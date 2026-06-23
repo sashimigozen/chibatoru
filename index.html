@@ -5374,6 +5374,9 @@
       transformed.rpsWinner = onlineSwapSide(hostState.rpsWinner);
       transformed.rpsPlayerChoice = hostState.rpsOpponentChoice;
       transformed.rpsOpponentChoice = hostState.rpsPlayerChoice;
+      if (transformed.phase === "rps" && !transformed.rpsPlayerChoice && !transformed.rpsWinner) {
+        transformed.preBattleBusy = false;
+      }
       transformed.selectedAttacker = onlineMapRefForGuest(hostState.selectedAttacker);
       transformed.pendingMultiItem = onlineSwapOwnersDeep(hostState.pendingMultiItem);
       transformed.pendingPanpanItem = onlineSwapOwnersDeep(hostState.pendingPanpanItem);
