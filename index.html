@@ -6758,11 +6758,13 @@
       player.hand = player.hand.map((card) => {
         if (card.baseId !== "alpha") return card;
         const beta = createCardFromBase("beta", side);
+        beta.createdActionTurn = state.actionTurn;
         addLog(`${SIDES[side]}のアルファがターン終了時にベータへ変化しました。`);
         return beta;
       });
       player.hand.forEach((card) => {
         if (card.baseId !== "beta" || card.generatedGamma) return;
+        if (card.createdActionTurn === state.actionTurn) return;
         if (state.players[opponent].board.seats[3] || state.players[opponent].board.seats[5]) return;
         player.hand.push(createCardFromBase("gamma", side));
         card.generatedGamma = true;
@@ -10544,7 +10546,7 @@
         music_detergent: "自分のデッキから「稲妻デザイン講師N」を1枚まで引く。すでに手札にある場合、かわりにデッキを上から2枚引く。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
         alpha: "このカードが手札にあるなら、自分のターン終了時にこのカードを「ベータ」に変更する。このカードは使用できない。",
-        beta: "このカードが手札にあるなら、自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加える。このカードはデッキ編成に入れられない。",
+        beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加える。このカードはデッキ編成に入れられない。",
         gamma: "相手の2行2列が空いている場合にのみ使用できる。デッキを上から3枚引く。このカードはデッキ編成に入れられない。",
         double_diamond: "融合：「定規」2枚。相手の出席者1人または相手本体を指名し、4ダメージを与える。出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。",
         roar: "お互いの学生すべてに、それぞれの体力が1になるまでダメージを与える。",
