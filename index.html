@@ -6600,13 +6600,7 @@
           addLog("目黒区図書館の効果：手札がないため校外エリアへ送れませんでした。");
         }
       }
-      if (state.environment?.baseId === "student_council") {
-        state.environment = makeBoardCard(createCardFromBase("dark_student_council", state.environment.owner || side));
-        addLog("学友会が裏学友会に変化しました。");
-      } else if (state.environment?.baseId === "dark_student_council") {
-        state.environment = makeBoardCard(createCardFromBase("student_council", state.environment.owner || side));
-        addLog("裏学友会が学友会に変化しました。");
-      }
+      resolveCouncilEnvironmentCycle(side);
       listBoardRefs(side).forEach((ref) => {
         const card = getBoardCardFromRef(ref);
         if (card?.yutaAccelerate) {
@@ -6649,6 +6643,24 @@
         addLog("深淵の効果：相手の出席者がいないため不発。");
       }
       player.abyssTurns -= 1;
+    }
+
+    function isCouncilEnvironment(card) {
+      return card?.baseId === "student_council" || card?.baseId === "dark_student_council";
+    }
+
+    function resolveCouncilEnvironmentCycle(side) {
+      const environment = state.environment;
+      if (!isCouncilEnvironment(environment)) return;
+      environment.councilTurnsUntilTransform = Math.max(0, (environment.councilTurnsUntilTransform ?? 2) - 1);
+      if (environment.councilTurnsUntilTransform > 0) {
+        addLog(`${environment.name}：あと${environment.councilTurnsUntilTransform}回ターンが終了すると変化します。`);
+        return;
+      }
+      const nextBaseId = environment.baseId === "student_council" ? "dark_student_council" : "student_council";
+      const nextEnvironment = makeBoardCard(createCardFromBase(nextBaseId, environment.owner || side));
+      state.environment = nextEnvironment;
+      addLog(`${environment.name}は一周して、${nextEnvironment.name}に変化しました。`);
     }
 
     function discardOneHandCardForMeguro(side) {
@@ -7011,7 +7023,7 @@
     }
 
     function makeBoardCard(card) {
-      return {
+      const boardCard = {
         ...card,
         baseAttack: card.attack ?? null,
         baseMaxHp: card.hp ?? null,
@@ -7021,6 +7033,10 @@
         hasAttacked: false,
         playedOnTurn: state.actionTurn
       };
+      if (isCouncilEnvironment(boardCard)) {
+        boardCard.councilTurnsUntilTransform = card.councilTurnsUntilTransform ?? 2;
+      }
+      return boardCard;
     }
 
     function canPlaceCard(side, card, zone, owner, index) {
@@ -10537,8 +10553,8 @@
         cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。",
         seat_rules: "自分の2列目と相手の1列目・3列目には出席できない。このカードが環境マスに出たとき、それらの席マスにいる出席者すべてを校外エリアへ送る。このカードは、環境マスにある同名カードを上書きできる。",
         gangi_fortress: "お互いの1行2列、1行3列、2行2列、2行3列にいる出席者すべての体力を+2する。",
-        dark_student_council: "場にいるすべての出席者の攻撃力を+2する。自分のターン終了時、「学友会」に変化する。このカードは上書きできる。",
-        student_council: "場にいるすべての出席者の体力を+2する。自分のターン終了時、「裏学友会」に変化する。このカードは上書きできる。",
+        dark_student_council: "場にいるすべての出席者の攻撃力を+2する。このカードが出てからターンが2回終了すると、「学友会」に変化する。",
+        student_council: "場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。",
         full_lock: "お互いの空いている席マスには出席できない。",
         chaos_world: "このカードが環境マスに出たとき、すべての出席者の攻撃力と体力を0〜10のランダムな値に変更する。",
         no_late_time: "このカードがあるかぎり、「遅刻」の効果をなくす。",
