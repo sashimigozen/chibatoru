@@ -1721,37 +1721,37 @@
     }
 
     .play-reveal-card {
-      width: 148px;
+      width: 190px;
       transform-origin: center center;
-      filter: drop-shadow(0 22px 32px rgba(15, 23, 42, 0.28));
+      filter: drop-shadow(0 24px 34px rgba(15, 23, 42, 0.34));
     }
 
     .play-reveal-card .card {
-      width: 148px;
-      min-height: 210px;
-      flex-basis: 148px;
+      width: 190px;
+      min-height: 264px;
+      flex-basis: 190px;
       border-width: 2px;
-      border-radius: 9px;
+      border-radius: 10px;
     }
 
     .play-reveal-card .card-face {
-      padding: 26px 10px 30px;
+      padding: 34px 13px 36px;
     }
 
     .play-reveal-card .card-name {
-      font-size: 16px;
+      font-size: 19px;
       line-height: 1.18;
     }
 
     .play-reveal-card .card-type {
-      margin-top: 8px;
-      font-size: 12px;
+      margin-top: 9px;
+      font-size: 13px;
     }
 
     .play-reveal-card .card-stat {
-      min-width: 26px;
-      height: 23px;
-      font-size: 13px;
+      min-width: 30px;
+      height: 26px;
+      font-size: 14px;
     }
 
     .play-reveal-card.to-trash {
@@ -1762,6 +1762,10 @@
       animation: revealToEnvironment 1.35s ease-in-out forwards;
     }
 
+    .play-reveal-card.to-board {
+      animation: revealToBoard 1.45s ease-in-out forwards;
+    }
+
     @keyframes revealToTrash {
       0% {
         opacity: 0;
@@ -1770,11 +1774,11 @@
       20%,
       58% {
         opacity: 1;
-        transform: translateY(0) scale(1.12) rotate(0deg);
+        transform: translateY(0) scale(1.06) rotate(0deg);
       }
       100% {
         opacity: 0;
-        transform: translate(36vw, 16vh) scale(0.36) rotate(10deg);
+        transform: translate(34vw, 22vh) scale(0.28) rotate(10deg);
       }
     }
 
@@ -1786,11 +1790,27 @@
       20%,
       62% {
         opacity: 1;
-        transform: translateY(0) scale(1.12);
+        transform: translateY(0) scale(1.06);
       }
       100% {
         opacity: 0;
         transform: translateY(-24vh) scale(0.42);
+      }
+    }
+
+    @keyframes revealToBoard {
+      0% {
+        opacity: 0;
+        transform: translateY(20px) scale(0.74) rotate(-1deg);
+      }
+      20%,
+      58% {
+        opacity: 1;
+        transform: translateY(0) scale(1.06) rotate(0deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-16vh) scale(0.38) rotate(1deg);
       }
     }
 
@@ -3048,6 +3068,27 @@
       line-height: 1.45;
     }
 
+    .log-card-link {
+      appearance: none;
+      border: 0;
+      border-bottom: 1px dotted currentColor;
+      padding: 0 1px;
+      background: transparent;
+      color: #2457d6;
+      font: inherit;
+      font-weight: 1000;
+      text-decoration: none;
+      cursor: help;
+    }
+
+    .log-card-link:hover,
+    .log-card-link:focus-visible {
+      color: #0f766e;
+      outline: none;
+      background: rgba(36, 87, 214, 0.09);
+      border-radius: 4px;
+    }
+
     .trash-box,
     .life-target,
     .hud-pill {
@@ -3121,81 +3162,141 @@
       }
 
       .battle-screen {
-        padding-bottom: 18px;
+        min-height: auto;
+        padding-bottom: 8px;
+      }
+
+      .battle-screen .topbar {
+        margin-bottom: 6px;
+        padding: 6px 8px;
+      }
+
+      .battle-screen h1 {
+        font-size: 18px;
+      }
+
+      .battle-screen .subtitle {
+        display: none;
+      }
+
+      .battle-screen .status {
+        min-width: 68px;
+        padding: 3px 6px;
+        font-size: 10px;
+      }
+
+      .battle-screen .turn-status {
+        min-width: 102px;
+      }
+
+      .battle-screen .message {
+        padding: 5px 8px;
+        font-size: 11px;
+        line-height: 1.35;
       }
 
       .game-shell {
-        grid-template-columns: minmax(0, 1fr) 132px 292px;
-        gap: 14px;
+        grid-template-columns: minmax(0, 1fr) 118px 270px;
+        gap: 10px;
       }
 
       .playmat {
-        gap: 10px;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-areas:
+          "opponent-hand opponent-hand"
+          "opponent-board player-board"
+          "environment environment"
+          "player-hand player-hand";
+        gap: 5px;
+      }
+
+      .opponent-hand-zone {
+        grid-area: opponent-hand;
+      }
+
+      #opponentBoardPanel {
+        grid-area: opponent-board;
+      }
+
+      .environment-panel {
+        grid-area: environment;
+      }
+
+      #playerBoardPanel {
+        grid-area: player-board;
+      }
+
+      .player-hand-zone {
+        grid-area: player-hand;
+      }
+
+      .player-hand-zone .hint {
+        display: none;
       }
 
       .seat-grid,
       .professor-lane {
-        grid-template-columns: repeat(3, minmax(92px, 1fr));
-        gap: 7px;
+        grid-template-columns: repeat(3, minmax(82px, 1fr));
+        gap: 4px;
       }
 
       .slot {
-        min-height: 54px;
-        padding: 16px 6px 6px;
+        min-height: 38px;
+        padding: 13px 5px 4px;
       }
 
       .environment-panel .slot {
-        min-height: 56px;
+        min-height: 38px;
       }
 
       .field-card {
-        min-height: 46px;
-        padding: 7px 8px;
+        min-height: 32px;
+        padding: 5px 6px;
       }
 
       .field-card-name {
-        font-size: 13px;
-        line-height: 1.2;
+        font-size: 11px;
+        line-height: 1.12;
       }
 
       .field-stat {
-        min-width: 36px;
-        height: 22px;
-        font-size: 12px;
+        min-width: 30px;
+        height: 18px;
+        font-size: 10px;
       }
 
       .life-target {
-        min-height: 42px;
-        min-width: 132px;
-        padding: 8px 12px;
-        font-size: 13px;
+        min-height: 34px;
+        min-width: 118px;
+        padding: 5px 9px;
+        font-size: 11px;
       }
 
       .life-value {
-        padding: 3px 8px;
-        font-size: 13px;
+        padding: 2px 6px;
+        font-size: 11px;
       }
 
       .hand {
-        min-height: 154px;
-        padding: 16px 8px 10px;
+        min-height: 108px;
+        padding: 10px 6px 7px;
       }
 
       .card {
-        flex-basis: 98px;
-        min-height: 136px;
+        flex-basis: 76px;
+        min-height: 104px;
       }
 
       .hand-card {
-        height: 136px;
+        height: 104px;
       }
 
       .card-face {
-        padding: 18px 7px 22px;
+        padding: 15px 5px 18px;
       }
 
       .card-name {
-        font-size: 12px;
+        font-size: 10px;
         line-height: 1.16;
       }
 
@@ -3204,8 +3305,8 @@
       }
 
       .card-effect {
-        font-size: 8px;
-        -webkit-line-clamp: 4;
+        font-size: 7px;
+        -webkit-line-clamp: 3;
       }
 
       .mulligan-card .card-effect,
@@ -3226,17 +3327,17 @@
 
       .battle-action-slot {
         position: sticky;
-        top: 112px;
+        top: 92px;
         grid-column: 2;
         right: auto;
         bottom: auto;
         z-index: 18;
-        width: 132px;
+        width: 118px;
       }
 
       .battle-end-button {
-        min-height: 72px;
-        font-size: 14px;
+        min-height: 58px;
+        font-size: 12px;
       }
 
       .player-combat-hud {
@@ -3249,8 +3350,8 @@
       }
 
       .log {
-        height: 232px;
-        max-height: 232px;
+        height: 190px;
+        max-height: 190px;
       }
 
       .mulligan-window {
@@ -3823,6 +3924,24 @@
         height: 82px;
         max-height: 82px;
         font-size: 9px;
+      }
+
+      .play-reveal-card {
+        width: 136px;
+      }
+
+      .play-reveal-card .card {
+        width: 136px;
+        min-height: 190px;
+        flex-basis: 136px;
+      }
+
+      .play-reveal-card .card-face {
+        padding: 24px 8px 28px;
+      }
+
+      .play-reveal-card .card-name {
+        font-size: 14px;
       }
 
       .prebattle-stage {
@@ -4652,6 +4771,8 @@
       noAttackUntilActionTurn: 0,
       recentBoardTrash: [],
       gameOver: false,
+      gameWinner: null,
+      gameResultOptions: {},
       aiThinking: false,
       testMode: false,
       testCardBaseId: null,
@@ -5414,6 +5535,10 @@
         state.online.lastSnapshotAckSeq = Math.max(state.online.lastSnapshotAckSeq || 0, message.seq || 0);
         return;
       }
+      if (message.type === "playReveal" && isOnlineGuest()) {
+        showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
+        return;
+      }
       if (message.type === "returnRoom" && isOnlineGuest()) {
         onlineReturnToRoom(false);
       }
@@ -5534,6 +5659,7 @@
       state.screen = "battle";
       state.online.isApplyingRemote = false;
       render();
+      if (state.gameOver) showResultOverlay(state.gameWinner, state.gameResultOptions || {});
       onlineSend({ type: "snapshotAck", seq: snapshot.seq });
     }
 
@@ -5546,6 +5672,7 @@
       transformed.firstSide = onlineSwapSide(hostState.firstSide);
       transformed.currentSide = onlineSwapSide(hostState.currentSide);
       transformed.rpsWinner = onlineSwapSide(hostState.rpsWinner);
+      transformed.gameWinner = onlineSwapSide(hostState.gameWinner);
       transformed.rpsPlayerChoice = hostState.rpsOpponentChoice;
       transformed.rpsOpponentChoice = hostState.rpsPlayerChoice;
       if (transformed.phase === "rps" && !transformed.rpsPlayerChoice && !transformed.rpsWinner) {
@@ -5555,8 +5682,8 @@
       transformed.pendingMultiItem = onlineSwapOwnersDeep(hostState.pendingMultiItem);
       transformed.pendingPanpanItem = onlineSwapOwnersDeep(hostState.pendingPanpanItem);
       transformed.pendingCopiedCard = onlineSwapOwnersDeep(hostState.pendingCopiedCard);
-      transformed.message = onlineDisplayText(transformed.message);
-      transformed.log = (transformed.log || []).map(onlineDisplayText);
+      transformed.message = onlineDisplayTextForGuest(transformed.message);
+      transformed.log = (transformed.log || []).map(onlineDisplayTextForGuest);
       return transformed;
     }
 
@@ -5565,7 +5692,7 @@
       if (!value || typeof value !== "object") return value;
       const copy = {};
       Object.entries(value).forEach(([key, entry]) => {
-        if ((key === "owner" || key === "currentSide" || key === "firstSide" || key === "rpsWinner") && (entry === "player" || entry === "opponent")) {
+        if ((key === "owner" || key === "currentSide" || key === "firstSide" || key === "rpsWinner" || key === "gameWinner") && (entry === "player" || entry === "opponent")) {
           copy[key] = onlineSwapSide(entry);
         } else {
           copy[key] = onlineSwapOwnersDeep(entry);
@@ -5591,6 +5718,13 @@
 
     function onlineDisplayText(text) {
       return String(text || "").replaceAll("相手AI", ONLINE_OPPONENT_LABEL);
+    }
+
+    function onlineDisplayTextForGuest(text) {
+      return onlineDisplayText(text)
+        .replaceAll("あなた", "__LOCAL_PLAYER__")
+        .replaceAll("相手", "あなた")
+        .replaceAll("__LOCAL_PLAYER__", "相手");
     }
 
     function onlineApplyRemoteCommand(command) {
@@ -5864,6 +5998,8 @@
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
       state.gameOver = false;
+      state.gameWinner = null;
+      state.gameResultOptions = {};
       state.aiThinking = false;
       state.testMode = false;
       state.testCardBaseId = null;
@@ -7188,6 +7324,7 @@
       if (card.evolutionFrom) {
         evolveCard(side, card, owner, zone, index);
       } else if (card.late && state.environment?.baseId !== "no_late_time") {
+        showCardPlayAnimation(card, "board");
         player.late.push({ card, owner, zone, index, remaining: card.late });
         addLog(`${SIDES[side]}は${card.name}を遅刻ゾーンへ送りました。残り${card.late}ターン。`);
       } else {
@@ -7200,6 +7337,7 @@
         }
         const placedCard = makeBoardCard(card);
         if (zone === "seat" || zone === "teacher") setBoardCard(owner, zone, index, placedCard);
+        if (zone === "seat" || zone === "teacher") showCardPlayAnimation(card, "board");
         if (zone === "environment") {
           showCardPlayAnimation(card, "environment");
           if (state.environment) {
@@ -8924,15 +9062,27 @@
       });
     }
 
-    function showCardPlayAnimation(card, destination) {
+    function cardRevealPayload(card) {
+      if (!card) return null;
+      return JSON.parse(JSON.stringify(card));
+    }
+
+    function showCardPlayAnimation(card, destination, options = {}) {
       if (!card || !elements.playRevealOverlay || !elements.playRevealCard) return;
       window.clearTimeout(playRevealTimer);
-      const destinationClass = destination === "environment" ? "to-environment" : "to-trash";
+      const destinationClass = destination === "environment"
+        ? "to-environment"
+        : destination === "board"
+          ? "to-board"
+          : "to-trash";
       elements.playRevealCard.className = "play-reveal-card";
       elements.playRevealCard.innerHTML = cardShellTemplate(card);
       elements.playRevealOverlay.classList.remove("hidden");
       void elements.playRevealCard.offsetWidth;
       elements.playRevealCard.classList.add(destinationClass);
+      if (!options.remote && isOnlineHost() && state.online.started && state.online.connected) {
+        onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination });
+      }
       playRevealTimer = window.setTimeout(hidePlayReveal, PLAY_REVEAL_MS);
     }
 
@@ -9091,6 +9241,8 @@
 
     function endGame(winner, reason, options = {}) {
       state.gameOver = true;
+      state.gameWinner = winner;
+      state.gameResultOptions = { ...options };
       state.aiThinking = false;
       state.phase = "gameover";
       clearSelections();
@@ -10614,6 +10766,8 @@
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
       state.gameOver = false;
+      state.gameWinner = null;
+      state.gameResultOptions = {};
       state.aiThinking = false;
       state.testMode = true;
       state.testCardBaseId = baseId;
@@ -11188,9 +11342,48 @@
       elements.log.innerHTML = "";
       state.log.forEach((message) => {
         const item = document.createElement("li");
-        item.textContent = message;
+        renderLogMessage(item, message);
         elements.log.appendChild(item);
       });
+    }
+
+    function renderLogMessage(container, message) {
+      const text = String(message || "");
+      const names = getLogCardNameEntries();
+      let index = 0;
+      while (index < text.length) {
+        const match = names.find((entry) => text.startsWith(entry.name, index));
+        if (!match) {
+          const nextIndex = findNextCardNameIndex(text, index + 1, names);
+          container.appendChild(document.createTextNode(text.slice(index, nextIndex)));
+          index = nextIndex;
+          continue;
+        }
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "log-card-link";
+        button.textContent = match.name;
+        button.setAttribute("aria-label", `${match.name}の能力を見る`);
+        attachCardDetailEvents(button, match.card, { previewOnClick: true });
+        container.appendChild(button);
+        index += match.name.length;
+      }
+    }
+
+    function findNextCardNameIndex(text, start, names) {
+      let next = text.length;
+      names.forEach((entry) => {
+        const found = text.indexOf(entry.name, start);
+        if (found >= 0 && found < next) next = found;
+      });
+      return next;
+    }
+
+    function getLogCardNameEntries() {
+      return Object.entries(CARD_BASES)
+        .map(([baseId, card]) => ({ name: card.name, card: { ...card, baseId } }))
+        .filter((entry, index, list) => entry.name && list.findIndex((other) => other.name === entry.name) === index)
+        .sort((a, b) => b.name.length - a.name.length);
     }
 
     renderRpsChoiceButtons();
