@@ -523,6 +523,16 @@
       min-width: 0;
     }
 
+    .playmat.drop-ready,
+    .playmat.drag-over {
+      border-radius: 10px;
+      box-shadow: inset 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .playmat.drag-over {
+      box-shadow: inset 0 0 0 4px rgba(37, 99, 235, 0.22);
+    }
+
     .panel,
     .hand-zone {
       border: 1px solid #cbd5e1;
@@ -616,7 +626,8 @@
     }
 
     .slot.drag-over,
-    .slot.click-ready {
+    .slot.click-ready,
+    .slot.drop-ready {
       border-color: #2563eb;
       background: #dbeafe;
     }
@@ -646,9 +657,16 @@
     }
 
     .slot.enemy-target,
-    .life-target.enemy-target {
+    .life-target.enemy-target,
+    .life-target.drop-ready {
       outline: 2px solid rgba(37, 99, 235, 0.3);
       outline-offset: 1px;
+    }
+
+    .life-target.drag-over {
+      outline: 3px solid rgba(37, 99, 235, 0.46);
+      outline-offset: 2px;
+      transform: translateY(-1px);
     }
 
     .field-card.attack-target-ready,
@@ -814,11 +832,30 @@
       cursor: grab;
     }
 
+    .card.dragging-source {
+      opacity: 0.48;
+      transform: translateY(-6px) scale(0.98);
+    }
+
+    .drag-ghost-card {
+      position: fixed;
+      z-index: 10000;
+      width: 76px;
+      pointer-events: none;
+      transform: translate(-50%, -50%) rotate(-2deg) scale(1.04);
+      filter: drop-shadow(0 14px 22px rgba(15, 23, 42, 0.28));
+    }
+
     .hand-card {
       height: 92px;
       min-height: 0;
       overflow: hidden;
       transform-origin: bottom center;
+    }
+
+    .hand-card.draggable-ready {
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.18);
+      cursor: grab;
     }
 
     .board-card {
@@ -4574,6 +4611,9 @@
     let deckPressTimer = null;
     let deckPressActive = false;
     let playRevealTimer = null;
+    let handDragCandidate = null;
+    let activeHandDrag = null;
+    const HAND_DRAG_THRESHOLD = 10;
     const pendingAnimations = [];
 
     const state = {
@@ -4695,6 +4735,7 @@
       playerHand: document.getElementById("playerHand"),
       playerHandZone: document.querySelector(".player-hand-zone"),
       opponentHandZone: document.querySelector(".opponent-hand-zone"),
+      playmat: document.querySelector(".playmat"),
       playerCombatHud: document.getElementById("playerCombatHud"),
       preBattleStage: document.getElementById("preBattleStage"),
       preBattleTitle: document.getElementById("preBattleTitle"),
@@ -8973,6 +9014,8 @@
       renderTrash();
       renderLog();
       renderControls();
+      setupPlaymatDropEvents();
+      setupDocumentHandDropEvents();
       flushAnimationQueue();
       onlineBroadcastState();
     }
@@ -9206,6 +9249,130 @@
       return false;
     }
 
+    function canStartHandDrag(card) {
+      return state.phase === "battle"
+        && state.currentSide === "player"
+        && !state.gameOver
+        && !state.aiThinking
+        && canUseHandCardNow(card);
+    }
+
+    function getDraggedHandCard() {
+      return activeHandDrag?.instanceId ? getHandCard("player", activeHandDrag.instanceId) : getSelectedHandCard();
+    }
+
+    function isImmediateDragItem(item) {
+      return item?.type === "item"
+        && (item.target === "global"
+          || ["onigiri_draw", "hondara", "fire_touch", "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket", "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind", "dropped_cards", "reversal", "dont_worry", "yutakun_yutakun", "three_gestures", "music_detergent", "gamma", ...CRAB_SET_IDS].includes(item.baseId));
+    }
+
+    function canUseItemOnBoardTarget(item, owner, zone, index) {
+      const target = getBoardCard(owner, zone, index);
+      if (!item || item.type !== "item" || !target) return false;
+      if (item.target === "enemy" && owner === "player") return false;
+      if ((item.target === "friendly" || item.target === "friendlyAny") && owner !== "player") return false;
+      if (item.target === "friendly" && !(target.currentHp !== null && target.currentHp < target.maxHp)) return false;
+      if (["accelerate", "chameleon", "yuta_umbrella", "red_happi"].includes(item.baseId) && target.baseId !== "yuta") return false;
+      if (item.baseId === "quiet_please" && target.attack < 4) return false;
+      if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") return false;
+      if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
+      if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
+      return ["enemy", "friendly", "friendlyAny"].includes(item.target);
+    }
+
+    function canDropHandCardOnSlot(card, zone, owner, index) {
+      if (!card || !canStartHandDrag(card)) return false;
+      if (card.type !== "item") return isValidPlacement(card, zone, owner, index);
+      if (card.baseId === "capture") {
+        return owner === "opponent"
+          && zone === "seat"
+          && index !== null
+          && state.players[owner].board.seats[index] === null
+          && !isSeatBlocked(owner, index);
+      }
+      return canUseItemOnBoardTarget(card, owner, zone, index);
+    }
+
+    function canDropHandCardOnLife(card, targetSide) {
+      return Boolean(card
+        && canStartHandDrag(card)
+        && card.type === "item"
+        && card.target === "enemy"
+        && targetSide !== "player"
+        && ["ruler", "double_diamond"].includes(card.baseId));
+    }
+
+    function canDropHandCardOnPlaymat(card) {
+      return Boolean(card && canStartHandDrag(card) && isImmediateDragItem(card));
+    }
+
+    function performHandDropOnSlot(instanceId, zone, owner, index) {
+      const card = getHandCard("player", instanceId);
+      if (!card || !canDropHandCardOnSlot(card, zone, owner, index)) return false;
+      state.selectedHandId = instanceId;
+      if (card.type !== "item") {
+        playCard(instanceId, zone, owner, index);
+        return true;
+      }
+      if (card.baseId === "capture") {
+        castCaptureOnSlot("player", card, owner, zone, index, true);
+        return true;
+      }
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("itemCard", { instanceId: card.instanceId, target: { owner, zone, index } });
+        state.message = `${card.name}の対象を送信しました。`;
+        render();
+        return true;
+      }
+      castItemOnCard("player", card, owner, zone, index, true);
+      return true;
+    }
+
+    function performHandDropOnLife(instanceId, targetSide) {
+      const card = getHandCard("player", instanceId);
+      if (!card || !canDropHandCardOnLife(card, targetSide)) return false;
+      state.selectedHandId = instanceId;
+      attackLife(targetSide);
+      return true;
+    }
+
+    function performHandDropOnPlaymat(instanceId) {
+      const item = getHandCard("player", instanceId);
+      if (!item || !canDropHandCardOnPlaymat(item)) return false;
+      state.selectedHandId = instanceId;
+      if (onlineCanSendCommand()) {
+        const commandType = item.target === "global" ? "itemGlobal" : "itemImmediate";
+        onlineSendCommand(commandType, { instanceId: item.instanceId });
+        state.message = `${item.name}の使用を送信しました。`;
+        render();
+        return true;
+      }
+      if (item.target === "global") return castItemGlobal("player", item, true);
+      return castImmediateItem("player", item, true);
+    }
+
+    function clearHandDropHints() {
+      document.querySelectorAll(".drop-ready,.drag-over,.invalid").forEach((element) => {
+        element.classList.remove("drop-ready", "drag-over", "invalid");
+      });
+    }
+
+    function refreshHandDropHints(card = getDraggedHandCard()) {
+      clearHandDropHints();
+      if (!card || !canStartHandDrag(card)) return;
+      document.querySelectorAll(".slot").forEach((slot) => {
+        const index = slot.dataset.index === "" ? null : Number(slot.dataset.index);
+        if (canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, index)) {
+          slot.classList.add("drop-ready");
+        }
+      });
+      document.querySelectorAll("[data-life-target]").forEach((target) => {
+        if (canDropHandCardOnLife(card, target.dataset.lifeTarget)) target.classList.add("drop-ready");
+      });
+      if (canDropHandCardOnPlaymat(card)) elements.playmat?.classList.add("drop-ready");
+    }
+
     function renderHands() {
       renderDeckPiles();
       renderOpponentHand();
@@ -9327,10 +9494,12 @@
       player.hand.forEach((card) => {
         const button = document.createElement("button");
         button.className = `card hand-card ${card.type}`;
-        button.draggable = state.phase === "battle" && state.currentSide === "player" && !state.gameOver && card.type !== "item";
+        const canDrag = canStartHandDrag(card);
+        button.draggable = false;
         button.dataset.cardId = card.instanceId;
         button.innerHTML = cardTemplate(card, false);
         button.classList.toggle("selected", state.selectedHandId === card.instanceId || player.mulliganSelection.includes(card.instanceId));
+        button.classList.toggle("draggable-ready", canDrag);
         button.classList.toggle("affordable", state.phase === "battle"
           && state.currentSide === "player"
           && !state.gameOver
@@ -9341,12 +9510,198 @@
         });
         attachCardDetailEvents(button, card);
         button.addEventListener("dragstart", (event) => {
-          if (state.phase !== "battle" || state.currentSide !== "player" || card.type === "item") return;
+          if (!canStartHandDrag(card)) {
+            event.preventDefault();
+            return;
+          }
           event.dataTransfer.setData("text/plain", card.instanceId);
+          event.dataTransfer.effectAllowed = "move";
           state.selectedHandId = card.instanceId;
+          activeHandDrag = { instanceId: card.instanceId, sourceElement: button, native: true };
+          button.classList.add("dragging-source");
+          refreshHandDropHints(card);
         });
+        button.addEventListener("dragend", () => {
+          finishHandDrag();
+        });
+        button.addEventListener("pointerdown", (event) => startHandPointerDrag(event, card, button));
+        button.addEventListener("pointermove", moveHandPointerDrag);
+        button.addEventListener("pointerup", finishHandPointerDrag);
+        button.addEventListener("pointercancel", cancelHandPointerDrag);
+        button.addEventListener("mousedown", (event) => startHandMouseDrag(event, card, button));
         elements.playerHand.appendChild(button);
       });
+    }
+
+    function startHandMouseDrag(event, card, element) {
+      if (event.button !== 0 || !canStartHandDrag(card)) return;
+      handDragCandidate = {
+        instanceId: card.instanceId,
+        element,
+        startX: event.clientX,
+        startY: event.clientY
+      };
+      document.addEventListener("mousemove", moveHandMouseDrag);
+      document.addEventListener("mouseup", finishHandMouseDrag, { once: true });
+    }
+
+    function moveHandMouseDrag(event) {
+      moveHandPointerDrag(event);
+    }
+
+    function finishHandMouseDrag(event) {
+      finishHandPointerDrag(event);
+      document.removeEventListener("mousemove", moveHandMouseDrag);
+    }
+
+    function startHandPointerDrag(event, card, element) {
+      if ((event.pointerType === "mouse" && event.button !== 0) || !canStartHandDrag(card)) return;
+      handDragCandidate = {
+        instanceId: card.instanceId,
+        element,
+        startX: event.clientX,
+        startY: event.clientY
+      };
+      try { element.setPointerCapture(event.pointerId); } catch {}
+    }
+
+    function moveHandPointerDrag(event) {
+      if (!handDragCandidate) return;
+      const dx = event.clientX - handDragCandidate.startX;
+      const dy = event.clientY - handDragCandidate.startY;
+      if (!activeHandDrag && Math.hypot(dx, dy) >= HAND_DRAG_THRESHOLD) {
+        const card = getHandCard("player", handDragCandidate.instanceId);
+        if (!card || !canStartHandDrag(card)) {
+          handDragCandidate = null;
+          return;
+        }
+        cancelCardDetailPress(handDragCandidate.element);
+        activeHandDrag = {
+          instanceId: handDragCandidate.instanceId,
+          sourceElement: handDragCandidate.element,
+          pointer: true,
+          ghost: createHandDragGhost(handDragCandidate.element)
+        };
+        state.selectedHandId = handDragCandidate.instanceId;
+        handDragCandidate.element.classList.add("dragging-source");
+        refreshHandDropHints(card);
+      }
+      if (!activeHandDrag?.pointer) return;
+      event.preventDefault();
+      moveHandDragGhost(event.clientX, event.clientY);
+      updatePointDropHover(event.clientX, event.clientY);
+    }
+
+    function finishHandPointerDrag(event) {
+      if (!handDragCandidate) return;
+      if (activeHandDrag?.pointer) {
+        event.preventDefault();
+        handleHandDropAtPoint(activeHandDrag.instanceId, event.clientX, event.clientY);
+        finishHandDrag();
+      }
+      handDragCandidate = null;
+    }
+
+    function cancelHandPointerDrag() {
+      handDragCandidate = null;
+      finishHandDrag();
+    }
+
+    function createHandDragGhost(sourceElement) {
+      const ghost = sourceElement.cloneNode(true);
+      ghost.classList.add("drag-ghost-card");
+      ghost.classList.remove("dragging-source");
+      document.body.appendChild(ghost);
+      return ghost;
+    }
+
+    function moveHandDragGhost(x, y) {
+      if (!activeHandDrag?.ghost) return;
+      activeHandDrag.ghost.style.left = `${x}px`;
+      activeHandDrag.ghost.style.top = `${y}px`;
+    }
+
+    function findHandDropTargetAtPoint(x, y, card = getDraggedHandCard()) {
+      const stack = document.elementsFromPoint
+        ? document.elementsFromPoint(x, y)
+        : [document.elementFromPoint(x, y)].filter(Boolean);
+      let firstCandidate = null;
+
+      for (const element of stack) {
+        if (element.closest?.(".drag-ghost-card")) continue;
+        const slot = element.closest?.(".slot");
+        if (slot) {
+          const index = slot.dataset.index === "" ? null : Number(slot.dataset.index);
+          const candidate = {
+            type: "slot",
+            element: slot,
+            owner: slot.dataset.owner || null,
+            zone: slot.dataset.zone,
+            index,
+            valid: canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, index)
+          };
+          if (candidate.valid) return candidate;
+          firstCandidate ||= candidate;
+          continue;
+        }
+
+        const life = element.closest?.("[data-life-target]");
+        if (life) {
+          const candidate = {
+            type: "life",
+            element: life,
+            targetSide: life.dataset.lifeTarget,
+            valid: canDropHandCardOnLife(card, life.dataset.lifeTarget)
+          };
+          if (candidate.valid) return candidate;
+          firstCandidate ||= candidate;
+          continue;
+        }
+
+        const playmat = element.closest?.(".playmat");
+        if (playmat) {
+          const candidate = {
+            type: "playmat",
+            element: playmat,
+            valid: canDropHandCardOnPlaymat(card)
+          };
+          if (candidate.valid) return candidate;
+          firstCandidate ||= candidate;
+        }
+      }
+
+      return firstCandidate;
+    }
+
+    function updatePointDropHover(x, y) {
+      document.querySelectorAll(".drag-over,.invalid").forEach((element) => element.classList.remove("drag-over", "invalid"));
+      const card = getDraggedHandCard();
+      const target = findHandDropTargetAtPoint(x, y, card);
+      if (!target) return;
+      if (target.type === "slot") {
+        target.element.classList.toggle("drag-over", target.valid);
+        target.element.classList.toggle("invalid", Boolean(card && !target.valid));
+        return;
+      }
+      if (target.valid) target.element.classList.add("drag-over");
+      else if (card && target.type !== "playmat") target.element.classList.add("invalid");
+    }
+
+    function handleHandDropAtPoint(instanceId, x, y) {
+      const card = getHandCard("player", instanceId);
+      const target = findHandDropTargetAtPoint(x, y, card);
+      if (!target?.valid) return false;
+      if (target.type === "slot") return performHandDropOnSlot(instanceId, target.zone, target.owner, target.index);
+      if (target.type === "life") return performHandDropOnLife(instanceId, target.targetSide);
+      if (target.type === "playmat") return performHandDropOnPlaymat(instanceId);
+      return false;
+    }
+
+    function finishHandDrag() {
+      activeHandDrag?.sourceElement?.classList.remove("dragging-source");
+      activeHandDrag?.ghost?.remove();
+      activeHandDrag = null;
+      clearHandDropHints();
     }
 
     function queueAnimation(type, side, count = 1) {
@@ -9456,7 +9811,74 @@
         const attackTarget = canSelectedAttackerTargetLife(targetSide);
         button.classList.toggle("enemy-target", enemyItemTarget || attackTarget);
         button.classList.toggle("attack-target-ready", attackTarget);
+        setupLifeTargetDropEvents(button, targetSide);
       });
+    }
+
+    function setupLifeTargetDropEvents(button, targetSide) {
+      button.ondragover = (event) => {
+        const card = getSelectedHandCard();
+        const valid = canDropHandCardOnLife(card, targetSide);
+        if (valid) event.preventDefault();
+        button.classList.toggle("drag-over", valid);
+      };
+      button.ondragleave = () => button.classList.remove("drag-over");
+      button.ondrop = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const instanceId = event.dataTransfer.getData("text/plain");
+        button.classList.remove("drag-over");
+        performHandDropOnLife(instanceId, targetSide);
+        finishHandDrag();
+      };
+    }
+
+    function setupPlaymatDropEvents() {
+      if (!elements.playmat) return;
+      elements.playmat.ondragover = (event) => {
+        const card = getSelectedHandCard();
+        const valid = canDropHandCardOnPlaymat(card);
+        if (valid) event.preventDefault();
+        elements.playmat.classList.toggle("drag-over", valid);
+      };
+      elements.playmat.ondragleave = (event) => {
+        if (!elements.playmat.contains(event.relatedTarget)) {
+          elements.playmat.classList.remove("drag-over");
+        }
+      };
+      elements.playmat.ondrop = (event) => {
+        const instanceId = event.dataTransfer.getData("text/plain");
+        const card = getHandCard("player", instanceId);
+        if (!canDropHandCardOnPlaymat(card)) return;
+        event.preventDefault();
+        elements.playmat.classList.remove("drag-over");
+        performHandDropOnPlaymat(instanceId);
+        finishHandDrag();
+      };
+    }
+
+    function setupDocumentHandDropEvents() {
+      document.ondragover = (event) => {
+        if (!activeHandDrag?.instanceId) return;
+        const card = getDraggedHandCard();
+        if (!card) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY);
+        if (!target) return;
+        const slot = target.closest(".slot");
+        const life = target.closest("[data-life-target]");
+        const valid = slot
+          ? canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, slot.dataset.index === "" ? null : Number(slot.dataset.index))
+          : life
+            ? canDropHandCardOnLife(card, life.dataset.lifeTarget)
+            : Boolean(target.closest(".playmat") && canDropHandCardOnPlaymat(card));
+        if (valid) event.preventDefault();
+      };
+      document.ondrop = (event) => {
+        if (!activeHandDrag?.instanceId) return;
+        const handled = handleHandDropAtPoint(activeHandDrag.instanceId, event.clientX, event.clientY);
+        if (handled) event.preventDefault();
+        finishHandDrag();
+      };
     }
 
     function createSlot(zone, owner, index, label) {
@@ -9473,18 +9895,20 @@
 
     function setupSlotEvents(slot, zone, owner, index) {
       slot.ondragover = (event) => {
-        event.preventDefault();
         const card = getSelectedHandCard();
-        const valid = isValidPlacement(card, zone, owner, index);
+        const valid = canDropHandCardOnSlot(card, zone, owner, index);
+        if (valid) event.preventDefault();
         slot.classList.toggle("drag-over", valid);
         slot.classList.toggle("invalid", Boolean(card && !valid));
       };
       slot.ondragleave = () => slot.classList.remove("drag-over", "invalid");
       slot.ondrop = (event) => {
         event.preventDefault();
+        event.stopPropagation();
         const instanceId = event.dataTransfer.getData("text/plain");
         slot.classList.remove("drag-over", "invalid");
-        playCard(instanceId, zone, owner, index);
+        performHandDropOnSlot(instanceId, zone, owner, index);
+        finishHandDrag();
       };
       slot.onclick = () => {
         const selected = getSelectedHandCard();
@@ -9509,7 +9933,7 @@
         && zone === "seat"
         && state.players[owner].board.seats[index] === null
         && !isSeatBlocked(owner, index));
-      slot.classList.toggle("click-ready", copyReady || captureReady || Boolean(selected && isValidPlacement(selected, zone, owner, index)));
+      slot.classList.toggle("click-ready", copyReady || captureReady || Boolean(selected && canDropHandCardOnSlot(selected, zone, owner, index)));
     }
 
     function createBoardCard(card, owner, zone, index) {
