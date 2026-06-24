@@ -5721,9 +5721,15 @@
     }
 
     function onlineDisplayTextForGuest(text) {
-      return onlineDisplayText(text)
+      const displayed = onlineDisplayText(text)
+        .replaceAll(
+          "じゃんけんに勝ちました。先攻か後攻を選んでください。",
+          "__REMOTE_PLAYER__がカードじゃんけんに勝ちました。先攻か後攻の選択を待っています。"
+        );
+      return displayed
         .replaceAll("あなた", "__LOCAL_PLAYER__")
         .replaceAll("相手", "あなた")
+        .replaceAll("__REMOTE_PLAYER__", "相手")
         .replaceAll("__LOCAL_PLAYER__", "相手");
     }
 
