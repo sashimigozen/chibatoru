@@ -2203,7 +2203,7 @@
 
     .deck-save-tools {
       display: grid;
-      grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) auto auto auto auto;
+      grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) auto auto auto auto auto;
       gap: 4px;
     }
 
@@ -4247,8 +4247,9 @@
             <option value="">保存デッキを選択</option>
           </select>
           <button class="button secondary" id="saveDeckButton" type="button">保存</button>
+          <button class="button secondary" id="loadDeckButton" type="button">保存デッキを読み込む</button>
           <button class="button secondary" id="exportDeckButton" type="button">jsonファイルに書き出し</button>
-          <button class="button secondary" id="loadDeckButton" type="button">読込</button>
+          <button class="button secondary" id="importDeckButton" type="button">jsonファイルを読み込む</button>
           <button class="button secondary" id="deleteDeckButton" type="button">削除</button>
           <input id="deckFileInput" type="file" accept="application/json" hidden>
         </div>
@@ -4517,6 +4518,7 @@
     const ONLINE_DEDUPE_LIMIT = 80;
     const ONLINE_CONNECT_TIMEOUT_MS = 14000;
     const ONLINE_RECONNECT_MS = 2200;
+    const ONLINE_SYNC_REQUEST_MS = 4200;
     const PLAYER_SEAT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
     const OPPONENT_SEAT_ORDER = [8, 7, 6, 5, 4, 3, 2, 1, 0];
     const AI_SEAT_PRIORITY = [4, 0, 2, 6, 8, 1, 3, 5, 7];
@@ -4889,6 +4891,8 @@
         lastSnapshotAt: 0,
         lastSnapshotAckSeq: 0,
         lastSnapshotSeq: 0,
+        roomStateSeq: 0,
+        lastSyncRequestAt: 0,
         isApplyingRemote: false,
         isHandlingRemoteCommand: false,
         started: false
@@ -4994,6 +4998,7 @@
       savedDeckSelect: document.getElementById("savedDeckSelect"),
       saveDeckButton: document.getElementById("saveDeckButton"),
       exportDeckButton: document.getElementById("exportDeckButton"),
+      importDeckButton: document.getElementById("importDeckButton"),
       loadDeckButton: document.getElementById("loadDeckButton"),
       deckFileInput: document.getElementById("deckFileInput"),
       deleteDeckButton: document.getElementById("deleteDeckButton"),
@@ -5257,6 +5262,11 @@
       if (state.online.lastSeenAt && now - state.online.lastSeenAt > ONLINE_STALE_MS) {
         onlineSetStatus("通信が遅れています。自動で再同期を試しています。", "warn");
         if (isOnlineHost() && state.online.started) onlineBroadcastState(true);
+        if (isOnlineGuest() && state.online.started && now - (state.online.lastSyncRequestAt || 0) > ONLINE_SYNC_REQUEST_MS) {
+          state.online.lastSyncRequestAt = now;
+          onlineClearPendingMessagesByType("syncRequest");
+          onlineSend({ type: "syncRequest" }, { track: true });
+        }
       }
     }
 
@@ -5347,6 +5357,12 @@
       }
     }
 
+    function onlineClearPendingMessagesByType(type) {
+      Object.entries(state.online.pendingMessages || {}).forEach(([id, pending]) => {
+        if (pending?.message?.type === type) delete state.online.pendingMessages[id];
+      });
+    }
+
     function onlineAckMessage(message) {
       if (!message?.msgId || message.type === "ack") return;
       onlineSend({ type: "ack", ackId: message.msgId });
@@ -5382,6 +5398,8 @@
       state.online.lastSnapshotAt = 0;
       state.online.lastSnapshotAckSeq = 0;
       state.online.lastSnapshotSeq = 0;
+      state.online.roomStateSeq = 0;
+      state.online.lastSyncRequestAt = 0;
       state.online.started = false;
       SIDES.opponent = SOLO_OPPONENT_LABEL;
       document.body.dataset.online = "";
@@ -5593,6 +5611,8 @@
         return;
       }
       if (message.type === "roomState" && isOnlineGuest()) {
+        if (message.roomStateSeq && message.roomStateSeq <= (state.online.roomStateSeq || 0)) return;
+        state.online.roomStateSeq = message.roomStateSeq || state.online.roomStateSeq || 0;
         state.online.roomSessionId = message.roomSessionId || messageSessionId || state.online.roomSessionId;
         state.online.remoteReady = Boolean(message.hostReady);
         state.online.remoteDeckName = message.hostDeckName || "";
@@ -5614,6 +5634,11 @@
         state.online.lastSnapshotAckSeq = Math.max(state.online.lastSnapshotAckSeq || 0, message.seq || 0);
         return;
       }
+      if (message.type === "syncRequest" && isOnlineHost()) {
+        if (state.online.started) onlineBroadcastState(true);
+        else onlineSendRoomState();
+        return;
+      }
       if (message.type === "playReveal" && isOnlineGuest()) {
         showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
         return;
@@ -5625,15 +5650,18 @@
 
     function onlineSendRoomState() {
       if (!isOnlineHost()) return;
+      onlineClearPendingMessagesByType("roomState");
+      state.online.roomStateSeq += 1;
       onlineSend({
         type: "roomState",
+        roomStateSeq: state.online.roomStateSeq,
         roomSessionId: state.online.roomSessionId,
         hostReady: state.online.localReady,
         guestReady: state.online.remoteReady,
         hostDeckName: state.online.localDeckName,
         guestDeckName: state.online.remoteDeckName || "__current",
         status: "ホストが部屋を開いています。"
-      });
+      }, { track: true });
     }
 
     function onlineUpdateDeckSelection() {
@@ -5701,7 +5729,8 @@
       if (!isOnlineHost() || !state.online.started || !state.online.connected) return;
       if (!force && state.online.isHandlingRemoteCommand) return;
       state.online.lastSnapshotAt = Date.now();
-      onlineSend({ type: "snapshot", snapshot: onlineCreateSnapshot() });
+      onlineClearPendingMessagesByType("snapshot");
+      onlineSend({ type: "snapshot", snapshot: onlineCreateSnapshot() }, { track: true });
     }
 
     function onlineCreateSnapshot() {
@@ -5931,7 +5960,7 @@
       hidePlayReveal();
       clearSelections();
       if (sendRemote && isOnlineHost()) {
-        onlineSend({ type: "returnRoom" });
+        onlineSend({ type: "returnRoom" }, { track: true });
         onlineSendRoomState();
       }
       onlineSetStatus("対戦が終了しました。もう一度準備OKで再戦できます。", "good");
@@ -10890,7 +10919,7 @@
         elements.savedDeckSelect.appendChild(option);
       });
       if (names.includes(previousValue)) elements.savedDeckSelect.value = previousValue;
-      elements.loadDeckButton.disabled = false;
+      elements.loadDeckButton.disabled = names.length === 0 || !elements.savedDeckSelect.value;
       elements.deleteDeckButton.disabled = names.length === 0 || !elements.savedDeckSelect.value || isStarterDeckName(elements.savedDeckSelect.value);
     }
 
@@ -11020,7 +11049,8 @@
     function loadSavedDeckIntoActiveSide() {
       const name = elements.savedDeckSelect.value;
       if (!name) {
-        elements.deckFileInput.click();
+        state.message = "読み込む保存デッキを選択してください。jsonファイルは「jsonファイルを読み込む」から選べます。";
+        render();
         return;
       }
       const saved = state.deckBuilder.savedDecks[name];
@@ -11031,6 +11061,10 @@
       render();
       elements.savedDeckSelect.value = name;
       renderSavedDeckOptions();
+    }
+
+    function openDeckFilePicker() {
+      elements.deckFileInput.click();
     }
 
     function downloadDeckFile(name, counts) {
@@ -11819,6 +11853,7 @@
     elements.saveDeckButton.addEventListener("click", saveActiveDeck);
     elements.exportDeckButton.addEventListener("click", exportActiveDeckFile);
     elements.loadDeckButton.addEventListener("click", loadSavedDeckIntoActiveSide);
+    elements.importDeckButton.addEventListener("click", openDeckFilePicker);
     elements.deckFileInput.addEventListener("change", () => {
       importDeckFile(elements.deckFileInput.files?.[0]);
       elements.deckFileInput.value = "";
