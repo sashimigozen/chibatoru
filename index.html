@@ -220,6 +220,47 @@
       color: #991b1b;
     }
 
+    .online-connection-mode {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px;
+      background: #eff6ff;
+      color: #1e3a8a;
+      font-weight: 900;
+    }
+
+    .online-connection-mode span {
+      display: block;
+      color: #475569;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .online-relay-toggle {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+      min-height: 34px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 1000;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .online-relay-toggle input {
+      width: 18px;
+      height: 18px;
+      accent-color: #2563eb;
+    }
+
     .online-player-list {
       display: grid;
       gap: 8px;
@@ -4184,6 +4225,16 @@
           </div>
           <div class="online-code" id="onlineRoomCode">------</div>
           <div class="online-status warn" id="onlineStatusText">部屋を作るか、部屋コードを入力してください。</div>
+          <div class="online-connection-mode">
+            <div>
+              接続方式
+              <span id="onlineConnectionModeText">中継対応で別端末接続を安定させます</span>
+            </div>
+            <label class="online-relay-toggle">
+              <input id="onlineRelayModeToggle" type="checkbox" checked>
+              中継対応
+            </label>
+          </div>
         </section>
 
         <section class="online-panel">
@@ -4214,7 +4265,7 @@
               <span class="online-ready-badge" id="onlineRemoteReadyBadge">未準備</span>
             </div>
           </div>
-          <p class="online-help">ホスト側が対戦状態を管理し、ゲストの操作はコマンドとして送信します。通信が切れた場合は同じ部屋コードで作り直してください。</p>
+          <p class="online-help">ホスト側が対戦状態を管理し、ゲストの操作はコマンドとして送信します。別端末でつながりにくい場合は中継対応をオンのまま部屋を作り直してください。</p>
         </section>
       </div>
     </section>
@@ -4498,18 +4549,25 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ONLINE_PEER_PREFIX = "chibattle-room-";
-    const ONLINE_PEER_OPTIONS = {
+    const ONLINE_RELAY_MODE_STORAGE_KEY = "chibattle-online-relay-mode-v1";
+    const ONLINE_STUN_SERVERS = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:global.stun.twilio.com:3478" }
+    ];
+    const ONLINE_ICE_SERVERS = [
+      ...ONLINE_STUN_SERVERS,
+      { urls: "stun:openrelay.metered.ca:80" },
+      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:80?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
+      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
+    ];
+    const ONLINE_PEER_BASE_OPTIONS = {
       host: "0.peerjs.com",
       port: 443,
       path: "/",
       secure: true,
-      debug: 1,
-      config: {
-        iceServers: [
-          { urls: "stun:stun.l.google.com:19302" },
-          { urls: "stun:global.stun.twilio.com:3478" }
-        ]
-      }
+      debug: 1
     };
     const ONLINE_HEARTBEAT_MS = 2500;
     const ONLINE_STALE_MS = 12000;
@@ -4878,6 +4936,7 @@
         remoteDeckName: "",
         localDeckCounts: null,
         remoteDeckCounts: null,
+        relayMode: loadOnlineRelayMode(),
         localRpsChoice: null,
         remoteRpsChoice: null,
         clientId: createOnlineClientId(),
@@ -4915,6 +4974,8 @@
       onlineRoomCode: document.getElementById("onlineRoomCode"),
       onlineStatusText: document.getElementById("onlineStatusText"),
       onlineRoleText: document.getElementById("onlineRoleText"),
+      onlineConnectionModeText: document.getElementById("onlineConnectionModeText"),
+      onlineRelayModeToggle: document.getElementById("onlineRelayModeToggle"),
       onlineDeckSelect: document.getElementById("onlineDeckSelect"),
       onlineDeckInfo: document.getElementById("onlineDeckInfo"),
       onlineReadyButton: document.getElementById("onlineReadyButton"),
@@ -5179,6 +5240,33 @@
       return `s${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     }
 
+    function loadOnlineRelayMode() {
+      try {
+        const stored = localStorage.getItem(ONLINE_RELAY_MODE_STORAGE_KEY);
+        return stored === null ? true : stored === "true";
+      } catch {
+        return true;
+      }
+    }
+
+    function persistOnlineRelayMode() {
+      try {
+        localStorage.setItem(ONLINE_RELAY_MODE_STORAGE_KEY, String(state.online.relayMode));
+      } catch {}
+    }
+
+    function createOnlinePeerOptions() {
+      return {
+        ...ONLINE_PEER_BASE_OPTIONS,
+        config: {
+          iceServers: state.online.relayMode ? ONLINE_ICE_SERVERS : ONLINE_STUN_SERVERS,
+          iceTransportPolicy: "all",
+          bundlePolicy: "max-bundle",
+          rtcpMuxPolicy: "require"
+        }
+      };
+    }
+
     function onlineConnectionMetadata() {
       return {
         protocol: ONLINE_PROTOCOL_VERSION,
@@ -5313,6 +5401,29 @@
       return isOnlineGuest() && isOnlineBattle() && !state.online.isApplyingRemote;
     }
 
+    function onlineConnectionModeLabel() {
+      return state.online.relayMode ? "中継対応接続" : "直接接続";
+    }
+
+    function onlineConnectionModeDescription() {
+      return state.online.relayMode
+        ? "直接接続が通らない時にTURN中継へ切り替え、別端末・別回線の接続を安定させます"
+        : "STUNだけで直接接続します。近い回線では軽いですが、別端末では失敗しやすい場合があります";
+    }
+
+    function updateOnlineRelayModeFromToggle() {
+      if (state.online.role) {
+        elements.onlineRelayModeToggle.checked = state.online.relayMode;
+        onlineSetStatus("接続方式は部屋を作る前・入室する前に変更してください。", "warn");
+        render();
+        return;
+      }
+      state.online.relayMode = Boolean(elements.onlineRelayModeToggle.checked);
+      persistOnlineRelayMode();
+      onlineSetStatus(`${onlineConnectionModeLabel()}にしました。`, "good");
+      render();
+    }
+
     function onlineSetStatus(message, kind = "warn") {
       state.online.screenStatus = kind;
       if (elements.onlineStatusText) {
@@ -5326,7 +5437,9 @@
       if (type === "peer-unavailable") return "部屋が見つかりません。部屋コードが正しいか、ホスト側の画面が開いているか確認してください。";
       if (type === "unavailable-id") return "同じ部屋コードが使用中でした。別の部屋コードで作り直します。";
       if (type === "network" || type === "socket-error" || type === "socket-closed") return "Peerサーバーとの通信が切れました。ネットワークを確認してください。";
-      if (type === "webrtc") return "端末間のWebRTC接続に失敗しました。別ネットワークやテザリングでも失敗する場合は中継サーバーが必要です。";
+      if (type === "webrtc") return state.online.relayMode
+        ? "中継対応でもWebRTC接続に失敗しました。片方の通信制限が強い可能性があります。別回線でもう一度試してください。"
+        : "端末間の直接接続に失敗しました。中継対応をオンにして部屋を作り直してください。";
       return `${fallback}: ${type || error?.message || "unknown"}`;
     }
 
@@ -5422,8 +5535,8 @@
       state.online.remoteClientId = "";
       state.online.localDeckCounts = createOnlineDeckCounts();
       document.body.dataset.online = "host";
-      onlineSetStatus("部屋を作成しています。", "warn");
-      const peer = new Peer(onlinePeerId(roomCode), ONLINE_PEER_OPTIONS);
+      onlineSetStatus(`${onlineConnectionModeLabel()}で部屋を作成しています。`, "warn");
+      const peer = new Peer(onlinePeerId(roomCode), createOnlinePeerOptions());
       state.online.peer = peer;
       peer.on("open", () => {
         onlineSetStatus("部屋を作りました。相手に部屋コードを伝えてください。", "good");
@@ -5485,7 +5598,7 @@
       state.online.localDeckCounts = createOnlineDeckCounts();
       document.body.dataset.online = "guest";
       onlineSetStatus("部屋へ接続しています。", "warn");
-      const peer = new Peer(undefined, ONLINE_PEER_OPTIONS);
+      const peer = new Peer(undefined, createOnlinePeerOptions());
       state.online.peer = peer;
       peer.on("open", () => {
         const conn = peer.connect(onlinePeerId(roomCode), { reliable: true, metadata: onlineConnectionMetadata() });
@@ -9634,6 +9747,9 @@
       const localSize = deckSize(getOnlineDeckCountsByName(state.online.localDeckName));
       elements.onlineRoleText.textContent = roleLabel;
       elements.onlineRoomCode.textContent = state.online.roomCode || "------";
+      elements.onlineConnectionModeText.textContent = onlineConnectionModeDescription();
+      elements.onlineRelayModeToggle.checked = state.online.relayMode;
+      elements.onlineRelayModeToggle.disabled = Boolean(state.online.role);
       elements.onlineDeckInfo.textContent = `${localDeckName} / ${localSize}枚`;
       elements.onlineLocalDeckText.textContent = `${localDeckName} / ${localSize}枚`;
       elements.onlineRemoteDeckText.textContent = state.online.remoteDeckName ? "デッキ選択済み" : "待機中";
@@ -11806,6 +11922,7 @@
     elements.onlineCreateRoomButton.addEventListener("click", onlineCreateRoom);
     elements.onlineJoinRoomButton.addEventListener("click", onlineJoinRoom);
     elements.onlineLeaveRoomButton.addEventListener("click", () => onlineCloseConnection(false));
+    elements.onlineRelayModeToggle.addEventListener("change", updateOnlineRelayModeFromToggle);
     elements.onlineDeckSelect.addEventListener("change", onlineUpdateDeckSelection);
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineStartButton.addEventListener("click", onlineStartBattle);
