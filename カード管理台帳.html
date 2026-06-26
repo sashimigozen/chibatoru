@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>チバトル カード管理台帳 閲覧版</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --panel: #fffdf8;
+      --ink: #24211c;
+      --muted: #6c6256;
+      --line: #d8d0c3;
+      --accent: #256f73;
+      --accent-soft: #d9ece8;
+      --danger: #9d3b3b;
+      --shadow: 0 16px 34px rgba(45, 35, 20, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Yu Gothic", YuGothic, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-end;
+      padding: 22px 28px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 253, 248, 0.92);
+    }
+    h1 { margin: 0; font-size: 24px; letter-spacing: 0; }
+    .subtitle { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .readonly-badge {
+      flex: 0 0 auto;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    main {
+      height: calc(100vh - 86px);
+      display: grid;
+      grid-template-columns: minmax(300px, 38%) minmax(420px, 1fr);
+      gap: 16px;
+      padding: 16px;
+    }
+    .pane {
+      min-height: 0;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 150px 130px;
+      gap: 8px;
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbf7ef;
+    }
+    .toolbar.rules { grid-template-columns: 1fr 170px; }
+    input, select {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 14px;
+    }
+    .count {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .list {
+      overflow: auto;
+      padding: 8px;
+      scrollbar-gutter: stable;
+    }
+    .row, .group {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      text-align: left;
+      font: inherit;
+    }
+    .group {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      padding: 8px 10px;
+      color: var(--muted);
+      background: #fbf7ef;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      padding: 10px;
+      border-bottom: 1px solid #ece5da;
+      cursor: pointer;
+      color: var(--ink);
+    }
+    .row:hover, .row.active { background: var(--accent-soft); }
+    .row-title { font-weight: 800; font-size: 14px; }
+    .row-sub { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .meta { display: flex; gap: 5px; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #eee7dc;
+      color: #51483d;
+      white-space: nowrap;
+    }
+    .student { background: #dfeaf8; color: #23415f; }
+    .teacher { background: #f3dfdf; color: #763333; }
+    .vampire { background: #ece2f5; color: #553370; }
+    .item { background: #e2eddc; color: #385c32; }
+    .environment { background: #f4ead0; color: #6b4a1b; }
+    .detail {
+      min-height: 0;
+      overflow: auto;
+      padding: 20px;
+      scrollbar-gutter: stable;
+    }
+    .detail h2 { margin: 0 0 8px; font-size: 26px; letter-spacing: 0; }
+    .detail-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(80px, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 10px;
+    }
+    .label { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
+    .value { font-weight: 800; font-size: 18px; }
+    section + section { margin-top: 16px; }
+    h3 { margin: 0 0 8px; font-size: 15px; color: var(--accent); }
+    .text-block {
+      white-space: pre-wrap;
+      line-height: 1.7;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 15px;
+    }
+    .muted { color: var(--muted); }
+    a { color: var(--accent); }
+    @media (max-width: 860px) {
+      header { display: block; padding: 18px 16px 12px; }
+      .readonly-badge { display: inline-flex; margin-top: 10px; }
+      main { height: auto; min-height: calc(100vh - 120px); grid-template-columns: 1fr; padding: 10px; }
+      .pane { min-height: 360px; }
+      .toolbar, .toolbar.rules { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>チバトル カード管理台帳</h1>
+      <p class="subtitle">カードプールを確認するための閲覧専用ページ</p>
+    </div>
+    <span class="readonly-badge">閲覧専用</span>
+  </header>
+  <main>
+    <div class="pane">
+      <div class="toolbar">
+        <input id="searchInput" type="search" placeholder="カード名・効果を検索">
+        <select id="typeFilter" aria-label="タイプで絞り込み">
+          <option value="">全タイプ</option>
+          <option value="student">学生</option><option value="teacher">教師</option><option value="vampire">ヴァンパイア</option><option value="item">持ち物</option><option value="environment">環境</option>
+        </select>
+        <select id="availabilityFilter" aria-label="入手区分で絞り込み">
+          <option value="">全区分</option>
+          <option value="deck">デッキ投入</option><option value="generated">生成限定</option><option value="token">トークン</option>
+        </select>
+      </div>
+      <div class="count" id="countText"></div>
+      <div class="list" id="list"></div>
+    </div>
+    <div class="pane">
+      <div class="detail" id="detail"></div>
+    </div>
+  </main>
+  <script>
+    const CARDS = [{"id":"aggro_student","name":"アグロ大学生","type":"student","cost":1,"attack":1,"hp":1,"availability":"deck","placement":"席マス","effect":"このカードが出席している相手の場の席には、どのカードも出席できない。","combo":"","notes":""},{"id":"aggro_king","name":"アグロキング","type":"student","cost":1,"attack":1,"hp":2,"availability":"deck","placement":"席マス","effect":"このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。","combo":"","notes":""},{"id":"adjective_student","name":"形容詞学生","type":"student","cost":1,"attack":2,"hp":4,"availability":"deck","placement":"席マス","effect":"遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。","combo":"","notes":""},{"id":"general_student","name":"一般学生","type":"student","cost":2,"attack":2,"hp":2,"availability":"deck","placement":"席マス","effect":"効果なし。","combo":"","notes":""},{"id":"yuta","name":"U太","type":"student","cost":3,"attack":3,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"余裕と陽気を持つ。","combo":"","notes":""},{"id":"aggro_queen","name":"アグロクイーン","type":"student","cost":2,"attack":1,"hp":1,"availability":"deck","placement":"席マス","effect":"このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。","combo":"","notes":""},{"id":"ae_student","name":"あえー学生","type":"student","cost":2,"attack":0,"hp":4,"availability":"deck","placement":"席マス / 教卓マス","effect":"注目を持つ。","combo":"","notes":""},{"id":"hurried_student","name":"急いできた学生","type":"student","cost":2,"attack":3,"hp":1,"availability":"deck","placement":"席マス / 教卓マス","effect":"遅刻1。陽気を持つ。","combo":"","notes":""},{"id":"lazy_student","name":"不真面目な学生","type":"student","cost":2,"attack":4,"hp":4,"availability":"deck","placement":"席マス","effect":"遅刻1（このカードを使ったとき、遅刻ゾーンに置く。カウントが0になったとき、指定したマスに出席する）。","combo":"","notes":""},{"id":"back_question_student","name":"後ろから質問する学生","type":"student","cost":2,"attack":1,"hp":1,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に2ダメージを与える。","combo":"","notes":""},{"id":"best_friend","name":"ベストフレンド","type":"student","cost":2,"attack":1,"hp":2,"availability":"deck","placement":"席マス","effect":"このカードは「バカでかい声の学生」の効果によるダメージを受けない。このカードが「バカでかい声の学生」と隣接しているかぎり、攻撃力を+2、体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。","combo":"バカでかい声の学生","notes":""},{"id":"laughing_front_student","name":"前で積極的に笑う学生","type":"student","cost":3,"attack":2,"hp":2,"availability":"deck","placement":"席マス","effect":"このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。","combo":"","notes":""},{"id":"trpg_member","name":"TRPGサークルメンバー","type":"student","cost":3,"attack":1,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。","combo":"","notes":""},{"id":"ttb","name":"TTB","type":"student","cost":5,"attack":3,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分のデッキに「怪しげな文書」を1枚、相手のデッキに「怪しげな文書」を3枚生成する。","combo":"","notes":""},{"id":"suspicious_document","name":"怪しげな文書","type":"item","cost":null,"attack":null,"hp":null,"availability":"generated","placement":"使用不可","effect":"このカードは使用できない。","combo":"TTB","notes":"戦意なし。 デッキには投入しない。"},{"id":"predator","name":"捕食者","type":"student","cost":5,"attack":5,"hp":5,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードを出席させる場合、自分の出席者1人を指名して破壊し、その出席者がいたマスにこのカードを出席させる。陽気を持つ。","combo":"","notes":""},{"id":"student_comedy","name":"学生お笑い","type":"student","cost":5,"attack":2,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが席マスに出席したとき、周囲1マスにいる自分の学生すべての攻撃力と体力を+1する。","combo":"","notes":""},{"id":"acting_out_man","name":"アクティングアウトマン","type":"student","cost":6,"attack":3,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。","combo":"","notes":""},{"id":"seat_taking_group","name":"席取り軍団","type":"student","cost":6,"attack":3,"hp":3,"availability":"deck","placement":"席マス","effect":"このカードは、自分の2行目の席マスがすべて空いている場合、2行2列にのみ出席できる。このカードが出席したとき、自分の2行1列と2行3列に「席取り軍団」を1人ずつ出席させる。","combo":"","notes":""},{"id":"sniper","name":"スナイパー","type":"student","cost":7,"attack":2,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、相手の手札からカード1枚をランダムに選び、そのカードを校外エリアへ送る。","combo":"","notes":""},{"id":"cynical_student","name":"冷笑学生","type":"student","cost":4,"attack":3,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"自分のターン終了時、このカードが自分の場にいる場合、相手は手札をすべてデッキに戻してシャッフルする。その後、戻した枚数と同じ枚数のカードを引く。","combo":"","notes":""},{"id":"loud_student","name":"バカでかい声の学生","type":"student","cost":8,"attack":7,"hp":9,"availability":"deck","placement":"席マス","effect":"このカードが出席したとき、周囲1マスにいる他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。「ベストフレンド」と隣接しているかぎり、陽気を持つ。","combo":"ベストフレンド","notes":""},{"id":"college_student_vibe","name":"大学生って感じの学生","type":"student","cost":4,"attack":1,"hp":3,"availability":"deck","placement":"席マス","effect":"注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。","combo":"","notes":""},{"id":"enemy_student","name":"敵","type":"student","cost":3,"attack":2,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。","combo":"","notes":""},{"id":"fridge_thief","name":"冷蔵庫泥棒","type":"student","cost":3,"attack":2,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。","combo":"","notes":""},{"id":"extra_people","name":"エキストラの皆さん","type":"student","cost":9,"attack":2,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分の空いている席マスすべてに、1/1で陽気を持つ「エキストラ学生」を1人ずつ出席させる。","combo":"","notes":""},{"id":"extra_student","name":"エキストラ学生","type":"student","cost":null,"attack":1,"hp":1,"availability":"token","placement":"席マス","effect":"陽気を持つ。カードの効果によって出席する1/1の学生トークン。","combo":"エキストラの皆さん","notes":"戦意なし。 デッキには投入しない。"},{"id":"angry_maker","name":"アングリーメイカー","type":"student","cost":3,"attack":1,"hp":2,"availability":"deck","placement":"席マス","effect":"席マスにのみ出席できる。このカードが出席したとき、相手の学生1人の攻撃力を+2する。その後、お互いのプレイヤーはデッキを2枚引く。","combo":"","notes":""},{"id":"elite_open_chatter","name":"エリートオープンチャッター","type":"student","cost":4,"attack":3,"hp":7,"availability":"deck","placement":"席マス","effect":"席マスにのみ出席できる。このカードが出席したとき、相手は手札を3枚引く。このカードが自分の場にいるかぎり、相手は2行目に出席できない。","combo":"","notes":""},{"id":"word_increaser","name":"ワードインクリーサー","type":"student","cost":2,"attack":1,"hp":1,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分の手札をすべてデッキに戻してシャッフルする。その後、デッキを上から5枚まで引く。","combo":"","notes":""},{"id":"impossible_pink_fat","name":"ピンク色のありえないデブ","type":"student","cost":4,"attack":2,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。","combo":"","notes":""},{"id":"loud_group","name":"声がでかい集団","type":"student","cost":8,"attack":2,"hp":3,"availability":"deck","placement":"席マス","effect":"注目を持つ。このカードは3行目にも出席できる。このカードが席マスに出席したとき、左隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。","combo":"","notes":""},{"id":"ta_killer","name":"TAキラー","type":"student","cost":5,"attack":2,"hp":4,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、相手の場に同名の出席者が複数いる場合、その同名出席者すべてに同名の数だけダメージを与える。","combo":"","notes":""},{"id":"dark_yuta","name":"裏U太","type":"student","cost":null,"attack":6,"hp":6,"availability":"deck","placement":"U太の上に進化","effect":"進化：「U太」。出席したとき「U太」1枚を手札に生成する。","combo":"U太","notes":"戦意なし。"},{"id":"general_teacher","name":"一般教師","type":"teacher","cost":3,"attack":1,"hp":1,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスにいるかぎり、陽気を持つ。自分のターン終了時、相手の学生すべてに1ダメージを与える。","combo":"","notes":""},{"id":"fairy_t","name":"デザインフェアリー","type":"teacher","cost":3,"attack":1,"hp":2,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、相手の3行目にいる学生を、空いている1行目の席マスへ移動させてもよい。","combo":"","notes":""},{"id":"popular_c","name":"デザインスレンダーウーマン","type":"teacher","cost":4,"attack":2,"hp":1,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスにいるかぎり、陽気を持つ。","combo":"","notes":""},{"id":"lightning_n","name":"デザインデーモンスレイヤー","type":"teacher","cost":4,"attack":2,"hp":2,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、「定規」1枚を手札に生成し、自分のデッキから「定規」を1枚まで引く。","combo":"定規 / ダブルダイヤモンドクロス","notes":""},{"id":"kyushu_info_c","name":"論文マスター","type":"teacher","cost":5,"attack":4,"hp":4,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人出席させる。","combo":"","notes":""},{"id":"ta","name":"TA","type":"student","cost":0,"attack":1,"hp":1,"availability":"token","placement":"席マス","effect":"カードの効果によって出席する学生トークン。","combo":"プロ言の長 / 論文マスター","notes":"デッキには投入しない。"},{"id":"pro_k","name":"プロ言の長","type":"teacher","cost":5,"attack":2,"hp":2,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ出席させ、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。","combo":"TA / 咆哮","notes":""},{"id":"roar","name":"咆哮","type":"item","cost":5,"attack":null,"hp":null,"availability":"generated","placement":"手札から使用","effect":"お互いの学生すべてに、それぞれの体力が1になるまでダメージを与える。","combo":"プロ言の長","notes":"デッキには投入しない。"},{"id":"signal_professor_m","name":"信号さん教授M","type":"teacher","cost":6,"attack":2,"hp":2,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、相手の1列目または3列目にいる学生1人を指名し、3ダメージを与える。","combo":"","notes":""},{"id":"kyoto_sound_i","name":"ネガティブトーカー","type":"teacher","cost":6,"attack":3,"hp":3,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、相手の学生すべての攻撃力を+2し、それらに2ダメージを与える。","combo":"","notes":""},{"id":"kansai_voice_t","name":"ボイスローダー","type":"teacher","cost":7,"attack":2,"hp":4,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、相手の出席者1人を指名する。その出席者は次の相手のターン終了時まで攻撃できない。","combo":"","notes":""},{"id":"bird_a","name":"デザインファルコン","type":"teacher","cost":7,"attack":7,"hp":7,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが教卓マスに出席したとき、相手の1行目にいる学生1人を指名し、2ダメージを与える。このカードが席マスに出席したとき、相手の学生1人を指名し、破壊する。","combo":"","notes":""},{"id":"thin_professor_h","name":"細い教授","type":"teacher","cost":8,"attack":3,"hp":3,"availability":"deck","placement":"教卓マス","effect":"このカードが教卓マスに出席したとき、相手の1列目と3列目、および自分の2列目にいる出席者すべてを破壊する。","combo":"","notes":""},{"id":"president","name":"学長","type":"teacher","cost":10,"attack":3,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場に新しく出席した学生は眠気を持つ。","combo":"","notes":""},{"id":"demon_a_plus","name":"デザインデストロイファルコン","type":"teacher","cost":null,"attack":10,"hp":10,"availability":"deck","placement":"デザインファルコンの上に進化","effect":"進化：「デザインファルコン」。教卓マスで進化したとき、相手の学生すべてに10ダメージを与える。","combo":"デザインファルコン","notes":"戦意なし。"},{"id":"cafeteria_lady","name":"食堂のおばちゃん","type":"vampire","cost":4,"attack":1,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"環境が「食堂」であるかぎり、このカードの戦意を-1、攻撃力を+1、体力を+2する。","combo":"","notes":"ヴァンパイアの共通効果はルール・用語管理台帳を参照。"},{"id":"curry_treater","name":"カレーの驕り人","type":"vampire","cost":7,"attack":5,"hp":5,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分のデッキから「グリーンカレー」を1枚まで引く。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。","combo":"","notes":"ヴァンパイアの共通効果はルール・用語管理台帳を参照。"},{"id":"chen_san","name":"陳さん","type":"vampire","cost":7,"attack":3,"hp":3,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。","combo":"","notes":"ヴァンパイアの共通効果はルール・用語管理台帳を参照。"},{"id":"tissue_distributor","name":"ティッシュ配り","type":"vampire","cost":5,"attack":2,"hp":2,"availability":"deck","placement":"席マス / 教卓マス","effect":"このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2、体力を+2する。","combo":"ヴァンパイア / 食堂","notes":"ヴァンパイアの共通効果はルール・用語管理台帳を参照。"},{"id":"vampire","name":"CITヴァンパイア","type":"vampire","cost":10,"attack":10,"hp":10,"availability":"deck","placement":"席マス / 教卓マス","effect":"陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。","combo":"食堂 / 超陽気","notes":"ヴァンパイアの共通効果はルール・用語管理台帳を参照。"},{"id":"zombie","name":"ゾンビ","type":"vampire","cost":3,"attack":2,"hp":1,"availability":"deck","placement":"席マス / 教卓マス","effect":"陽気を持つ。このカードが出席者を攻撃したとき、その出席者の攻撃力と体力をこのカードと同じ値にする。ヴァンパイアにはこの効果は発動しない。","combo":"","notes":"ヴァンパイアの共通効果はルール・用語管理台帳を参照。"},{"id":"ruler","name":"定規","type":"item","cost":1,"attack":null,"hp":null,"availability":"deck","placement":"相手の出席者または相手本体を指名して使用","effect":"相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。","combo":"","notes":""},{"id":"double_diamond","name":"ダブルダイヤモンドクロス","type":"item","cost":2,"attack":null,"hp":null,"availability":"generated","placement":"相手の出席者または相手本体を指名して使用","effect":"融合：「定規」2枚。相手の出席者1人または相手本体を指名し、4ダメージを与える。出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。","combo":"定規2枚を融合","notes":"デッキには投入しない。"},{"id":"bento","name":"お弁当","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"自分の出席者を指名して使用","effect":"自分の出席者1人を指名し、その体力を2回復する。","combo":"","notes":""},{"id":"yakiniku","name":"焼肉","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"お互いの出席者すべての攻撃力を+1し、体力を2回復する。","combo":"","notes":""},{"id":"environment_setup","name":"環境構築","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキから環境カードをランダムに1枚引く。","combo":"","notes":""},{"id":"fluid_pasta","name":"流動性パスタ","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分の気力を2回復する。","combo":"","notes":""},{"id":"water_2l","name":"水2L","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分の校外エリアから、カニ勝利に必要なカードを2枚まで手札に回収する。","combo":"○○○ガニ / 毛蟹 / どこにも居場所がないカニ","notes":""},{"id":"onigiri_draw","name":"おにぎりドロー","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキからカードを2枚引き、自分の気力を1回復する。","combo":"","notes":""},{"id":"hondara","name":"ほんだら","type":"item","cost":1,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"カードを1枚ドローする。","combo":"","notes":""},{"id":"fire_touch","name":"火に触れてしまう","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分の気力を4失い、カードを4枚ドローする。","combo":"","notes":""},{"id":"thin_item","name":"細い","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"相手の手札が3枚になるようにカードを校外エリアへ送る。","combo":"","notes":""},{"id":"i_got_it","name":"I GOT IT!!","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"複数の相手出席者を指名して使用","effect":"相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。","combo":"","notes":""},{"id":"iv_pack","name":"輸血パック","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキからヴァンパイアをランダムに2枚まで引く。","combo":"","notes":""},{"id":"accelerate","name":"アクセラレート","type":"item","cost":null,"attack":null,"hp":null,"availability":"deck","placement":"「U太」または「裏U太」に装備","effect":"装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の場にいるならカードを1枚ドローする。装備カードは1人につき1枚まで。","combo":"","notes":"戦意なし。 装備カードは1人につき1枚まで。"},{"id":"chameleon","name":"カメレオン","type":"item","cost":null,"attack":null,"hp":null,"availability":"deck","placement":"「U太」または「裏U太」に装備","effect":"装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は体力+3する。装備カードは1人につき1枚まで。","combo":"","notes":"戦意なし。 装備カードは1人につき1枚まで。"},{"id":"yuta_umbrella","name":"U太の傘","type":"item","cost":null,"attack":null,"hp":null,"availability":"deck","placement":"「U太」または「裏U太」に装備","effect":"装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは1人につき1枚まで。","combo":"","notes":"戦意なし。 装備カードは1人につき1枚まで。"},{"id":"red_happi","name":"赤はっぴ","type":"item","cost":null,"attack":null,"hp":null,"availability":"deck","placement":"「U太」または「裏U太」に装備","effect":"装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は攻撃力+3する。装備カードは1人につき1枚まで。","combo":"","notes":"戦意なし。 装備カードは1人につき1枚まで。"},{"id":"wet_meal_ticket","name":"濡れた食券","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキからカードを1枚引く。このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「乾いた食券」にする。","combo":"","notes":""},{"id":"circle_crab","name":"○○○ガニ","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。","combo":"○○○ガニ2枚 / 毛蟹 / どこにも居場所がないカニ","notes":"デッキには最大2枚まで投入できる。"},{"id":"hair_crab","name":"毛蟹","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。","combo":"○○○ガニ2枚 / 毛蟹 / どこにも居場所がないカニ","notes":"デッキには最大1枚まで投入できる。"},{"id":"homeless_crab","name":"どこにも居場所がないカニ","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。","combo":"○○○ガニ2枚 / 毛蟹 / どこにも居場所がないカニ","notes":"デッキには最大1枚まで投入できる。"},{"id":"quiet_please","name":"静かにしましょうね？","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"相手の現在の攻撃力が4以上の出席者を指名して使用","effect":"相手の現在の攻撃力が4以上の出席者1人を指名する。その出席者は永続的に攻撃できない。","combo":"","notes":""},{"id":"seriously_hit","name":"ガチでしばくぞ","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"相手の出席者または相手本体を指名して使用","effect":"相手の出席者1人を指名する。次の自分のターン開始時、その出席者を破壊する。","combo":"","notes":""},{"id":"chigauyo","name":"ちがうよ","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"相手は手札をすべてデッキに戻してシャッフルする。その後、カードを4枚引く。","combo":"","notes":""},{"id":"favorite_number_s","name":"好きな数字は「S」","type":"item","cost":5,"attack":null,"hp":null,"availability":"deck","placement":"相手の出席者または相手本体を指名して使用","effect":"相手の教卓マスにいる教師1人を指名し、破壊する。その後、その教師と同名のカード1枚を自分の手札に加える。","combo":"","notes":""},{"id":"sexual_eye","name":"性的な目","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキから「U太」を1枚まで引く。","combo":"","notes":""},{"id":"yoyu_announce","name":"余裕アナウンス","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"「U太」を1枚手札に生成し、カードを1枚ドローする。","combo":"","notes":""},{"id":"vampirization","name":"吸血鬼化","type":"item","cost":7,"attack":null,"hp":null,"availability":"deck","placement":"相手の出席者または相手本体を指名して使用","effect":"相手の出席者1人を指名し、破壊する。その後、その出席者の能力、効果、現在の能力値を引き継いだコピーを、自分の空いているマスに出席させる。","combo":"","notes":""},{"id":"green_curry","name":"グリーンカレー","type":"item","cost":9,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。","combo":"食堂 / ヴァンパイア","notes":""},{"id":"panpan","name":"パンパン","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"自分と相手の出席者を1人ずつ指名して使用","effect":"相手の出席者1人を指名する。自分の出席者1人と、その相手の出席者を破壊する。","combo":"","notes":""},{"id":"capture","name":"キャプチャー","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"相手の空いている席マスを指名して使用","effect":"相手の空いている席マス1つを1ターン出席不可にする。","combo":"","notes":""},{"id":"paired_existence","name":"対の存在","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"自分の手札を選んで使用","effect":"自分の手札1枚を選んで校外エリアへ送る。相手の手札に同名カードがある場合、それも1枚校外エリアへ送る。","combo":"","notes":""},{"id":"peaceful_mind","name":"心安らか","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"お互いの気力を3回復する。","combo":"","notes":""},{"id":"abyss","name":"深淵","type":"item","cost":6,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"使用後2回、自分のターン終了時に相手の出席者1人をランダムに破壊する。","combo":"","notes":""},{"id":"dropped_cards","name":"カードを落としてしまったのですが","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキからランダムで2枚を校外エリアへ送る。","combo":"","notes":""},{"id":"reversal","name":"逆行","type":"item","cost":4,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"前の相手ターンに校外エリアへ送られた自分の出席者1人を、元のマスが空いていれば戻す。出席時効果は発動しない。","combo":"","notes":""},{"id":"dont_worry","name":"気にするな","type":"item","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。","combo":"","notes":""},{"id":"namen_tenno","name":"なめんてんの？","type":"item","cost":null,"attack":null,"hp":null,"availability":"deck","placement":"相手の出席者または相手本体を指名して使用","effect":"相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。","combo":"","notes":"戦意なし。"},{"id":"yutakun_yutakun","name":"U太くんU太くん","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。","combo":"","notes":""},{"id":"three_gestures","name":"３つジェスチャー","type":"item","cost":5,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"デッキを上から6枚見る。そのうち3枚を選び、手札に加える。他のカードは校外エリアへ送る。デッキが6枚未満の場合は使えない。","combo":"","notes":""},{"id":"music_detergent","name":"music洗剤","type":"item","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"自分のデッキから「デザインデーモンスレイヤー」を1枚まで引く。すでに手札にある場合、かわりにデッキを上から2枚引く。","combo":"","notes":""},{"id":"thanks_all_students","name":"全ての学生に感謝を込めて","type":"item","cost":6,"attack":null,"hp":null,"availability":"deck","placement":"手札から使用","effect":"お互いの学生すべての最大体力を+1し、体力をすべて回復する。","combo":"","notes":""},{"id":"alpha","name":"アルファ","type":"item","cost":null,"attack":null,"hp":null,"availability":"deck","placement":"使用不可","effect":"このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。","combo":"ベータ / ガンマ","notes":"戦意なし。"},{"id":"beta","name":"ベータ","type":"item","cost":null,"attack":null,"hp":null,"availability":"generated","placement":"使用不可","effect":"このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。","combo":"アルファ / ガンマ","notes":"戦意なし。 デッキには投入しない。"},{"id":"gamma","name":"ガンマ","type":"item","cost":null,"attack":null,"hp":null,"availability":"generated","placement":"手札から使用","effect":"相手の2行2列が空いている場合にのみ使用できる。デッキを上から3枚引く。このカードはデッキ編成に入れられない。","combo":"ベータ","notes":"戦意なし。 デッキには投入しない。"},{"id":"classroom","name":"一般教室","type":"environment","cost":1,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"効果なし。","combo":"","notes":""},{"id":"cafeteria","name":"食堂","type":"environment","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。","combo":"","notes":""},{"id":"gangi_fortress","name":"雁木囲い","type":"environment","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"お互いの1行2列、1行3列、2行2列、2行3列にいる出席者すべての体力を+2する。","combo":"","notes":""},{"id":"seat_rules","name":"座れる席と座れない席の存在","type":"environment","cost":7,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"自分の2列目と相手の1列目・3列目には出席できない。このカードが環境マスに出たとき、それらの席マスにいる出席者すべてを校外エリアへ送る。このカードは、環境マスにある同名カードを上書きできる。","combo":"","notes":""},{"id":"student_council","name":"学友会","type":"environment","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。","combo":"裏学友会","notes":""},{"id":"dark_student_council","name":"裏学友会","type":"environment","cost":null,"attack":null,"hp":null,"availability":"generated","placement":"環境マス（変化で出現）","effect":"場にいるすべての出席者の攻撃力を+2する。このカードが出てからターンが2回終了すると、「学友会」に変化する。","combo":"学友会","notes":"戦意なし。 デッキには投入しない。 「学友会」から変化する。"},{"id":"full_lock","name":"全ロック","type":"environment","cost":8,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"お互いの空いている席マスには出席できない。","combo":"","notes":""},{"id":"chaos_world","name":"カオスワールド","type":"environment","cost":9,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"このカードが環境マスに出たとき、すべての出席者の攻撃力と体力を0〜10のランダムな値に変更する。","combo":"","notes":""},{"id":"no_late_time","name":"遅刻じゃない時間","type":"environment","cost":5,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"このカードがあるかぎり、「遅刻」の効果をなくす。","combo":"","notes":""},{"id":"meguro_library","name":"目黒区図書館","type":"environment","cost":2,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"このカードがあるかぎり、お互いにプレイヤーを攻撃できない。このカードをプレイしたプレイヤーは、このカードがあるかぎり自分のターン終了時に手札1枚を校外エリアへ送る。","combo":"","notes":""},{"id":"dorm_council","name":"寮友会","type":"environment","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"この環境があるかぎり、お互いのプレイヤーは自分のターン終了時、自分のデッキから注目を持つカードをランダムに1枚まで引く。","combo":"","notes":""},{"id":"on_demand_business","name":"オンデマンド事業","type":"environment","cost":3,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"このカードがあるかぎり、教卓マスにいる教師の「相手の学生すべてに1ダメージを与える」効果はなくなる。","combo":"","notes":""},{"id":"cote_dazur","name":"コートダジュール","type":"environment","cost":8,"attack":null,"hp":null,"availability":"deck","placement":"環境マス","effect":"このカードがあるかぎり、お互いの場の「あえー学生」の攻撃力と体力を+10する。","combo":"","notes":""},{"id":"dry_meal_ticket","name":"乾いた食券","type":"item","cost":1,"attack":null,"hp":null,"availability":"generated","placement":"手札から使用","effect":"環境が「食堂」の場合にのみ使用できる。自分のデッキから「おにぎりドロー」と「水2L」をそれぞれ1枚まで引く。","combo":"","notes":"デッキには投入しない。"}];
+    const TYPE_LABELS = {"student":"学生","teacher":"教師","vampire":"ヴァンパイア","item":"持ち物","environment":"環境"};
+    const AVAILABILITY_LABELS = {"deck":"デッキ投入","generated":"生成限定","token":"トークン"};
+    const TYPE_ORDER = { student: 0, teacher: 1, vampire: 2, item: 3, environment: 4 };
+    let selectedId = CARDS[0]?.id || null;
+    const elements = {
+      search: document.getElementById('searchInput'),
+      type: document.getElementById('typeFilter'),
+      availability: document.getElementById('availabilityFilter'),
+      count: document.getElementById('countText'),
+      list: document.getElementById('list'),
+      detail: document.getElementById('detail')
+    };
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+    function stat(value) { return value === null || value === undefined ? '-' : value; }
+    function matches(card) {
+      const query = elements.search.value.trim().toLowerCase();
+      const haystack = [card.name, card.id, card.effect, card.placement, card.combo, card.notes].join(' ').toLowerCase();
+      return (!query || haystack.includes(query))
+        && (!elements.type.value || card.type === elements.type.value)
+        && (!elements.availability.value || card.availability === elements.availability.value);
+    }
+    function filteredCards() {
+      return CARDS.filter(matches).sort((a, b) => {
+        if (TYPE_ORDER[a.type] !== TYPE_ORDER[b.type]) return TYPE_ORDER[a.type] - TYPE_ORDER[b.type];
+        const ac = a.cost === null ? -1 : a.cost;
+        const bc = b.cost === null ? -1 : b.cost;
+        if (ac !== bc) return ac - bc;
+        return a.name.localeCompare(b.name, 'ja');
+      });
+    }
+    function renderList() {
+      const cards = filteredCards();
+      elements.count.textContent = '表示 ' + cards.length + '枚 / 全' + CARDS.length + '枚';
+      if (!cards.some((card) => card.id === selectedId)) selectedId = cards[0]?.id || null;
+      let lastType = '';
+      elements.list.innerHTML = cards.map((card) => {
+        const group = card.type !== lastType ? '<div class="group">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</div>' : '';
+        lastType = card.type;
+        const active = card.id === selectedId ? ' active' : '';
+        return group + '<button class="row' + active + '" type="button" data-id="' + escapeHtml(card.id) + '">'
+          + '<span><span class="row-title">' + escapeHtml(card.name) + '</span>'
+          + '<span class="row-sub">戦意 ' + escapeHtml(stat(card.cost)) + ' / ' + escapeHtml(card.effect) + '</span></span>'
+          + '<span class="meta"><span class="badge ' + escapeHtml(card.type) + '">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</span>'
+          + '<span class="badge">' + escapeHtml(AVAILABILITY_LABELS[card.availability] || card.availability) + '</span></span>'
+          + '</button>';
+      }).join('') || '<p class="muted">該当するカードがありません。</p>';
+      renderDetail();
+    }
+    function renderDetail() {
+      const card = CARDS.find((entry) => entry.id === selectedId);
+      if (!card) {
+        elements.detail.innerHTML = '<p class="muted">左の一覧からカードを選んでください。</p>';
+        return;
+      }
+      elements.detail.innerHTML = '<h2>' + escapeHtml(card.name) + '</h2>'
+        + '<div class="detail-meta"><span class="badge ' + escapeHtml(card.type) + '">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</span>'
+        + '<span class="badge">' + escapeHtml(AVAILABILITY_LABELS[card.availability] || card.availability) + '</span>'
+        + '<span class="badge">ID: ' + escapeHtml(card.id) + '</span></div>'
+        + '<div class="stats"><div class="stat"><div class="label">戦意</div><div class="value">' + escapeHtml(stat(card.cost)) + '</div></div>'
+        + '<div class="stat"><div class="label">攻撃力</div><div class="value">' + escapeHtml(stat(card.attack)) + '</div></div>'
+        + '<div class="stat"><div class="label">体力</div><div class="value">' + escapeHtml(stat(card.hp)) + '</div></div></div>'
+        + '<section><h3>配置・使用</h3><div class="text-block">' + escapeHtml(card.placement || '-') + '</div></section>'
+        + '<section><h3>効果</h3><div class="text-block">' + escapeHtml(card.effect || '効果なし。') + '</div></section>'
+        + (card.combo ? '<section><h3>関連カード</h3><div class="text-block">' + escapeHtml(card.combo) + '</div></section>' : '')
+        + (card.notes ? '<section><h3>備考</h3><div class="text-block">' + escapeHtml(card.notes) + '</div></section>' : '');
+    }
+    elements.list.addEventListener('click', (event) => {
+      const row = event.target.closest('[data-id]');
+      if (!row) return;
+      selectedId = row.dataset.id;
+      renderList();
+    });
+    [elements.search, elements.type, elements.availability].forEach((element) => element.addEventListener('input', renderList));
+    renderList();
+  </script>
+</body>
+</html>
