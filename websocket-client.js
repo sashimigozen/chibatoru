@@ -8,6 +8,7 @@
       this.socket = null;
       this.joinPayload = null;
       this.isOpen = false;
+      this.everOpened = false;
     }
 
     get open() {
@@ -20,6 +21,7 @@
       this.socket = new WebSocket(this.url);
       this.socket.addEventListener("open", () => {
         this.isOpen = true;
+        this.everOpened = true;
         this.handlers.onOpen?.();
         this.send({
           type: "joinRoom",

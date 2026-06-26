@@ -261,6 +261,13 @@
       accent-color: #2563eb;
     }
 
+    .online-server-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
     .online-player-list {
       display: grid;
       gap: 8px;
@@ -4235,7 +4242,11 @@
               WS同期
             </label>
           </div>
-        </section>
+          <div class="online-server-row">
+            <input class="control" id="onlineServerUrlInput" type="url" placeholder="wss://あなたのRenderサービス.onrender.com">
+            <button class="button secondary" id="onlineSaveServerUrlButton" type="button">保存</button>
+          </div>
+          </section>
 
         <section class="online-panel">
           <div class="panel-head">
@@ -4959,6 +4970,8 @@
       onlineRoleText: document.getElementById("onlineRoleText"),
       onlineConnectionModeText: document.getElementById("onlineConnectionModeText"),
       onlineRelayModeToggle: document.getElementById("onlineRelayModeToggle"),
+      onlineServerUrlInput: document.getElementById("onlineServerUrlInput"),
+      onlineSaveServerUrlButton: document.getElementById("onlineSaveServerUrlButton"),
       onlineDeckSelect: document.getElementById("onlineDeckSelect"),
       onlineDeckInfo: document.getElementById("onlineDeckInfo"),
       onlineReadyButton: document.getElementById("onlineReadyButton"),
@@ -5229,10 +5242,30 @@
 
     function getOnlineServerUrl() {
       try {
-        return localStorage.getItem(ONLINE_SERVER_URL_STORAGE_KEY) || ONLINE_DEFAULT_WS_URL;
+        const queryUrl = new URLSearchParams(location.search).get("ws");
+        return normalizeOnlineServerUrl(queryUrl || localStorage.getItem(ONLINE_SERVER_URL_STORAGE_KEY) || ONLINE_DEFAULT_WS_URL);
       } catch {
         return ONLINE_DEFAULT_WS_URL;
       }
+    }
+
+    function normalizeOnlineServerUrl(value) {
+      const url = String(value || "").trim();
+      if (!url) return ONLINE_DEFAULT_WS_URL;
+      if (url.startsWith("wss://") || url.startsWith("ws://")) return url.replace(/\/+$/, "");
+      if (url.startsWith("https://")) return `wss://${url.slice("https://".length).replace(/\/+$/, "")}`;
+      if (url.startsWith("http://")) return `ws://${url.slice("http://".length).replace(/\/+$/, "")}`;
+      return `wss://${url.replace(/\/+$/, "")}`;
+    }
+
+    function persistOnlineServerUrl() {
+      const normalized = normalizeOnlineServerUrl(elements.onlineServerUrlInput.value);
+      try {
+        localStorage.setItem(ONLINE_SERVER_URL_STORAGE_KEY, normalized);
+      } catch {}
+      elements.onlineServerUrlInput.value = normalized;
+      onlineSetStatus(`対戦サーバーURLを保存しました: ${normalized}`, "good");
+      render();
     }
 
     function persistOnlineRelayMode() {
@@ -5389,7 +5422,10 @@
 
     function onlineConnectionErrorMessage(error, fallback) {
       const detail = error?.message || error?.type || "";
-      return `${fallback}。対戦サーバーの起動状態とネットワークを確認してください${detail ? `: ${detail}` : ""}`;
+      if (getOnlineServerUrl() === ONLINE_DEFAULT_WS_URL) {
+        return `${fallback}。標準接続先 ${ONLINE_DEFAULT_WS_URL} にRenderサービスが見つからない可能性があります。Renderで作成した実際のURLを入力して保存してください。`;
+      }
+      return `${fallback}。対戦サーバーの起動状態、RenderのURL、ネットワークを確認してください${detail ? `: ${detail}` : ""}`;
     }
 
     function onlineSend(message, options = {}) {
@@ -5531,12 +5567,15 @@
         },
         onClose: () => {
           if (!onlineIsCurrentConnToken(token)) return;
+          const openedBeforeClose = client.everOpened;
           state.online.connected = false;
           if (!state.online.started) state.online.remoteReady = false;
           onlineStopReliabilityLoop();
           state.online.conn = null;
-          onlineSetStatus("対戦サーバーとの接続が切れました。自動で再接続を試しています。", "bad");
-          onlineScheduleReconnect();
+          onlineSetStatus(openedBeforeClose
+            ? "対戦サーバーとの接続が切れました。自動で再接続を試しています。"
+            : onlineConnectionErrorMessage({}, "対戦サーバーへ接続できません"), "bad");
+          if (openedBeforeClose) onlineScheduleReconnect();
           render();
         },
         onError: (error) => {
@@ -9688,6 +9727,11 @@
       elements.onlineConnectionModeText.textContent = onlineConnectionModeDescription();
       elements.onlineRelayModeToggle.checked = state.online.relayMode;
       elements.onlineRelayModeToggle.disabled = Boolean(state.online.role);
+      elements.onlineServerUrlInput.value = elements.onlineServerUrlInput === document.activeElement
+        ? elements.onlineServerUrlInput.value
+        : getOnlineServerUrl();
+      elements.onlineServerUrlInput.disabled = Boolean(state.online.role);
+      elements.onlineSaveServerUrlButton.disabled = Boolean(state.online.role);
       elements.onlineDeckInfo.textContent = `${localDeckName} / ${localSize}枚`;
       elements.onlineLocalDeckText.textContent = `${localDeckName} / ${localSize}枚`;
       elements.onlineRemoteDeckText.textContent = state.online.remoteDeckName ? "デッキ選択済み" : "待機中";
@@ -11861,6 +11905,10 @@
     elements.onlineJoinRoomButton.addEventListener("click", onlineJoinRoom);
     elements.onlineLeaveRoomButton.addEventListener("click", () => onlineCloseConnection(false));
     elements.onlineRelayModeToggle.addEventListener("change", updateOnlineRelayModeFromToggle);
+    elements.onlineSaveServerUrlButton.addEventListener("click", persistOnlineServerUrl);
+    elements.onlineServerUrlInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") persistOnlineServerUrl();
+    });
     elements.onlineDeckSelect.addEventListener("change", onlineUpdateDeckSelection);
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineStartButton.addEventListener("click", onlineStartBattle);
