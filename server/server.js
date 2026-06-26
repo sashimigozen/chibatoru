@@ -6,6 +6,7 @@ const { WebSocketServer } = require("ws");
 const PORT = Number(process.env.PORT || 8787);
 const PROTOCOL_VERSION = 1;
 const ROOM_TTL_MS = 1000 * 60 * 60 * 2;
+const WAITING_ROOM_TIMEOUT_MS = Number(process.env.WAITING_ROOM_TIMEOUT_MS || 1000 * 60 * 5);
 const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,12}$/;
 const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
@@ -91,6 +92,31 @@ function hostOf(room) {
   return [...room.players.values()].find((player) => player.role === "host") || null;
 }
 
+function clearWaitingRoomTimer(room) {
+  if (!room?.waitingTimer) return;
+  clearTimeout(room.waitingTimer);
+  room.waitingTimer = null;
+}
+
+function closeWaitingRoom(roomId) {
+  const room = rooms.get(roomId);
+  if (!room || room.started || room.players.size !== 1) return;
+  const host = hostOf(room);
+  if (!host) return;
+  sendError(host.ws, "5分間相手が入室しなかったため、部屋を閉じました。もう一度部屋を作ってください。", "room_timeout");
+  clearWaitingRoomTimer(room);
+  rooms.delete(roomId);
+  try { host.ws.close(4002, "room_timeout"); } catch {}
+}
+
+function refreshWaitingRoomTimer(room) {
+  if (!room) return;
+  clearWaitingRoomTimer(room);
+  if (room.started || room.players.size !== 1 || !hostOf(room)) return;
+  room.waitingTimer = setTimeout(() => closeWaitingRoom(room.roomId), WAITING_ROOM_TIMEOUT_MS);
+  room.waitingTimer.unref?.();
+}
+
 function deckTotal(deckCounts) {
   if (!deckCounts || typeof deckCounts !== "object" || Array.isArray(deckCounts)) return 0;
   return Object.values(deckCounts).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
@@ -166,6 +192,7 @@ function joinRoom(ws, message) {
       state: null,
       currentTurn: "",
       snapshotSeq: 0,
+      waitingTimer: null,
       createdAt: now(),
       updatedAt: now()
     };
@@ -225,6 +252,7 @@ function joinRoom(ws, message) {
       snapshot: room.state
     });
   }
+  refreshWaitingRoomTimer(room);
 }
 
 function requireJoined(ws) {
@@ -294,6 +322,7 @@ function handleStartGame(ws, message) {
     return;
   }
   room.started = true;
+  clearWaitingRoomTimer(room);
   room.state = message.snapshot;
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
   room.currentTurn = snapshotCurrentTurn(message.snapshot);
@@ -369,6 +398,7 @@ function handleReturnRoom(ws, message) {
   room.players.forEach((joinedPlayer) => {
     joinedPlayer.ready = false;
   });
+  refreshWaitingRoomTimer(room);
   broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
 }
 
@@ -438,6 +468,7 @@ wss.on("connection", (ws) => {
     if (!player || player.ws !== ws) return;
     room.players.delete(ws.clientId);
     room.updatedAt = now();
+    refreshWaitingRoomTimer(room);
     const opponent = opponentOf(room, ws.clientId);
     if (opponent) {
       send(opponent.ws, {
