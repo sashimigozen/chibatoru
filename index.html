@@ -5506,6 +5506,30 @@
       render();
     }
 
+    function onlineHandleRoomClosed(message) {
+      const notice = message?.message || "部屋が閉じられました。もう一度部屋を作ってください。";
+      onlineStopReliabilityLoop();
+      state.online.connToken += 1;
+      try { state.online.conn?.close(); } catch {}
+      try { state.online.peer?.destroy(); } catch {}
+      state.online.peer = null;
+      state.online.conn = null;
+      state.online.role = null;
+      state.online.roomCode = "";
+      state.online.roomSessionId = "";
+      state.online.connected = false;
+      state.online.remoteClientId = "";
+      state.online.localReady = false;
+      state.online.remoteReady = false;
+      state.online.remoteDeckName = "";
+      state.online.remoteDeckCounts = null;
+      state.online.started = false;
+      SIDES.opponent = SOLO_OPPONENT_LABEL;
+      document.body.dataset.online = "";
+      onlineSetStatus(notice, "bad");
+      render();
+    }
+
     function onlineCreateRoom() {
       if (typeof ChibatoruWebSocketClient === "undefined") {
         onlineSetStatus("WebSocketクライアントを読み込めませんでした。", "bad");
@@ -5675,6 +5699,10 @@
       }
       if (message.type === "pong") return;
       if (message.type === "error") {
+        if (message.code === "room_timeout") {
+          onlineHandleRoomClosed(message);
+          return;
+        }
         onlineSetStatus(message.message || "オンライン接続でエラーが発生しました。", "bad");
         return;
       }
