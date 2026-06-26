@@ -4228,11 +4228,11 @@
           <div class="online-connection-mode">
             <div>
               接続方式
-              <span id="onlineConnectionModeText">中継対応で別端末接続を安定させます</span>
+              <span id="onlineConnectionModeText">対戦サーバーで別端末接続を安定させます</span>
             </div>
             <label class="online-relay-toggle">
               <input id="onlineRelayModeToggle" type="checkbox" checked>
-              中継対応
+              WS同期
             </label>
           </div>
         </section>
@@ -4265,7 +4265,7 @@
               <span class="online-ready-badge" id="onlineRemoteReadyBadge">未準備</span>
             </div>
           </div>
-          <p class="online-help">ホスト側が対戦状態を管理し、ゲストの操作はコマンドとして送信します。別端末でつながりにくい場合は中継対応をオンのまま部屋を作り直してください。</p>
+          <p class="online-help">対戦サーバーが部屋と最新のゲーム状態を保持します。接続が切れた場合は同じ部屋コードで入り直してください。</p>
         </section>
       </div>
     </section>
@@ -4542,33 +4542,16 @@
     </section>
   </div>
 
-  <script src="https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js"></script>
+  <script src="websocket-client.js"></script>
   <script>
     const SIDES = { player: "あなた", opponent: "相手AI" };
     const SOLO_OPPONENT_LABEL = "相手AI";
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
-    const ONLINE_PEER_PREFIX = "chibattle-room-";
-    const ONLINE_RELAY_MODE_STORAGE_KEY = "chibattle-online-relay-mode-v1";
-    const ONLINE_STUN_SERVERS = [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:global.stun.twilio.com:3478" }
-    ];
-    const ONLINE_ICE_SERVERS = [
-      ...ONLINE_STUN_SERVERS,
-      { urls: "stun:openrelay.metered.ca:80" },
-      { urls: "turn:openrelay.metered.ca:80", username: "openrelayproject", credential: "openrelayproject" },
-      { urls: "turn:openrelay.metered.ca:443", username: "openrelayproject", credential: "openrelayproject" },
-      { urls: "turn:openrelay.metered.ca:80?transport=tcp", username: "openrelayproject", credential: "openrelayproject" },
-      { urls: "turn:openrelay.metered.ca:443?transport=tcp", username: "openrelayproject", credential: "openrelayproject" }
-    ];
-    const ONLINE_PEER_BASE_OPTIONS = {
-      host: "0.peerjs.com",
-      port: 443,
-      path: "/",
-      secure: true,
-      debug: 1
-    };
+    const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
+    const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
+      ? "ws://localhost:8787"
+      : "wss://chibatoru-ws.onrender.com";
     const ONLINE_HEARTBEAT_MS = 2500;
     const ONLINE_STALE_MS = 12000;
     const ONLINE_RETRY_MS = 3200;
@@ -5241,30 +5224,19 @@
     }
 
     function loadOnlineRelayMode() {
+      return true;
+    }
+
+    function getOnlineServerUrl() {
       try {
-        const stored = localStorage.getItem(ONLINE_RELAY_MODE_STORAGE_KEY);
-        return stored === null ? true : stored === "true";
+        return localStorage.getItem(ONLINE_SERVER_URL_STORAGE_KEY) || ONLINE_DEFAULT_WS_URL;
       } catch {
-        return true;
+        return ONLINE_DEFAULT_WS_URL;
       }
     }
 
     function persistOnlineRelayMode() {
-      try {
-        localStorage.setItem(ONLINE_RELAY_MODE_STORAGE_KEY, String(state.online.relayMode));
-      } catch {}
-    }
-
-    function createOnlinePeerOptions() {
-      return {
-        ...ONLINE_PEER_BASE_OPTIONS,
-        config: {
-          iceServers: state.online.relayMode ? ONLINE_ICE_SERVERS : ONLINE_STUN_SERVERS,
-          iceTransportPolicy: "all",
-          bundlePolicy: "max-bundle",
-          rtcpMuxPolicy: "require"
-        }
-      };
+      state.online.relayMode = true;
     }
 
     function onlineConnectionMetadata() {
@@ -5358,27 +5330,18 @@
       }
     }
 
-    function onlineScheduleGuestReconnect() {
-      if (!isOnlineGuest() || !state.online.roomCode) return;
+    function onlineScheduleReconnect() {
+      if (!state.online.role || !state.online.roomCode) return;
       window.clearTimeout(state.online.reconnectTimer);
       state.online.reconnectTimer = window.setTimeout(() => {
-        if (state.online.connected || !isOnlineGuest()) return;
-        const peer = state.online.peer;
-        if (peer?.open) {
-          onlineSetStatus("再接続しています。", "warn");
-          onlineAttachConnection(peer.connect(onlinePeerId(state.online.roomCode), { reliable: true, metadata: onlineConnectionMetadata() }));
-          return;
-        }
-        if (peer) {
-          onlineSetStatus("Peerサーバーへ再接続しています。", "warn");
-          try { peer.reconnect(); } catch {}
-          onlineScheduleGuestReconnect();
-        }
+        if (state.online.connected) return;
+        onlineSetStatus("対戦サーバーへ再接続しています。", "warn");
+        onlineConnectRoom(isOnlineHost());
       }, ONLINE_RECONNECT_MS);
     }
 
-    function onlinePeerId(roomCode) {
-      return `${ONLINE_PEER_PREFIX}${roomCode.toLowerCase()}`;
+    function onlineScheduleGuestReconnect() {
+      onlineScheduleReconnect();
     }
 
     function isOnlineConnected() {
@@ -5402,25 +5365,17 @@
     }
 
     function onlineConnectionModeLabel() {
-      return state.online.relayMode ? "中継対応接続" : "直接接続";
+      return "サーバー同期接続";
     }
 
     function onlineConnectionModeDescription() {
-      return state.online.relayMode
-        ? "直接接続が通らない時にTURN中継へ切り替え、別端末・別回線の接続を安定させます"
-        : "STUNだけで直接接続します。近い回線では軽いですが、別端末では失敗しやすい場合があります";
+      return "RenderのWebSocket対戦サーバーで部屋・ターン・ゲーム状態を同期します";
     }
 
     function updateOnlineRelayModeFromToggle() {
-      if (state.online.role) {
-        elements.onlineRelayModeToggle.checked = state.online.relayMode;
-        onlineSetStatus("接続方式は部屋を作る前・入室する前に変更してください。", "warn");
-        render();
-        return;
-      }
-      state.online.relayMode = Boolean(elements.onlineRelayModeToggle.checked);
-      persistOnlineRelayMode();
-      onlineSetStatus(`${onlineConnectionModeLabel()}にしました。`, "good");
+      elements.onlineRelayModeToggle.checked = true;
+      state.online.relayMode = true;
+      onlineSetStatus("オンライン対戦はWebSocketサーバー同期で接続します。", "good");
       render();
     }
 
@@ -5432,15 +5387,9 @@
       }
     }
 
-    function onlinePeerErrorMessage(error, fallback) {
-      const type = error?.type || "";
-      if (type === "peer-unavailable") return "部屋が見つかりません。部屋コードが正しいか、ホスト側の画面が開いているか確認してください。";
-      if (type === "unavailable-id") return "同じ部屋コードが使用中でした。別の部屋コードで作り直します。";
-      if (type === "network" || type === "socket-error" || type === "socket-closed") return "Peerサーバーとの通信が切れました。ネットワークを確認してください。";
-      if (type === "webrtc") return state.online.relayMode
-        ? "中継対応でもWebRTC接続に失敗しました。片方の通信制限が強い可能性があります。別回線でもう一度試してください。"
-        : "端末間の直接接続に失敗しました。中継対応をオンにして部屋を作り直してください。";
-      return `${fallback}: ${type || error?.message || "unknown"}`;
+    function onlineConnectionErrorMessage(error, fallback) {
+      const detail = error?.message || error?.type || "";
+      return `${fallback}。対戦サーバーの起動状態とネットワークを確認してください${detail ? `: ${detail}` : ""}`;
     }
 
     function onlineSend(message, options = {}) {
@@ -5521,9 +5470,9 @@
       render();
     }
 
-    function onlineCreateRoom(attempt = 0) {
-      if (typeof Peer === "undefined") {
-        onlineSetStatus("PeerJSを読み込めませんでした。ネットワーク接続を確認してください。", "bad");
+    function onlineCreateRoom() {
+      if (typeof ChibatoruWebSocketClient === "undefined") {
+        onlineSetStatus("WebSocketクライアントを読み込めませんでした。", "bad");
         return;
       }
       onlineCloseConnection(false);
@@ -5536,52 +5485,13 @@
       state.online.localDeckCounts = createOnlineDeckCounts();
       document.body.dataset.online = "host";
       onlineSetStatus(`${onlineConnectionModeLabel()}で部屋を作成しています。`, "warn");
-      const peer = new Peer(onlinePeerId(roomCode), createOnlinePeerOptions());
-      state.online.peer = peer;
-      peer.on("open", () => {
-        onlineSetStatus("部屋を作りました。相手に部屋コードを伝えてください。", "good");
-        render();
-      });
-      peer.on("connection", (conn) => {
-        const incomingClientId = conn.metadata?.clientId || "";
-        const occupiedByOther = (state.online.connected || state.online.started)
-          && state.online.remoteClientId
-          && incomingClientId
-          && incomingClientId !== state.online.remoteClientId;
-        const occupiedByUnknown = state.online.connected
-          && state.online.remoteClientId
-          && !incomingClientId;
-        if (occupiedByOther || occupiedByUnknown) {
-          conn.on("open", () => conn.send({
-            protocol: ONLINE_PROTOCOL_VERSION,
-            type: "error",
-            message: "この部屋はすでに2人で使用中です。"
-          }));
-          window.setTimeout(() => conn.close(), 400);
-          return;
-        }
-        onlineAttachConnection(conn);
-      });
-      peer.on("error", (error) => {
-        if (error?.type === "unavailable-id" && attempt < 3) {
-          onlineSetStatus("同じ部屋コードが使用中でした。別の部屋コードで作り直します。", "warn");
-          onlineCloseConnection(false);
-          window.setTimeout(() => onlineCreateRoom(attempt + 1), 300);
-          return;
-        }
-        onlineSetStatus(onlinePeerErrorMessage(error, "部屋作成に失敗しました"), "bad");
-        render();
-      });
-      peer.on("disconnected", () => {
-        onlineSetStatus("Peerサーバーへ再接続しています。", "warn");
-        try { peer.reconnect(); } catch {}
-      });
+      onlineConnectRoom(true);
       render();
     }
 
     function onlineJoinRoom() {
-      if (typeof Peer === "undefined") {
-        onlineSetStatus("PeerJSを読み込めませんでした。ネットワーク接続を確認してください。", "bad");
+      if (typeof ChibatoruWebSocketClient === "undefined") {
+        onlineSetStatus("WebSocketクライアントを読み込めませんでした。", "bad");
         return;
       }
       const roomCode = normalizeOnlineRoomCode(elements.onlineRoomInput.value);
@@ -5598,77 +5508,103 @@
       state.online.localDeckCounts = createOnlineDeckCounts();
       document.body.dataset.online = "guest";
       onlineSetStatus("部屋へ接続しています。", "warn");
-      const peer = new Peer(undefined, createOnlinePeerOptions());
-      state.online.peer = peer;
-      peer.on("open", () => {
-        const conn = peer.connect(onlinePeerId(roomCode), { reliable: true, metadata: onlineConnectionMetadata() });
-        onlineAttachConnection(conn);
-      });
-      peer.on("error", (error) => {
-        onlineSetStatus(onlinePeerErrorMessage(error, "入室に失敗しました"), "bad");
-        render();
-      });
-      peer.on("disconnected", () => {
-        onlineSetStatus("Peerサーバーへ再接続しています。", "warn");
-        try { peer.reconnect(); } catch {}
-      });
+      onlineConnectRoom(false);
       render();
     }
 
-    function onlineAttachConnection(conn) {
+    function onlineConnectRoom(createRoom) {
       const previousConn = state.online.conn;
       const token = state.online.connToken + 1;
       state.online.connToken = token;
-      state.online.conn = conn;
       state.online.connected = false;
       state.online.lastSeenAt = 0;
-      if (previousConn && previousConn !== conn) {
-        try { previousConn.close(); } catch {}
-      }
+      if (previousConn) try { previousConn.close(); } catch {}
+      const client = new ChibatoruWebSocketClient(getOnlineServerUrl(), {
+        onOpen: () => {
+          if (!onlineIsCurrentConnToken(token)) return;
+          onlineSetStatus("対戦サーバーに接続しました。部屋を確認しています。", "warn");
+          render();
+        },
+        onMessage: (message) => {
+          if (!onlineIsCurrentConnToken(token)) return;
+          onlineHandleMessage(message);
+        },
+        onClose: () => {
+          if (!onlineIsCurrentConnToken(token)) return;
+          state.online.connected = false;
+          if (!state.online.started) state.online.remoteReady = false;
+          onlineStopReliabilityLoop();
+          state.online.conn = null;
+          onlineSetStatus("対戦サーバーとの接続が切れました。自動で再接続を試しています。", "bad");
+          onlineScheduleReconnect();
+          render();
+        },
+        onError: (error) => {
+          if (!onlineIsCurrentConnToken(token)) return;
+          onlineSetStatus(onlineConnectionErrorMessage(error, "通信エラーが発生しました"), "bad");
+          render();
+        }
+      });
+      state.online.conn = client;
       onlineStartConnectTimer(token);
-      conn.on("open", () => {
-        if (!onlineIsCurrentConnToken(token)) return;
-        onlineClearConnectTimer();
-        state.online.connected = true;
-        state.online.lastSeenAt = Date.now();
-        if (isOnlineHost() && conn.metadata?.clientId) state.online.remoteClientId = conn.metadata.clientId;
-        onlineStartReliabilityLoop();
-        onlineSetStatus(isOnlineHost()
-          ? (state.online.started ? "相手が再接続しました。対戦状態を同期しています。" : "相手が入室しました。デッキと準備OKを待っています。")
-          : (state.online.started ? "再接続しました。対戦状態を同期しています。" : "入室しました。デッキを選んで準備OKを押してください。"), "good");
-        if (isOnlineGuest()) {
-          onlineSend({ type: "hello", deckName: state.online.localDeckName, deckCounts: createOnlineDeckCounts(), ready: state.online.localReady });
-        }
-        if (isOnlineHost()) {
-          if (state.online.started) onlineBroadcastState(true);
-          else onlineSendRoomState();
-        }
-        render();
-      });
-      conn.on("data", (message) => {
-        if (!onlineIsCurrentConnToken(token)) return;
-        onlineHandleMessage(message);
-      });
-      conn.on("close", () => {
-        if (!onlineIsCurrentConnToken(token)) return;
-        state.online.connected = false;
-        if (!state.online.started) state.online.remoteReady = false;
-        onlineStopReliabilityLoop();
-        state.online.conn = null;
-        onlineSetStatus(isOnlineGuest() ? "接続が切れました。自動で再接続を試しています。" : "接続が切れました。相手の再入室を待っています。", "bad");
-        onlineScheduleGuestReconnect();
-        render();
-      });
-      conn.on("error", () => {
-        if (!onlineIsCurrentConnToken(token)) return;
-        onlineSetStatus("通信エラーが発生しました。", "bad");
-        render();
+      client.connect({
+        protocol: ONLINE_PROTOCOL_VERSION,
+        create: createRoom,
+        roomId: state.online.roomCode,
+        clientId: state.online.clientId,
+        roomSessionId: state.online.roomSessionId || "",
+        deckName: state.online.localDeckName,
+        deckCounts: createOnlineDeckCounts(),
+        ready: state.online.localReady
       });
     }
 
     function onlineHandleMessage(message) {
       if (!message || message.protocol !== ONLINE_PROTOCOL_VERSION) return;
-      const senderId = message.senderId || "";
+      if (message.type === "playerJoined") {
+        state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
+        const players = Array.isArray(message.players) ? message.players : [];
+        const self = players.find((player) => player.clientId === state.online.clientId) || message.you;
+        const opponent = players.find((player) => player.clientId && player.clientId !== state.online.clientId);
+        if (self?.role) {
+          state.online.role = self.role;
+          document.body.dataset.online = self.role;
+        }
+        state.online.remoteClientId = opponent?.clientId || "";
+        state.online.remoteDeckName = opponent?.deckName || state.online.remoteDeckName || "";
+        state.online.remoteReady = Boolean(opponent?.ready);
+        state.online.connected = Boolean(opponent);
+        state.online.lastSeenAt = Date.now();
+        onlineClearConnectTimer();
+        onlineStartReliabilityLoop();
+        if (state.online.connected) {
+          onlineSetStatus(isOnlineHost()
+            ? "相手が入室しました。デッキと準備OKを待っています。"
+            : "入室しました。デッキを選んで準備OKを押してください。", "good");
+          if (isOnlineHost() && !state.online.started) onlineSendRoomState();
+        } else {
+          onlineSetStatus("部屋を作りました。相手に部屋コードを伝えてください。", "good");
+        }
+        render();
+        return;
+      }
+      if (message.type === "opponentDisconnected") {
+        state.online.connected = false;
+        if (!state.online.started) state.online.remoteReady = false;
+        state.online.remoteClientId = "";
+        onlineSetStatus(message.message || "相手の接続が切れました。再入室を待っています。", "bad");
+        render();
+        return;
+      }
+      if (message.type === "startGame" && isOnlineGuest()) {
+        onlineApplySnapshot(message.snapshot);
+        return;
+      }
+      if (message.type === "gameState") {
+        if (isOnlineGuest()) onlineApplySnapshot(message.snapshot);
+        return;
+      }
+      const senderId = message.senderId === "server" ? "" : (message.senderId || "");
       const messageSessionId = onlineGetMessageSessionId(message);
       if (isOnlineHost()) {
         if (senderId) {
@@ -5781,7 +5717,7 @@
       state.online.localDeckName = elements.onlineDeckSelect.value || "__current";
       state.online.localDeckCounts = createOnlineDeckCounts();
       state.online.localReady = false;
-      if (isOnlineGuest()) {
+      if (state.online.role) {
         onlineSend({ type: "deckUpdate", deckName: state.online.localDeckName, deckCounts: state.online.localDeckCounts, ready: false });
       }
       if (isOnlineHost()) onlineSendRoomState();
@@ -5796,7 +5732,7 @@
         return;
       }
       state.online.localReady = !state.online.localReady;
-      if (isOnlineGuest()) {
+      if (state.online.role) {
         onlineSend({ type: "deckUpdate", deckName: state.online.localDeckName, deckCounts: state.online.localDeckCounts, ready: state.online.localReady });
       }
       if (isOnlineHost()) onlineSendRoomState();
@@ -5824,7 +5760,8 @@
       state.online.started = true;
       state.screen = "battle";
       initializeGame({ onlineHost: true });
-      onlineBroadcastState(true);
+      onlineClearPendingMessagesByType("startGame");
+      onlineSend({ type: "startGame", snapshot: onlineCreateSnapshot() }, { track: true });
     }
 
     function onlineSendCommand(type, payload = {}) {
@@ -5835,15 +5772,16 @@
         payload,
         createdAt: Date.now()
       };
-      return onlineSend({ type: "command", command }, { track: true });
+      const messageType = type === "playCard" || type === "endTurn" ? type : "gameAction";
+      return onlineSend({ type: messageType, command }, { track: true });
     }
 
     function onlineBroadcastState(force = false) {
       if (!isOnlineHost() || !state.online.started || !state.online.connected) return;
       if (!force && state.online.isHandlingRemoteCommand) return;
       state.online.lastSnapshotAt = Date.now();
-      onlineClearPendingMessagesByType("snapshot");
-      onlineSend({ type: "snapshot", snapshot: onlineCreateSnapshot() }, { track: true });
+      onlineClearPendingMessagesByType("gameState");
+      onlineSend({ type: "gameState", snapshot: onlineCreateSnapshot() }, { track: true });
     }
 
     function onlineCreateSnapshot() {
