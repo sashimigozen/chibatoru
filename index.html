@@ -1250,6 +1250,18 @@
       font-weight: 1000;
     }
 
+    .card-flavor {
+      display: block;
+      margin-top: 3px;
+      color: #7c2d12;
+      font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+      font-size: 9px;
+      font-style: italic;
+      font-weight: 1000;
+      line-height: 1.25;
+      transform: skewX(-5deg);
+    }
+
     .board-card .card-type {
       display: none;
     }
@@ -5885,9 +5897,26 @@
     function onlineBroadcastState(force = false) {
       if (!isOnlineHost() || !state.online.started || !state.online.connected) return;
       if (!force && state.online.isHandlingRemoteCommand) return;
+      if (onlineHasPrivatePendingAction()) return;
+      const snapshot = onlineCreateSnapshot();
+      if (!snapshot) return;
       state.online.lastSnapshotAt = Date.now();
       onlineClearPendingMessagesByType("gameState");
-      onlineSend({ type: "gameState", snapshot: onlineCreateSnapshot() }, { track: true });
+      onlineSend({ type: "gameState", snapshot }, { track: true });
+    }
+
+    function onlineHasPrivatePendingAction() {
+      return Boolean(
+        state.selectedHandId
+        || state.selectedAttacker
+        || state.pendingItemConfirmId
+        || state.pendingMultiItem
+        || state.pendingPanpanItem
+        || state.pendingHandDiscardItem
+        || state.pendingThreeGestures
+        || state.pendingCardChoice
+        || state.pendingCopiedCard
+      );
     }
 
     function onlineCreateSnapshot() {
@@ -5896,6 +5925,15 @@
         if (key === "deckBuilder" || key === "online") return;
         snapshotState[key] = state[key];
       });
+      snapshotState.selectedHandId = null;
+      snapshotState.selectedAttacker = null;
+      snapshotState.pendingItemConfirmId = null;
+      snapshotState.pendingMultiItem = null;
+      snapshotState.pendingPanpanItem = null;
+      snapshotState.pendingHandDiscardItem = null;
+      snapshotState.pendingThreeGestures = null;
+      snapshotState.pendingCardChoice = null;
+      snapshotState.pendingCopiedCard = null;
       state.online.lastSnapshotSeq += 1;
       return {
         seq: state.online.lastSnapshotSeq,
@@ -6117,12 +6155,16 @@
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.screen = "online";
+      state.phase = "versus";
+      state.gameOver = false;
+      state.gameWinner = null;
+      state.gameResultOptions = {};
       hideResultOverlay();
       hidePlayReveal();
       clearSelections();
-      if (sendRemote && isOnlineHost()) {
+      if (sendRemote) {
         onlineSend({ type: "returnRoom" }, { track: true });
-        onlineSendRoomState();
+        if (isOnlineHost()) onlineSendRoomState();
       }
       onlineSetStatus("対戦が終了しました。もう一度準備OKで再戦できます。", "good");
       render();
@@ -6760,7 +6802,7 @@
       if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 11 : -2;
       if (card.baseId === "ae_student") score += 7;
       if (card.baseId === "hurried_student") score += 4;
-      if (card.baseId === "lazy_student" && state.actionTurn >= 6) {
+      if (card.baseId === "lazy_student" && isOwnSixthTurnOrLater("opponent")) {
         score += state.players.player.board.teacher?.type === "teacher" ? 8 : 0;
       }
       if (card.baseId === "cancel_student") {
@@ -6827,7 +6869,7 @@
         score += state.players.player.board.seats.some(Boolean) ? 8 : -3;
       }
       if (zone === "seat" && card.baseId === "bird_a") {
-        score += enemyRefs.some((ref) => getBoardCardFromRef(ref)?.type === "student") ? 9 : 0;
+        score += enemyRefs.length ? 9 : 0;
       }
 
       if (zone !== "teacher") return score;
@@ -6841,7 +6883,7 @@
         lightning_n: state.players.opponent.deck.some((deckCard) => deckCard.baseId === "ruler") ? 5 : 2,
         fairy_t: enemyThirdRowStudents.length * 3,
         popular_c: friendlyRefs.some((ref) => getBoardCardFromRef(ref)?.type === "teacher" && String(getBoardCardFromRef(ref)?.name || "").includes("デザイン")) ? 6 : 3,
-        bird_a: enemyStudents.some((ref) => ref.zone === "seat" && seatRow(ref.index) === 1) ? 5 : 0,
+        bird_a: enemyRefs.some((ref) => ref.zone === "seat" && seatRow(ref.index) === 1) ? 5 : 0,
         thin_professor_h: enemyOuterColumns.length * 5 - friendlyMiddleColumn.length * 5,
         kansai_voice_t: enemyRefs.length ? 5 : 0,
         kyoto_sound_i: enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp <= 3).length * 5
@@ -6866,7 +6908,7 @@
         return 4 + cafeteriaCards * 3 + (state.players.opponent.life < 20 ? 2 : 0);
       }
       if (card.baseId === "gangi_fortress") {
-        const buffSeats = [1, 2, 4, 5];
+        const buffSeats = [3, 4, 6, 7];
         const friendlyCount = buffSeats.filter((index) => friendlySeats[index]).length;
         const enemyCount = buffSeats.filter((index) => enemySeats[index]).length;
         return 3 + friendlyCount * 3 - enemyCount * 2;
@@ -7227,12 +7269,12 @@
       clearExpiredTemporarySeatBlocks(side);
       const teacher = state.players[side].board.teacher;
       if (teacher && teacher.type === "teacher" && state.environment?.baseId !== "on_demand_business") {
-        const lectureTargetType = teacher.baseId === "lightning_n" ? "vampire" : "student";
-        const lectureTargetLabel = lectureTargetType === "vampire" ? "ヴァンパイア" : "学生";
+        const lectureTargetTypes = teacher.baseId === "lightning_n" ? ["student", "vampire"] : ["student"];
+        const lectureTargetLabel = teacher.baseId === "lightning_n" ? "学生・ヴァンパイア" : "学生";
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const card = getBoardCardFromRef(ref);
-          if (card && card.type === lectureTargetType) {
+          if (card && lectureTargetTypes.includes(card.type)) {
             dealDamageToCard(card, 1, teacher, { ignoreWeakness: teacher.baseId === "lightning_n" });
             affected += 1;
           }
@@ -8152,13 +8194,13 @@
         showFloatingTextForCard(card, "+3攻", "heal");
         addLog(`${card.name}の効果：攻撃力を+3しました。`);
       }
-      if (card.baseId === "lazy_student" && state.actionTurn >= 6) {
+      if (card.baseId === "lazy_student" && isOwnSixthTurnOrLater(side)) {
         const teacherRefs = listBoardRefs(opponent).filter((ref) => getBoardCardFromRef(ref)?.type === "teacher");
         const targetRef = teacherRefs[Math.floor(Math.random() * teacherRefs.length)];
         if (targetRef) {
           const target = getBoardCardFromRef(targetRef);
           destroyBoardCard(targetRef);
-          addLog(`${card.name}の効果：6ターン目以降に出席したため、相手の教師${target.name}をランダムに指名し、破壊しました。`);
+          addLog(`${card.name}の効果：自分の6ターン目以降に出席したため、相手の教師${target.name}をランダムに指名し、破壊しました。`);
         } else {
           addLog(`${card.name}の効果：相手の教師がいないため不発になりました。`);
         }
@@ -8365,10 +8407,12 @@
         state.players[side].hand.push(createCardFromBase("roar", side));
         addLog(`${card.name}の効果：TAを召喚し、咆哮を生成。教卓マスにいる間、自分のTAの体力+1。`);
       }
-      if (card.baseId === "lightning_n" && zone === "teacher") {
+      if (card.baseId === "lightning_n") {
         state.players[side].hand.push(createCardFromBase("ruler", side));
-        const pulled = pullCardsFromDeck(side, "ruler", 1);
-        addLog(`${card.name}の効果：定規を1枚生成し、デッキから${pulled}枚引きました。`);
+        const pulled = zone === "teacher" ? pullCardsFromDeck(side, "ruler", 1) : 0;
+        addLog(zone === "teacher"
+          ? `${card.name}の効果：定規を1枚生成し、デッキから${pulled}枚引きました。`
+          : `${card.name}の効果：定規を1枚生成しました。`);
       }
       if (card.baseId === "popular_c" && zone === "teacher") {
         if (isBoardSlotOpen(side, "seat", 0)) {
@@ -8461,18 +8505,18 @@
       }
       if (card.baseId === "bird_a") {
         if (zone === "teacher") {
-          const target = [0, 1, 2].map((i) => state.players[opponent].board.seats[i]).find((c) => c?.type === "student");
+          const target = [0, 1, 2].map((i) => state.players[opponent].board.seats[i]).find((c) => c);
           if (target) {
-            dealDamageToCard(target, 2, card);
-            addLog(`${card.name}の効果：相手1行目の学生に2ダメージ。`);
+            dealDamageToCard(target, 3, card);
+            addLog(`${card.name}の効果：相手1行目の出席者に3ダメージ。`);
           }
         }
         if (zone === "seat") {
-          const refs = listBoardRefs(opponent).filter((entry) => getBoardCardFromRef(entry)?.type === "student");
+          const refs = listBoardRefs(opponent);
           const ref = refs[Math.floor(Math.random() * refs.length)];
           if (ref) {
             destroyBoardCard(ref);
-            addLog(`${card.name}の効果：相手学生1人をランダムに指名し、破壊しました。`);
+            addLog(`${card.name}の効果：相手の場の出席者1人をランダムに指名し、破壊しました。`);
           }
         }
       }
@@ -8822,6 +8866,7 @@
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       const selectedCard = getSelectedHandCard();
       if (selectedCard?.type === "item") {
+        if (!canDropHandCardOnLife(selectedCard, targetSide)) return;
         if (onlineCanSendCommand()) {
           onlineSendCommand("itemLife", { instanceId: selectedCard.instanceId, targetSide });
           state.message = `${selectedCard.name}の対象を送信しました。`;
@@ -8987,29 +9032,26 @@
         if (renderAfter) render();
         return false;
       }
+      if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard(side, target)) {
+        addLog("吸血鬼化で移せる自分の空きマスがありません。");
+        if (renderAfter) render();
+        return false;
+      }
       if (!payForItem(side, item)) return false;
       showCardPlayAnimation(item, "trash");
       if (item.baseId === "vampirization") {
-        const copiedCard = {
-          ...target,
-          owner: side,
-          type: "vampire",
-          instanceId: `${side}-${target.baseId}-copy-${nextCardInstanceId++}`,
-          baseAttack: target.attack,
-          baseMaxHp: target.maxHp,
-          hasAttacked: false,
-          playedOnTurn: state.actionTurn
-        };
-        destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
+        const movedCard = prepareVampirizedCard(target, side);
+        setBoardCard(targetOwner, targetZone, targetIndex, null);
         moveHandCardToTrash(side, item);
         if (side === "player") {
-          state.pendingCopiedCard = copiedCard;
+          state.pendingCopiedCard = movedCard;
           state.selectedHandId = null;
-          state.message = `${copiedCard.name}のコピーを出す自分の空きマスを選んでください。`;
+          state.message = `${movedCard.name}を移す自分の空きマスを選んでください。`;
         } else {
-          placeCopiedCardInFirstOpenSlot(side, copiedCard);
+          placeCopiedCardInFirstOpenSlot(side, movedCard);
         }
-        addLog(`${SIDES[side]}は${target.name}を破壊し、そのコピーを作りました。`);
+        addLog(`${SIDES[side]}は${target.name}をヴァンパイアにし、自分の場へ移そうとしています。`);
+        applyBoardAuras();
         if (renderAfter) render();
         return true;
       }
@@ -9579,24 +9621,24 @@
       if (seatIndex !== undefined && ["student", "teacher", "vampire"].includes(card.type)) {
         if (state.environment?.baseId === "chaos_world") applyChaosWorldRandomStats(card);
         setBoardCard(side, "seat", seatIndex, card);
-        resolveAttendEffects(side, card, "seat", seatIndex);
+        if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, "seat", seatIndex);
         return true;
       }
       if (isBoardSlotOpen(side, "teacher") && ["student", "teacher", "vampire"].includes(card.type)) {
         if (state.environment?.baseId === "chaos_world") applyChaosWorldRandomStats(card);
         setBoardCard(side, "teacher", null, card);
-        resolveAttendEffects(side, card, "teacher", null);
+        if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, "teacher", null);
         return true;
       }
       moveToTrash(side, card);
-      addLog(`${card.name}のコピーを出せる空きマスがなく、校外エリアへ送りました。`);
+      addLog(`${card.name}を移せる空きマスがなく、校外エリアへ送りました。`);
       return false;
     }
 
     function placePendingCopiedCard(zone, owner, index) {
       if (onlineCanSendCommand()) {
         onlineSendCommand("placeCopy", { target: { owner, zone, index } });
-        state.message = "コピーの出席先を送信しました。";
+        state.message = state.pendingCopiedCard?.pendingMove ? "移動先を送信しました。" : "コピーの出席先を送信しました。";
         render();
         return true;
       }
@@ -9609,10 +9651,12 @@
       if (!isBoardSlotOpen(owner, zone, index) || !["student", "teacher", "vampire"].includes(card.type)) return false;
       if (state.environment?.baseId === "chaos_world") applyChaosWorldRandomStats(card);
       setBoardCard(owner, zone, index, card);
-      resolveAttendEffects(owner, card, zone, index);
+      if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(owner, card, zone, index);
       state.pendingCopiedCard = null;
-      state.message = `${card.name}のコピーを出席させました。`;
-      addLog(`${card.name}のコピーが${SIDES[side]}の場に出席しました。`);
+      state.message = card.pendingMove ? `${card.name}を自分の場に移しました。` : `${card.name}のコピーを出席させました。`;
+      addLog(card.pendingMove
+        ? `${card.name}が${SIDES[side]}の場に移りました。`
+        : `${card.name}のコピーが${SIDES[side]}の場に出席しました。`);
       applyBoardAuras();
       render();
       return true;
@@ -9835,7 +9879,7 @@
             newAttack += 10;
             newMaxHp += 10;
           }
-          if (isGangiBuffSeat(index)) newMaxHp += 4;
+          if (isGangiBuffSeat(index)) newMaxHp += 2;
           if (state.environment?.baseId === "dark_student_council") newAttack += 2;
           if (state.environment?.baseId === "student_council") newMaxHp += 2;
           const hpDelta = newMaxHp - card.maxHp;
@@ -9885,7 +9929,7 @@
     }
 
     function isGangiBuffSeat(index) {
-      return state.environment?.baseId === "gangi_fortress" && [1, 2, 4, 5].includes(index);
+      return state.environment?.baseId === "gangi_fortress" && [3, 4, 6, 7].includes(index);
     }
 
     function dealDamageToCard(card, amount, source = null, options = {}) {
@@ -10086,6 +10130,24 @@
       return false;
     }
 
+    function hasOpenBoardSlotForCard(side, card) {
+      if (!card || !["student", "teacher", "vampire"].includes(card.type)) return false;
+      return state.players[side].board.seats.some((seatCard, index) => !seatCard && isBoardSlotOpen(side, "seat", index))
+        || isBoardSlotOpen(side, "teacher");
+    }
+
+    function prepareVampirizedCard(target, side) {
+      return {
+        ...target,
+        owner: side,
+        type: "vampire",
+        hasAttacked: false,
+        playedOnTurn: state.actionTurn,
+        pendingMove: true,
+        skipAttendEffectsOnPlacement: true
+      };
+    }
+
     function isSeatClosedByAggro(owner, index) {
       if (index === null) return false;
       return state.players[oppositeSide(owner)].board.seats[index]?.baseId === "aggro_student";
@@ -10245,6 +10307,10 @@
 
     function countStudents(owner) {
       return listBoardRefs(owner).filter((ref) => getBoardCardFromRef(ref)?.type === "student").length;
+    }
+
+    function isOwnSixthTurnOrLater(side) {
+      return (state.players[side]?.turnsTaken || 0) >= 6;
     }
 
     function clearSelections() {
@@ -10518,6 +10584,7 @@
           if (item.baseId === "quiet_please") return target.attack >= 4;
           if (item.baseId === "namen_tenno") return target.baseId === "cynical_student";
           if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && target.type === "teacher";
+          if (item.baseId === "vampirization") return hasOpenBoardSlotForCard("player", target);
           return true;
         });
       }
@@ -10554,6 +10621,7 @@
       if (item.baseId === "quiet_please" && target.attack < 4) return false;
       if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") return false;
       if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
+      if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("player", target)) return false;
       if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
       return ["enemy", "friendly", "friendlyAny"].includes(item.target);
     }
@@ -11136,7 +11204,7 @@
         const label = targetSide === "player" ? "あなた本体" : "相手本体";
         button.innerHTML = `<span>${label}</span><span class="life-value">気力 ${state.players[targetSide].life}</span>`;
         const selected = getSelectedHandCard();
-        const enemyItemTarget = selected?.type === "item" && selected.target === "enemy" && targetSide !== state.currentSide;
+        const enemyItemTarget = canDropHandCardOnLife(selected, targetSide);
         const attackTarget = canSelectedAttackerTargetLife(targetSide);
         button.classList.toggle("enemy-target", enemyItemTarget || attackTarget);
         button.classList.toggle("attack-target-ready", attackTarget);
@@ -11349,7 +11417,7 @@
       const attackBadge = hasStats ? `<span class="card-stat stat-attack">${attackValue}</span>` : "";
       const hpBadge = hasStats ? `<span class="card-stat stat-hp">${hpDisplayValue}</span>` : "";
       const type = boardCard ? "" : `<div class="card-type">${escapeHtml(labelForType(card.type))}</div>`;
-      const effect = boardCard ? "" : `<div class="card-effect"><span class="card-effect-label">効果：</span>${escapeHtml(cardRulesText(card))}</div>`;
+      const effect = boardCard ? "" : `<div class="card-effect">${cardEffectHtml(card)}</div>`;
       return `
         <div class="card-face">
           ${costBadge}
@@ -11362,6 +11430,16 @@
           ${hpBadge}
         </div>
       `;
+    }
+
+    function cardEffectHtml(card) {
+      const text = cardRulesText(card);
+      if (card.baseId !== "demon_a_plus") {
+        return `<span class="card-effect-label">効果：</span>${escapeHtml(text)}`;
+      }
+      const match = text.match(/^(.*?)(-我が.+-)$/);
+      if (!match) return `<span class="card-effect-label">効果：</span>${escapeHtml(text)}`;
+      return `<span class="card-effect-label">効果：</span>${escapeHtml(match[1].trim())}<span class="card-flavor">${escapeHtml(match[2])}</span>`;
     }
 
     function visibleCrabVictoryCount(card, boardCard) {
@@ -12339,7 +12417,7 @@
         aggro_queen: "このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。",
         ae_student: "注目を持つ。",
         hurried_student: "遅刻1。陽気を持つ。",
-        lazy_student: "遅刻1。6ターン目以降に出席した場合、相手の教師1人をランダムに指名し、破壊する。",
+        lazy_student: "遅刻1。自分の6ターン目以降に出席した場合、相手の教師1人をランダムに指名し、破壊する。",
         cancel_student: "遅刻2。出席したとき、相手の学生にランダムに3ダメージを割り振る。",
         laughing_front_student: "このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
@@ -12364,10 +12442,10 @@
         impossible_pink_fat: "このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。",
         general_teacher: "講義。教卓マスにいるかぎり、陽気を持つ。",
         pro_k: "このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ召喚し、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。",
-        lightning_n: "このカードが教卓マスに出席したとき、「定規」1枚を手札に生成し、自分のデッキから「定規」1枚を手札に加える。このカードが教卓マスにいるかぎり、講義でダメージを与える対象は相手のヴァンパイアになる。",
+        lightning_n: "出席したとき、「定規」1枚を手札に生成する。このカードが教師マスに出席したとき、自分のデッキから「定規」を1枚まで引く。このカードが教卓マスにいるかぎり、講義はヴァンパイアにも適応される。",
         fairy_t: "このカードが教卓マスに出席したとき、相手の3行目にいる学生を、空いている1行目の席マスへ移動させてもよい。",
         popular_c: "このカードが教卓マスに出席したとき、自分の1行1列に「デザインフェアリー」1人を出席させる。このカードが教卓マスにいるかぎり、自分の「デザイン」と名のつく教師は陽気を持つ。",
-        bird_a: "このカードが教卓マスに出席したとき、相手の1行目にいる学生1人を指名し、2ダメージを与える。このカードが席マスに出席したとき、相手の学生1人をランダムに指名し、破壊する。",
+        bird_a: "このカードが教卓マスに出席したとき、相手の1行目にいる出席者1人を指名し、3ダメージを与える。このカードが席マスに出席したとき、相手の場の出席者1人をランダムに指名し、破壊する。",
         demon_a_plus: "進化：「デザインファルコン」。このカードは進化するために戦意9を消費する。進化したとき、「相手の場の出席者1人をランダムに指名し、1ダメージを与える。」を10回行う。-我が光に仇なす者よ。今この翼を以って頽落せしめん。羽ばたけ-",
         thin_professor_h: "このカードが教卓マスに出席したとき、相手の1列目と3列目、および自分の2列目にいる出席者すべてを破壊する。",
         ninety_three_teacher: "陽気を持つ。このカードが教卓マスに出席したとき、相手本体に3ダメージを与える。このカードが教卓マスにいるかぎり、相手ターン開始時に相手本体に1ダメージを与える。",
@@ -12396,7 +12474,7 @@
         handy_jet_engine: "相手の手札をランダムに2枚、校外エリアへ送る。",
         environment_setup: "自分のデッキから環境カードをランダムに1枚引く。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
-        vampirization: "相手の出席者1人を指名し、破壊する。その後、その出席者の能力、効果、現在の能力値を引き継いだコピーを、自分の空いているマスに出席させる。そのコピーはヴァンパイアになる。",
+        vampirization: "相手の出席者1人を指名し、それをタイプ「ヴァンパイア」にした後、自分の場に移す。",
         iv_pack: "自分のデッキからヴァンパイアをランダムに2枚まで引く。",
         wet_meal_ticket: "自分のデッキからカードを1枚引く。このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「乾いた食券」にする。",
         dry_meal_ticket: "環境が「食堂」の場合にのみ使用できる。自分のデッキから「おにぎりドロー」と「流動性パスタ」をそれぞれ1枚まで引く。",
@@ -12441,7 +12519,7 @@
         classroom: "効果なし。",
         cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。",
         seat_rules: "お互いの場の2列目には出席できない。このカードは同名カードでも上書きできる。",
-        gangi_fortress: "お互いの1行2列、1行3列、2行2列、2行3列にいる出席者すべての体力を+4する。",
+        gangi_fortress: "お互いの2行1列、2行2列、3行1列、3行2列にいる出席者すべての体力を+2する。",
         dark_student_council: "場にいるすべての出席者の攻撃力を+2する。",
         student_council: "場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。",
         full_lock: "お互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
@@ -12563,7 +12641,7 @@
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.battleBackHomeButton.addEventListener("click", () => {
       if (state.phase === "gameover") {
-        if (isOnlineBattle()) onlineReturnToRoom(isOnlineHost());
+        if (isOnlineBattle()) onlineReturnToRoom(true);
         else showHomeScreen();
         return;
       }
@@ -12660,7 +12738,7 @@
       if (event.target.closest("[data-result-home]")) {
         event.stopPropagation();
         if (isOnlineBattle()) {
-          onlineReturnToRoom(isOnlineHost());
+          onlineReturnToRoom(true);
         } else {
           showHomeScreen();
         }
