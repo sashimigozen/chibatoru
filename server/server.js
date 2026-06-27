@@ -390,7 +390,6 @@ function handlePlayerCommand(ws, message) {
 function handleReturnRoom(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
-  if (player.role !== "host") return;
   room.started = false;
   room.state = null;
   room.currentTurn = "";
