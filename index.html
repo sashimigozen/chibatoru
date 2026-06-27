@@ -10413,7 +10413,6 @@
       const testBattle = state.screen === "battle" && state.testMode;
       elements.testBackDeckButton.classList.toggle("hidden", !testBattle);
       elements.battleBackHomeButton.classList.toggle("hidden", testBattle);
-      elements.resetButton.classList.toggle("hidden", testBattle);
       const selectionCount = state.players.player.mulliganSelection.length;
       elements.mulliganButton.textContent = selectionCount === 0 ? "確定" : `${selectionCount}枚で確定`;
       elements.mulliganButton.disabled = state.phase !== "mulligan" || state.players.player.mulliganUsed;
