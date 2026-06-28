@@ -2558,6 +2558,9 @@
     .battle-card-preview .card-effect {
       font-size: 10px;
       line-height: 1.4;
+      display: block;
+      overflow: visible;
+      -webkit-line-clamp: unset;
     }
 
     .battle-card-preview-actions {
@@ -4726,7 +4729,7 @@
       predator: { name: "捕食者", type: "student", cost: 5, attack: 5, hp: 5, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       student_comedy: { name: "学生お笑い", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
       seat_taking_group: { name: "席取り軍団", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat"] },
-      sniper: { name: "スナイパー", type: "student", cost: 7, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
+      sniper: { name: "スナイパー", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       cynical_student: { name: "冷笑学生", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       extra_people: { name: "エキストラの皆さん", type: "student", cost: 9, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       extra_student: { name: "エキストラ学生", type: "student", cost: 0, noCost: true, attack: 1, hp: 1, keywords: ["陽気"], allowedZones: ["seat"] },
@@ -4814,7 +4817,7 @@
       suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
       cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
-      seat_rules: { name: "座れる席と座れない席の存在", type: "environment", cost: 7, allowedZones: ["environment"] },
+      seat_rules: { name: "座れる席と座れない席の存在", type: "environment", cost: 5, allowedZones: ["environment"] },
       gangi_fortress: { name: "雁木囲い", type: "environment", cost: 3, allowedZones: ["environment"] },
       dark_student_council: { name: "裏学友会", type: "environment", cost: 0, noCost: true, generated: true, allowedZones: ["environment"] },
       student_council: { name: "学友会", type: "environment", cost: 6, allowedZones: ["environment"] },
@@ -4829,7 +4832,7 @@
       loud_group: { name: "声がでかい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       ta_killer: { name: "TAキラー", type: "student", cost: 5, attack: 2, hp: 4, allowedZones: ["seat", "teacher"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 6, hp: 6, keywords: ["陽気"], evolutionFrom: "yuta", allowedZones: ["evolution"] },
-      ta: { name: "TA", type: "student", cost: 0, attack: 1, hp: 1, token: true, allowedZones: ["seat"] }
+      ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
 
     const STARTER_DECK_RECIPES = {
@@ -6886,8 +6889,8 @@
         bird_a: enemyRefs.some((ref) => ref.zone === "seat" && seatRow(ref.index) === 1) ? 5 : 0,
         thin_professor_h: enemyOuterColumns.length * 5 - friendlyMiddleColumn.length * 5,
         kansai_voice_t: enemyRefs.length ? 5 : 0,
-        kyoto_sound_i: enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp <= 3).length * 5
-          - enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp > 3).length * 2,
+        kyoto_sound_i: enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp <= 2).length * 5
+          - enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp > 2).length * 2,
         kyushu_info_c: isBoardSlotOpen("opponent", "seat", 1) ? 5 : -2,
         signal_professor_m: friendlyRefs.some((ref) => getBoardCardFromRef(ref)?.type === "teacher") ? 1 : 5,
         logic_hunter: state.players.player.hand.length > 0 ? 7 + state.players.player.hand.length : 0,
@@ -7029,7 +7032,7 @@
       if (item.baseId === "yakiniku") return friendlyCards.length > 0 ? 5 + friendlyCards.length : 0;
       if (item.baseId === "panpan") return friendlyCards.length > 0 && enemyCards.length > 0 ? 8 : 0;
       if (item.baseId === "capture") {
-        return PLAYER_SEAT_ORDER.some((index) => !state.players.player.board.seats[index] && !isSeatBlocked("player", index)) ? 4 : 0;
+        return PLAYER_SEAT_ORDER.some((index) => !state.players.player.board.seats[index] && !isSeatBlocked("player", index)) ? 6 : 0;
       }
       if (item.baseId === "roar") {
         const enemyDamage = enemyCards.filter((card) => card.type === "student").reduce((sum, card) => sum + Math.max(0, card.currentHp - 1), 0);
@@ -8292,8 +8295,8 @@
         const targetRef = chooseBestBoardRef(opponent, (target) => target.type === "student");
         if (targetRef) {
           const target = getBoardCardFromRef(targetRef);
-          applyPermanentStatBuff(target, 2, 0);
-          addLog(`${card.name}の効果：相手の${target.name}の攻撃力を+2しました。`);
+          applyPermanentStatBuff(target, 1, 0);
+          addLog(`${card.name}の効果：相手の${target.name}の攻撃力を+1しました。`);
         } else {
           addLog(`${card.name}の効果：相手の学生がいないため攻撃力上昇は不発。`);
         }
@@ -8357,8 +8360,8 @@
       if (card.baseId === "back_question_student" && zone === "seat" && seatRow(index) === 3) {
         const teacherTarget = state.players[opponent].board.teacher;
         if (teacherTarget) {
-          dealDamageToCard(teacherTarget, 2, card);
-          addLog(`${card.name}の効果：相手の教卓マスに2ダメージ。`);
+          dealDamageToCard(teacherTarget, 3, card);
+          addLog(`${card.name}の効果：相手の教卓マスに3ダメージ。`);
         }
       }
       if (card.baseId === "ta_killer") {
@@ -8472,10 +8475,10 @@
           const target = getBoardCardFromRef(ref);
           if (target?.type !== "student") return;
           applyPermanentStatBuff(target, 2, 0);
-          dealDamageToCard(target, 3, card);
+          dealDamageToCard(target, 2, card);
           affected += 1;
         });
-        addLog(`${card.name}の効果：相手の学生${affected}人の攻撃力を+2し、3ダメージを与えました。`);
+        addLog(`${card.name}の効果：相手の学生${affected}人の攻撃力を+2し、2ダメージを与えました。`);
       }
       if (card.baseId === "kyushu_info_c" && zone === "teacher") {
         if (isBoardSlotOpen(side, "seat", 1)) {
@@ -8521,6 +8524,7 @@
         }
       }
       if (card.baseId === "seat_rules" && zone === "environment") {
+        enforceSeatRulesEnvironment();
         addLog(`${card.name}の効果：お互いの2列目は出席できません。`);
       }
       if (card.baseId === "full_lock" && zone === "environment") {
@@ -8774,6 +8778,11 @@
         return;
       }
       if (selectedCard?.type === "item") {
+        if (!canUseItemOnBoardTarget(selectedCard, owner, zone, index)) {
+          state.message = `${selectedCard.name}はその出席者を対象にできません。`;
+          render();
+          return;
+        }
         if (onlineCanSendCommand()) {
           onlineSendCommand("itemCard", { instanceId: selectedCard.instanceId, target: { owner, zone, index } });
           state.message = `${selectedCard.name}の対象を送信しました。`;
@@ -8945,6 +8954,8 @@
       if (target?.yutaUmbrellaShield) {
         target.yutaUmbrellaShield = false;
         target.yutaEquipment = null;
+        target.umbrellaUntilTurn = null;
+        target.umbrellaUntilSide = null;
         addLog(`${target.name}のU太の傘：攻撃を一度だけ防ぎ、傘を校外エリアへ送りました。`);
         showFloatingTextForCard(target, "防御", "heal");
         return;
@@ -9071,6 +9082,8 @@
       }
       if (item.baseId === "yuta_umbrella") {
         target.yutaUmbrellaShield = true;
+        target.umbrellaUntilTurn = state.actionTurn + 1;
+        target.umbrellaUntilSide = oppositeSide(side);
         target.yutaEquipment = item.baseId;
       }
       if (item.baseId === "quiet_please") {
@@ -9214,9 +9227,9 @@
         return false;
       }
       showCardPlayAnimation(item, "trash");
-      state.temporarySeatBlocks.push({ owner, index, untilActionTurn: state.actionTurn + 1, untilSide: owner });
+      state.temporarySeatBlocks.push({ owner, index, untilActionTurn: state.actionTurn + 3, untilSide: owner });
       moveHandCardToTrash(side, item);
-      addLog(`${SIDES[side]}はキャプチャーを使い、${SIDES[owner]}の${seatRow(index)}行${seatCol(index) + 1}列を1ターン出席不可にしました。`);
+      addLog(`${SIDES[side]}はキャプチャーを使い、${SIDES[owner]}の${seatRow(index)}行${seatCol(index) + 1}列を3ターン出席不可にしました。`);
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -9793,6 +9806,7 @@
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
       if (keyword === "陽気" && card.baseId === "general_teacher") return isOnTeacherSlot(card);
+      if (keyword === "陽気" && isUtaEquipmentTarget(card) && card.yutaEquipment) return true;
       if (keyword === "陽気" && card.baseId === "signal_professor_m" && isOnTeacherSlot(card) && !hasOtherFriendlyTeacher(card)) return true;
       if (keyword === "陽気" && card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") return true;
       if (keyword === "陽気" && card.baseId === "curry_treater" && state.environment?.baseId === "cafeteria") return true;
@@ -9834,13 +9848,34 @@
       return adjacentIndexes(ref.index).some((index) => state.players[card.owner].board.seats[index]?.baseId === "best_friend");
     }
 
+    function hasFriendlyCafeteriaTissue(owner) {
+      return state.environment?.baseId === "cafeteria"
+        && Boolean(owner)
+        && listBoardRefs(owner).some((ref) => getBoardCardFromRef(ref)?.baseId === "tissue_distributor");
+    }
+
+    function cafeteriaVampireStatBonus(card) {
+      const bonus = { attack: 0, hp: 0 };
+      if (!card || card.type !== "vampire" || state.environment?.baseId !== "cafeteria") return bonus;
+      if (card.baseId === "cafeteria_lady") {
+        bonus.attack += 1;
+        bonus.hp += 2;
+      }
+      if (card.baseId === "curry_treater") {
+        bonus.attack += 1;
+        bonus.hp += 1;
+      }
+      if (hasFriendlyCafeteriaTissue(card.owner)) bonus.hp += 2;
+      return bonus;
+    }
+
     function applyBoardAuras() {
       ["player", "opponent"].forEach((owner) => {
         const proKIsTeaching = state.players[owner].board.teacher?.baseId === "pro_k";
         const teacherSlotCard = state.players[owner].board.teacher;
         if (teacherSlotCard) {
-          applyCafeteriaVampireAura(teacherSlotCard);
           applyEnvironmentStatAura(teacherSlotCard);
+          applyCafeteriaVampireAura(teacherSlotCard);
         }
         state.players[owner].board.seats.forEach((card, index) => {
           if (!card || card.currentHp === null) return;
@@ -9861,17 +9896,9 @@
             if (hasOtherAttention) newMaxHp += 1;
           }
           if (proKIsTeaching && card.baseId === "ta") newMaxHp += 1;
-          if (card.baseId === "cafeteria_lady" && state.environment?.baseId === "cafeteria") {
-            newAttack += 1;
-            newMaxHp += 2;
-          }
-          if (card.baseId === "curry_treater" && state.environment?.baseId === "cafeteria") {
-            newAttack += 1;
-            newMaxHp += 1;
-          }
-          if (card.baseId === "tissue_distributor" && state.environment?.baseId === "cafeteria") {
-            newMaxHp += 2;
-          }
+          const cafeteriaBonus = cafeteriaVampireStatBonus(card);
+          newAttack += cafeteriaBonus.attack;
+          newMaxHp += cafeteriaBonus.hp;
           if (card.baseId === "enemy_student" && listBoardRefs(oppositeSide(owner)).some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member")) {
             newAttack += 5;
           }
@@ -9904,11 +9931,10 @@
     }
 
     function applyCafeteriaVampireAura(card) {
-      if (!card || card.currentHp === null || !["cafeteria_lady", "curry_treater", "tissue_distributor"].includes(card.baseId)) return;
-      const hasCafeteria = state.environment?.baseId === "cafeteria";
-      const newAttack = (card.baseAttack ?? card.attack) + (hasCafeteria && card.baseId !== "tissue_distributor" ? 1 : 0);
-      const hpBonus = card.baseId === "cafeteria_lady" || card.baseId === "tissue_distributor" ? 2 : 1;
-      const newMaxHp = (card.baseMaxHp ?? card.maxHp) + (hasCafeteria ? hpBonus : 0);
+      if (!card || card.currentHp === null || card.type !== "vampire") return;
+      const bonus = cafeteriaVampireStatBonus(card);
+      const newAttack = (card.attack ?? card.baseAttack ?? 0) + bonus.attack;
+      const newMaxHp = (card.maxHp ?? card.baseMaxHp ?? 0) + bonus.hp;
       const hpDelta = newMaxHp - card.maxHp;
       card.attack = newAttack;
       card.maxHp = newMaxHp;
@@ -10566,7 +10592,10 @@
         return PLAYER_SEAT_ORDER.some((index) => !state.players.opponent.board.seats[index] && !isSeatBlocked("opponent", index));
       }
       if (["accelerate", "chameleon", "yuta_umbrella", "red_happi"].includes(item.baseId)) {
-        return listBoardRefs("player").some((ref) => getBoardCardFromRef(ref)?.baseId === "yuta");
+        return listBoardRefs("player").some((ref) => {
+          const target = getBoardCardFromRef(ref);
+          return isUtaEquipmentTarget(target) && !target.yutaEquipment;
+        });
       }
       if (item.target === "friendly" || item.target === "friendlyAny") {
         return listBoardRefs("player").some((ref) => {
@@ -11501,7 +11530,7 @@
     }
 
     function hasActiveCafeteriaVampireBuff(card) {
-      return ["cafeteria_lady", "curry_treater", "tissue_distributor"].includes(card?.baseId)
+      return ["cafeteria_lady", "curry_treater"].includes(card?.baseId)
         && state.screen === "battle"
         && state.phase === "battle"
         && state.environment?.baseId === "cafeteria";
@@ -12413,7 +12442,7 @@
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
         aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
         adjective_student: "遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。",
-        yuta: "余裕を持つ。",
+        yuta: "余裕を持つ。このカードに装備カードがついたとき、陽気を持つ。",
         aggro_queen: "このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。",
         ae_student: "注目を持つ。",
         hurried_student: "遅刻1。陽気を持つ。",
@@ -12436,7 +12465,7 @@
         cynical_student: "自分のターン終了時、このカードが自分の場にいる場合、相手は手札をすべてデッキに戻してシャッフルする。その後、戻した枚数と同じ枚数のカードを引く。",
         extra_people: "このカードが出席したとき、自分の空いている席マスすべてに、1/1で陽気を持つ「エキストラ学生」を1人ずつ召喚する。",
         extra_student: "陽気を持つ。カードの効果によって召喚される1/1の学生トークン。",
-        angry_maker: "席マスにのみ出席できる。このカードが出席したとき、相手の学生1人の攻撃力を+2する。その後、お互いのプレイヤーはデッキを2枚引く。",
+        angry_maker: "席マスにのみ出席できる。このカードが出席したとき、相手の学生1人の攻撃力を+1する。その後、お互いのプレイヤーはデッキを2枚引く。",
         elite_open_chatter: "席マスにのみ出席できる。このカードが出席したとき、相手は手札を3枚引く。",
         word_increaser: "このカードが出席したとき、自分の手札をすべてデッキに戻してシャッフルする。その後、デッキを上から5枚まで引く。",
         impossible_pink_fat: "このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。",
@@ -12450,7 +12479,7 @@
         thin_professor_h: "このカードが教卓マスに出席したとき、相手の1列目と3列目、および自分の2列目にいる出席者すべてを破壊する。",
         ninety_three_teacher: "陽気を持つ。このカードが教卓マスに出席したとき、相手本体に3ダメージを与える。このカードが教卓マスにいるかぎり、相手ターン開始時に相手本体に1ダメージを与える。",
         kansai_voice_t: "このカードが教卓マスに出席したとき、相手の出席者1人を指名する。その出席者は次の相手のターン終了時まで攻撃できない。",
-        kyoto_sound_i: "このカードが教卓マスに出席したとき、相手の学生すべての攻撃力を+2し、それらに3ダメージを与える。",
+        kyoto_sound_i: "このカードが教卓マスに出席したとき、相手の学生すべての攻撃力を+2し、それらに2ダメージを与える。",
         kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人召喚する。",
         signal_professor_m: "このカードが教卓マスにいるかぎり、自分の場に他の教師がいなければ陽気を持つ。このカードが席マスにいるかぎり、自分の教師は攻撃できない。",
         logic_hunter: "このカードが教卓マスに出席したとき、相手の手札を見て、その中から1枚を選び、校外エリアへ送る。",
@@ -12458,11 +12487,11 @@
         cafeteria_lady: "環境が「食堂」であるかぎり、このカードの戦意を-1、攻撃力を+1、体力を+2する。",
         curry_treater: "このカードが出席したとき、自分のデッキから「グリーンカレー」を1枚まで引く。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
         chen_san: "このカードが出席したとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
-        tissue_distributor: "このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2、体力を+2する。",
+        tissue_distributor: "このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の場のヴァンパイアすべての体力を+2する。",
         vampire: "陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。",
         zombie: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者の攻撃力と体力をこのカードと同じ値にする。ヴァンパイアにはこの効果は発動しない。",
         dark_yuta: "進化：「U太」。出席したとき「U太」1枚を手札に生成する。",
-        back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に2ダメージを与える。",
+        back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に3ダメージを与える。",
         acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         bento: "自分の出席者1人を指名し、その体力を2回復する。",
@@ -12483,7 +12512,7 @@
         i_got_it: "相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。",
         accelerate: "装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の場にいるならカードを1枚ドローする。装備カードは1人につき1枚まで。",
         chameleon: "装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は体力+3する。装備カードは1人につき1枚まで。",
-        yuta_umbrella: "装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは1人につき1枚まで。",
+        yuta_umbrella: "装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。次の相手ターン終了時まで、このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは1人につき1枚まで。",
         red_happi: "装備カード。戦意なし。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は攻撃力+3する。装備カードは1人につき1枚まで。",
         circle_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         hair_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
@@ -12503,7 +12532,7 @@
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。",
         panpan: "相手の出席者1人を指名する。自分の出席者1人と、その相手の出席者を破壊する。",
-        capture: "相手の空いている席マス1つを1ターン出席不可にする。",
+        capture: "相手の空いている席マス1つを3ターン出席不可にする。",
         yutakun_yutakun: "校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。",
         three_gestures: "デッキを上から6枚見る。そのうち3枚を選び、手札に加える。他のカードは校外エリアへ送る。デッキが6枚未満の場合は使えない。",
         substitute_attendance: "遅刻ゾーンにいるカード1枚をランダムに指名し、そのカードの遅刻カウントを0にする。",
@@ -12518,7 +12547,7 @@
         suspicious_document: "このカードは使用できない。",
         classroom: "効果なし。",
         cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。",
-        seat_rules: "お互いの場の2列目には出席できない。このカードは同名カードでも上書きできる。",
+        seat_rules: "お互いの場の2列目には出席できない。すでに2列目に出席者がいる場合、それらを破壊する。このカードは同名カードでも上書きできる。",
         gangi_fortress: "お互いの2行1列、2行2列、3行1列、3行2列にいる出席者すべての体力を+2する。",
         dark_student_council: "場にいるすべての出席者の攻撃力を+2する。",
         student_council: "場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。",
