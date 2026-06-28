@@ -826,6 +826,41 @@
       display: none;
     }
 
+    .player-hand {
+      padding-bottom: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: #94a3b8 #e2e8f0;
+      overscroll-behavior-x: contain;
+      scroll-behavior: smooth;
+      cursor: grab;
+    }
+
+    .player-hand.drag-scroll-active {
+      cursor: grabbing;
+      user-select: none;
+      scroll-behavior: auto;
+    }
+
+    .player-hand::-webkit-scrollbar {
+      display: block;
+      height: 9px;
+    }
+
+    .player-hand::-webkit-scrollbar-track {
+      border-radius: 999px;
+      background: #e2e8f0;
+    }
+
+    .player-hand::-webkit-scrollbar-thumb {
+      border: 2px solid #e2e8f0;
+      border-radius: 999px;
+      background: #94a3b8;
+    }
+
+    .player-hand::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+
     .hand-table {
       display: grid;
       gap: 6px;
@@ -4916,6 +4951,7 @@
     let playRevealTimer = null;
     let handDragCandidate = null;
     let activeHandDrag = null;
+    let handScrollDrag = null;
     const HAND_DRAG_THRESHOLD = 10;
     const pendingAnimations = [];
 
@@ -11033,6 +11069,53 @@
       finishHandDrag();
     }
 
+    function setupHandScrollEvents() {
+      if (!elements.playerHand) return;
+      elements.playerHand.addEventListener("pointerdown", startHandScrollDrag);
+      elements.playerHand.addEventListener("pointermove", moveHandScrollDrag);
+      elements.playerHand.addEventListener("pointerup", finishHandScrollDrag);
+      elements.playerHand.addEventListener("pointercancel", finishHandScrollDrag);
+      elements.playerHand.addEventListener("wheel", scrollPlayerHandWithWheel, { passive: false });
+    }
+
+    function canScrollPlayerHand() {
+      return elements.playerHand && elements.playerHand.scrollWidth > elements.playerHand.clientWidth + 2;
+    }
+
+    function startHandScrollDrag(event) {
+      if ((event.pointerType === "mouse" && event.button !== 0) || event.target.closest(".hand-card")) return;
+      if (!canScrollPlayerHand()) return;
+      handScrollDrag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startScrollLeft: elements.playerHand.scrollLeft
+      };
+      elements.playerHand.classList.add("drag-scroll-active");
+      try { elements.playerHand.setPointerCapture(event.pointerId); } catch {}
+      event.preventDefault();
+    }
+
+    function moveHandScrollDrag(event) {
+      if (!handScrollDrag || handScrollDrag.pointerId !== event.pointerId) return;
+      const dx = event.clientX - handScrollDrag.startX;
+      elements.playerHand.scrollLeft = handScrollDrag.startScrollLeft - dx;
+      event.preventDefault();
+    }
+
+    function finishHandScrollDrag(event) {
+      if (handScrollDrag && event?.pointerId && handScrollDrag.pointerId !== event.pointerId) return;
+      handScrollDrag = null;
+      elements.playerHand?.classList.remove("drag-scroll-active");
+    }
+
+    function scrollPlayerHandWithWheel(event) {
+      if (!canScrollPlayerHand()) return;
+      const horizontalDelta = Math.abs(event.deltaX) >= Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (!horizontalDelta) return;
+      elements.playerHand.scrollLeft += horizontalDelta;
+      event.preventDefault();
+    }
+
     function createHandDragGhost(sourceElement) {
       const ghost = sourceElement.cloneNode(true);
       ghost.classList.add("drag-ghost-card");
@@ -12781,6 +12864,7 @@
     document.querySelectorAll("[data-life-target]").forEach((button) => {
       button.addEventListener("click", () => attackLife(button.dataset.lifeTarget));
     });
+    setupHandScrollEvents();
 
     window.__chibattle = {
       state,
