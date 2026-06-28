@@ -7308,8 +7308,8 @@
       clearExpiredTemporarySeatBlocks(side);
       const teacher = state.players[side].board.teacher;
       if (teacher && teacher.type === "teacher" && state.environment?.baseId !== "on_demand_business") {
-        const lectureTargetTypes = teacher.baseId === "lightning_n" ? ["student", "vampire"] : ["student"];
-        const lectureTargetLabel = teacher.baseId === "lightning_n" ? "学生・ヴァンパイア" : "学生";
+        const lectureTargetTypes = teacher.baseId === "lightning_n" ? ["vampire"] : ["student"];
+        const lectureTargetLabel = teacher.baseId === "lightning_n" ? "ヴァンパイア" : "学生";
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const card = getBoardCardFromRef(ref);
@@ -12554,7 +12554,7 @@
         impossible_pink_fat: "このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。",
         general_teacher: "講義。教卓マスにいるかぎり、陽気を持つ。",
         pro_k: "このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ召喚し、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。",
-        lightning_n: "出席したとき、「定規」1枚を手札に生成する。このカードが教師マスに出席したとき、自分のデッキから「定規」を1枚まで引く。このカードが教卓マスにいるかぎり、講義はヴァンパイアにも適応される。",
+        lightning_n: "出席したとき、「定規」1枚を手札に生成する。このカードが教師マスに出席したとき、自分のデッキから「定規」を1枚まで引く。このカードが教卓マスにいるかぎり、講義の対象はヴァンパイアになる。",
         fairy_t: "このカードが教卓マスに出席したとき、相手の3行目にいる学生を、空いている1行目の席マスへ移動させてもよい。",
         popular_c: "このカードが教卓マスに出席したとき、自分の1行1列に「デザインフェアリー」1人を出席させる。このカードが教卓マスにいるかぎり、自分の「デザイン」と名のつく教師は陽気を持つ。",
         bird_a: "このカードが教卓マスに出席したとき、相手の1行目にいる出席者1人を指名し、3ダメージを与える。このカードが席マスに出席したとき、相手の場の出席者1人をランダムに指名し、破壊する。",
