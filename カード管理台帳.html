@@ -122,13 +122,43 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
+      margin-bottom: 6px;
       padding: 10px;
-      border-bottom: 1px solid #e1e8f0;
+      border: 1px solid #dbe4ef;
+      border-left: 7px solid #64748b;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
       cursor: pointer;
       color: var(--ink);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
     }
-    .row:hover, .row.active { background: var(--accent-soft); }
-    .row.active { box-shadow: inset 4px 0 0 var(--accent); }
+    .row:hover, .row.active {
+      transform: translateY(-1px);
+      border-color: #93c5fd;
+      box-shadow: 0 12px 22px rgba(15, 23, 42, 0.12);
+    }
+    .row.active { box-shadow: inset 4px 0 0 var(--accent), 0 12px 22px rgba(15, 23, 42, 0.12); }
+    .row.type-student {
+      border-left-color: #0284c7;
+      background: linear-gradient(135deg, #ffffff 0%, #e0f2fe 100%);
+    }
+    .row.type-teacher {
+      border-left-color: #7c3aed;
+      background: linear-gradient(135deg, #ffffff 0%, #ede9fe 100%);
+    }
+    .row.type-vampire {
+      border-left-color: #dc2626;
+      background: linear-gradient(135deg, #ffffff 0%, #fee2e2 100%);
+    }
+    .row.type-item {
+      border-left-color: #d97706;
+      background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+    }
+    .row.type-environment {
+      border-left-color: #16a34a;
+      background: linear-gradient(135deg, #ffffff 0%, #dcfce7 100%);
+    }
     .row-title { font-weight: 800; font-size: 14px; }
     .row-sub { margin-top: 3px; color: var(--muted); font-size: 12px; line-height: 1.45; }
     .meta { display: flex; gap: 5px; align-items: flex-start; flex-wrap: wrap; justify-content: flex-end; }
@@ -193,6 +223,36 @@
       padding: 12px;
       font-size: 15px;
     }
+    .link-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .link-chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      border: 1px solid #93c5fd;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      padding: 6px 11px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.2;
+      cursor: pointer;
+    }
+    .link-chip:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .link-chip.is-missing {
+      border-color: var(--line);
+      background: #f8fafc;
+      color: var(--muted);
+      cursor: default;
+    }
     .muted { color: var(--muted); }
     a { color: var(--accent); }
     @media (max-width: 860px) {
@@ -250,6 +310,29 @@
       return String(value ?? '').replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
     function stat(value) { return value === null || value === undefined ? '-' : value; }
+    const CARD_NAME_TO_ID = new Map(CARDS.map((card) => [card.name, card.id]));
+    function resolveCardId(label) {
+      const raw = String(label || '').trim();
+      const compact = raw.replace(/\s+/g, '');
+      const cleaned = compact.replace(/\d+枚.*$/, '').replace(/\d+人.*$/, '').replace(/を融合$/, '').trim();
+      return CARD_NAME_TO_ID.get(raw)
+        || CARD_NAME_TO_ID.get(compact)
+        || CARD_NAME_TO_ID.get(cleaned)
+        || CARDS.find((card) => compact.includes(card.name) || card.name.includes(compact))?.id
+        || null;
+    }
+    function splitLinks(value) {
+      return String(value || '').split('/').map((part) => part.trim()).filter(Boolean);
+    }
+    function renderCardLinks(value) {
+      const links = splitLinks(value);
+      if (!links.length) return '';
+      return '<div class="link-list">' + links.map((name) => {
+        const id = resolveCardId(name);
+        if (!id) return '<span class="link-chip is-missing">' + escapeHtml(name) + '</span>';
+        return '<button class="link-chip" type="button" data-card-link="' + escapeHtml(id) + '">' + escapeHtml(name) + '</button>';
+      }).join('') + '</div>';
+    }
     function matches(card) {
       const query = elements.search.value.trim().toLowerCase();
       const haystack = [card.name, card.id, card.effect, card.placement, card.combo, card.notes].join(' ').toLowerCase();
@@ -275,7 +358,7 @@
         const group = card.type !== lastType ? '<div class="group">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</div>' : '';
         lastType = card.type;
         const active = card.id === selectedId ? ' active' : '';
-        return group + '<button class="row' + active + '" type="button" data-id="' + escapeHtml(card.id) + '">'
+        return group + '<button class="row type-' + escapeHtml(card.type) + active + '" type="button" data-id="' + escapeHtml(card.id) + '">'
           + '<span><span class="row-title">' + escapeHtml(card.name) + '</span>'
           + '<span class="row-sub">戦意 ' + escapeHtml(stat(card.cost)) + ' / ' + escapeHtml(card.effect) + '</span></span>'
           + '<span class="meta"><span class="badge ' + escapeHtml(card.type) + '">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</span>'
@@ -299,14 +382,33 @@
         + '<div class="stat"><div class="label">体力</div><div class="value">' + escapeHtml(stat(card.hp)) + '</div></div></div>'
         + '<section><h3>配置・使用</h3><div class="text-block">' + escapeHtml(card.placement || '-') + '</div></section>'
         + '<section><h3>効果</h3><div class="text-block">' + escapeHtml(card.effect || '効果なし。') + '</div></section>'
-        + (card.combo ? '<section><h3>関連カード</h3><div class="text-block">' + escapeHtml(card.combo) + '</div></section>' : '')
+        + (card.combo ? '<section><h3>関連カード</h3>' + renderCardLinks(card.combo) + '</section>' : '')
         + (card.notes ? '<section><h3>備考</h3><div class="text-block">' + escapeHtml(card.notes) + '</div></section>' : '');
+    }
+    function scrollSelectedCardIntoView(id) {
+      const row = [...elements.list.querySelectorAll('[data-id]')].find((entry) => entry.dataset.id === id);
+      if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      elements.detail.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    function selectCard(id, clearFilters = false) {
+      selectedId = id;
+      if (clearFilters) {
+        elements.search.value = '';
+        elements.type.value = '';
+        elements.availability.value = '';
+      }
+      renderList();
+      requestAnimationFrame(() => scrollSelectedCardIntoView(id));
     }
     elements.list.addEventListener('click', (event) => {
       const row = event.target.closest('[data-id]');
       if (!row) return;
-      selectedId = row.dataset.id;
-      renderList();
+      selectCard(row.dataset.id);
+    });
+    elements.detail.addEventListener('click', (event) => {
+      const link = event.target.closest('[data-card-link]');
+      if (!link) return;
+      selectCard(link.dataset.cardLink, true);
     });
     [elements.search, elements.type, elements.availability].forEach((element) => element.addEventListener('input', renderList));
     renderList();
