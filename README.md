@@ -6,8 +6,8 @@
 
 https://sashimigozen.github.io/chibatoru/
 
-- [カード一覧](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html)
-- [ルール](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html)
+- [カード一覧 ver.0.6.11](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.6.11)
+- [ルール ver.0.6.11](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.6.11)
 
 GitHub Pagesで公開しているため、インストールせずにPCやスマートフォンのブラウザから遊べます。オンライン対戦をする場合は、対戦する2人が同じ公開URLを開くのがおすすめです。
 
