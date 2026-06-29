@@ -3444,6 +3444,30 @@
       color: #7f1d1d;
     }
 
+    .log-trash-count-button {
+      appearance: none;
+      border: 1px solid #93c5fd;
+      border-radius: 999px;
+      padding: 1px 8px;
+      background: #dbeafe;
+      color: #1e3a8a;
+      font: inherit;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .log-trash-count-button.trash-owner-opponent {
+      border-color: #fca5a5;
+      background: #fee2e2;
+      color: #7f1d1d;
+    }
+
+    .log-trash-count-button:hover,
+    .log-trash-count-button:focus-visible {
+      outline: none;
+      filter: brightness(0.96);
+    }
+
     .log-card-link:hover,
     .log-card-link:focus-visible {
       color: #0f766e;
@@ -4667,6 +4691,15 @@
       </div>
     </div>
 
+    <div class="mulligan-stage hidden" id="trashDetailStage">
+      <div class="mulligan-window">
+        <h2 id="trashDetailTitle">校外エリアへ送られたカード</h2>
+        <p id="trashDetailMessage">送られたカードを確認できます。</p>
+        <div class="mulligan-hand" id="trashDetailHand"></div>
+        <button class="button mulligan-hand-button" id="trashDetailCloseButton" type="button">閉じる</button>
+      </div>
+    </div>
+
     <section class="game-shell">
       <div class="playmat">
         <section class="hand-zone opponent-hand-zone">
@@ -5207,6 +5240,8 @@
       fullLockSeatBlocks: [],
       noAttackUntilActionTurn: 0,
       recentBoardTrash: [],
+      trashDetailEvents: [],
+      activeTrashDetailId: null,
       gameOver: false,
       gameWinner: null,
       gameResultOptions: {},
@@ -5341,6 +5376,11 @@
       threeGesturesHand: document.getElementById("threeGesturesHand"),
       threeGesturesMessage: document.getElementById("threeGesturesMessage"),
       threeGesturesConfirmButton: document.getElementById("threeGesturesConfirmButton"),
+      trashDetailStage: document.getElementById("trashDetailStage"),
+      trashDetailTitle: document.getElementById("trashDetailTitle"),
+      trashDetailMessage: document.getElementById("trashDetailMessage"),
+      trashDetailHand: document.getElementById("trashDetailHand"),
+      trashDetailCloseButton: document.getElementById("trashDetailCloseButton"),
       opponentDeckPile: document.getElementById("opponentDeckPile"),
       playerDeckPile: document.getElementById("playerDeckPile"),
       opponentDeckPileCount: document.getElementById("opponentDeckPileCount"),
@@ -6339,7 +6379,7 @@
           if (hpDiff > 0) showFloatingTextForCard(next.card, `+${hpDiff}`, "heal");
         });
         current.trash.forEach((card) => {
-          if (!previous.trashIds.has(card.instanceId)) announceTrashMove(side, card);
+          if (!previous.trashIds.has(card.instanceId) && !card.suppressTrashToast) announceTrashMove(side, card);
         });
       });
       const previousTurnCount = before.players?.[state.currentSide]?.turnsTaken || 0;
@@ -6740,6 +6780,8 @@
       state.fullLockSeatBlocks = [];
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
+      state.trashDetailEvents = [];
+      state.activeTrashDetailId = null;
       state.gameOver = false;
       state.gameWinner = null;
       state.gameResultOptions = {};
@@ -8453,6 +8495,7 @@
         .map((card) => card.instanceId);
       fallbackIds.forEach((id) => keepSet.add(id));
       let kept = 0;
+      const sentToTrash = [];
       revealed.forEach((card) => {
         if (keepSet.has(card.instanceId)) {
           card.owner = side;
@@ -8460,12 +8503,14 @@
           state.players[side].hand.push(card);
           kept += 1;
         } else {
-          moveToTrash(side, card);
+          sentToTrash.push(card);
         }
       });
+      moveCardsToTrash(side, sentToTrash);
       moveHandCardToTrash(side, item);
       queueAnimation("draw", side, kept);
-      addLog(`${SIDES[side]}は3つジェスチャーを使い、デッキ上6枚から${kept}枚を手札に加え、残りを校外エリアへ送りました。`);
+      const trashText = trashDetailCountText(side, sentToTrash, "3つジェスチャーで校外へ送られたカード");
+      addLog(`${SIDES[side]}は3つジェスチャーを使い、デッキ上6枚から${kept}枚を手札に加え、残り${trashText}を校外エリアへ送りました。`);
       state.pendingThreeGestures = null;
       clearSelections();
       if (renderAfter) render();
@@ -8744,8 +8789,9 @@
       }
       if (card.baseId === "perfect_mutant") {
         const targets = listBoardRefs(opponent);
-        targets.forEach(destroyBoardCard);
-        addLog(`${card.name}の出席時効果：相手の出席者${targets.length}人をすべて破壊しました。`);
+        const moved = destroyBoardRefsToTrash(targets);
+        const movedText = trashDetailCountText(opponent, moved, `${card.name}で破壊された出席者`, "人");
+        addLog(`${card.name}の出席時効果：相手の出席者${movedText}をすべて破壊しました。`);
       }
       if (["single_cell", "midge", "organism"].includes(card.baseId)) {
         resolveBiologyFusion(side);
@@ -9015,9 +9061,11 @@
           .filter((ref) => ref.zone === "seat" && [0, 2].includes(seatCol(ref.index)));
         const friendlyTargets = listBoardRefs(side)
           .filter((ref) => ref.zone === "seat" && seatCol(ref.index) === 1);
-        enemyTargets.forEach(destroyBoardCard);
-        friendlyTargets.forEach(destroyBoardCard);
-        addLog(`${card.name}の効果：相手の1列目・3列目から${enemyTargets.length}人、自分の2列目から${friendlyTargets.length}人を破壊しました。`);
+        const enemyMoved = destroyBoardRefsToTrash(enemyTargets);
+        const friendlyMoved = destroyBoardRefsToTrash(friendlyTargets);
+        const enemyText = trashDetailCountText(opponent, enemyMoved, `${card.name}で破壊された相手の出席者`, "人");
+        const friendlyText = trashDetailCountText(side, friendlyMoved, `${card.name}で破壊された自分の出席者`, "人");
+        addLog(`${card.name}の効果：相手の1列目・3列目から${enemyText}、自分の2列目から${friendlyText}を破壊しました。`);
       }
       if (card.baseId === "ninety_three_teacher" && zone === "teacher") {
         damagePlayer(opponent, 3);
@@ -9192,15 +9240,16 @@
     }
 
     function enforceSeatRulesEnvironment() {
-      let moved = 0;
+      const movedCards = [];
       ["player", "opponent"].forEach((owner) => {
         state.players[owner].board.seats.forEach((card, index) => {
           if (!card || !isSeatBlocked(owner, index)) return;
-          destroyBoardCard({ owner, zone: "seat", index });
-          moved += 1;
+          const moved = destroyBoardCard({ owner, zone: "seat", index }, { suppressLog: true, suppressToast: true, reason: "出席不可" });
+          if (moved) movedCards.push(moved);
         });
       });
-      addLog(`座れる席と座れない席の存在：出席不可になった席から${moved}人を校外エリアへ送りました。`);
+      const movedText = trashDetailCountText("mixed", movedCards, "出席不可になった席から校外へ送られた出席者", "人");
+      addLog(`座れる席と座れない席の存在：出席不可になった席から${movedText}を校外エリアへ送りました。`);
     }
 
     function moveOpponentThirdRowStudents(owner) {
@@ -9234,9 +9283,9 @@
       for (let i = 0; i < count && player.deck.length > 0; i += 1) {
         const index = Math.floor(Math.random() * player.deck.length);
         const [card] = player.deck.splice(index, 1);
-        moveToTrash(side, card);
         moved.push(card);
       }
+      moveCardsToTrash(side, moved);
       return moved;
     }
 
@@ -9245,9 +9294,9 @@
       const moved = [];
       for (let i = 0; i < count && player.deck.length > 0; i += 1) {
         const card = player.deck.shift();
-        moveToTrash(side, card);
         moved.push(card);
       }
+      moveCardsToTrash(side, moved);
       return moved;
     }
 
@@ -9257,9 +9306,9 @@
       for (let i = 0; i < count && player.hand.length > 0; i += 1) {
         const index = Math.floor(Math.random() * player.hand.length);
         const [card] = player.hand.splice(index, 1);
-        moveToTrash(side, card);
         moved.push(card);
       }
+      moveCardsToTrash(side, moved);
       return moved;
     }
 
@@ -9873,8 +9922,9 @@
       if (item.baseId === "green_curry") {
         const opponent = oppositeSide(side);
         const targets = listBoardRefs(opponent);
-        targets.forEach(destroyBoardCard);
-        addLog(`${SIDES[side]}はグリーンカレーを使い、相手の出席者${targets.length}人を破壊しました。`);
+        const moved = destroyBoardRefsToTrash(targets);
+        const movedText = trashDetailCountText(opponent, moved, "グリーンカレーで破壊された出席者", "人");
+        addLog(`${SIDES[side]}はグリーンカレーを使い、相手の出席者${movedText}を破壊しました。`);
       } else if (item.baseId === "yakiniku") {
         let affected = 0;
         ["player", "opponent"].forEach((owner) => {
@@ -9988,19 +10038,22 @@
       if (item.baseId === "handy_jet_engine") {
         const targetSide = oppositeSide(side);
         const moved = moveRandomHandCardsToTrash(targetSide, 2);
-        resultText = `相手の手札からランダムに${moved.length}枚を校外エリアへ送りました。`;
+        const movedText = trashDetailCountText(targetSide, moved, "ハンディジェットエンジンで校外へ送られたカード");
+        resultText = `相手の手札からランダムに${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "dos_attack") {
         const targetSide = oppositeSide(side);
         const moved = moveTopDeckCardsToTrash(targetSide, 3);
-        resultText = `相手のデッキの上から${moved.length}枚を校外エリアへ送りました。`;
+        const movedText = trashDetailCountText(targetSide, moved, "Dos攻撃で校外へ送られたカード");
+        resultText = `相手のデッキの上から${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "destroy_dos_attack") {
         const targetSide = oppositeSide(side);
         const dosCount = state.players[side].trash.filter((trashCard) => trashCard.baseId === "dos_attack").length;
         const moveCount = (dosCount + 1) * 3;
         const moved = moveTopDeckCardsToTrash(targetSide, moveCount);
-        resultText = `自分の校外エリアのDos攻撃${dosCount}枚を参照し、相手のデッキの上から${moved.length}枚を校外エリアへ送りました。`;
+        const movedText = trashDetailCountText(targetSide, moved, "デストロイDos攻撃で校外へ送られたカード");
+        resultText = `自分の校外エリアのDos攻撃${dosCount}枚を参照し、相手のデッキの上から${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "environment_setup") {
         const pulled = pullRandomCardsFromDeck(side, (card) => card.type === "environment", 1);
@@ -10047,7 +10100,8 @@
       }
       if (item.baseId === "dropped_cards") {
         const moved = moveRandomDeckCardsToTrash(side, 2);
-        resultText = `自分のデッキからランダムで${moved.length}枚を校外エリアへ送りました。`;
+        const movedText = trashDetailCountText(side, moved, "カードを落としてしまったのですがで校外へ送られたカード");
+        resultText = `自分のデッキからランダムで${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "reversal") {
         resultText = restoreRecentBoardCard(side) ? "前の相手ターンに校外へ送られた出席者を元の席に戻しました。" : "戻せる出席者がいませんでした。";
@@ -10086,17 +10140,20 @@
         }
         const keepSet = new Set(keepIndexes);
         let kept = 0;
+        const sentToTrash = [];
         revealed.forEach((card, index) => {
           if (keepSet.has(index)) {
             card.handTurns = 0;
             state.players[side].hand.push(card);
             kept += 1;
           } else {
-            moveToTrash(side, card);
+            sentToTrash.push(card);
           }
         });
+        moveCardsToTrash(side, sentToTrash);
         queueAnimation("draw", side, kept);
-        resultText = `デッキ上6枚から${kept}枚を手札に加え、残りを校外エリアへ送りました。`;
+        const trashText = trashDetailCountText(side, sentToTrash, "3つジェスチャーで校外へ送られたカード");
+        resultText = `デッキ上6枚から${kept}枚を手札に加え、残り${trashText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "music_detergent") {
         const candidates = uniqueDesignDeckCandidates(side);
@@ -10831,13 +10888,27 @@
       return refs;
     }
 
-    function destroyBoardCard(ref) {
+    function destroyBoardCard(ref, trashOptions = {}) {
       const card = getBoardCardFromRef(ref);
-      if (!card) return;
+      if (!card) return null;
       recordRecentBoardTrash(ref.owner, card, ref);
-      moveToTrash(ref.owner, card);
+      moveToTrash(ref.owner, card, trashOptions);
       if (ref.zone === "seat") state.players[ref.owner].board.seats[ref.index] = null;
       if (ref.zone === "teacher") state.players[ref.owner].board.teacher = null;
+      return card;
+    }
+
+    function destroyBoardRefsToTrash(refs, options = {}) {
+      const moved = [];
+      refs.forEach((ref) => {
+        const card = destroyBoardCard(ref, {
+          suppressLog: options.suppressIndividual !== false,
+          suppressToast: options.suppressIndividual !== false,
+          reason: options.reason || "まとめ破壊"
+        });
+        if (card) moved.push(card);
+      });
+      return moved;
     }
 
     function cleanupDestroyedCards() {
@@ -10845,17 +10916,17 @@
         state.players[owner].board.seats.forEach((card, index) => {
           if (card && card.currentHp <= 0) {
             recordRecentBoardTrash(owner, card, { owner, zone: "seat", index });
-            moveToTrash(owner, card);
+            moveToTrash(owner, card, { suppressToast: true, suppressLog: true, reason: "体力0" });
             state.players[owner].board.seats[index] = null;
-            addLog(`${card.name}は体力0で校外エリアへ送られました。`);
+            addTrashLog(owner, card, "体力0");
           }
         });
         const teacher = state.players[owner].board.teacher;
         if (teacher && teacher.currentHp <= 0) {
           recordRecentBoardTrash(owner, teacher, { owner, zone: "teacher", index: null });
-          moveToTrash(owner, teacher);
+          moveToTrash(owner, teacher, { suppressToast: true, suppressLog: true, reason: "体力0" });
           state.players[owner].board.teacher = null;
-          addLog(`${teacher.name}は体力0で校外エリアへ送られました。`);
+          addTrashLog(owner, teacher, "体力0");
         }
       });
     }
@@ -10872,10 +10943,13 @@
       state.recentBoardTrash = state.recentBoardTrash.slice(0, 40);
     }
 
-    function moveToTrash(owner, card) {
+    function moveToTrash(owner, card, options = {}) {
+      card.suppressTrashToast = options.suppressToast === true;
+      card.trashReason = options.reason || "";
       state.players[owner].trash.push(card);
-      addTrashLog(owner, card);
-      announceTrashMove(owner, card);
+      if (!options.suppressLog) addTrashLog(owner, card, options.reason || "");
+      if (!options.suppressToast) announceTrashMove(owner, card);
+      return card;
     }
 
     function localTrashOwnerTone(owner) {
@@ -10886,9 +10960,44 @@
       return owner === "player" ? "自分" : "相手";
     }
 
-    function addTrashLog(owner, card) {
+    function addTrashLog(owner, card, reason = "") {
       if (!card || state.screen !== "battle") return;
-      addLog(`${localTrashOwnerLabel(owner)}の校外へ：${card.name || "カード"}`);
+      addLog(`${localTrashOwnerLabel(owner)}の校外へ：${card.name || "カード"}${reason ? `（${reason}）` : ""}`);
+    }
+
+    function moveCardsToTrash(owner, cards, options = {}) {
+      const moved = cards.filter(Boolean);
+      const suppressIndividual = options.suppressIndividual !== false;
+      moved.forEach((card) => moveToTrash(owner, card, {
+        suppressLog: suppressIndividual,
+        suppressToast: suppressIndividual,
+        reason: options.reason || "まとめ送り"
+      }));
+      return moved;
+    }
+
+    function createTrashDetailEvent(owner, cards, title = "校外エリアへ送られたカード", unit = "枚") {
+      const detailCards = cards.filter(Boolean).map((card) => ({ ...card }));
+      if (detailCards.length === 0) return null;
+      const id = `trash-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      if (!Array.isArray(state.trashDetailEvents)) state.trashDetailEvents = [];
+      state.trashDetailEvents.unshift({
+        id,
+        owner: owner || "mixed",
+        title,
+        unit,
+        cards: detailCards,
+        actionTurn: state.actionTurn
+      });
+      state.trashDetailEvents = state.trashDetailEvents.slice(0, 24);
+      return id;
+    }
+
+    function trashDetailCountText(owner, cards, title, unit = "枚") {
+      const moved = cards.filter(Boolean);
+      if (moved.length === 0) return `0${unit}`;
+      const eventId = createTrashDetailEvent(owner, moved, title, unit);
+      return eventId ? `[[trash-detail:${eventId}]]${moved.length}${unit}` : `${moved.length}${unit}`;
     }
 
     function announceTrashMove(owner, card) {
@@ -11025,6 +11134,7 @@
       renderPreBattleStage();
       renderMulliganStage();
       renderThreeGesturesStage();
+      renderTrashDetailStage();
       renderBoards();
       renderDeckEditor();
       renderTrash();
@@ -11583,6 +11693,53 @@
         attachCardDetailEvents(button, card, { previewOnClick: false });
         elements.threeGesturesHand.appendChild(button);
       });
+    }
+
+    function renderTrashDetailStage() {
+      if (!elements.trashDetailStage) return;
+      const event = getTrashDetailEvent(state.activeTrashDetailId);
+      const active = state.screen === "battle" && Boolean(event);
+      elements.trashDetailStage.classList.toggle("hidden", !active);
+      if (!active) {
+        elements.trashDetailHand.innerHTML = "";
+        return;
+      }
+      const unit = event.unit || "枚";
+      elements.trashDetailTitle.textContent = event.title || "校外エリアへ送られたカード";
+      elements.trashDetailMessage.textContent = event.owner === "mixed"
+        ? `まとめて校外エリアへ送られた${event.cards.length}${unit}。`
+        : `${trashDetailOwnerLabel(event.owner)}の校外エリアへ送られた${event.cards.length}${unit}。`;
+      elements.trashDetailHand.innerHTML = "";
+      event.cards.forEach((card) => {
+        const button = document.createElement("button");
+        button.className = `card mulligan-card ${card.type}`;
+        button.type = "button";
+        button.dataset.cardId = card.instanceId || card.baseId || card.name;
+        button.innerHTML = cardTemplate(card, false);
+        attachCardDetailEvents(button, card, { previewOnClick: false });
+        elements.trashDetailHand.appendChild(button);
+      });
+    }
+
+    function openTrashDetail(eventId) {
+      if (!getTrashDetailEvent(eventId)) return;
+      state.activeTrashDetailId = eventId;
+      render();
+    }
+
+    function closeTrashDetail() {
+      state.activeTrashDetailId = null;
+      render();
+    }
+
+    function getTrashDetailEvent(eventId) {
+      if (!eventId) return null;
+      return (state.trashDetailEvents || []).find((event) => event.id === eventId) || null;
+    }
+
+    function trashDetailOwnerLabel(owner) {
+      if (owner === "mixed") return "まとめて";
+      return localTrashOwnerLabel(owner);
     }
 
     function renderDeckPiles() {
@@ -12736,6 +12893,8 @@
       state.temporarySeatBlocks = [];
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
+      state.trashDetailEvents = [];
+      state.activeTrashDetailId = null;
       state.gameOver = false;
       state.gameWinner = null;
       state.gameResultOptions = {};
@@ -13389,9 +13548,25 @@
       const trashTone = logTrashOwnerTone(text);
       let index = 0;
       while (index < text.length) {
+        const trashMarker = matchTrashDetailMarker(text, index);
+        if (trashMarker) {
+          const event = getTrashDetailEvent(trashMarker.eventId);
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `log-trash-count-button${event?.owner === "opponent" ? " trash-owner-opponent" : ""}`;
+          button.textContent = trashMarker.label;
+          button.setAttribute("aria-label", `${trashMarker.label}の内容を見る`);
+          button.addEventListener("click", () => openTrashDetail(trashMarker.eventId));
+          container.appendChild(button);
+          index += trashMarker.length;
+          continue;
+        }
         const match = names.find((entry) => text.startsWith(entry.name, index));
         if (!match) {
-          const nextIndex = findNextCardNameIndex(text, index + 1, names);
+          const nextIndex = Math.min(
+            findNextCardNameIndex(text, index + 1, names),
+            findNextTrashMarkerIndex(text, index + 1)
+          );
           container.appendChild(document.createTextNode(text.slice(index, nextIndex)));
           index = nextIndex;
           continue;
@@ -13411,6 +13586,21 @@
       if (/^(自分|あなた|プレイヤー1)の校外へ/.test(text)) return "self";
       if (/^(相手|プレイヤー2)の校外へ/.test(text)) return "opponent";
       return "";
+    }
+
+    function matchTrashDetailMarker(text, index) {
+      const match = text.slice(index).match(/^\[\[trash-detail:([^\]]+)\]\](\d+[枚人])/);
+      if (!match) return null;
+      return {
+        eventId: match[1],
+        label: match[2],
+        length: match[0].length
+      };
+    }
+
+    function findNextTrashMarkerIndex(text, start) {
+      const found = text.indexOf("[[trash-detail:", start);
+      return found >= 0 ? found : text.length;
     }
 
     function findNextCardNameIndex(text, start, names) {
@@ -13479,6 +13669,10 @@
     elements.threeGesturesConfirmButton.addEventListener("click", () => {
       if (state.pendingCardChoice) confirmCardChoiceSelection();
       else confirmThreeGesturesSelection();
+    });
+    elements.trashDetailCloseButton.addEventListener("click", closeTrashDetail);
+    elements.trashDetailStage.addEventListener("click", (event) => {
+      if (event.target === elements.trashDetailStage) closeTrashDetail();
     });
     elements.itemTargetConfirmButton.addEventListener("click", confirmSelectedItemTargets);
     elements.fusionButton.addEventListener("click", () => fuseRulersForSide("player", true));
