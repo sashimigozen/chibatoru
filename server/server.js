@@ -64,8 +64,8 @@ function playerPublicState(player) {
   return {
     clientId: player.clientId,
     role: player.role,
-    deckName: player.deckName || "__current",
-    ready: Boolean(player.ready)
+    deckName: player.role === "spectator" ? "" : (player.deckName || "__current"),
+    ready: player.role === "spectator" ? false : Boolean(player.ready)
   };
 }
 
@@ -73,8 +73,17 @@ function roomPlayers(room) {
   return [...room.players.values()].map(playerPublicState);
 }
 
+function isBattleRole(role) {
+  return role === "host" || role === "guest";
+}
+
+function battlePlayers(room) {
+  return [...room.players.values()].filter((player) => isBattleRole(player.role));
+}
+
 function roomHasOpponent(room, role) {
-  return [...room.players.values()].some((player) => player.role !== role);
+  if (role === "spectator") return battlePlayers(room).length === 2;
+  return battlePlayers(room).some((player) => player.role !== role);
 }
 
 function broadcast(room, message, exceptClientId = "") {
@@ -84,12 +93,12 @@ function broadcast(room, message, exceptClientId = "") {
   });
 }
 
-function opponentOf(room, clientId) {
-  return [...room.players.values()].find((player) => player.clientId !== clientId) || null;
-}
-
 function hostOf(room) {
   return [...room.players.values()].find((player) => player.role === "host") || null;
+}
+
+function guestOf(room) {
+  return [...room.players.values()].find((player) => player.role === "guest") || null;
 }
 
 function clearWaitingRoomTimer(room) {
@@ -100,19 +109,23 @@ function clearWaitingRoomTimer(room) {
 
 function closeWaitingRoom(roomId) {
   const room = rooms.get(roomId);
-  if (!room || room.started || room.players.size !== 1) return;
+  if (!room || room.started || guestOf(room)) return;
   const host = hostOf(room);
   if (!host) return;
-  sendError(host.ws, "5分間相手が入室しなかったため、部屋を閉じました。もう一度部屋を作ってください。", "room_timeout");
+  room.players.forEach((player) => {
+    sendError(player.ws, "5分間相手が入室しなかったため、部屋を閉じました。もう一度部屋を作ってください。", "room_timeout");
+  });
   clearWaitingRoomTimer(room);
   rooms.delete(roomId);
-  try { host.ws.close(4002, "room_timeout"); } catch {}
+  room.players.forEach((player) => {
+    try { player.ws.close(4002, "room_timeout"); } catch {}
+  });
 }
 
 function refreshWaitingRoomTimer(room) {
   if (!room) return;
   clearWaitingRoomTimer(room);
-  if (room.started || room.players.size !== 1 || !hostOf(room)) return;
+  if (room.started || guestOf(room) || !hostOf(room)) return;
   room.waitingTimer = setTimeout(() => closeWaitingRoom(room.roomId), WAITING_ROOM_TIMEOUT_MS);
   room.waitingTimer.unref?.();
 }
@@ -206,11 +219,9 @@ function joinRoom(ws, message) {
       role = "host";
     } else if (![...room.players.values()].some((player) => player.role === "guest")) {
       role = "guest";
+    } else {
+      role = "spectator";
     }
-  }
-  if (!role || (!existing && room.players.size >= 2)) {
-    sendError(ws, "この部屋はすでに2人で使用中です。", "room_full");
-    return;
   }
 
   if (existing?.ws && existing.ws !== ws) {
@@ -221,9 +232,9 @@ function joinRoom(ws, message) {
     clientId,
     role,
     ws,
-    ready: Boolean(message.ready),
-    deckName: message.deckName || "__current",
-    deckCounts: message.deckCounts || null,
+    ready: role === "spectator" ? false : Boolean(message.ready),
+    deckName: role === "spectator" ? "" : (message.deckName || "__current"),
+    deckCounts: role === "spectator" ? null : (message.deckCounts || null),
     joinedAt: existing?.joinedAt || now(),
     lastSeenAt: now()
   };
@@ -270,6 +281,10 @@ function requireJoined(ws) {
 function handleDeckUpdate(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
+  if (!isBattleRole(player.role)) {
+    sendError(ws, "観戦者はデッキや準備状態を変更できません。", "forbidden");
+    return;
+  }
   const ready = Boolean(message.ready);
   if (ready && !isDeckValid(message.deckCounts)) {
     sendError(ws, "デッキは40〜60枚で準備OKにしてください。", "invalid_deck");
@@ -308,11 +323,12 @@ function handleStartGame(ws, message) {
     sendError(ws, "対戦開始はホストだけが実行できます。", "forbidden");
     return;
   }
-  if (room.players.size !== 2) {
+  const joinedBattlePlayers = battlePlayers(room);
+  if (joinedBattlePlayers.length !== 2) {
     sendError(ws, "2人そろうまで開始できません。", "not_ready");
     return;
   }
-  const allReady = [...room.players.values()].every((joinedPlayer) => joinedPlayer.ready && isDeckValid(joinedPlayer.deckCounts));
+  const allReady = joinedBattlePlayers.every((joinedPlayer) => joinedPlayer.ready && isDeckValid(joinedPlayer.deckCounts));
   if (!allReady) {
     sendError(ws, "2人とも有効なデッキで準備OKにしてください。", "not_ready");
     return;
@@ -366,6 +382,10 @@ function handleGameState(ws, message) {
 function handlePlayerCommand(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
+  if (!isBattleRole(player.role)) {
+    sendError(ws, "観戦者は対戦を操作できません。", "forbidden");
+    return;
+  }
   const command = commandFromMessage(message);
   const commandType = command.type || message.type;
   const validationError = validateTurnCommand(room, player, commandType);
@@ -444,7 +464,11 @@ function routeMessage(ws, raw) {
       break;
     case "playReveal": {
       const { room, player } = requireJoined(ws);
-      if (room && player) broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
+      if (room && player && isBattleRole(player.role)) {
+        broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
+      } else if (room && player) {
+        sendError(ws, "観戦者は対戦演出を送信できません。", "forbidden");
+      }
       break;
     }
     case "returnRoom":
@@ -468,13 +492,14 @@ wss.on("connection", (ws) => {
     room.players.delete(ws.clientId);
     room.updatedAt = now();
     refreshWaitingRoomTimer(room);
-    const opponent = opponentOf(room, ws.clientId);
-    if (opponent) {
-      send(opponent.ws, {
+    if (isBattleRole(player.role)) {
+      broadcast(room, {
         type: "opponentDisconnected",
         senderId: SERVER_ID,
         roomSessionId: room.sessionId,
-        message: "相手の接続が切れました。再入室を待っています。"
+        disconnectedRole: player.role,
+        players: roomPlayers(room),
+        message: "対戦者の接続が切れました。再入室を待っています。"
       });
     }
   });

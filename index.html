@@ -319,8 +319,34 @@
     }
 
     body[data-online="guest"] .battle-screen .topbar .subtitle,
-    body[data-online="host"] .battle-screen .topbar .subtitle {
+    body[data-online="host"] .battle-screen .topbar .subtitle,
+    body[data-online="spectator"] .battle-screen .topbar .subtitle {
       color: #0e7490;
+    }
+
+    .spectator-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      border: 2px solid #0e7490;
+      border-radius: 8px;
+      padding: 8px 14px;
+      background: #ecfeff;
+      color: #155e75;
+      font-size: 13px;
+      font-weight: 1000;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.14);
+    }
+
+    body[data-online="spectator"] .battle-action-slot {
+      display: none;
+    }
+
+    body[data-online="spectator"] .opponent-hand .hand-card,
+    body[data-online="spectator"] .player-hand .hand-card {
+      cursor: help;
     }
 
     .screen-head {
@@ -4272,7 +4298,7 @@
       <div class="screen-head">
         <div>
           <h1>オンラインバトル</h1>
-          <p class="subtitle">部屋を作って、2人がデッキ選択と準備OKを押すと対戦開始</p>
+          <p class="subtitle">2人で対戦。3人目以降は両者の手札を見ながら観戦できます</p>
         </div>
         <button class="button secondary" id="onlineBackHomeButton" type="button">ホーム</button>
       </div>
@@ -4323,20 +4349,20 @@
           <div class="online-player-list">
             <div class="online-player-row">
               <div>
-                <div class="online-player-name">あなた</div>
+                <div class="online-player-name" id="onlineLocalPlayerName">あなた</div>
                 <div class="online-player-meta" id="onlineLocalDeckText">現在のあなたデッキ</div>
               </div>
               <span class="online-ready-badge" id="onlineLocalReadyBadge">未準備</span>
             </div>
             <div class="online-player-row">
               <div>
-                <div class="online-player-name">相手</div>
+                <div class="online-player-name" id="onlineRemotePlayerName">相手</div>
                 <div class="online-player-meta" id="onlineRemoteDeckText">待機中</div>
               </div>
               <span class="online-ready-badge" id="onlineRemoteReadyBadge">未準備</span>
             </div>
           </div>
-          <p class="online-help">対戦サーバーが部屋と最新のゲーム状態を保持します。接続が切れた場合は同じ部屋コードで入り直してください。</p>
+          <p class="online-help">対戦サーバーが部屋と最新のゲーム状態を保持します。3人目以降は観戦者になり、対戦操作はできません。</p>
         </section>
       </div>
     </section>
@@ -4420,18 +4446,20 @@
       <div class="message" id="message">引き直したいカードを0〜5枚選び、確定してください。</div>
     </header>
 
+    <div class="spectator-banner hidden" id="spectatorBanner">観戦モード：両者の手札を公開しています。対戦への操作はできません。</div>
+
     <div class="prebattle-stage hidden" id="preBattleStage">
       <div class="prebattle-panel">
         <h2 class="prebattle-title" id="preBattleTitle">VS AI</h2>
         <p class="prebattle-message" id="preBattleMessage">対戦相手を確認しています。</p>
         <div class="rps-area hidden" id="rpsArea">
           <div class="rps-side">
-            <span>あなた</span>
+            <span id="playerRpsLabel">あなた</span>
             <div class="rps-card" id="playerRpsCard">選択</div>
           </div>
           <div class="rps-vs">VS</div>
           <div class="rps-side">
-            <span>相手AI</span>
+            <span id="opponentRpsLabel">相手AI</span>
             <div class="rps-card card-back" id="opponentRpsCard">?</div>
           </div>
         </div>
@@ -4469,7 +4497,7 @@
       <div class="playmat">
         <section class="hand-zone opponent-hand-zone">
           <div class="hand-head">
-            <h2>相手の手札</h2>
+            <h2 id="opponentHandTitle">相手の手札</h2>
             <span class="small-info" id="opponentHandInfo">5枚</span>
           </div>
           <div class="hand-table opponent-hand-table">
@@ -4484,7 +4512,7 @@
 
         <section class="panel player-board opponent-board" id="opponentBoardPanel">
           <div class="panel-head">
-            <h2>相手の盤面</h2>
+            <h2 id="opponentBoardTitle">相手の盤面</h2>
             <button class="life-target" data-life-target="opponent" id="opponentLifeTarget">相手本体</button>
           </div>
           <div class="late-zone" id="opponentLateZone"></div>
@@ -4504,7 +4532,7 @@
 
         <section class="panel player-board" id="playerBoardPanel">
           <div class="panel-head">
-            <h2>あなたの盤面</h2>
+            <h2 id="playerBoardTitle">あなたの盤面</h2>
             <button class="life-target" data-life-target="player" id="playerLifeTarget">あなた本体</button>
           </div>
           <div class="professor-lane" id="playerProfessorLane"></div>
@@ -4514,7 +4542,7 @@
 
         <section class="hand-zone player-hand-zone">
           <div class="hand-head">
-            <h2>あなたの手札</h2>
+            <h2 id="playerHandTitle">あなたの手札</h2>
             <span class="small-info" id="playerHandInfo">5枚</span>
           </div>
           <div class="hand-table player-hand-table">
@@ -5046,6 +5074,7 @@
       onlineScreen: document.getElementById("onlineScreen"),
       deckScreen: document.getElementById("deckScreen"),
       battleScreen: document.getElementById("battleScreen"),
+      spectatorBanner: document.getElementById("spectatorBanner"),
       homeDeckButton: document.getElementById("homeDeckButton"),
       homeBattleButton: document.getElementById("homeBattleButton"),
       onlineBackHomeButton: document.getElementById("onlineBackHomeButton"),
@@ -5066,6 +5095,8 @@
       onlineStartButton: document.getElementById("onlineStartButton"),
       onlineLocalDeckText: document.getElementById("onlineLocalDeckText"),
       onlineRemoteDeckText: document.getElementById("onlineRemoteDeckText"),
+      onlineLocalPlayerName: document.getElementById("onlineLocalPlayerName"),
+      onlineRemotePlayerName: document.getElementById("onlineRemotePlayerName"),
       onlineLocalReadyBadge: document.getElementById("onlineLocalReadyBadge"),
       onlineRemoteReadyBadge: document.getElementById("onlineRemoteReadyBadge"),
       homeSoloButton: document.getElementById("homeSoloButton"),
@@ -5099,6 +5130,8 @@
       rpsArea: document.getElementById("rpsArea"),
       playerRpsCard: document.getElementById("playerRpsCard"),
       opponentRpsCard: document.getElementById("opponentRpsCard"),
+      playerRpsLabel: document.getElementById("playerRpsLabel"),
+      opponentRpsLabel: document.getElementById("opponentRpsLabel"),
       rpsControls: document.getElementById("rpsControls"),
       orderChoiceControls: document.getElementById("orderChoiceControls"),
       chooseFirstButton: document.getElementById("chooseFirstButton"),
@@ -5119,6 +5152,8 @@
       playerDeckPileCount: document.getElementById("playerDeckPileCount"),
       opponentHandInfo: document.getElementById("opponentHandInfo"),
       playerHandInfo: document.getElementById("playerHandInfo"),
+      opponentHandTitle: document.getElementById("opponentHandTitle"),
+      playerHandTitle: document.getElementById("playerHandTitle"),
       deckRuleText: document.getElementById("deckRuleText"),
       playerSeatGrid: document.getElementById("playerSeatGrid"),
       opponentSeatGrid: document.getElementById("opponentSeatGrid"),
@@ -5129,6 +5164,8 @@
       environmentSlot: document.getElementById("environmentSlot"),
       playerBoardPanel: document.getElementById("playerBoardPanel"),
       opponentBoardPanel: document.getElementById("opponentBoardPanel"),
+      playerBoardTitle: document.getElementById("playerBoardTitle"),
+      opponentBoardTitle: document.getElementById("opponentBoardTitle"),
       playerTrash: document.getElementById("playerTrash"),
       opponentTrash: document.getElementById("opponentTrash"),
       log: document.getElementById("log"),
@@ -5389,7 +5426,7 @@
         if (!onlineIsCurrentConnToken(token) || state.online.connected) return;
         try { state.online.conn?.close(); } catch {}
         onlineSetStatus("接続に時間がかかっています。部屋コードと通信環境を確認してください。", "bad");
-        if (isOnlineGuest()) onlineScheduleGuestReconnect();
+        if (!isOnlineHost()) onlineScheduleGuestReconnect();
         render();
       }, ONLINE_CONNECT_TIMEOUT_MS);
     }
@@ -5445,7 +5482,7 @@
       if (state.online.lastSeenAt && now - state.online.lastSeenAt > ONLINE_STALE_MS) {
         onlineSetStatus("通信が遅れています。自動で再同期を試しています。", "warn");
         if (isOnlineHost() && state.online.started) onlineBroadcastState(true);
-        if (isOnlineGuest() && state.online.started && now - (state.online.lastSyncRequestAt || 0) > ONLINE_SYNC_REQUEST_MS) {
+        if ((isOnlineGuest() || isOnlineSpectator()) && state.online.started && now - (state.online.lastSyncRequestAt || 0) > ONLINE_SYNC_REQUEST_MS) {
           state.online.lastSyncRequestAt = now;
           onlineClearPendingMessagesByType("syncRequest");
           onlineSend({ type: "syncRequest" }, { track: true });
@@ -5477,6 +5514,10 @@
 
     function isOnlineGuest() {
       return state.online.role === "guest";
+    }
+
+    function isOnlineSpectator() {
+      return state.online.role === "spectator";
     }
 
     function isOnlineBattle() {
@@ -5718,7 +5759,9 @@
         state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
         const players = Array.isArray(message.players) ? message.players : [];
         const self = players.find((player) => player.clientId === state.online.clientId) || message.you;
-        const opponent = players.find((player) => player.clientId && player.clientId !== state.online.clientId);
+        const host = players.find((player) => player.role === "host");
+        const guest = players.find((player) => player.role === "guest");
+        const opponent = self?.role === "host" ? guest : self?.role === "guest" ? host : null;
         if (self?.role) {
           state.online.role = self.role;
           document.body.dataset.online = self.role;
@@ -5726,11 +5769,16 @@
         state.online.remoteClientId = opponent?.clientId || "";
         state.online.remoteDeckName = opponent?.deckName || state.online.remoteDeckName || "";
         state.online.remoteReady = Boolean(opponent?.ready);
-        state.online.connected = Boolean(opponent);
+        state.online.connected = Boolean(host && guest);
+        state.online.started = Boolean(message.started || state.online.started);
         state.online.lastSeenAt = Date.now();
         onlineClearConnectTimer();
         onlineStartReliabilityLoop();
-        if (state.online.connected) {
+        if (isOnlineSpectator()) {
+          onlineSetStatus(state.online.started
+            ? "観戦者として入室しました。両者の手札を見ながら観戦できます。"
+            : "観戦者として入室しました。対戦開始を待っています。", "good");
+        } else if (state.online.connected) {
           onlineSetStatus(isOnlineHost()
             ? "相手が入室しました。デッキと準備OKを待っています。"
             : "入室しました。デッキを選んで準備OKを押してください。", "good");
@@ -5742,19 +5790,22 @@
         return;
       }
       if (message.type === "opponentDisconnected") {
-        state.online.connected = false;
-        if (!state.online.started) state.online.remoteReady = false;
-        state.online.remoteClientId = "";
+        const players = Array.isArray(message.players) ? message.players : [];
+        const host = players.find((player) => player.role === "host");
+        const guest = players.find((player) => player.role === "guest");
+        state.online.connected = Boolean(host && guest);
+        if (!state.online.started || !state.online.connected) state.online.remoteReady = false;
+        if (!isOnlineSpectator()) state.online.remoteClientId = state.online.role === "host" ? (guest?.clientId || "") : (host?.clientId || "");
         onlineSetStatus(message.message || "相手の接続が切れました。再入室を待っています。", "bad");
         render();
         return;
       }
-      if (message.type === "startGame" && isOnlineGuest()) {
+      if (message.type === "startGame" && (isOnlineGuest() || isOnlineSpectator())) {
         onlineApplySnapshot(message.snapshot);
         return;
       }
       if (message.type === "gameState") {
-        if (isOnlineGuest()) onlineApplySnapshot(message.snapshot);
+        if (isOnlineGuest() || isOnlineSpectator()) onlineApplySnapshot(message.snapshot);
         return;
       }
       const senderId = message.senderId === "server" ? "" : (message.senderId || "");
@@ -5845,11 +5896,11 @@
         else onlineSendRoomState();
         return;
       }
-      if (message.type === "playReveal" && isOnlineGuest()) {
+      if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {
         showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
         return;
       }
-      if (message.type === "returnRoom" && isOnlineGuest()) {
+      if (message.type === "returnRoom" && (isOnlineGuest() || isOnlineSpectator())) {
         onlineReturnToRoom(false);
       }
     }
@@ -5987,7 +6038,9 @@
       state.online.isApplyingRemote = true;
       const preservedDeckBuilder = state.deckBuilder;
       const preservedOnline = state.online;
-      const nextState = onlineTransformSnapshotForGuest(snapshot.state);
+      const nextState = isOnlineSpectator()
+        ? onlineTransformSnapshotForSpectator(snapshot.state)
+        : onlineTransformSnapshotForGuest(snapshot.state);
       Object.keys(nextState).forEach((key) => {
         state[key] = nextState[key];
       });
@@ -6003,6 +6056,13 @@
       render();
       if (state.gameOver) showResultOverlay(state.gameWinner, state.gameResultOptions || {});
       onlineSend({ type: "snapshotAck", seq: snapshot.seq });
+    }
+
+    function onlineTransformSnapshotForSpectator(hostState) {
+      const transformed = JSON.parse(JSON.stringify(hostState));
+      transformed.message = onlineDisplayTextForSpectator(transformed.message);
+      transformed.log = (transformed.log || []).map(onlineDisplayTextForSpectator);
+      return transformed;
     }
 
     function onlineTransformSnapshotForGuest(hostState) {
@@ -6073,6 +6133,14 @@
         .replaceAll("相手", "あなた")
         .replaceAll("__REMOTE_PLAYER__", "相手")
         .replaceAll("__LOCAL_PLAYER__", "相手");
+    }
+
+    function onlineDisplayTextForSpectator(text) {
+      return String(text || "")
+        .replaceAll("相手AI", "__PLAYER_TWO__")
+        .replaceAll("あなた", "プレイヤー1")
+        .replaceAll("相手", "プレイヤー2")
+        .replaceAll("__PLAYER_TWO__", "プレイヤー2");
     }
 
     function onlineApplyRemoteCommand(command) {
@@ -6409,6 +6477,7 @@
     }
 
     function selectRpsCard(choice) {
+      if (isOnlineSpectator()) return;
       if (state.phase !== "rps" || state.preBattleBusy || !RPS_LABELS[choice]) return;
       if (onlineCanSendCommand()) {
         state.preBattleBusy = true;
@@ -6485,6 +6554,7 @@
     }
 
     function chooseStartingOrder(playerChoosesFirst) {
+      if (isOnlineSpectator()) return;
       if (onlineCanSendCommand()) {
         state.preBattleBusy = true;
         onlineSendCommand("order", { first: playerChoosesFirst });
@@ -6559,6 +6629,7 @@
     }
 
     function toggleMulliganCard(instanceId) {
+      if (isOnlineSpectator()) return;
       if (state.phase !== "mulligan" || state.players.player.mulliganUsed) return;
       const selection = state.players.player.mulliganSelection;
       if (selection.includes(instanceId)) {
@@ -6570,6 +6641,7 @@
     }
 
     function confirmPlayerMulligan() {
+      if (isOnlineSpectator()) return;
       if (onlineCanSendCommand()) {
         const selectedIds = state.players.player.mulliganSelection.slice(0, 5);
         state.players.player.mulliganUsed = true;
@@ -7240,6 +7312,7 @@
 
     function endTurn(options = {}) {
       const fromAi = options.fromAi === true;
+      if (isOnlineSpectator() && !fromAi) return;
       if (state.phase !== "battle" || state.gameOver) return;
       if (onlineCanSendCommand()) {
         if (needsMeguroHandChoice("player")) {
@@ -7649,6 +7722,7 @@
     }
 
     function handleHandCardClick(instanceId) {
+      if (isOnlineSpectator()) return;
       if (state.phase === "mulligan") {
         toggleMulliganCard(instanceId);
         return;
@@ -7839,6 +7913,7 @@
     }
 
     function confirmPendingItemUse() {
+      if (isOnlineSpectator()) return;
       const item = getHandCard("player", state.pendingItemConfirmId);
       closeItemConfirm();
       if (!item || state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
@@ -8803,6 +8878,7 @@
     }
 
     function handleBoardCardClick(owner, zone, index = null) {
+      if (isOnlineSpectator()) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       const selectedCard = getSelectedHandCard();
       if (state.pendingMultiItem && selectedCard?.baseId === "i_got_it") {
@@ -8908,6 +8984,7 @@
     }
 
     function attackLife(targetSide) {
+      if (isOnlineSpectator()) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       const selectedCard = getSelectedHandCard();
       if (selectedCard?.type === "item") {
@@ -9727,6 +9804,7 @@
     }
 
     function fuseRulersForSide(side, renderAfter = true) {
+      if (side === "player" && isOnlineSpectator()) return false;
       if (side === "player" && onlineCanSendCommand()) {
         onlineSendCommand("fuse");
         state.message = "定規融合を送信しました。";
@@ -10149,14 +10227,16 @@
 
     function showResultOverlay(winner, options = {}) {
       if (!elements.resultOverlay) return;
-      const label = options.crabVictory ? "かーちー🦀" : winner === "player" ? "勝利" : winner === "opponent" ? "敗北" : "引き分け";
+      const label = isOnlineSpectator()
+        ? (winner === "player" ? "プレイヤー1の勝利" : winner === "opponent" ? "プレイヤー2の勝利" : "引き分け")
+        : (options.crabVictory ? "かーちー🦀" : winner === "player" ? "勝利" : winner === "opponent" ? "敗北" : "引き分け");
       const resultClass = winner === "player" ? "victory" : winner === "opponent" ? "defeat" : "draw";
       const homeLabel = isOnlineBattle() ? "対戦部屋に戻る" : "ホームに戻る";
       elements.resultOverlay.innerHTML = `
         <span class="result-label">${escapeHtml(label)}</span>
         <div class="result-actions">
           <button class="button secondary" type="button" data-result-home="true">${escapeHtml(homeLabel)}</button>
-          <button class="button" type="button" data-result-deck="true">デッキを編成する</button>
+          ${isOnlineSpectator() ? "" : '<button class="button" type="button" data-result-deck="true">デッキを編成する</button>'}
         </div>
       `;
       elements.resultOverlay.className = `result-overlay ${resultClass}`;
@@ -10417,13 +10497,15 @@
       elements.onlineScreen.classList.toggle("hidden", state.screen !== "online");
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
       elements.battleScreen.classList.toggle("hidden", state.screen !== "battle");
+      elements.spectatorBanner.classList.toggle("hidden", state.screen !== "battle" || !isOnlineSpectator());
       document.body.dataset.screen = state.screen;
     }
 
     function renderOnlineLobby() {
       if (!elements.onlineScreen) return;
       renderOnlineDeckOptions();
-      const roleLabel = isOnlineHost() ? "ホスト" : isOnlineGuest() ? "ゲスト" : "未接続";
+      const roleLabel = isOnlineHost() ? "ホスト" : isOnlineGuest() ? "ゲスト" : isOnlineSpectator() ? "観戦者" : "未接続";
+      const spectator = isOnlineSpectator();
       const localDeckName = deckNameForOnline(state.online.localDeckName);
       const localSize = deckSize(getOnlineDeckCountsByName(state.online.localDeckName));
       elements.onlineRoleText.textContent = roleLabel;
@@ -10436,15 +10518,18 @@
         : getOnlineServerUrl();
       elements.onlineServerUrlInput.disabled = Boolean(state.online.role);
       elements.onlineSaveServerUrlButton.disabled = Boolean(state.online.role);
-      elements.onlineDeckInfo.textContent = `${localDeckName} / ${localSize}枚`;
-      elements.onlineLocalDeckText.textContent = `${localDeckName} / ${localSize}枚`;
-      elements.onlineRemoteDeckText.textContent = state.online.remoteDeckName ? "デッキ選択済み" : "待機中";
-      elements.onlineLocalReadyBadge.textContent = state.online.localReady ? "準備OK" : "未準備";
-      elements.onlineRemoteReadyBadge.textContent = state.online.remoteReady ? "準備OK" : "未準備";
-      elements.onlineLocalReadyBadge.classList.toggle("ready", state.online.localReady);
-      elements.onlineRemoteReadyBadge.classList.toggle("ready", state.online.remoteReady);
-      elements.onlineReadyButton.textContent = state.online.localReady ? "準備を解除" : "準備OK";
-      elements.onlineReadyButton.disabled = !state.online.role || !state.online.connected;
+      elements.onlineDeckInfo.textContent = spectator ? "観戦専用" : `${localDeckName} / ${localSize}枚`;
+      elements.onlineLocalPlayerName.textContent = spectator ? "プレイヤー1" : "あなた";
+      elements.onlineRemotePlayerName.textContent = spectator ? "プレイヤー2" : "相手";
+      elements.onlineLocalDeckText.textContent = spectator ? "プレイヤー1（ホスト）" : `${localDeckName} / ${localSize}枚`;
+      elements.onlineRemoteDeckText.textContent = spectator ? "プレイヤー2（ゲスト）" : (state.online.remoteDeckName ? "デッキ選択済み" : "待機中");
+      elements.onlineLocalReadyBadge.textContent = spectator ? "対戦者" : (state.online.localReady ? "準備OK" : "未準備");
+      elements.onlineRemoteReadyBadge.textContent = spectator ? "対戦者" : (state.online.remoteReady ? "準備OK" : "未準備");
+      elements.onlineLocalReadyBadge.classList.toggle("ready", spectator || state.online.localReady);
+      elements.onlineRemoteReadyBadge.classList.toggle("ready", spectator || state.online.remoteReady);
+      elements.onlineReadyButton.textContent = spectator ? "観戦中" : (state.online.localReady ? "準備を解除" : "準備OK");
+      elements.onlineDeckSelect.disabled = spectator;
+      elements.onlineReadyButton.disabled = spectator || !state.online.role || !state.online.connected;
       elements.onlineStartButton.disabled = !isOnlineHost()
         || !state.online.connected
         || !state.online.localReady
@@ -10475,9 +10560,20 @@
     function renderStatus() {
       const current = state.players[state.currentSide];
       const deckValidation = state.players.player.deckValid;
+      const spectator = isOnlineSpectator();
+      elements.playerRpsLabel.textContent = spectator ? "プレイヤー1" : "あなた";
+      elements.opponentRpsLabel.textContent = spectator ? "プレイヤー2" : SIDES.opponent;
+      elements.playerHandTitle.textContent = spectator ? "プレイヤー1の手札" : "あなたの手札";
+      elements.opponentHandTitle.textContent = spectator ? "プレイヤー2の手札" : "相手の手札";
+      elements.playerBoardTitle.textContent = spectator ? "プレイヤー1の盤面" : "あなたの盤面";
+      elements.opponentBoardTitle.textContent = spectator ? "プレイヤー2の盤面" : "相手の盤面";
       elements.phaseText.textContent = phaseLabel();
-      elements.currentSideText.textContent = state.phase === "battle" ? SIDES[state.currentSide] : "準備";
-      elements.firstSideText.textContent = state.firstSide ? SIDES[state.firstSide] : "未決定";
+      elements.currentSideText.textContent = state.phase === "battle"
+        ? (spectator ? (state.currentSide === "player" ? "プレイヤー1" : "プレイヤー2") : SIDES[state.currentSide])
+        : "準備";
+      elements.firstSideText.textContent = state.firstSide
+        ? (spectator ? (state.firstSide === "player" ? "プレイヤー1" : "プレイヤー2") : SIDES[state.firstSide])
+        : "未決定";
       elements.turnText.textContent = turnLabel(state.currentSide);
       elements.lifeText.textContent = `${state.players.player.life} / ${state.players.opponent.life}`;
       elements.crabText.textContent = `${crabCountLabel("player")} / ${crabCountLabel("opponent")}`;
@@ -10538,20 +10634,21 @@
     }
 
     function renderControls() {
+      const spectator = isOnlineSpectator();
       const testBattle = state.screen === "battle" && state.testMode;
       elements.testBackDeckButton.classList.toggle("hidden", !testBattle);
       elements.battleBackHomeButton.classList.toggle("hidden", testBattle);
       const selectionCount = state.players.player.mulliganSelection.length;
       elements.mulliganButton.textContent = selectionCount === 0 ? "確定" : `${selectionCount}枚で確定`;
-      elements.mulliganButton.disabled = state.phase !== "mulligan" || state.players.player.mulliganUsed;
-      elements.mulliganButton.classList.toggle("hidden", state.phase !== "mulligan" || state.players.player.mulliganUsed);
+      elements.mulliganButton.disabled = spectator || state.phase !== "mulligan" || state.players.player.mulliganUsed;
+      elements.mulliganButton.classList.toggle("hidden", spectator || state.phase !== "mulligan" || state.players.player.mulliganUsed);
       const canFuseRulers = canPlayerFuseRulers();
       elements.fusionButton.classList.add("hidden");
       elements.fusionButton.disabled = !canFuseRulers;
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
       const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingThreeGestures);
-      elements.itemTargetConfirmButton.classList.toggle("hidden", !state.pendingMultiItem && !state.pendingPanpanItem);
+      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem));
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? `対象${state.pendingMultiItem.targets.length}人で使用`
         : state.pendingPanpanItem
@@ -10560,8 +10657,9 @@
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
         || (state.pendingMultiItem && state.pendingMultiItem.targets.length === 0)
         || (state.pendingPanpanItem && (!state.pendingPanpanItem.friendly || !state.pendingPanpanItem.enemy));
-      elements.endTurnButton.classList.toggle("hidden", state.phase !== "battle" || choosingItemTargets);
-      elements.endTurnButton.disabled = state.phase !== "battle"
+      elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || choosingItemTargets);
+      elements.endTurnButton.disabled = spectator
+        || state.phase !== "battle"
         || state.gameOver
         || state.currentSide !== "player"
         || state.aiThinking
@@ -10572,6 +10670,8 @@
         && !playerHasAvailableAction();
       elements.endTurnButton.classList.toggle("recommended", recommendEndTurn);
       elements.endTurnButton.textContent = recommendEndTurn ? "ターン終了" : "ターン終了";
+      elements.battleBackHomeButton.textContent = spectator ? "観戦を終了" : "勝てない";
+      elements.resetButton.classList.toggle("hidden", spectator);
       const playerDeckValid = validateDeckCounts(state.deckBuilder.counts.player).valid;
       const opponentDeckValid = validateDeckCounts(state.deckBuilder.counts.opponent).valid;
       elements.newGameWithDeckButton.disabled = !playerDeckValid || !opponentDeckValid || state.aiThinking;
@@ -10657,7 +10757,8 @@
     }
 
     function canStartHandDrag(card) {
-      return state.phase === "battle"
+      return !isOnlineSpectator()
+        && state.phase === "battle"
         && state.currentSide === "player"
         && !state.gameOver
         && !state.aiThinking
@@ -10792,7 +10893,9 @@
       renderDeckPiles();
       renderOpponentHand();
       renderPlayerHand();
-      const hideNormalHands = ["versus", "rps", "orderChoice", "dealing", "mulligan", "mulliganDraw"].includes(state.phase);
+      const spectatorMulligan = isOnlineSpectator() && ["mulligan", "mulliganDraw"].includes(state.phase);
+      const hideNormalHands = ["versus", "rps", "orderChoice", "dealing", "mulligan", "mulliganDraw"].includes(state.phase)
+        && !spectatorMulligan;
       elements.playerHandZone.classList.toggle("hidden", hideNormalHands);
       elements.opponentHandZone.classList.toggle("hidden", hideNormalHands);
     }
@@ -10806,12 +10909,16 @@
       elements.preBattleTitle.classList.toggle("versus", state.phase === "versus");
       elements.rpsArea.classList.toggle("hidden", !["rps", "orderChoice"].includes(state.phase));
       elements.rpsControls.classList.toggle("hidden", !(
+        !isOnlineSpectator()
+        &&
         state.phase === "rps"
         && !state.preBattleBusy
         && !state.rpsWinner
         && !state.rpsPlayerChoice
       ));
       elements.orderChoiceControls.classList.toggle("hidden", !(
+        !isOnlineSpectator()
+        &&
         state.phase === "orderChoice"
         && state.rpsWinner === "player"
         && !state.preBattleBusy
@@ -10854,6 +10961,7 @@
     function renderMulliganStage() {
       const active = state.screen === "battle"
         && ["mulligan", "mulliganDraw"].includes(state.phase)
+        && !isOnlineSpectator()
         && (state.phase === "mulliganDraw" || !state.players.player.mulliganUsed);
       elements.mulliganStage.classList.toggle("hidden", !active);
       if (!active) {
@@ -10887,7 +10995,10 @@
       if (!elements.threeGesturesStage) return;
       const pending = state.pendingThreeGestures;
       const choice = state.pendingCardChoice;
-      const active = state.screen === "battle" && state.phase === "battle" && (Boolean(pending) || Boolean(choice));
+      const active = state.screen === "battle"
+        && state.phase === "battle"
+        && (Boolean(pending) || Boolean(choice))
+        && !isOnlineSpectator();
       elements.threeGesturesStage.classList.toggle("hidden", !active);
       if (!active) {
         elements.threeGesturesHand.innerHTML = "";
@@ -10933,7 +11044,7 @@
     function renderDeckPiles() {
       elements.playerDeckPileCount.textContent = state.players.player.deck.length;
       elements.opponentDeckPileCount.textContent = state.players.opponent.deck.length;
-      elements.playerDeckPile.disabled = false;
+      elements.playerDeckPile.disabled = isOnlineSpectator();
       elements.opponentDeckPile.disabled = true;
     }
 
@@ -10941,7 +11052,16 @@
       const hand = state.players.opponent.hand;
       elements.opponentHandInfo.textContent = `${hand.length}枚`;
       elements.opponentHand.innerHTML = "";
-      [...hand].reverse().forEach(() => {
+      [...hand].reverse().forEach((card) => {
+        if (isOnlineSpectator()) {
+          const face = document.createElement("div");
+          face.className = `card hand-card ${card.type}`;
+          face.dataset.cardId = card.instanceId;
+          face.innerHTML = cardTemplate(card, false);
+          attachCardDetailEvents(face, card);
+          elements.opponentHand.appendChild(face);
+          return;
+        }
         const back = document.createElement("div");
         back.className = "card card-back";
         back.textContent = "相手手札";
@@ -10954,6 +11074,15 @@
       elements.playerHandInfo.textContent = `${player.hand.length}枚`;
       elements.playerHand.innerHTML = "";
       player.hand.forEach((card) => {
+        if (isOnlineSpectator()) {
+          const face = document.createElement("div");
+          face.className = `card hand-card ${card.type}`;
+          face.dataset.cardId = card.instanceId;
+          face.innerHTML = cardTemplate(card, false);
+          attachCardDetailEvents(face, card);
+          elements.playerHand.appendChild(face);
+          return;
+        }
         const button = document.createElement("button");
         button.className = `card hand-card ${card.type}`;
         const canDrag = canStartHandDrag(card);
@@ -11313,8 +11442,11 @@
     function renderLifeTargets() {
       document.querySelectorAll("[data-life-target]").forEach((button) => {
         const targetSide = button.dataset.lifeTarget;
-        const label = targetSide === "player" ? "あなた本体" : "相手本体";
+        const label = isOnlineSpectator()
+          ? (targetSide === "player" ? "プレイヤー1本体" : "プレイヤー2本体")
+          : (targetSide === "player" ? "あなた本体" : "相手本体");
         button.innerHTML = `<span>${label}</span><span class="life-value">気力 ${state.players[targetSide].life}</span>`;
+        button.disabled = isOnlineSpectator();
         const selected = getSelectedHandCard();
         const enemyItemTarget = canDropHandCardOnLife(selected, targetSide);
         const attackTarget = canSelectedAttackerTargetLife(targetSide);
@@ -12752,6 +12884,11 @@
     elements.deckBackHomeButton.addEventListener("click", showHomeScreen);
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.battleBackHomeButton.addEventListener("click", () => {
+      if (isOnlineSpectator()) {
+        state.screen = "online";
+        onlineCloseConnection(false);
+        return;
+      }
       if (state.phase === "gameover") {
         if (isOnlineBattle()) onlineReturnToRoom(true);
         else showHomeScreen();
