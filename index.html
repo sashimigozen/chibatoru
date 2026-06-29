@@ -1972,6 +1972,27 @@
       animation: trashMoveToast 1.85s ease-out forwards;
     }
 
+    .trash-owner-self {
+      --trash-owner-color: #2563eb;
+      --trash-owner-ink: #1e3a8a;
+      --trash-owner-border: #93c5fd;
+      --trash-owner-bg: #eff6ff;
+    }
+
+    .trash-owner-opponent {
+      --trash-owner-color: #dc2626;
+      --trash-owner-ink: #7f1d1d;
+      --trash-owner-border: #fca5a5;
+      --trash-owner-bg: #fff1f2;
+    }
+
+    .trash-move-card.trash-owner-self,
+    .trash-move-card.trash-owner-opponent {
+      border-color: var(--trash-owner-border);
+      background: linear-gradient(135deg, #ffffff 0%, var(--trash-owner-bg) 100%);
+      color: var(--trash-owner-color);
+    }
+
     .trash-move-mini {
       width: 32px;
       height: 44px;
@@ -1992,7 +2013,7 @@
       display: block;
       font-size: 10px;
       font-weight: 800;
-      color: #64748b;
+      color: var(--trash-owner-color, #64748b);
     }
 
     .trash-move-name {
@@ -2338,10 +2359,23 @@
       overscroll-behavior: contain;
     }
 
+    .trash-box.trash-owner-self,
+    .trash-box.trash-owner-opponent {
+      border-color: var(--trash-owner-border);
+      background: linear-gradient(180deg, #ffffff 0%, var(--trash-owner-bg) 100%);
+    }
+
     .trash-title {
-      color: #475569;
+      display: inline-flex;
+      align-items: center;
+      min-height: 20px;
+      border: 1px solid var(--trash-owner-border, transparent);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: var(--trash-owner-bg, transparent);
+      color: var(--trash-owner-color, #475569);
       font-weight: 900;
-      margin-bottom: 3px;
+      margin-bottom: 5px;
     }
 
     .trash-total {
@@ -2362,12 +2396,20 @@
       justify-content: space-between;
       gap: 6px;
       border-top: 1px solid #e2e8f0;
-      padding-top: 3px;
+      border-radius: 5px;
+      padding: 3px 4px;
+    }
+
+    .trash-card-row.trash-owner-self,
+    .trash-card-row.trash-owner-opponent {
+      border-top-color: var(--trash-owner-border);
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--trash-owner-ink);
     }
 
     .trash-card-count {
       flex: 0 0 auto;
-      color: #475569;
+      color: inherit;
       font-weight: 1000;
     }
 
@@ -4642,12 +4684,12 @@
             <span class="small-info" id="deckRuleText">40枚 / 同名3枚OK</span>
           </div>
           <div class="trash-row">
-            <div class="trash-box">
-              <div class="trash-title">あなた</div>
+            <div class="trash-box trash-owner-self">
+              <div class="trash-title trash-owner-self">自分</div>
               <div id="playerTrash">0枚</div>
             </div>
-            <div class="trash-box">
-              <div class="trash-title">相手</div>
+            <div class="trash-box trash-owner-opponent">
+              <div class="trash-title trash-owner-opponent">相手</div>
               <div id="opponentTrash">0枚</div>
             </div>
           </div>
@@ -10772,6 +10814,14 @@
       announceTrashMove(owner, card);
     }
 
+    function localTrashOwnerTone(owner) {
+      return owner === "player" ? "self" : "opponent";
+    }
+
+    function localTrashOwnerLabel(owner) {
+      return owner === "player" ? "自分" : "相手";
+    }
+
     function announceTrashMove(owner, card) {
       if (!card || state.screen !== "battle") return;
       if (typeof document === "undefined") return;
@@ -10782,11 +10832,12 @@
         document.body.appendChild(stack);
       }
       const toast = document.createElement("div");
-      toast.className = `trash-move-card ${card.type || ""}`;
+      const ownerTone = localTrashOwnerTone(owner);
+      toast.className = `trash-move-card trash-owner-${ownerTone} ${card.type || ""}`;
       toast.innerHTML = `
         <span class="trash-move-mini"></span>
         <span class="trash-move-text">
-          <span class="trash-move-label">${escapeHtml(SIDES[owner] || owner)}の校外へ</span>
+          <span class="trash-move-label">${escapeHtml(localTrashOwnerLabel(owner))}の校外へ</span>
           <span class="trash-move-name">${escapeHtml(card.name || "カード")}</span>
         </span>
       `;
@@ -13235,6 +13286,7 @@
       const trash = state.players[side].trash;
       const counts = new Map();
       trash.forEach((card) => counts.set(card.name, (counts.get(card.name) || 0) + 1));
+      const ownerTone = localTrashOwnerTone(side);
       container.innerHTML = `<div class="trash-total">合計 ${trash.length}枚</div>`;
       const list = document.createElement("div");
       list.className = "trash-card-list";
@@ -13245,7 +13297,7 @@
           .sort((a, b) => a[0].localeCompare(b[0], "ja"))
           .forEach(([name, count]) => {
             const row = document.createElement("div");
-            row.className = "trash-card-row";
+            row.className = `trash-card-row trash-owner-${ownerTone}`;
             row.innerHTML = `<span>${escapeHtml(name)}</span><span class="trash-card-count">×${count}</span>`;
             list.appendChild(row);
           });
