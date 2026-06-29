@@ -1998,7 +1998,7 @@
       height: 44px;
       border: 2px solid currentColor;
       border-radius: 6px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(226, 232, 240, 0.92));
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), var(--trash-owner-bg, rgba(226, 232, 240, 0.92)));
       transform: rotate(-5deg);
     }
 
@@ -2017,7 +2017,14 @@
     }
 
     .trash-move-name {
-      display: block;
+      display: inline-block;
+      max-width: 100%;
+      margin-top: 2px;
+      border: 1px solid var(--trash-owner-border, #cbd5e1);
+      border-radius: 999px;
+      padding: 2px 8px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--trash-owner-ink, var(--ink));
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -3382,6 +3389,15 @@
       font-weight: 1000;
       text-decoration: none;
       cursor: help;
+    }
+
+    .log-card-link.trash-owner-self,
+    .log-card-link.trash-owner-opponent {
+      border: 1px solid var(--trash-owner-border);
+      border-radius: 999px;
+      padding: 1px 7px;
+      background: var(--trash-owner-bg);
+      color: var(--trash-owner-ink);
     }
 
     .log-card-link:hover,
@@ -6377,15 +6393,18 @@
           "__REMOTE_PLAYER__がカードじゃんけんに勝ちました。先攻か後攻の選択を待っています。"
         );
       return displayed
+        .replaceAll("自分", "__LOCAL_PLAYER__")
         .replaceAll("あなた", "__LOCAL_PLAYER__")
         .replaceAll("相手", "あなた")
         .replaceAll("__REMOTE_PLAYER__", "相手")
-        .replaceAll("__LOCAL_PLAYER__", "相手");
+        .replaceAll("__LOCAL_PLAYER__", "相手")
+        .replaceAll("あなたの校外へ", "自分の校外へ");
     }
 
     function onlineDisplayTextForSpectator(text) {
       return String(text || "")
         .replaceAll("相手AI", "__PLAYER_TWO__")
+        .replaceAll("自分", "プレイヤー1")
         .replaceAll("あなた", "プレイヤー1")
         .replaceAll("相手", "プレイヤー2")
         .replaceAll("__PLAYER_TWO__", "プレイヤー2");
@@ -10811,6 +10830,7 @@
 
     function moveToTrash(owner, card) {
       state.players[owner].trash.push(card);
+      addTrashLog(owner, card);
       announceTrashMove(owner, card);
     }
 
@@ -10820,6 +10840,11 @@
 
     function localTrashOwnerLabel(owner) {
       return owner === "player" ? "自分" : "相手";
+    }
+
+    function addTrashLog(owner, card) {
+      if (!card || state.screen !== "battle") return;
+      addLog(`${localTrashOwnerLabel(owner)}の校外へ：${card.name || "カード"}`);
     }
 
     function announceTrashMove(owner, card) {
@@ -13317,6 +13342,7 @@
     function renderLogMessage(container, message) {
       const text = String(message || "");
       const names = getLogCardNameEntries();
+      const trashTone = logTrashOwnerTone(text);
       let index = 0;
       while (index < text.length) {
         const match = names.find((entry) => text.startsWith(entry.name, index));
@@ -13328,13 +13354,19 @@
         }
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "log-card-link";
+        button.className = `log-card-link${trashTone ? ` trash-owner-${trashTone}` : ""}`;
         button.textContent = match.name;
         button.setAttribute("aria-label", `${match.name}の能力を見る`);
         attachCardDetailEvents(button, match.card, { previewOnClick: true });
         container.appendChild(button);
         index += match.name.length;
       }
+    }
+
+    function logTrashOwnerTone(text) {
+      if (/^(自分|あなた|プレイヤー1)の校外へ/.test(text)) return "self";
+      if (/^(相手|プレイヤー2)の校外へ/.test(text)) return "opponent";
+      return "";
     }
 
     function findNextCardNameIndex(text, start, names) {
