@@ -1947,6 +1947,109 @@
       animation: revealToBoard 1.45s ease-in-out forwards;
     }
 
+    .play-reveal-card.donguri-evolution-card {
+      width: min(92vw, 620px);
+      filter: drop-shadow(0 28px 42px rgba(15, 23, 42, 0.38));
+    }
+
+    .donguri-evolution-scene {
+      position: relative;
+      width: min(92vw, 620px);
+      min-height: 380px;
+      display: grid;
+      place-items: center;
+    }
+
+    .donguri-pair {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      animation: donguriPairStage 2.35s ease-in-out forwards;
+    }
+
+    .donguri-card {
+      width: 160px;
+      transform-origin: center;
+    }
+
+    .donguri-card:first-child {
+      animation: donguriLeftCard 2.35s ease-in-out forwards;
+    }
+
+    .donguri-card:last-child {
+      animation: donguriRightCard 2.35s ease-in-out forwards;
+    }
+
+    .donguri-card .card,
+    .donguri-stack-card .card {
+      width: 160px;
+      min-height: 224px;
+      flex-basis: 160px;
+      border-width: 2px;
+      border-radius: 10px;
+    }
+
+    .donguri-card .card-face,
+    .donguri-stack-card .card-face {
+      padding: 28px 11px 32px;
+    }
+
+    .donguri-card .card-name,
+    .donguri-stack-card .card-name {
+      font-size: 17px;
+      line-height: 1.16;
+    }
+
+    .donguri-card .card-effect,
+    .donguri-stack-card .card-effect {
+      font-size: 9px;
+      line-height: 1.25;
+    }
+
+    .donguri-evolution-stack {
+      position: relative;
+      width: 224px;
+      height: 292px;
+      opacity: 0;
+      animation: donguriStackStage 2.35s ease-in-out forwards;
+    }
+
+    .donguri-stack-card {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 160px;
+      transform: translate(-50%, -50%);
+    }
+
+    .donguri-base-card {
+      filter: brightness(0.96) saturate(0.92);
+      animation: donguriBasePulse 2.35s ease-in-out forwards;
+    }
+
+    .donguri-evolved-card {
+      z-index: 2;
+      animation: donguriEvolvedDrop 2.35s cubic-bezier(0.16, 0.84, 0.25, 1) forwards;
+    }
+
+    .donguri-evolution-burst {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 212px;
+      height: 212px;
+      border-radius: 999px;
+      border: 2px solid rgba(252, 211, 77, 0.78);
+      background: radial-gradient(circle, rgba(253, 224, 71, 0.34), rgba(59, 130, 246, 0.04) 58%, transparent 68%);
+      transform: translate(-50%, -50%) scale(0.2);
+      opacity: 0;
+      animation: donguriBurst 2.35s ease-out forwards;
+      pointer-events: none;
+    }
+
     .trash-move-stack {
       position: fixed;
       right: 18px;
@@ -2124,6 +2227,110 @@
       100% {
         opacity: 0;
         transform: translateY(-16vh) scale(0.38) rotate(1deg);
+      }
+    }
+
+    @keyframes donguriPairStage {
+      0% {
+        opacity: 0;
+        transform: translateY(22px) scale(0.82);
+      }
+      14%,
+      46% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      64%,
+      100% {
+        opacity: 0;
+        transform: translateY(44px) scale(0.72);
+      }
+    }
+
+    @keyframes donguriLeftCard {
+      0% {
+        transform: translateX(-18px) rotate(-8deg);
+      }
+      18%,
+      46% {
+        transform: translateX(0) rotate(-5deg);
+      }
+      64%,
+      100% {
+        transform: translateX(72px) translateY(28px) rotate(12deg) scale(0.72);
+      }
+    }
+
+    @keyframes donguriRightCard {
+      0% {
+        transform: translateX(18px) rotate(8deg);
+      }
+      18%,
+      46% {
+        transform: translateX(0) rotate(5deg);
+      }
+      64%,
+      100% {
+        transform: translateX(-72px) translateY(28px) rotate(-12deg) scale(0.72);
+      }
+    }
+
+    @keyframes donguriStackStage {
+      0%,
+      48% {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      58%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes donguriEvolvedDrop {
+      0%,
+      50% {
+        opacity: 0;
+        transform: translate(-50%, -150vh) scale(0.86) rotate(-4deg);
+      }
+      78% {
+        opacity: 1;
+        transform: translate(-50%, -57%) scale(1.04) rotate(1deg);
+      }
+      90%,
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      }
+    }
+
+    @keyframes donguriBasePulse {
+      0%,
+      52% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.92);
+      }
+      60%,
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    @keyframes donguriBurst {
+      0%,
+      72% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+      }
+      82% {
+        opacity: 0.9;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(1.28);
       }
     }
 
@@ -4873,6 +5080,7 @@
     const AI_START_DELAY = 700;
     const AI_STEP_DELAY = 1500;
     const PLAY_REVEAL_MS = 1450;
+    const DONGURI_EVOLUTION_REVEAL_MS = 2350;
     const PREBATTLE_STEP_MS = 950;
     const INITIAL_DEAL_STEP_MS = 430;
     const RPS_LABELS = {
@@ -4950,7 +5158,8 @@
       impossible_high_note: ["cafeteria"],
       destroy_dos_attack: ["dos_attack"],
       college_student_vibe: [],
-      water_2l: ["circle_crab", "hair_crab"]
+      water_2l: ["circle_crab", "hair_crab"],
+      donguri: ["donguri", "demon_a_plus"]
     };
     const ALL_DECK_IDS = [
       "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "hurried_student",
@@ -4965,7 +5174,7 @@
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "quiet_please", "seriously_hit", "chigauyo",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture",
       "paired_existence", "peaceful_mind", "abyss", "dropped_cards", "reversal", "dont_worry", "namen_tenno",
-      "yutakun_yutakun", "three_gestures", "music_detergent", "thanks_all_students", "alpha",
+      "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
       "classroom", "cafeteria", "night_pool", "gangi_fortress", "seat_rules", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur"
     ];
     const CARD_COPY_LIMITS = {
@@ -4981,7 +5190,7 @@
       "dropped_cards", "reversal", "dont_worry", "yutakun_yutakun",
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo", "chigauyo_kanji",
-      "gamma", "substitute_attendance"
+      "gamma", "substitute_attendance", "donguri"
     ];
 
     function isImmediateItemBaseId(baseId) {
@@ -5097,6 +5306,7 @@
       three_gestures: { name: "３つジェスチャー", type: "item", cost: 5, target: "self" },
       substitute_attendance: { name: "代返", type: "item", cost: 3, target: "self" },
       music_detergent: { name: "music洗剤", type: "item", cost: 3, target: "self" },
+      donguri: { name: "どんぐり", type: "item", cost: 0, target: "self" },
       thanks_all_students: { name: "全ての学生に感謝を込めて", type: "item", cost: 6, target: "global" },
       alpha: { name: "アルファ", type: "item", cost: 0, noCost: true, target: "none", unusable: true },
       beta: { name: "ベータ", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
@@ -5121,7 +5331,7 @@
       cote_dazur: { name: "コートダジュール", type: "environment", cost: 8, allowedZones: ["environment"] },
       loud_group: { name: "声がでかい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       ta_killer: { name: "TAキラー", type: "student", cost: 5, attack: 2, hp: 4, allowedZones: ["seat", "teacher"] },
-      dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 6, hp: 6, keywords: ["陽気"], evolutionFrom: "yuta", allowedZones: ["evolution"] },
+      dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, keywords: ["陽気"], evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
 
@@ -6161,6 +6371,10 @@
         showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
         return;
       }
+      if (message.type === "donguriReveal" && (isOnlineGuest() || isOnlineSpectator())) {
+        showDonguriEvolutionAnimation(message.payload || {}, { remote: true });
+        return;
+      }
       if (message.type === "returnRoom" && (isOnlineGuest() || isOnlineSpectator())) {
         onlineReturnToRoom(false);
       }
@@ -6291,6 +6505,7 @@
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
       snapshotState.pendingCopiedCard = null;
+      snapshotState.activeTrashDetailId = null;
       state.online.lastSnapshotSeq += 1;
       return {
         seq: state.online.lastSnapshotSeq,
@@ -7557,6 +7772,7 @@
       if (item.baseId === "dropped_cards") return opponent.deck.length >= 2 ? 2 : 0;
       if (item.baseId === "yutakun_yutakun") return opponent.trash.some((card) => card.baseId === "yuta") ? 6 : 0;
       if (item.baseId === "three_gestures") return opponent.deck.length >= 6 ? 8 : 0;
+      if (item.baseId === "donguri") return canUseDonguri("opponent", item) ? 18 : 0;
       if (item.baseId === "music_detergent") {
         const designCandidates = uniqueDesignDeckCandidates("opponent").length;
         const designTeachers = countFriendlyDesignTeachers("opponent");
@@ -8403,31 +8619,18 @@
         return true;
       }
       const candidates = uniqueDesignDeckCandidates("player");
-      const designTeacherCount = countFriendlyDesignTeachers("player");
-      const choices = [...candidates];
-      if (designTeacherCount > 0) {
-        choices.push({
-          instanceId: "music-detergent-draw-option",
-          baseId: "music_draw_option",
-          name: `ドロー効果（${designTeacherCount}枚）`,
-          type: "item",
-          noCost: true,
-          owner: "player",
-          target: "self"
-        });
-      }
-      if (choices.length === 0) return false;
+      if (candidates.length === 0) return false;
       state.selectedAttacker = null;
       state.selectedHandId = item.instanceId;
       return openCardChoice({
         mode: "music_detergent",
         itemId: item.instanceId,
         title: "music洗剤",
-        message: "使う効果を選んでください。",
-        cards: choices,
+        message: "手札に加える「デザイン」と名のつく教師を選んでください。選んだあと、自分のデザイン教師の人数だけドローします。",
+        cards: candidates,
         min: 1,
         max: 1,
-        confirmLabel: "この効果を使う"
+        confirmLabel: "この教師を選ぶ"
       });
     }
 
@@ -8591,7 +8794,7 @@
     }
 
     function isUtaEquipmentTarget(card) {
-      return card?.baseId === "yuta" || card?.baseId === "dark_yuta";
+      return card?.baseId === "yuta";
     }
 
     function playCard(instanceId, zone, owner, index = null) {
@@ -8756,7 +8959,7 @@
       }) || null;
     }
 
-    function evolveCard(side, card, owner, zone, index) {
+    function evolveCard(side, card, owner, zone, index, options = {}) {
       const target = findEvolveTarget(side, card, owner, zone, index);
       if (!target) return false;
       const previous = getBoardCardFromRef(target);
@@ -8767,16 +8970,9 @@
         : 0;
       if (previous) evolved.hasAttacked = Boolean(previous.hasAttacked);
       if (card.baseId === "dark_yuta" && previous) {
-        const attackBonus = (previous.attack || previous.baseAttack || 0) - (previous.baseAttack || 0);
-        const hpBonus = (previous.maxHp || previous.baseMaxHp || 0) - (previous.baseMaxHp || 0);
-        if (attackBonus || hpBonus) applyPermanentStatBuff(evolved, attackBonus, hpBonus);
-        evolved.keywords = [...new Set([...(evolved.keywords || []), ...(previous.keywords || [])])];
-        evolved.yutaAccelerate = previous.yutaAccelerate;
-        evolved.yutaEquipment = previous.yutaEquipment;
-        evolved.yutaUmbrellaShield = previous.yutaUmbrellaShield;
-        evolved.untargetableUntilTurn = previous.untargetableUntilTurn;
-        evolved.umbrellaUntilTurn = previous.umbrellaUntilTurn;
-        evolved.umbrellaUntilSide = previous.umbrellaUntilSide;
+        if (previous.yutaEquipment && CARD_BASES[previous.yutaEquipment]) {
+          addLog(`${previous.name}についていた${CARD_BASES[previous.yutaEquipment].name}の装備効果は失われました。`);
+        }
       }
       if (inheritedDamage > 0 && evolved.currentHp !== null) {
         evolved.currentHp = Math.max(0, evolved.maxHp - inheritedDamage);
@@ -8787,7 +8983,13 @@
         state.players[side].hand.push(createCardFromBase("yuta", side));
         addLog(`${card.name}の効果：「U太」を1枚手札に生成しました。`);
       } else if (card.baseId === "demon_a_plus") {
-        scheduleDemonFalconHits(side, evolved);
+        const effectDelay = options.effectDelayMs || 0;
+        if (effectDelay > 0) {
+          const effectTurn = state.actionTurn;
+          window.setTimeout(() => scheduleDemonFalconHits(side, evolved, effectTurn), effectDelay);
+        } else {
+          scheduleDemonFalconHits(side, evolved);
+        }
       } else if (card.baseId === "oni_shima_ai") {
         const opponent = oppositeSide(side);
         let affected = 0;
@@ -8804,9 +9006,8 @@
       return true;
     }
 
-    function scheduleDemonFalconHits(side, sourceCard) {
+    function scheduleDemonFalconHits(side, sourceCard, effectTurn = state.actionTurn) {
       const opponent = oppositeSide(side);
-      const effectTurn = state.actionTurn;
       addLog(`${sourceCard.name}の進化時効果：相手の出席者へランダムに1ダメージを10回与えます。`);
       for (let i = 0; i < 10; i += 1) {
         window.setTimeout(() => {
@@ -9430,6 +9631,7 @@
       const seen = new Set();
       return state.players[side].deck.filter((card) => {
         if (!String(card.name || "").includes("デザイン")) return false;
+        if (card.type !== "teacher") return false;
         if (seen.has(card.baseId)) return false;
         seen.add(card.baseId);
         return true;
@@ -9452,19 +9654,18 @@
       showCardPlayAnimation(item, "trash");
       const deck = state.players[side].deck;
       const index = deck.findIndex((card) => card.instanceId === selectedCardKey || card.baseId === selectedCardKey);
-      let resultText = "";
+      let pulled = 0;
       if (index >= 0) {
         const [picked] = deck.splice(index, 1);
         picked.owner = side;
         picked.handTurns = 0;
         state.players[side].hand.push(picked);
         queueAnimation("draw", side, 1);
-        resultText = "デザイン名を持つカード1枚を手札に加えました。";
-      } else {
-        const count = countFriendlyDesignTeachers(side);
-        const drawn = drawUpTo(side, count);
-        resultText = `自分の場のデザイン名を持つ教師の数だけ、${drawn}枚ドローしました。`;
+        pulled = 1;
       }
+      const count = countFriendlyDesignTeachers(side);
+      const drawn = drawUpTo(side, count);
+      const resultText = `「デザイン」と名のつく教師カードを${pulled}枚手札に加え、自分の場の「デザイン」と名のつく教師の人数だけ${drawn}枚ドローしました。`;
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}を使い、${resultText}`);
       clearSelections();
@@ -9750,7 +9951,7 @@
         return false;
       }
       if (["accelerate", "chameleon", "yuta_umbrella", "red_happi"].includes(item.baseId) && !isUtaEquipmentTarget(target)) {
-        addLog(`${item.name}は「U太」または「裏U太」にだけ使えます。`);
+        addLog(`${item.name}は「U太」にだけ使えます。`);
         if (renderAfter) render();
         return false;
       }
@@ -9794,11 +9995,11 @@
         target.yutaEquipment = item.baseId;
       }
       if (item.baseId === "chameleon") {
-        applyPermanentStatBuff(target, 0, 3);
+        applyPermanentStatBuff(target, 0, 2);
         target.yutaEquipment = item.baseId;
       }
       if (item.baseId === "red_happi") {
-        applyPermanentStatBuff(target, 3, 0);
+        applyPermanentStatBuff(target, 2, 0);
         target.yutaEquipment = item.baseId;
       }
       if (item.baseId === "yuta_umbrella") {
@@ -10075,8 +10276,20 @@
         if (renderAfter) render();
         return false;
       }
+      if (item.baseId === "music_detergent"
+        && uniqueDesignDeckCandidates(side).length === 0
+        && countFriendlyDesignTeachers(side) === 0) {
+        addLog("music洗剤は対象になる教師カードも、参照できるデザイン教師もありません。");
+        if (renderAfter) render();
+        return false;
+      }
+      if (item.baseId === "donguri" && !canUseDonguri(side, item)) {
+        addLog("どんぐりは、手札にどんぐり2枚とデザインデストロイファルコンがあり、自分の場に進化可能なデザインファルコンがいる場合にのみ使えます。");
+        if (renderAfter) render();
+        return false;
+      }
       if (!payForItem(side, item)) return false;
-      showCardPlayAnimation(item, "trash");
+      if (item.baseId !== "donguri") showCardPlayAnimation(item, "trash");
       let resultText = "";
       let itemAlreadyMovedToTrash = false;
       if (item.baseId === "onigiri_draw") {
@@ -10173,7 +10386,7 @@
         resultText = `自分のデッキからランダムで${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "reversal") {
-        resultText = restoreRecentBoardCard(side) ? "前の相手ターンに校外へ送られた出席者を元の席に戻しました。" : "戻せる出席者がいませんでした。";
+        resultText = restoreRecentBoardCard(side) ? "前の相手ターンに校外へ送られた出席者を元の席に出席させました。" : "出席させられる出席者がいませんでした。";
       }
       if (item.baseId === "dont_worry") {
         state.players[side].lifeShieldUntilTurn = state.actionTurn + 1;
@@ -10226,16 +10439,23 @@
       }
       if (item.baseId === "music_detergent") {
         const candidates = uniqueDesignDeckCandidates(side);
+        let pulled = 0;
         if (candidates.length > 0) {
           const pickedBaseId = candidates
             .sort((a, b) => (effectiveCardCost(b) || 0) - (effectiveCardCost(a) || 0))[0].baseId;
-          const pulled = pullCardsFromDeck(side, pickedBaseId, 1);
-          resultText = `デッキから「デザイン」と名のつくカードを${pulled}枚手札に加えました。`;
-        } else {
-          const count = countFriendlyDesignTeachers(side);
-          const drawn = drawUpTo(side, count);
-          resultText = `自分の場の「デザイン」と名のつく教師の数だけ、${drawn}枚ドローしました。`;
+          pulled = pullCardsFromDeck(side, pickedBaseId, 1);
         }
+        const count = countFriendlyDesignTeachers(side);
+        const drawn = drawUpTo(side, count);
+        resultText = `「デザイン」と名のつく教師カードを${pulled}枚手札に加え、自分の場の「デザイン」と名のつく教師の人数だけ${drawn}枚ドローしました。`;
+      }
+      if (item.baseId === "donguri") {
+        const evolved = resolveDonguriEvolution(side, item);
+        moveHandCardToTrash(side, item, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
+        itemAlreadyMovedToTrash = true;
+        resultText = evolved
+          ? "どんぐり2枚を使い、手札のデザインデストロイファルコンでデザインファルコンを進化させました。"
+          : "条件を満たせず、不発になりました。";
       }
       if (item.baseId === "chigauyo" || item.baseId === "chigauyo_kanji") {
         state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
@@ -10281,10 +10501,48 @@
       const trashCard = trashIndex >= 0 ? player.trash.splice(trashIndex, 1)[0] : entry.card;
       const restored = makeBoardCard({ ...trashCard, owner: side });
       restored.hasAttacked = false;
-      restored.playedOnTurn = Math.max(0, state.actionTurn - 1);
+      restored.playedOnTurn = state.actionTurn;
+      restored.skipAttendEffectsOnPlacement = true;
       setBoardCard(side, entry.zone, entry.index, restored);
-      addLog(`${SIDES[side]}は逆行で${restored.name}を元のマスへ戻しました。`);
+      addLog(`${SIDES[side]}は逆行で${restored.name}を元のマスへ出席させました。`);
       return true;
+    }
+
+    function findDonguriEvolutionTarget(side) {
+      return findEvolveTarget(side, { evolutionFrom: "bird_a" }, side);
+    }
+
+    function canUseDonguri(side, item = null) {
+      const player = state.players[side];
+      if (!player || state.phase !== "battle" || state.currentSide !== side) return false;
+      const donguriCount = player.hand.filter((card) => card.baseId === "donguri").length;
+      const hasItem = item ? player.hand.some((card) => card.instanceId === item.instanceId) : donguriCount > 0;
+      return hasItem
+        && donguriCount >= 2
+        && player.hand.some((card) => card.baseId === "demon_a_plus")
+        && Boolean(findDonguriEvolutionTarget(side));
+    }
+
+    function resolveDonguriEvolution(side, item) {
+      if (!canUseDonguri(side, item)) return false;
+      const player = state.players[side];
+      const target = findDonguriEvolutionTarget(side);
+      const extraDonguri = player.hand.find((card) => card.baseId === "donguri" && card.instanceId !== item.instanceId);
+      const evolutionCard = player.hand.find((card) => card.baseId === "demon_a_plus");
+      if (!target || !extraDonguri || !evolutionCard) return false;
+      const targetCard = getBoardCardFromRef(target);
+      showDonguriEvolutionAnimation({
+        owner: side,
+        donguriCards: [item, extraDonguri],
+        targetCard,
+        evolutionCard
+      });
+      player.hand = player.hand.filter((card) =>
+        card.instanceId !== extraDonguri.instanceId
+        && card.instanceId !== evolutionCard.instanceId
+      );
+      moveToTrash(side, extraDonguri, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
+      return evolveCard(side, evolutionCard, side, target.zone, target.index, { effectDelayMs: 1650 });
     }
 
     function pickCardsFromDeckAndTrash(side, maxCount) {
@@ -10426,9 +10684,9 @@
       return true;
     }
 
-    function moveHandCardToTrash(side, card) {
+    function moveHandCardToTrash(side, card, options = {}) {
       state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== card.instanceId);
-      moveToTrash(side, card);
+      moveToTrash(side, card, options);
     }
 
     function fuseRulersForSide(side, renderAfter = true) {
@@ -10824,6 +11082,58 @@
     function cardRevealPayload(card) {
       if (!card) return null;
       return JSON.parse(JSON.stringify(card));
+    }
+
+    function revealCardFromBase(baseId, owner = "player") {
+      const base = CARD_BASES[baseId];
+      if (!base) return null;
+      return {
+        ...base,
+        baseId,
+        owner,
+        maxHp: base.hp ?? null,
+        currentHp: base.hp ?? null,
+        instanceId: `reveal-${owner}-${baseId}`
+      };
+    }
+
+    function showDonguriEvolutionAnimation(payload = {}, options = {}) {
+      if (!elements.playRevealOverlay || !elements.playRevealCard) return;
+      window.clearTimeout(playRevealTimer);
+      const donguriCards = (payload.donguriCards || []).filter(Boolean);
+      const firstDonguri = donguriCards[0] || revealCardFromBase("donguri", payload.owner || "player");
+      const secondDonguri = donguriCards[1] || revealCardFromBase("donguri", payload.owner || "player");
+      const targetCard = payload.targetCard || revealCardFromBase("bird_a", payload.owner || "player");
+      const evolutionCard = payload.evolutionCard || revealCardFromBase("demon_a_plus", payload.owner || "player");
+      if (!firstDonguri || !secondDonguri || !targetCard || !evolutionCard) return;
+      elements.playRevealCard.className = "play-reveal-card donguri-evolution-card";
+      elements.playRevealCard.innerHTML = `
+        <div class="donguri-evolution-scene">
+          <div class="donguri-pair">
+            <div class="donguri-card">${cardShellTemplate(firstDonguri)}</div>
+            <div class="donguri-card">${cardShellTemplate(secondDonguri)}</div>
+          </div>
+          <div class="donguri-evolution-stack">
+            <div class="donguri-evolution-burst"></div>
+            <div class="donguri-stack-card donguri-base-card">${cardShellTemplate(targetCard)}</div>
+            <div class="donguri-stack-card donguri-evolved-card">${cardShellTemplate(evolutionCard)}</div>
+          </div>
+        </div>
+      `;
+      elements.playRevealOverlay.classList.remove("hidden");
+      void elements.playRevealCard.offsetWidth;
+      if (!options.remote && isOnlineHost() && state.online.started && state.online.connected) {
+        onlineSend({
+          type: "donguriReveal",
+          payload: {
+            owner: payload.owner || "player",
+            donguriCards: [cardRevealPayload(firstDonguri), cardRevealPayload(secondDonguri)],
+            targetCard: cardRevealPayload(targetCard),
+            evolutionCard: cardRevealPayload(evolutionCard)
+          }
+        });
+      }
+      playRevealTimer = window.setTimeout(hidePlayReveal, DONGURI_EVOLUTION_REVEAL_MS);
     }
 
     function showCardPlayAnimation(card, destination, options = {}) {
@@ -11435,6 +11745,7 @@
       if (item.baseId === "yutakun_yutakun" && !state.players.player.trash.some((card) => card.baseId === "yuta")) return false;
       if (item.baseId === "three_gestures" && state.players.player.deck.length < 6) return false;
       if (item.baseId === "music_detergent" && uniqueDesignDeckCandidates("player").length === 0 && countFriendlyDesignTeachers("player") === 0) return false;
+      if (item.baseId === "donguri") return canUseDonguri("player", item);
       if (item.baseId === "gamma" && state.players.opponent.board.seats[4]) return false;
       if (isImmediateItemBaseId(item.baseId)) return true;
       if (item.target === "global") return true;
@@ -13027,6 +13338,11 @@
         designTeacher.playedOnTurn = 0;
         player.board.teacher = designTeacher;
       }
+      if (baseId === "donguri") {
+        const falcon = makeBoardCard(createCardFromBase("bird_a", "player"));
+        falcon.playedOnTurn = 0;
+        player.board.teacher = falcon;
+      }
       if (baseId === "substitute_attendance") {
         player.late.push({
           card: createCardFromBase("lazy_student", "player"),
@@ -13488,7 +13804,7 @@
         vampire: "陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。",
         zombie: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を「ゾンビ」にする。ヴァンパイアにはこの効果は発動しない。",
         impossible_high_note: "このカードが出席したとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
-        dark_yuta: "進化：「U太」。出席したとき「U太」1枚を手札に生成する。",
+        dark_yuta: "進化：「U太」。陽気を持つ。進化したとき、「U太」1枚を手札に生成する。進化元の「U太」についている装備カードは校外エリアへ送る。このカードには装備カードをつけられない。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に3ダメージを与える。",
         acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
@@ -13510,10 +13826,10 @@
         fluid_pasta: "自分の気力を3回復する。",
         water_2l: "自分の校外エリアから、カニ勝利に必要なカードを2枚まで手札に回収する。",
         i_got_it: "相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。",
-        accelerate: "装備カード。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の場にいるならカードを1枚ドローする。装備カードは1人につき1枚まで。",
-        chameleon: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は体力+3する。装備カードは1人につき1枚まで。",
-        yuta_umbrella: "装備カード。「U太」または「裏U太」1人に装備できる。次の相手ターン終了時まで、このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは1人につき1枚まで。",
-        red_happi: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者は攻撃力+3する。装備カードは1人につき1枚まで。",
+        accelerate: "装備カード。「U太」1人に装備できる。自分のターン終了時、このカードを装備している「U太」が自分の場にいるならカードを1枚ドローする。装備カードは1人につき1枚まで。",
+        chameleon: "装備カード。「U太」1人に装備できる。このカードを装備している「U太」は体力+2する。装備カードは1人につき1枚まで。",
+        yuta_umbrella: "装備カード。「U太」1人に装備できる。次の相手ターン終了時まで、このカードを装備している「U太」は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは1人につき1枚まで。",
+        red_happi: "装備カード。「U太」1人に装備できる。このカードを装備している「U太」は攻撃力+2する。装備カードは1人につき1枚まで。",
         circle_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         hair_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         homeless_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
@@ -13528,7 +13844,7 @@
         peaceful_mind: "お互いの気力を3回復する。",
         abyss: "使用後2回、自分のターン終了時に相手の出席者1人をランダムに破壊する。",
         dropped_cards: "自分のデッキからランダムで2枚を校外エリアへ送る。",
-        reversal: "前の相手ターンに校外エリアへ送られた自分の出席者1人を、元のマスが空いていれば戻す。出席時効果は発動しない。",
+        reversal: "前の相手ターンに校外エリアへ送られた自分の出席者1人を、元のマスが空いていれば出席させる。出席時効果は発動しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。",
         panpan: "相手の出席者1人を指名する。自分の出席者1人と、その相手の出席者を破壊する。",
@@ -13536,8 +13852,9 @@
         yutakun_yutakun: "校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。",
         three_gestures: "デッキを上から6枚見る。そのうち3枚を選び、手札に加える。他のカードは校外エリアへ送る。デッキが6枚未満の場合は使えない。",
         substitute_attendance: "遅刻ゾーンにいるカード1枚をランダムに指名し、そのカードの遅刻カウントを0にする。",
-        music_detergent: "次の2つから1つを選ぶ。1. 自分のデッキから「デザイン」と名のつくカードを1種類ずつ表示し、その中から1枚を選び、手札に加える。2. 自分の場にいる「デザイン」と名のつく教師の数だけカードを引く。",
-        music_draw_option: "自分の場にいる「デザイン」と名のつく教師の数だけカードを引く。",
+        music_detergent: "自分のデッキから「デザイン」と名のつく教師カードを1種類ずつ表示し、その中から1枚を選び、手札に加える。その後、自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
+        music_draw_option: "自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
+        donguri: "このカードは、自分の手札に「どんぐり」が2枚あり、さらに「デザインデストロイファルコン」がある場合にのみ使える。自分の手札から「デザインデストロイファルコン」1枚を選び、自分の場の「デザインファルコン」1人を進化させる。この効果で進化する場合、進化のための戦意は消費しない。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
         alpha: "このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。",
         beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。",
