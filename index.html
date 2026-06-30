@@ -92,7 +92,7 @@
 
     .home-actions {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(4, minmax(0, 1fr));
       gap: 18px;
     }
 
@@ -106,6 +106,23 @@
       box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
       text-align: left;
       transition: transform 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .home-button.featured {
+      grid-column: span 2;
+      min-height: 168px;
+    }
+
+    .home-button.under-online {
+      grid-column: span 1;
+    }
+
+    .home-button.under-online-start {
+      grid-column: 3;
+    }
+
+    .home-button.under-online-end {
+      grid-column: 4;
     }
 
     .home-button:hover:not(:disabled) {
@@ -136,6 +153,144 @@
     .home-button.online {
       background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%);
       border-color: #0e7490;
+    }
+
+    .tutorial-screen {
+      display: grid;
+      gap: 14px;
+      align-content: start;
+      padding: 8px 0 16px;
+    }
+
+    .tutorial-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 340px);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .tutorial-steps {
+      display: grid;
+      gap: 10px;
+    }
+
+    .tutorial-step {
+      border: 2px solid #1f2937;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+      box-shadow: 0 8px 0 rgba(15, 23, 42, 0.08);
+    }
+
+    .tutorial-step h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .tutorial-step p {
+      margin: 0;
+      color: #475569;
+      font-size: 13px;
+      line-height: 1.7;
+      font-weight: 800;
+    }
+
+    .tutorial-card-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .tutorial-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 88;
+      pointer-events: none;
+    }
+
+    .tutorial-dim {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    .tutorial-spotlight {
+      position: absolute;
+      border: 3px solid #facc15;
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 9999px rgba(15, 23, 42, 0.52),
+        0 0 28px rgba(250, 204, 21, 0.95);
+      transition: left 0.18s ease, top 0.18s ease, width 0.18s ease, height 0.18s ease;
+      pointer-events: none;
+    }
+
+    .tutorial-coach {
+      position: absolute;
+      left: 50%;
+      bottom: 22px;
+      width: min(92vw, 560px);
+      transform: translateX(-50%);
+      border: 2px solid #1f2937;
+      border-radius: 10px;
+      padding: 16px;
+      background: #ffffff;
+      color: #172033;
+      box-shadow: 0 24px 54px rgba(15, 23, 42, 0.34);
+      pointer-events: auto;
+    }
+
+    .tutorial-coach h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+
+    .tutorial-coach p {
+      margin: 0;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 850;
+      line-height: 1.65;
+      white-space: pre-line;
+    }
+
+    .tutorial-coach-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .tutorial-exit-button {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 2;
+      pointer-events: auto;
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.22);
+    }
+
+    .tutorial-step-counter {
+      position: absolute;
+      right: 14px;
+      top: 12px;
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .tutorial-allowed-card,
+    .tutorial-allowed-target {
+      outline: 3px solid #facc15;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 5px rgba(250, 204, 21, 0.2), 0 0 28px rgba(250, 204, 21, 0.65);
+    }
+
+    .tutorial-muted-card {
+      opacity: 0.38;
+      filter: grayscale(0.4);
     }
 
     .online-screen {
@@ -1801,6 +1956,17 @@
       animation: turnFade 1.65s ease-out forwards;
     }
 
+    .turn-overlay.tutorial-title {
+      z-index: 130;
+      min-width: min(86vw, 520px);
+      padding: 24px 34px;
+      border-color: #2457d6;
+      background: linear-gradient(135deg, #ffffff 0%, #dbeafe 100%);
+      color: #122033;
+      text-align: center;
+      font-size: 36px;
+    }
+
     @keyframes turnFade {
       0% {
         opacity: 0;
@@ -1837,6 +2003,26 @@
     .result-label {
       display: block;
       margin-bottom: 14px;
+    }
+
+    .lo-result {
+      display: inline-flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 14px;
+      font-weight: 1000;
+      letter-spacing: 0;
+    }
+
+    .lo-result .lo-small {
+      font-size: 0.42em;
+      line-height: 1;
+    }
+
+    .lo-result .lo-big {
+      font-size: 1.08em;
+      line-height: 0.9;
     }
 
     .result-actions {
@@ -1948,6 +2134,7 @@
     }
 
     .play-reveal-card.donguri-evolution-card {
+      --donguri-evolution-duration: 3.8s;
       width: min(92vw, 620px);
       filter: drop-shadow(0 28px 42px rgba(15, 23, 42, 0.38));
     }
@@ -1955,7 +2142,7 @@
     .donguri-evolution-scene {
       position: relative;
       width: min(92vw, 620px);
-      min-height: 380px;
+      min-height: 430px;
       display: grid;
       place-items: center;
     }
@@ -1966,87 +2153,87 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 22px;
-      animation: donguriPairStage 2.35s ease-in-out forwards;
+      gap: 24px;
+      animation: donguriPairStage var(--donguri-evolution-duration) ease-in-out forwards;
     }
 
     .donguri-card {
-      width: 160px;
+      width: 190px;
       transform-origin: center;
     }
 
     .donguri-card:first-child {
-      animation: donguriLeftCard 2.35s ease-in-out forwards;
+      animation: donguriLeftCard var(--donguri-evolution-duration) ease-in-out forwards;
     }
 
     .donguri-card:last-child {
-      animation: donguriRightCard 2.35s ease-in-out forwards;
+      animation: donguriRightCard var(--donguri-evolution-duration) ease-in-out forwards;
     }
 
     .donguri-card .card,
     .donguri-stack-card .card {
-      width: 160px;
-      min-height: 224px;
-      flex-basis: 160px;
+      width: 190px;
+      min-height: 264px;
+      flex-basis: 190px;
       border-width: 2px;
       border-radius: 10px;
     }
 
     .donguri-card .card-face,
     .donguri-stack-card .card-face {
-      padding: 28px 11px 32px;
+      padding: 34px 13px 36px;
     }
 
     .donguri-card .card-name,
     .donguri-stack-card .card-name {
-      font-size: 17px;
+      font-size: 19px;
       line-height: 1.16;
     }
 
     .donguri-card .card-effect,
     .donguri-stack-card .card-effect {
-      font-size: 9px;
+      font-size: 10px;
       line-height: 1.25;
     }
 
     .donguri-evolution-stack {
       position: relative;
-      width: 224px;
-      height: 292px;
+      width: 254px;
+      height: 332px;
       opacity: 0;
-      animation: donguriStackStage 2.35s ease-in-out forwards;
+      animation: donguriStackStage var(--donguri-evolution-duration) ease-in-out forwards;
     }
 
     .donguri-stack-card {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 160px;
+      width: 190px;
       transform: translate(-50%, -50%);
     }
 
     .donguri-base-card {
       filter: brightness(0.96) saturate(0.92);
-      animation: donguriBasePulse 2.35s ease-in-out forwards;
+      animation: donguriBasePulse var(--donguri-evolution-duration) ease-in-out forwards;
     }
 
     .donguri-evolved-card {
       z-index: 2;
-      animation: donguriEvolvedDrop 2.35s cubic-bezier(0.16, 0.84, 0.25, 1) forwards;
+      animation: donguriEvolvedDrop var(--donguri-evolution-duration) cubic-bezier(0.16, 0.84, 0.25, 1) forwards;
     }
 
     .donguri-evolution-burst {
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 212px;
-      height: 212px;
+      width: 242px;
+      height: 242px;
       border-radius: 999px;
       border: 2px solid rgba(252, 211, 77, 0.78);
       background: radial-gradient(circle, rgba(253, 224, 71, 0.34), rgba(59, 130, 246, 0.04) 58%, transparent 68%);
       transform: translate(-50%, -50%) scale(0.2);
       opacity: 0;
-      animation: donguriBurst 2.35s ease-out forwards;
+      animation: donguriBurst var(--donguri-evolution-duration) ease-out forwards;
       pointer-events: none;
     }
 
@@ -4118,9 +4305,27 @@
         gap: 10px;
       }
 
+      .home-button.featured {
+        grid-column: span 1;
+      }
+
+      .home-button.under-online-start,
+      .home-button.under-online-end {
+        grid-column: span 1;
+      }
+
       .home-button {
         min-height: 96px;
         padding: 16px;
+      }
+
+      .tutorial-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .tutorial-card-stack {
+        grid-template-columns: repeat(4, minmax(84px, 1fr));
+        overflow-x: auto;
       }
 
       .home-button-main {
@@ -4684,17 +4889,21 @@
         <p>デジタルカードゲーム プロトタイプ</p>
       </div>
       <div class="home-actions">
-        <button class="home-button" id="homeDeckButton" type="button">
+        <button class="home-button featured" id="homeDeckButton" type="button">
           <span class="home-button-main">デッキ変更</span>
           <span class="home-button-sub">自分とAIのデッキを作る</span>
         </button>
-        <button class="home-button online" id="homeBattleButton" type="button">
+        <button class="home-button online featured" id="homeBattleButton" type="button">
           <span class="home-button-main">オンラインバトル</span>
           <span class="home-button-sub">部屋を作る・入る</span>
         </button>
-        <button class="home-button" id="homeSoloButton" type="button">
+        <button class="home-button under-online under-online-start" id="homeSoloButton" type="button">
           <span class="home-button-main">ソロバトル</span>
           <span class="home-button-sub">VS AIで試す</span>
+        </button>
+        <button class="home-button under-online under-online-end" id="homeTutorialButton" type="button">
+          <span class="home-button-main">チュートリアル</span>
+          <span class="home-button-sub">基本操作を試す</span>
         </button>
       </div>
     </section>
@@ -4768,6 +4977,40 @@
             </div>
           </div>
           <p class="online-help">対戦サーバーが部屋と最新のゲーム状態を保持します。3人目以降は観戦者になり、対戦操作はできません。</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="screen tutorial-screen hidden" id="tutorialScreen">
+      <div class="screen-head">
+        <div>
+          <h1>チュートリアル</h1>
+          <p class="subtitle">カードの見方、出席、攻撃、持ち物の基本を確認できます</p>
+        </div>
+        <button class="button secondary" id="tutorialBackHomeButton" type="button">ホーム</button>
+      </div>
+      <div class="tutorial-layout">
+        <div class="tutorial-steps">
+          <section class="tutorial-step">
+            <h2>カードの見方</h2>
+            <p>左上が必要戦意、左下が攻撃力、右下が体力です。学生・教師・ヴァンパイアは席マスか教卓マスに出席します。</p>
+          </section>
+          <section class="tutorial-step">
+            <h2>ターンの流れ</h2>
+            <p>ターン開始時に戦意が増えて全回復し、カードを1枚引きます。手札を使い、攻撃したらターン終了です。</p>
+          </section>
+          <section class="tutorial-step">
+            <h2>攻撃と持ち物</h2>
+            <p>出席者は相手本体か相手の出席者を攻撃できます。持ち物は確認後に使い、効果処理後に校外エリアへ送ります。</p>
+          </section>
+        </div>
+        <section class="panel">
+          <div class="panel-head">
+            <h2>体験セット</h2>
+            <span class="small-info">戦意10</span>
+          </div>
+          <div class="tutorial-card-stack" id="tutorialCardPreview"></div>
+          <button class="button" id="tutorialStartButton" type="button">体験バトルを始める</button>
         </section>
       </div>
     </section>
@@ -5003,10 +5246,23 @@
       </aside>
     </section>
     <div class="player-combat-hud" id="playerCombatHud">
-      <span class="hud-pill">気力 <span id="playerLifeHud">20</span></span>
-      <span class="hud-pill will">戦意 <span id="playerWillHud">0/0</span></span>
+      <span class="hud-pill" id="playerLifeHudPill">気力 <span id="playerLifeHud">20</span></span>
+      <span class="hud-pill will" id="playerWillHudPill">戦意 <span id="playerWillHud">0/0</span></span>
     </div>
     <div class="turn-overlay" id="turnOverlay" aria-live="polite"></div>
+    <div class="tutorial-layer hidden" id="tutorialLayer" aria-live="polite">
+      <div class="tutorial-dim"></div>
+      <div class="tutorial-spotlight" id="tutorialSpotlight"></div>
+      <button class="button secondary tutorial-exit-button" id="tutorialExitButton" type="button">終了</button>
+      <section class="tutorial-coach" id="tutorialCoach">
+        <span class="tutorial-step-counter" id="tutorialStepCounter"></span>
+        <h2 id="tutorialCoachTitle">チュートリアル</h2>
+        <p id="tutorialCoachText"></p>
+        <div class="tutorial-coach-actions">
+          <button class="button" id="tutorialNextButton" type="button">次へ</button>
+        </div>
+      </section>
+    </div>
     <div class="result-overlay hidden" id="resultOverlay" aria-live="assertive"></div>
     <div class="play-reveal-overlay hidden" id="playRevealOverlay" aria-hidden="true">
       <div class="play-reveal-card" id="playRevealCard"></div>
@@ -5080,7 +5336,7 @@
     const AI_START_DELAY = 700;
     const AI_STEP_DELAY = 1500;
     const PLAY_REVEAL_MS = 1450;
-    const DONGURI_EVOLUTION_REVEAL_MS = 2350;
+    const DONGURI_EVOLUTION_REVEAL_MS = 3800;
     const PREBATTLE_STEP_MS = 950;
     const INITIAL_DEAL_STEP_MS = 430;
     const RPS_LABELS = {
@@ -5159,6 +5415,9 @@
       destroy_dos_attack: ["dos_attack"],
       college_student_vibe: [],
       water_2l: ["circle_crab", "hair_crab"],
+      music_detergent: ["bird_a", "popular_c"],
+      thin_item: ["general_student", "ruler", "bento", "classroom", "cafeteria"],
+      night_pool_water: ["single_cell"],
       donguri: ["donguri", "demon_a_plus"]
     };
     const ALL_DECK_IDS = [
@@ -5169,7 +5428,7 @@
       "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
       "cafeteria_lady", "curry_treater", "chen_san", "tissue_distributor", "impossible_high_note", "vampire", "zombie",
-      "ruler", "bento", "yakiniku", "environment_setup", "fluid_pasta", "water_2l", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
+      "ruler", "bento", "yakiniku", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
       "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi",
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "quiet_please", "seriously_hit", "chigauyo",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture",
@@ -5190,7 +5449,7 @@
       "dropped_cards", "reversal", "dont_worry", "yutakun_yutakun",
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo", "chigauyo_kanji",
-      "gamma", "substitute_attendance", "donguri"
+      "gamma", "substitute_attendance", "night_pool_water", "donguri"
     ];
 
     function isImmediateItemBaseId(baseId) {
@@ -5245,7 +5504,7 @@
       kyoto_sound_i: { name: "ネガティブトーカー", type: "teacher", cost: 7, attack: 3, hp: 3, allowedZones: ["teacher"] },
       kyushu_info_c: { name: "論文マスター", type: "teacher", cost: 5, attack: 4, hp: 4, allowedZones: ["teacher"] },
       signal_professor_m: { name: "スタディアブローダー", type: "teacher", cost: 6, attack: 2, hp: 4, allowedZones: ["teacher", "seat"] },
-      logic_hunter: { name: "ロジックハンター", type: "teacher", cost: 6, attack: 1, hp: 3, allowedZones: ["teacher"] },
+      logic_hunter: { name: "ロジックハンター", type: "teacher", cost: 5, attack: 1, hp: 3, allowedZones: ["teacher"] },
       president: { name: "学長", type: "teacher", cost: 10, attack: 3, hp: 3, allowedZones: ["teacher", "seat"] },
       suzaku: { name: "朱雀", type: "teacher", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
       ai_chan: { name: "愛ちゃん", type: "teacher", cost: 4, attack: 2, hp: 3, allowedZones: ["teacher", "seat"] },
@@ -5278,6 +5537,7 @@
       dry_meal_ticket: { name: "乾いた食券", type: "item", cost: 1, target: "self", generated: true },
       fluid_pasta: { name: "流動性パスタ", type: "item", cost: 1, target: "self" },
       water_2l: { name: "水2L", type: "item", cost: 4, target: "self" },
+      night_pool_water: { name: "ナイトプール水", type: "item", cost: 4, target: "self" },
       i_got_it: { name: "I GOT IT!!", type: "item", cost: 3, target: "enemyMulti" },
       accelerate: { name: "アクセラレート", type: "item", cost: 1, target: "friendlyAny" },
       chameleon: { name: "カメレオン", type: "item", cost: 1, target: "friendlyAny" },
@@ -5287,7 +5547,7 @@
       hair_crab: { name: "毛蟹", type: "item", cost: 4, target: "self" },
       homeless_crab: { name: "どこにも居場所がないカニ", type: "item", cost: 4, target: "self" },
       quiet_please: { name: "静かにしましょうね？", type: "item", cost: 4, target: "enemy" },
-      seriously_hit: { name: "ガチでしばくぞ", type: "item", cost: 4, target: "enemy" },
+      seriously_hit: { name: "ガチでしばくぞ", type: "item", cost: 5, target: "enemy" },
       chigauyo: { name: "ちがうよ", type: "item", cost: 3, target: "self" },
       chigauyo_kanji: { name: "違うよ", type: "item", cost: 1, target: "self" },
       favorite_number_s: { name: "好きな数字は「S」", type: "item", cost: 5, target: "enemy" },
@@ -5329,7 +5589,7 @@
       dorm_council: { name: "寮友会", type: "environment", cost: 3, allowedZones: ["environment"] },
       on_demand_business: { name: "オンデマンド授業", type: "environment", cost: 3, allowedZones: ["environment"] },
       cote_dazur: { name: "コートダジュール", type: "environment", cost: 8, allowedZones: ["environment"] },
-      loud_group: { name: "声がでかい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
+      loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       ta_killer: { name: "TAキラー", type: "student", cost: 5, attack: 2, hp: 4, allowedZones: ["seat", "teacher"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, keywords: ["陽気"], evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
@@ -5443,6 +5703,7 @@
       pendingHandDiscardItem: null,
       pendingThreeGestures: null,
       pendingCardChoice: null,
+      pendingRemoteHandTrim: null,
       pendingTestCardId: null,
       pendingCopiedCard: null,
       environment: null,
@@ -5458,6 +5719,11 @@
       aiThinking: false,
       testMode: false,
       testCardBaseId: null,
+      tutorial: {
+        active: false,
+        stepIndex: 0,
+        intro: false
+      },
       message: "",
       log: [],
       deckBuilder: {
@@ -5510,14 +5776,167 @@
       players: { player: createPlayerState(), opponent: createPlayerState() }
     };
 
+    const TUTORIAL_STEPS = [
+      {
+        id: "basicWin",
+        title: "基本編：勝利条件",
+        body: "相手の気力を0にすると勝利です。\n20ターンで決着しない場合は、気力が多い方が勝ちます。山札から引けないと敗北です。",
+        focus: "#opponentLifeTarget"
+      },
+      {
+        id: "basicLife",
+        title: "基本編：気力",
+        body: "気力はプレイヤー本体の体力です。\n自分の気力はここに表示されます。相手の気力を減らして勝ちを目指します。",
+        focus: "#playerLifeHudPill"
+      },
+      {
+        id: "basicWill",
+        title: "基本編：戦意",
+        body: "戦意はカードを使うためのコストです。\nターン開始時に最大値が1増え、全回復します。最大値は10です。",
+        focus: "#playerWillHudPill"
+      },
+      {
+        id: "basicStats",
+        title: "基本編：カードの数字",
+        body: "カード左上が必要戦意、左下が攻撃力、右下が体力です。\n場に出ているカードは「出席者」と呼びます。",
+        focus: ".player-hand [data-base-id='general_student']"
+      },
+      {
+        id: "studentIntro",
+        title: "学生編：学生の特徴",
+        body: "学生は主に席マスへ出席するタイプです。\n席の位置で強くなるカードもあります。出したターンは、基本的に攻撃できません。",
+        focus: ".player-hand [data-base-id='general_student']"
+      },
+      {
+        id: "studentPlay",
+        title: "学生編：出席",
+        body: "「一般学生」だけを使えます。\n一般学生をクリックして、自分の中央の席マスに出席させてください。",
+        action: "playCard",
+        allowedBaseId: "general_student",
+        focus: ".player-hand [data-base-id='general_student']",
+        target: { owner: "player", zone: "seat", index: 4 }
+      },
+      {
+        id: "teacherIntro",
+        title: "教師編：教師の特徴",
+        body: "教師は教卓マスで力を発揮するタイプです。\n席マスに置ける教師もいますが、教卓マスにいないと発動しない効果があります。",
+        focus: ".player-hand [data-base-id='general_teacher']"
+      },
+      {
+        id: "teacherPlay",
+        title: "教師編：出席",
+        body: "「一般教師」だけを使えます。\n一般教師を教卓マスへ出席させてください。",
+        action: "playCard",
+        allowedBaseId: "general_teacher",
+        focus: ".player-hand [data-base-id='general_teacher']",
+        target: { owner: "player", zone: "teacher", index: null }
+      },
+      {
+        id: "teacherLecture",
+        title: "教師編：講義",
+        body: "講義は、教卓マスにいる教師が自分のターン終了時に行う効果です。\n一般教師の講義は、相手の学生すべてに1ダメージを与えます。",
+        focus: "#playerProfessorLane .board-card"
+      },
+      {
+        id: "cheerfulAttack",
+        title: "陽気/超陽気編：陽気",
+        body: "陽気を持つ出席者は、出したターンでも相手の出席者を攻撃できます。\n「あえー学生」は注目を持つので、先に処理します。一般教師で攻撃してください。",
+        action: "attackCard",
+        attackerBaseId: "general_teacher",
+        targetBaseId: "ae_student",
+        focus: "#playerProfessorLane .board-card"
+      },
+      {
+        id: "itemIntro",
+        title: "持ち物編：持ち物の特徴",
+        body: "持ち物は手札から使うタイプです。\n効果を発動したあと、校外エリアへ送られます。誤タップ防止の確認が出ます。",
+        focus: ".player-hand [data-base-id='ruler']"
+      },
+      {
+        id: "itemRuler",
+        title: "持ち物編：定規",
+        body: "「定規」だけを使えます。\n確認が出たら「使う」を押し、相手本体を指名してください。",
+        action: "itemLife",
+        allowedBaseId: "ruler",
+        targetSide: "opponent",
+        focus: ".player-hand [data-base-id='ruler']"
+      },
+      {
+        id: "environmentIntro",
+        title: "環境編：環境の特徴",
+        body: "環境は共有の環境マスに置くタイプです。\n場全体に影響し、別の環境で上書きできます。同名での上書きは原則できません。",
+        focus: ".player-hand [data-base-id='cafeteria']"
+      },
+      {
+        id: "environmentPlay",
+        title: "環境編：食堂",
+        body: "「食堂」だけを使えます。\n環境マスに置いてください。食堂はターン終了時に気力を1回復します。",
+        action: "playCard",
+        allowedBaseId: "cafeteria",
+        focus: ".player-hand [data-base-id='cafeteria']",
+        target: { owner: null, zone: "environment", index: null }
+      },
+      {
+        id: "vampireIntro",
+        title: "ヴァンパイア編：ヴァンパイアの特徴",
+        body: "ヴァンパイアは、攻撃で与えたダメージ分だけ体力を回復するタイプです。\nただし「デザイン」と名のつく教師やダブルダイヤモンドクロスには弱いです。",
+        focus: ".player-hand [data-base-id='vampire']"
+      },
+      {
+        id: "vampirePlay",
+        title: "ヴァンパイア編：出席",
+        body: "「CITヴァンパイア」だけを使えます。\n自分の左上の席マスに出席させてください。説明用に少しダメージを受けた状態にします。",
+        action: "playCard",
+        allowedBaseId: "vampire",
+        focus: ".player-hand [data-base-id='vampire']",
+        target: { owner: "player", zone: "seat", index: 0 }
+      },
+      {
+        id: "superCheerfulAttack",
+        title: "陽気/超陽気編：超陽気",
+        body: "超陽気なら、出したターンでも相手本体を攻撃できます。\nCITヴァンパイアを攻撃役に選び、相手本体を攻撃してください。吸血で回復します。",
+        action: "attackLife",
+        attackerBaseId: "vampire",
+        targetSide: "opponent",
+        focus: ".player-board [data-base-id='vampire']"
+      },
+      {
+        id: "yoyuIntro",
+        title: "余裕編：余裕の特徴",
+        body: "余裕は、自分のターン終了時に体力を2回復するキーワードです。\n次にU太を出して、ターン終了時の回復を確認します。",
+        focus: ".player-hand [data-base-id='yuta']"
+      },
+      {
+        id: "yutaPlay",
+        title: "余裕編：U太",
+        body: "「U太」だけを使えます。\n自分の右下の席マスに出席させてください。説明用に少しダメージを受けた状態にします。",
+        action: "playCard",
+        allowedBaseId: "yuta",
+        focus: ".player-hand [data-base-id='yuta']",
+        target: { owner: "player", zone: "seat", index: 8 }
+      },
+      {
+        id: "endTurn",
+        title: "ターン終了編：自動効果",
+        body: "ターン終了を押してください。\n一般教師の講義、食堂の回復、U太の余裕がまとめて処理されます。",
+        action: "endTurn",
+        focus: "#endTurnButton"
+      }
+    ];
+
     const elements = {
       homeScreen: document.getElementById("homeScreen"),
       onlineScreen: document.getElementById("onlineScreen"),
+      tutorialScreen: document.getElementById("tutorialScreen"),
       deckScreen: document.getElementById("deckScreen"),
       battleScreen: document.getElementById("battleScreen"),
       spectatorBanner: document.getElementById("spectatorBanner"),
       homeDeckButton: document.getElementById("homeDeckButton"),
       homeBattleButton: document.getElementById("homeBattleButton"),
+      homeTutorialButton: document.getElementById("homeTutorialButton"),
+      tutorialBackHomeButton: document.getElementById("tutorialBackHomeButton"),
+      tutorialStartButton: document.getElementById("tutorialStartButton"),
+      tutorialCardPreview: document.getElementById("tutorialCardPreview"),
       onlineBackHomeButton: document.getElementById("onlineBackHomeButton"),
       onlineCreateRoomButton: document.getElementById("onlineCreateRoomButton"),
       onlineJoinRoomButton: document.getElementById("onlineJoinRoomButton"),
@@ -5553,8 +5972,18 @@
       willText: document.getElementById("willText"),
       playerLifeHud: document.getElementById("playerLifeHud"),
       playerWillHud: document.getElementById("playerWillHud"),
+      playerLifeHudPill: document.getElementById("playerLifeHudPill"),
+      playerWillHudPill: document.getElementById("playerWillHudPill"),
       turnOverlay: document.getElementById("turnOverlay"),
       resultOverlay: document.getElementById("resultOverlay"),
+      tutorialLayer: document.getElementById("tutorialLayer"),
+      tutorialSpotlight: document.getElementById("tutorialSpotlight"),
+      tutorialCoach: document.getElementById("tutorialCoach"),
+      tutorialCoachTitle: document.getElementById("tutorialCoachTitle"),
+      tutorialCoachText: document.getElementById("tutorialCoachText"),
+      tutorialStepCounter: document.getElementById("tutorialStepCounter"),
+      tutorialNextButton: document.getElementById("tutorialNextButton"),
+      tutorialExitButton: document.getElementById("tutorialExitButton"),
       playRevealOverlay: document.getElementById("playRevealOverlay"),
       playRevealCard: document.getElementById("playRevealCard"),
       deckText: document.getElementById("deckText"),
@@ -6367,6 +6796,14 @@
         else onlineSendRoomState();
         return;
       }
+      if (message.type === "thinItemChoiceRequest" && isOnlineGuest()) {
+        onlineOpenThinItemChoiceRequest(message);
+        return;
+      }
+      if (message.type === "thinItemChoiceResponse" && isOnlineHost()) {
+        onlineResolveThinItemChoiceResponse(message.requestId, message.keepIds || []);
+        return;
+      }
       if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {
         showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
         return;
@@ -6475,6 +6912,51 @@
       onlineSend({ type: "gameState", snapshot, processedCommandId }, { track: true });
     }
 
+    function requestRemoteThinItemChoice(sourceSide, commandId = "") {
+      if (!isOnlineHost() || !state.online.started || !state.online.connected) return false;
+      const targetSide = oppositeSide(sourceSide);
+      if (targetSide !== "opponent" || state.players[targetSide].hand.length <= 4) return false;
+      const requestId = onlineNextMessageId("thin");
+      state.pendingRemoteHandTrim = { requestId, sourceSide, targetSide, commandId };
+      state.message = "細いの効果：相手が残す手札を選んでいます。";
+      onlineSend({
+        type: "thinItemChoiceRequest",
+        requestId,
+        handCount: state.players[targetSide].hand.length
+      }, { track: true });
+      return true;
+    }
+
+    function onlineOpenThinItemChoiceRequest(message) {
+      if (!isOnlineGuest() || !state.online.started) return;
+      if (state.players.player.hand.length <= 4) {
+        onlineSend({ type: "thinItemChoiceResponse", requestId: message.requestId, keepIds: state.players.player.hand.map((card) => card.instanceId) }, { track: true });
+        return;
+      }
+      openThinItemKeepChoice("player", {
+        onlineResponse: true,
+        requestId: message.requestId,
+        sourceSide: "opponent"
+      });
+    }
+
+    function onlineResolveThinItemChoiceResponse(requestId, keepIds) {
+      const pending = state.pendingRemoteHandTrim;
+      if (!pending || pending.requestId !== requestId) return;
+      const moved = discardHandDownToKeptIds(pending.targetSide, keepIds, 4);
+      const movedText = trashDetailCountText(pending.targetSide, moved, "細いで校外へ送られたカード");
+      addLog(`細いの効果：${SIDES[pending.targetSide]}は手札から${movedText}を校外エリアへ送りました。`);
+      state.pendingRemoteHandTrim = null;
+      clearSelections();
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+      if (pending.commandId) state.online.isHandlingRemoteCommand = true;
+      render();
+      state.online.isHandlingRemoteCommand = wasHandlingRemote;
+      onlineBroadcastState(true, pending.commandId || "");
+    }
+
     function onlineHasPrivatePendingAction() {
       return Boolean(
         state.selectedHandId
@@ -6485,6 +6967,7 @@
         || state.pendingHandDiscardItem
         || state.pendingThreeGestures
         || state.pendingCardChoice
+        || state.pendingRemoteHandTrim
         || state.pendingCopiedCard
         || state.players.player.mulliganSelection.length > 0
       );
@@ -6504,6 +6987,7 @@
       snapshotState.pendingHandDiscardItem = null;
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
+      snapshotState.pendingRemoteHandTrim = null;
       snapshotState.pendingCopiedCard = null;
       snapshotState.activeTrashDetailId = null;
       state.online.lastSnapshotSeq += 1;
@@ -6787,7 +7271,7 @@
         if (command.type === "playCard") placeCardFromHand("opponent", payload.instanceId, payload.zone, onlineSwapSide(payload.owner), payload.index ?? null, true);
         if (command.type === "itemImmediate") {
           const item = getHandCard("opponent", payload.instanceId);
-          if (item) castImmediateItem("opponent", item, true);
+          if (item) castImmediateItem("opponent", item, true, { commandId: command.id || "" });
         }
         if (command.type === "threeGestures") {
           const item = getHandCard("opponent", payload.instanceId);
@@ -6846,7 +7330,9 @@
         if (command.type === "concede") endGame("player", "相手が勝てないを選びました。", { retire: true });
       } finally {
         state.online.isHandlingRemoteCommand = false;
-        onlineBroadcastState(true, command.id || "");
+        const waitingForPrivateChoice = state.pendingRemoteHandTrim?.commandId === command.id
+          || state.pendingCardChoice?.commandId === command.id;
+        if (!waitingForPrivateChoice) onlineBroadcastState(true, command.id || "");
       }
     }
 
@@ -7051,6 +7537,7 @@
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
+      state.pendingRemoteHandTrim = null;
       state.pendingCopiedCard = null;
       state.pendingTestCardId = null;
       state.online.localMulliganPending = false;
@@ -7251,7 +7738,7 @@
     function drawOne(side, loseOnEmpty) {
       const player = state.players[side];
       if (player.deck.length === 0) {
-        if (loseOnEmpty) endGame(oppositeSide(side), `${SIDES[side]}がデッキ切れになりました。`);
+        if (loseOnEmpty) endGame(oppositeSide(side), `${SIDES[side]}がデッキ切れになりました。`, { libraryOut: true, loser: side });
         return false;
       }
       const card = player.deck.shift();
@@ -7405,6 +7892,7 @@
       clearSelections();
       state.pendingItemConfirmId = null;
       state.pendingCardChoice = null;
+      state.pendingRemoteHandTrim = null;
       state.pendingCopiedCard = null;
       hideBattleCardPreview();
       resolveDelayedDestruction(side);
@@ -7458,6 +7946,11 @@
       await sleep(AI_STEP_DELAY);
       if (!isOpponentAiActive()) return;
       await tryUseAiItems();
+      if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
+        state.aiThinking = false;
+        render();
+        return;
+      }
       let safety = 0;
       while (safety < 8 && isOpponentAiActive()) {
         safety += 1;
@@ -7468,6 +7961,11 @@
         await sleep(AI_STEP_DELAY);
       }
       await tryUseAiItems();
+      if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
+        state.aiThinking = false;
+        render();
+        return;
+      }
       await aiAttackWithReadyCards();
       state.aiThinking = false;
       if (state.gameOver) {
@@ -7590,12 +8088,13 @@
         score += besideLoud ? 10 : 0;
       }
       if (zone === "seat" && card.baseId === "loud_student") {
-        const vulnerableFriends = surroundingIndexes(index)
-          .filter((neighbor) => {
-            const neighborCard = state.players.opponent.board.seats[neighbor];
-            return neighborCard && neighborCard.baseId !== "best_friend";
-          }).length;
-        score -= vulnerableFriends * 4;
+        const friendlyVictims = friendlyRefs
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((fieldCard) => fieldCard && fieldCard.baseId !== "best_friend").length;
+        const enemyVictims = enemyRefs
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((fieldCard) => fieldCard && fieldCard.baseId !== "best_friend").length;
+        score += enemyVictims * 2 - friendlyVictims * 1.5;
       }
       if (card.baseId === "laughing_front_student") {
         const usefulHealing = state.players.opponent.life < 20 || friendlyRefs.some((ref) => {
@@ -7708,6 +8207,7 @@
         const used = useAiItem(item);
         if (!used) return;
         render();
+        if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
         await sleep(AI_STEP_DELAY);
       }
     }
@@ -7736,6 +8236,12 @@
       if (item.baseId === "water_2l") {
         const crabTrashCount = opponent.trash.filter((card) => CRAB_SET_IDS.includes(card.baseId)).length;
         return crabTrashCount > 0 ? 4 + crabTrashCount : 0;
+      }
+      if (item.baseId === "night_pool_water") {
+        const openSeats = state.players.opponent.board.seats
+          .filter((seatCard, index) => !seatCard && isBoardSlotOpen("opponent", "seat", index)).length;
+        const singleCells = friendlyCards.filter((card) => card.baseId === "single_cell").length;
+        return openSeats > 0 ? 4 + Math.min(2, openSeats) * 2 + singleCells * 3 : 0;
       }
       if (item.baseId === "thin_item") {
         const enemyHandSize = state.players.player.hand.length;
@@ -7786,7 +8292,7 @@
       if (item.baseId === "thanks_all_students") return friendlyCards.some((card) => card.type === "student" && card.currentHp < card.maxHp) ? 7 : 3;
       if (item.baseId === "dont_worry") return state.actionTurn >= 5 && state.players.player.life <= 8 ? 4 : 0;
       if (item.baseId === "abyss") return enemyCards.length >= 2 ? 8 + enemyCards.length : 0;
-      if (item.baseId === "seriously_hit") return enemyCards.some((card) => !card.destroyAtActionTurn) ? 7 : 0;
+      if (item.baseId === "seriously_hit") return enemyCards.length ? 8 + Math.max(...enemyCards.map((card) => (card.attack || 0) + (card.currentHp || 0))) : 0;
       if (item.baseId === "favorite_number_s") {
         return state.players.player.board.teacher?.type === "teacher" ? 9 : 0;
       }
@@ -7864,7 +8370,6 @@
       if (item.baseId === "seriously_hit") {
         const target = listBoardRefs("player")
           .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
-          .filter((entry) => !entry.card.destroyAtActionTurn)
           .sort((a, b) => ((b.card.attack || 0) + (b.card.currentHp || 0)) - ((a.card.attack || 0) + (a.card.currentHp || 0)))[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
@@ -7979,6 +8484,10 @@
       if (isOnlineSpectator() && !fromAi) return;
       if (isOnlineGuest() && isOnlineBattle() && state.online.pendingTurnCommandId && !fromAi) return;
       if (state.phase !== "battle" || state.gameOver) return;
+      if (!fromAi && !tutorialAllowsEndTurn()) {
+        rejectTutorialAction("まだターン終了は押せません。光っている操作を進めてください。");
+        return;
+      }
       if (onlineCanSendCommand()) {
         if (needsMeguroHandChoice("player")) {
           openCardChoice({
@@ -8027,6 +8536,11 @@
         return;
       }
       if (resolveCrabVictoryAtTurnEnd(endingSide)) {
+        render();
+        return;
+      }
+      const tutorialCompleted = endingSide === "player" && completeTutorialAction("endTurn", { side: endingSide });
+      if (tutorialCompleted && !state.tutorial.active) {
         render();
         return;
       }
@@ -8463,6 +8977,7 @@
         return;
       }
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
+      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
       if (state.pendingHandDiscardItem) {
         const item = getHandCard("player", state.pendingHandDiscardItem.itemId);
         const target = getHandCard("player", instanceId);
@@ -8480,6 +8995,10 @@
       }
       const card = getHandCard("player", instanceId);
       if (!card) return;
+      if (!tutorialAllowsHandCard(card)) {
+        rejectTutorialAction("今は光っているカードだけ使えます。");
+        return;
+      }
       if (card.type === "item") {
         if (card.unusable) {
           state.message = `${card.name}は使用できません。`;
@@ -8536,7 +9055,10 @@
         selectedIds: [],
         min: options.min ?? 1,
         max: options.max ?? 1,
-        confirmLabel: options.confirmLabel || "確定"
+        confirmLabel: options.confirmLabel || "確定",
+        sourceSide: options.sourceSide || null,
+        requestId: options.requestId || null,
+        commandId: options.commandId || ""
       };
       state.message = options.message || "カードを選んでください。";
       render();
@@ -8609,6 +9131,24 @@
         }
         resolveMusicDetergentChoice("player", item, selectedIds[0], true);
       }
+      if (mode === "thin_item_keep") {
+        resolveThinItemKeepChoice("player", selectedIds, {
+          sourceSide: pending.sourceSide || "opponent",
+          commandId: pending.commandId || "",
+          resumeAi: pending.sourceSide === "opponent" && !isOnlineBattle()
+        });
+        return;
+      }
+      if (mode === "thin_item_online_response") {
+        onlineSend({
+          type: "thinItemChoiceResponse",
+          requestId: pending.requestId,
+          keepIds: selectedIds
+        }, { track: true });
+        state.message = "細いで残す手札を送信しました。";
+        clearSelections();
+        render();
+      }
     }
 
     function openMusicDetergentChoice(item) {
@@ -8639,6 +9179,10 @@
       const item = getHandCard("player", state.pendingItemConfirmId);
       closeItemConfirm();
       if (!item || state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
+      if (!tutorialAllowsHandCard(item)) {
+        rejectTutorialAction("今は光っている持ち物だけ使えます。");
+        return;
+      }
       if (item.baseId === "three_gestures") {
         openThreeGesturesSelection(item);
         return;
@@ -8814,6 +9358,12 @@
       const card = getHandCard(side, instanceId);
       if (!card) return false;
       if (card.type === "item") return false;
+      if (side === "player" && !tutorialAllowsPlacement(card, zone, owner, index)) {
+        addLog("チュートリアル中は、光っているマスにだけ出席できます。");
+        clearSelections();
+        if (renderAfter) render();
+        return false;
+      }
       if (!canPlaceCard(side, card, zone, owner, index)) {
         addLog(`${card.name}はそのマスには出席できません。`);
         clearSelections();
@@ -8861,6 +9411,7 @@
       }
       cleanupDestroyedCards();
       applyBoardAuras();
+      if (side === "player") completeTutorialAction("playCard", { card, owner, zone, index });
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -8968,7 +9519,12 @@
       const inheritedDamage = previous && previous.currentHp !== null
         ? Math.max(0, (previous.maxHp || 0) - (previous.currentHp || 0))
         : 0;
-      if (previous) evolved.hasAttacked = Boolean(previous.hasAttacked);
+      if (previous) {
+        const previousWasReady = !previous.hasAttacked
+          && (previous.playedOnTurn !== state.actionTurn || hasKeyword(previous, "陽気") || hasKeyword(previous, "超陽気"));
+        evolved.hasAttacked = Boolean(previous.hasAttacked);
+        if (previousWasReady) evolved.playedOnTurn = previous.playedOnTurn ?? Math.max(0, state.actionTurn - 1);
+      }
       if (card.baseId === "dark_yuta" && previous) {
         if (previous.yutaEquipment && CARD_BASES[previous.yutaEquipment]) {
           addLog(`${previous.name}についていた${CARD_BASES[previous.yutaEquipment].name}の装備効果は失われました。`);
@@ -9033,11 +9589,16 @@
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
       }
       if (card.baseId === "loud_student" && zone === "seat") {
-        surroundingIndexes(index).forEach((neighbor) => {
-          const target = state.players[side].board.seats[neighbor];
-          if (target && target.baseId !== "best_friend") dealDamageToCard(target, 1, card);
+        let affected = 0;
+        ["player", "opponent"].forEach((owner) => {
+          listBoardRefs(owner).forEach((ref) => {
+            const target = getBoardCardFromRef(ref);
+            if (!target || target.instanceId === card.instanceId || target.baseId === "best_friend") return;
+            dealDamageToCard(target, 1, card);
+            affected += 1;
+          });
         });
-        addLog(`${card.name}の効果：周囲1マスに1ダメージ。`);
+        addLog(`${card.name}の効果：お互いの場の出席者${affected}人に1ダメージ。`);
       }
       if (card.baseId === "midge") {
         const targetRef = randomBoardRef(opponent);
@@ -9599,6 +10160,84 @@
       return returned;
     }
 
+    function chooseHandKeepIdsForAi(side, targetCount) {
+      return [...state.players[side].hand]
+        .sort((a, b) => {
+          const aScore = (effectiveCardCost(a) || 0) + (a.attack || 0) + (a.hp || 0);
+          const bScore = (effectiveCardCost(b) || 0) + (b.attack || 0) + (b.hp || 0);
+          return bScore - aScore;
+        })
+        .slice(0, targetCount)
+        .map((card) => card.instanceId);
+    }
+
+    function discardHandDownToKeptIds(side, keepIds, targetCount, title = "細いで校外へ送られたカード") {
+      const player = state.players[side];
+      if (player.hand.length <= targetCount) return [];
+      const keepSet = new Set((keepIds || []).slice(0, targetCount));
+      const kept = [];
+      player.hand.forEach((card) => {
+        if (keepSet.has(card.instanceId) && kept.length < targetCount) kept.push(card);
+      });
+      player.hand.forEach((card) => {
+        if (kept.length < targetCount && !kept.some((keptCard) => keptCard.instanceId === card.instanceId)) kept.push(card);
+      });
+      const finalKeepIds = new Set(kept.map((card) => card.instanceId));
+      const moved = [];
+      player.hand = player.hand.filter((card) => {
+        if (finalKeepIds.has(card.instanceId)) return true;
+        moved.push(card);
+        return false;
+      });
+      moveCardsToTrash(side, moved, { title });
+      return moved;
+    }
+
+    function openThinItemKeepChoice(targetSide, options = {}) {
+      const hand = state.players[targetSide].hand;
+      if (hand.length <= 4) return false;
+      if (targetSide !== "player") return false;
+      return openCardChoice({
+        mode: options.onlineResponse ? "thin_item_online_response" : "thin_item_keep",
+        title: "細い",
+        message: "手札が4枚になるように、残すカードを4枚選んでください。選ばなかったカードは校外エリアへ送られます。",
+        cards: hand,
+        min: 4,
+        max: 4,
+        confirmLabel: "この4枚を残す",
+        sourceSide: options.sourceSide || oppositeSide(targetSide),
+        requestId: options.requestId || null,
+        commandId: options.commandId || ""
+      });
+    }
+
+    function resolveThinItemKeepChoice(targetSide, keepIds, options = {}) {
+      const moved = discardHandDownToKeptIds(targetSide, keepIds, 4);
+      const movedText = trashDetailCountText(targetSide, moved, "細いで校外へ送られたカード");
+      addLog(`細いの効果：${SIDES[targetSide]}は手札から${movedText}を校外エリアへ送りました。`);
+      state.pendingCardChoice = null;
+      state.pendingRemoteHandTrim = null;
+      clearSelections();
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      if (options.commandId && isOnlineHost()) {
+        const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+        state.online.isHandlingRemoteCommand = true;
+        render();
+        state.online.isHandlingRemoteCommand = wasHandlingRemote;
+        onlineBroadcastState(true, options.commandId);
+        return true;
+      }
+      if (options.resumeAi && state.phase === "battle" && state.currentSide === "opponent" && !isOnlineBattle()) {
+        state.aiThinking = true;
+        render();
+        window.setTimeout(runOpponentAI, AI_STEP_DELAY);
+        return true;
+      }
+      render();
+      return true;
+    }
+
     function redrawHandToCount(side, drawCount) {
       const player = state.players[side];
       const returned = player.hand.length;
@@ -9683,6 +10322,7 @@
     function handleBoardCardClick(owner, zone, index = null) {
       if (isOnlineSpectator()) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
+      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
       const selectedCard = getSelectedHandCard();
       if (state.pendingMultiItem && selectedCard?.baseId === "i_got_it") {
         toggleMultiItemTarget(owner, zone, index);
@@ -9708,10 +10348,18 @@
         return;
       }
       if (selectedCard && owner === "player") {
+        if (!tutorialAllowsPlacement(selectedCard, zone, owner, index)) {
+          rejectTutorialAction("今は光っているマスに出席させてください。");
+          return;
+        }
         placeCardFromHand("player", selectedCard.instanceId, zone, owner, index, true);
         return;
       }
       if (state.selectedAttacker && owner !== state.currentSide) {
+        if (!tutorialAllowsAttackTarget(owner, zone, index)) {
+          rejectTutorialAction("今は光っている相手の出席者だけ攻撃できます。");
+          return;
+        }
         if (onlineCanSendCommand()) {
           onlineSendCommand("attackCard", { attacker: state.selectedAttacker, target: { owner, zone, index } });
           state.message = "攻撃対象を送信しました。";
@@ -9722,6 +10370,10 @@
         return;
       }
       if (owner === state.currentSide) {
+        if (!tutorialAllowsAttacker(owner, zone, index)) {
+          rejectTutorialAction("今は光っている自分の出席者だけ攻撃役にできます。");
+          return;
+        }
         selectAttacker(owner, zone, index);
         return;
       }
@@ -9742,6 +10394,10 @@
       const attacker = getBoardCardFromRef(state.selectedAttacker);
       const target = getBoardCard(targetOwner, targetZone, targetIndex);
       if (!attacker || !target) return;
+      if (!tutorialAllowsAttackTarget(targetOwner, targetZone, targetIndex)) {
+        rejectTutorialAction("今は光っている相手の出席者だけ攻撃できます。");
+        return;
+      }
       if (attacker.type === "teacher" && target.baseId === "loud_student") {
         addLog("タイプ教師の出席者はバカでかい声の学生に攻撃できません。");
         clearSelections();
@@ -9782,6 +10438,7 @@
       cleanupDestroyedCards();
       applyBoardAuras();
       checkLifeVictory();
+      completeTutorialAction("attackCard", { attacker, target });
       clearSelections();
       render();
     }
@@ -9789,8 +10446,13 @@
     function attackLife(targetSide) {
       if (isOnlineSpectator()) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
+      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
       const selectedCard = getSelectedHandCard();
       if (selectedCard?.type === "item") {
+        if (!tutorialAllowsItemLife(selectedCard, targetSide)) {
+          rejectTutorialAction("今は光っている対象だけ指名できます。");
+          return;
+        }
         if (!canDropHandCardOnLife(selectedCard, targetSide)) return;
         if (onlineCanSendCommand()) {
           onlineSendCommand("itemLife", { instanceId: selectedCard.instanceId, targetSide });
@@ -9800,6 +10462,12 @@
         }
         castItemOnLife("player", selectedCard, targetSide, true);
         return;
+      }
+      if (isTutorialActive()) {
+        if (!tutorialAllowsAttackLife(targetSide)) {
+          rejectTutorialAction("今は光っている本体だけ攻撃できます。");
+          return;
+        }
       }
       if (onlineCanSendCommand()) {
         if (!state.selectedAttacker) {
@@ -9862,6 +10530,7 @@
       const dealtDamage = resolveLifeAttack(attacker, targetSide);
       addLog(`${attacker.name}が${SIDES[targetSide]}本体に${dealtDamage}ダメージ。`);
       checkLifeVictory();
+      completeTutorialAction("attackLife", { attacker, targetSide });
       clearSelections();
       render();
     }
@@ -9917,6 +10586,10 @@
 
     function castItemOnLife(side, item, targetSide, renderAfter) {
       if (targetSide === side || item.target !== "enemy") return false;
+      if (side === "player" && !tutorialAllowsItemLife(item, targetSide)) {
+        rejectTutorialAction("今は光っている対象だけ指名できます。");
+        return false;
+      }
       if (!payForItem(side, item)) return false;
       showCardPlayAnimation(item, "trash");
       if (item.baseId === "ruler") damagePlayer(targetSide, 1);
@@ -9924,6 +10597,7 @@
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}で${SIDES[targetSide]}本体にダメージ。`);
       checkLifeVictory();
+      if (side === "player") completeTutorialAction("itemLife", { item, targetSide });
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -10012,8 +10686,7 @@
         target.attackLockedThroughTurn = Math.max(target.attackLockedThroughTurn || 0, state.actionTurn + 1);
       }
       if (item.baseId === "seriously_hit") {
-        target.destroyAtActionTurn = Math.min(target.destroyAtActionTurn || Infinity, state.actionTurn + 2);
-        target.destroyAtSideStart = side;
+        destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
       }
       if (item.baseId === "favorite_number_s") {
         const copiedBaseId = target.baseId;
@@ -10241,7 +10914,7 @@
       return true;
     }
 
-    function castImmediateItem(side, item, renderAfter) {
+    function castImmediateItem(side, item, renderAfter, options = {}) {
       if (item.baseId === "dry_meal_ticket" && state.environment?.baseId !== "cafeteria") {
         addLog("乾いた食券は環境が食堂の時にしか使えません。");
         if (renderAfter) render();
@@ -10314,8 +10987,24 @@
       }
       if (item.baseId === "thin_item") {
         const targetSide = oppositeSide(side);
-        const returned = returnRandomHandCardsToDeckUntil(targetSide, 4);
-        resultText = `相手の手札が4枚になるまで、ランダムに${returned}枚をデッキへ戻してシャッフルしました。`;
+        if (isOnlineHost() && targetSide === "opponent" && requestRemoteThinItemChoice(side, options.commandId || "")) {
+          moveHandCardToTrash(side, item);
+          addLog(`${SIDES[side]}は${item.name}を使いました。相手は残す手札を選んでいます。`);
+          clearSelections();
+          if (renderAfter) render();
+          return true;
+        }
+        if (targetSide === "player" && openThinItemKeepChoice(targetSide, { sourceSide: side, commandId: options.commandId || "" })) {
+          moveHandCardToTrash(side, item);
+          addLog(`${SIDES[side]}は${item.name}を使いました。${SIDES[targetSide]}は残す手札を選んでいます。`);
+          clearSelections();
+          if (renderAfter) render();
+          return true;
+        }
+        const keepIds = chooseHandKeepIdsForAi(targetSide, 4);
+        const moved = discardHandDownToKeptIds(targetSide, keepIds, 4);
+        const movedText = trashDetailCountText(targetSide, moved, "細いで校外へ送られたカード");
+        resultText = `相手の手札が4枚になるよう、${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "handy_jet_engine") {
         const targetSide = oppositeSide(side);
@@ -10361,6 +11050,13 @@
       if (item.baseId === "water_2l") {
         const recovered = recoverCrabCardsFromTrash(side, 2);
         resultText = `校外エリアからカニ勝利に必要なカードを${recovered}枚回収しました。`;
+      }
+      if (item.baseId === "night_pool_water") {
+        let summoned = 0;
+        for (let i = 0; i < 2; i += 1) {
+          if (summonToRandomOpenSeat(side, "single_cell", item.name)) summoned += 1;
+        }
+        resultText = `単細胞生物をランダムな席マスに${summoned}人召喚しました。`;
       }
       if (CRAB_SET_IDS.includes(item.baseId)) {
         healPlayer(side, 4);
@@ -10542,7 +11238,7 @@
         && card.instanceId !== evolutionCard.instanceId
       );
       moveToTrash(side, extraDonguri, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
-      return evolveCard(side, evolutionCard, side, target.zone, target.index, { effectDelayMs: 1650 });
+      return evolveCard(side, evolutionCard, side, target.zone, target.index, { effectDelayMs: DONGURI_EVOLUTION_REVEAL_MS + 180 });
     }
 
     function pickCardsFromDeckAndTrash(side, maxCount) {
@@ -11165,13 +11861,19 @@
 
     function showResultOverlay(winner, options = {}) {
       if (!elements.resultOverlay) return;
+      const isLo = Boolean(options.libraryOut) && winner !== "draw";
       const label = isOnlineSpectator()
         ? (winner === "player" ? "プレイヤー1の勝利" : winner === "opponent" ? "プレイヤー2の勝利" : "引き分け")
         : (options.crabVictory ? "かーちー🦀" : winner === "player" ? "勝利" : winner === "opponent" ? "敗北" : "引き分け");
+      const labelHtml = isLo && !isOnlineSpectator()
+        ? (winner === "player"
+          ? '<span class="lo-result"><span class="lo-small">g</span><span class="lo-big">LO</span><span class="lo-small">ry</span></span>'
+          : '<span class="lo-result"><span class="lo-big">LO</span><span class="lo-small">se</span></span>')
+        : `<span class="result-label">${escapeHtml(label)}</span>`;
       const resultClass = winner === "player" ? "victory" : winner === "opponent" ? "defeat" : "draw";
       const homeLabel = isOnlineBattle() ? "対戦部屋に戻る" : "ホームに戻る";
       elements.resultOverlay.innerHTML = `
-        <span class="result-label">${escapeHtml(label)}</span>
+        ${labelHtml}
         <div class="result-actions">
           <button class="button secondary" type="button" data-result-home="true">${escapeHtml(homeLabel)}</button>
           ${isOnlineSpectator() ? "" : '<button class="button" type="button" data-result-deck="true">デッキを編成する</button>'}
@@ -11507,6 +12209,7 @@
 
     function render() {
       renderScreen();
+      renderTutorial();
       renderOnlineLobby();
       renderStatus();
       renderHands();
@@ -11519,6 +12222,7 @@
       renderTrash();
       renderLog();
       renderControls();
+      renderTutorialCoach();
       setupPlaymatDropEvents();
       setupDocumentHandDropEvents();
       flushAnimationQueue();
@@ -11528,10 +12232,25 @@
     function renderScreen() {
       elements.homeScreen.classList.toggle("hidden", state.screen !== "home");
       elements.onlineScreen.classList.toggle("hidden", state.screen !== "online");
+      elements.tutorialScreen.classList.toggle("hidden", state.screen !== "tutorial");
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
       elements.battleScreen.classList.toggle("hidden", state.screen !== "battle");
       elements.spectatorBanner.classList.toggle("hidden", state.screen !== "battle" || !isOnlineSpectator());
       document.body.dataset.screen = state.screen;
+    }
+
+    function renderTutorial() {
+      if (!elements.tutorialCardPreview) return;
+      const previewIds = ["general_student", "general_teacher", "ruler", "cafeteria", "vampire", "yuta"];
+      elements.tutorialCardPreview.innerHTML = "";
+      previewIds.forEach((baseId) => {
+        const card = createCardFromBase(baseId, "player");
+        const cardElement = document.createElement("div");
+        cardElement.className = `card ${card.type}`;
+        cardElement.innerHTML = cardTemplate(card, false);
+        attachCardDetailEvents(cardElement, card, { previewOnClick: false });
+        elements.tutorialCardPreview.appendChild(cardElement);
+      });
     }
 
     function renderOnlineLobby() {
@@ -11681,6 +12400,7 @@
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
       const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingThreeGestures);
+      const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingRemoteHandTrim);
       elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem));
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? `対象${state.pendingMultiItem.targets.length}人で使用`
@@ -11690,15 +12410,17 @@
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
         || (state.pendingMultiItem && state.pendingMultiItem.targets.length === 0)
         || (state.pendingPanpanItem && (!state.pendingPanpanItem.friendly || !state.pendingPanpanItem.enemy));
-      elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || choosingItemTargets);
+      elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || choosingItemTargets || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
         || state.phase !== "battle"
         || state.gameOver
         || state.currentSide !== "player"
         || state.aiThinking
+        || (isTutorialActive() && !tutorialAllowsEndTurn())
         || Boolean(state.online.pendingTurnCommandId)
         || Boolean(state.pendingCopiedCard)
-        || Boolean(state.pendingThreeGestures);
+        || Boolean(state.pendingThreeGestures)
+        || waitingForCardChoice;
       const recommendEndTurn = !elements.endTurnButton.disabled
         && !choosingItemTargets
         && !playerHasAvailableAction();
@@ -11709,6 +12431,247 @@
       const playerDeckValid = validateDeckCounts(state.deckBuilder.counts.player).valid;
       const opponentDeckValid = validateDeckCounts(state.deckBuilder.counts.opponent).valid;
       elements.newGameWithDeckButton.disabled = !playerDeckValid || !opponentDeckValid || state.aiThinking;
+    }
+
+    function isTutorialActive() {
+      return state.screen === "battle"
+        && state.phase === "battle"
+        && Boolean(state.tutorial?.active)
+        && !state.gameOver;
+    }
+
+    function currentTutorialStep() {
+      if (!isTutorialActive()) return null;
+      if (state.tutorial.intro) return null;
+      return TUTORIAL_STEPS[state.tutorial.stepIndex] || null;
+    }
+
+    function resetTutorialState() {
+      state.tutorial = { active: false, stepIndex: 0, intro: false };
+    }
+
+    function tutorialRefMatches(ref, owner, zone, index) {
+      if (!ref) return false;
+      const normalizedOwner = owner || null;
+      const normalizedIndex = index === undefined ? null : index;
+      return (ref.owner ?? null) === normalizedOwner
+        && ref.zone === zone
+        && (ref.index ?? null) === (normalizedIndex ?? null);
+    }
+
+    function tutorialRefSelector(ref) {
+      if (!ref) return "";
+      if (ref.zone === "environment") return "#environmentSlot";
+      const ownerPart = ref.owner ? `[data-owner='${ref.owner}']` : "[data-owner='']";
+      const indexPart = ref.index === null || ref.index === undefined ? "[data-index='']" : `[data-index='${ref.index}']`;
+      return `.slot[data-zone='${ref.zone}']${ownerPart}${indexPart}`;
+    }
+
+    function tutorialAllowedHandBaseId() {
+      const step = currentTutorialStep();
+      return step?.allowedBaseId || null;
+    }
+
+    function tutorialAllowsHandCard(card) {
+      if (!isTutorialActive()) return true;
+      const allowedBaseId = tutorialAllowedHandBaseId();
+      return Boolean(card && allowedBaseId && card.baseId === allowedBaseId);
+    }
+
+    function tutorialAllowsPlacement(card, zone, owner, index) {
+      const step = currentTutorialStep();
+      if (!step) return true;
+      return step.action === "playCard"
+        && card?.baseId === step.allowedBaseId
+        && tutorialRefMatches(step.target, owner, zone, index);
+    }
+
+    function tutorialAllowsItemLife(item, targetSide) {
+      const step = currentTutorialStep();
+      if (!step) return true;
+      return step.action === "itemLife"
+        && item?.baseId === step.allowedBaseId
+        && targetSide === step.targetSide;
+    }
+
+    function tutorialAllowsAttacker(owner, zone, index) {
+      const step = currentTutorialStep();
+      if (!step) return true;
+      const card = getBoardCard(owner, zone, index);
+      return ["attackCard", "attackLife"].includes(step.action)
+        && owner === "player"
+        && card?.baseId === step.attackerBaseId;
+    }
+
+    function tutorialAllowsAttackTarget(owner, zone, index) {
+      const step = currentTutorialStep();
+      if (!step) return true;
+      const card = getBoardCard(owner, zone, index);
+      return step.action === "attackCard"
+        && owner === "opponent"
+        && card?.baseId === step.targetBaseId;
+    }
+
+    function tutorialAllowsAttackLife(targetSide) {
+      const step = currentTutorialStep();
+      if (!step) return true;
+      const attacker = getBoardCardFromRef(state.selectedAttacker);
+      return step.action === "attackLife"
+        && attacker?.baseId === step.attackerBaseId
+        && targetSide === step.targetSide;
+    }
+
+    function tutorialAllowsEndTurn() {
+      const step = currentTutorialStep();
+      return !step || step.action === "endTurn";
+    }
+
+    function rejectTutorialAction(message = "今は光っている場所だけ操作できます。") {
+      if (!isTutorialActive()) return false;
+      state.message = message;
+      render();
+      return true;
+    }
+
+    function tutorialActionMatches(step, action, payload = {}) {
+      if (!step || step.action !== action) return false;
+      if (action === "playCard") {
+        return payload.card?.baseId === step.allowedBaseId
+          && tutorialRefMatches(step.target, payload.owner, payload.zone, payload.index);
+      }
+      if (action === "attackCard") {
+        return payload.attacker?.baseId === step.attackerBaseId
+          && payload.target?.baseId === step.targetBaseId;
+      }
+      if (action === "itemLife") {
+        return payload.item?.baseId === step.allowedBaseId && payload.targetSide === step.targetSide;
+      }
+      if (action === "attackLife") {
+        return payload.attacker?.baseId === step.attackerBaseId && payload.targetSide === step.targetSide;
+      }
+      return action === "endTurn";
+    }
+
+    function completeTutorialAction(action, payload = {}) {
+      const step = currentTutorialStep();
+      if (!tutorialActionMatches(step, action, payload)) return false;
+      applyTutorialStepAfterAction(step, payload);
+      state.tutorial.stepIndex += 1;
+      const nextStep = currentTutorialStep();
+      if (nextStep) {
+        state.message = `チュートリアル：${nextStep.title}`;
+      } else {
+        resetTutorialState();
+        state.message = "チュートリアル完了。ここからは自由に試せます。";
+        addLog("チュートリアル完了。自由に操作できます。");
+        showCenterAnnouncement("チュートリアル完了");
+      }
+      return true;
+    }
+
+    function applyTutorialStepAfterAction(step, payload = {}) {
+      if (!step) return;
+      const player = state.players.player;
+      player.maxWill = 10;
+      player.will = 10;
+      if (step.id === "cheerfulAttack") {
+        applyTutorialLectureDemo(payload.attacker, payload.target);
+      }
+      if (step.id === "vampirePlay") {
+        const vampire = getBoardCard(payload.owner, payload.zone, payload.index);
+        if (vampire) {
+          vampire.currentHp = Math.max(1, vampire.currentHp - 5);
+          showFloatingTextForCard(vampire, "-5", "damage");
+          addLog("説明用にCITヴァンパイアが5ダメージを受けた状態にしました。");
+        }
+      }
+      if (step.id === "yutaPlay") {
+        const yuta = getBoardCard(payload.owner, payload.zone, payload.index);
+        if (yuta) {
+          yuta.currentHp = 1;
+          showFloatingTextForCard(yuta, "-2", "damage");
+          addLog("説明用にU太が2ダメージを受けた状態にしました。");
+        }
+      }
+    }
+
+    function applyTutorialLectureDemo(teacher, target) {
+      if (!teacher || teacher.baseId !== "general_teacher" || !target || target.currentHp <= 0) return;
+      dealDamageToCard(target, 1, teacher);
+      addLog("チュートリアル：一般教師の講義で、相手の学生に1ダメージ。");
+      cleanupDestroyedCards();
+      applyBoardAuras();
+    }
+
+    function advanceTutorialTextStep() {
+      const step = currentTutorialStep();
+      if (!step || step.action) return;
+      state.tutorial.stepIndex += 1;
+      state.message = currentTutorialStep()
+        ? `チュートリアル：${currentTutorialStep().title}`
+        : "チュートリアル完了。";
+      render();
+    }
+
+    function exitTutorialMode() {
+      if (!state.tutorial?.active) return;
+      resetTutorialState();
+      state.message = "チュートリアルを終了しました。自由に操作できます。";
+      render();
+    }
+
+    function tutorialFocusSelector(step) {
+      if (!step) return "";
+      if (step.action === "playCard") {
+        const selected = getSelectedHandCard();
+        return selected?.baseId === step.allowedBaseId ? tutorialRefSelector(step.target) : step.focus;
+      }
+      if (step.action === "attackCard") {
+        return state.selectedAttacker ? `.opponent-board [data-base-id='${step.targetBaseId}']` : step.focus;
+      }
+      if (step.action === "attackLife") {
+        return state.selectedAttacker ? "#opponentLifeTarget" : step.focus;
+      }
+      if (step.action === "itemLife") {
+        const selected = getSelectedHandCard();
+        return selected?.baseId === step.allowedBaseId ? "#opponentLifeTarget" : step.focus;
+      }
+      return step.focus || "";
+    }
+
+    function renderTutorialCoach() {
+      const step = currentTutorialStep();
+      const active = Boolean(step);
+      elements.tutorialLayer.classList.toggle("hidden", !active);
+      if (!active) return;
+      elements.tutorialCoachTitle.textContent = step.title;
+      elements.tutorialCoachText.textContent = step.body;
+      elements.tutorialStepCounter.textContent = `${state.tutorial.stepIndex + 1}/${TUTORIAL_STEPS.length}`;
+      elements.tutorialNextButton.classList.toggle("hidden", Boolean(step.action));
+      elements.tutorialNextButton.textContent = "次へ";
+      window.requestAnimationFrame(() => updateTutorialSpotlight(tutorialFocusSelector(step)));
+    }
+
+    function updateTutorialSpotlight(selector) {
+      if (!isTutorialActive() || !selector || !elements.tutorialSpotlight) return;
+      const target = document.querySelector(selector);
+      if (!target) {
+        elements.tutorialSpotlight.style.opacity = "0";
+        return;
+      }
+      const rect = target.getBoundingClientRect();
+      const pad = 8;
+      elements.tutorialSpotlight.style.opacity = "1";
+      elements.tutorialSpotlight.style.left = `${Math.max(4, rect.left - pad)}px`;
+      elements.tutorialSpotlight.style.top = `${Math.max(4, rect.top - pad)}px`;
+      elements.tutorialSpotlight.style.width = `${Math.max(24, rect.width + pad * 2)}px`;
+      elements.tutorialSpotlight.style.height = `${Math.max(24, rect.height + pad * 2)}px`;
+    }
+
+    function refreshTutorialSpotlight() {
+      const step = currentTutorialStep();
+      if (!step) return;
+      updateTutorialSpotlight(tutorialFocusSelector(step));
     }
 
     function canPlayerFuseRulers() {
@@ -11797,6 +12760,9 @@
         && state.currentSide === "player"
         && !state.gameOver
         && !state.aiThinking
+        && !state.pendingCardChoice
+        && !state.pendingRemoteHandTrim
+        && tutorialAllowsHandCard(card)
         && canUseHandCardNow(card);
     }
 
@@ -11829,7 +12795,7 @@
 
     function canDropHandCardOnSlot(card, zone, owner, index) {
       if (!card || !canStartHandDrag(card)) return false;
-      if (card.type !== "item") return isValidPlacement(card, zone, owner, index);
+      if (card.type !== "item") return tutorialAllowsPlacement(card, zone, owner, index) && isValidPlacement(card, zone, owner, index);
       if (card.baseId === "capture") {
         return owner === "opponent"
           && zone === "seat"
@@ -11845,6 +12811,7 @@
         && canStartHandDrag(card)
         && card.type === "item"
         && card.target === "enemy"
+        && tutorialAllowsItemLife(card, targetSide)
         && targetSide !== "player"
         && ["ruler", "double_diamond"].includes(card.baseId));
     }
@@ -12170,14 +13137,18 @@
         const canDrag = canStartHandDrag(card);
         button.draggable = false;
         button.dataset.cardId = card.instanceId;
+        button.dataset.baseId = card.baseId;
         button.innerHTML = cardTemplate(card, false);
         button.classList.toggle("selected", state.selectedHandId === card.instanceId || player.mulliganSelection.includes(card.instanceId));
         button.classList.toggle("draggable-ready", canDrag);
+        button.classList.toggle("tutorial-allowed-card", isTutorialActive() && tutorialAllowsHandCard(card));
+        button.classList.toggle("tutorial-muted-card", isTutorialActive() && !tutorialAllowsHandCard(card));
         button.classList.toggle("affordable", state.phase === "battle"
           && state.currentSide === "player"
           && !state.gameOver
           && !card.unusable
           && effectiveCardCost(card) <= player.will);
+        button.disabled = isTutorialActive() && !tutorialAllowsHandCard(card);
         button.addEventListener("click", (event) => {
           handleHandCardClick(card.instanceId);
         });
@@ -12615,6 +13586,7 @@
       if (reservation) slot.dataset.reservedLabel = `遅刻予約：${reservation.card.name}`;
       slot.classList.toggle("reserved-late", Boolean(reservation));
       slot.classList.toggle("blocked", zone === "seat" && (isSeatBlocked(owner, index) || isSeatClosedByAggro(owner, index)));
+      slot.classList.toggle("tutorial-allowed-target", isTutorialActive() && currentTutorialStep()?.action === "playCard" && tutorialRefMatches(currentTutorialStep().target, owner, zone, index));
       setupSlotEvents(slot, zone, owner, index);
       return slot;
     }
@@ -12638,6 +13610,10 @@
       };
       slot.onclick = () => {
         const selected = getSelectedHandCard();
+        if (selected && selected.type !== "item" && !tutorialAllowsPlacement(selected, zone, owner, index)) {
+          rejectTutorialAction("今は光っているマスに出席させてください。");
+          return;
+        }
         if (selected?.baseId === "capture") {
           castCaptureOnSlot("player", selected, owner, zone, index, true);
           return;
@@ -12666,6 +13642,7 @@
       const button = document.createElement("button");
       button.className = `field-card board-card ${card.type}`;
       button.dataset.cardId = card.instanceId;
+      button.dataset.baseId = card.baseId;
       button.innerHTML = fieldCardTemplate(card);
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
@@ -12674,6 +13651,9 @@
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気"));
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
       button.classList.toggle("attack-target-ready", canSelectedAttackerTargetCard(owner, zone, index));
+      button.classList.toggle("tutorial-allowed-target", isTutorialActive() && (
+        tutorialAllowsAttacker(owner, zone, index) || tutorialAllowsAttackTarget(owner, zone, index)
+      ));
       attachCardDetailEvents(button, card);
       button.addEventListener("click", (event) => {
         event.stopPropagation();
@@ -13256,6 +14236,7 @@
     function startCardTest(baseId) {
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
+      resetTutorialState();
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
@@ -13269,6 +14250,8 @@
       state.pendingPanpanItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
+      state.pendingCardChoice = null;
+      state.pendingRemoteHandTrim = null;
       state.pendingCopiedCard = null;
       state.environment = null;
       state.temporarySeatBlocks = [];
@@ -13304,7 +14287,7 @@
       opponent.originalDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent);
       opponent.deckValid = validateDeckCounts(state.deckBuilder.counts.opponent);
       opponent.deck = createTestDeck("opponent", baseId, ["aggro_student", "fluid_pasta", "sniper", "quiet_please"]);
-      if (["chigauyo", "sniper", "cynical_student"].includes(baseId)) {
+      if (["chigauyo", "sniper", "cynical_student", "thin_item"].includes(baseId)) {
         opponent.hand = [
           createCardFromBase("general_student", "opponent"),
           createCardFromBase("ruler", "opponent"),
@@ -13337,6 +14320,16 @@
         const designTeacher = makeBoardCard(createCardFromBase("bird_a", "player"));
         designTeacher.playedOnTurn = 0;
         player.board.teacher = designTeacher;
+      }
+      if (baseId === "music_detergent") {
+        const designTeacher = makeBoardCard(createCardFromBase("bird_a", "player"));
+        designTeacher.playedOnTurn = 0;
+        player.board.teacher = designTeacher;
+        player.deck.unshift(
+          createCardFromBase("fairy_t", "player"),
+          createCardFromBase("lightning_n", "player"),
+          createCardFromBase("popular_c", "player")
+        );
       }
       if (baseId === "donguri") {
         const falcon = makeBoardCard(createCardFromBase("bird_a", "player"));
@@ -13437,6 +14430,7 @@
 
     function showHomeScreen() {
       state.preBattleToken += 1;
+      resetTutorialState();
       state.screen = "home";
       hideCardTooltip();
       hideBattleCardPreview();
@@ -13450,6 +14444,7 @@
 
     function showOnlineScreen() {
       state.preBattleToken += 1;
+      resetTutorialState();
       state.screen = "online";
       SIDES.opponent = state.online.role ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       hideCardTooltip();
@@ -13462,8 +14457,23 @@
       render();
     }
 
+    function showTutorialScreen() {
+      state.preBattleToken += 1;
+      resetTutorialState();
+      state.screen = "tutorial";
+      hideCardTooltip();
+      hideBattleCardPreview();
+      hideDeckInspectPrompt();
+      closeItemConfirm();
+      closeCardTestConfirm();
+      hidePlayReveal();
+      hideResultOverlay();
+      render();
+    }
+
     function showDeckScreen() {
       state.preBattleToken += 1;
+      resetTutorialState();
       state.screen = "deck";
       hideCardTooltip();
       hideBattleCardPreview();
@@ -13481,6 +14491,7 @@
     }
 
     function startNewGameWithDecks() {
+      resetTutorialState();
       const playerValidation = validateDeckCounts(state.deckBuilder.counts.player);
       const opponentValidation = validateDeckCounts(state.deckBuilder.counts.opponent);
       if (!playerValidation.valid || !opponentValidation.valid) {
@@ -13493,6 +14504,84 @@
       initializeGame();
     }
 
+    function startTutorialBattle() {
+      nextCardInstanceId = 1;
+      pendingAnimations.length = 0;
+      state.preBattleToken += 1;
+      state.screen = "battle";
+      state.phase = "battle";
+      state.actionTurn = 1;
+      state.firstSide = "player";
+      state.currentSide = "player";
+      state.selectedHandId = null;
+      state.selectedAttacker = null;
+      state.pendingItemConfirmId = null;
+      state.pendingMultiItem = null;
+      state.pendingPanpanItem = null;
+      state.pendingHandDiscardItem = null;
+      state.pendingThreeGestures = null;
+      state.pendingCardChoice = null;
+      state.pendingRemoteHandTrim = null;
+      state.pendingCopiedCard = null;
+      state.environment = null;
+      state.temporarySeatBlocks = [];
+      state.fullLockSeatBlocks = [];
+      state.noAttackUntilActionTurn = 0;
+      state.recentBoardTrash = [];
+      state.trashDetailEvents = [];
+      state.activeTrashDetailId = null;
+      state.gameOver = false;
+      state.gameWinner = null;
+      state.gameResultOptions = {};
+      state.aiThinking = false;
+      state.testMode = true;
+      state.testCardBaseId = null;
+      state.tutorial = { active: true, stepIndex: 0, intro: true };
+      state.log = [];
+      closeItemConfirm();
+      hideResultOverlay();
+      hidePlayReveal();
+      state.players.player = createPlayerState();
+      state.players.opponent = createPlayerState();
+      const player = state.players.player;
+      const opponent = state.players.opponent;
+      player.maxWill = 10;
+      player.will = 10;
+      player.turnsTaken = 1;
+      player.mulliganUsed = true;
+      player.originalDeckCounts = copyDeckCounts(state.deckBuilder.counts.player);
+      player.deckValid = validateDeckCounts(state.deckBuilder.counts.player);
+      player.hand = ["general_student", "general_teacher", "ruler", "cafeteria", "vampire", "yuta", "bento"]
+        .map((baseId) => createCardFromBase(baseId, "player"));
+      player.deck = createTestDeck("player", "general_student", ["single_cell", "single_cell", "onigiri_draw", "ruler", "cafeteria_lady"]);
+      opponent.maxWill = 10;
+      opponent.will = 10;
+      opponent.mulliganUsed = true;
+      opponent.originalDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent);
+      opponent.deckValid = validateDeckCounts(state.deckBuilder.counts.opponent);
+      opponent.deck = createTestDeck("opponent", "general_student", ["fluid_pasta", "ruler", "classroom"]);
+      const targetStudent = makeBoardCard(createCardFromBase("ae_student", "opponent"));
+      targetStudent.playedOnTurn = 0;
+      targetStudent.baseMaxHp = 2;
+      targetStudent.maxHp = 2;
+      targetStudent.currentHp = 2;
+      opponent.board.seats[4] = targetStudent;
+      const spareStudent = makeBoardCard(createCardFromBase("general_student", "opponent"));
+      spareStudent.playedOnTurn = 0;
+      opponent.board.seats[0] = spareStudent;
+      applyBoardAuras();
+      state.message = "チュートリアル開始。説明を読みながら光っている場所を操作してください。";
+      addLog("チュートリアル開始。光っている場所だけ操作できます。");
+      render();
+      showTutorialTitleAnnouncement();
+      window.setTimeout(() => {
+        if (state.screen !== "battle" || !state.tutorial.active || !state.tutorial.intro) return;
+        state.tutorial.intro = false;
+        state.message = `チュートリアル：${currentTutorialStep()?.title || "基本ルール"}`;
+        render();
+      }, 1350);
+    }
+
     function showTurnOverlay(side) {
       if (state.screen !== "battle" || !elements.turnOverlay) return;
       showCenterAnnouncement(`${turnLabel(side)} ${SIDES[side]}`);
@@ -13500,10 +14589,23 @@
 
     function showCenterAnnouncement(text) {
       if (state.screen !== "battle" || !elements.turnOverlay) return;
+      elements.turnOverlay.classList.remove("tutorial-title");
       elements.turnOverlay.textContent = text;
       elements.turnOverlay.classList.remove("show");
       void elements.turnOverlay.offsetWidth;
       elements.turnOverlay.classList.add("show");
+    }
+
+    function showTutorialTitleAnnouncement() {
+      if (state.screen !== "battle" || !elements.turnOverlay) return;
+      elements.turnOverlay.classList.add("tutorial-title");
+      elements.turnOverlay.textContent = "チュートリアル VS AI";
+      elements.turnOverlay.classList.remove("show");
+      void elements.turnOverlay.offsetWidth;
+      elements.turnOverlay.classList.add("show");
+      window.setTimeout(() => {
+        elements.turnOverlay.classList.remove("tutorial-title");
+      }, 1700);
     }
 
     function startDeckPilePress(event) {
@@ -13759,7 +14861,7 @@
         cancel_student: "遅刻2。出席したとき、相手の学生にランダムに3ダメージを割り振る。",
         laughing_front_student: "このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
-        loud_student: "このカードが出席したとき、周囲1マスにいる他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。「ベストフレンド」と隣接しているかぎり、陽気を持つ。",
+        loud_student: "このカードが出席したとき、お互いの場の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。「ベストフレンド」と隣接しているかぎり、陽気を持つ。",
         best_friend: "このカードは「バカでかい声の学生」の効果によるダメージを受けない。このカードが「バカでかい声の学生」と隣接しているかぎり、攻撃力を+2、体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。",
         ttb: "このカードが出席したとき、自分のデッキに「怪しげな文書」を1枚、相手のデッキに「怪しげな文書」を3枚生成する。",
         predator: "このカードを出席させる場合、自分の出席者1人を指名して破壊し、その出席者がいたマスにこのカードを出席させる。陽気を持つ。",
@@ -13813,7 +14915,7 @@
         onigiri_draw: "自分のデッキからカードを2枚引き、自分の気力を2回復する。",
         hondara: "カードを1枚ドローする。",
         fire_touch: "自分の気力を4失い、カードを4枚ドローする。",
-        thin_item: "相手の手札が4枚になるまで、相手の手札をランダムにデッキへ戻してシャッフルする。",
+        thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードを校外エリアへ送る。",
         handy_jet_engine: "相手の手札をランダムに2枚、校外エリアへ送る。",
         dos_attack: "相手のデッキの上から3枚を校外エリアへ送る。",
         destroy_dos_attack: "自分の校外エリアにある「Dos攻撃」の枚数+1を数え、その数×3枚、相手のデッキの上から校外エリアへ送る。",
@@ -13825,6 +14927,7 @@
         dry_meal_ticket: "環境が「食堂」の場合にのみ使用できる。自分のデッキから「おにぎりドロー」と「流動性パスタ」をそれぞれ1枚まで引く。",
         fluid_pasta: "自分の気力を3回復する。",
         water_2l: "自分の校外エリアから、カニ勝利に必要なカードを2枚まで手札に回収する。",
+        night_pool_water: "自分の空いている席マスに「単細胞生物」をランダムに2人召喚する。",
         i_got_it: "相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。",
         accelerate: "装備カード。「U太」1人に装備できる。自分のターン終了時、このカードを装備している「U太」が自分の場にいるならカードを1枚ドローする。装備カードは1人につき1枚まで。",
         chameleon: "装備カード。「U太」1人に装備できる。このカードを装備している「U太」は体力+2する。装備カードは1人につき1枚まで。",
@@ -13834,7 +14937,7 @@
         hair_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         homeless_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         quiet_please: "相手の攻撃力4以上の出席者1人を指名する。その出席者は次の相手のターン終了時まで攻撃できない。",
-        seriously_hit: "相手の出席者1人を指名する。次の自分のターン開始時、その出席者を破壊する。",
+        seriously_hit: "相手の出席者1人を指名し、破壊する。",
         chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
         chigauyo_kanji: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
         favorite_number_s: "相手の教卓マスにいる教師1人を指名し、破壊する。その後、その教師と同名のカード1枚を自分の手札に加える。",
@@ -14011,6 +15114,11 @@
     elements.homeDeckButton.addEventListener("click", showDeckScreen);
     elements.homeBattleButton.addEventListener("click", showOnlineScreen);
     elements.homeSoloButton.addEventListener("click", startSoloBattleFromHome);
+    elements.homeTutorialButton.addEventListener("click", startTutorialBattle);
+    elements.tutorialBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.tutorialStartButton.addEventListener("click", startTutorialBattle);
+    elements.tutorialNextButton.addEventListener("click", advanceTutorialTextStep);
+    elements.tutorialExitButton.addEventListener("click", exitTutorialMode);
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
     elements.onlineCreateRoomButton.addEventListener("click", onlineCreateRoom);
     elements.onlineJoinRoomButton.addEventListener("click", onlineJoinRoom);
@@ -14147,6 +15255,8 @@
     document.querySelectorAll("[data-life-target]").forEach((button) => {
       button.addEventListener("click", () => attackLife(button.dataset.lifeTarget));
     });
+    window.addEventListener("resize", refreshTutorialSpotlight);
+    window.addEventListener("scroll", refreshTutorialSpotlight, true);
     setupHandScrollEvents();
 
     window.__chibattle = {
