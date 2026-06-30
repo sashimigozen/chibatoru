@@ -7,6 +7,11 @@ const PORT = Number(process.env.PORT || 8787);
 const PROTOCOL_VERSION = 1;
 const ROOM_TTL_MS = 1000 * 60 * 60 * 2;
 const WAITING_ROOM_TIMEOUT_MS = Number(process.env.WAITING_ROOM_TIMEOUT_MS || 1000 * 60 * 5);
+const COMMAND_RETRY_MS = Number(process.env.COMMAND_RETRY_MS || 1200);
+const COMMAND_MAX_ATTEMPTS = Number(process.env.COMMAND_MAX_ATTEMPTS || 6);
+const PROCESSED_COMMAND_LIMIT = 120;
+const MAX_PENDING_COMMANDS_PER_PLAYER = 12;
+const MAX_MESSAGE_BYTES = 512 * 1024;
 const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,12}$/;
 const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
@@ -24,7 +29,7 @@ const server = http.createServer((req, res) => {
   res.end("Chibatoru WebSocket server");
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, maxPayload: MAX_MESSAGE_BYTES });
 
 function now() {
   return Date.now();
@@ -101,6 +106,86 @@ function guestOf(room) {
   return [...room.players.values()].find((player) => player.role === "guest") || null;
 }
 
+function clearPendingCommand(room, commandId) {
+  const pending = room?.pendingCommands?.get(commandId);
+  if (!pending) return null;
+  if (pending.timer) clearTimeout(pending.timer);
+  room.pendingCommands.delete(commandId);
+  return pending;
+}
+
+function clearAllPendingCommands(room) {
+  if (!room?.pendingCommands) return;
+  [...room.pendingCommands.keys()].forEach((commandId) => clearPendingCommand(room, commandId));
+}
+
+function rememberProcessedCommand(room, commandId) {
+  if (!commandId || room.processedCommandIds.includes(commandId)) return;
+  room.processedCommandIds.push(commandId);
+  while (room.processedCommandIds.length > PROCESSED_COMMAND_LIMIT) room.processedCommandIds.shift();
+}
+
+function sendLatestState(room, ws) {
+  if (!room?.state) return;
+  send(ws, {
+    type: "gameState",
+    senderId: SERVER_ID,
+    roomSessionId: room.sessionId,
+    snapshot: room.state
+  });
+}
+
+function sendCommandProcessed(room, player, commandId) {
+  if (!player || !commandId) return;
+  send(player.ws, {
+    type: "commandProcessed",
+    senderId: SERVER_ID,
+    roomSessionId: room.sessionId,
+    commandId,
+    snapshotSeq: room.snapshotSeq
+  });
+}
+
+function failPendingCommand(room, commandId) {
+  const pending = clearPendingCommand(room, commandId);
+  if (!pending) return;
+  const sender = room.players.get(pending.senderId);
+  if (!sender) return;
+  sendError(sender.ws, "操作の同期を確認できませんでした。最新状態へ再同期します。", "command_timeout");
+  sendLatestState(room, sender.ws);
+}
+
+function deliverPendingCommand(room, commandId) {
+  const pending = room?.pendingCommands?.get(commandId);
+  if (!pending) return;
+  if (pending.timer) clearTimeout(pending.timer);
+  if (pending.attempts >= COMMAND_MAX_ATTEMPTS) {
+    failPendingCommand(room, commandId);
+    return;
+  }
+  pending.attempts += 1;
+  const host = hostOf(room);
+  if (host) {
+    send(host.ws, {
+      type: "command",
+      senderId: pending.senderId,
+      roomSessionId: room.sessionId,
+      command: pending.command,
+      deliveryAttempt: pending.attempts
+    });
+  }
+  pending.timer = setTimeout(() => deliverPendingCommand(room, commandId), COMMAND_RETRY_MS);
+  pending.timer.unref?.();
+}
+
+function completePendingCommand(room, commandId) {
+  if (!commandId) return;
+  const pending = clearPendingCommand(room, commandId);
+  rememberProcessedCommand(room, commandId);
+  if (!pending) return;
+  sendCommandProcessed(room, room.players.get(pending.senderId), commandId);
+}
+
 function clearWaitingRoomTimer(room) {
   if (!room?.waitingTimer) return;
   clearTimeout(room.waitingTimer);
@@ -116,6 +201,7 @@ function closeWaitingRoom(roomId) {
     sendError(player.ws, "5分間相手が入室しなかったため、部屋を閉じました。もう一度部屋を作ってください。", "room_timeout");
   });
   clearWaitingRoomTimer(room);
+  clearAllPendingCommands(room);
   rooms.delete(roomId);
   room.players.forEach((player) => {
     try { player.ws.close(4002, "room_timeout"); } catch {}
@@ -175,7 +261,10 @@ function validateTurnCommand(room, player, commandType) {
 function cleanupRooms() {
   const cutoff = now() - ROOM_TTL_MS;
   rooms.forEach((room, roomId) => {
-    if (room.players.size === 0 && room.updatedAt < cutoff) rooms.delete(roomId);
+    if (room.players.size === 0 && room.updatedAt < cutoff) {
+      clearAllPendingCommands(room);
+      rooms.delete(roomId);
+    }
   });
 }
 
@@ -205,6 +294,8 @@ function joinRoom(ws, message) {
       state: null,
       currentTurn: "",
       snapshotSeq: 0,
+      pendingCommands: new Map(),
+      processedCommandIds: [],
       waitingTimer: null,
       createdAt: now(),
       updatedAt: now()
@@ -262,6 +353,9 @@ function joinRoom(ws, message) {
       roomSessionId: room.sessionId,
       snapshot: room.state
     });
+  }
+  if (role === "host" && room.started) {
+    room.pendingCommands.forEach((_pending, commandId) => deliverPendingCommand(room, commandId));
   }
   refreshWaitingRoomTimer(room);
 }
@@ -371,12 +465,15 @@ function handleGameState(ws, message) {
   room.snapshotSeq = Math.max(room.snapshotSeq, seq);
   room.currentTurn = snapshotCurrentTurn(message.snapshot) || room.currentTurn;
   room.updatedAt = now();
+  const processedCommandId = String(message.processedCommandId || "").slice(0, 120);
   broadcast(room, {
     type: "gameState",
     senderId: SERVER_ID,
     roomSessionId: room.sessionId,
-    snapshot: room.state
+    snapshot: room.state,
+    processedCommandId
   }, player.clientId);
+  completePendingCommand(room, processedCommandId);
 }
 
 function handlePlayerCommand(ws, message) {
@@ -388,9 +485,33 @@ function handlePlayerCommand(ws, message) {
   }
   const command = commandFromMessage(message);
   const commandType = command.type || message.type;
+  const commandId = String(command.id || "").slice(0, 120);
+  if (!commandId) {
+    sendError(ws, "操作IDがありません。", "invalid_command");
+    return;
+  }
+  if (player.role === "host") return;
+  if (room.processedCommandIds.includes(commandId)) {
+    sendLatestState(room, player.ws);
+    sendCommandProcessed(room, player, commandId);
+    return;
+  }
+  if (room.pendingCommands.has(commandId)) {
+    deliverPendingCommand(room, commandId);
+    return;
+  }
   const validationError = validateTurnCommand(room, player, commandType);
   if (validationError) {
     sendError(ws, validationError, "invalid_turn");
+    const authoritativeHost = hostOf(room);
+    if (authoritativeHost) {
+      send(authoritativeHost.ws, {
+        type: "syncRequest",
+        senderId: SERVER_ID,
+        roomSessionId: room.sessionId,
+        reason: "turn_validation"
+      });
+    }
     return;
   }
   const host = hostOf(room);
@@ -398,22 +519,48 @@ function handlePlayerCommand(ws, message) {
     sendError(ws, "ホストがいません。", "host_missing");
     return;
   }
-  if (player.role === "host") return;
-  send(host.ws, {
-    type: "command",
+  if (commandType === "endTurn") {
+    const existingEndTurn = [...room.pendingCommands.values()].find((pending) =>
+      pending.senderId === player.clientId && pending.command.type === "endTurn");
+    if (existingEndTurn) {
+      send(ws, {
+        type: "commandPending",
+        senderId: SERVER_ID,
+        roomSessionId: room.sessionId,
+        commandId: existingEndTurn.command.id
+      });
+      return;
+    }
+  }
+  const pendingForPlayer = [...room.pendingCommands.values()].filter((pending) =>
+    pending.senderId === player.clientId).length;
+  if (pendingForPlayer >= MAX_PENDING_COMMANDS_PER_PLAYER) {
+    sendError(ws, "未処理の操作が多すぎます。同期完了を待ってください。", "too_many_pending_commands");
+    return;
+  }
+  room.pendingCommands.set(commandId, {
+    command: { ...command, id: commandId },
     senderId: player.clientId,
-    roomSessionId: room.sessionId,
-    command
+    attempts: 0,
+    timer: null
   });
+  deliverPendingCommand(room, commandId);
 }
 
 function handleReturnRoom(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
+  const guestCanReturnAfterGame = player.role === "guest" && Boolean(room.state?.state?.gameOver);
+  if (player.role !== "host" && !guestCanReturnAfterGame) {
+    sendError(ws, "対戦中の部屋状態はホストだけが変更できます。", "forbidden");
+    return;
+  }
   room.started = false;
   room.state = null;
   room.currentTurn = "";
   room.snapshotSeq = 0;
+  clearAllPendingCommands(room);
+  room.processedCommandIds = [];
   room.players.forEach((joinedPlayer) => {
     joinedPlayer.ready = false;
   });
@@ -492,6 +639,11 @@ wss.on("connection", (ws) => {
     room.players.delete(ws.clientId);
     room.updatedAt = now();
     refreshWaitingRoomTimer(room);
+    if (player.role === "guest") {
+      [...room.pendingCommands.entries()].forEach(([commandId, pending]) => {
+        if (pending.senderId === player.clientId) clearPendingCommand(room, commandId);
+      });
+    }
     if (isBattleRole(player.role)) {
       broadcast(room, {
         type: "opponentDisconnected",
