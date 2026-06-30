@@ -5279,6 +5279,7 @@
         localRpsChoice: null,
         remoteRpsChoice: null,
         localMulliganPending: false,
+        pendingTurnCommandId: "",
         clientId: createOnlineClientId(),
         sendSeq: 0,
         pendingMessages: {},
@@ -5856,6 +5857,7 @@
       state.online.localRpsChoice = null;
       state.online.remoteRpsChoice = null;
       state.online.localMulliganPending = false;
+      state.online.pendingTurnCommandId = "";
       state.online.pendingMessages = {};
       state.online.receivedMessageIds = [];
       state.online.appliedCommandIds = [];
@@ -5890,6 +5892,7 @@
       state.online.remoteReady = false;
       state.online.remoteDeckName = "";
       state.online.remoteDeckCounts = null;
+      state.online.pendingTurnCommandId = "";
       state.online.started = false;
       SIDES.opponent = SOLO_OPPONENT_LABEL;
       document.body.dataset.online = "";
@@ -6080,7 +6083,29 @@
           onlineHandleRoomClosed(message);
           return;
         }
+        if (["invalid_turn", "command_timeout"].includes(message.code)) {
+          state.online.pendingTurnCommandId = "";
+          state.aiThinking = false;
+          if (isOnlineGuest() && state.online.started) {
+            onlineClearPendingMessagesByType("syncRequest");
+            onlineSend({ type: "syncRequest" }, { track: true });
+          }
+        }
         onlineSetStatus(message.message || "オンライン接続でエラーが発生しました。", "bad");
+        render();
+        return;
+      }
+      if (message.type === "commandProcessed") {
+        if (message.commandId && message.commandId === state.online.pendingTurnCommandId) {
+          state.online.pendingTurnCommandId = "";
+          state.aiThinking = false;
+        }
+        return;
+      }
+      if (message.type === "commandPending") {
+        state.online.pendingTurnCommandId = message.commandId || state.online.pendingTurnCommandId;
+        state.aiThinking = true;
+        render();
         return;
       }
       if (message.type === "hello" && isOnlineHost()) {
@@ -6217,18 +6242,23 @@
         createdAt: Date.now()
       };
       const messageType = type === "playCard" || type === "endTurn" ? type : "gameAction";
-      return onlineSend({ type: messageType, command }, { track: true });
+      const sent = onlineSend({ type: messageType, command }, { track: true });
+      if (sent && type === "endTurn") {
+        state.online.pendingTurnCommandId = command.id;
+        state.aiThinking = true;
+      }
+      return sent;
     }
 
-    function onlineBroadcastState(force = false) {
+    function onlineBroadcastState(force = false, processedCommandId = "") {
       if (!isOnlineHost() || !state.online.started || !state.online.connected) return;
       if (!force && state.online.isHandlingRemoteCommand) return;
-      if (onlineHasPrivatePendingAction()) return;
+      if (!force && onlineHasPrivatePendingAction()) return;
       const snapshot = onlineCreateSnapshot();
       if (!snapshot) return;
       state.online.lastSnapshotAt = Date.now();
       onlineClearPendingMessagesByType("gameState");
-      onlineSend({ type: "gameState", snapshot }, { track: true });
+      onlineSend({ type: "gameState", snapshot, processedCommandId }, { track: true });
     }
 
     function onlineHasPrivatePendingAction() {
@@ -6298,6 +6328,13 @@
       state.online.started = true;
       state.screen = "battle";
       state.online.isApplyingRemote = false;
+      if (isOnlineGuest()
+        && state.online.pendingTurnCommandId
+        && state.phase === "battle"
+        && state.currentSide !== "player") {
+        state.online.pendingTurnCommandId = "";
+        state.aiThinking = false;
+      }
       render();
       showOnlineSnapshotVisuals(visualBefore);
       if (state.gameOver) showResultOverlay(state.gameWinner, state.gameResultOptions || {});
@@ -6494,9 +6531,35 @@
         .replaceAll("__PLAYER_TWO__", "プレイヤー2");
     }
 
+    function onlineCanApplyRemoteCommand(command) {
+      if (!command?.type || state.gameOver) return false;
+      if (command.type === "concede") return Boolean(state.online.started);
+      if (command.type === "rps") {
+        return state.phase === "rps"
+          && !state.rpsOpponentChoice
+          && Boolean(RPS_LABELS[command.payload?.choice]);
+      }
+      if (command.type === "order") {
+        return state.phase === "orderChoice"
+          && state.rpsWinner === "opponent"
+          && !state.preBattleBusy;
+      }
+      if (command.type === "mulligan") {
+        return state.phase === "mulligan" && !state.players.opponent.mulliganUsed;
+      }
+      return state.phase === "battle" && state.currentSide === "opponent";
+    }
+
     function onlineApplyRemoteCommand(command) {
       if (!command || !isOnlineHost()) return;
       if (command.id && onlineRememberBounded("appliedCommandIds", command.id)) {
+        onlineBroadcastState(true, command.id);
+        return;
+      }
+      if (!onlineCanApplyRemoteCommand(command)) {
+        if (command.id) {
+          state.online.appliedCommandIds = state.online.appliedCommandIds.filter((id) => id !== command.id);
+        }
         onlineBroadcastState(true);
         return;
       }
@@ -6568,7 +6631,7 @@
         if (command.type === "concede") endGame("player", "相手が勝てないを選びました。", { retire: true });
       } finally {
         state.online.isHandlingRemoteCommand = false;
-        onlineBroadcastState(true);
+        onlineBroadcastState(true, command.id || "");
       }
     }
 
@@ -6576,7 +6639,7 @@
       if (state.phase !== "rps" || !RPS_LABELS[choice]) return;
       if (side === "player") state.rpsPlayerChoice = choice;
       if (side === "opponent") state.rpsOpponentChoice = choice;
-      state.preBattleBusy = Boolean((side === "player" && !state.rpsOpponentChoice) || (side === "opponent" && !state.rpsPlayerChoice));
+      state.preBattleBusy = Boolean(side === "player" && !state.rpsOpponentChoice);
       state.message = "相手のじゃんけんカードを待っています。";
       if (state.rpsPlayerChoice && state.rpsOpponentChoice) {
         const token = state.preBattleToken;
@@ -6609,6 +6672,7 @@
 
     function onlineReturnToRoom(sendRemote = true) {
       if (!state.online.role) return;
+      state.online.pendingTurnCommandId = "";
       state.online.started = false;
       state.online.localReady = false;
       state.online.remoteReady = false;
@@ -7124,6 +7188,10 @@
       player.will = player.maxWill;
       resetAttackFlags(side);
       clearSelections();
+      state.pendingItemConfirmId = null;
+      state.pendingCardChoice = null;
+      state.pendingCopiedCard = null;
+      hideBattleCardPreview();
       resolveDelayedDestruction(side);
       resolveHandTurnEffects(side);
       resolveLateZone(side);
@@ -7693,6 +7761,7 @@
     function endTurn(options = {}) {
       const fromAi = options.fromAi === true;
       if (isOnlineSpectator() && !fromAi) return;
+      if (isOnlineGuest() && isOnlineBattle() && state.online.pendingTurnCommandId && !fromAi) return;
       if (state.phase !== "battle" || state.gameOver) return;
       if (onlineCanSendCommand()) {
         if (needsMeguroHandChoice("player")) {
@@ -11317,6 +11386,7 @@
         || state.gameOver
         || state.currentSide !== "player"
         || state.aiThinking
+        || Boolean(state.online.pendingTurnCommandId)
         || Boolean(state.pendingCopiedCard)
         || Boolean(state.pendingThreeGestures);
       const recommendEndTurn = !elements.endTurnButton.disabled
