@@ -1877,6 +1877,16 @@
       width: min(1120px, calc(100vw - 96px));
     }
 
+    #mulliganStage.choice-stage .mulligan-window {
+      width: min(1120px, calc(100vw - 96px));
+    }
+
+    #mulliganStage.choice-stage .mulligan-hand {
+      justify-content: flex-start;
+      max-height: min(58vh, 520px);
+      align-items: flex-start;
+    }
+
     #threeGesturesStage .mulligan-hand {
       justify-content: flex-start;
       max-height: min(58vh, 520px);
@@ -2913,6 +2923,98 @@
       align-self: center;
       min-width: 94px;
       min-height: 48px;
+    }
+
+    .mulligan-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .selection-peek-button,
+    .selection-peek-return {
+      display: inline-grid;
+      place-items: center;
+      width: 48px;
+      min-width: 48px;
+      height: 48px;
+      border: 1px solid #94a3b8;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #1e293b;
+      box-shadow: 0 4px 0 #cbd5e1, 0 10px 18px rgba(15, 23, 42, 0.12);
+      cursor: pointer;
+    }
+
+    .selection-peek-button:hover,
+    .selection-peek-return:hover,
+    .selection-peek-button:focus-visible,
+    .selection-peek-return:focus-visible {
+      border-color: #2563eb;
+      color: #1d4ed8;
+      outline: 3px solid rgba(37, 99, 235, 0.18);
+      outline-offset: 2px;
+    }
+
+    .selection-peek-button:active,
+    .selection-peek-return:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #cbd5e1, 0 6px 12px rgba(15, 23, 42, 0.1);
+    }
+
+    .selection-peek-return {
+      position: fixed;
+      right: max(232px, calc((100vw - 1220px) / 2 + 232px));
+      top: 50%;
+      z-index: 46;
+      transform: translateY(-50%);
+    }
+
+    .selection-peek-return:active {
+      transform: translateY(calc(-50% + 2px));
+    }
+
+    .eye-icon {
+      position: relative;
+      display: block;
+      width: 25px;
+      height: 15px;
+      border: 2px solid currentColor;
+      border-radius: 50% / 58%;
+    }
+
+    .eye-icon::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: currentColor;
+      transform: translate(-50%, -50%);
+    }
+
+    .eye-icon.closed {
+      height: 16px;
+      border-top-color: transparent;
+      border-right-color: transparent;
+      border-left-color: transparent;
+      border-bottom-width: 3px;
+      border-radius: 0 0 999px 999px;
+      transform: translateY(-3px);
+    }
+
+    .eye-icon.closed::before {
+      display: none;
+    }
+
+    @media (max-width: 960px) {
+      .selection-peek-return {
+        right: 12px;
+        top: 52%;
+      }
     }
 
     .deck-tabs .button,
@@ -5129,6 +5231,12 @@
         <h2 id="mulliganTitle">引き直すカードを選んでください</h2>
         <p id="mulliganMessage">引き直したいカードを0〜5枚選び、右側の「確定」を押してください。</p>
         <div class="mulligan-hand" id="mulliganHand"></div>
+        <div class="mulligan-action-row hidden" id="thinItemChoiceActions">
+          <button class="button mulligan-hand-button" id="thinItemKeepConfirmButton" type="button">この4枚を残す</button>
+          <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="盤面を見る" title="盤面を見る">
+            <span class="eye-icon closed" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -5137,7 +5245,12 @@
         <h2 id="threeGesturesTitle">カードを選んでください</h2>
         <p id="threeGesturesMessage">手札に加えるカードを3枚選び、確定してください。</p>
         <div class="mulligan-hand" id="threeGesturesHand"></div>
-        <button class="button mulligan-hand-button" id="threeGesturesConfirmButton" type="button">3枚選択で確定</button>
+        <div class="mulligan-action-row">
+          <button class="button mulligan-hand-button" id="threeGesturesConfirmButton" type="button">3枚選択で確定</button>
+          <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="盤面を見る" title="盤面を見る">
+            <span class="eye-icon closed" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -5149,6 +5262,10 @@
         <button class="button mulligan-hand-button" id="trashDetailCloseButton" type="button">閉じる</button>
       </div>
     </div>
+
+    <button class="selection-peek-return hidden" id="selectionPeekReturnButton" type="button" aria-label="選択画面に戻る" title="選択画面に戻る">
+      <span class="eye-icon" aria-hidden="true"></span>
+    </button>
 
     <section class="game-shell">
       <div class="playmat">
@@ -5704,6 +5821,7 @@
       pendingThreeGestures: null,
       pendingCardChoice: null,
       pendingRemoteHandTrim: null,
+      selectionOverlayPeek: false,
       pendingTestCardId: null,
       pendingCopiedCard: null,
       environment: null,
@@ -6011,11 +6129,14 @@
       mulliganHand: document.getElementById("mulliganHand"),
       mulliganTitle: document.getElementById("mulliganTitle"),
       mulliganMessage: document.getElementById("mulliganMessage"),
+      thinItemChoiceActions: document.getElementById("thinItemChoiceActions"),
+      thinItemKeepConfirmButton: document.getElementById("thinItemKeepConfirmButton"),
       threeGesturesStage: document.getElementById("threeGesturesStage"),
       threeGesturesTitle: document.getElementById("threeGesturesTitle"),
       threeGesturesHand: document.getElementById("threeGesturesHand"),
       threeGesturesMessage: document.getElementById("threeGesturesMessage"),
       threeGesturesConfirmButton: document.getElementById("threeGesturesConfirmButton"),
+      selectionPeekReturnButton: document.getElementById("selectionPeekReturnButton"),
       trashDetailStage: document.getElementById("trashDetailStage"),
       trashDetailTitle: document.getElementById("trashDetailTitle"),
       trashDetailMessage: document.getElementById("trashDetailMessage"),
@@ -6988,6 +7109,7 @@
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
       snapshotState.pendingRemoteHandTrim = null;
+      snapshotState.selectionOverlayPeek = false;
       snapshotState.pendingCopiedCard = null;
       snapshotState.activeTrashDetailId = null;
       state.online.lastSnapshotSeq += 1;
@@ -7002,6 +7124,7 @@
       if (!snapshot || snapshot.seq <= state.online.lastSnapshotSeq) return;
       state.online.lastSnapshotSeq = snapshot.seq;
       const visualBefore = captureOnlineVisualState();
+      const preservedThinItemChoice = preserveOnlineThinItemChoice();
       const preservedMulliganSelection = isOnlineGuest()
         && state.phase === "mulligan"
         && !state.players.player.mulliganUsed
@@ -7020,6 +7143,7 @@
       state.deckBuilder = preservedDeckBuilder;
       state.online = preservedOnline;
       restoreOnlineGuestMulliganState(preservedMulliganSelection, hadLocalMulliganPending);
+      restoreOnlineThinItemChoice(preservedThinItemChoice);
       nextCardInstanceId = snapshot.nextCardInstanceId || nextCardInstanceId;
       pendingAnimations.length = 0;
       closeItemConfirm();
@@ -7038,6 +7162,38 @@
       showOnlineSnapshotVisuals(visualBefore);
       if (state.gameOver) showResultOverlay(state.gameWinner, state.gameResultOptions || {});
       onlineSend({ type: "snapshotAck", seq: snapshot.seq });
+    }
+
+    function isThinItemCardChoice(choice) {
+      return Boolean(choice && (choice.mode === "thin_item_keep" || choice.mode === "thin_item_online_response"));
+    }
+
+    function preserveOnlineThinItemChoice() {
+      const choice = state.pendingCardChoice;
+      if (!isOnlineGuest() || !isThinItemCardChoice(choice)) return null;
+      return {
+        ...choice,
+        selectionOverlayPeek: state.selectionOverlayPeek,
+        cards: choice.cards.map((card) => ({ instanceId: card.instanceId })),
+        selectedIds: [...choice.selectedIds]
+      };
+    }
+
+    function restoreOnlineThinItemChoice(choice) {
+      if (!choice || !isOnlineGuest() || state.phase !== "battle" || state.gameOver) return;
+      const handById = new Map(state.players.player.hand.map((card) => [card.instanceId, card]));
+      const cards = choice.cards.map((card) => handById.get(card.instanceId)).filter(Boolean);
+      if (cards.length <= 4) {
+        state.pendingCardChoice = null;
+        return;
+      }
+      state.pendingCardChoice = {
+        ...choice,
+        cards,
+        selectedIds: choice.selectedIds.filter((id) => handById.has(id)).slice(0, choice.max)
+      };
+      state.selectionOverlayPeek = Boolean(choice.selectionOverlayPeek);
+      state.message = choice.message || "細いで残す手札を選んでください。";
     }
 
     function restoreOnlineGuestMulliganState(selectedIds, hadLocalMulliganPending) {
@@ -7538,6 +7694,7 @@
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
       state.pendingRemoteHandTrim = null;
+      state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.pendingTestCardId = null;
       state.online.localMulliganPending = false;
@@ -7893,6 +8050,7 @@
       state.pendingItemConfirmId = null;
       state.pendingCardChoice = null;
       state.pendingRemoteHandTrim = null;
+      state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       hideBattleCardPreview();
       resolveDelayedDestruction(side);
@@ -8977,7 +9135,7 @@
         return;
       }
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
-      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
+      if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       if (state.pendingHandDiscardItem) {
         const item = getHandCard("player", state.pendingHandDiscardItem.itemId);
         const target = getHandCard("player", instanceId);
@@ -9041,11 +9199,13 @@
       state.pendingPanpanItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
+      state.selectionOverlayPeek = false;
     }
 
     function openCardChoice(options) {
       const cards = (options.cards || []).filter(Boolean);
       if (cards.length === 0) return false;
+      state.selectionOverlayPeek = false;
       state.pendingCardChoice = {
         mode: options.mode,
         itemId: options.itemId || null,
@@ -9086,6 +9246,7 @@
       const mode = pending.mode;
       const itemId = pending.itemId;
       state.pendingCardChoice = null;
+      state.selectionOverlayPeek = false;
       if (mode === "paired_existence") {
         const item = getHandCard("player", itemId);
         const target = getHandCard("player", selectedIds[0]);
@@ -9258,6 +9419,7 @@
       }
       const revealed = state.players.player.deck.slice(0, 6);
       state.pendingThreeGestures = { itemId: item.instanceId, revealed, selectedIds: [] };
+      state.selectionOverlayPeek = false;
       state.selectedHandId = item.instanceId;
       state.message = "3つジェスチャー：手札に加えるカードを3枚選んでください。";
       render();
@@ -9283,6 +9445,7 @@
       if (onlineCanSendCommand()) {
         onlineSendCommand("threeGestures", { instanceId: item.instanceId, selectedIds: [...pending.selectedIds] });
         state.pendingThreeGestures = null;
+        state.selectionOverlayPeek = false;
         clearSelections();
         state.message = "3つジェスチャーの選択を送信しました。";
         render();
@@ -9328,6 +9491,7 @@
       const trashText = trashDetailCountText(side, sentToTrash, "3つジェスチャーで校外へ送られたカード");
       addLog(`${SIDES[side]}は3つジェスチャーを使い、デッキ上6枚から${kept}枚を手札に加え、残り${trashText}を校外エリアへ送りました。`);
       state.pendingThreeGestures = null;
+      state.selectionOverlayPeek = false;
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -10322,7 +10486,7 @@
     function handleBoardCardClick(owner, zone, index = null) {
       if (isOnlineSpectator()) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
-      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
+      if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       const selectedCard = getSelectedHandCard();
       if (state.pendingMultiItem && selectedCard?.baseId === "i_got_it") {
         toggleMultiItemTarget(owner, zone, index);
@@ -10446,7 +10610,7 @@
     function attackLife(targetSide) {
       if (isOnlineSpectator()) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
-      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
+      if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       const selectedCard = getSelectedHandCard();
       if (selectedCard?.type === "item") {
         if (!tutorialAllowsItemLife(selectedCard, targetSide)) {
@@ -11460,6 +11624,7 @@
     function getSelectedAttackCard() {
       const attacker = getBoardCardFromRef(state.selectedAttacker);
       if (!attacker || state.phase !== "battle" || state.gameOver) return null;
+      if (hasPeekableSelectionOverlay()) return null;
       if (state.selectedAttacker.owner !== state.currentSide) return null;
       return canAttackSilently(attacker) ? attacker : null;
     }
@@ -12196,6 +12361,22 @@
       state.pendingPanpanItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
+      state.selectionOverlayPeek = false;
+    }
+
+    function hasPeekableSelectionOverlay() {
+      return Boolean(state.pendingThreeGestures || state.pendingCardChoice);
+    }
+
+    function hideSelectionOverlayForBoard() {
+      if (!hasPeekableSelectionOverlay()) return;
+      state.selectionOverlayPeek = true;
+      render();
+    }
+
+    function showSelectionOverlayFromBoard() {
+      state.selectionOverlayPeek = false;
+      render();
     }
 
     function oppositeSide(side) {
@@ -12216,6 +12397,7 @@
       renderPreBattleStage();
       renderMulliganStage();
       renderThreeGesturesStage();
+      renderSelectionPeekReturn();
       renderTrashDetailStage();
       renderBoards();
       renderDeckEditor();
@@ -12761,6 +12943,7 @@
         && !state.gameOver
         && !state.aiThinking
         && !state.pendingCardChoice
+        && !state.pendingThreeGestures
         && !state.pendingRemoteHandTrim
         && tutorialAllowsHandCard(card)
         && canUseHandCardNow(card);
@@ -12961,16 +13144,43 @@
     }
 
     function renderMulliganStage() {
-      const active = state.screen === "battle"
+      const thinChoice = isThinItemCardChoice(state.pendingCardChoice) ? state.pendingCardChoice : null;
+      const peeking = state.selectionOverlayPeek && hasPeekableSelectionOverlay();
+      const mulliganActive = state.screen === "battle"
         && ["mulligan", "mulliganDraw"].includes(state.phase)
         && !isOnlineSpectator()
         && (state.phase === "mulliganDraw" || !state.players.player.mulliganUsed);
+      const active = !peeking && (mulliganActive || (state.screen === "battle" && Boolean(thinChoice) && !isOnlineSpectator()));
+      elements.mulliganStage.classList.toggle("choice-stage", Boolean(thinChoice));
       elements.mulliganStage.classList.toggle("hidden", !active);
       if (!active) {
         elements.mulliganHand.innerHTML = "";
+        elements.thinItemChoiceActions.classList.add("hidden");
+        return;
+      }
+      if (thinChoice) {
+        elements.mulliganTitle.textContent = thinChoice.title;
+        elements.mulliganMessage.textContent = `${thinChoice.message} 選択中：${thinChoice.selectedIds.length}/${thinChoice.max}`;
+        elements.thinItemChoiceActions.classList.remove("hidden");
+        elements.thinItemKeepConfirmButton.textContent = thinChoice.confirmLabel;
+        elements.thinItemKeepConfirmButton.disabled = thinChoice.selectedIds.length < thinChoice.min;
+        elements.mulliganHand.innerHTML = "";
+        thinChoice.cards.forEach((card) => {
+          const button = document.createElement("button");
+          button.className = `card mulligan-card ${card.type}`;
+          button.type = "button";
+          button.dataset.cardId = card.instanceId;
+          button.innerHTML = cardTemplate(card, false);
+          button.classList.toggle("selected", thinChoice.selectedIds.includes(card.instanceId));
+          button.setAttribute("aria-pressed", String(thinChoice.selectedIds.includes(card.instanceId)));
+          button.addEventListener("click", () => toggleCardChoiceCard(card.instanceId));
+          attachCardDetailEvents(button, card, { previewOnClick: false });
+          elements.mulliganHand.appendChild(button);
+        });
         return;
       }
       const player = state.players.player;
+      elements.thinItemChoiceActions.classList.add("hidden");
       elements.mulliganTitle.textContent = state.phase === "mulligan"
         ? "引き直すカードを選んでください"
         : "カードを引き直しています";
@@ -12996,10 +13206,12 @@
     function renderThreeGesturesStage() {
       if (!elements.threeGesturesStage) return;
       const pending = state.pendingThreeGestures;
-      const choice = state.pendingCardChoice;
+      const choice = isThinItemCardChoice(state.pendingCardChoice) ? null : state.pendingCardChoice;
+      const peeking = state.selectionOverlayPeek && hasPeekableSelectionOverlay();
       const active = state.screen === "battle"
         && state.phase === "battle"
         && (Boolean(pending) || Boolean(choice))
+        && !peeking
         && !isOnlineSpectator();
       elements.threeGesturesStage.classList.toggle("hidden", !active);
       if (!active) {
@@ -13041,6 +13253,16 @@
         attachCardDetailEvents(button, card, { previewOnClick: false });
         elements.threeGesturesHand.appendChild(button);
       });
+    }
+
+    function renderSelectionPeekReturn() {
+      if (!elements.selectionPeekReturnButton) return;
+      if (!hasPeekableSelectionOverlay()) state.selectionOverlayPeek = false;
+      const visible = state.screen === "battle"
+        && state.selectionOverlayPeek
+        && hasPeekableSelectionOverlay()
+        && !isOnlineSpectator();
+      elements.selectionPeekReturnButton.classList.toggle("hidden", !visible);
     }
 
     function renderTrashDetailStage() {
@@ -13501,7 +13723,7 @@
         button.innerHTML = `<span>${label}</span><span class="life-value">気力 ${state.players[targetSide].life}</span>`;
         button.disabled = isOnlineSpectator();
         const selected = getSelectedHandCard();
-        const enemyItemTarget = canDropHandCardOnLife(selected, targetSide);
+        const enemyItemTarget = !hasPeekableSelectionOverlay() && canDropHandCardOnLife(selected, targetSide);
         const attackTarget = canSelectedAttackerTargetLife(targetSide);
         button.classList.toggle("enemy-target", enemyItemTarget || attackTarget);
         button.classList.toggle("attack-target-ready", attackTarget);
@@ -13512,7 +13734,7 @@
     function setupLifeTargetDropEvents(button, targetSide) {
       button.ondragover = (event) => {
         const card = getSelectedHandCard();
-        const valid = canDropHandCardOnLife(card, targetSide);
+        const valid = !hasPeekableSelectionOverlay() && canDropHandCardOnLife(card, targetSide);
         if (valid) event.preventDefault();
         button.classList.toggle("drag-over", valid);
       };
@@ -13531,7 +13753,7 @@
       if (!elements.playmat) return;
       elements.playmat.ondragover = (event) => {
         const card = getSelectedHandCard();
-        const valid = canDropHandCardOnPlaymat(card);
+        const valid = !hasPeekableSelectionOverlay() && canDropHandCardOnPlaymat(card);
         if (valid) event.preventDefault();
         elements.playmat.classList.toggle("drag-over", valid);
       };
@@ -13609,6 +13831,7 @@
         finishHandDrag();
       };
       slot.onclick = () => {
+        if (hasPeekableSelectionOverlay()) return;
         const selected = getSelectedHandCard();
         if (selected && selected.type !== "item" && !tutorialAllowsPlacement(selected, zone, owner, index)) {
           rejectTutorialAction("今は光っているマスに出席させてください。");
@@ -13624,6 +13847,10 @@
         }
         if (state.selectedHandId) playCard(state.selectedHandId, zone, owner, index);
       };
+      if (hasPeekableSelectionOverlay()) {
+        slot.classList.remove("click-ready");
+        return;
+      }
       const selected = getSelectedHandCard();
       const copyReady = Boolean(state.pendingCopiedCard
         && owner === "player"
@@ -13668,6 +13895,7 @@
         && owner === "player"
         && !state.gameOver
         && !state.aiThinking
+        && !hasPeekableSelectionOverlay()
         && canAttackSilently(card);
     }
 
@@ -14252,6 +14480,7 @@
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
       state.pendingRemoteHandTrim = null;
+      state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.environment = null;
       state.temporarySeatBlocks = [];
@@ -14522,6 +14751,7 @@
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
       state.pendingRemoteHandTrim = null;
+      state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.environment = null;
       state.temporarySeatBlocks = [];
@@ -15161,6 +15391,11 @@
     elements.chooseFirstButton.addEventListener("click", () => chooseStartingOrder(true));
     elements.chooseSecondButton.addEventListener("click", () => chooseStartingOrder(false));
     elements.mulliganButton.addEventListener("click", confirmPlayerMulligan);
+    document.querySelectorAll("[data-selection-peek='hide']").forEach((button) => {
+      button.addEventListener("click", hideSelectionOverlayForBoard);
+    });
+    elements.selectionPeekReturnButton.addEventListener("click", showSelectionOverlayFromBoard);
+    elements.thinItemKeepConfirmButton.addEventListener("click", confirmCardChoiceSelection);
     elements.threeGesturesConfirmButton.addEventListener("click", () => {
       if (state.pendingCardChoice) confirmCardChoiceSelection();
       else confirmThreeGesturesSelection();
