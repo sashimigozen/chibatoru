@@ -6408,6 +6408,7 @@
       crabSetTurns: 0,
       crabCountdown: null,
       abyssTurns: 0,
+      designTextbookBonus: 0,
       designTextbookUntilTurn: 0,
       lifeShieldUntilTurn: 0,
       lifeShieldUntilSide: null,
@@ -9233,7 +9234,6 @@
       resolveBestFriendEndTurnEffect(side);
       resolveAggroStudentEffects(side);
       resolveAbyssEffect(side);
-      state.players[side].designTextbookUntilTurn = 0;
     }
 
     function resolveDormCouncilEndTurnDraw(side) {
@@ -9345,7 +9345,7 @@
     }
 
     function isCouncilEnvironment(card) {
-      return card?.baseId === "student_council";
+      return card?.baseId === "student_council" || card?.baseId === "dark_student_council";
     }
 
     function resolveCouncilEnvironmentCycle(side) {
@@ -11996,9 +11996,9 @@
         resultText = `${drawn}枚ドローしました。`;
       }
       if (item.baseId === "ux_design_textbook") {
-        state.players[side].designTextbookUntilTurn = Math.max(state.players[side].designTextbookUntilTurn || 0, state.actionTurn);
+        state.players[side].designTextbookBonus = (state.players[side].designTextbookBonus || 0) + 1;
         applyBoardAuras();
-        resultText = "自分のターン終了時まで、自分の「デザイン」と名のつく教師の体力を+1しました。";
+        resultText = "自分の「デザイン」と名のつく教師の体力を+1しました。";
       }
       if (item.baseId === "aggro_eater") {
         const before = state.players[side].life;
@@ -12708,11 +12708,11 @@
     }
 
     function designTextbookHpBonus(card) {
-      return card?.type === "teacher"
-        && isDesignTeacher(card)
-        && state.players[card.owner]?.designTextbookUntilTurn >= state.actionTurn
-        ? 1
-        : 0;
+      if (card?.type !== "teacher" || !isDesignTeacher(card)) return 0;
+      const player = state.players[card.owner];
+      const permanentBonus = Math.max(0, Number(player?.designTextbookBonus) || 0);
+      const temporaryBonus = player?.designTextbookUntilTurn >= state.actionTurn ? 1 : 0;
+      return permanentBonus + temporaryBonus;
     }
 
     function applyCafeteriaVampireAura(card) {
@@ -16471,7 +16471,7 @@
         acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の気力を1回復する。",
-        ux_design_textbook: "自分のターン終了時まで、自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
+        ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
         bento: "自分の出席者1人を指名し、その体力を2回復する。",
         yakiniku: "お互いの出席者すべての攻撃力を+1し、体力を2回復する。",
         onigiri_draw: "自分のデッキからカードを2枚引き、自分の気力を2回復する。",
@@ -16537,7 +16537,7 @@
         night_pool: "お互いのターン終了時、ターンを終了したプレイヤーの場の空いている席マスに「単細胞生物」1人をランダムに出席させる。",
         seat_rules: "お互いの場の2列目には出席できない。すでに2列目に出席者がいる場合、それらを破壊する。このカードは同名カードでも上書きできる。",
         gangi_fortress: "お互いの2行1列、2行2列、3行1列、3行2列にいる出席者すべての体力を+2する。",
-        dark_student_council: "場にいるすべての出席者の攻撃力を+2する。",
+        dark_student_council: "場にいるすべての出席者の攻撃力を+2する。このカードが出てからターンが2回終了すると、「学友会」に変化する。",
         student_council: "場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。",
         full_lock: "お互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
         design_domain: "このカードは、自分の教卓マスに「デザイン」と名のつく教師がいなければ置けない。ヴァンパイアは「デザイン」と名のつく教師を攻撃できない。",
