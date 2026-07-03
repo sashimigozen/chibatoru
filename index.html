@@ -7131,6 +7131,14 @@
         onlineResolveBadStudentDiscardResponse(message.requestId, message.discardIds || []);
         return;
       }
+      if (message.type === "logicHunterChoiceRequest" && isOnlineGuest()) {
+        onlineOpenLogicHunterChoiceRequest(message);
+        return;
+      }
+      if (message.type === "logicHunterChoiceResponse" && isOnlineHost()) {
+        onlineResolveLogicHunterChoiceResponse(message.requestId, message.discardId || null);
+        return;
+      }
       if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {
         showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
         return;
@@ -7284,6 +7292,31 @@
       return true;
     }
 
+    function requestRemoteLogicHunterChoice(sourceSide, sourceCard, commandId = "") {
+      if (!isOnlineHost() || !state.online.started || !state.online.connected) return false;
+      if (sourceSide !== "opponent") return false;
+      const targetSide = oppositeSide(sourceSide);
+      const cards = state.players[targetSide].hand;
+      if (cards.length <= 0) return false;
+      const requestId = onlineNextMessageId("logic-hunter");
+      state.pendingRemoteHandTrim = {
+        mode: "logic_hunter_choice",
+        requestId,
+        sourceSide,
+        targetSide,
+        sourceBaseId: sourceCard?.baseId || "logic_hunter",
+        commandId
+      };
+      state.message = `${sourceCard?.name || "ロジックハンター"}の効果：相手が校外エリアへ送る手札を選んでいます。`;
+      onlineSend({
+        type: "logicHunterChoiceRequest",
+        requestId,
+        sourceName: sourceCard?.name || "ロジックハンター",
+        cards: cards.map(cardRevealPayload)
+      }, { track: true });
+      return true;
+    }
+
     function onlineOpenThinItemChoiceRequest(message) {
       if (!isOnlineGuest() || !state.online.started) return;
       if (state.players.player.hand.length <= 4) {
@@ -7316,6 +7349,25 @@
       });
     }
 
+    function onlineOpenLogicHunterChoiceRequest(message) {
+      if (!isOnlineGuest() || !state.online.started) return;
+      const cards = (message.cards || []).filter(Boolean);
+      if (cards.length <= 0) {
+        onlineSend({ type: "logicHunterChoiceResponse", requestId: message.requestId, discardId: null }, { track: true });
+        return;
+      }
+      openCardChoice({
+        mode: "logic_hunter_online_response",
+        title: message.sourceName || "ロジックハンター",
+        message: "相手の手札から校外エリアへ送るカードを1枚選んでください。",
+        cards,
+        min: 1,
+        max: 1,
+        confirmLabel: "選んで送る",
+        requestId: message.requestId
+      });
+    }
+
     function onlineResolveThinItemChoiceResponse(requestId, keepIds) {
       const pending = state.pendingRemoteHandTrim;
       if (!pending || pending.requestId !== requestId || pending.mode === "bad_student_discard") return;
@@ -7341,6 +7393,26 @@
         renderAfter: false,
         title: `${sourceBase.name}で校外へ送られたカード`
       });
+      state.pendingRemoteHandTrim = null;
+      clearSelections();
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+      if (pending.commandId) state.online.isHandlingRemoteCommand = true;
+      render();
+      state.online.isHandlingRemoteCommand = wasHandlingRemote;
+      onlineBroadcastState(true, pending.commandId || "");
+    }
+
+    function onlineResolveLogicHunterChoiceResponse(requestId, discardId) {
+      const pending = state.pendingRemoteHandTrim;
+      if (!pending || pending.requestId !== requestId || pending.mode !== "logic_hunter_choice") return;
+      const source = listBoardRefs(pending.sourceSide)
+        .map((ref) => getBoardCardFromRef(ref))
+        .find((card) => card?.baseId === pending.sourceBaseId)
+        || CARD_BASES[pending.sourceBaseId]
+        || CARD_BASES.logic_hunter;
+      discardOpponentHandCardById(pending.sourceSide, discardId, source, false);
       state.pendingRemoteHandTrim = null;
       clearSelections();
       cleanupDestroyedCards();
@@ -7636,6 +7708,44 @@
       return onlineMapRefForHost(ref);
     }
 
+    function onlineBuildEvolutionTargetPayload(side, card, owner, zone, index) {
+      if (!card?.evolutionFrom) return null;
+      const targetRef = findEvolveTarget(side, card, owner, zone, index) || findEvolveTarget(side, card);
+      const targetCard = getBoardCardFromRef(targetRef);
+      if (!targetRef || !targetCard) return null;
+      return {
+        owner: targetRef.owner,
+        zone: targetRef.zone,
+        index: targetRef.index,
+        instanceId: targetCard.instanceId,
+        baseId: targetCard.baseId
+      };
+    }
+
+    function onlineResolveRemotePlayTarget(side, card, payload = {}) {
+      const mapped = {
+        owner: payload.owner === "player" || payload.owner === "opponent" ? onlineSwapSide(payload.owner) : payload.owner,
+        zone: payload.zone,
+        index: payload.index ?? null
+      };
+      if (!card?.evolutionFrom) return mapped;
+      const targetPayload = payload.evolutionTarget ? onlineMapRefForHost(payload.evolutionTarget) : null;
+      const targetByInstance = payload.evolutionTarget?.instanceId
+        ? listBoardRefs(side).find((ref) => getBoardCardFromRef(ref)?.instanceId === payload.evolutionTarget.instanceId)
+        : null;
+      const targetByMappedRef = targetPayload
+        ? findEvolveTarget(side, card, targetPayload.owner, targetPayload.zone, targetPayload.index)
+        : null;
+      const targetByPlayRef = mapped.owner
+        ? findEvolveTarget(side, card, mapped.owner, mapped.zone, mapped.index)
+        : null;
+      const fallbackTarget = findEvolveTarget(side, card, side);
+      const resolved = targetByInstance || targetByMappedRef || targetByPlayRef || fallbackTarget;
+      return resolved
+        ? { owner: resolved.owner, zone: resolved.zone, index: resolved.index }
+        : mapped;
+    }
+
     function onlineDisplayText(text) {
       return String(text || "").replaceAll("相手AI", ONLINE_OPPONENT_LABEL);
     }
@@ -7703,7 +7813,9 @@
         if (command.type === "order") chooseStartingOrderForSide("opponent", Boolean(payload.first));
         if (command.type === "mulligan") onlineConfirmMulliganForSide("opponent", payload.selectedIds || []);
         if (command.type === "playCard") {
-          placeCardFromHand("opponent", payload.instanceId, payload.zone, onlineSwapSide(payload.owner), payload.index ?? null, true, {
+          const card = getHandCard("opponent", payload.instanceId);
+          const target = onlineResolveRemotePlayTarget("opponent", card, payload);
+          placeCardFromHand("opponent", payload.instanceId, target.zone, target.owner, target.index ?? null, true, {
             commandId: command.id || "",
             badStudentDiscardIds: payload.badStudentDiscardIds || []
           });
@@ -9610,6 +9722,17 @@
         discardOpponentHandCardById("player", selectedIds[0], source, true);
         return;
       }
+      if (mode === "logic_hunter_online_response") {
+        onlineSend({
+          type: "logicHunterChoiceResponse",
+          requestId: pending.requestId,
+          discardId: selectedIds[0]
+        }, { track: true });
+        state.message = "ロジックハンターの選択を送信しました。";
+        clearSelections();
+        render();
+        return;
+      }
       if (mode === "bad_student_discard") {
         resolveBadStudentDiscardChoice("player", selectedIds, CARD_BASES.failure_student, { renderAfter: true });
         return;
@@ -9987,7 +10110,12 @@
             return;
           }
         }
-        onlineSendCommand("playCard", { instanceId, zone, owner, index });
+        const payload = { instanceId, zone, owner, index };
+        if (card?.evolutionFrom) {
+          payload.evolutionFrom = card.evolutionFrom;
+          payload.evolutionTarget = onlineBuildEvolutionTargetPayload("player", card, owner, zone, index);
+        }
+        onlineSendCommand("playCard", payload);
         state.message = "カードの出席を送信しました。";
         render();
         return;
@@ -10014,6 +10142,13 @@
         if (renderAfter) render();
         return false;
       }
+      const evolutionTarget = card.evolutionFrom ? findEvolveTarget(side, card, owner, zone, index) : null;
+      if (card.evolutionFrom && !evolutionTarget) {
+        addLog(`${card.name}は進化元が見つからないため進化できません。`);
+        clearSelections();
+        if (renderAfter) render();
+        return false;
+      }
       const playCost = effectiveCardCost(card);
       if (player.will < playCost) {
         addLog(`戦意が足りません。${card.name}のコストは${playCost}です。`);
@@ -10026,9 +10161,17 @@
       player.will -= playCost;
       player.hand = player.hand.filter((handCard) => handCard.instanceId !== instanceId);
       if (card.evolutionFrom) {
-        evolveCard(side, card, owner, zone, index, {
+        const evolved = evolveCard(side, card, owner, zone, index, {
           commandId: options.commandId || ""
         });
+        if (!evolved) {
+          player.will += playCost;
+          player.hand.push(card);
+          addLog(`${card.name}は進化に失敗しました。`);
+          clearSelections();
+          if (renderAfter) render();
+          return false;
+        }
       } else if (card.late && state.environment?.baseId !== "no_late_time") {
         showCardPlayAnimation(card, "board");
         player.late.push({ card, owner, zone, index, remaining: card.late });
@@ -10629,6 +10772,8 @@
             max: 1,
             confirmLabel: "選んで送る"
           });
+        } else if (isOnlineHost() && state.online.isHandlingRemoteCommand && requestRemoteLogicHunterChoice(side, card, options.commandId || "")) {
+          addLog(`${card.name}の効果：相手が校外エリアへ送る手札を選んでいます。`);
         } else {
           const target = opponentHand[Math.floor(Math.random() * opponentHand.length)];
           discardOpponentHandCardById(side, target.instanceId, card, false);
