@@ -5695,7 +5695,7 @@
       aggro_eater: [],
       apprentice_vampire: ["cafeteria"],
       smart_me: ["lazy_student", "cancel_student"],
-      greeting_3000: ["yuta"],
+      greeting_3000: ["yuta", "dark_yuta"],
       failure_student: ["general_student", "ruler"],
       success_student: ["failure_student", "general_student", "ruler"],
       bounce_day: []
@@ -6062,7 +6062,7 @@
       {
         id: "basicWin",
         title: "基本編：勝利条件",
-        body: "相手の気力を0にすると勝利です。\n20ターンで決着しない場合は、気力が多い方が勝ちます。山札から引けないと敗北です。",
+        body: "相手の気力を0にすると勝利です。\n自分のターン開始時に山札から引けないと敗北です。カードに特殊な勝利条件がある場合は、その条件でも勝利できます。",
         focus: "#opponentLifeTarget"
       },
       {
@@ -8793,7 +8793,7 @@
       if (item.baseId === "deck_without") return deck.length >= 2 && opponent.hand.length >= 2 ? 5 : 0;
       if (item.baseId === "smart_me") return state.players.player.late.some((entry) => entry.card?.type === "student") ? 6 : 0;
       if (item.baseId === "greeting_3000") {
-        const utaCount = opponent.trash.filter((card) => card.baseId === "yuta").length;
+        const utaCount = opponent.trash.filter((card) => ["yuta", "dark_yuta"].includes(card.baseId)).length;
         return utaCount > 0 ? 3 + utaCount * 2 : 0;
       }
       if (item.baseId === "fire_touch") return deck.length >= 4 && opponent.life > 4 ? 7 : 0;
@@ -10704,7 +10704,7 @@
             affected += 1;
           });
         });
-        addLog(`${card.name}の効果：同名で並ぶ相手出席者${affected}人に、その枚数分のダメージを与えました。`);
+        addLog(`${card.name}の効果：同名で並ぶ相手出席者${affected}人に、その人数分のダメージを与えました。`);
       }
       if (card.baseId === "acting_out_man") {
         let healed = 0;
@@ -12145,9 +12145,9 @@
         }
       }
       if (item.baseId === "greeting_3000") {
-        const utaCount = state.players[side].trash.filter((trashCard) => trashCard.baseId === "yuta").length;
+        const utaCount = state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
         damagePlayer(oppositeSide(side), utaCount);
-        resultText = `自分の校外エリアにいるU太${utaCount}枚分、相手本体に${utaCount}ダメージを与えました。`;
+        resultText = `自分の校外エリアにあるU太と裏U太の合計${utaCount}人分、相手本体に${utaCount}ダメージを与えました。`;
       }
       if (item.baseId === "three_gestures") {
         const revealed = state.players[side].deck.splice(0, 6);
@@ -13310,13 +13310,6 @@
         return true;
       }
       return false;
-    }
-
-    function finishByTurnLimit() {
-      const winner = state.players.player.life === state.players.opponent.life
-        ? null
-        : state.players.player.life > state.players.opponent.life ? "player" : "opponent";
-      endGame(winner, winner ? "20ターン終了。気力が多いプレイヤーの勝利です。" : "20ターン終了。気力が同点のため引き分けです。");
     }
 
     function endGame(winner, reason, options = {}) {
@@ -16415,7 +16408,7 @@
         enemy_student: "相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
         failure_student: "このカードが出席したとき、自分の手札を2枚選び、校外エリアへ送る。",
-        success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の枚数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
+        success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の人数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
         bounce_day: "このカードが攻撃したとき、このカードを校外エリアへ送る。出席者を攻撃していたなら、その出席者を持ち主の手札に戻す。相手本体を攻撃していたなら、このカードの攻撃力分のダメージを与える。",
         lone_wolf: "注目を持つ。このカードの周囲1マスに出席者がいないかぎり、このカードの攻撃力を+3、体力を+3する。",
         student_comedy: "このカードが席マスに出席したとき、周囲1マスにいる自分の学生すべての攻撃力と体力を+1する。",
@@ -16513,7 +16506,7 @@
         music_draw_option: "自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
         donguri: "このカードは、自分の手札に「どんぐり」が2枚あり、さらに「デザインデストロイファルコン」がある場合にのみ使える。自分の手札から「デザインデストロイファルコン」1枚を選び、自分の場の「デザインファルコン」1人を進化させる。この効果で進化する場合、進化のための戦意は消費しない。",
         smart_me: "相手の遅刻ゾーンにいる学生1人をランダムに指名し、そのカードを校外エリアへ送る。",
-        greeting_3000: "自分の校外エリアにある「U太」の枚数分、相手本体にダメージを与える。",
+        greeting_3000: "自分の校外エリアにある「U太」と「裏U太」の合計人数分、相手本体にダメージを与える。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
         alpha: "このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。",
         beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。",
@@ -16536,7 +16529,7 @@
         dorm_council: "お互いのプレイヤーは自分のターン終了時、自分のデッキから注目を持つカードをランダムに1枚まで引く。",
         on_demand_business: "講義は発動しない。",
         cote_dazur: "お互いの場の「あえー学生」の攻撃力を+10、体力を+10する。",
-        ta_killer: "このカードが出席したとき、相手の場に同名の出席者が複数いる場合、その同名出席者すべてに同名の数だけダメージを与える。",
+        ta_killer: "このカードが出席したとき、相手の場に同名の出席者が複数いる場合、その同名出席者すべてに同名の人数分のダメージを与える。",
         ta: "カードの効果によって召喚される学生トークン。"
       };
       return rules[card.baseId] || "効果なし。";
