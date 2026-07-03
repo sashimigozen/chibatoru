@@ -12555,7 +12555,6 @@
     function hasKeyword(card, keyword) {
       if (!card) return false;
       if (card.keywords?.includes(keyword)) {
-        if (keyword === "陽気" && card.type === "teacher") return isOnTeacherSlot(card);
         return true;
       }
       if (keyword === "超陽気" && card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
