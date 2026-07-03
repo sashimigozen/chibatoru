@@ -5642,7 +5642,7 @@
     const CARD_COPY_MAX = 3;
     const SAVED_DECK_STORAGE_KEY = "chibattle-saved-decks-v1";
     const STARTER_DECK_SEED_STORAGE_KEY = "chibattle-starter-decks-seeded-v1";
-    const STARTER_DECK_SEED_VERSION = "2026-06-22-starter-v1";
+    const STARTER_DECK_SEED_VERSION = "2026-07-03-starter-v2";
     const DETAIL_LONG_PRESS_MS = 520;
     const DETAIL_HIDE_DELAY_MS = 900;
     const TEST_HAND_COMPANIONS = {
@@ -5889,28 +5889,6 @@
     };
 
     const STARTER_DECK_RECIPES = {
-      "スターター：速攻学生会": {
-        theme: "低コストの学生を早く並べ、定規とドローで押し切る速攻デッキ。",
-        entries: {
-          aggro_student: 3,
-          aggro_king: 3,
-          aggro_queen: 3,
-          hurried_student: 3,
-          general_student: 3,
-          adjective_student: 2,
-          back_question_student: 2,
-          best_friend: 2,
-          laughing_front_student: 2,
-          general_teacher: 2,
-          popular_c: 2,
-          lightning_n: 2,
-          ruler: 3,
-          bento: 2,
-          onigiri_draw: 3,
-          fluid_pasta: 2,
-          classroom: 1
-        }
-      },
       "スターター：出席ビギナーズ": {
         theme: "学生を中心に出席者を並べ、回復とドローで戦う初心者向けの60枚デッキ。",
         entries: {
@@ -5937,50 +5915,31 @@
           classroom: 3
         }
       },
-      "スターター：食堂カレー同盟": {
-        theme: "食堂を軸に、カレーとヴァンパイア系カードで回復しながら大きく戦うデッキ。",
+      "スターター：教卓ベーシック": {
+        theme: "教師を中心に教卓マスの効果を使い、ドローと回復で手堅く戦う初心者向けの60枚デッキ。",
         entries: {
-          cafeteria_lady: 3,
-          curry_treater: 3,
-          chen_san: 3,
-          vampire: 2,
-          cafeteria: 3,
-          green_curry: 3,
-          environment_setup: 3,
-          wet_meal_ticket: 3,
-          fluid_pasta: 3,
-          onigiri_draw: 3,
-          iv_pack: 3,
-          bento: 2,
-          general_student: 2,
-          ae_student: 2,
-          trpg_member: 2
-        }
-      },
-      "スターター：教授コントロール": {
-        theme: "教卓マスの効果と除去系の持ち物で相手の盤面を崩して勝つコントロールデッキ。",
-        entries: {
-          general_teacher: 2,
-          pro_k: 2,
+          general_teacher: 3,
+          fairy_t: 3,
           lightning_n: 3,
-          fairy_t: 2,
-          popular_c: 2,
+          ai_chan: 3,
+          france_asakura: 3,
+          pro_k: 3,
+          popular_c: 3,
           kyushu_info_c: 2,
+          logic_hunter: 2,
           signal_professor_m: 2,
-          kyoto_sound_i: 2,
-          kansai_voice_t: 1,
           bird_a: 2,
-          demon_a_plus: 2,
-          thin_professor_h: 1,
-          president: 1,
+          general_student: 3,
           ae_student: 3,
-          acting_out_man: 2,
-          sniper: 2,
-          cynical_student: 2,
+          laughing_front_student: 3,
+          acting_out_man: 1,
           ruler: 3,
-          quiet_please: 2,
-          favorite_number_s: 1,
-          seat_rules: 1
+          ux_design_textbook: 3,
+          hondara: 3,
+          bento: 3,
+          onigiri_draw: 3,
+          fluid_pasta: 3,
+          classroom: 3
         }
       }
     };
@@ -6489,7 +6448,7 @@
     function createStarterSavedDecks() {
       return Object.fromEntries(Object.entries(STARTER_DECK_RECIPES).map(([name, recipe]) => [name, {
         counts: createDeckCountsFromEntries(recipe.entries),
-        savedAt: "2026-06-22T00:00:00.000Z",
+        savedAt: "2026-07-03T00:00:00.000Z",
         starterDeck: true,
         theme: recipe.theme
       }]));
@@ -6502,6 +6461,11 @@
     function seedStarterDecks(savedDecks) {
       const starterDecks = createStarterSavedDecks();
       let changed = false;
+      Object.keys(savedDecks).forEach((name) => {
+        if (!savedDecks[name]?.starterDeck || isStarterDeckName(name)) return;
+        delete savedDecks[name];
+        changed = true;
+      });
       Object.entries(starterDecks).forEach(([name, deck]) => {
         if (JSON.stringify(savedDecks[name]) === JSON.stringify(deck)) return;
         savedDecks[name] = deck;
