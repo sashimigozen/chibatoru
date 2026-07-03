@@ -6052,6 +6052,7 @@
         remoteRpsChoice: null,
         localMulliganPending: false,
         pendingTurnCommandId: "",
+        pendingEvolutionCommandId: "",
         clientId: createOnlineClientId(),
         sendSeq: 0,
         pendingMessages: {},
@@ -6705,6 +6706,15 @@
       return isOnlineGuest() && isOnlineBattle() && !state.online.isApplyingRemote;
     }
 
+    function isOnlineCommandPending() {
+      return isOnlineGuest() && isOnlineBattle() && Boolean(state.online.pendingTurnCommandId);
+    }
+
+    function rejectOnlinePendingAction() {
+      state.message = "前の操作を同期しています。少し待ってください。";
+      render();
+    }
+
     function onlineConnectionModeLabel() {
       return "サーバー同期接続";
     }
@@ -6985,7 +6995,14 @@
         return;
       }
       if (message.type === "gameState") {
-        if (isOnlineGuest() || isOnlineSpectator()) onlineApplySnapshot(message.snapshot);
+        if (isOnlineGuest() || isOnlineSpectator()) {
+          onlineApplySnapshot(message.snapshot);
+          if (message.processedCommandId && message.processedCommandId === state.online.pendingTurnCommandId) {
+            state.online.pendingTurnCommandId = "";
+            state.aiThinking = false;
+            render();
+          }
+        }
         return;
       }
       const senderId = message.senderId === "server" ? "" : (message.senderId || "");
@@ -7200,6 +7217,7 @@
 
     function onlineSendCommand(type, payload = {}) {
       if (!onlineCanSendCommand()) return false;
+      const commandCard = type === "playCard" ? getHandCard("player", payload.instanceId) : null;
       const command = {
         id: onlineNextMessageId("cmd"),
         type,
@@ -7208,7 +7226,7 @@
       };
       const messageType = type === "playCard" || type === "endTurn" ? type : "gameAction";
       const sent = onlineSend({ type: messageType, command }, { track: true });
-      if (sent && type === "endTurn") {
+      if (sent && (type === "endTurn" || commandCard?.evolutionFrom)) {
         state.online.pendingTurnCommandId = command.id;
         state.aiThinking = true;
       }
@@ -7756,7 +7774,8 @@
       } finally {
         state.online.isHandlingRemoteCommand = false;
         const waitingForPrivateChoice = state.pendingRemoteHandTrim?.commandId === command.id
-          || state.pendingCardChoice?.commandId === command.id;
+          || state.pendingCardChoice?.commandId === command.id
+          || state.online.pendingEvolutionCommandId === command.id;
         if (!waitingForPrivateChoice) onlineBroadcastState(true, command.id || "");
       }
     }
@@ -9442,6 +9461,10 @@
         toggleMulliganCard(instanceId);
         return;
       }
+      if (isOnlineCommandPending()) {
+        rejectOnlinePendingAction();
+        return;
+      }
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       if (state.pendingHandDiscardItem) {
@@ -9940,6 +9963,10 @@
     }
 
     function playCard(instanceId, zone, owner, index = null) {
+      if (isOnlineCommandPending()) {
+        rejectOnlinePendingAction();
+        return;
+      }
       if (onlineCanSendCommand()) {
         const card = getHandCard("player", instanceId);
         if (card?.baseId === "failure_student") {
@@ -9999,7 +10026,9 @@
       player.will -= playCost;
       player.hand = player.hand.filter((handCard) => handCard.instanceId !== instanceId);
       if (card.evolutionFrom) {
-        evolveCard(side, card, owner, zone, index);
+        evolveCard(side, card, owner, zone, index, {
+          commandId: options.commandId || ""
+        });
       } else if (card.late && state.environment?.baseId !== "no_late_time") {
         showCardPlayAnimation(card, "board");
         player.late.push({ card, owner, zone, index, remaining: card.late });
@@ -10181,14 +10210,34 @@
     function scheduleEvolutionEffect(side, evolved, options = {}) {
       const delay = evolutionEffectDelay(options);
       const effectTurn = state.actionTurn;
+      const commandId = options.commandId || "";
+      if (commandId && isOnlineHost() && state.online.isHandlingRemoteCommand) {
+        state.online.pendingEvolutionCommandId = commandId;
+      }
       const runEffect = () => {
-        if (state.phase !== "battle" || state.gameOver || state.actionTurn < effectTurn) return;
-        if (!isEvolutionSourceStillInPlay(evolved)) return;
+        const finishPendingOnlineEvolution = () => {
+          if (!commandId || !isOnlineHost()) return false;
+          const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+          state.online.isHandlingRemoteCommand = true;
+          render();
+          state.online.isHandlingRemoteCommand = wasHandlingRemote;
+          if (state.online.pendingEvolutionCommandId === commandId) state.online.pendingEvolutionCommandId = "";
+          onlineBroadcastState(true, commandId);
+          return true;
+        };
+        if (state.phase !== "battle" || state.gameOver || state.actionTurn < effectTurn) {
+          finishPendingOnlineEvolution();
+          return;
+        }
+        if (!isEvolutionSourceStillInPlay(evolved)) {
+          finishPendingOnlineEvolution();
+          return;
+        }
         resolveEvolutionEffect(side, evolved, effectTurn);
         cleanupDestroyedCards();
         applyBoardAuras();
         checkLifeVictory();
-        render();
+        if (!finishPendingOnlineEvolution()) render();
       };
       if (delay > 0) {
         window.setTimeout(runEffect, delay);
@@ -11069,6 +11118,10 @@
 
     function handleBoardCardClick(owner, zone, index = null) {
       if (isOnlineSpectator()) return;
+      if (isOnlineCommandPending()) {
+        rejectOnlinePendingAction();
+        return;
+      }
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       const selectedCard = getSelectedHandCard();
@@ -11205,6 +11258,10 @@
 
     function attackLife(targetSide) {
       if (isOnlineSpectator()) return;
+      if (isOnlineCommandPending()) {
+        rejectOnlinePendingAction();
+        return;
+      }
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       const selectedCard = getSelectedHandCard();
