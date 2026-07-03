@@ -609,7 +609,9 @@ function routeMessage(ws, raw) {
     case "snapshotAck":
     case "ack":
       break;
-    case "playReveal": {
+    case "playReveal":
+    case "evolutionReveal":
+    case "donguriReveal": {
       const { room, player } = requireJoined(ws);
       if (room && player && isBattleRole(player.role)) {
         broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
