@@ -7684,7 +7684,12 @@
         if (command.type === "rps") onlineChooseRpsForSide("opponent", payload.choice);
         if (command.type === "order") chooseStartingOrderForSide("opponent", Boolean(payload.first));
         if (command.type === "mulligan") onlineConfirmMulliganForSide("opponent", payload.selectedIds || []);
-        if (command.type === "playCard") placeCardFromHand("opponent", payload.instanceId, payload.zone, onlineSwapSide(payload.owner), payload.index ?? null, true, { commandId: command.id || "" });
+        if (command.type === "playCard") {
+          placeCardFromHand("opponent", payload.instanceId, payload.zone, onlineSwapSide(payload.owner), payload.index ?? null, true, {
+            commandId: command.id || "",
+            badStudentDiscardIds: payload.badStudentDiscardIds || []
+          });
+        }
         if (command.type === "itemImmediate") {
           const item = getHandCard("opponent", payload.instanceId);
           if (item) castImmediateItem("opponent", item, true, { commandId: command.id || "" });
@@ -9521,7 +9526,9 @@
         confirmLabel: options.confirmLabel || "確定",
         sourceSide: options.sourceSide || null,
         requestId: options.requestId || null,
-        commandId: options.commandId || ""
+        commandId: options.commandId || "",
+        playCardId: options.playCardId || null,
+        playTarget: options.playTarget || null
       };
       state.message = options.message || "カードを選んでください。";
       render();
@@ -9591,6 +9598,20 @@
           discardIds: selectedIds
         }, { track: true });
         state.message = "校外エリアへ送る手札を送信しました。";
+        clearSelections();
+        render();
+        return;
+      }
+      if (mode === "bad_student_online_play") {
+        const target = pending.playTarget || {};
+        onlineSendCommand("playCard", {
+          instanceId: pending.playCardId,
+          zone: target.zone,
+          owner: target.owner,
+          index: target.index ?? null,
+          badStudentDiscardIds: selectedIds
+        });
+        state.message = "出席と校外エリアへ送る手札を送信しました。";
         clearSelections();
         render();
         return;
@@ -9920,6 +9941,25 @@
 
     function playCard(instanceId, zone, owner, index = null) {
       if (onlineCanSendCommand()) {
+        const card = getHandCard("player", instanceId);
+        if (card?.baseId === "failure_student") {
+          const discardCards = state.players.player.hand.filter((handCard) => handCard.instanceId !== instanceId);
+          const discardCount = Math.min(2, discardCards.length);
+          if (discardCount > 0) {
+            openCardChoice({
+              mode: "bad_student_online_play",
+              title: card.name,
+              message: `出席後、手札から校外エリアへ送るカードを${discardCount}枚選んでください。`,
+              cards: discardCards,
+              min: discardCount,
+              max: discardCount,
+              confirmLabel: "選んで出席",
+              playCardId: instanceId,
+              playTarget: { zone, owner, index }
+            });
+            return;
+          }
+        }
         onlineSendCommand("playCard", { instanceId, zone, owner, index });
         state.message = "カードの出席を送信しました。";
         render();
@@ -9986,7 +10026,10 @@
         }
         const costLog = card.noCost ? "戦意なし" : `戦意-${playCost}`;
         addLog(`${SIDES[side]}は${card.name}を出席させました。${costLog}。`);
-        resolveAttendEffects(side, placedCard, zone, index, { commandId: options.commandId || "" });
+        resolveAttendEffects(side, placedCard, zone, index, {
+          commandId: options.commandId || "",
+          badStudentDiscardIds: options.badStudentDiscardIds || []
+        });
       }
       cleanupDestroyedCards();
       applyBoardAuras();
@@ -10350,6 +10393,8 @@
         const discardCount = Math.min(2, state.players[side].hand.length);
         if (discardCount === 0) {
           addLog(`${card.name}の効果：手札がないため不発になりました。`);
+        } else if (Array.isArray(options.badStudentDiscardIds) && options.badStudentDiscardIds.length > 0) {
+          resolveBadStudentDiscardChoice(side, options.badStudentDiscardIds, card, { renderAfter: false });
         } else if (side === "player") {
           openBadStudentDiscardChoice(side, card);
         } else if (isOnlineHost() && state.online.isHandlingRemoteCommand && requestRemoteBadStudentDiscardChoice(side, card, options.commandId || "")) {
