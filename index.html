@@ -5590,9 +5590,10 @@
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
     const GAME_DATA_VERSION = "0.8.0";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
+    const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
       ? "ws://localhost:8787"
-      : "wss://chibatoru-ws.onrender.com";
+      : "wss://chibatoru-online.onrender.com";
     const ONLINE_HEARTBEAT_MS = 2500;
     const ONLINE_STALE_MS = 12000;
     const ONLINE_RETRY_MS = 3200;
@@ -7043,7 +7044,17 @@
     function getOnlineServerUrl() {
       try {
         const queryUrl = new URLSearchParams(location.search).get("ws");
-        return normalizeOnlineServerUrl(queryUrl || localStorage.getItem(ONLINE_SERVER_URL_STORAGE_KEY) || ONLINE_DEFAULT_WS_URL);
+        if (queryUrl) return normalizeOnlineServerUrl(queryUrl);
+        const storedRaw = localStorage.getItem(ONLINE_SERVER_URL_STORAGE_KEY);
+        if (storedRaw) {
+          const storedUrl = normalizeOnlineServerUrl(storedRaw);
+          if (storedUrl === ONLINE_LEGACY_DEFAULT_WS_URL) {
+            localStorage.setItem(ONLINE_SERVER_URL_STORAGE_KEY, ONLINE_DEFAULT_WS_URL);
+            return ONLINE_DEFAULT_WS_URL;
+          }
+          return storedUrl;
+        }
+        return ONLINE_DEFAULT_WS_URL;
       } catch {
         return ONLINE_DEFAULT_WS_URL;
       }
