@@ -5325,6 +5325,8 @@
           <button class="button secondary" id="battleBackHomeButton" type="button">勝てない</button>
           <button class="button secondary hidden" id="testBackDeckButton" type="button">デッキ変更へ戻る</button>
           <button class="button secondary hidden" id="testUndoButton" type="button">一手戻る</button>
+          <button class="button secondary" id="analyticsJsonlButton" type="button">ログJSONL</button>
+          <button class="button secondary" id="analyticsCsvButton" type="button">ログCSV</button>
           <button class="button secondary hidden" id="fusionButton">定規融合</button>
           <button class="button hidden" id="startButton" type="button">バトル開始</button>
           <button class="button secondary hidden" id="resetButton">リセット</button>
@@ -5585,6 +5587,8 @@
     const SOLO_OPPONENT_LABEL = "相手AI";
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
+    const ANALYTICS_SCHEMA_VERSION = "1.0.0";
+    const GAME_DATA_VERSION = "0.8.0";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
       ? "ws://localhost:8787"
@@ -6021,6 +6025,7 @@
       },
       message: "",
       log: [],
+      analytics: createAnalyticsState(),
       deckBuilder: {
         activeSide: "player",
         counts: {
@@ -6260,6 +6265,8 @@
       battleBackHomeButton: document.getElementById("battleBackHomeButton"),
       testBackDeckButton: document.getElementById("testBackDeckButton"),
       testUndoButton: document.getElementById("testUndoButton"),
+      analyticsJsonlButton: document.getElementById("analyticsJsonlButton"),
+      analyticsCsvButton: document.getElementById("analyticsCsvButton"),
       phaseText: document.getElementById("phaseText"),
       currentSideText: document.getElementById("currentSideText"),
       firstSideText: document.getElementById("firstSideText"),
@@ -6413,6 +6420,486 @@
       lifeShieldUntilSide: null,
       board: { seats: Array(9).fill(null), teacher: null }
       };
+    }
+
+    function createAnalyticsState() {
+      return {
+        schemaVersion: ANALYTICS_SCHEMA_VERSION,
+        game: null,
+        events: [],
+        actionSeq: 0,
+        eventSeq: 0,
+        mulliganInitial: {},
+        pendingMulligans: {},
+        cardStats: {},
+        lastLethalCard: null
+      };
+    }
+
+    function analyticsSafe(fn) {
+      try {
+        return fn();
+      } catch (error) {
+        console.warn("analytics skipped", error);
+        return null;
+      }
+    }
+
+    function analyticsState() {
+      if (!state.analytics) state.analytics = createAnalyticsState();
+      return state.analytics;
+    }
+
+    function createAnalyticsGameId() {
+      return `game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function analyticsNow() {
+      return new Date().toISOString();
+    }
+
+    function analyticsSideDeckName(side) {
+      if (isOnlineBattle()) {
+        if (side === "player") return deckNameForOnline(state.online.localDeckName);
+        return deckNameForOnline(state.online.remoteDeckName || "__current");
+      }
+      return side === "player" ? "あなたデッキ" : "AIデッキ";
+    }
+
+    function analyticsCopyDeckList(counts = {}) {
+      return Object.fromEntries(Object.entries(counts)
+        .filter(([, count]) => Number(count) > 0)
+        .map(([baseId, count]) => [baseId, Number(count)]));
+    }
+
+    function analyticsCardInfo(card) {
+      if (!card) return null;
+      return {
+        instanceId: card.instanceId || null,
+        cardId: card.baseId || null,
+        cardName: card.name || "",
+        type: card.type || "",
+        cost: effectiveCardCost(card),
+        attack: card.attack ?? null,
+        hp: card.currentHp ?? card.hp ?? null,
+        maxHp: card.maxHp ?? card.hp ?? null,
+        owner: card.owner || null
+      };
+    }
+
+    function analyticsBoardCardInfo(card, ref = {}) {
+      const info = analyticsCardInfo(card);
+      if (!info) return null;
+      return {
+        ...info,
+        zone: ref.zone || null,
+        seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null,
+        hasAttacked: Boolean(card.hasAttacked),
+        playedOnTurn: card.playedOnTurn ?? null,
+        keywords: Array.isArray(card.keywords) ? [...card.keywords] : []
+      };
+    }
+
+    function analyticsSeatInfo(index) {
+      if (index === null || index === undefined) return null;
+      return {
+        index,
+        row: seatRow(index),
+        column: seatCol(index) + 1
+      };
+    }
+
+    function analyticsLateZone(side) {
+      return state.players[side].late.map((entry) => ({
+        card: analyticsCardInfo(entry.card),
+        remaining: entry.remaining,
+        reservedOwner: entry.owner,
+        reservedZone: entry.zone,
+        reservedSeat: entry.zone === "seat" ? analyticsSeatInfo(entry.index) : null
+      }));
+    }
+
+    function analyticsBoardSnapshot() {
+      const snapshotSide = (side) => ({
+        teacher: analyticsBoardCardInfo(state.players[side].board.teacher, { owner: side, zone: "teacher", index: null }),
+        seats: state.players[side].board.seats.map((card, index) =>
+          analyticsBoardCardInfo(card, { owner: side, zone: "seat", index }))
+      });
+      return {
+        player: snapshotSide("player"),
+        opponent: snapshotSide("opponent"),
+        environment: state.environment ? {
+          owner: state.environment.owner || null,
+          card: analyticsCardInfo(state.environment)
+        } : null
+      };
+    }
+
+    function analyticsPushEvent(eventType, payload = {}) {
+      return analyticsSafe(() => {
+        const analytics = analyticsState();
+        const event = {
+          schemaVersion: ANALYTICS_SCHEMA_VERSION,
+          gameId: analytics.game?.gameId || null,
+          eventSeq: ++analytics.eventSeq,
+          eventType,
+          recordedAt: analyticsNow(),
+          actionTurn: state.actionTurn,
+          phase: state.phase,
+          ...payload
+        };
+        analytics.events.push(event);
+        return event;
+      });
+    }
+
+    function analyticsStartGame() {
+      analyticsSafe(() => {
+        state.analytics = createAnalyticsState();
+        const playerDeckList = analyticsCopyDeckList(state.players.player.originalDeckCounts);
+        const opponentDeckList = analyticsCopyDeckList(state.players.opponent.originalDeckCounts);
+        state.analytics.game = {
+          gameId: createAnalyticsGameId(),
+          version: GAME_DATA_VERSION,
+          schemaVersion: ANALYTICS_SCHEMA_VERSION,
+          mode: isOnlineBattle() ? "online" : state.testMode ? "test" : isTutorialActive() ? "tutorial" : "solo",
+          onlineRole: state.online.role || null,
+          startedAt: analyticsNow(),
+          firstSide: state.firstSide,
+          decks: {
+            player: {
+              deckName: analyticsSideDeckName("player"),
+              deckList: playerDeckList,
+              deckSize: deckSize(playerDeckList)
+            },
+            opponent: {
+              deckName: analyticsSideDeckName("opponent"),
+              deckList: opponentDeckList,
+              deckSize: deckSize(opponentDeckList)
+            }
+          }
+        };
+        seedAnalyticsDeckStats("player", playerDeckList);
+        seedAnalyticsDeckStats("opponent", opponentDeckList);
+        analyticsPushEvent("game_start", { game: state.analytics.game });
+      });
+    }
+
+    function seedAnalyticsDeckStats(side, deckList) {
+      Object.entries(deckList || {}).forEach(([baseId, count]) => {
+        const base = CARD_BASES[baseId];
+        const stats = analyticsCardStat(side, { baseId, name: base?.name || baseId, type: base?.type || "" });
+        stats.deckCopies = Number(count) || 0;
+      });
+    }
+
+    function analyticsRecordTurnStart(side) {
+      analyticsPushEvent("turn_start", {
+        turn: turnLabel(side),
+        side,
+        life: state.players[side].life,
+        will: state.players[side].will,
+        maxWill: state.players[side].maxWill,
+        handCount: state.players[side].hand.length,
+        deckCount: state.players[side].deck.length,
+        trashCount: state.players[side].trash.length,
+        lateZone: analyticsLateZone(side),
+        environment: state.environment ? analyticsCardInfo(state.environment) : null,
+        boardSnapshot: analyticsBoardSnapshot()
+      });
+    }
+
+    function analyticsRecordAction(payload = {}) {
+      return analyticsSafe(() => {
+        const analytics = analyticsState();
+        return analyticsPushEvent("action", {
+          actionId: `a-${++analytics.actionSeq}`,
+          turn: turnLabel(payload.side || state.currentSide),
+          side: payload.side || state.currentSide,
+          actionType: payload.actionType || "unknown",
+          cardId: payload.card?.baseId || payload.cardId || null,
+          cardName: payload.card?.name || payload.cardName || "",
+          cost: payload.cost ?? (payload.card ? effectiveCardCost(payload.card) : null),
+          sourceZone: payload.sourceZone || null,
+          targetZone: payload.targetZone || null,
+          targetSeat: payload.targetSeat ?? null,
+          targetCardId: payload.targetCard?.baseId || payload.targetCardId || null,
+          legalCandidateCount: payload.legalCandidateCount ?? null,
+          legalCandidates: payload.legalCandidates || [],
+          details: payload.details || {}
+        });
+      });
+    }
+
+    function analyticsRecordEffect(payload = {}) {
+      return analyticsSafe(() => {
+        return analyticsPushEvent("effect", {
+          turn: turnLabel(payload.side || state.currentSide),
+          side: payload.side || null,
+          source: analyticsCardInfo(payload.source),
+          effectType: payload.effectType || "effect",
+          randomCandidates: payload.randomCandidates || [],
+          chosenTargets: payload.chosenTargets || [],
+          damageDistribution: payload.damageDistribution || null,
+          drawCount: payload.drawCount ?? null,
+          trashedCards: payload.trashedCards || [],
+          environmentBefore: payload.environmentBefore || null,
+          environmentAfter: payload.environmentAfter || null,
+          details: payload.details || {}
+        });
+      });
+    }
+
+    function analyticsCardStat(side, card) {
+      const baseId = card?.baseId || card?.cardId || "unknown";
+      const key = `${side}:${baseId}`;
+      const analytics = analyticsState();
+      if (!analytics.cardStats[key]) {
+        analytics.cardStats[key] = {
+          side,
+          cardId: baseId,
+          cardName: card?.name || card?.cardName || CARD_BASES[baseId]?.name || baseId,
+          type: card?.type || CARD_BASES[baseId]?.type || "",
+          deckCopies: 0,
+          playCount: 0,
+          playWin: 0,
+          residenceTurns: 0,
+          damageDealt: 0,
+          removalContribution: 0
+        };
+      }
+      return analytics.cardStats[key];
+    }
+
+    function analyticsMarkPlayed(side, card) {
+      analyticsSafe(() => {
+        const stats = analyticsCardStat(side, card);
+        stats.playCount += 1;
+      });
+    }
+
+    function analyticsAddResidence(owner, card) {
+      analyticsSafe(() => {
+        if (!card || card.analyticsEnteredTurn === undefined || card.analyticsEnteredTurn === null) return;
+        const stats = analyticsCardStat(owner, card);
+        stats.residenceTurns += Math.max(0, state.actionTurn - card.analyticsEnteredTurn);
+      });
+    }
+
+    function analyticsAddDamage(source, damage) {
+      analyticsSafe(() => {
+        if (!source || damage <= 0) return;
+        const stats = analyticsCardStat(source.owner || state.currentSide, source);
+        stats.damageDealt += damage;
+      });
+    }
+
+    function analyticsAddRemovalContribution(source) {
+      analyticsSafe(() => {
+        if (!source) return;
+        const stats = analyticsCardStat(source.owner || state.currentSide, source);
+        stats.removalContribution += 1;
+      });
+    }
+
+    function analyticsLegalPlacementCandidates(side, card) {
+      const candidates = [];
+      if (!card) return candidates;
+      if (card.evolutionFrom) {
+        listBoardRefs(side).forEach((ref) => {
+          if (canPlaceCard(side, card, ref.zone, side, ref.index)) candidates.push(analyticsPlacementCandidate(side, card, ref.zone, side, ref.index));
+        });
+        return candidates;
+      }
+      if (card.type === "environment") {
+        if (canPlaceCard(side, card, "environment", null, null)) candidates.push(analyticsPlacementCandidate(side, card, "environment", null, null));
+        return candidates;
+      }
+      if (canPlaceCard(side, card, "teacher", side, null)) candidates.push(analyticsPlacementCandidate(side, card, "teacher", side, null));
+      for (let index = 0; index < 9; index += 1) {
+        if (canPlaceCard(side, card, "seat", side, index)) candidates.push(analyticsPlacementCandidate(side, card, "seat", side, index));
+      }
+      return candidates;
+    }
+
+    function analyticsPlacementCandidate(side, card, zone, owner, index) {
+      return {
+        owner,
+        zone,
+        seat: zone === "seat" ? analyticsSeatInfo(index) : null,
+        sameSlotLocked: zone === "seat" ? isSeatBlocked(owner, index) : false,
+        aggroLocked: zone === "seat" ? isSeatClosedByAggro(owner, index) : false,
+        occupied: zone === "teacher"
+          ? Boolean(state.players[owner].board.teacher)
+          : zone === "seat"
+            ? Boolean(state.players[owner].board.seats[index])
+            : Boolean(state.environment),
+        legal: canPlaceCard(side, card, zone, owner, index)
+      };
+    }
+
+    function analyticsItemCandidates(side, item) {
+      if (!item) return [];
+      if (item.target === "enemy") {
+        const candidates = [{ targetZone: "life", owner: oppositeSide(side), seat: null }];
+        listBoardRefs(oppositeSide(side)).forEach((ref) => candidates.push({
+          owner: ref.owner,
+          targetZone: ref.zone,
+          seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null,
+          card: analyticsCardInfo(getBoardCardFromRef(ref))
+        }));
+        return candidates;
+      }
+      if (item.target === "friendly" || item.target === "friendlyAny") {
+        return listBoardRefs(side).map((ref) => ({
+          owner: ref.owner,
+          targetZone: ref.zone,
+          seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null,
+          card: analyticsCardInfo(getBoardCardFromRef(ref))
+        }));
+      }
+      return [];
+    }
+
+    function analyticsCaptureMulliganInitial() {
+      analyticsSafe(() => {
+        const analytics = analyticsState();
+        ["player", "opponent"].forEach((side) => {
+          analytics.mulliganInitial[side] = state.players[side].hand.map(analyticsCardInfo);
+        });
+      });
+    }
+
+    function analyticsRecordMulligan(side, returnedCards, redrawnCards) {
+      return analyticsSafe(() => {
+        const analytics = analyticsState();
+        return analyticsPushEvent("mulligan", {
+          side,
+          initialHand: analytics.mulliganInitial[side] || [],
+          returnedCards: returnedCards.map(analyticsCardInfo),
+          redrawnCards: redrawnCards.map(analyticsCardInfo),
+          returnedCount: returnedCards.length,
+          redrawnCount: redrawnCards.length
+        });
+      });
+    }
+
+    function analyticsFinalizeGame(winner, reason, options = {}) {
+      analyticsSafe(() => {
+        const analytics = analyticsState();
+        if (analytics.final) return;
+        const final = {
+          winner,
+          loser: options.loser || (winner ? oppositeSide(winner) : null),
+          reason,
+          finishedAt: analyticsNow(),
+          finalTurn: state.actionTurn,
+          lethalCard: analytics.lastLethalCard,
+          finalBoard: analyticsBoardSnapshot(),
+          cardStats: Object.values(analytics.cardStats)
+        };
+        if (winner) {
+          Object.values(analytics.cardStats).forEach((stats) => {
+            if (stats.side === winner && stats.playCount > 0) stats.playWin += 1;
+          });
+        }
+        analytics.final = final;
+        analyticsPushEvent("game_end", { final });
+      });
+    }
+
+    function anonymizeAnalyticsEvent(event, perspective = "player") {
+      const clone = JSON.parse(JSON.stringify(event));
+      const hideCards = (cards) => Array.isArray(cards)
+        ? { hiddenCount: cards.length }
+        : cards;
+      if (clone.eventType === "game_start" && clone.game?.decks) {
+        Object.entries(clone.game.decks).forEach(([side, deck]) => {
+          if (side !== perspective) {
+            deck.deckName = "非公開デッキ";
+            deck.deckList = { hidden: deck.deckSize || 0 };
+          }
+        });
+      }
+      if (clone.eventType === "mulligan" && clone.side !== perspective) {
+        clone.initialHand = hideCards(clone.initialHand);
+        clone.returnedCards = hideCards(clone.returnedCards);
+        clone.redrawnCards = hideCards(clone.redrawnCards);
+      }
+      if (clone.eventType === "action" && clone.actionType === "draw" && clone.side !== perspective) {
+        clone.cardId = "hidden";
+        clone.cardName = "非公開カード";
+        clone.details.card = null;
+      }
+      return clone;
+    }
+
+    function analyticsEventsForExport(options = {}) {
+      const publicView = options.publicView === true;
+      const perspective = isOnlineGuest() ? "opponent" : "player";
+      const events = state.analytics?.events || [];
+      return publicView ? events.map((event) => anonymizeAnalyticsEvent(event, perspective)) : events;
+    }
+
+    function downloadTextFile(name, text, type) {
+      const blob = new Blob([text], { type });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    function exportAnalyticsJsonl() {
+      const publicView = isOnlineBattle() && !isOnlineHost();
+      const events = analyticsEventsForExport({ publicView });
+      const jsonl = events.map((event) => JSON.stringify(event)).join("\n");
+      const gameId = state.analytics?.game?.gameId || "chibattle";
+      downloadTextFile(`${gameId}${publicView ? "-public" : "-full"}.jsonl`, `${jsonl}\n`, "application/x-ndjson");
+      state.message = publicView ? "自分視点のJSONLログを書き出しました。" : "完全JSONLログを書き出しました。";
+      render();
+    }
+
+    function analyticsCsvEscape(value) {
+      if (value === null || value === undefined) return "";
+      const text = typeof value === "string" ? value : JSON.stringify(value);
+      return /[",\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
+    }
+
+    function exportAnalyticsCsv() {
+      const publicView = isOnlineBattle() && !isOnlineHost();
+      const events = analyticsEventsForExport({ publicView });
+      const rows = [[
+        "gameId", "eventSeq", "eventType", "turn", "side", "actionType", "cardId", "cardName",
+        "cost", "sourceZone", "targetZone", "targetSeat", "targetCardId", "winner", "reason"
+      ]];
+      events.forEach((event) => {
+        rows.push([
+          event.gameId,
+          event.eventSeq,
+          event.eventType,
+          event.turn || "",
+          event.side || "",
+          event.actionType || "",
+          event.cardId || "",
+          event.cardName || "",
+          event.cost ?? "",
+          event.sourceZone || "",
+          event.targetZone || "",
+          event.targetSeat ? `${event.targetSeat.row}-${event.targetSeat.column}` : "",
+          event.targetCardId || "",
+          event.final?.winner || "",
+          event.final?.reason || ""
+        ]);
+      });
+      const csv = rows.map((row) => row.map(analyticsCsvEscape).join(",")).join("\n");
+      const gameId = state.analytics?.game?.gameId || "chibattle";
+      downloadTextFile(`${gameId}${publicView ? "-public" : "-full"}.csv`, `${csv}\n`, "text/csv");
+      state.message = publicView ? "自分視点のCSVログを書き出しました。" : "完全CSVログを書き出しました。";
+      render();
     }
 
     function createCardFromBase(baseId, owner) {
@@ -8131,6 +8618,7 @@
       state.players.opponent.deck = createDeckFromCounts("opponent", opponentDeckCounts);
       state.players.player.deckValid = validateDeckCounts(playerDeckCounts);
       state.players.opponent.deckValid = validateDeckCounts(opponentDeckCounts);
+      analyticsStartGame();
       queueAnimation("shuffle", "player");
       queueAnimation("shuffle", "opponent");
       state.message = onlineHost ? "オンライン対戦" : "VS AI";
@@ -8229,6 +8717,17 @@
       }
       const aiChoosesFirst = Math.random() < 0.7;
       state.firstSide = aiChoosesFirst ? "opponent" : "player";
+      if (state.analytics?.game) state.analytics.game.firstSide = state.firstSide;
+      analyticsPushEvent("order_choice", {
+        side: "opponent",
+        chose: aiChoosesFirst ? "first" : "second",
+        firstSide: state.firstSide,
+        rps: {
+          player: state.rpsPlayerChoice,
+          opponent: state.rpsOpponentChoice,
+          winner: state.rpsWinner
+        }
+      });
       state.message = `相手AIが${aiChoosesFirst ? "先攻" : "後攻"}を選びました。`;
       addLog(`相手AIがカードじゃんけんに勝ち、${aiChoosesFirst ? "先攻" : "後攻"}を選びました。`);
       render();
@@ -8251,6 +8750,17 @@
       if (state.phase !== "orderChoice" || state.rpsWinner !== side || state.preBattleBusy) return;
       state.preBattleBusy = true;
       state.firstSide = playerChoosesFirst ? side : oppositeSide(side);
+      if (state.analytics?.game) state.analytics.game.firstSide = state.firstSide;
+      analyticsPushEvent("order_choice", {
+        side,
+        chose: playerChoosesFirst ? "first" : "second",
+        firstSide: state.firstSide,
+        rps: {
+          player: state.rpsPlayerChoice,
+          opponent: state.rpsOpponentChoice,
+          winner: state.rpsWinner
+        }
+      });
       state.message = `${SIDES[side]}は${playerChoosesFirst ? "先攻" : "後攻"}を選びました。`;
       addLog(`${SIDES[side]}は${playerChoosesFirst ? "先攻" : "後攻"}を選びました。`);
       render();
@@ -8287,6 +8797,7 @@
       if (!isCurrentPreBattle(token, "dealing")) return;
       state.phase = "mulligan";
       state.message = "引き直すカードを0〜5枚選んでください。";
+      analyticsCaptureMulliganInitial();
       render();
     }
 
@@ -8306,6 +8817,19 @@
       const card = player.deck.shift();
       card.handTurns = 0;
       player.hand.push(card);
+      analyticsRecordAction({
+        side,
+        actionType: "draw",
+        card,
+        cost: null,
+        sourceZone: "deck",
+        targetZone: "hand",
+        details: {
+          loseOnEmpty,
+          handCountAfter: player.hand.length,
+          deckCountAfter: player.deck.length
+        }
+      });
       queueAnimation("draw", side, 1);
       return true;
     }
@@ -8345,6 +8869,7 @@
       const returned = player.hand.filter((card) => selectedSet.has(card.instanceId));
       player.hand = player.hand.filter((card) => !selectedSet.has(card.instanceId));
       player.deck = shuffle([...player.deck, ...returned]);
+      state.analytics.pendingMulligans.player = { returned: returned.map((card) => ({ ...card })), redrawn: [] };
       player.mulliganSelection = [];
       player.mulliganUsed = true;
       state.phase = "mulliganDraw";
@@ -8366,7 +8891,11 @@
       if (!isCurrentPreBattle(token, "mulliganDraw")) return;
       if (state.mulliganDrawRemaining > 0) {
         drawOne("player", false);
-        state.lastMulliganDrawId = state.players.player.hand.at(-1)?.instanceId || null;
+        const drawnCard = state.players.player.hand.at(-1);
+        if (drawnCard && state.analytics.pendingMulligans.player) {
+          state.analytics.pendingMulligans.player.redrawn.push({ ...drawnCard });
+        }
+        state.lastMulliganDrawId = drawnCard?.instanceId || null;
         state.mulliganDrawRemaining -= 1;
         state.message = state.mulliganDrawRemaining > 0
           ? `カードを引き直しています。残り${state.mulliganDrawRemaining}枚。`
@@ -8379,6 +8908,11 @@
       }
       window.setTimeout(() => {
         if (!isCurrentPreBattle(token, "mulliganDraw")) return;
+        const pending = state.analytics.pendingMulligans.player;
+        if (pending) {
+          analyticsRecordMulligan("player", pending.returned, pending.redrawn);
+          delete state.analytics.pendingMulligans.player;
+        }
         autoOpponentMulligan();
         beginBattleAfterMulligan();
       }, 620);
@@ -8390,11 +8924,13 @@
       const returned = player.hand.filter((card) => selectedSet.has(card.instanceId));
       player.hand = player.hand.filter((card) => !selectedSet.has(card.instanceId));
       player.deck = shuffle([...player.deck, ...returned]);
+      const redrawn = player.deck.slice(0, returned.length).map((card) => ({ ...card }));
       if (returned.length > 0) {
         queueAnimation("shuffle", side);
         queueAnimation("mulligan", side);
       }
       drawCards(side, returned.length, false);
+      analyticsRecordMulligan(side, returned, redrawn);
       addLog(returned.length === 0
         ? `${SIDES[side]}はマリガンで引き直しませんでした。`
         : `${SIDES[side]}は${returned.length}枚を引き直しました。`);
@@ -8435,6 +8971,7 @@
       clearSelections();
       state.message = "マリガン完了。バトルを開始します。";
       addLog("バトル開始。ターン開始時に1枚引きます。");
+      analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       render();
       showCenterAnnouncement("バトル開始");
       window.setTimeout(() => {
@@ -8470,6 +9007,7 @@
       const drawText = "1枚ドロー。";
       state.message = `${turnLabel(side)} ${SIDES[side]}。戦意${player.will}/${player.maxWill}、${drawText}`;
       addLog(`${turnLabel(side)} ${SIDES[side]}開始。戦意${player.will}/${player.maxWill}、${drawText}`);
+      analyticsRecordTurnStart(side);
       render();
       showTurnOverlay(side);
       if (side === "opponent" && !isOnlineBattle()) scheduleOpponentAI();
@@ -9562,10 +10100,34 @@
           const placed = makeBoardCard(entry.card);
           setBoardCard(entry.owner, entry.zone, entry.index, placed);
           addLog(`${entry.card.name}が遅刻ゾーンから出席しました。`);
+          analyticsRecordEffect({
+            side,
+            source: entry.card,
+            effectType: "late_resolve",
+            details: {
+              success: true,
+              owner: entry.owner,
+              zone: entry.zone,
+              seat: entry.zone === "seat" ? analyticsSeatInfo(entry.index) : null
+            }
+          });
           resolveAttendEffects(entry.owner, placed, entry.zone, entry.index);
         } else {
           moveToTrash(side, entry.card);
           addLog(`${entry.card.name}は出席先が埋まり、校外エリアへ移動しました。`);
+          analyticsRecordEffect({
+            side,
+            source: entry.card,
+            effectType: "late_resolve",
+            details: {
+              success: false,
+              failureReason: "reserved_slot_occupied",
+              owner: entry.owner,
+              zone: entry.zone,
+              seat: entry.zone === "seat" ? analyticsSeatInfo(entry.index) : null,
+              aggroLocked: entry.zone === "seat" ? isSeatClosedByAggro(entry.owner, entry.index) : false
+            }
+          });
         }
       });
     }
@@ -9579,10 +10141,22 @@
         const placed = makeBoardCard(entry.card);
         setBoardCard(entry.owner, entry.zone, entry.index, placed);
         addLog(`${entry.card.name}が代返で遅刻ゾーンから出席しました。`);
+        analyticsRecordEffect({
+          side,
+          source: entry.card,
+          effectType: "late_resolve",
+          details: { success: true, releasedBySubstituteAttendance: true }
+        });
         resolveAttendEffects(entry.owner, placed, entry.zone, entry.index);
       } else {
         moveToTrash(side, entry.card);
         addLog(`${entry.card.name}は出席先が埋まり、校外エリアへ移動しました。`);
+        analyticsRecordEffect({
+          side,
+          source: entry.card,
+          effectType: "late_resolve",
+          details: { success: false, releasedBySubstituteAttendance: true, failureReason: "reserved_slot_occupied" }
+        });
       }
       return true;
     }
@@ -10294,6 +10868,9 @@
         if (renderAfter) render();
         return false;
       }
+      const analyticsCandidates = analyticsLegalPlacementCandidates(side, card);
+      const analyticsEnvironmentBefore = state.environment ? analyticsCardInfo(state.environment) : null;
+      const analyticsPlacement = analyticsPlacementCandidate(side, card, zone, owner, index);
       if (side === "player") pushTutorialHistoryBeforeAction("playCard", { card, owner, zone, index });
       if (side === "player") pushTestHistoryBeforeAction();
       player.will -= playCost;
@@ -10310,9 +10887,40 @@
           if (renderAfter) render();
           return false;
         }
+        analyticsMarkPlayed(side, card);
+        analyticsRecordAction({
+          side,
+          actionType: "evolve",
+          card,
+          sourceZone: "hand",
+          targetZone: zone,
+          targetSeat: zone === "seat" ? analyticsSeatInfo(index) : null,
+          targetCardId: card.evolutionFrom,
+          legalCandidateCount: analyticsCandidates.length,
+          legalCandidates: analyticsCandidates,
+          details: {
+            placement: analyticsPlacement,
+            evolutionFrom: card.evolutionFrom
+          }
+        });
       } else if (card.late && state.environment?.baseId !== "no_late_time") {
         showCardPlayAnimation(card, "board");
         player.late.push({ card, owner, zone, index, remaining: card.late });
+        analyticsMarkPlayed(side, card);
+        analyticsRecordAction({
+          side,
+          actionType: "reserve_late",
+          card,
+          sourceZone: "hand",
+          targetZone: "late",
+          targetSeat: zone === "seat" ? analyticsSeatInfo(index) : null,
+          legalCandidateCount: analyticsCandidates.length,
+          legalCandidates: analyticsCandidates,
+          details: {
+            placement: analyticsPlacement,
+            lateReservation: { owner, zone, seat: zone === "seat" ? analyticsSeatInfo(index) : null, remaining: card.late }
+          }
+        });
         addLog(`${SIDES[side]}は${card.name}を遅刻ゾーンへ送りました。残り${card.late}ターン。`);
       } else {
         if (card.baseId === "predator") {
@@ -10336,6 +10944,24 @@
         }
         const costLog = card.noCost ? "戦意なし" : `戦意-${playCost}`;
         addLog(`${SIDES[side]}は${card.name}を出席させました。${costLog}。`);
+        analyticsMarkPlayed(side, card);
+        analyticsRecordAction({
+          side,
+          actionType: zone === "environment" ? "play_environment" : "play_card",
+          card,
+          sourceZone: "hand",
+          targetZone: zone,
+          targetSeat: zone === "seat" ? analyticsSeatInfo(index) : null,
+          legalCandidateCount: analyticsCandidates.length,
+          legalCandidates: analyticsCandidates,
+          details: {
+            placement: analyticsPlacement,
+            environmentBefore: analyticsEnvironmentBefore,
+            environmentAfter: zone === "environment" ? analyticsCardInfo(state.environment) : null,
+            sameCoordinateLocked: zone === "seat" ? isSeatBlocked(owner, index) : false,
+            aggroLocked: zone === "seat" ? isSeatClosedByAggro(owner, index) : false
+          }
+        });
         resolveAttendEffects(side, placedCard, zone, index, {
           commandId: options.commandId || "",
           badStudentDiscardIds: options.badStudentDiscardIds || []
@@ -10358,7 +10984,8 @@
         maxHp: card.hp ?? null,
         currentHp: card.hp ?? null,
         hasAttacked: false,
-        playedOnTurn: state.actionTurn
+        playedOnTurn: state.actionTurn,
+        analyticsEnteredTurn: state.actionTurn
       };
       if (isCouncilEnvironment(boardCard)) {
         boardCard.councilTurnsUntilTransform = card.councilTurnsUntilTransform ?? 2;
@@ -11677,6 +12304,28 @@
         addLog(`${attacker.name}の効果：${previousName}をゾンビにしました。`);
       }
       const vampireLog = healed > 0 ? ` 吸血で${healed}回復。` : "";
+      analyticsRecordAction({
+        side: attacker.owner,
+        actionType: "attack_card",
+        card: attacker,
+        sourceZone: "board",
+        targetZone: "board",
+        targetCard: target,
+        targetCardId: target.baseId,
+        details: {
+          attacker: analyticsCardInfo(attacker),
+          target: analyticsCardInfo(target),
+          damage: dealtDamage,
+          counterDamage: counterDealtDamage,
+          forcedByAttention: listAttentionCards(target.owner).some((attentionCard) => attentionCard.instanceId === target.instanceId),
+          cheerful: hasKeyword(attacker, "陽気"),
+          superCheerful: hasKeyword(attacker, "超陽気"),
+          canAttackLife: state.environment?.baseId !== "meguro_library" && listAttentionCards(target.owner).length === 0,
+          targetDiedAfterAttack: target.currentHp <= 0,
+          attackerDiedAfterCounter: attacker.currentHp <= 0,
+          vampireHeal: healed
+        }
+      });
       addLog(`${attacker.name}が${target.name}に${dealtDamage}ダメージ。${vampireLog}${target.name}の反撃で${attacker.name}に${counterDealtDamage}ダメージ。`);
     }
 
@@ -11687,6 +12336,21 @@
       returned.handTurns = 0;
       state.players[targetRef.owner].hand.push(returned);
       destroyBoardCard(attackerRef, { reason: "バウンスディ" });
+      analyticsRecordAction({
+        side: attacker.owner,
+        actionType: "attack_card",
+        card: attacker,
+        sourceZone: "board",
+        targetZone: targetRef.zone,
+        targetSeat: targetRef.zone === "seat" ? analyticsSeatInfo(targetRef.index) : null,
+        targetCard: target,
+        targetCardId: target.baseId,
+        details: {
+          bounce: true,
+          returnedToHand: analyticsCardInfo(returned),
+          attackerMovedToTrash: true
+        }
+      });
       addLog(`${attacker.name}の攻撃時効果：${attacker.name}を校外エリアへ送り、${target.name}を${SIDES[targetRef.owner]}の手札に戻しました。`);
     }
 
@@ -11694,7 +12358,25 @@
       const beforeLife = state.players[targetSide].life;
       damagePlayer(targetSide, attacker.attack || 0);
       const dealtDamage = beforeLife - state.players[targetSide].life;
+      if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(attacker);
       destroyBoardCard(attackerRef, { reason: "バウンスディ" });
+      analyticsRecordAction({
+        side: attacker.owner,
+        actionType: "attack_life",
+        card: attacker,
+        sourceZone: "board",
+        targetZone: "life",
+        details: {
+          targetSide,
+          damage: dealtDamage,
+          counterDamage: 0,
+          cheerful: hasKeyword(attacker, "陽気"),
+          superCheerful: hasKeyword(attacker, "超陽気"),
+          canAttackLife: true,
+          bounce: true,
+          attackerMovedToTrash: true
+        }
+      });
       addLog(`${attacker.name}の攻撃時効果：${attacker.name}を校外エリアへ送りました。`);
       return dealtDamage;
     }
@@ -11703,7 +12385,26 @@
       const beforeLife = state.players[targetSide].life;
       damagePlayer(targetSide, attacker.attack || 0);
       const dealtDamage = beforeLife - state.players[targetSide].life;
-      healVampireFromDamage(attacker, dealtDamage);
+      if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(attacker);
+      const healed = healVampireFromDamage(attacker, dealtDamage);
+      analyticsRecordAction({
+        side: attacker.owner,
+        actionType: "attack_life",
+        card: attacker,
+        sourceZone: "board",
+        targetZone: "life",
+        details: {
+          targetSide,
+          damage: dealtDamage,
+          counterDamage: 0,
+          forcedByAttention: false,
+          cheerful: hasKeyword(attacker, "陽気"),
+          superCheerful: hasKeyword(attacker, "超陽気"),
+          canAttackLife: true,
+          vampireHeal: healed,
+          targetLifeAfter: state.players[targetSide].life
+        }
+      });
       return dealtDamage;
     }
 
@@ -11725,6 +12426,7 @@
       showCardPlayAnimation(item, "trash");
       if (item.baseId === "ruler") damagePlayer(targetSide, 1);
       if (item.baseId === "double_diamond") damagePlayer(targetSide, 4);
+      if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(item);
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}で${SIDES[targetSide]}本体にダメージ。`);
       checkLifeVictory();
@@ -12376,6 +13078,7 @@
         }
       }
       if (!itemAlreadyMovedToTrash) moveHandCardToTrash(side, item);
+      if (state.players[oppositeSide(side)]?.life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(item);
       addLog(`${SIDES[side]}は${item.name}を使い、${resultText}`);
       cleanupDestroyedCards();
       applyBoardAuras();
@@ -12584,6 +13287,20 @@
       }
       if (side === "player") pushTestHistoryBeforeAction();
       state.players[side].will -= playCost;
+      const candidates = analyticsItemCandidates(side, item);
+      analyticsRecordAction({
+        side,
+        actionType: "use_item",
+        card: item,
+        cost: playCost,
+        sourceZone: "hand",
+        targetZone: item.target || "self",
+        legalCandidateCount: candidates.length,
+        legalCandidates: candidates,
+        details: {
+          willAfter: state.players[side].will
+        }
+      });
       return true;
     }
 
@@ -12607,6 +13324,17 @@
       moveToTrash(side, rulers[0]);
       moveToTrash(side, rulers[1]);
       player.hand.push(createCardFromBase("double_diamond", side));
+      analyticsRecordAction({
+        side,
+        actionType: "fusion",
+        cardId: "double_diamond",
+        cardName: CARD_BASES.double_diamond?.name || "ダブルダイヤモンドクロス",
+        sourceZone: "hand",
+        targetZone: "hand",
+        details: {
+          materials: rulers.map(analyticsCardInfo)
+        }
+      });
       addLog(`${SIDES[side]}は定規2枚を融合し、ダブルダイヤモンドクロスを生成しました。`);
       if (renderAfter) render();
       return true;
@@ -12884,6 +13612,18 @@
       if (!ignoreWeakness && isVampireDestroyedByDoubleDiamond(card, source)) {
         showFloatingTextForCard(card, "破壊", "damage");
         card.currentHp = 0;
+        if (source) {
+          card.lastDamageSource = analyticsCardInfo(source);
+          analyticsAddDamage(source, beforeHp);
+        }
+        analyticsRecordEffect({
+          side: source?.owner || null,
+          source,
+          effectType: "damage_card",
+          chosenTargets: [analyticsCardInfo(card)],
+          damageDistribution: { amount, finalDamage: beforeHp, dealt: beforeHp, destroyedByWeakness: true },
+          details: { targetOwner: card.owner || null, targetDiedAfterDamage: true, ignoreWeakness }
+        });
         addLog(`${card.name}はデザインデーモンスレイヤーがいる場でダブルダイヤモンドクロスを受け、破壊されました。`);
         return beforeHp;
       }
@@ -12891,7 +13631,24 @@
       const finalDamage = amount * multiplier;
       showFloatingTextForCard(card, `-${finalDamage}`, "damage");
       card.currentHp -= finalDamage;
-      return Math.min(beforeHp, finalDamage);
+      const dealt = Math.min(beforeHp, finalDamage);
+      if (source) {
+        card.lastDamageSource = analyticsCardInfo(source);
+        analyticsAddDamage(source, dealt);
+      }
+      analyticsRecordEffect({
+        side: source?.owner || null,
+        source,
+        effectType: "damage_card",
+        chosenTargets: [analyticsCardInfo(card)],
+        damageDistribution: { amount, finalDamage, dealt, multiplier },
+        details: {
+          targetOwner: card.owner || null,
+          targetDiedAfterDamage: card.currentHp <= 0,
+          ignoreWeakness
+        }
+      });
+      return dealt;
     }
 
     function previewFinalDamageToCard(card, amount, source = null, options = {}) {
@@ -12948,6 +13705,24 @@
         attendeeDamage += dealDamageToCard(card, hits, source);
       });
       if (life > 0) damagePlayer(targetSide, life);
+      analyticsRecordEffect({
+        side: source?.owner || null,
+        source,
+        effectType: "distributed_damage",
+        randomCandidates: listBoardRefs(targetSide).map((ref) => ({
+          ref,
+          card: analyticsCardInfo(getBoardCardFromRef(ref))
+        })).concat(includeLife ? [{ ref: { owner: targetSide, zone: "life", index: null }, card: null }] : []),
+        damageDistribution: {
+          life,
+          cards: [...cardHits.values()].map(({ ref, hits }) => ({
+            ref,
+            card: analyticsCardInfo(getBoardCardFromRef(ref)),
+            hits
+          }))
+        },
+        details: { targetSide, totalHits: life + attendees }
+      });
       return {
         life,
         attendees,
@@ -12986,7 +13761,16 @@
         addLog(`${SIDES[side]}は「気にするな」の効果で気力ダメージを受けません。`);
         return;
       }
+      const before = state.players[side].life;
       state.players[side].life = Math.max(0, state.players[side].life - amount);
+      const dealt = before - state.players[side].life;
+      analyticsRecordEffect({
+        side: state.currentSide,
+        effectType: "damage_life",
+        chosenTargets: [{ side, lifeBefore: before, lifeAfter: state.players[side].life }],
+        damageDistribution: { amount, dealt },
+        details: { targetSide: side }
+      });
       showFloatingTextForLife(side, `-${amount}`, "damage");
     }
 
@@ -13362,6 +14146,21 @@
       card.suppressTrashToast = options.suppressToast === true;
       card.trashReason = options.reason || "";
       state.players[owner].trash.push(card);
+      analyticsAddResidence(owner, card);
+      if (options.reason === "体力0" && card.lastDamageSource) analyticsAddRemovalContribution(card.lastDamageSource);
+      analyticsRecordAction({
+        side: owner,
+        actionType: "trash",
+        card,
+        cost: null,
+        sourceZone: options.sourceZone || "unknown",
+        targetZone: "trash",
+        details: {
+          reason: options.reason || "",
+          suppressLog: options.suppressLog === true,
+          suppressToast: options.suppressToast === true
+        }
+      });
       if (!options.suppressLog) addTrashLog(owner, card, options.reason || "");
       if (!options.suppressToast) announceTrashMove(owner, card);
       return card;
@@ -13469,6 +14268,7 @@
       clearSelections();
       state.message = winner ? `${reason} ${SIDES[winner]}の勝利！` : reason;
       addLog(state.message);
+      analyticsFinalizeGame(winner, reason, options);
       showResultOverlay(winner, options);
     }
 
@@ -16008,6 +16808,8 @@
         opponent.board.teacher = enemyTeacher;
       }
 
+      analyticsStartGame();
+      analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       applyBoardAuras();
       state.message = `${CARD_BASES[baseId].name}のテストプレイ。戦意10、初期手札は${testHandCardNames(baseId)}。`;
       addLog(`${CARD_BASES[baseId].name}のテストプレイを開始しました。`);
@@ -16208,6 +17010,8 @@
       const spareStudent = makeBoardCard(createCardFromBase("general_student", "opponent"));
       spareStudent.playedOnTurn = 0;
       opponent.board.seats[0] = spareStudent;
+      analyticsStartGame();
+      analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       applyBoardAuras();
       state.message = "チュートリアル開始。説明を読みながら光っている場所を操作してください。";
       addLog("チュートリアル開始。光っている場所だけ操作できます。");
@@ -16877,6 +17681,8 @@
     elements.fusionButton.addEventListener("click", () => fuseRulersForSide("player", true));
     elements.startButton.addEventListener("click", startBattle);
     elements.endTurnButton.addEventListener("click", () => endTurn());
+    elements.analyticsJsonlButton.addEventListener("click", exportAnalyticsJsonl);
+    elements.analyticsCsvButton.addEventListener("click", exportAnalyticsCsv);
     elements.resetButton.addEventListener("click", () => {
       if (state.testMode && state.testCardBaseId) {
         startCardTest(state.testCardBaseId);
