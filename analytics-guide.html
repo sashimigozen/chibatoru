@@ -476,6 +476,41 @@
     </section>
 
     <section class="panel">
+      <h2>管理者だけが見るオンライン対戦ログ</h2>
+      <p>
+        オンライン対戦では、ホスト側が持つ完全ログを対戦サーバーに保存できます。
+        管理ページはパスワード付きで、Renderに設定した管理者パスワードを知っている人だけが開けます。
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>項目</th>
+              <th>内容</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>管理ページ</td>
+              <td><code>https://あなたのRenderサービス.onrender.com/admin/logs</code></td>
+            </tr>
+            <tr>
+              <td>パスワード</td>
+              <td>Renderの環境変数 <code>CHIBATORU_LOG_ADMIN_PASSWORD</code> に設定します。</td>
+            </tr>
+            <tr>
+              <td>保存先</td>
+              <td><code>CHIBATORU_LOG_DIR</code> を永続ディスクに向けると、サーバー再起動後もログを残せます。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        GitHub PagesのHTMLにパスワードを書く方式ではなく、Renderサーバー側で管理者認証を行います。
+      </p>
+    </section>
+
+    <section class="panel">
       <h2>あとで分析できること</h2>
       <div class="grid">
         <div>

@@ -1,6 +1,9 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const http = require("node:http");
+const os = require("node:os");
 const net = require("node:net");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
@@ -18,7 +21,7 @@ function freePort() {
   });
 }
 
-function startServer(port) {
+function startServer(port, env = {}) {
   const child = spawn(process.execPath, ["server.js"], {
     cwd: __dirname,
     env: {
@@ -26,7 +29,8 @@ function startServer(port) {
       PORT: String(port),
       COMMAND_RETRY_MS: "70",
       COMMAND_MAX_ATTEMPTS: "5",
-      WAITING_ROOM_TIMEOUT_MS: "300000"
+      WAITING_ROOM_TIMEOUT_MS: "300000",
+      ...env
     },
     stdio: ["ignore", "pipe", "pipe"]
   });
@@ -86,6 +90,27 @@ function waitFor(client, predicate, fromIndex = 0, timeoutMs = 3000) {
 
 function send(client, message) {
   client.ws.send(JSON.stringify({ protocol: 1, ...message }));
+}
+
+function httpGet(port, pathname, password = "") {
+  return new Promise((resolve, reject) => {
+    const headers = {};
+    if (password) headers.authorization = `Basic ${Buffer.from(`admin:${password}`).toString("base64")}`;
+    const req = http.request({
+      hostname: "127.0.0.1",
+      port,
+      path: pathname,
+      method: "GET",
+      headers
+    }, (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => resolve({ statusCode: res.statusCode, headers: res.headers, body }));
+    });
+    req.once("error", reject);
+    req.end();
+  });
 }
 
 test("guest commands retry until the host confirms an authoritative snapshot", async (t) => {
@@ -151,4 +176,69 @@ test("guest commands retry until the host confirms an authoritative snapshot", a
   send(guest, { type: "returnRoom", msgId: "guest-return-during-game" });
   const forbidden = await waitFor(guest, (message) => message.type === "error" && message.code === "forbidden", forbiddenStart);
   assert.match(forbidden.message.message, /ホスト/);
+});
+
+test("admin logs require a password and store host analytics logs", async (t) => {
+  const port = await freePort();
+  const logDir = fs.mkdtempSync(path.join(os.tmpdir(), "chibatoru-log-test-"));
+  const child = await startServer(port, {
+    CHIBATORU_LOG_ADMIN_PASSWORD: "secret",
+    CHIBATORU_LOG_DIR: logDir
+  });
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "LOG01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+    fs.rmSync(logDir, { recursive: true, force: true });
+  });
+
+  const unauthorized = await httpGet(port, "/admin/logs");
+  assert.equal(unauthorized.statusCode, 401);
+
+  const host = await connectClient(url, roomId, "host-log", true);
+  const guest = await connectClient(url, roomId, "guest-log");
+  clients.push(host, guest);
+
+  const deckCounts = { test_card: 40 };
+  send(host, { type: "deckUpdate", deckCounts, ready: true });
+  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  await waitFor(host, (message) => message.type === "deckUpdate");
+  send(host, {
+    type: "startGame",
+    snapshot: { seq: 1, state: { currentSide: "player", gameOver: false } }
+  });
+  await waitFor(guest, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
+
+  send(guest, {
+    type: "analyticsLog",
+    gameId: "guest-should-not-save",
+    events: []
+  });
+  await waitFor(guest, (message) => message.type === "error" && message.code === "forbidden");
+
+  send(host, {
+    type: "analyticsLog",
+    gameId: "game-admin-test",
+    final: true,
+    version: "test",
+    events: [
+      { eventType: "game_start", gameId: "game-admin-test", eventSeq: 1, game: { gameId: "game-admin-test", mode: "online", startedAt: "2026-07-05T00:00:00.000Z", firstSide: "player", decks: { player: { deckName: "A" }, opponent: { deckName: "B" } } } },
+      { eventType: "game_end", gameId: "game-admin-test", eventSeq: 2, final: { winner: "player", reason: "test win", finalTurn: 3 } }
+    ]
+  });
+  await waitFor(host, (message) => message.type === "analyticsLogSaved" && message.gameId === "game-admin-test");
+
+  const list = await httpGet(port, "/admin/logs", "secret");
+  assert.equal(list.statusCode, 200);
+  assert.match(list.body, /game-admin-test/);
+  assert.match(list.body, /test win/);
+
+  const json = await httpGet(port, "/admin/logs/game-admin-test.json", "secret");
+  assert.equal(json.statusCode, 200);
+  const parsed = JSON.parse(json.body);
+  assert.equal(parsed.gameId, "game-admin-test");
+  assert.equal(parsed.summary.winner, "player");
+  assert.equal(parsed.events.length, 2);
 });

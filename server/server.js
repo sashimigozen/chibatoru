@@ -1,6 +1,10 @@
 "use strict";
 
+const crypto = require("crypto");
+const fs = require("fs");
 const http = require("http");
+const os = require("os");
+const path = require("path");
 const { WebSocketServer } = require("ws");
 
 const PORT = Number(process.env.PORT || 8787);
@@ -11,18 +15,31 @@ const COMMAND_RETRY_MS = Number(process.env.COMMAND_RETRY_MS || 1200);
 const COMMAND_MAX_ATTEMPTS = Number(process.env.COMMAND_MAX_ATTEMPTS || 6);
 const PROCESSED_COMMAND_LIMIT = 120;
 const MAX_PENDING_COMMANDS_PER_PLAYER = 12;
-const MAX_MESSAGE_BYTES = 512 * 1024;
+const MAX_MESSAGE_BYTES = Number(process.env.MAX_MESSAGE_BYTES || 2 * 1024 * 1024);
 const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,12}$/;
 const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
 const SERVER_ID = "server";
+const LOG_ADMIN_PASSWORD = process.env.CHIBATORU_LOG_ADMIN_PASSWORD || process.env.ADMIN_LOG_PASSWORD || "";
+const LOG_STORAGE_DIR = process.env.CHIBATORU_LOG_DIR || path.join(os.tmpdir(), "chibatoru-online-logs");
+const MAX_STORED_LOGS = Number(process.env.MAX_STORED_LOGS || 300);
 
 const rooms = new Map();
+const onlineBattleLogs = new Map();
 
 const server = http.createServer((req, res) => {
-  if (req.url === "/health") {
+  const url = new URL(req.url || "/", "http://localhost");
+  if (url.pathname === "/health") {
     res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
+    res.end(JSON.stringify({ ok: true, rooms: rooms.size, onlineLogs: onlineBattleLogs.size }));
+    return;
+  }
+  if (url.pathname === "/admin/logs" || url.pathname.startsWith("/admin/logs/")) {
+    handleAdminLogsRequest(req, res, url);
+    return;
+  }
+  if (url.pathname === "/admin/logs.json") {
+    handleAdminLogsJson(req, res);
     return;
   }
   res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
@@ -49,6 +66,367 @@ function safeJsonParse(raw) {
   } catch {
     return null;
   }
+}
+
+function jsonResponse(res, statusCode, payload) {
+  res.writeHead(statusCode, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store"
+  });
+  res.end(JSON.stringify(payload, null, 2));
+}
+
+function htmlResponse(res, statusCode, html) {
+  res.writeHead(statusCode, {
+    "content-type": "text/html; charset=utf-8",
+    "cache-control": "no-store"
+  });
+  res.end(html);
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function isAdminAuthorized(req) {
+  if (!LOG_ADMIN_PASSWORD) return false;
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Basic ")) return false;
+  const decoded = Buffer.from(header.slice("Basic ".length), "base64").toString("utf8");
+  const password = decoded.includes(":") ? decoded.slice(decoded.indexOf(":") + 1) : decoded;
+  const expected = Buffer.from(LOG_ADMIN_PASSWORD);
+  const actual = Buffer.from(password);
+  return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+}
+
+function requireAdmin(req, res) {
+  if (!LOG_ADMIN_PASSWORD) {
+    htmlResponse(res, 503, adminPageShell(`
+      <section class="panel">
+        <h1>ログ管理は未設定です</h1>
+        <p>Renderの環境変数に <code>CHIBATORU_LOG_ADMIN_PASSWORD</code> を設定すると、管理者だけがオンライン対戦ログを見られるようになります。</p>
+      </section>
+    `));
+    return false;
+  }
+  if (isAdminAuthorized(req)) return true;
+  res.writeHead(401, {
+    "www-authenticate": 'Basic realm="Chibatoru online logs", charset="UTF-8"',
+    "content-type": "text/plain; charset=utf-8",
+    "cache-control": "no-store"
+  });
+  res.end("管理者パスワードが必要です。");
+  return false;
+}
+
+function safeLogFileName(gameId) {
+  return String(gameId || "unknown").replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 140);
+}
+
+function ensureLogDir() {
+  fs.mkdirSync(LOG_STORAGE_DIR, { recursive: true });
+}
+
+function trimStoredLogs() {
+  const logs = [...onlineBattleLogs.values()].sort((a, b) => String(b.receivedAt).localeCompare(String(a.receivedAt)));
+  onlineBattleLogs.clear();
+  logs.slice(0, MAX_STORED_LOGS).forEach((log) => onlineBattleLogs.set(log.gameId, log));
+}
+
+function writeLogToDisk(log) {
+  try {
+    ensureLogDir();
+    const file = path.join(LOG_STORAGE_DIR, `${safeLogFileName(log.gameId)}.json`);
+    fs.writeFileSync(file, JSON.stringify(log, null, 2));
+  } catch (error) {
+    console.warn("online log disk write skipped", error.message);
+  }
+}
+
+function loadLogsFromDisk() {
+  try {
+    if (!fs.existsSync(LOG_STORAGE_DIR)) return;
+    const files = fs.readdirSync(LOG_STORAGE_DIR)
+      .filter((file) => file.endsWith(".json"))
+      .slice(0, MAX_STORED_LOGS * 2);
+    files.forEach((file) => {
+      try {
+        const parsed = JSON.parse(fs.readFileSync(path.join(LOG_STORAGE_DIR, file), "utf8"));
+        if (parsed?.gameId) onlineBattleLogs.set(parsed.gameId, parsed);
+      } catch {}
+    });
+    trimStoredLogs();
+  } catch (error) {
+    console.warn("online log disk load skipped", error.message);
+  }
+}
+
+function cardName(card) {
+  return card?.cardName || card?.name || card?.cardId || card?.baseId || "";
+}
+
+function summarizeAnalyticsEvents(events) {
+  const start = events.find((event) => event.eventType === "game_start")?.game || null;
+  const final = [...events].reverse().find((event) => event.eventType === "game_end")?.final || null;
+  const actions = events.filter((event) => event.eventType === "action");
+  const effects = events.filter((event) => event.eventType === "effect");
+  const playedCards = actions
+    .filter((event) => ["play_card", "play_environment", "reserve_late", "evolve", "use_item"].includes(event.actionType))
+    .map((event) => event.cardName || event.cardId)
+    .filter(Boolean);
+  const lethalCard = cardName(final?.lethalCard);
+  return {
+    mode: start?.mode || "",
+    startedAt: start?.startedAt || "",
+    finishedAt: final?.finishedAt || "",
+    firstSide: start?.firstSide || "",
+    winner: final?.winner || "",
+    reason: final?.reason || "",
+    finalTurn: final?.finalTurn ?? null,
+    lethalCard,
+    eventCount: events.length,
+    actionCount: actions.length,
+    effectCount: effects.length,
+    deckNames: {
+      player: start?.decks?.player?.deckName || "",
+      opponent: start?.decks?.opponent?.deckName || ""
+    },
+    frequentlyPlayedCards: countTop(playedCards, 12)
+  };
+}
+
+function countTop(values, limit) {
+  const counts = new Map();
+  values.forEach((value) => counts.set(value, (counts.get(value) || 0) + 1));
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])))
+    .slice(0, limit)
+    .map(([name, count]) => ({ name, count }));
+}
+
+function normalizeAnalyticsLog(room, player, payload) {
+  const events = Array.isArray(payload.events) ? payload.events : [];
+  const gameId = String(payload.gameId || events.find((event) => event.gameId)?.gameId || room.sessionId || createSessionId()).slice(0, 160);
+  const summary = summarizeAnalyticsEvents(events);
+  return {
+    gameId,
+    roomId: room.roomId,
+    roomSessionId: room.sessionId,
+    receivedAt: new Date().toISOString(),
+    receivedFromRole: player.role,
+    protocolVersion: PROTOCOL_VERSION,
+    clientVersion: payload.version || "",
+    final: Boolean(payload.final || summary.winner),
+    summary,
+    events
+  };
+}
+
+function saveOnlineBattleLog(room, player, payload) {
+  const log = normalizeAnalyticsLog(room, player, payload || {});
+  onlineBattleLogs.set(log.gameId, log);
+  trimStoredLogs();
+  writeLogToDisk(log);
+  return log;
+}
+
+function handleAnalyticsLog(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player) return;
+  if (player.role !== "host") {
+    sendError(ws, "対戦ログはホストだけが送信できます。", "forbidden");
+    return;
+  }
+  if (!room.started) return;
+  const log = saveOnlineBattleLog(room, player, message);
+  send(ws, {
+    type: "analyticsLogSaved",
+    senderId: SERVER_ID,
+    roomSessionId: room.sessionId,
+    gameId: log.gameId,
+    eventCount: log.summary.eventCount
+  });
+}
+
+function listLogSummaries() {
+  return [...onlineBattleLogs.values()]
+    .sort((a, b) => String(b.receivedAt).localeCompare(String(a.receivedAt)))
+    .map((log) => ({
+      gameId: log.gameId,
+      roomId: log.roomId,
+      receivedAt: log.receivedAt,
+      final: log.final,
+      ...log.summary
+    }));
+}
+
+function adminPageShell(body) {
+  return `<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>チバトル 管理ログ</title>
+  <style>
+    body { margin: 0; background: #f7f5ee; color: #1f2a24; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; line-height: 1.7; }
+    .page { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
+    .panel { background: #fffdf7; border: 1px solid #d9d0bf; border-radius: 8px; box-shadow: 0 12px 32px rgba(39, 34, 24, 0.1); padding: 22px; margin-bottom: 18px; }
+    h1, h2, p { margin-top: 0; }
+    h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.1; }
+    a { color: #2f6b4f; font-weight: 800; text-underline-offset: 3px; }
+    code { background: #efe7d6; border-radius: 5px; padding: 2px 6px; }
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #d9d0bf; text-align: left; vertical-align: top; }
+    th { background: #efe7d6; color: #4c4332; font-size: 13px; }
+    .table-wrap { overflow-x: auto; border: 1px solid #d9d0bf; border-radius: 8px; background: #fff; }
+    .badge { display: inline-flex; padding: 2px 8px; border-radius: 999px; background: #dcefe5; color: #2f6b4f; font-size: 12px; font-weight: 900; }
+    .badge.pending { background: #fff0cc; color: #815d16; }
+    .muted { color: #5d6b62; }
+  </style>
+</head>
+<body>
+  <main class="page">${body}</main>
+</body>
+</html>`;
+}
+
+function renderAdminLogsPage() {
+  const logs = listLogSummaries();
+  const rows = logs.map((log) => `
+    <tr>
+      <td><a href="/admin/logs/${encodeURIComponent(log.gameId)}">${escapeHtml(log.gameId)}</a></td>
+      <td>${escapeHtml(log.receivedAt)}</td>
+      <td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終局" : "進行中"}</span></td>
+      <td>${escapeHtml(log.winner || "-")}</td>
+      <td>${escapeHtml(log.reason || "-")}</td>
+      <td>${escapeHtml(log.deckNames?.player || "-")}<br><span class="muted">${escapeHtml(log.deckNames?.opponent || "-")}</span></td>
+      <td>${escapeHtml(log.eventCount)}</td>
+    </tr>
+  `).join("");
+  return adminPageShell(`
+    <section class="panel">
+      <h1>チバトル オンライン対戦ログ</h1>
+      <p class="muted">管理者だけが見られるログ一覧です。プレイヤーの個人名は保存せず、カードバランス分析に必要な対戦イベントを保存します。</p>
+      <p><a href="/admin/logs.json">JSON一覧を開く</a></p>
+    </section>
+    <section class="panel">
+      <h2>保存済みログ ${logs.length}件</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>gameId</th><th>受信日時</th><th>状態</th><th>勝者</th><th>理由</th><th>デッキ</th><th>イベント数</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td colspan="7" class="muted">まだオンライン対戦ログはありません。</td></tr>`}</tbody>
+        </table>
+      </div>
+    </section>
+  `);
+}
+
+function renderAdminLogDetail(log) {
+  const topCards = (log.summary.frequentlyPlayedCards || [])
+    .map((card) => `<span class="badge">${escapeHtml(card.name)} ${escapeHtml(card.count)}</span>`)
+    .join(" ");
+  return adminPageShell(`
+    <section class="panel">
+      <p><a href="/admin/logs">ログ一覧へ戻る</a></p>
+      <h1>${escapeHtml(log.gameId)}</h1>
+      <p class="muted">受信日時: ${escapeHtml(log.receivedAt)} / 部屋: ${escapeHtml(log.roomId)}</p>
+      <p>
+        <a href="/admin/logs/${encodeURIComponent(log.gameId)}.json">JSONで開く</a>
+        ・
+        <a href="/admin/logs/${encodeURIComponent(log.gameId)}.jsonl">JSONLで開く</a>
+      </p>
+    </section>
+    <section class="panel">
+      <h2>概要</h2>
+      <p>勝者: <strong>${escapeHtml(log.summary.winner || "-")}</strong></p>
+      <p>理由: ${escapeHtml(log.summary.reason || "-")}</p>
+      <p>最終ターン: ${escapeHtml(log.summary.finalTurn ?? "-")} / リーサル: ${escapeHtml(log.summary.lethalCard || "-")}</p>
+      <p>デッキ: ${escapeHtml(log.summary.deckNames?.player || "-")} vs ${escapeHtml(log.summary.deckNames?.opponent || "-")}</p>
+      <p>よく使われたカード: ${topCards || '<span class="muted">なし</span>'}</p>
+    </section>
+    <section class="panel">
+      <h2>イベント</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>種類</th><th>ターン</th><th>side</th><th>カード</th><th>内容</th></tr></thead>
+          <tbody>${log.events.map((event) => `
+            <tr>
+              <td>${escapeHtml(event.eventSeq || "")}</td>
+              <td>${escapeHtml(event.eventType || "")}</td>
+              <td>${escapeHtml(event.turn || "")}</td>
+              <td>${escapeHtml(event.side || "")}</td>
+              <td>${escapeHtml(event.cardName || event.source?.cardName || "")}</td>
+              <td><code>${escapeHtml(JSON.stringify(compactEventForTable(event)))}</code></td>
+            </tr>
+          `).join("")}</tbody>
+        </table>
+      </div>
+    </section>
+  `);
+}
+
+function compactEventForTable(event) {
+  if (event.eventType === "action") return {
+    actionType: event.actionType,
+    targetZone: event.targetZone,
+    targetSeat: event.targetSeat,
+    targetCardId: event.targetCardId
+  };
+  if (event.eventType === "effect") return {
+    effectType: event.effectType,
+    drawCount: event.drawCount,
+    chosenTargets: event.chosenTargets,
+    damageDistribution: event.damageDistribution
+  };
+  if (event.eventType === "game_end") return event.final;
+  return {};
+}
+
+function findLogByPath(pathname) {
+  const match = pathname.match(/^\/admin\/logs\/([^/]+?)(?:\.(jsonl|json))?$/);
+  if (!match) return { log: null, format: "" };
+  const gameId = decodeURIComponent(match[1]);
+  return { log: onlineBattleLogs.get(gameId) || null, format: match[2] || "html" };
+}
+
+function handleAdminLogsJson(req, res) {
+  if (!requireAdmin(req, res)) return;
+  jsonResponse(res, 200, { logs: listLogSummaries() });
+}
+
+function handleAdminLogsRequest(req, res, url) {
+  if (!requireAdmin(req, res)) return;
+  if (url.pathname === "/admin/logs") {
+    htmlResponse(res, 200, renderAdminLogsPage());
+    return;
+  }
+  const { log, format } = findLogByPath(url.pathname);
+  if (!log) {
+    htmlResponse(res, 404, adminPageShell(`<section class="panel"><h1>ログが見つかりません</h1><p><a href="/admin/logs">一覧へ戻る</a></p></section>`));
+    return;
+  }
+  if (format === "json") {
+    jsonResponse(res, 200, log);
+    return;
+  }
+  if (format === "jsonl") {
+    res.writeHead(200, {
+      "content-type": "application/x-ndjson; charset=utf-8",
+      "cache-control": "no-store"
+    });
+    res.end(`${log.events.map((event) => JSON.stringify(event)).join("\n")}\n`);
+    return;
+  }
+  htmlResponse(res, 200, renderAdminLogDetail(log));
 }
 
 function send(ws, message) {
@@ -596,6 +974,9 @@ function routeMessage(ws, raw) {
     case "gameState":
       handleGameState(ws, message);
       break;
+    case "analyticsLog":
+      handleAnalyticsLog(ws, message);
+      break;
     case "playCard":
     case "endTurn":
     case "gameAction":
@@ -660,6 +1041,8 @@ wss.on("connection", (ws) => {
 });
 
 setInterval(cleanupRooms, 1000 * 60 * 10).unref();
+
+loadLogsFromDisk();
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Chibatoru WebSocket server listening on ${PORT}`);
