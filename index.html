@@ -5602,6 +5602,20 @@
     const AI_SEAT_PRIORITY = [4, 0, 2, 6, 8, 1, 3, 5, 7];
     const AI_START_DELAY = 700;
     const AI_STEP_DELAY = 1500;
+    const AI_RESOURCE_ITEM_IDS = new Set([
+      "onigiri_draw", "hondara", "fire_touch", "deck_without", "three_gestures",
+      "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
+      "yoyu_announce", "music_detergent", "sexual_eye", "water_2l", "fluid_pasta",
+      "aggro_eater", "peaceful_mind", "bento", "go_home", "chigauyo", "chigauyo_kanji"
+    ]);
+    const AI_TACTICAL_ITEM_IDS = new Set([
+      "ruler", "double_diamond", "seriously_hit", "green_curry", "roar", "thin_item",
+      "handy_jet_engine", "i_got_it", "quiet_please", "vampirization", "panpan",
+      "favorite_number_s", "namen_tenno", "sock_block", "capture", "abyss", "donguri",
+      "night_pool_water", "substitute_attendance", "greeting_3000", "dos_attack",
+      "destroy_dos_attack", "dropped_cards", "thanks_all_students", "yakiniku",
+      "dont_worry", "gamma"
+    ]);
     const PLAY_REVEAL_MS = 1450;
     const EVOLUTION_REVEAL_MS = 2200;
     const DONGURI_EVOLUTION_REVEAL_MS = 3800;
@@ -8494,27 +8508,20 @@
       render();
       await sleep(AI_STEP_DELAY);
       if (!isOpponentAiActive()) return;
-      await tryUseAiItems();
+      await tryUseAiItems({ timing: "beforeBoard" });
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
         render();
         return;
       }
-      let safety = 0;
-      while (safety < 8 && isOpponentAiActive()) {
-        safety += 1;
-        const move = findAiPlayMove();
-        if (!move) break;
-        placeCardFromHand("opponent", move.card.instanceId, move.zone, move.owner, move.index, false);
-        render();
-        await sleep(AI_STEP_DELAY);
-      }
-      await tryUseAiItems();
+      await playAiBoardMoves();
+      await tryUseAiItems({ timing: "afterBoard" });
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
         render();
         return;
       }
+      await playAiBoardMoves();
       await aiAttackWithReadyCards();
       state.aiThinking = false;
       if (state.gameOver) {
@@ -8528,12 +8535,122 @@
       }
     }
 
+    async function playAiBoardMoves() {
+      let safety = 0;
+      while (safety < 8 && isOpponentAiActive()) {
+        safety += 1;
+        const move = findAiPlayMove();
+        if (!move) break;
+        placeCardFromHand("opponent", move.card.instanceId, move.zone, move.owner, move.index, false);
+        render();
+        await sleep(AI_STEP_DELAY);
+      }
+    }
+
     function isOpponentAiActive() {
       return state.phase === "battle" && state.currentSide === "opponent" && !state.gameOver;
     }
 
     function sleep(ms) {
       return new Promise((resolve) => window.setTimeout(resolve, ms));
+    }
+
+    function getAiDecisionContext() {
+      const ai = state.players.opponent;
+      const player = state.players.player;
+      const friendlyRefs = listBoardRefs("opponent");
+      const enemyRefs = listBoardRefs("player");
+      const friendlyCards = friendlyRefs.map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
+      const enemyCards = enemyRefs.map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
+      const openSeatCount = ai.board.seats
+        .filter((seatCard, seatIndex) => !seatCard && isBoardSlotOpen("opponent", "seat", seatIndex)).length;
+      const enemyAttackTotal = enemyCards.reduce((total, card) => total + Math.max(0, card.attack || 0), 0);
+      const friendlyAttackTotal = friendlyCards.reduce((total, card) => total + Math.max(0, card.attack || 0), 0);
+      const boardDeficit = Math.max(0, enemyCards.length - friendlyCards.length);
+      const lifePressure = Math.max(0, enemyAttackTotal - ai.life * 0.35);
+      const handDeficit = Math.max(0, player.hand.length - ai.hand.length);
+      return {
+        ai,
+        player,
+        friendlyRefs,
+        enemyRefs,
+        friendlyCards,
+        enemyCards,
+        friendlyCount: friendlyCards.length,
+        enemyCount: enemyCards.length,
+        openSeatCount,
+        enemyAttackTotal,
+        friendlyAttackTotal,
+        boardDeficit,
+        lifePressure,
+        handDeficit,
+        ownHandSize: ai.hand.length,
+        enemyHandSize: player.hand.length,
+        ownLife: ai.life,
+        enemyLife: player.life,
+        will: ai.will,
+        maxWill: ai.maxWill
+      };
+    }
+
+    function aiBoardNeedScore(context = getAiDecisionContext()) {
+      let score = 0;
+      if (context.friendlyCount === 0) score += 7;
+      if (context.friendlyCount <= 2) score += 3;
+      score += context.boardDeficit * 4;
+      if (context.enemyAttackTotal >= context.ownLife) score += 8;
+      else if (context.ownLife <= 10) score += 3;
+      score += Math.min(5, context.lifePressure);
+      if (context.openSeatCount <= 1) score -= 3;
+      return score;
+    }
+
+    function isAiResourceItem(item) {
+      return AI_RESOURCE_ITEM_IDS.has(item.baseId) || CRAB_SET_IDS.includes(item.baseId);
+    }
+
+    function isAiTacticalItem(item) {
+      return AI_TACTICAL_ITEM_IDS.has(item.baseId) && !isAiResourceItem(item);
+    }
+
+    function shouldAiUseItemAtTiming(item, score, timing) {
+      if (timing !== "beforeBoard") return true;
+      if (score <= 0) return false;
+      const bestBoardMove = findAiPlayMove();
+      if (!bestBoardMove) return true;
+      const context = getAiDecisionContext();
+      const canStillPlayBest = context.will - effectiveCardCost(item) >= effectiveCardCost(bestBoardMove.card);
+      if (isAiResourceItem(item)) return canStillPlayBest || aiBoardNeedScore(context) <= 2;
+      if (isAiTacticalItem(item)) return score >= 10 || canStillPlayBest || bestBoardMove.score < 7;
+      return canStillPlayBest || bestBoardMove.score < 6;
+    }
+
+    function adjustAiItemScoreForContext(item, score, timing) {
+      if (score <= 0) return 0;
+      const context = getAiDecisionContext();
+      const boardNeed = aiBoardNeedScore(context);
+      const bestBoardMove = findAiPlayMove();
+      const itemCost = effectiveCardCost(item);
+      const willAfterItem = context.will - itemCost;
+      const blocksBestBoardMove = bestBoardMove && willAfterItem < effectiveCardCost(bestBoardMove.card);
+
+      let adjusted = score;
+      if (isAiResourceItem(item)) {
+        adjusted += Math.min(4, Math.max(0, 2 - context.ownHandSize)) * 2;
+        adjusted += Math.min(3, context.handDeficit);
+        if (blocksBestBoardMove && boardNeed > 2) adjusted -= 6 + boardNeed;
+        if (timing === "beforeBoard" && bestBoardMove && boardNeed > 0) adjusted -= 4;
+      } else if (blocksBestBoardMove && boardNeed >= 7 && score < 12) {
+        adjusted -= 4;
+      }
+
+      if (context.enemyLife <= 8 && ["ruler", "double_diamond", "greeting_3000"].includes(item.baseId)) {
+        adjusted += 5;
+      }
+      if (context.ownLife <= 8 && ["bento", "fluid_pasta", "peaceful_mind", "aggro_eater"].includes(item.baseId)) {
+        adjusted += 4;
+      }
+      return adjusted;
     }
 
     function findAiPlayMove() {
@@ -8584,10 +8701,21 @@
     }
 
     function scoreAiPlacement(card, zone, index) {
-      const enemyRefs = listBoardRefs("player");
-      const friendlyRefs = listBoardRefs("opponent");
+      const context = getAiDecisionContext();
+      const enemyRefs = context.enemyRefs;
+      const friendlyRefs = context.friendlyRefs;
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
       let score = bodyScore + (zone === "seat" ? 2 : 0);
+      if (["student", "teacher", "vampire"].includes(card.type)) {
+        const boardNeed = aiBoardNeedScore(context);
+        score += boardNeed;
+        if (context.friendlyCount === 0) score += 4;
+        if (context.enemyCount > context.friendlyCount) score += (context.enemyCount - context.friendlyCount) * 2.5;
+        if (context.ownLife <= 10) score += Math.min(4, (card.hp || 0) * 0.6);
+        if (context.enemyLife <= 10) score += Math.min(5, (card.attack || 0) * 0.8);
+        if (context.ownHandSize >= 6 && effectiveCardCost(card) <= context.will) score += 2;
+        if (zone === "seat" && context.openSeatCount <= 2) score -= 2;
+      }
       if (zone === "teacher") {
         score += card.type === "teacher" ? 8 : -5;
       } else if (card.type === "teacher") {
@@ -8614,7 +8742,8 @@
         score += state.players.opponent.deck.some((deckCard) => deckCard.type === "student") ? 6 : -2;
       }
       if (card.baseId === "failure_student") {
-        score += state.players.opponent.hand.length >= 2 ? -7 : -2;
+        const hasEvolutionPlan = state.players.opponent.hand.some((handCard) => handCard.baseId === "success_student");
+        score += state.players.opponent.hand.length >= 2 ? (hasEvolutionPlan ? -6 : -14) : -4;
       }
       if (card.baseId === "bounce_day") {
         score += enemyRefs.length ? 3 : 0;
@@ -8752,7 +8881,8 @@
       return 0;
     }
 
-    async function tryUseAiItems() {
+    async function tryUseAiItems(options = {}) {
+      const timing = options.timing || "normal";
       if (fuseRulersForSide("opponent", false)) {
         render();
         await sleep(AI_STEP_DELAY);
@@ -8763,8 +8893,9 @@
         const opponent = state.players.opponent;
         const item = opponent.hand
           .filter((card) => card.type === "item" && effectiveCardCost(card) <= opponent.will)
-          .map((card) => ({ card, score: scoreAiItem(card) }))
+          .map((card) => ({ card, score: scoreAiItem(card, { timing }) }))
           .filter((entry) => entry.score > 0)
+          .filter((entry) => shouldAiUseItemAtTiming(entry.card, entry.score, timing))
           .sort((a, b) => b.score - a.score)[0]?.card;
         if (!item) return;
         const used = useAiItem(item);
@@ -8775,7 +8906,12 @@
       }
     }
 
-    function scoreAiItem(item) {
+    function scoreAiItem(item, options = {}) {
+      const baseScore = baseScoreAiItem(item);
+      return adjustAiItemScoreForContext(item, baseScore, options.timing || "normal");
+    }
+
+    function baseScoreAiItem(item) {
       const opponent = state.players.opponent;
       const enemyCards = listBoardRefs("player").map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
       const friendlyCards = listBoardRefs("opponent").map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
@@ -9061,6 +9197,18 @@
         .sort((a, b) => b.score - a.score);
       const best = targets[0];
       if (!best) return null;
+      const cannotAttackLife = attentionIds.size > 0
+        || state.environment?.baseId === "meguro_library"
+        || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気"));
+      if (!cannotAttackLife) {
+        const attack = Math.max(0, attacker.attack || 0);
+        const enemyLife = state.players.player.life;
+        const faceScore = attack * 2.4
+          + (enemyLife <= attack ? 30 : 0)
+          + (enemyLife <= attack * 2 ? 8 : 0)
+          - (best.canDefeat ? 2 : 0);
+        if (faceScore > best.score + 2) return null;
+      }
       return best;
     }
 
