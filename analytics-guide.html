@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>チバトル 解析ログガイド</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1f2a24;
+      --muted: #5d6b62;
+      --paper: #f7f5ee;
+      --panel: #fffdf7;
+      --line: #d9d0bf;
+      --green: #2f6b4f;
+      --green-soft: #dcefe5;
+      --red: #a84b42;
+      --blue: #315f9f;
+      --gold: #bf8b2e;
+      --shadow: 0 14px 36px rgba(39, 34, 24, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(47, 107, 79, 0.12), transparent 260px),
+        var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+      line-height: 1.7;
+    }
+
+    a {
+      color: var(--green);
+      font-weight: 700;
+      text-underline-offset: 3px;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 56px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(260px, 0.75fr);
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    .hero-main,
+    .panel,
+    .mini-panel {
+      background: rgba(255, 253, 247, 0.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-main {
+      padding: 32px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px;
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 12px;
+      font-size: clamp(30px, 5vw, 54px);
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin-bottom: 14px;
+      font-size: 24px;
+      line-height: 1.25;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin-bottom: 6px;
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      margin-bottom: 20px;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 10px 16px;
+      border: 1px solid var(--green);
+      border-radius: 6px;
+      background: var(--green);
+      color: #fff;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--green);
+    }
+
+    .status-card {
+      padding: 24px;
+      display: grid;
+      align-content: center;
+      gap: 14px;
+    }
+
+    .status-line {
+      display: grid;
+      gap: 4px;
+      padding: 12px;
+      border-radius: 8px;
+      background: var(--green-soft);
+      border: 1px solid rgba(47, 107, 79, 0.22);
+    }
+
+    .status-line strong {
+      color: var(--green);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .panel {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .mini-panel {
+      padding: 18px;
+    }
+
+    .mini-panel p,
+    .panel p {
+      color: var(--muted);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #efe7d6;
+      color: #4c4332;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .flow-step {
+      min-height: 94px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    .flow-step span {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--gold);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #efe7d6;
+      font-size: 13px;
+      color: #4c4332;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #efe7d6;
+      color: #2c4638;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    .note {
+      border-left: 5px solid var(--gold);
+      padding: 14px 16px;
+      background: #fff7e5;
+      color: #5b4721;
+      border-radius: 6px;
+    }
+
+    .tone-blue {
+      border-top: 4px solid var(--blue);
+    }
+
+    .tone-red {
+      border-top: 4px solid var(--red);
+    }
+
+    .tone-green {
+      border-top: 4px solid var(--green);
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .grid,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+
+      .hero-main {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-main">
+        <p class="eyebrow">チバトル 解析ログ</p>
+        <h1>対戦ログで何が見えるか</h1>
+        <p class="lead">
+          このページは、追加されたログ機能をコードではなく説明として確認するための案内ページです。
+          どのファイルを見るべきか、ログをどう保存するか、あとで何を分析できるかをまとめています。
+        </p>
+        <div class="button-row">
+          <a class="button" href="./index.html">ゲームを開く</a>
+          <a class="button secondary" href="./sample-analytics-game.jsonl">サンプルログを見る</a>
+          <a class="button secondary" href="./analytics-schema.d.ts">ログスキーマを見る</a>
+        </div>
+      </div>
+
+      <aside class="status-card">
+        <div class="status-line">
+          <strong>追加されたもの</strong>
+          <span>対戦ログを書き出すボタンと、分析用ファイル一式。</span>
+        </div>
+        <div class="status-line">
+          <strong>ゲームへの影響</strong>
+          <span>勝敗やカード処理は変えず、後ろで記録だけ行います。</span>
+        </div>
+        <div class="status-line">
+          <strong>見方</strong>
+          <span>ゲーム内の <code>ログCSV</code> か <code>ログJSONL</code> を押します。</span>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid">
+      <article class="mini-panel tone-green">
+        <h2>JSONL</h2>
+        <p>細かい対戦記録です。分析スクリプトやAI検証に向いています。</p>
+        <div class="chips">
+          <span class="chip">ターン</span>
+          <span class="chip">盤面</span>
+          <span class="chip">カード効果</span>
+        </div>
+      </article>
+      <article class="mini-panel tone-blue">
+        <h2>CSV</h2>
+        <p>NumbersやExcelで開きやすい表形式です。まず確認するならこちらが見やすいです。</p>
+        <div class="chips">
+          <span class="chip">行動一覧</span>
+          <span class="chip">カード名</span>
+          <span class="chip">勝敗</span>
+        </div>
+      </article>
+      <article class="mini-panel tone-red">
+        <h2>公開ログ</h2>
+        <p>オンライン対戦では、相手の非公開情報を隠した自分視点ログも出せるようにしています。</p>
+        <div class="chips">
+          <span class="chip">手札を隠す</span>
+          <span class="chip">デッキを隠す</span>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>ログに残る流れ</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <span>1</span>
+          <strong>ゲーム開始</strong><br>
+          gameId、バージョン、デッキ、先攻後攻。
+        </div>
+        <div class="flow-step">
+          <span>2</span>
+          <strong>マリガン</strong><br>
+          初期手札、戻したカード、引き直したカード。
+        </div>
+        <div class="flow-step">
+          <span>3</span>
+          <strong>ターン開始</strong><br>
+          気力、戦意、手札枚数、盤面、遅刻ゾーン。
+        </div>
+        <div class="flow-step">
+          <span>4</span>
+          <strong>行動</strong><br>
+          出席、攻撃、持ち物、環境、融合、進化。
+        </div>
+        <div class="flow-step">
+          <span>5</span>
+          <strong>効果</strong><br>
+          ダメージ、ドロー、破壊、ランダム対象。
+        </div>
+        <div class="flow-step">
+          <span>6</span>
+          <strong>終局</strong><br>
+          勝者、敗因、リーサルカード、最終盤面。
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>追加ファイル一覧</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ファイル</th>
+              <th>何を見るものか</th>
+              <th>おすすめの使い方</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="./analytics-schema.d.ts">analytics-schema.d.ts</a></td>
+              <td>ログの形を説明する型ファイルです。</td>
+              <td>どんな項目が保存されるかを確認するときに見ます。</td>
+            </tr>
+            <tr>
+              <td><a href="./sample-analytics-game.jsonl">sample-analytics-game.jsonl</a></td>
+              <td>1ゲーム分のサンプルログです。</td>
+              <td>実際のログがどんな見た目になるか試しに見ます。</td>
+            </tr>
+            <tr>
+              <td><a href="./tools/analyze-analytics.mjs">tools/analyze-analytics.mjs</a></td>
+              <td>JSONLログを集計するスクリプトです。</td>
+              <td>勝率、採用率、カード使用率などを出すときに使います。</td>
+            </tr>
+            <tr>
+              <td><a href="./index.html">index.html</a></td>
+              <td>ゲーム本体です。ログ保存ボタンもここに入っています。</td>
+              <td>実際に対戦してログを書き出します。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>ゲーム画面での使い方</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>手順</th>
+              <th>操作</th>
+              <th>確認できること</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><a href="./index.html">ゲーム</a>を開いて、ソロバトルかオンラインバトルを始めます。</td>
+              <td>ゲーム開始ログが作られます。</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>カードを出す、攻撃する、ターンを進めるなど普通に遊びます。</td>
+              <td>行動ログと効果ログがたまります。</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><code>ログCSV</code> か <code>ログJSONL</code> を押します。</td>
+              <td>ブラウザがログファイルをダウンロードします。</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>CSVはNumbersやExcelで開きます。JSONLは集計スクリプトに使います。</td>
+              <td>カードやデッキの強さを後から見返せます。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">
+        ページを再読み込みすると、その対戦中にまだ保存していないログは消えます。
+        対戦後は先にログを書き出してください。
+      </p>
+    </section>
+
+    <section class="panel">
+      <h2>あとで分析できること</h2>
+      <div class="grid">
+        <div>
+          <h3>デッキ</h3>
+          <p>デッキ別勝率、先攻後攻別勝率、平均勝利ターン。</p>
+        </div>
+        <div>
+          <h3>カード</h3>
+          <p>採用率、プレイ率、マリガン返却率、プレイ時勝率。</p>
+        </div>
+        <div>
+          <h3>配置</h3>
+          <p>どの席に置かれたか、位置別勝率、平均生存ターン。</p>
+        </div>
+        <div>
+          <h3>遅刻</h3>
+          <p>予約回数、成功率、失敗理由、ロックされたか。</p>
+        </div>
+        <div>
+          <h3>環境</h3>
+          <p>上書き回数、環境があった時の勝率差。</p>
+        </div>
+        <div>
+          <h3>効果</h3>
+          <p>ランダム候補、選ばれた対象、ダメージ配分。</p>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      チバトルの対戦ログは、カードバランス調整とAI検証のための観測データです。
+    </footer>
+  </main>
+</body>
+</html>
