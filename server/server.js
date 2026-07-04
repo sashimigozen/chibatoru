@@ -273,20 +273,44 @@ function adminPageShell(body) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>チバトル 管理ログ</title>
   <style>
-    body { margin: 0; background: #f7f5ee; color: #1f2a24; font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif; line-height: 1.7; }
+    :root {
+      color-scheme: light;
+      --bg: #f1f5f9;
+      --panel: #ffffff;
+      --ink: #122033;
+      --muted: #536276;
+      --line: #b8c3d3;
+      --accent: #2457d6;
+      --accent-soft: #dbeafe;
+      --surface: #edf3f8;
+      --panel-soft: #f8fbff;
+      --teal: #0f766e;
+      --amber: #b45309;
+      --shadow: 0 10px 24px rgba(15, 23, 42, 0.1);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f8fbff 0%, var(--surface) 58%, #e9eff6 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Yu Gothic", YuGothic, sans-serif;
+      line-height: 1.7;
+    }
     .page { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 56px; }
-    .panel { background: #fffdf7; border: 1px solid #d9d0bf; border-radius: 8px; box-shadow: 0 12px 32px rgba(39, 34, 24, 0.1); padding: 22px; margin-bottom: 18px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 22px; margin-bottom: 18px; }
     h1, h2, p { margin-top: 0; }
-    h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.1; }
-    a { color: #2f6b4f; font-weight: 800; text-underline-offset: 3px; }
-    code { background: #efe7d6; border-radius: 5px; padding: 2px 6px; }
+    h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.1; letter-spacing: 0; }
+    h2 { letter-spacing: 0; }
+    a { color: var(--accent); font-weight: 800; text-underline-offset: 3px; }
+    code { background: var(--accent-soft); color: #14356f; border-radius: 5px; padding: 2px 6px; }
     table { width: 100%; border-collapse: collapse; min-width: 900px; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid #d9d0bf; text-align: left; vertical-align: top; }
-    th { background: #efe7d6; color: #4c4332; font-size: 13px; }
-    .table-wrap { overflow-x: auto; border: 1px solid #d9d0bf; border-radius: 8px; background: #fff; }
-    .badge { display: inline-flex; padding: 2px 8px; border-radius: 999px; background: #dcefe5; color: #2f6b4f; font-size: 12px; font-weight: 900; }
-    .badge.pending { background: #fff0cc; color: #815d16; }
-    .muted { color: #5d6b62; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { background: var(--panel-soft); color: #24364d; font-size: 13px; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); scrollbar-gutter: stable; }
+    .badge { display: inline-flex; min-height: 22px; align-items: center; padding: 3px 8px; border-radius: 999px; background: #ddf8e8; color: #166534; font-size: 12px; font-weight: 900; }
+    .badge.pending { background: #fff2bf; color: var(--amber); }
+    .muted { color: var(--muted); }
   </style>
 </head>
 <body>
