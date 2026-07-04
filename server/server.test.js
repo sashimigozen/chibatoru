@@ -113,6 +113,31 @@ function httpGet(port, pathname, password = "") {
   });
 }
 
+function httpPost(port, pathname, password, body, contentType = "application/json") {
+  return new Promise((resolve, reject) => {
+    const headers = {
+      "content-type": contentType,
+      "content-length": Buffer.byteLength(body)
+    };
+    if (password) headers.authorization = `Basic ${Buffer.from(`admin:${password}`).toString("base64")}`;
+    const req = http.request({
+      hostname: "127.0.0.1",
+      port,
+      path: pathname,
+      method: "POST",
+      headers
+    }, (res) => {
+      let responseBody = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { responseBody += chunk; });
+      res.on("end", () => resolve({ statusCode: res.statusCode, headers: res.headers, body: responseBody }));
+    });
+    req.once("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 test("guest commands retry until the host confirms an authoritative snapshot", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
@@ -241,4 +266,29 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   assert.equal(parsed.gameId, "game-admin-test");
   assert.equal(parsed.summary.winner, "player");
   assert.equal(parsed.events.length, 2);
+
+  const importPage = await httpGet(port, "/admin/logs/import", "secret");
+  assert.equal(importPage.statusCode, 200);
+  assert.match(importPage.body, /ログJSONインポート/);
+
+  const importedPayload = {
+    logs: [{
+      gameId: "imported-log",
+      receivedAt: "2026-07-05T00:10:00.000Z",
+      final: true,
+      events: [
+        { eventType: "game_start", gameId: "imported-log", eventSeq: 1, game: { mode: "online", decks: { player: { deckName: "C" }, opponent: { deckName: "D" } } } },
+        { eventType: "game_end", gameId: "imported-log", eventSeq: 2, final: { winner: "opponent", reason: "import win" } }
+      ]
+    }]
+  };
+  const importResult = await httpPost(port, "/admin/logs/import", "secret", JSON.stringify(importedPayload));
+  assert.equal(importResult.statusCode, 200);
+  assert.match(importResult.body, /1件のログをインポートしました/);
+
+  const imported = await httpGet(port, "/admin/logs/imported-log.json", "secret");
+  assert.equal(imported.statusCode, 200);
+  const importedParsed = JSON.parse(imported.body);
+  assert.equal(importedParsed.gameId, "imported-log");
+  assert.equal(importedParsed.summary.reason, "import win");
 });

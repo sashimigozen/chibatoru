@@ -21,8 +21,13 @@ const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
 const SERVER_ID = "server";
 const LOG_ADMIN_PASSWORD = process.env.CHIBATORU_LOG_ADMIN_PASSWORD || process.env.ADMIN_LOG_PASSWORD || "";
-const LOG_STORAGE_DIR = process.env.CHIBATORU_LOG_DIR || path.join(os.tmpdir(), "chibatoru-online-logs");
+const RENDER_DISK_ROOT = "/var/data";
+const DEFAULT_LOG_STORAGE_DIR = fs.existsSync(RENDER_DISK_ROOT)
+  ? path.join(RENDER_DISK_ROOT, "chibatoru-online-logs")
+  : path.join(os.tmpdir(), "chibatoru-online-logs");
+const LOG_STORAGE_DIR = process.env.CHIBATORU_LOG_DIR || DEFAULT_LOG_STORAGE_DIR;
 const MAX_STORED_LOGS = Number(process.env.MAX_STORED_LOGS || 300);
+const MAX_IMPORT_BYTES = Number(process.env.MAX_IMPORT_BYTES || 8 * 1024 * 1024);
 
 const rooms = new Map();
 const onlineBattleLogs = new Map();
@@ -146,6 +151,45 @@ function writeLogToDisk(log) {
   } catch (error) {
     console.warn("online log disk write skipped", error.message);
   }
+}
+
+function normalizeImportedLog(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const events = Array.isArray(raw.events) ? raw.events : [];
+  const gameId = String(raw.gameId || events.find((event) => event?.gameId)?.gameId || "").slice(0, 160);
+  if (!gameId) return null;
+  const summary = raw.summary && typeof raw.summary === "object"
+    ? { ...summarizeAnalyticsEvents(events), ...raw.summary }
+    : summarizeAnalyticsEvents(events);
+  return {
+    ...raw,
+    gameId,
+    receivedAt: raw.receivedAt || new Date().toISOString(),
+    protocolVersion: raw.protocolVersion || PROTOCOL_VERSION,
+    final: Boolean(raw.final || summary.winner),
+    summary,
+    events
+  };
+}
+
+function importOnlineBattleLogs(payload) {
+  const candidates = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.logs)
+      ? payload.logs
+      : payload?.gameId
+        ? [payload]
+        : [];
+  let imported = 0;
+  candidates.forEach((candidate) => {
+    const log = normalizeImportedLog(candidate);
+    if (!log) return;
+    onlineBattleLogs.set(log.gameId, log);
+    imported += 1;
+  });
+  trimStoredLogs();
+  onlineBattleLogs.forEach((log) => writeLogToDisk(log));
+  return imported;
 }
 
 function loadLogsFromDisk() {
@@ -310,6 +354,11 @@ function adminPageShell(body) {
     .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); scrollbar-gutter: stable; }
     .badge { display: inline-flex; min-height: 22px; align-items: center; padding: 3px 8px; border-radius: 999px; background: #ddf8e8; color: #166534; font-size: 12px; font-weight: 900; }
     .badge.pending { background: #fff2bf; color: var(--amber); }
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 7px; background: var(--accent); color: #ffffff; padding: 8px 14px; font: inherit; font-weight: 800; cursor: pointer; text-decoration: none; }
+    .button.secondary { background: var(--accent-soft); color: var(--accent); }
+    textarea { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; color: var(--ink); padding: 12px; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
+    .notice { border: 1px solid #9ec5fe; border-left: 5px solid var(--accent); border-radius: 8px; background: #eef6ff; color: #14356f; padding: 10px 12px; }
     .muted { color: var(--muted); }
   </style>
 </head>
@@ -336,7 +385,11 @@ function renderAdminLogsPage() {
     <section class="panel">
       <h1>チバトル オンライン対戦ログ</h1>
       <p class="muted">管理者だけが見られるログ一覧です。プレイヤーの個人名は保存せず、カードバランス分析に必要な対戦イベントを保存します。</p>
-      <p><a href="/admin/logs.json">JSON一覧を開く</a></p>
+      <p class="muted">保存先: <code>${escapeHtml(LOG_STORAGE_DIR)}</code></p>
+      <p class="actions">
+        <a class="button secondary" href="/admin/logs.json">JSON一覧を開く</a>
+        <a class="button secondary" href="/admin/logs/import">JSONをインポート</a>
+      </p>
     </section>
     <section class="panel">
       <h2>保存済みログ ${logs.length}件</h2>
@@ -350,6 +403,26 @@ function renderAdminLogsPage() {
           <tbody>${rows || `<tr><td colspan="7" class="muted">まだオンライン対戦ログはありません。</td></tr>`}</tbody>
         </table>
       </div>
+    </section>
+  `);
+}
+
+function renderAdminImportPage(message = "", kind = "muted") {
+  return adminPageShell(`
+    <section class="panel">
+      <p><a href="/admin/logs">ログ一覧へ戻る</a></p>
+      <h1>ログJSONインポート</h1>
+      <p class="muted">再デプロイ前に保存した <code>/admin/logs.json</code> の中身を貼り付けると、保存済みログを復元できます。</p>
+      ${message ? `<p class="${kind === "ok" ? "notice" : "muted"}">${escapeHtml(message)}</p>` : ""}
+    </section>
+    <section class="panel">
+      <form method="post" action="/admin/logs/import">
+        <p><textarea name="logsJson" spellcheck="false" placeholder='{"logs":[...]}'></textarea></p>
+        <p class="actions">
+          <button class="button" type="submit">インポートする</button>
+          <a class="button secondary" href="/admin/logs">キャンセル</a>
+        </p>
+      </form>
     </section>
   `);
 }
@@ -422,15 +495,68 @@ function findLogByPath(pathname) {
   return { log: onlineBattleLogs.get(gameId) || null, format: match[2] || "html" };
 }
 
+function readBody(req, onDone) {
+  let body = "";
+  let tooLarge = false;
+  let done = false;
+  function finish(error, value) {
+    if (done) return;
+    done = true;
+    onDone(error, value);
+  }
+  req.setEncoding("utf8");
+  req.on("data", (chunk) => {
+    body += chunk;
+    if (body.length > MAX_IMPORT_BYTES) {
+      tooLarge = true;
+      req.destroy();
+    }
+  });
+  req.on("end", () => finish(null, body));
+  req.on("error", (error) => finish(tooLarge ? new Error("インポートJSONが大きすぎます。") : error));
+}
+
 function handleAdminLogsJson(req, res) {
   if (!requireAdmin(req, res)) return;
   jsonResponse(res, 200, { logs: listLogSummaries() });
+}
+
+function handleAdminLogsImport(req, res) {
+  if (req.method === "GET" || req.method === "HEAD") {
+    htmlResponse(res, 200, renderAdminImportPage());
+    return;
+  }
+  if (req.method !== "POST") {
+    htmlResponse(res, 405, renderAdminImportPage("インポートはPOSTだけ対応しています。"));
+    return;
+  }
+  readBody(req, (error, body) => {
+    if (error) {
+      htmlResponse(res, 400, renderAdminImportPage(error.message));
+      return;
+    }
+    try {
+      const contentType = req.headers["content-type"] || "";
+      const jsonText = contentType.includes("application/x-www-form-urlencoded")
+        ? new URLSearchParams(body).get("logsJson")
+        : body;
+      const payload = JSON.parse(jsonText || "");
+      const imported = importOnlineBattleLogs(payload);
+      htmlResponse(res, 200, renderAdminImportPage(`${imported}件のログをインポートしました。`, "ok"));
+    } catch (parseError) {
+      htmlResponse(res, 400, renderAdminImportPage(`JSONを読み取れませんでした: ${parseError.message}`));
+    }
+  });
 }
 
 function handleAdminLogsRequest(req, res, url) {
   if (!requireAdmin(req, res)) return;
   if (url.pathname === "/admin/logs") {
     htmlResponse(res, 200, renderAdminLogsPage());
+    return;
+  }
+  if (url.pathname === "/admin/logs/import") {
+    handleAdminLogsImport(req, res);
     return;
   }
   const { log, format } = findLogByPath(url.pathname);
