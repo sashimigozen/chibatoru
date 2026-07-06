@@ -8092,12 +8092,33 @@
       );
     }
 
+    function onlineShouldHideSnapshotMessage() {
+      return Boolean(
+        state.selectedHandId
+        || state.selectedAttacker
+        || state.pendingItemConfirmId
+        || state.pendingMultiItem
+        || state.pendingPanpanItem
+        || state.pendingHandDiscardItem
+        || state.pendingThreeGestures
+        || state.pendingCardChoice
+        || state.pendingCopiedCard
+      );
+    }
+
+    function onlineHiddenSnapshotMessage() {
+      return "自分が操作中です。";
+    }
+
     function onlineCreateSnapshot() {
       const snapshotState = {};
       Object.keys(state).forEach((key) => {
         if (key === "deckBuilder" || key === "online") return;
         snapshotState[key] = state[key];
       });
+      if (onlineShouldHideSnapshotMessage()) {
+        snapshotState.message = onlineHiddenSnapshotMessage();
+      }
       snapshotState.selectedHandId = null;
       snapshotState.selectedAttacker = null;
       snapshotState.pendingItemConfirmId = null;
