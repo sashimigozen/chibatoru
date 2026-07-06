@@ -69,6 +69,30 @@ function connectClient(url, roomId, clientId, create = false) {
   });
 }
 
+function connectSpectatorClient(url, roomId, clientId) {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    const client = { ws, messages: [] };
+    const timer = setTimeout(() => reject(new Error(`spectator join timeout: ${clientId}`)), 4000);
+    ws.on("open", () => {
+      ws.send(JSON.stringify({ type: "joinRoom", protocol: 1, roomId, clientId, spectate: true, role: "spectator" }));
+    });
+    ws.on("message", (raw) => {
+      const message = JSON.parse(String(raw));
+      client.messages.push(message);
+      if (message.type === "error") {
+        clearTimeout(timer);
+        reject(new Error(message.code || message.message || "spectator error"));
+        return;
+      }
+      if (message.type !== "playerJoined" || message.you?.clientId !== clientId) return;
+      clearTimeout(timer);
+      resolve(client);
+    });
+    ws.once("error", reject);
+  });
+}
+
 function connectRandomClient(url, clientId) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
@@ -188,6 +212,51 @@ test("random match pairs waiting clients into one room", async (t) => {
     && message.roomId === firstJoin.roomId
     && message.players?.some((player) => player.clientId === "random-b" && player.role === "guest"));
   assert.equal(hostUpdate.message.matchType, "random");
+});
+
+test("public room list exposes spectatable battles and allows spectator joins", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "WATCH01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectClient(url, roomId, "host-watch", true);
+  const guest = await connectClient(url, roomId, "guest-watch");
+  clients.push(host, guest);
+
+  const deckCounts = { test_card: 40 };
+  send(host, { type: "deckUpdate", deckCounts, ready: true });
+  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  await waitFor(host, (message) => message.type === "deckUpdate");
+
+  const beforeStart = await httpGet(port, "/rooms.json");
+  assert.equal(beforeStart.statusCode, 200);
+  assert.equal(beforeStart.headers["access-control-allow-origin"], "*");
+  assert.deepEqual(JSON.parse(beforeStart.body).rooms, []);
+
+  send(host, {
+    type: "startGame",
+    snapshot: { seq: 1, state: { currentSide: "player", gameOver: false } }
+  });
+  await waitFor(guest, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
+
+  const afterStart = await httpGet(port, "/rooms.json");
+  const rooms = JSON.parse(afterStart.body).rooms;
+  assert.equal(rooms.length, 1);
+  assert.equal(rooms[0].roomId, roomId);
+  assert.equal(rooms[0].started, true);
+  assert.equal(rooms[0].players, 2);
+
+  const spectator = await connectSpectatorClient(url, roomId, "spectator-watch");
+  clients.push(spectator);
+  const spectatorJoin = spectator.messages.find((message) => message.type === "playerJoined");
+  assert.equal(spectatorJoin.you.role, "spectator");
+  assert.equal(spectatorJoin.hasOpponent, true);
 });
 
 test("private card choice requests and responses relay between host and guest", async (t) => {

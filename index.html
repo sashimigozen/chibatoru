@@ -314,24 +314,46 @@
 
     .online-match-actions {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
+      grid-template-rows: repeat(2, minmax(150px, 1fr));
       gap: 12px;
     }
 
     .online-match-button {
       display: grid;
       gap: 6px;
-      min-height: 92px;
+      min-height: 150px;
       justify-items: start;
       align-content: center;
       text-align: left;
       border: 2px solid #1f2937;
       border-radius: 8px;
-      padding: 14px;
-      background: #fff7ed;
-      color: #111827;
-      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+      padding: 18px;
+      background: #ffffff;
+      color: #172033;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
       cursor: pointer;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+
+    .online-match-button:hover:not(:disabled),
+    .online-match-button:focus-visible {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
+      outline: none;
+    }
+
+    .online-match-button:disabled {
+      cursor: default;
+      opacity: 0.76;
+      transform: none;
+    }
+
+    .online-match-button.random {
+      grid-row: span 2;
+      min-height: 312px;
+      background: linear-gradient(135deg, #ffffff 0%, #ecfeff 100%);
+      border-color: #0e7490;
     }
 
     .online-match-button.active {
@@ -341,8 +363,12 @@
     }
 
     .online-match-main {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       font-size: 22px;
       font-weight: 1000;
+      line-height: 1.15;
     }
 
     .online-match-sub {
@@ -350,6 +376,21 @@
       font-size: 13px;
       font-weight: 900;
       line-height: 1.35;
+    }
+
+    .online-spinner {
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(14, 116, 144, 0.22);
+      border-top-color: #0e7490;
+      border-radius: 999px;
+      animation: online-spin 0.8s linear infinite;
+    }
+
+    @keyframes online-spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .online-panel {
@@ -418,6 +459,62 @@
     .online-status.bad {
       background: #fee2e2;
       color: #991b1b;
+    }
+
+    .online-spectate-panel {
+      align-self: start;
+    }
+
+    .online-spectate-tools {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .online-spectate-list {
+      display: grid;
+      gap: 8px;
+      max-height: min(48vh, 420px);
+      overflow: auto;
+      scrollbar-gutter: stable;
+      padding-right: 2px;
+    }
+
+    .online-room-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid #d6e3df;
+      border-radius: 8px;
+      padding: 10px;
+      background: #f8fffb;
+    }
+
+    .online-room-name {
+      font-size: 16px;
+      font-weight: 1000;
+      color: #153d36;
+      letter-spacing: 0.03em;
+    }
+
+    .online-room-meta {
+      margin-top: 3px;
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .online-empty {
+      margin: 0;
+      border: 1px dashed #b7d8cf;
+      border-radius: 8px;
+      padding: 14px;
+      color: #64748b;
+      background: #f8fafc;
+      font-weight: 900;
+      text-align: center;
     }
 
     .online-connection-mode {
@@ -4463,6 +4560,16 @@
         grid-template-columns: 1fr;
       }
 
+      .online-match-actions {
+        grid-template-columns: 1fr;
+        grid-template-rows: none;
+      }
+
+      .online-match-button.random {
+        grid-row: auto;
+        min-height: 190px;
+      }
+
       .battle-card-preview {
         position: fixed;
         right: 10px;
@@ -4532,9 +4639,10 @@
       }
 
       .online-actions,
-      .online-match-actions,
       .online-code-row,
-      .online-ready-row {
+      .online-ready-row,
+      .online-spectate-tools,
+      .online-room-row {
         grid-template-columns: 1fr;
       }
 
@@ -5231,16 +5339,20 @@
         <button class="button secondary" id="onlineBackHomeButton" type="button">ホーム</button>
       </div>
       <div class="online-match-actions" aria-label="オンライン対戦モード">
-        <button class="online-match-button" id="onlineRandomMatchButton" type="button">
-          <span class="online-match-main">ランダムマッチ</span>
-          <span class="online-match-sub">マッチング中の相手と自動で対戦部屋に入ります</span>
+        <button class="online-match-button random" id="onlineRandomMatchButton" type="button">
+          <span class="online-match-main"><span class="online-spinner hidden" id="onlineRandomSpinner"></span><span id="onlineRandomMainText">ランダムマッチ</span></span>
+          <span class="online-match-sub" id="onlineRandomSubText">マッチング中の相手と自動で対戦部屋に入ります</span>
         </button>
-        <button class="online-match-button active" id="onlinePrivateMatchButton" type="button">
+        <button class="online-match-button" id="onlinePrivateMatchButton" type="button">
           <span class="online-match-main">プライベートマッチ</span>
           <span class="online-match-sub">部屋コードを作る、または入力して入室します</span>
         </button>
+        <button class="online-match-button" id="onlineSpectateButton" type="button">
+          <span class="online-match-main">観戦</span>
+          <span class="online-match-sub">対戦中の部屋を選んで観戦します</span>
+        </button>
       </div>
-      <div class="online-layout">
+      <div class="online-layout hidden" id="onlinePrivatePanel">
         <section class="online-panel online-room-card">
           <div class="panel-head">
             <h2>プライベートマッチ</h2>
@@ -5303,6 +5415,20 @@
           <p class="online-help">対戦サーバーが部屋と最新のゲーム状態を保持します。3人目以降は観戦者になり、対戦操作はできません。</p>
         </section>
       </div>
+      <section class="online-panel online-spectate-panel hidden" id="onlineSpectatePanel">
+        <div class="panel-head">
+          <h2>観戦</h2>
+          <span class="small-info" id="onlineSpectateCount">0部屋</span>
+        </div>
+        <div class="online-spectate-tools">
+          <input class="control" id="onlineSpectateRoomInput" type="text" maxlength="12" placeholder="部屋コードで検索">
+          <button class="button" id="onlineSpectateSearchButton" type="button">観戦する</button>
+          <button class="button secondary" id="onlineSpectateRefreshButton" type="button">更新</button>
+        </div>
+        <div class="online-spectate-list" id="onlineSpectateList">
+          <p class="online-empty">対戦中の部屋を読み込みます。</p>
+        </div>
+      </section>
     </section>
 
     <section class="screen tutorial-screen hidden" id="tutorialScreen">
@@ -6115,6 +6241,7 @@
       },
       online: {
         screenStatus: "idle",
+        lobbyView: "menu",
         matchMode: "private",
         role: null,
         roomCode: "",
@@ -6153,6 +6280,9 @@
         lastAnalyticsLogEventSeq: 0,
         lastAnalyticsLogGameId: "",
         lastAnalyticsLogFinal: false,
+        spectateRooms: [],
+        spectateLoading: false,
+        spectateError: "",
         isApplyingRemote: false,
         isHandlingRemoteCommand: false,
         started: false
@@ -6325,7 +6455,18 @@
       tutorialCardPreview: document.getElementById("tutorialCardPreview"),
       onlineBackHomeButton: document.getElementById("onlineBackHomeButton"),
       onlineRandomMatchButton: document.getElementById("onlineRandomMatchButton"),
+      onlineRandomSpinner: document.getElementById("onlineRandomSpinner"),
+      onlineRandomMainText: document.getElementById("onlineRandomMainText"),
+      onlineRandomSubText: document.getElementById("onlineRandomSubText"),
       onlinePrivateMatchButton: document.getElementById("onlinePrivateMatchButton"),
+      onlineSpectateButton: document.getElementById("onlineSpectateButton"),
+      onlinePrivatePanel: document.getElementById("onlinePrivatePanel"),
+      onlineSpectatePanel: document.getElementById("onlineSpectatePanel"),
+      onlineSpectateCount: document.getElementById("onlineSpectateCount"),
+      onlineSpectateRoomInput: document.getElementById("onlineSpectateRoomInput"),
+      onlineSpectateSearchButton: document.getElementById("onlineSpectateSearchButton"),
+      onlineSpectateRefreshButton: document.getElementById("onlineSpectateRefreshButton"),
+      onlineSpectateList: document.getElementById("onlineSpectateList"),
       onlineCreateRoomButton: document.getElementById("onlineCreateRoomButton"),
       onlineJoinRoomButton: document.getElementById("onlineJoinRoomButton"),
       onlineLeaveRoomButton: document.getElementById("onlineLeaveRoomButton"),
@@ -7152,6 +7293,15 @@
       return `wss://${url.replace(/\/+$/, "")}`;
     }
 
+    function onlineServerHttpUrl(path = "") {
+      const base = getOnlineServerUrl()
+        .replace(/^wss:\/\//, "https://")
+        .replace(/^ws:\/\//, "http://")
+        .replace(/\/+$/, "");
+      const suffix = String(path || "");
+      return `${base}${suffix.startsWith("/") ? suffix : `/${suffix}`}`;
+    }
+
     function persistOnlineServerUrl() {
       const normalized = normalizeOnlineServerUrl(elements.onlineServerUrlInput.value);
       try {
@@ -7416,6 +7566,7 @@
       state.online.peer = null;
       state.online.conn = null;
       state.online.connToken += 1;
+      state.online.lobbyView = "menu";
       state.online.matchMode = "private";
       state.online.role = null;
       state.online.roomCode = "";
@@ -7456,6 +7607,7 @@
       try { state.online.peer?.destroy(); } catch {}
       state.online.peer = null;
       state.online.conn = null;
+      state.online.lobbyView = "private";
       state.online.matchMode = "private";
       state.online.role = null;
       state.online.roomCode = "";
@@ -7481,6 +7633,7 @@
         return;
       }
       onlineCloseConnection(false);
+      state.online.lobbyView = "private";
       state.online.matchMode = "private";
       SIDES.opponent = ONLINE_OPPONENT_LABEL;
       const roomCode = generateOnlineRoomCode();
@@ -7506,6 +7659,7 @@
         return;
       }
       onlineCloseConnection(false);
+      state.online.lobbyView = "private";
       state.online.matchMode = "private";
       SIDES.opponent = ONLINE_OPPONENT_LABEL;
       state.online.role = "guest";
@@ -7521,6 +7675,7 @@
 
     function onlineSelectPrivateMatch() {
       if (state.online.role) return;
+      state.online.lobbyView = "private";
       state.online.matchMode = "private";
       onlineSetStatus("プライベートマッチは、部屋を作るか部屋コードを入力して入室してください。", "warn");
       render();
@@ -7528,11 +7683,17 @@
     }
 
     function onlineRandomMatch() {
+      if (state.online.matchMode === "random" && state.online.role && !state.online.connected) {
+        onlineCloseConnection(false);
+        onlineSetStatus("ランダムマッチをキャンセルしました。", "warn");
+        return;
+      }
       if (typeof ChibatoruWebSocketClient === "undefined") {
         onlineSetStatus("WebSocketクライアントを読み込めませんでした。", "bad");
         return;
       }
       onlineCloseConnection(false);
+      state.online.lobbyView = "menu";
       SIDES.opponent = ONLINE_OPPONENT_LABEL;
       state.online.matchMode = "random";
       state.online.role = null;
@@ -7547,6 +7708,70 @@
         roomId: "",
         roomSessionId: "",
         matchType: "random"
+      });
+      render();
+    }
+
+    function onlineSelectSpectate() {
+      if (state.online.role) return;
+      state.online.lobbyView = "spectate";
+      state.online.matchMode = "private";
+      onlineSetStatus("観戦する部屋を選んでください。", "warn");
+      render();
+      onlineRefreshSpectateRooms();
+    }
+
+    async function onlineRefreshSpectateRooms() {
+      state.online.spectateLoading = true;
+      state.online.spectateError = "";
+      render();
+      try {
+        const response = await fetch(`${onlineServerHttpUrl("/rooms.json")}?t=${Date.now()}`, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const payload = await response.json();
+        state.online.spectateRooms = Array.isArray(payload.rooms) ? payload.rooms : [];
+      } catch (error) {
+        state.online.spectateRooms = [];
+        state.online.spectateError = "部屋一覧を取得できませんでした。対戦サーバーのURLを確認してください。";
+      } finally {
+        state.online.spectateLoading = false;
+        render();
+      }
+    }
+
+    function onlineSpectateInputRoom() {
+      const roomCode = normalizeOnlineRoomCode(elements.onlineSpectateRoomInput.value);
+      if (!roomCode) {
+        onlineSetStatus("観戦する部屋コードを入力してください。", "bad");
+        return;
+      }
+      onlineSpectateRoom(roomCode);
+    }
+
+    function onlineSpectateRoom(roomCode) {
+      if (typeof ChibatoruWebSocketClient === "undefined") {
+        onlineSetStatus("WebSocketクライアントを読み込めませんでした。", "bad");
+        return;
+      }
+      const normalized = normalizeOnlineRoomCode(roomCode);
+      if (!normalized) {
+        onlineSetStatus("部屋コードを確認してください。", "bad");
+        return;
+      }
+      onlineCloseConnection(false);
+      state.online.lobbyView = "spectate";
+      state.online.matchMode = "private";
+      state.online.role = "spectator";
+      state.online.roomCode = normalized;
+      state.online.roomSessionId = "";
+      state.online.remoteClientId = "";
+      document.body.dataset.online = "spectator";
+      onlineSetStatus("観戦者として接続しています。", "warn");
+      onlineConnectRoom(false, {
+        type: "joinRoom",
+        roomId: normalized,
+        spectate: true,
+        role: "spectator"
       });
       render();
     }
@@ -7706,6 +7931,19 @@
         if (message.code === "room_timeout") {
           onlineHandleRoomClosed(message);
           return;
+        }
+        if (["room_not_found", "not_spectatable", "invalid_room"].includes(message.code)) {
+          const previousView = state.online.lobbyView || "private";
+          onlineStopReliabilityLoop();
+          try { state.online.conn?.close(); } catch {}
+          state.online.conn = null;
+          state.online.role = null;
+          state.online.connected = false;
+          state.online.roomCode = "";
+          state.online.roomSessionId = "";
+          state.online.matchMode = "private";
+          state.online.lobbyView = previousView === "spectate" ? "spectate" : "private";
+          document.body.dataset.online = "";
         }
         if (["invalid_turn", "command_timeout"].includes(message.code)) {
           state.online.pendingTurnCommandId = "";
@@ -14667,6 +14905,10 @@
       const roleLabel = isOnlineHost() ? "ホスト" : isOnlineGuest() ? "ゲスト" : isOnlineSpectator() ? "観戦者" : "未接続";
       const spectator = isOnlineSpectator();
       const randomMode = state.online.matchMode === "random";
+      const view = state.online.lobbyView || "menu";
+      const randomWaiting = randomMode && Boolean(state.online.role) && !state.online.connected;
+      const showPrivatePanel = view === "private" || Boolean(state.online.role && (state.online.connected || state.online.matchMode === "private"));
+      const showSpectatePanel = view === "spectate" && !showPrivatePanel;
       const localDeckName = deckNameForOnline(state.online.localDeckName);
       const localSize = deckSize(getOnlineDeckCountsByName(state.online.localDeckName));
       elements.onlineRoleText.textContent = roleLabel;
@@ -14677,9 +14919,20 @@
       elements.onlineRelayModeToggle.checked = state.online.relayMode;
       elements.onlineRelayModeToggle.disabled = Boolean(state.online.role);
       elements.onlineRandomMatchButton.classList.toggle("active", randomMode);
-      elements.onlinePrivateMatchButton.classList.toggle("active", !randomMode);
-      elements.onlineRandomMatchButton.disabled = Boolean(state.online.role);
+      elements.onlinePrivateMatchButton.classList.toggle("active", view === "private");
+      elements.onlineSpectateButton.classList.toggle("active", view === "spectate");
+      elements.onlineRandomMatchButton.disabled = Boolean(state.online.role && !randomWaiting);
       elements.onlinePrivateMatchButton.disabled = Boolean(state.online.role);
+      elements.onlineSpectateButton.disabled = Boolean(state.online.role);
+      elements.onlineRandomSpinner?.classList.toggle("hidden", !randomWaiting);
+      elements.onlineRandomMainText.textContent = randomWaiting ? "マッチング中..." : randomMode && state.online.connected ? "マッチしました" : "ランダムマッチ";
+      elements.onlineRandomSubText.textContent = randomWaiting
+        ? "相手を探しています。もう一度押すとキャンセルします"
+        : randomMode && state.online.connected
+          ? "デッキを選んで準備OKを押してください"
+          : "マッチング中の相手と自動で対戦部屋に入ります";
+      elements.onlinePrivatePanel?.classList.toggle("hidden", !showPrivatePanel);
+      elements.onlineSpectatePanel?.classList.toggle("hidden", !showSpectatePanel);
       elements.onlineServerUrlInput.value = elements.onlineServerUrlInput === document.activeElement
         ? elements.onlineServerUrlInput.value
         : getOnlineServerUrl();
@@ -14709,6 +14962,45 @@
       elements.onlineRoomInput.value = elements.onlineRoomInput === document.activeElement
         ? elements.onlineRoomInput.value
         : (state.online.roomCode || elements.onlineRoomInput.value);
+      renderOnlineSpectateRooms();
+    }
+
+    function renderOnlineSpectateRooms() {
+      if (!elements.onlineSpectateList) return;
+      const rooms = state.online.spectateRooms || [];
+      elements.onlineSpectateCount.textContent = state.online.spectateLoading
+        ? "読込中"
+        : `${rooms.length}部屋`;
+      elements.onlineSpectateRefreshButton.disabled = state.online.spectateLoading || Boolean(state.online.role);
+      elements.onlineSpectateSearchButton.disabled = Boolean(state.online.role);
+      if (state.online.spectateLoading) {
+        elements.onlineSpectateList.innerHTML = `<p class="online-empty">対戦中の部屋を探しています。</p>`;
+        return;
+      }
+      if (state.online.spectateError) {
+        elements.onlineSpectateList.innerHTML = `<p class="online-empty">${escapeHtml(state.online.spectateError)}</p>`;
+        return;
+      }
+      if (!rooms.length) {
+        elements.onlineSpectateList.innerHTML = `<p class="online-empty">現在観戦できる部屋はありません。</p>`;
+        return;
+      }
+      elements.onlineSpectateList.innerHTML = rooms.map((room) => {
+        const matchLabel = room.matchType === "random" ? "ランダム" : "プライベート";
+        const spectatorLabel = `${Number(room.spectators) || 0}人観戦中`;
+        return `
+          <div class="online-room-row">
+            <div>
+              <div class="online-room-name">${escapeHtml(room.roomId)}</div>
+              <div class="online-room-meta">${escapeHtml(matchLabel)} / ${escapeHtml(spectatorLabel)}</div>
+            </div>
+            <button class="button secondary" type="button" data-spectate-room="${escapeHtml(room.roomId)}">観戦する</button>
+          </div>
+        `;
+      }).join("");
+      elements.onlineSpectateList.querySelectorAll("[data-spectate-room]").forEach((button) => {
+        button.addEventListener("click", () => onlineSpectateRoom(button.dataset.spectateRoom || ""));
+      });
     }
 
     function renderOnlineDeckOptions() {
@@ -17158,6 +17450,7 @@
       state.preBattleToken += 1;
       resetTutorialState();
       state.screen = "online";
+      if (!state.online.role) state.online.lobbyView = "menu";
       SIDES.opponent = state.online.role ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       hideCardTooltip();
       hideBattleCardPreview();
@@ -17896,6 +18189,12 @@
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
     elements.onlineRandomMatchButton.addEventListener("click", onlineRandomMatch);
     elements.onlinePrivateMatchButton.addEventListener("click", onlineSelectPrivateMatch);
+    elements.onlineSpectateButton.addEventListener("click", onlineSelectSpectate);
+    elements.onlineSpectateRefreshButton.addEventListener("click", onlineRefreshSpectateRooms);
+    elements.onlineSpectateSearchButton.addEventListener("click", onlineSpectateInputRoom);
+    elements.onlineSpectateRoomInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") onlineSpectateInputRoom();
+    });
     elements.onlineCreateRoomButton.addEventListener("click", onlineCreateRoom);
     elements.onlineJoinRoomButton.addEventListener("click", onlineJoinRoom);
     elements.onlineLeaveRoomButton.addEventListener("click", () => onlineCloseConnection(false));

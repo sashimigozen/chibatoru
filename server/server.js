@@ -40,6 +40,10 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, rooms: rooms.size, onlineLogs: onlineBattleLogs.size }));
     return;
   }
+  if (url.pathname === "/rooms.json") {
+    handlePublicRoomsJson(res);
+    return;
+  }
   if (url.pathname === "/admin/logs" || url.pathname.startsWith("/admin/logs/")) {
     handleAdminLogsRequest(req, res, url);
     return;
@@ -88,6 +92,15 @@ function jsonResponse(res, statusCode, payload) {
   res.writeHead(statusCode, {
     "content-type": "application/json; charset=utf-8",
     "cache-control": "no-store"
+  });
+  res.end(JSON.stringify(payload, null, 2));
+}
+
+function publicJsonResponse(res, statusCode, payload) {
+  res.writeHead(statusCode, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+    "access-control-allow-origin": "*"
   });
   res.end(JSON.stringify(payload, null, 2));
 }
@@ -630,6 +643,36 @@ function roomHasOpponent(room, role) {
   return battlePlayers(room).some((player) => player.role !== role);
 }
 
+function publicRoomState(room) {
+  const host = hostOf(room);
+  const guest = guestOf(room);
+  return {
+    roomId: room.roomId,
+    matchType: room.matchType || "private",
+    started: Boolean(room.started),
+    players: battlePlayers(room).length,
+    spectators: [...room.players.values()].filter((player) => player.role === "spectator").length,
+    hostReady: Boolean(host?.ready),
+    guestReady: Boolean(guest?.ready),
+    updatedAt: room.updatedAt,
+    createdAt: room.createdAt
+  };
+}
+
+function listSpectatableRooms() {
+  return [...rooms.values()]
+    .filter((room) => room.started && hostOf(room) && guestOf(room))
+    .sort((a, b) => b.updatedAt - a.updatedAt)
+    .map(publicRoomState);
+}
+
+function handlePublicRoomsJson(res) {
+  publicJsonResponse(res, 200, {
+    rooms: listSpectatableRooms(),
+    generatedAt: now()
+  });
+}
+
 function broadcast(room, message, exceptClientId = "") {
   room.players.forEach((player) => {
     if (player.clientId === exceptClientId) return;
@@ -860,6 +903,7 @@ function cleanupRooms() {
 function joinRoom(ws, message) {
   const roomId = normalizeRoomId(message.roomId);
   const clientId = String(message.clientId || "").slice(0, 80);
+  const wantsSpectator = message.spectate === true || message.role === "spectator";
   if (!ROOM_CODE_PATTERN.test(roomId)) {
     sendError(ws, "部屋コードは4〜12文字の英数字で指定してください。", "invalid_room");
     return;
@@ -874,6 +918,10 @@ function joinRoom(ws, message) {
     sendError(ws, "部屋が見つかりません。部屋コードを確認してください。", "room_not_found");
     return;
   }
+  if (wantsSpectator && (!room || !room.started || battlePlayers(room).length < 2)) {
+    sendError(ws, "この部屋はまだ観戦できません。対戦中の部屋を選んでください。", "not_spectatable");
+    return;
+  }
   if (!room) {
     room = createRoom(roomId, message.roomSessionId || createSessionId(), message.matchType === "random" ? "random" : "private");
     rooms.set(roomId, room);
@@ -882,7 +930,9 @@ function joinRoom(ws, message) {
   const existing = room.players.get(clientId);
   let role = existing?.role || "";
   if (!role) {
-    if (message.create && ![...room.players.values()].some((player) => player.role === "host")) {
+    if (wantsSpectator) {
+      role = "spectator";
+    } else if (message.create && ![...room.players.values()].some((player) => player.role === "host")) {
       role = "host";
     } else if (![...room.players.values()].some((player) => player.role === "guest")) {
       role = "guest";
