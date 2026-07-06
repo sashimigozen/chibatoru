@@ -427,6 +427,15 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   assert.equal(list.statusCode, 200);
   assert.match(list.body, /game-admin-test/);
   assert.match(list.body, /test win/);
+  assert.match(list.body, /バックアップJSONをダウンロード/);
+
+  const backup = await httpGet(port, "/admin/logs/backup.json", "secret");
+  assert.equal(backup.statusCode, 200);
+  assert.match(backup.headers["content-disposition"], /^attachment; filename="chibatoru-online-logs-/);
+  const backupParsed = JSON.parse(backup.body);
+  assert.equal(backupParsed.count, 1);
+  assert.equal(backupParsed.logs[0].gameId, "game-admin-test");
+  assert.equal(backupParsed.logs[0].events.length, 2);
 
   const json = await httpGet(port, "/admin/logs/game-admin-test.json", "secret");
   assert.equal(json.statusCode, 200);

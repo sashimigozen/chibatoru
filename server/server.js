@@ -44,6 +44,10 @@ const server = http.createServer((req, res) => {
     handlePublicRoomsJson(res);
     return;
   }
+  if (url.pathname === "/admin/logs/backup.json") {
+    handleAdminLogsBackupJson(req, res);
+    return;
+  }
   if (url.pathname === "/admin/logs" || url.pathname.startsWith("/admin/logs/")) {
     handleAdminLogsRequest(req, res, url);
     return;
@@ -381,6 +385,7 @@ function adminPageShell(body) {
     .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     .button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 7px; background: var(--accent); color: #ffffff; padding: 8px 14px; font: inherit; font-weight: 800; cursor: pointer; text-decoration: none; }
     .button.secondary { background: var(--accent-soft); color: var(--accent); }
+    .button.backup { min-height: 46px; background: var(--teal); border-color: var(--teal); font-size: 17px; box-shadow: 0 8px 18px rgba(15, 118, 110, 0.18); }
     textarea { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; color: var(--ink); padding: 12px; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
     .notice { border: 1px solid #9ec5fe; border-left: 5px solid var(--accent); border-radius: 8px; background: #eef6ff; color: #14356f; padding: 10px 12px; }
     .muted { color: var(--muted); }
@@ -411,9 +416,11 @@ function renderAdminLogsPage() {
       <p class="muted">管理者だけが見られるログ一覧です。プレイヤーの個人名は保存せず、カードバランス分析に必要な対戦イベントを保存します。</p>
       <p class="muted">保存先: <code>${escapeHtml(LOG_STORAGE_DIR)}</code></p>
       <p class="actions">
+        <a class="button backup" href="/admin/logs/backup.json" download>バックアップJSONをダウンロード</a>
         <a class="button secondary" href="/admin/logs.json">JSON一覧を開く</a>
         <a class="button secondary" href="/admin/logs/import">JSONをインポート</a>
       </p>
+      <p class="muted">更新や再デプロイの前は、まずバックアップJSONを保存してください。</p>
     </section>
     <section class="panel">
       <h2>保存済みログ ${logs.length}件</h2>
@@ -436,7 +443,7 @@ function renderAdminImportPage(message = "", kind = "muted") {
     <section class="panel">
       <p><a href="/admin/logs">ログ一覧へ戻る</a></p>
       <h1>ログJSONインポート</h1>
-      <p class="muted">再デプロイ前に保存した <code>/admin/logs.json</code> の中身を貼り付けると、保存済みログを復元できます。</p>
+      <p class="muted">「バックアップJSONをダウンロード」で保存したJSONの中身を貼り付けると、保存済みログを復元できます。</p>
       ${message ? `<p class="${kind === "ok" ? "notice" : "muted"}">${escapeHtml(message)}</p>` : ""}
     </section>
     <section class="panel">
@@ -543,6 +550,32 @@ function readBody(req, onDone) {
 function handleAdminLogsJson(req, res) {
   if (!requireAdmin(req, res)) return;
   jsonResponse(res, 200, { logs: listLogSummaries() });
+}
+
+function backupFileName() {
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  return `chibatoru-online-logs-${stamp}.json`;
+}
+
+function buildAdminLogsBackupPayload() {
+  return {
+    exportedAt: new Date().toISOString(),
+    count: onlineBattleLogs.size,
+    logs: [...onlineBattleLogs.values()]
+      .sort((a, b) => String(b.receivedAt).localeCompare(String(a.receivedAt)))
+  };
+}
+
+function handleAdminLogsBackupJson(req, res) {
+  if (!requireAdmin(req, res)) return;
+  const body = JSON.stringify(buildAdminLogsBackupPayload(), null, 2);
+  res.writeHead(200, {
+    "content-type": "application/json; charset=utf-8",
+    "cache-control": "no-store",
+    "content-disposition": `attachment; filename="${backupFileName()}"`,
+    "content-length": Buffer.byteLength(body)
+  });
+  res.end(body);
 }
 
 function handleAdminLogsImport(req, res) {
