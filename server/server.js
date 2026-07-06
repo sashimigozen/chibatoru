@@ -1164,6 +1164,34 @@ function handlePlayerCommand(ws, message) {
   deliverPendingCommand(room, commandId);
 }
 
+function handlePrivateChoiceRelay(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player) return;
+  if (!room.started) {
+    sendError(ws, "対戦がまだ開始されていません。", "not_started");
+    return;
+  }
+  if (!isBattleRole(player.role)) {
+    sendError(ws, "観戦者は選択効果を送信できません。", "forbidden");
+    return;
+  }
+  const isRequest = String(message.type || "").endsWith("Request");
+  const target = isRequest ? guestOf(room) : hostOf(room);
+  if (isRequest && player.role !== "host") {
+    sendError(ws, "選択依頼はホストだけが送信できます。", "forbidden");
+    return;
+  }
+  if (!isRequest && player.role !== "guest") {
+    sendError(ws, "選択結果はゲストだけが送信できます。", "forbidden");
+    return;
+  }
+  if (!target) {
+    sendError(ws, "選択効果の送信先が見つかりません。", "target_missing");
+    return;
+  }
+  send(target.ws, { ...message, senderId: player.clientId, roomSessionId: room.sessionId });
+}
+
 function handleReturnRoom(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
@@ -1243,6 +1271,14 @@ function routeMessage(ws, raw) {
       }
       break;
     }
+    case "thinItemChoiceRequest":
+    case "thinItemChoiceResponse":
+    case "badStudentDiscardRequest":
+    case "badStudentDiscardResponse":
+    case "logicHunterChoiceRequest":
+    case "logicHunterChoiceResponse":
+      handlePrivateChoiceRelay(ws, message);
+      break;
     case "returnRoom":
       handleReturnRoom(ws, message);
       break;

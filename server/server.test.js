@@ -190,6 +190,53 @@ test("random match pairs waiting clients into one room", async (t) => {
   assert.equal(hostUpdate.message.matchType, "random");
 });
 
+test("private card choice requests and responses relay between host and guest", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "CHOICE01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectClient(url, roomId, "host-choice", true);
+  const guest = await connectClient(url, roomId, "guest-choice");
+  clients.push(host, guest);
+
+  const deckCounts = { test_card: 40 };
+  send(host, { type: "deckUpdate", deckCounts, ready: true });
+  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  await waitFor(host, (message) => message.type === "deckUpdate");
+  send(host, {
+    type: "startGame",
+    snapshot: { seq: 1, state: { currentSide: "opponent", gameOver: false } }
+  });
+  await waitFor(guest, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
+
+  const pairs = [
+    ["thinItemChoiceRequest", "thinItemChoiceResponse", { handCount: 5 }, { keepIds: ["a", "b", "c", "d"] }],
+    ["badStudentDiscardRequest", "badStudentDiscardResponse", { discardCount: 2 }, { discardIds: ["a", "b"] }],
+    ["logicHunterChoiceRequest", "logicHunterChoiceResponse", { cards: [{ instanceId: "host-card-1", name: "テストカード" }] }, { discardId: "host-card-1" }]
+  ];
+
+  for (const [requestType, responseType, requestPayload, responsePayload] of pairs) {
+    const requestId = `${requestType}-1`;
+    const guestStart = guest.messages.length;
+    send(host, { type: requestType, requestId, ...requestPayload });
+    const relayedRequest = await waitFor(guest, (message) =>
+      message.type === requestType && message.requestId === requestId, guestStart);
+    assert.equal(relayedRequest.message.senderId, "host-choice");
+
+    const hostStart = host.messages.length;
+    send(guest, { type: responseType, requestId, ...responsePayload });
+    const relayedResponse = await waitFor(host, (message) =>
+      message.type === responseType && message.requestId === requestId, hostStart);
+    assert.equal(relayedResponse.message.senderId, "guest-choice");
+  }
+});
+
 test("guest commands retry until the host confirms an authoritative snapshot", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
