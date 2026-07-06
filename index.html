@@ -14351,6 +14351,9 @@
       analyticsFinalizeGame(winner, reason, options);
       onlineSubmitAnalyticsLog("game_end");
       showResultOverlay(winner, options);
+      if (isOnlineHost() && state.online.started && !state.online.isHandlingRemoteCommand) {
+        onlineBroadcastState(true);
+      }
     }
 
     function seatRow(index) {
