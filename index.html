@@ -8334,9 +8334,17 @@
       return state.phase === "battle" && state.currentSide === "opponent";
     }
 
+    function onlineIsCommandAwaitingResolution(commandId) {
+      if (!commandId) return false;
+      return state.pendingRemoteHandTrim?.commandId === commandId
+        || state.pendingCardChoice?.commandId === commandId
+        || state.online.pendingEvolutionCommandId === commandId;
+    }
+
     function onlineApplyRemoteCommand(command) {
       if (!command || !isOnlineHost()) return;
       if (command.id && onlineRememberBounded("appliedCommandIds", command.id)) {
+        if (onlineIsCommandAwaitingResolution(command.id)) return;
         onlineBroadcastState(true, command.id);
         return;
       }
@@ -8426,10 +8434,7 @@
         if (command.type === "concede") endGame("player", "相手が勝てないを選びました。", { retire: true });
       } finally {
         state.online.isHandlingRemoteCommand = false;
-        const waitingForPrivateChoice = state.pendingRemoteHandTrim?.commandId === command.id
-          || state.pendingCardChoice?.commandId === command.id
-          || state.online.pendingEvolutionCommandId === command.id;
-        if (!waitingForPrivateChoice) onlineBroadcastState(true, command.id || "");
+        if (!onlineIsCommandAwaitingResolution(command.id)) onlineBroadcastState(true, command.id || "");
       }
     }
 
@@ -11167,6 +11172,17 @@
       return listBoardRefs(card.owner).some((ref) => getBoardCardFromRef(ref)?.instanceId === card.instanceId);
     }
 
+    function finishOnlineEvolutionCommand(commandId) {
+      if (!commandId || !isOnlineHost()) return false;
+      const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+      state.online.isHandlingRemoteCommand = true;
+      render();
+      state.online.isHandlingRemoteCommand = wasHandlingRemote;
+      if (state.online.pendingEvolutionCommandId === commandId) state.online.pendingEvolutionCommandId = "";
+      onlineBroadcastState(true, commandId);
+      return true;
+    }
+
     function scheduleEvolutionEffect(side, evolved, options = {}) {
       const delay = evolutionEffectDelay(options);
       const effectTurn = state.actionTurn;
@@ -11175,29 +11191,20 @@
         state.online.pendingEvolutionCommandId = commandId;
       }
       const runEffect = () => {
-        const finishPendingOnlineEvolution = () => {
-          if (!commandId || !isOnlineHost()) return false;
-          const wasHandlingRemote = state.online.isHandlingRemoteCommand;
-          state.online.isHandlingRemoteCommand = true;
-          render();
-          state.online.isHandlingRemoteCommand = wasHandlingRemote;
-          if (state.online.pendingEvolutionCommandId === commandId) state.online.pendingEvolutionCommandId = "";
-          onlineBroadcastState(true, commandId);
-          return true;
-        };
         if (state.phase !== "battle" || state.gameOver || state.actionTurn < effectTurn) {
-          finishPendingOnlineEvolution();
+          finishOnlineEvolutionCommand(commandId);
           return;
         }
         if (!isEvolutionSourceStillInPlay(evolved)) {
-          finishPendingOnlineEvolution();
+          finishOnlineEvolutionCommand(commandId);
           return;
         }
-        resolveEvolutionEffect(side, evolved, effectTurn);
+        const asyncHandled = resolveEvolutionEffect(side, evolved, effectTurn, { commandId });
+        if (asyncHandled) return;
         cleanupDestroyedCards();
         applyBoardAuras();
         checkLifeVictory();
-        if (!finishPendingOnlineEvolution()) render();
+        if (!finishOnlineEvolutionCommand(commandId)) render();
       };
       if (delay > 0) {
         window.setTimeout(runEffect, delay);
@@ -11206,14 +11213,15 @@
       }
     }
 
-    function resolveEvolutionEffect(side, evolved, effectTurn = state.actionTurn) {
+    function resolveEvolutionEffect(side, evolved, effectTurn = state.actionTurn, options = {}) {
       if (evolved.baseId === "dark_yuta") {
         state.players[side].hand.push(createCardFromBase("yuta", side));
         addLog(`${evolved.name}の効果：「U太」を1枚手札に生成しました。`);
       } else if (evolved.baseId === "success_student") {
         resolveSuccessStudentEvolutionEffect(side, evolved);
       } else if (evolved.baseId === "demon_a_plus") {
-        scheduleDemonFalconHits(side, evolved, effectTurn);
+        scheduleDemonFalconHits(side, evolved, effectTurn, { commandId: options.commandId || "" });
+        return true;
       } else if (evolved.baseId === "oni_shima_ai") {
         const opponent = oppositeSide(side);
         let affected = 0;
@@ -11227,6 +11235,7 @@
       } else {
         addLog(`${evolved.name}の進化時効果はありません。`);
       }
+      return false;
     }
 
     function resolveSuccessStudentEvolutionEffect(side, sourceCard) {
@@ -11247,23 +11256,41 @@
       checkLifeVictory();
     }
 
-    function scheduleDemonFalconHits(side, sourceCard, effectTurn = state.actionTurn) {
+    function scheduleDemonFalconHits(side, sourceCard, effectTurn = state.actionTurn, options = {}) {
       const opponent = oppositeSide(side);
+      const commandId = options.commandId || "";
+      let finished = false;
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        if (!finishOnlineEvolutionCommand(commandId)) render();
+      };
       addLog(`${sourceCard.name}の進化時効果：相手の出席者へランダムに1ダメージを10回与えます。`);
       for (let i = 0; i < 10; i += 1) {
         window.setTimeout(() => {
-          if (state.phase !== "battle" || state.gameOver || state.actionTurn < effectTurn) return;
+          if (finished) return;
+          if (state.phase !== "battle" || state.gameOver || state.actionTurn < effectTurn) {
+            finish();
+            return;
+          }
           const targets = listBoardRefs(opponent)
             .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
             .filter((entry) => entry.card && entry.card.currentHp > 0);
-          if (targets.length === 0) return;
+          if (targets.length === 0) {
+            finish();
+            return;
+          }
           const targetEntry = targets[Math.floor(Math.random() * targets.length)];
           const damage = dealDamageToCard(targetEntry.card, 1, sourceCard);
           addLog(`${sourceCard.name}の連続攻撃${i + 1}回目：${targetEntry.card.name}に${damage}ダメージ。`);
           cleanupDestroyedCards();
           applyBoardAuras();
           checkLifeVictory();
-          render();
+          if (i === 9 || state.gameOver) {
+            finish();
+          } else {
+            render();
+          }
         }, 120 * i);
       }
     }
@@ -13100,7 +13127,7 @@
         resultText = `「デザイン」と名のつく教師カードを${pulled}枚手札に加え、自分の場の「デザイン」と名のつく教師の人数だけ${drawn}枚ドローしました。`;
       }
       if (item.baseId === "donguri") {
-        const evolved = resolveDonguriEvolution(side, item);
+        const evolved = resolveDonguriEvolution(side, item, { commandId: options.commandId || "" });
         moveHandCardToTrash(side, item, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
         itemAlreadyMovedToTrash = true;
         resultText = evolved
@@ -13177,7 +13204,7 @@
         && Boolean(findDonguriEvolutionTarget(side));
     }
 
-    function resolveDonguriEvolution(side, item) {
+    function resolveDonguriEvolution(side, item, options = {}) {
       if (!canUseDonguri(side, item)) return false;
       const player = state.players[side];
       const target = findDonguriEvolutionTarget(side);
@@ -13197,6 +13224,7 @@
       );
       moveToTrash(side, extraDonguri, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
       return evolveCard(side, evolutionCard, side, target.zone, target.index, {
+        commandId: options.commandId || "",
         effectDelayMs: DONGURI_EVOLUTION_REVEAL_MS,
         skipEvolutionAnimation: true
       });
