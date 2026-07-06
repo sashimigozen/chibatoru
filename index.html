@@ -13713,6 +13713,16 @@
     }
 
     function applyBoardAuras() {
+      let cleanupCount = 0;
+      let guard = 0;
+      do {
+        recalculateBoardAuras();
+        cleanupCount = cleanupDestroyedCards();
+        guard += 1;
+      } while (cleanupCount > 0 && guard < 6);
+    }
+
+    function recalculateBoardAuras() {
       ["player", "opponent"].forEach((owner) => {
         const proKIsTeaching = state.players[owner].board.teacher?.baseId === "pro_k";
         const teacherSlotCard = state.players[owner].board.teacher;
@@ -14323,6 +14333,7 @@
     }
 
     function cleanupDestroyedCards() {
+      let movedCount = 0;
       ["player", "opponent"].forEach((owner) => {
         state.players[owner].board.seats.forEach((card, index) => {
           if (card && card.currentHp <= 0) {
@@ -14330,6 +14341,7 @@
             moveToTrash(owner, card, { suppressToast: true, suppressLog: true, reason: "体力0" });
             state.players[owner].board.seats[index] = null;
             addTrashLog(owner, card, "体力0");
+            movedCount += 1;
           }
         });
         const teacher = state.players[owner].board.teacher;
@@ -14338,8 +14350,10 @@
           moveToTrash(owner, teacher, { suppressToast: true, suppressLog: true, reason: "体力0" });
           state.players[owner].board.teacher = null;
           addTrashLog(owner, teacher, "体力0");
+          movedCount += 1;
         }
       });
+      return movedCount;
     }
 
     function recordRecentBoardTrash(owner, card, ref) {
