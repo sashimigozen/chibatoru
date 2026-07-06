@@ -5871,6 +5871,8 @@
     const TEST_HAND_COMPANIONS = {
       best_friend: ["loud_student"],
       loud_student: ["best_friend"],
+      super_ae_student: [],
+      handmade_ctoc: ["general_student"],
       ruler: ["ruler"],
       bird_a: ["demon_a_plus"],
       demon_a_plus: ["bird_a"],
@@ -5924,14 +5926,14 @@
       bounce_day: []
     };
     const ALL_DECK_IDS = [
-      "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "hurried_student",
+      "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "lone_wolf", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
       "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
       "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire",
-      "ruler", "aggro_eater", "ux_design_textbook", "bento", "yakiniku", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
+      "ruler", "aggro_eater", "ux_design_textbook", "bento", "yakiniku", "handmade_ctoc", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
       "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi",
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture",
@@ -5972,6 +5974,7 @@
       yuta: { name: "U太", type: "student", cost: 3, attack: 3, hp: 3, keywords: ["余裕"], allowedZones: ["seat", "teacher"] },
       aggro_queen: { name: "アグロクイーン", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"] },
       ae_student: { name: "あえー学生", type: "student", cost: 2, attack: 0, hp: 4, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
+      super_ae_student: { name: "超あえー学生", type: "student", cost: 2, attack: 0, hp: 2, keywords: ["超注目"], allowedZones: ["seat", "teacher"] },
       hurried_student: { name: "急いできた学生", type: "student", cost: 2, attack: 2, hp: 2, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       lazy_student: { name: "不真面目な学生", type: "student", cost: 2, attack: 4, hp: 4, late: 1, allowedZones: ["seat"] },
       cancel_student: { name: "ドタキャン学生", type: "student", cost: 3, attack: 3, hp: 3, late: 2, allowedZones: ["seat", "teacher"] },
@@ -6033,6 +6036,7 @@
       ux_design_textbook: { name: "UXデザインの教科書", type: "item", cost: 1, target: "self" },
       bento: { name: "お弁当", type: "item", cost: 2, target: "friendly" },
       yakiniku: { name: "焼肉", type: "item", cost: 2, target: "global" },
+      handmade_ctoc: { name: "お手製C to C", type: "item", cost: 2, target: "anyBoard" },
       onigiri_draw: { name: "おにぎりドロー", type: "item", cost: 3, target: "self" },
       hondara: { name: "ほんだら", type: "item", cost: 1, target: "self" },
       fire_touch: { name: "火に触れてしまう", type: "item", cost: 4, target: "self" },
@@ -6985,6 +6989,14 @@
           seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null,
           card: analyticsCardInfo(getBoardCardFromRef(ref))
         }));
+      }
+      if (item.target === "anyBoard") {
+        return ["player", "opponent"].flatMap((owner) => listBoardRefs(owner).map((ref) => ({
+          owner: ref.owner,
+          targetZone: ref.zone,
+          seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null,
+          card: analyticsCardInfo(getBoardCardFromRef(ref))
+        })));
       }
       return [];
     }
@@ -9720,9 +9732,6 @@
       if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 11 : -2;
       if (card.baseId === "ae_student") score += 7;
       if (card.baseId === "hurried_student") score += 4;
-      if (card.baseId === "lazy_student" && isOwnSixthTurnOrLater("opponent")) {
-        score += state.players.player.board.teacher?.type === "teacher" ? 8 : 0;
-      }
       if (card.baseId === "cancel_student") {
         score += enemyRefs.filter((ref) => getBoardCardFromRef(ref)?.type === "student").length * 2;
       }
@@ -9976,13 +9985,16 @@
         return opponent.life < 20 ? 5 + (20 - opponent.life) : 0;
       }
       if (item.baseId === "quiet_please") {
-        return enemyCards.some((card) => card.attack >= 4
-          && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)) ? 6 : 0;
+        return effectTargetEntries("opponent", "player", (card) => card.attack >= 4
+          && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)).length > 0 ? 6 : 0;
       }
       if (item.baseId === "namen_tenno") {
         return enemyCards.some((card) => card.baseId === "cynical_student") ? 10 : 0;
       }
       if (item.baseId === "peaceful_mind") return opponent.life <= 15 ? 3 : 0;
+      if (item.baseId === "handmade_ctoc") {
+        return effectTargetEntries("opponent", "player", (card) => hasOpposingSameNameAttendee(card)).length > 0 ? 6 : 0;
+      }
       if (item.baseId === "dropped_cards") return opponent.deck.length >= 2 ? 2 : 0;
       if (item.baseId === "yutakun_yutakun") return opponent.trash.some((card) => card.baseId === "yuta") ? 6 : 0;
       if (item.baseId === "three_gestures") return opponent.deck.length >= 6 ? 8 : 0;
@@ -10002,12 +10014,14 @@
       if (item.baseId === "abyss") return enemyCards.length >= 2 ? 8 + enemyCards.length : 0;
       if (item.baseId === "seriously_hit") return enemyCards.length ? 8 + Math.max(...enemyCards.map((card) => (card.attack || 0) + (card.currentHp || 0))) : 0;
       if (item.baseId === "favorite_number_s") {
-        return state.players.player.board.teacher?.type === "teacher" ? 9 : 0;
+        const teacher = state.players.player.board.teacher;
+        return teacher?.type === "teacher" && isAllowedEffectTarget("opponent", teacher) ? 9 : 0;
       }
       if (item.baseId === "i_got_it") {
-        const targets = state.players.player.board.seats.filter((card, index) =>
-          card?.type === "student"
-          && seatRow(index) === 3
+        const targets = effectTargetEntries("opponent", "player", (card, ref) =>
+          card.type === "student"
+          && ref.zone === "seat"
+          && seatRow(ref.index) === 3
           && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)).length;
         return targets > 0 ? 5 + targets * 2 : 0;
       }
@@ -10059,48 +10073,48 @@
         return damagedStudent ? castItemOnCard("opponent", item, damagedStudent.ref.owner, damagedStudent.ref.zone, damagedStudent.ref.index, false) : false;
       }
       if (item.baseId === "i_got_it") {
-        const targets = listBoardRefs("player")
-          .filter((ref) => {
-            const target = getBoardCardFromRef(ref);
-            return ref.zone === "seat"
-              && seatRow(ref.index) === 3
-              && target?.type === "student"
-              && !(target.attackLockedThroughTurn && target.attackLockedThroughTurn >= state.actionTurn + 1);
-          })
+        const targets = effectTargetEntries("opponent", "player", (target, ref) =>
+          ref.zone === "seat"
+          && seatRow(ref.index) === 3
+          && target.type === "student"
+          && !(target.attackLockedThroughTurn && target.attackLockedThroughTurn >= state.actionTurn + 1))
+          .map((entry) => entry.ref)
           .slice(0, 2);
         return castIGotIt("opponent", item, targets, false);
       }
       if (item.baseId === "quiet_please") {
-        const target = listBoardRefs("player").find((ref) => {
-          const card = getBoardCardFromRef(ref);
-          return card?.attack >= 4
-            && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1);
-        });
-        return target ? castItemOnCard("opponent", item, target.owner, target.zone, target.index, false) : false;
+        const target = effectTargetEntries("opponent", "player", (card) =>
+          card.attack >= 4
+            && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)
+        )[0];
+        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "namen_tenno") {
-        const target = listBoardRefs("player").find((ref) => getBoardCardFromRef(ref)?.baseId === "cynical_student");
-        return target ? castItemOnCard("opponent", item, target.owner, target.zone, target.index, false) : false;
+        const target = effectTargetEntries("opponent", "player", (card) => card.baseId === "cynical_student")[0];
+        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "seriously_hit") {
-        const target = listBoardRefs("player")
-          .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        const target = effectTargetEntries("opponent", "player")
           .sort((a, b) => ((b.card.attack || 0) + (b.card.currentHp || 0)) - ((a.card.attack || 0) + (a.card.currentHp || 0)))[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "favorite_number_s") {
         const teacher = state.players.player.board.teacher;
-        return teacher?.type === "teacher"
+        return teacher?.type === "teacher" && isAllowedEffectTarget("opponent", teacher)
           ? castItemOnCard("opponent", item, "player", "teacher", null, false)
           : false;
+      }
+      if (item.baseId === "handmade_ctoc") {
+        const target = effectTargetEntries("opponent", "player", (card) => hasOpposingSameNameAttendee(card))[0]
+          || effectTargetEntries("opponent", "opponent", (card) => hasOpposingSameNameAttendee(card))[0];
+        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "roar" || item.baseId === "green_curry" || item.baseId === "yakiniku" || item.baseId === "abyss" || item.baseId === "thanks_all_students") {
         return castItemGlobal("opponent", item, false);
       }
       if (item.baseId === "panpan") {
         const friendly = listBoardRefs("opponent")[0];
-        const enemy = listBoardRefs("player")
-          .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        const enemy = effectTargetEntries("opponent", "player")
           .sort((a, b) => ((b.card.attack || 0) + (b.card.currentHp || 0)) - ((a.card.attack || 0) + (a.card.currentHp || 0)))[0]?.ref;
         return friendly && enemy ? castPanpan("opponent", item, friendly, enemy, false) : false;
       }
@@ -10109,16 +10123,14 @@
         return index !== undefined ? castCaptureOnSlot("opponent", item, "player", "seat", index, false) : false;
       }
       if (item.baseId === "vampirization") {
-        const target = listBoardRefs("player")
-          .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        const target = effectTargetEntries("opponent", "player")
           .sort((a, b) => ((b.card.attack || 0) + (b.card.currentHp || 0)) - ((a.card.attack || 0) + (a.card.currentHp || 0)))[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "ruler" || item.baseId === "double_diamond") {
         const damage = item.baseId === "double_diamond" ? 4 : 1;
         if (state.players.player.life <= damage) return castItemOnLife("opponent", item, "player", false);
-        const target = listBoardRefs("player")
-          .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        const target = effectTargetEntries("opponent", "player")
           .sort((a, b) => {
             const aKill = a.card.currentHp <= damage ? 1 : 0;
             const bKill = b.card.currentHp <= damage ? 1 : 0;
@@ -10170,7 +10182,7 @@
     }
 
     function findAiAttackTarget(attacker) {
-      const attentionIds = new Set(listAttentionCards("player").map((card) => card.instanceId));
+      const attentionIds = new Set(listAttackPriorityCards("player").map((card) => card.instanceId));
       if (attentionIds.size === 0
         && attacker.playedOnTurn !== state.actionTurn
         && (attacker.attack || 0) >= state.players.player.life) return null;
@@ -10178,7 +10190,7 @@
         .map((ref) => ({ ...ref, card: getBoardCardFromRef(ref) }))
         .filter((target) => target.card && !(attacker.type === "teacher" && target.card.baseId === "loud_student"))
         .filter((target) => !isDesignDomainAttackBlocked(attacker, target.card))
-        .filter((target) => attentionIds.size === 0 || attentionIds.has(target.card.instanceId))
+        .filter((target) => attacker.baseId === "loud_student" || attentionIds.size === 0 || attentionIds.has(target.card.instanceId))
         .map((target) => {
           const canDefeat = (attacker.attack || 0) >= target.card.currentHp;
           const survivesCounter = (target.card.attack || 0) < attacker.currentHp;
@@ -10191,7 +10203,7 @@
         .sort((a, b) => b.score - a.score);
       const best = targets[0];
       if (!best) return null;
-      const cannotAttackLife = attentionIds.size > 0
+      const cannotAttackLife = (attentionIds.size > 0 && attacker.baseId !== "loud_student")
         || state.environment?.baseId === "meguro_library"
         || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気"));
       if (!cannotAttackLife) {
@@ -10374,7 +10386,23 @@
       addLog(`寮友会の効果：${SIDES[side]}は「注目」を持つカードを${pulled}枚引きました。`);
     }
 
-    function randomBoardRef(owner, predicate = null) {
+    function effectTargetEntries(sourceSide, targetSide, predicate = null) {
+      const allEntries = listBoardRefs(targetSide)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card && (!predicate || predicate(entry.card, entry.ref)));
+      if (sourceSide && sourceSide !== targetSide && listSuperAttentionCards(targetSide).length > 0) {
+        return allEntries.filter((entry) => hasKeyword(entry.card, "超注目"));
+      }
+      return allEntries;
+    }
+
+    function randomEffectTargetEntry(sourceSide, targetSide, predicate = null) {
+      const entries = effectTargetEntries(sourceSide, targetSide, predicate);
+      return entries[Math.floor(Math.random() * entries.length)] || null;
+    }
+
+    function randomBoardRef(owner, predicate = null, sourceSide = null) {
+      if (sourceSide) return randomEffectTargetEntry(sourceSide, owner, predicate)?.ref || null;
       const refs = listBoardRefs(owner).filter((ref) => {
         const card = getBoardCardFromRef(ref);
         return card && (!predicate || predicate(card, ref));
@@ -10448,9 +10476,8 @@
         const hasLoudNeighbor = adjacentIndexes(ref.index).some((neighbor) => state.players[side].board.seats[neighbor]?.baseId === "loud_student");
         if (!hasLoudNeighbor) return;
         const opponent = oppositeSide(side);
-        const targets = listBoardRefs(opponent);
-        const targetRef = targets[Math.floor(Math.random() * targets.length)];
-        const target = getBoardCardFromRef(targetRef);
+        const targetEntry = randomEffectTargetEntry(side, opponent);
+        const target = targetEntry?.card || null;
         if (!target) {
           addLog(`${card.name}の効果：相手の出席者がいないため不発。`);
           return;
@@ -10464,11 +10491,10 @@
       const player = state.players[side];
       if (!player.abyssTurns || player.abyssTurns <= 0) return;
       const opponent = oppositeSide(side);
-      const targets = listBoardRefs(opponent);
-      const target = targets[Math.floor(Math.random() * targets.length)];
+      const target = randomEffectTargetEntry(side, opponent);
       if (target) {
-        const card = getBoardCardFromRef(target);
-        destroyBoardCard(target);
+        const card = target.card;
+        destroyBoardCard(target.ref);
         addLog(`深淵の効果：${card.name}を破壊しました。`);
       } else {
         addLog("深淵の効果：相手の出席者がいないため不発。");
@@ -10532,10 +10558,7 @@
           }
         }
         if (card.baseId === "aggro_queen" && ref.zone === "seat" && ref.index === 5) {
-          const targets = listBoardRefs(opponent)
-            .map((targetRef) => ({ ref: targetRef, card: getBoardCardFromRef(targetRef) }))
-            .filter((entry) => entry.card?.type === "student");
-          const target = targets[Math.floor(Math.random() * targets.length)];
+          const target = randomEffectTargetEntry(side, opponent, (targetCard) => targetCard.type === "student");
           if (target) {
             dealDamageToCard(target.card, 2, card);
             addLog(`${card.name}の効果：相手の学生1人をランダムに指名し、2ダメージ。`);
@@ -11672,9 +11695,7 @@
             finish();
             return;
           }
-          const targets = listBoardRefs(opponent)
-            .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
-            .filter((entry) => entry.card && entry.card.currentHp > 0);
+          const targets = effectTargetEntries(side, opponent, (targetCard) => targetCard.currentHp > 0);
           if (targets.length === 0) {
             finish();
             return;
@@ -11709,10 +11730,10 @@
             affected += 1;
           });
         });
-        addLog(`${card.name}の効果：お互いの場の出席者${affected}人に1ダメージ。`);
+        addLog(`${card.name}の効果：お互いの場の他の出席者${affected}人に1ダメージ。`);
       }
       if (card.baseId === "midge") {
-        const targetRef = randomBoardRef(opponent);
+        const targetRef = randomBoardRef(opponent, null, side);
         const target = getBoardCardFromRef(targetRef);
         if (target) {
           dealDamageToCard(target, 1, card);
@@ -11742,17 +11763,6 @@
         applyPermanentStatBuff(card, 3, 0);
         showFloatingTextForCard(card, "+3攻", "heal");
         addLog(`${card.name}の効果：攻撃力を+3しました。`);
-      }
-      if (card.baseId === "lazy_student" && isOwnSixthTurnOrLater(side)) {
-        const teacherRefs = listBoardRefs(opponent).filter((ref) => getBoardCardFromRef(ref)?.type === "teacher");
-        const targetRef = teacherRefs[Math.floor(Math.random() * teacherRefs.length)];
-        if (targetRef) {
-          const target = getBoardCardFromRef(targetRef);
-          destroyBoardCard(targetRef);
-          addLog(`${card.name}の効果：自分の6ターン目以降に出席したため、相手の教師${target.name}をランダムに指名し、破壊しました。`);
-        } else {
-          addLog(`${card.name}の効果：相手の教師がいないため不発になりました。`);
-        }
       }
       if (card.baseId === "cancel_student") {
         const hitSummary = dealDistributedDamageToRandomTargets({
@@ -11839,6 +11849,18 @@
           resolveBadStudentDiscardChoice(side, discardIds, card, { renderAfter: false });
         }
       }
+      if (card.baseId === "predator") {
+        const openNeighbor = zone === "seat"
+          ? adjacentIndexes(index).find((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex))
+          : undefined;
+        if (openNeighbor !== undefined) {
+          const friend = makeBoardCard(createCardFromBase("best_friend", side));
+          setBoardCard(side, "seat", openNeighbor, friend);
+          addLog(`${card.name}の効果：隣接する席にベストフレンドを1人出席させました。`);
+        } else {
+          addLog(`${card.name}の効果：隣接する空席がないためベストフレンドを出席させられません。`);
+        }
+      }
       if (card.baseId === "extra_people") {
         let summoned = 0;
         state.players[side].board.seats.forEach((seatCard, seatIndex) => {
@@ -11901,11 +11923,10 @@
         }
       }
       if (card.baseId === "chen_san") {
-        const seatTargets = listBoardRefs(opponent).filter((ref) => ref.zone === "seat");
-        const targetRef = seatTargets[Math.floor(Math.random() * seatTargets.length)];
-        if (targetRef) {
-          const target = getBoardCardFromRef(targetRef);
-          destroyBoardCard(targetRef);
+        const targetEntry = randomEffectTargetEntry(side, opponent, (_targetCard, ref) => ref.zone === "seat");
+        if (targetEntry) {
+          const target = targetEntry.card;
+          destroyBoardCard(targetEntry.ref);
           addLog(`${card.name}の効果：相手の席マスの${target.name}をランダムに指名し、破壊しました。`);
         }
       }
@@ -11921,10 +11942,10 @@
         addLog(`${card.name}の効果：自分のヴァンパイアを合計${healed}回復しました。`);
       }
       if (card.baseId === "impossible_high_note") {
-        const refs = listBoardRefs(opponent);
+        const refs = effectTargetEntries(side, opponent).map((entry) => entry.ref);
         const targets = state.environment?.baseId === "cafeteria"
           ? refs
-          : [refs[Math.floor(Math.random() * refs.length)]].filter(Boolean);
+          : [randomEffectTargetEntry(side, opponent)?.ref].filter(Boolean);
         targets.forEach((ref) => {
           const target = getBoardCardFromRef(ref);
           if (!target) return;
@@ -12042,7 +12063,7 @@
         addLog(`${card.name}の効果：相手本体に3ダメージ。`);
       }
       if (card.baseId === "kansai_voice_t" && zone === "teacher") {
-        const ref = findAttackLockTarget(opponent);
+        const ref = findAttackLockTarget(opponent, side);
         if (ref) {
           const target = getBoardCardFromRef(ref);
           target.attackLockedThroughTurn = state.actionTurn + 1;
@@ -12083,11 +12104,9 @@
         addLog(`${card.name}の効果：相手の出席者${targets.length}人に3ダメージを与えました。`);
       }
       if (card.baseId === "suzaku" && zone === "seat") {
-        const targets = shuffle(listBoardRefs(opponent)
-          .filter((ref) => getBoardCardFromRef(ref)?.type === "vampire"))
+        const targets = shuffle(effectTargetEntries(side, opponent, (targetCard) => targetCard.type === "vampire"))
           .slice(0, 2);
-        targets.forEach((ref) => {
-          const target = getBoardCardFromRef(ref);
+        targets.forEach(({ card: target }) => {
           if (target) dealDamageToCard(target, 3, card);
         });
         addLog(`${card.name}の効果：相手のヴァンパイア${targets.length}人に3ダメージ。`);
@@ -12109,17 +12128,17 @@
       }
       if (card.baseId === "bird_a") {
         if (zone === "teacher") {
-          const target = [0, 1, 2].map((i) => state.players[opponent].board.seats[i]).find((c) => c);
+          const target = effectTargetEntries(side, opponent, (_targetCard, ref) =>
+            ref.zone === "seat" && seatRow(ref.index) === 1)[0]?.card || null;
           if (target) {
             dealDamageToCard(target, 3, card);
             addLog(`${card.name}の効果：相手1行目の出席者に3ダメージ。`);
           }
         }
         if (zone === "seat") {
-          const refs = listBoardRefs(opponent);
-          const ref = refs[Math.floor(Math.random() * refs.length)];
-          if (ref) {
-            destroyBoardCard(ref);
+          const targetEntry = randomEffectTargetEntry(side, opponent);
+          if (targetEntry) {
+            destroyBoardCard(targetEntry.ref);
             addLog(`${card.name}の効果：相手の場の出席者1人をランダムに指名し、破壊しました。`);
           }
         }
@@ -12201,9 +12220,8 @@
       return selected.length;
     }
 
-    function findAttackLockTarget(owner) {
-      return listBoardRefs(owner)
-        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+    function findAttackLockTarget(owner, sourceSide = null) {
+      return effectTargetEntries(sourceSide || oppositeSide(owner), owner)
         .filter((entry) => entry.card && !(entry.card.attackLockedThroughTurn && entry.card.attackLockedThroughTurn >= state.actionTurn))
         .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0))[0]?.ref || null;
     }
@@ -12611,7 +12629,7 @@
         return;
       }
       if (!isAllowedAttackTarget(attacker.owner, target)) {
-        addLog("注目を持つ出席者がいるため、ほかの出席者を攻撃できません。");
+        addLog(`${attackRestrictionKeywordText(target.owner)}を持つ出席者がいるため、ほかの出席者を攻撃できません。`);
         clearSelections();
         render();
         return;
@@ -12713,8 +12731,8 @@
         render();
         return;
       }
-      if (listAttentionCards(targetSide).length > 0) {
-        addLog("注目を持つ出席者がいるため、相手本体を攻撃できません。");
+      if (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student") {
+        addLog(`${attackRestrictionKeywordText(targetSide)}を持つ出席者がいるため、相手本体を攻撃できません。`);
         clearSelections();
         render();
         return;
@@ -12920,6 +12938,16 @@
       if (item.target === "enemy" && targetOwner === side) return false;
       if (item.target === "friendly" && targetOwner !== side) return false;
       if (item.target === "friendlyAny" && targetOwner !== side) return false;
+      if (item.baseId === "handmade_ctoc" && !hasOpposingSameNameAttendee(target)) {
+        addLog("お手製C to Cは、お互いの場に同名の出席者がいる場合だけ使えます。");
+        if (renderAfter) render();
+        return false;
+      }
+      if ((item.target === "enemy" || item.baseId === "handmade_ctoc") && !isAllowedEffectTarget(side, target)) {
+        addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
+        if (renderAfter) render();
+        return false;
+      }
       if (item.baseId === "quiet_please" && target.attack < 4) {
         addLog("静かにしましょうね？は攻撃力4以上の出席者だけを指名できます。");
         if (renderAfter) render();
@@ -13021,13 +13049,22 @@
         destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
         state.players[side].hand.push(createCardFromBase(copiedBaseId, side));
       }
+      if (item.baseId === "handmade_ctoc") {
+        target.sameNameAttackLocked = true;
+        target.sameNameAttackLockedBy = item.name;
+        addLog(`${SIDES[side]}はお手製C to Cを使い、${target.name}は相手の場に同名の出席者がいるかぎり攻撃できなくなりました。`);
+      }
       if (item.baseId === "namen_tenno") {
         destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
         damagePlayer(oppositeSide(side), 5);
       }
       if (item.baseId === "double_diamond") {
         dealDamageToCard(target, 4, item);
-        const adjacent = adjacentBoardTargets(targetOwner, targetZone, targetIndex).find((ref) => getBoardCardFromRef(ref));
+        const adjacent = adjacentBoardTargets(targetOwner, targetZone, targetIndex)
+          .find((ref) => {
+            const adjacentTarget = getBoardCardFromRef(ref);
+            return adjacentTarget && isAllowedEffectTarget(side, adjacentTarget);
+          });
         if (adjacent) dealDamageToCard(getBoardCardFromRef(adjacent), 2, item);
       }
       moveHandCardToTrash(side, item);
@@ -13046,6 +13083,11 @@
       if (!pending || item?.baseId !== "i_got_it" || owner !== "opponent" || !target) return;
       if (!(zone === "seat" && seatRow(index) === 3 && target.type === "student")) {
         addLog("I GOT IT!!は相手の3行目にいる学生だけを指名できます。");
+        render();
+        return;
+      }
+      if (!isAllowedEffectTarget("player", target)) {
+        addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
         render();
         return;
       }
@@ -13091,6 +13133,11 @@
       if (owner === "player") {
         pending.friendly = isSameBoardRef(pending.friendly, ref) ? null : ref;
       } else if (owner === "opponent") {
+        if (!isAllowedEffectTarget("player", target)) {
+          addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
+          render();
+          return;
+        }
         pending.enemy = isSameBoardRef(pending.enemy, ref) ? null : ref;
       }
       const friendlyText = pending.friendly ? "自分1体" : "自分未選択";
@@ -13116,6 +13163,11 @@
       const friendly = getBoardCardFromRef(friendlyRef);
       const enemy = getBoardCardFromRef(enemyRef);
       if (!item || item.baseId !== "panpan" || !friendly || !enemy || friendlyRef.owner !== side || enemyRef.owner === side) return false;
+      if (!isAllowedEffectTarget(side, enemy)) {
+        addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
+        if (renderAfter) render();
+        return false;
+      }
       if (!payForItem(side, item)) {
         if (renderAfter) render();
         return false;
@@ -13169,6 +13221,7 @@
       refs.slice(0, 2).forEach((ref) => {
         const target = getBoardCardFromRef(ref);
         if (!target || ref.owner === side || target.type !== "student" || ref.zone !== "seat" || seatRow(ref.index) !== 3) return;
+        if (!isAllowedEffectTarget(side, target)) return;
         target.attackLockedThroughTurn = Math.max(target.attackLockedThroughTurn || 0, state.actionTurn + 1);
         affected += 1;
       });
@@ -13832,6 +13885,10 @@
         addLog(`${card.name}はこのターン攻撃できません。`);
         return false;
       }
+      if (isSameNameAttackLocked(card)) {
+        addLog(`${card.name}はお手製C to Cの効果で攻撃できません。`);
+        return false;
+      }
       if (card.type === "teacher" && isFriendlyTeacherAttackBlocked(card)) {
         addLog("スタディアブローダーが席マスにいるため、自分の教師は攻撃できません。");
         return false;
@@ -13851,6 +13908,7 @@
       return !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
         && !isFirstPlayerFirstTurn()
         && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
+        && !isSameNameAttackLocked(card)
         && !isFriendlyTeacherAttackBlocked(card)
         && (card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気"))
         && !card.hasAttacked;
@@ -13866,9 +13924,32 @@
         .filter((card) => card && hasKeyword(card, "注目"));
     }
 
+    function listSuperAttentionCards(owner) {
+      return listBoardRefs(owner)
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((card) => card && hasKeyword(card, "超注目"));
+    }
+
+    function listAttackPriorityCards(owner) {
+      const superAttentionCards = listSuperAttentionCards(owner);
+      return superAttentionCards.length > 0 ? superAttentionCards : listAttentionCards(owner);
+    }
+
+    function attackRestrictionKeywordText(owner) {
+      return listSuperAttentionCards(owner).length > 0 ? "超注目" : "注目";
+    }
+
     function isAllowedAttackTarget(attackerOwner, target) {
-      const attentionCards = listAttentionCards(oppositeSide(attackerOwner));
+      const attacker = getBoardCardFromRef(state.selectedAttacker);
+      if (attacker?.baseId === "loud_student") return true;
+      const attentionCards = listAttackPriorityCards(target.owner || oppositeSide(attackerOwner));
       return attentionCards.length === 0 || attentionCards.some((card) => card.instanceId === target.instanceId);
+    }
+
+    function isAllowedEffectTarget(sourceSide, target) {
+      if (!target || !sourceSide || target.owner === sourceSide) return true;
+      const superAttentionCards = listSuperAttentionCards(target.owner);
+      return superAttentionCards.length === 0 || hasKeyword(target, "超注目");
     }
 
     function getSelectedAttackCard() {
@@ -13899,7 +13980,7 @@
       const attacker = getSelectedAttackCard();
       if (!attacker || targetSide === state.currentSide) return false;
       if (state.environment?.baseId === "meguro_library") return false;
-      if (listAttentionCards(targetSide).length > 0) return false;
+      if (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student") return false;
       return !(attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
     }
 
@@ -13912,6 +13993,7 @@
       if (card.keywords?.includes(keyword)) {
         return true;
       }
+      if (keyword === "注目" && card.keywords?.includes("超注目")) return true;
       if (keyword === "超陽気" && card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
@@ -13921,6 +14003,16 @@
       if (keyword === "陽気" && card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") return true;
       if (keyword === "陽気" && card.baseId === "curry_treater" && state.environment?.baseId === "cafeteria") return true;
       return false;
+    }
+
+    function hasOpposingSameNameAttendee(card) {
+      if (!card?.owner || !card.name) return false;
+      const opponent = oppositeSide(card.owner);
+      return listBoardRefs(opponent).some((ref) => getBoardCardFromRef(ref)?.name === card.name);
+    }
+
+    function isSameNameAttackLocked(card) {
+      return Boolean(card?.sameNameAttackLocked && hasOpposingSameNameAttendee(card));
     }
 
     function opponentHasStudentAndTeacher(side) {
@@ -14161,10 +14253,11 @@
       let life = 0;
       for (let i = 0; i < hitCount; i += 1) {
         const targets = [];
-        if (includeLife) targets.push({ kind: "life" });
-        listBoardRefs(targetSide).forEach((ref) => {
-          const card = getBoardCardFromRef(ref);
-          if (!card || card.currentHp === null || !cardPredicate(card, ref)) return;
+        const sourceSide = source?.owner || null;
+        const cardTargets = effectTargetEntries(sourceSide, targetSide, (card, ref) => card.currentHp !== null && cardPredicate(card, ref));
+        const superAttentionActive = Boolean(sourceSide && sourceSide !== targetSide && listSuperAttentionCards(targetSide).length > 0);
+        if (includeLife && !superAttentionActive) targets.push({ kind: "life" });
+        cardTargets.forEach(({ ref, card }) => {
           const key = boardRefKey(ref);
           const pending = pendingDamage.get(key) || 0;
           if (card.currentHp - pending <= 0) return;
@@ -15651,11 +15744,21 @@
         return state.players.player.hand.some((card) => card.instanceId !== item.instanceId);
       }
       if (item.baseId === "i_got_it") {
-        return state.players.opponent.board.seats.some((card, index) => card?.type === "student" && seatRow(index) === 3);
+        return effectTargetEntries("player", "opponent", (card, ref) =>
+          ref.zone === "seat" && seatRow(ref.index) === 3 && card.type === "student").length > 0;
       }
       if (item.baseId === "panpan") {
         return listBoardRefs("player").some((ref) => getBoardCardFromRef(ref))
-          && listBoardRefs("opponent").some((ref) => getBoardCardFromRef(ref));
+          && effectTargetEntries("player", "opponent").length > 0;
+      }
+      if (item.baseId === "handmade_ctoc") {
+        return ["player", "opponent"].some((owner) =>
+          listBoardRefs(owner).some((ref) => {
+            const target = getBoardCardFromRef(ref);
+            return target
+              && hasOpposingSameNameAttendee(target)
+              && isAllowedEffectTarget("player", target);
+          }));
       }
       if (item.baseId === "capture") {
         return PLAYER_SEAT_ORDER.some((index) => !state.players.opponent.board.seats[index] && !isSeatBlocked("opponent", index));
@@ -15682,6 +15785,7 @@
           const target = getBoardCardFromRef(ref);
           if (!target) return false;
           if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn) return false;
+          if (!isAllowedEffectTarget("player", target)) return false;
           if (item.baseId === "quiet_please") return target.attack >= 4;
           if (item.baseId === "namen_tenno") return target.baseId === "cynical_student";
           if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && target.type === "teacher";
@@ -15718,6 +15822,7 @@
     function canUseItemOnBoardTarget(item, owner, zone, index) {
       const target = getBoardCard(owner, zone, index);
       if (!item || item.type !== "item" || !target) return false;
+      if (item.baseId === "handmade_ctoc") return hasOpposingSameNameAttendee(target) && isAllowedEffectTarget("player", target);
       if (item.target === "enemy" && owner === "player") return false;
       if ((item.target === "friendly" || item.target === "friendlyAny") && owner !== "player") return false;
       if (item.target === "friendly" && !(target.currentHp !== null && target.currentHp < target.maxHp)) return false;
@@ -15729,6 +15834,7 @@
       if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
       if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("player", target)) return false;
       if (item.baseId === "go_home" && target.type !== "student") return false;
+      if (item.target === "enemy" && !isAllowedEffectTarget("player", target)) return false;
       if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
       return ["enemy", "friendly", "friendlyAny"].includes(item.target);
     }
@@ -16702,8 +16808,10 @@
       if (boardCard && card.hasAttacked) statusParts.push("済");
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) statusParts.push("酔");
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push("止");
+      if (boardCard && isSameNameAttackLocked(card)) statusParts.push("止");
       if (hasKeyword(card, "陽気")) statusParts.push("陽");
-      if (hasKeyword(card, "注目")) statusParts.push("注");
+      if (hasKeyword(card, "超注目")) statusParts.push("超注");
+      else if (hasKeyword(card, "注目")) statusParts.push("注");
       if (hasKeyword(card, "眠気")) statusParts.push("眠");
       if (boardCard && card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push("予");
       if (card.late) statusParts.push(`遅${card.late}`);
@@ -16759,8 +16867,10 @@
       if (card.hasAttacked) statusParts.push("済");
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) statusParts.push("酔");
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push("止");
+      if (isSameNameAttackLocked(card)) statusParts.push("止");
       if (hasKeyword(card, "陽気")) statusParts.push("陽");
-      if (hasKeyword(card, "注目")) statusParts.push("注");
+      if (hasKeyword(card, "超注目")) statusParts.push("超注");
+      else if (hasKeyword(card, "注目")) statusParts.push("注");
       if (hasKeyword(card, "眠気")) statusParts.push("眠");
       if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push("予");
       const status = statusParts.length ? `<span class="field-card-status">${escapeHtml(statusParts.join("/"))}</span>` : "";
@@ -17866,7 +17976,8 @@
       if (hasKeyword(card, "陽気")) parts.push("陽気");
       if (hasKeyword(card, "超陽気")) parts.push("超陽気");
       if (hasKeyword(card, "余裕")) parts.push("余裕");
-      if (hasKeyword(card, "注目")) parts.push("注目");
+      if (hasKeyword(card, "超注目")) parts.push("超注目");
+      else if (hasKeyword(card, "注目")) parts.push("注目");
       if (hasKeyword(card, "眠気")) parts.push("眠気");
       if (card.hasAttacked) parts.push("攻撃済み");
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) parts.push("出席ターン");
@@ -17910,15 +18021,16 @@
         yuta: "余裕を持つ。このカードに装備カードがついたとき、陽気を持つ。",
         aggro_queen: "このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。",
         ae_student: "注目を持つ。",
+        super_ae_student: "超注目を持つ。",
         hurried_student: "遅刻1。陽気を持つ。",
-        lazy_student: "遅刻1。自分の6ターン目以降に出席した場合、相手の教師1人をランダムに指名し、破壊する。",
+        lazy_student: "遅刻1。",
         cancel_student: "遅刻2。出席したとき、相手の学生にランダムに3ダメージを割り振る。",
         laughing_front_student: "このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
-        loud_student: "陽気を持つ。このカードが出席したとき、お互いの場の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。「ベストフレンド」と隣接しているかぎり、超陽気を持つ。",
+        loud_student: "陽気を持つ。このカードが出席したとき、お互いの場の他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。このカードは注目と超注目を無視して攻撃できる。「ベストフレンド」と隣接しているかぎり、超陽気を持つ。",
         best_friend: "このカードは「バカでかい声の学生」の効果によるダメージを受けない。このカードが「バカでかい声の学生」と隣接しているかぎり、攻撃力を+2、体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。",
         ttb: "このカードが出席したとき、自分のデッキに「怪しげな文書」を1枚、相手のデッキに「怪しげな文書」を3枚生成する。",
-        predator: "このカードを出席させる場合、自分の出席者1人を指名して破壊し、その出席者がいたマスにこのカードを出席させる。陽気を持つ。",
+        predator: "陽気を持つ。このカードを出席させるには、自分の場の出席者1人を破壊する。その場所に、このカードを出席させる。このカードが出席したとき、隣接する空いている席マスに「ベストフレンド」を1人出席させる。",
         trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
         loud_group: "注目を持つ。このカードは3行目にも出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
@@ -17973,6 +18085,7 @@
         ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
         bento: "自分の出席者1人を指名し、その体力を2回復する。",
         yakiniku: "お互いの出席者すべての攻撃力を+1し、体力を2回復する。",
+        handmade_ctoc: "お互いの場に同名の出席者がいる場合、その中から出席者1人を指名する。その出席者は、相手の場に同名の出席者がいるかぎり攻撃できない。",
         onigiri_draw: "自分のデッキからカードを2枚引き、自分の気力を2回復する。",
         hondara: "カードを1枚ドローする。",
         fire_touch: "自分の気力を4失い、カードを4枚ドローする。",
