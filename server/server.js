@@ -30,6 +30,7 @@ const MAX_STORED_LOGS = Number(process.env.MAX_STORED_LOGS || 300);
 const MAX_IMPORT_BYTES = Number(process.env.MAX_IMPORT_BYTES || 8 * 1024 * 1024);
 
 const rooms = new Map();
+const randomMatchQueue = [];
 const onlineBattleLogs = new Map();
 
 const server = http.createServer((req, res) => {
@@ -63,6 +64,16 @@ function normalizeRoomId(value) {
 
 function createSessionId() {
   return `srv-${now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function createRandomRoomId() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const suffix = Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
+    const roomId = `R${suffix}`;
+    if (!rooms.has(roomId)) return roomId;
+  }
+  return `R${now().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(-8)}`;
 }
 
 function safeJsonParse(raw) {
@@ -634,6 +645,53 @@ function guestOf(room) {
   return [...room.players.values()].find((player) => player.role === "guest") || null;
 }
 
+function createRoom(roomId, sessionId = "", matchType = "private") {
+  return {
+    roomId,
+    sessionId: sessionId || createSessionId(),
+    matchType,
+    players: new Map(),
+    started: false,
+    state: null,
+    currentTurn: "",
+    snapshotSeq: 0,
+    pendingCommands: new Map(),
+    processedCommandIds: [],
+    waitingTimer: null,
+    createdAt: now(),
+    updatedAt: now()
+  };
+}
+
+function removeRandomQueueRoom(roomId) {
+  let index = randomMatchQueue.length;
+  while (index > 0) {
+    index -= 1;
+    if (randomMatchQueue[index] === roomId) randomMatchQueue.splice(index, 1);
+  }
+}
+
+function pruneRandomMatchQueue() {
+  let index = randomMatchQueue.length;
+  while (index > 0) {
+    index -= 1;
+    const room = rooms.get(randomMatchQueue[index]);
+    if (!room || room.matchType !== "random" || room.started || guestOf(room) || !hostOf(room)) {
+      randomMatchQueue.splice(index, 1);
+    }
+  }
+}
+
+function findRandomWaitingRoom(clientId) {
+  pruneRandomMatchQueue();
+  return randomMatchQueue
+    .map((roomId) => rooms.get(roomId))
+    .find((room) => {
+      const host = hostOf(room);
+      return room && host && host.clientId !== clientId && !guestOf(room) && !room.started;
+    }) || null;
+}
+
 function clearPendingCommand(room, commandId) {
   const pending = room?.pendingCommands?.get(commandId);
   if (!pending) return null;
@@ -730,6 +788,7 @@ function closeWaitingRoom(roomId) {
   });
   clearWaitingRoomTimer(room);
   clearAllPendingCommands(room);
+  removeRandomQueueRoom(roomId);
   rooms.delete(roomId);
   room.players.forEach((player) => {
     try { player.ws.close(4002, "room_timeout"); } catch {}
@@ -791,9 +850,11 @@ function cleanupRooms() {
   rooms.forEach((room, roomId) => {
     if (room.players.size === 0 && room.updatedAt < cutoff) {
       clearAllPendingCommands(room);
+      removeRandomQueueRoom(roomId);
       rooms.delete(roomId);
     }
   });
+  pruneRandomMatchQueue();
 }
 
 function joinRoom(ws, message) {
@@ -814,20 +875,7 @@ function joinRoom(ws, message) {
     return;
   }
   if (!room) {
-    room = {
-      roomId,
-      sessionId: message.roomSessionId || createSessionId(),
-      players: new Map(),
-      started: false,
-      state: null,
-      currentTurn: "",
-      snapshotSeq: 0,
-      pendingCommands: new Map(),
-      processedCommandIds: [],
-      waitingTimer: null,
-      createdAt: now(),
-      updatedAt: now()
-    };
+    room = createRoom(roomId, message.roomSessionId || createSessionId(), message.matchType === "random" ? "random" : "private");
     rooms.set(roomId, room);
   }
 
@@ -867,6 +915,7 @@ function joinRoom(ws, message) {
     senderId: SERVER_ID,
     roomId,
     roomSessionId: room.sessionId,
+    matchType: room.matchType || "private",
     you: playerPublicState(player),
     players: roomPlayers(room),
     hasOpponent: roomHasOpponent(room, role),
@@ -885,7 +934,46 @@ function joinRoom(ws, message) {
   if (role === "host" && room.started) {
     room.pendingCommands.forEach((_pending, commandId) => deliverPendingCommand(room, commandId));
   }
+  if (room.matchType === "random") {
+    if (guestOf(room)) {
+      removeRandomQueueRoom(room.roomId);
+    } else if (role === "host" && !randomMatchQueue.includes(room.roomId)) {
+      randomMatchQueue.push(room.roomId);
+    }
+  }
   refreshWaitingRoomTimer(room);
+}
+
+function handleRandomMatch(ws, message) {
+  const clientId = String(message.clientId || "").slice(0, 80);
+  if (!clientId) {
+    sendError(ws, "clientId がありません。", "invalid_client");
+    return;
+  }
+
+  const waitingRoom = findRandomWaitingRoom(clientId);
+  if (waitingRoom) {
+    removeRandomQueueRoom(waitingRoom.roomId);
+    joinRoom(ws, {
+      ...message,
+      type: "joinRoom",
+      roomId: waitingRoom.roomId,
+      create: false,
+      matchType: "random"
+    });
+    return;
+  }
+
+  const roomId = createRandomRoomId();
+  joinRoom(ws, {
+    ...message,
+    type: "joinRoom",
+    roomId,
+    create: true,
+    roomSessionId: message.roomSessionId || createSessionId(),
+    matchType: "random"
+  });
+  pruneRandomMatchQueue();
 }
 
 function requireJoined(ws) {
@@ -921,6 +1009,7 @@ function handleDeckUpdate(ws, message) {
     senderId: SERVER_ID,
     roomId: room.roomId,
     roomSessionId: room.sessionId,
+    matchType: room.matchType || "private",
     you: null,
     players: roomPlayers(room),
     hasOpponent: true,
@@ -1112,6 +1201,9 @@ function routeMessage(ws, raw) {
     case "joinRoom":
       joinRoom(ws, message);
       break;
+    case "randomMatch":
+      handleRandomMatch(ws, message);
+      break;
     case "deckUpdate":
       handleDeckUpdate(ws, message);
       break;
@@ -1171,6 +1263,7 @@ wss.on("connection", (ws) => {
     if (!player || player.ws !== ws) return;
     room.players.delete(ws.clientId);
     room.updatedAt = now();
+    if (room.matchType === "random" && !guestOf(room)) removeRandomQueueRoom(room.roomId);
     refreshWaitingRoomTimer(room);
     if (player.role === "guest") {
       [...room.pendingCommands.entries()].forEach(([commandId, pending]) => {

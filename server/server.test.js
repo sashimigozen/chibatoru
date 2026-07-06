@@ -69,6 +69,25 @@ function connectClient(url, roomId, clientId, create = false) {
   });
 }
 
+function connectRandomClient(url, clientId) {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    const client = { ws, messages: [] };
+    const timer = setTimeout(() => reject(new Error(`random match timeout: ${clientId}`)), 4000);
+    ws.on("open", () => {
+      ws.send(JSON.stringify({ type: "randomMatch", protocol: 1, clientId }));
+    });
+    ws.on("message", (raw) => {
+      const message = JSON.parse(String(raw));
+      client.messages.push(message);
+      if (message.type !== "playerJoined" || message.you?.clientId !== clientId) return;
+      clearTimeout(timer);
+      resolve(client);
+    });
+    ws.once("error", reject);
+  });
+}
+
 function waitFor(client, predicate, fromIndex = 0, timeoutMs = 3000) {
   const existingIndex = client.messages.findIndex((message, index) => index >= fromIndex && predicate(message));
   if (existingIndex >= 0) return Promise.resolve({ message: client.messages[existingIndex], index: existingIndex });
@@ -137,6 +156,39 @@ function httpPost(port, pathname, password, body, contentType = "application/jso
     req.end();
   });
 }
+
+test("random match pairs waiting clients into one room", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const first = await connectRandomClient(url, "random-a");
+  clients.push(first);
+  const firstJoin = first.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-a");
+  assert.equal(firstJoin.you.role, "host");
+  assert.equal(firstJoin.matchType, "random");
+  assert.equal(firstJoin.hasOpponent, false);
+  assert.match(firstJoin.roomId, /^R[A-Z0-9]{6}$/);
+
+  const second = await connectRandomClient(url, "random-b");
+  clients.push(second);
+  const secondJoin = second.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-b");
+  assert.equal(secondJoin.you.role, "guest");
+  assert.equal(secondJoin.matchType, "random");
+  assert.equal(secondJoin.roomId, firstJoin.roomId);
+  assert.equal(secondJoin.hasOpponent, true);
+
+  const hostUpdate = await waitFor(first, (message) =>
+    message.type === "playerJoined"
+    && message.roomId === firstJoin.roomId
+    && message.players?.some((player) => player.clientId === "random-b" && player.role === "guest"));
+  assert.equal(hostUpdate.message.matchType, "random");
+});
 
 test("guest commands retry until the host confirms an authoritative snapshot", async (t) => {
   const port = await freePort();

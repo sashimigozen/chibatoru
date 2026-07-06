@@ -312,6 +312,46 @@
       align-items: start;
     }
 
+    .online-match-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .online-match-button {
+      display: grid;
+      gap: 6px;
+      min-height: 92px;
+      justify-items: start;
+      align-content: center;
+      text-align: left;
+      border: 2px solid #1f2937;
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff7ed;
+      color: #111827;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.1);
+      cursor: pointer;
+    }
+
+    .online-match-button.active {
+      background: #ecfeff;
+      border-color: #0891b2;
+      box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.16), 0 12px 28px rgba(15, 23, 42, 0.1);
+    }
+
+    .online-match-main {
+      font-size: 22px;
+      font-weight: 1000;
+    }
+
+    .online-match-sub {
+      color: #475569;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.35;
+    }
+
     .online-panel {
       display: grid;
       gap: 12px;
@@ -4469,6 +4509,7 @@
       }
 
       .online-actions,
+      .online-match-actions,
       .online-code-row,
       .online-ready-row {
         grid-template-columns: 1fr;
@@ -5162,14 +5203,24 @@
       <div class="screen-head">
         <div>
           <h1>オンラインバトル</h1>
-          <p class="subtitle">2人で対戦。3人目以降は両者の手札を見ながら観戦できます</p>
+          <p class="subtitle">ランダムに相手を探すか、部屋コードで友だちと対戦できます</p>
         </div>
         <button class="button secondary" id="onlineBackHomeButton" type="button">ホーム</button>
+      </div>
+      <div class="online-match-actions" aria-label="オンライン対戦モード">
+        <button class="online-match-button" id="onlineRandomMatchButton" type="button">
+          <span class="online-match-main">ランダムマッチ</span>
+          <span class="online-match-sub">マッチング中の相手と自動で対戦部屋に入ります</span>
+        </button>
+        <button class="online-match-button active" id="onlinePrivateMatchButton" type="button">
+          <span class="online-match-main">プライベートマッチ</span>
+          <span class="online-match-sub">部屋コードを作る、または入力して入室します</span>
+        </button>
       </div>
       <div class="online-layout">
         <section class="online-panel online-room-card">
           <div class="panel-head">
-            <h2>対戦部屋</h2>
+            <h2>プライベートマッチ</h2>
             <span class="small-info" id="onlineRoleText">未接続</span>
           </div>
           <div class="online-actions">
@@ -6037,6 +6088,7 @@
       },
       online: {
         screenStatus: "idle",
+        matchMode: "private",
         role: null,
         roomCode: "",
         roomSessionId: "",
@@ -6243,6 +6295,8 @@
       tutorialStartButton: document.getElementById("tutorialStartButton"),
       tutorialCardPreview: document.getElementById("tutorialCardPreview"),
       onlineBackHomeButton: document.getElementById("onlineBackHomeButton"),
+      onlineRandomMatchButton: document.getElementById("onlineRandomMatchButton"),
+      onlinePrivateMatchButton: document.getElementById("onlinePrivateMatchButton"),
       onlineCreateRoomButton: document.getElementById("onlineCreateRoomButton"),
       onlineJoinRoomButton: document.getElementById("onlineJoinRoomButton"),
       onlineLeaveRoomButton: document.getElementById("onlineLeaveRoomButton"),
@@ -7333,6 +7387,7 @@
       state.online.peer = null;
       state.online.conn = null;
       state.online.connToken += 1;
+      state.online.matchMode = "private";
       state.online.role = null;
       state.online.roomCode = "";
       state.online.roomSessionId = "";
@@ -7372,6 +7427,7 @@
       try { state.online.peer?.destroy(); } catch {}
       state.online.peer = null;
       state.online.conn = null;
+      state.online.matchMode = "private";
       state.online.role = null;
       state.online.roomCode = "";
       state.online.roomSessionId = "";
@@ -7396,6 +7452,7 @@
         return;
       }
       onlineCloseConnection(false);
+      state.online.matchMode = "private";
       SIDES.opponent = ONLINE_OPPONENT_LABEL;
       const roomCode = generateOnlineRoomCode();
       state.online.role = "host";
@@ -7420,6 +7477,7 @@
         return;
       }
       onlineCloseConnection(false);
+      state.online.matchMode = "private";
       SIDES.opponent = ONLINE_OPPONENT_LABEL;
       state.online.role = "guest";
       state.online.roomCode = roomCode;
@@ -7432,7 +7490,39 @@
       render();
     }
 
-    function onlineConnectRoom(createRoom) {
+    function onlineSelectPrivateMatch() {
+      if (state.online.role) return;
+      state.online.matchMode = "private";
+      onlineSetStatus("プライベートマッチは、部屋を作るか部屋コードを入力して入室してください。", "warn");
+      render();
+      elements.onlineRoomInput?.focus();
+    }
+
+    function onlineRandomMatch() {
+      if (typeof ChibatoruWebSocketClient === "undefined") {
+        onlineSetStatus("WebSocketクライアントを読み込めませんでした。", "bad");
+        return;
+      }
+      onlineCloseConnection(false);
+      SIDES.opponent = ONLINE_OPPONENT_LABEL;
+      state.online.matchMode = "random";
+      state.online.role = null;
+      state.online.roomCode = "";
+      state.online.roomSessionId = "";
+      state.online.remoteClientId = "";
+      state.online.localDeckCounts = createOnlineDeckCounts();
+      document.body.dataset.online = "";
+      onlineSetStatus("ランダムマッチ中です。相手を探しています。", "warn");
+      onlineConnectRoom(false, {
+        type: "randomMatch",
+        roomId: "",
+        roomSessionId: "",
+        matchType: "random"
+      });
+      render();
+    }
+
+    function onlineConnectRoom(createRoom, payloadOverrides = {}) {
       const previousConn = state.online.conn;
       const token = state.online.connToken + 1;
       state.online.connToken = token;
@@ -7476,9 +7566,11 @@
         roomId: state.online.roomCode,
         clientId: state.online.clientId,
         roomSessionId: state.online.roomSessionId || "",
+        matchType: state.online.matchMode || "private",
         deckName: state.online.localDeckName,
         deckCounts: createOnlineDeckCounts(),
-        ready: state.online.localReady
+        ready: state.online.localReady,
+        ...payloadOverrides
       });
     }
 
@@ -7486,6 +7578,8 @@
       if (!message || message.protocol !== ONLINE_PROTOCOL_VERSION) return;
       if (message.type === "playerJoined") {
         state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
+        state.online.roomCode = message.roomId || state.online.roomCode;
+        state.online.matchMode = message.matchType || state.online.matchMode || "private";
         const players = Array.isArray(message.players) ? message.players : [];
         const self = players.find((player) => player.clientId === state.online.clientId) || message.you;
         const host = players.find((player) => player.role === "host");
@@ -7508,10 +7602,14 @@
             ? "観戦者として入室しました。両者の手札を見ながら観戦できます。"
             : "観戦者として入室しました。対戦開始を待っています。", "good");
         } else if (state.online.connected) {
-          onlineSetStatus(isOnlineHost()
-            ? "相手が入室しました。デッキと準備OKを待っています。"
-            : "入室しました。デッキを選んで準備OKを押してください。", "good");
+          onlineSetStatus(state.online.matchMode === "random"
+            ? "ランダムマッチ成立。デッキを選んで準備OKを押してください。"
+            : (isOnlineHost()
+              ? "相手が入室しました。デッキと準備OKを待っています。"
+              : "入室しました。デッキを選んで準備OKを押してください。"), "good");
           if (isOnlineHost() && !state.online.started) onlineSendRoomState();
+        } else if (state.online.matchMode === "random") {
+          onlineSetStatus("ランダムマッチ中です。相手を探しています。", "warn");
         } else {
           onlineSetStatus("部屋を作りました。相手に部屋コードを伝えてください。", "good");
         }
@@ -14486,13 +14584,20 @@
       renderOnlineDeckOptions();
       const roleLabel = isOnlineHost() ? "ホスト" : isOnlineGuest() ? "ゲスト" : isOnlineSpectator() ? "観戦者" : "未接続";
       const spectator = isOnlineSpectator();
+      const randomMode = state.online.matchMode === "random";
       const localDeckName = deckNameForOnline(state.online.localDeckName);
       const localSize = deckSize(getOnlineDeckCountsByName(state.online.localDeckName));
       elements.onlineRoleText.textContent = roleLabel;
-      elements.onlineRoomCode.textContent = state.online.roomCode || "------";
+      elements.onlineRoomCode.textContent = randomMode
+        ? (state.online.connected ? "MATCH" : state.online.roomCode ? "検索中" : "------")
+        : (state.online.roomCode || "------");
       elements.onlineConnectionModeText.textContent = onlineConnectionModeDescription();
       elements.onlineRelayModeToggle.checked = state.online.relayMode;
       elements.onlineRelayModeToggle.disabled = Boolean(state.online.role);
+      elements.onlineRandomMatchButton.classList.toggle("active", randomMode);
+      elements.onlinePrivateMatchButton.classList.toggle("active", !randomMode);
+      elements.onlineRandomMatchButton.disabled = Boolean(state.online.role);
+      elements.onlinePrivateMatchButton.disabled = Boolean(state.online.role);
       elements.onlineServerUrlInput.value = elements.onlineServerUrlInput === document.activeElement
         ? elements.onlineServerUrlInput.value
         : getOnlineServerUrl();
@@ -14518,6 +14623,7 @@
       elements.onlineCreateRoomButton.disabled = Boolean(state.online.role);
       elements.onlineJoinRoomButton.disabled = Boolean(state.online.role);
       elements.onlineLeaveRoomButton.disabled = !state.online.role;
+      elements.onlineLeaveRoomButton.textContent = randomMode && state.online.role && !state.online.connected ? "キャンセル" : "退出";
       elements.onlineRoomInput.value = elements.onlineRoomInput === document.activeElement
         ? elements.onlineRoomInput.value
         : (state.online.roomCode || elements.onlineRoomInput.value);
@@ -17706,6 +17812,8 @@
     elements.tutorialNextButton.addEventListener("click", advanceTutorialTextStep);
     elements.tutorialExitButton.addEventListener("click", exitTutorialMode);
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.onlineRandomMatchButton.addEventListener("click", onlineRandomMatch);
+    elements.onlinePrivateMatchButton.addEventListener("click", onlineSelectPrivateMatch);
     elements.onlineCreateRoomButton.addEventListener("click", onlineCreateRoom);
     elements.onlineJoinRoomButton.addEventListener("click", onlineJoinRoom);
     elements.onlineLeaveRoomButton.addEventListener("click", () => onlineCloseConnection(false));
