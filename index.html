@@ -7861,9 +7861,22 @@
       onlineSend({ type: "startGame", snapshot: onlineCreateSnapshot() }, { track: true });
     }
 
+    function onlineCommandNeedsHostResolution(type, commandCard) {
+      return type === "endTurn"
+        || Boolean(commandCard?.evolutionFrom)
+        || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
+    }
+
+    function onlineCommandCard(type, payload = {}) {
+      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent"]
+        .includes(type)
+        ? getHandCard("player", payload.instanceId)
+        : null;
+    }
+
     function onlineSendCommand(type, payload = {}) {
       if (!onlineCanSendCommand()) return false;
-      const commandCard = type === "playCard" ? getHandCard("player", payload.instanceId) : null;
+      const commandCard = onlineCommandCard(type, payload);
       const command = {
         id: onlineNextMessageId("cmd"),
         type,
@@ -7872,7 +7885,7 @@
       };
       const messageType = type === "playCard" || type === "endTurn" ? type : "gameAction";
       const sent = onlineSend({ type: messageType, command }, { track: true });
-      if (sent && (type === "endTurn" || commandCard?.evolutionFrom)) {
+      if (sent && onlineCommandNeedsHostResolution(type, commandCard)) {
         state.online.pendingTurnCommandId = command.id;
         state.aiThinking = true;
       }
