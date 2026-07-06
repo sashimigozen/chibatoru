@@ -1189,6 +1189,17 @@
       scroll-behavior: auto;
     }
 
+    .player-hand.drop-ready,
+    .player-hand.drag-over {
+      outline: 2px solid rgba(37, 99, 235, 0.5);
+      outline-offset: -2px;
+      background: rgba(239, 246, 255, 0.82);
+    }
+
+    .player-hand.drop-ready {
+      outline-color: rgba(37, 99, 235, 0.24);
+    }
+
     .player-hand::-webkit-scrollbar {
       display: block;
       height: 12px;
@@ -9463,6 +9474,7 @@
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       hideBattleCardPreview();
+      clearTurnStartTemporarySeatBlocks(side);
       resolveDelayedDestruction(side);
       resolveHandTurnEffects(side);
       resolveLateZone(side);
@@ -10536,6 +10548,15 @@
         !(block.untilActionTurn <= state.actionTurn && block.untilSide === side));
       if (before !== state.temporarySeatBlocks.length) {
         addLog(`${SIDES[side]}の一時的な席ロックが解除されました。`);
+      }
+    }
+
+    function clearTurnStartTemporarySeatBlocks(side) {
+      const before = state.temporarySeatBlocks.length;
+      state.temporarySeatBlocks = state.temporarySeatBlocks.filter((block) =>
+        !(block.releaseAtTurnStartSide === side && block.releaseAtActionTurn <= state.actionTurn));
+      if (before !== state.temporarySeatBlocks.length) {
+        addLog(`${SIDES[side]}のターンが戻ってきたため、靴下ブロックの席ロックが解除されました。`);
       }
     }
 
@@ -13433,8 +13454,9 @@
           state.temporarySeatBlocks.push({
             owner: ref.owner,
             index: ref.index,
-            untilActionTurn: state.actionTurn + 2,
-            untilSide: ref.owner
+            releaseAtActionTurn: state.actionTurn + 2,
+            releaseAtTurnStartSide: side,
+            sourceBaseId: "sock_block"
           });
         });
         const movedText = trashDetailCountText(targetSide, moved, "靴下ブロックで校外へ送られたカード", "人");
@@ -15939,6 +15961,7 @@
         if (canDropHandCardOnLife(card, target.dataset.lifeTarget)) target.classList.add("drop-ready");
       });
       if (canDropHandCardOnPlaymat(card)) elements.playmat?.classList.add("drop-ready");
+      elements.playerHand?.classList.add("drop-ready");
     }
 
     function renderHands() {
@@ -16446,6 +16469,15 @@
           continue;
         }
 
+        const hand = element.closest?.(".player-hand");
+        if (hand && activeHandDrag?.instanceId) {
+          return {
+            type: "hand",
+            element: hand,
+            valid: true
+          };
+        }
+
         const playmat = element.closest?.(".playmat");
         if (playmat) {
           const candidate = {
@@ -16471,6 +16503,10 @@
         target.element.classList.toggle("invalid", Boolean(card && !target.valid));
         return;
       }
+      if (target.type === "hand") {
+        target.element.classList.add("drag-over");
+        return;
+      }
       if (target.valid) target.element.classList.add("drag-over");
       else if (card && target.type !== "playmat") target.element.classList.add("invalid");
     }
@@ -16482,7 +16518,16 @@
       if (target.type === "slot") return performHandDropOnSlot(instanceId, target.zone, target.owner, target.index);
       if (target.type === "life") return performHandDropOnLife(instanceId, target.targetSide);
       if (target.type === "playmat") return performHandDropOnPlaymat(instanceId);
+      if (target.type === "hand") return cancelHandDropToHand();
       return false;
+    }
+
+    function cancelHandDropToHand() {
+      closeItemConfirm();
+      clearSelections();
+      state.message = "手札に戻したため、カードの使用をキャンセルしました。";
+      render();
+      return true;
     }
 
     function finishHandDrag() {
@@ -16657,11 +16702,14 @@
         if (!target) return;
         const slot = target.closest(".slot");
         const life = target.closest("[data-life-target]");
+        const hand = target.closest(".player-hand");
         const valid = slot
           ? canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, slot.dataset.index === "" ? null : Number(slot.dataset.index))
           : life
             ? canDropHandCardOnLife(card, life.dataset.lifeTarget)
-            : Boolean(target.closest(".playmat") && canDropHandCardOnPlaymat(card));
+            : hand
+              ? true
+              : Boolean(target.closest(".playmat") && canDropHandCardOnPlaymat(card));
         if (valid) event.preventDefault();
       };
       document.ondrop = (event) => {
