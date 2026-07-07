@@ -11561,16 +11561,18 @@
       return canPlaceCard("player", card, zone, owner, index);
     }
 
-    function findEvolveTarget(side, card, owner = side, zone = null, index = null) {
+    function findEvolveTarget(side, card, owner = side, zone = null, index = null, options = {}) {
+      const allowSameTurnEvolution = Boolean(options.allowSameTurnEvolution);
       const refs = listBoardRefs(owner).filter((ref) => zone === null || (ref.zone === zone && ref.index === index));
       return refs.find((ref) => {
         const target = getBoardCardFromRef(ref);
-        return target?.baseId === card.evolutionFrom && target.playedOnTurn < state.actionTurn;
+        return target?.baseId === card.evolutionFrom
+          && (allowSameTurnEvolution || target.playedOnTurn < state.actionTurn);
       }) || null;
     }
 
     function evolveCard(side, card, owner, zone, index, options = {}) {
-      const target = findEvolveTarget(side, card, owner, zone, index);
+      const target = findEvolveTarget(side, card, owner, zone, index, options);
       if (!target) return false;
       const previous = getBoardCardFromRef(target);
       const evolved = makeBoardCard(card);
@@ -13664,7 +13666,9 @@
     }
 
     function findDonguriEvolutionTarget(side) {
-      return findEvolveTarget(side, { evolutionFrom: "bird_a" }, side);
+      return findEvolveTarget(side, { evolutionFrom: "bird_a" }, side, null, null, {
+        allowSameTurnEvolution: true
+      });
     }
 
     function canUseDonguri(side, item = null) {
@@ -13698,6 +13702,7 @@
       );
       moveToTrash(side, extraDonguri, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
       return evolveCard(side, evolutionCard, side, target.zone, target.index, {
+        allowSameTurnEvolution: true,
         commandId: options.commandId || "",
         effectDelayMs: DONGURI_EVOLUTION_REVEAL_MS,
         skipEvolutionAnimation: true
@@ -18182,7 +18187,7 @@
         substitute_attendance: "遅刻ゾーンにいるカード1枚をランダムに指名し、そのカードの遅刻カウントを0にする。",
         music_detergent: "自分のデッキから「デザイン」と名のつく教師カードを1種類ずつ表示し、その中から1枚を選び、手札に加える。その後、自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
         music_draw_option: "自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
-        donguri: "このカードは、自分の手札に「どんぐり」が2枚あり、さらに「デザインデストロイファルコン」がある場合にのみ使える。自分の手札から「デザインデストロイファルコン」1枚を選び、自分の場の「デザインファルコン」1人を進化させる。この効果で進化する場合、進化のための戦意は消費しない。",
+        donguri: "このカードは、自分の手札に「どんぐり」が2枚あり、さらに「デザインデストロイファルコン」がある場合にのみ使える。自分の手札から「デザインデストロイファルコン」1枚を選び、自分の場の「デザインファルコン」1人を進化させる。この効果で進化する場合、進化のための戦意は消費せず、進化元を出席させたターンでも進化できる。",
         smart_me: "相手の遅刻ゾーンにいる学生1人をランダムに指名し、そのカードを校外エリアへ送る。",
         greeting_3000: "自分の校外エリアにある「U太」と「裏U太」の合計人数分、相手本体にダメージを与える。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
