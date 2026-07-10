@@ -1055,8 +1055,8 @@
     }
 
     .slot.invalid {
-      border-color: #dc2626;
-      background: #fee2e2;
+      border-color: #94a3b8;
+      background: #f1f5f9;
     }
 
     .slot.blocked {
@@ -1115,35 +1115,16 @@
 
     .field-card.attack-target-ready,
     .life-target.attack-target-ready {
-      border-color: #0ea5e9;
-      outline: 3px solid rgba(14, 165, 233, 0.28);
-      outline-offset: 2px;
-      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.16), 0 0 18px rgba(14, 165, 233, 0.34);
-      animation: attackTargetPulse 1.15s ease-in-out infinite;
+      /* 対象候補の段階では枠を出さず、実際の攻撃演出だけで強調する。 */
     }
 
     .field-card.attack-target-ready::after,
     .life-target.attack-target-ready::after {
-      content: "攻撃対象";
-      position: absolute;
-      right: 4px;
-      top: -10px;
-      z-index: 3;
-      border: 1px solid rgba(14, 165, 233, 0.45);
-      border-radius: 999px;
-      padding: 1px 5px;
-      background: #e0f2fe;
-      color: #075985;
-      font-size: 8px;
-      font-weight: 1000;
-      line-height: 1.2;
-      box-shadow: 0 4px 10px rgba(14, 165, 233, 0.2);
-      pointer-events: none;
+      content: none;
     }
 
     .life-target.attack-target-ready {
-      position: relative;
-      transform: translateY(-1px);
+      transform: none;
     }
 
     @keyframes attackTargetPulse {
@@ -1395,8 +1376,7 @@
     }
 
     .field-card.attack-ready {
-      border-color: rgba(37, 99, 235, 0.78);
-      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14), 0 0 14px rgba(37, 99, 235, 0.22);
+      /* 攻撃可能であることだけでは、盤面に枠を出さない。 */
     }
 
     .field-card.exhausted {
@@ -1478,6 +1458,54 @@
       font-weight: 1000;
       line-height: 1;
       white-space: nowrap;
+    }
+
+    .status-icons {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .status-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 14px;
+      height: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.14);
+      border-radius: 999px;
+      padding: 0 3px;
+      background: rgba(255, 255, 255, 0.9);
+      color: #334155;
+      font-size: 8px;
+      font-weight: 1000;
+      line-height: 1;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+    }
+
+    .field-card-status.status-icons {
+      background: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    .card-status.status-icons {
+      background: transparent;
+    }
+
+    .board-card.attack-focus-attacker {
+      z-index: 8;
+      outline: 3px solid rgba(245, 158, 11, 0.86);
+      box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.18), 0 16px 28px rgba(15, 23, 42, 0.22);
+      transform: scale(1.07);
+    }
+
+    .board-card.attack-focus-target {
+      z-index: 7;
+      outline: 3px solid rgba(14, 165, 233, 0.78);
+      box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.16), 0 16px 28px rgba(15, 23, 42, 0.22);
+      transform: scale(1.06);
     }
 
     .environment-card {
@@ -4011,8 +4039,8 @@
     }
 
     .slot.invalid {
-      border-color: var(--danger);
-      background: #fee2e2;
+      border-color: #94a3b8;
+      background: #f1f5f9;
     }
 
     .hand {
@@ -5803,7 +5831,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.11.0";
+    const GAME_DATA_VERSION = "0.11.1";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -6223,6 +6251,7 @@
       mulliganDrawRemaining: 0,
       selectedHandId: null,
       selectedAttacker: null,
+      attackFocus: null,
       pendingItemConfirmId: null,
       pendingMultiItem: null,
       pendingPanpanItem: null,
@@ -6671,8 +6700,6 @@
       designTextbookUntilTurn: 0,
       lifeShieldUntilTurn: 0,
       lifeShieldUntilSide: null,
-      sageLegacyDrawTurn: null,
-      sageLegacyDrawCount: 0,
       board: { seats: Array(9).fill(null), teacher: null }
       };
     }
@@ -8423,6 +8450,9 @@
       }
       snapshotState.selectedHandId = null;
       snapshotState.selectedAttacker = null;
+      // 攻撃の強調表示は各画面だけで完結する短い演出。同期すると受信側では解除タイマーを
+      // 持たず、赤枠が残り続けるため、対戦状態には含めない。
+      snapshotState.attackFocus = null;
       snapshotState.pendingItemConfirmId = null;
       snapshotState.pendingMultiItem = null;
       snapshotState.pendingPanpanItem = null;
@@ -9077,6 +9107,7 @@
       state.mulliganDrawRemaining = 0;
       state.selectedHandId = null;
       state.selectedAttacker = null;
+      state.attackFocus = null;
       state.pendingItemConfirmId = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
@@ -9504,16 +9535,7 @@
       resolveOpponentTurnStartEffects(side);
       if (state.gameOver) return;
       if (!drawOne(side, true)) return;
-      let extraDrawText = "";
-      if (player.sageLegacyDrawTurn === player.turnsTaken) {
-        const drawCount = Math.max(0, Number(player.sageLegacyDrawCount) || 2);
-        const extraDrawn = drawUpTo(side, drawCount);
-        player.sageLegacyDrawTurn = null;
-        player.sageLegacyDrawCount = 0;
-        extraDrawText = ` 賢者の遺産で${extraDrawn}枚ドロー。`;
-        addLog(`賢者の遺産の効果：${SIDES[side]}は${extraDrawn}枚ドローしました。`);
-      }
-      const drawText = `1枚ドロー。${extraDrawText}`;
+      const drawText = "1枚ドロー。";
       state.message = `${turnLabel(side)} ${SIDES[side]}。戦意${player.will}/${player.maxWill}、${drawText}`;
       addLog(`${turnLabel(side)} ${SIDES[side]}開始。戦意${player.will}/${player.maxWill}、${drawText}`);
       analyticsRecordTurnStart(side);
@@ -10348,64 +10370,27 @@
         && state.players[side].hand.length > 0;
     }
 
+    function settleEndTurnStep() {
+      cleanupDestroyedCards();
+      applyBoardAuras();
+    }
+
     function resolveEndTurnEffects(side, options = {}) {
-      const opponent = oppositeSide(side);
+      resolveItemEndTurnEffects(side);
+      settleEndTurnStep();
+      resolveLectureEndTurnEffect(side);
+      settleEndTurnStep();
+      resolveTeacherEndTurnEffects(side);
+      settleEndTurnStep();
+      resolveStudentEndTurnEffects(side);
+      settleEndTurnStep();
+      resolveEnvironmentEndTurnEffects(side, options);
+      settleEndTurnStep();
+    }
+
+    function resolveItemEndTurnEffects(side) {
       clearExpiredTemporarySeatBlocks(side);
-      const teacher = state.players[side].board.teacher;
-      if (teacher && teacher.type === "teacher") {
-        const lectureTargetTypes = teacher.baseId === "lightning_n" ? ["vampire"] : ["student"];
-        const lectureTargetLabel = teacher.baseId === "lightning_n" ? "ヴァンパイア" : "学生";
-        const onDemandProtectsStudents = state.environment?.baseId === "on_demand_business";
-        let affected = 0;
-        listBoardRefs(opponent).forEach((ref) => {
-          const card = getBoardCardFromRef(ref);
-          if (onDemandProtectsStudents && card?.type === "student") return;
-          if (card && lectureTargetTypes.includes(card.type)) {
-            dealDamageToCard(card, 1, teacher, { ignoreWeakness: teacher.baseId === "lightning_n" });
-            affected += 1;
-          }
-        });
-        const onDemandText = onDemandProtectsStudents && lectureTargetTypes.includes("student")
-          ? " オンデマンド授業により、学生は講義を受けません。"
-          : "";
-        addLog(`${teacher.name}の講義：相手の${lectureTargetLabel}${affected}人に1ダメージ。${onDemandText}`);
-      }
       resolveHandEndTurnEffects(side);
-      listBoardRefs(side).forEach((ref) => {
-        const card = getBoardCardFromRef(ref);
-        if (!card) return;
-        if (hasKeyword(card, "余裕")) {
-          const before = card.currentHp;
-          healCard(card, 2);
-          const healed = card.currentHp - before;
-          if (healed > 0) addLog(`${card.name}の余裕：体力を${healed}回復しました。`);
-        }
-        if (card.baseId === "laughing_front_student") {
-          healPlayer(side, 1);
-          listBoardRefs(side).forEach((teacherRef) => {
-            const teacherCard = getBoardCardFromRef(teacherRef);
-            if (teacherCard && teacherCard.type === "teacher") healCard(teacherCard, 1);
-          });
-          addLog(`${card.name}の効果：自分と教師を1回復。`);
-        }
-      });
-      if (state.environment?.baseId === "cafeteria") {
-        healPlayer(side, 1);
-        addLog(`食堂の効果：${SIDES[side]}が1回復。`);
-      }
-      if (state.environment?.baseId === "night_pool") {
-        summonToRandomOpenSeat(side, "single_cell", "ナイトプール");
-      }
-      if (state.environment?.baseId === "meguro_library" && state.environment.owner === side) {
-        const discarded = discardOneHandCardForMeguro(side, options.meguroDiscardId);
-        if (discarded) {
-          addLog(`目黒区図書館の効果：${SIDES[side]}は手札1枚を校外エリアへ送りました。`);
-        } else {
-          addLog("目黒区図書館の効果：手札がないため校外エリアへ送れませんでした。");
-        }
-      }
-      resolveDormCouncilEndTurnDraw(side);
-      resolveCouncilEnvironmentCycle(side);
       listBoardRefs(side).forEach((ref) => {
         const card = getBoardCardFromRef(ref);
         if (card?.yutaAccelerate) {
@@ -10424,6 +10409,55 @@
           }
         });
       });
+      resolveAbyssEffect(side);
+    }
+
+    function resolveLectureEndTurnEffect(side) {
+      const opponent = oppositeSide(side);
+      const teacher = state.players[side].board.teacher;
+      if (!teacher || teacher.type !== "teacher") return;
+      const lectureTargetTypes = teacher.baseId === "lightning_n" ? ["vampire"] : ["student"];
+      const lectureTargetLabel = teacher.baseId === "lightning_n" ? "ヴァンパイア" : "学生";
+      const onDemandProtectsStudents = state.environment?.baseId === "on_demand_business";
+      let affected = 0;
+      listBoardRefs(opponent).forEach((ref) => {
+        const card = getBoardCardFromRef(ref);
+        if (onDemandProtectsStudents && card?.type === "student") return;
+        if (card && lectureTargetTypes.includes(card.type)) {
+          dealDamageToCard(card, 1, teacher, { ignoreWeakness: teacher.baseId === "lightning_n" });
+          affected += 1;
+        }
+      });
+      const onDemandText = onDemandProtectsStudents && lectureTargetTypes.includes("student")
+        ? " オンデマンド授業により、学生は講義を受けません。"
+        : "";
+      addLog(`${teacher.name}の講義：相手の${lectureTargetLabel}${affected}人に1ダメージ。${onDemandText}`);
+    }
+
+    function resolveTeacherEndTurnEffects(_side) {
+      // 現時点では「講義」と分けて処理する教師の終了時効果はない。
+    }
+
+    function resolveStudentEndTurnEffects(side) {
+      const opponent = oppositeSide(side);
+      listBoardRefs(side).forEach((ref) => {
+        const card = getBoardCardFromRef(ref);
+        if (!card) return;
+        if (hasKeyword(card, "余裕")) {
+          const before = card.currentHp;
+          healCard(card, 2);
+          const healed = card.currentHp - before;
+          if (healed > 0) addLog(`${card.name}の余裕：体力を${healed}回復しました。`);
+        }
+        if (card.baseId === "laughing_front_student") {
+          healPlayer(side, 1);
+          listBoardRefs(side).forEach((teacherRef) => {
+            const teacherCard = getBoardCardFromRef(teacherRef);
+            if (teacherCard && teacherCard.type === "teacher") healCard(teacherCard, 1);
+          });
+          addLog(`${card.name}の効果：自分と教師を1回復。`);
+        }
+      });
       listBoardRefs(side).forEach((ref) => {
         const card = getBoardCardFromRef(ref);
         if (card?.baseId !== "cynical_student") return;
@@ -10432,7 +10466,26 @@
       });
       resolveBestFriendEndTurnEffect(side);
       resolveAggroStudentEffects(side);
-      resolveAbyssEffect(side);
+    }
+
+    function resolveEnvironmentEndTurnEffects(side, options = {}) {
+      if (state.environment?.baseId === "cafeteria") {
+        healPlayer(side, 1);
+        addLog(`食堂の効果：${SIDES[side]}が1回復。`);
+      }
+      if (state.environment?.baseId === "night_pool") {
+        summonToRandomOpenSeat(side, "single_cell", "ナイトプール");
+      }
+      if (state.environment?.baseId === "meguro_library" && state.environment.owner === side) {
+        const discarded = discardOneHandCardForMeguro(side, options.meguroDiscardId);
+        if (discarded) {
+          addLog(`目黒区図書館の効果：${SIDES[side]}は手札1枚を校外エリアへ送りました。`);
+        } else {
+          addLog("目黒区図書館の効果：手札がないため校外エリアへ送れませんでした。");
+        }
+      }
+      resolveDormCouncilEndTurnDraw(side);
+      resolveCouncilEnvironmentCycle(side);
     }
 
     function resolveDormCouncilEndTurnDraw(side) {
@@ -11227,20 +11280,20 @@
       });
     }
 
-    function isSecondPlayerFirstTurn(side) {
+    function isSageLegacyTurn(side) {
       return state.phase === "battle"
         && side !== state.firstSide
-        && state.players[side]?.turnsTaken === 1;
+        && [1, 7].includes(state.players[side]?.turnsTaken);
     }
 
     function canUseSageLegacy(side) {
-      return isSecondPlayerFirstTurn(side) && state.players[side]?.deck.length > 0;
+      return isSageLegacyTurn(side) && state.players[side]?.deck.length > 0;
     }
 
     function openSageLegacyChoice(item) {
       if (!item || item.baseId !== "sage_legacy") return false;
       if (!canUseSageLegacy("player")) {
-        addLog("賢者の遺産は後攻1ターン目にしか使えません。");
+        addLog("賢者の遺産は後攻1ターン目または後攻7ターン目にしか使えません。");
         render();
         return true;
       }
@@ -11479,7 +11532,7 @@
       if (!item || item.baseId !== "sage_legacy") return false;
       const player = state.players[side];
       if (!canUseSageLegacy(side)) {
-        addLog("賢者の遺産は後攻1ターン目にしか使えません。");
+        addLog("賢者の遺産は後攻1ターン目または後攻7ターン目にしか使えません。");
         if (renderAfter) render();
         return false;
       }
@@ -11502,10 +11555,8 @@
         queueAnimation("draw", side, 1);
         pickedName = picked.name;
       }
-      player.sageLegacyDrawTurn = 6;
-      player.sageLegacyDrawCount = (player.sageLegacyDrawCount || 0) + 2;
       moveHandCardToTrash(side, item);
-      addLog(`${SIDES[side]}は賢者の遺産を使い、デッキから${pickedName}を手札に加えました。後攻6ターン目に2枚ドローします。`);
+      addLog(`${SIDES[side]}は賢者の遺産を使い、デッキから${pickedName}を手札に加えました。`);
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
       clearSelections();
@@ -12892,6 +12943,7 @@
       pushTutorialHistoryBeforeAction("attackCard", { attacker, target });
       if (attacker.owner === "player") pushTestHistoryBeforeAction();
       attacker.hasAttacked = true;
+      flashAttackFocus({ ...state.selectedAttacker }, { owner: targetOwner, zone: targetZone, index: targetIndex });
       if (attackMissesFromDrowsiness(attacker)) {
         addLog(`${attacker.name}は眠気で攻撃を外しました。`);
         clearSelections();
@@ -16806,7 +16858,7 @@
       if (!target) return;
       if (target.type === "slot") {
         target.element.classList.toggle("drag-over", target.valid);
-        target.element.classList.toggle("invalid", Boolean(card && !target.valid));
+        target.element.classList.remove("invalid");
         return;
       }
       if (target.type === "hand") {
@@ -16814,7 +16866,6 @@
         return;
       }
       if (target.valid) target.element.classList.add("drag-over");
-      else if (card && target.type !== "playmat") target.element.classList.add("invalid");
     }
 
     function handleHandDropAtPoint(instanceId, x, y) {
@@ -17048,7 +17099,7 @@
         const valid = canDropHandCardOnSlot(card, zone, owner, index);
         if (valid) event.preventDefault();
         slot.classList.toggle("drag-over", valid);
-        slot.classList.toggle("invalid", Boolean(card && !valid));
+        slot.classList.remove("invalid");
       };
       slot.ondragleave = () => slot.classList.remove("drag-over", "invalid");
       slot.ondrop = (event) => {
@@ -17103,8 +17154,10 @@
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
         isSelectedAttacker(owner, zone, index) || isSelectedMultiItemTarget(owner, zone, index) || isSelectedPanpanTarget(owner, zone, index));
+      button.classList.toggle("attack-focus-attacker", isAttackFocusRef(owner, zone, index, "attacker"));
+      button.classList.toggle("attack-focus-target", isAttackFocusRef(owner, zone, index, "target"));
       button.classList.toggle("exhausted", Boolean(card.hasAttacked));
-      button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気"));
+      button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
       button.classList.toggle("attack-target-ready", canSelectedAttackerTargetCard(owner, zone, index));
       button.classList.toggle("tutorial-allowed-target", isTutorialActive() && (
@@ -17145,6 +17198,31 @@
         && state.selectedAttacker.index === index;
     }
 
+    function boardRefsMatch(ref, owner, zone, index) {
+      return ref
+        && ref.owner === owner
+        && ref.zone === zone
+        && ref.index === index;
+    }
+
+    function isAttackFocusRef(owner, zone, index, role) {
+      return boardRefsMatch(state.attackFocus?.[role], owner, zone, index);
+    }
+
+    function flashAttackFocus(attackerRef, targetRef) {
+      const token = `${Date.now()}-${Math.random()}`;
+      state.attackFocus = {
+        token,
+        attacker: { ...attackerRef },
+        target: { ...targetRef }
+      };
+      window.setTimeout(() => {
+        if (state.attackFocus?.token !== token) return;
+        state.attackFocus = null;
+        render();
+      }, 950);
+    }
+
     function isSelectedMultiItemTarget(owner, zone, index) {
       return Boolean(state.pendingMultiItem?.targets.some((ref) =>
         ref.owner === owner && ref.zone === zone && ref.index === index));
@@ -17159,17 +17237,18 @@
 
     function cardTemplate(card, boardCard) {
       const statusParts = [];
-      if (boardCard && card.hasAttacked) statusParts.push("済");
-      if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) statusParts.push("酔");
-      if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push("止");
-      if (boardCard && isSameNameAttackLocked(card)) statusParts.push("止");
-      if (hasKeyword(card, "陽気")) statusParts.push("陽");
-      if (hasKeyword(card, "超注目")) statusParts.push("超注");
-      else if (hasKeyword(card, "注目")) statusParts.push("注");
-      if (hasKeyword(card, "眠気")) statusParts.push("眠");
-      if (boardCard && card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push("予");
-      if (card.late) statusParts.push(`遅${card.late}`);
-      const status = statusParts.length ? `<div class="card-status">${escapeHtml(statusParts.join("/"))}</div>` : "";
+      if (boardCard && card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
+      if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
+      if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
+      if (boardCard && isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
+      if (hasKeyword(card, "超陽気")) statusParts.push({ icon: "陽+", title: "超陽気" });
+      else if (hasKeyword(card, "陽気")) statusParts.push({ icon: "陽", title: "陽気" });
+      if (hasKeyword(card, "超注目")) statusParts.push({ icon: "注+", title: "超注目" });
+      else if (hasKeyword(card, "注目")) statusParts.push({ icon: "注", title: "注目" });
+      if (hasKeyword(card, "眠気")) statusParts.push({ icon: "眠", title: "眠気" });
+      if (boardCard && card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push({ icon: "予", title: "破壊予約" });
+      if (card.late) statusParts.push({ icon: `遅${card.late}`, title: `遅刻${card.late}` });
+      const status = statusParts.length ? `<div class="card-status status-icons">${statusIconHtml(statusParts)}</div>` : "";
       const privateVictoryCount = visibleCrabVictoryCount(card, boardCard);
       const privateCounter = privateVictoryCount > 0
         ? `<div class="private-victory-count">🦀${privateVictoryCount}</div>`
@@ -17218,16 +17297,17 @@
 
     function fieldCardTemplate(card) {
       const statusParts = [];
-      if (card.hasAttacked) statusParts.push("済");
-      if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) statusParts.push("酔");
-      if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push("止");
-      if (isSameNameAttackLocked(card)) statusParts.push("止");
-      if (hasKeyword(card, "陽気")) statusParts.push("陽");
-      if (hasKeyword(card, "超注目")) statusParts.push("超注");
-      else if (hasKeyword(card, "注目")) statusParts.push("注");
-      if (hasKeyword(card, "眠気")) statusParts.push("眠");
-      if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push("予");
-      const status = statusParts.length ? `<span class="field-card-status">${escapeHtml(statusParts.join("/"))}</span>` : "";
+      if (card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
+      if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
+      if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
+      if (isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
+      if (hasKeyword(card, "超陽気")) statusParts.push({ icon: "陽+", title: "超陽気" });
+      else if (hasKeyword(card, "陽気")) statusParts.push({ icon: "陽", title: "陽気" });
+      if (hasKeyword(card, "超注目")) statusParts.push({ icon: "注+", title: "超注目" });
+      else if (hasKeyword(card, "注目")) statusParts.push({ icon: "注", title: "注目" });
+      if (hasKeyword(card, "眠気")) statusParts.push({ icon: "眠", title: "眠気" });
+      if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push({ icon: "予", title: "破壊予約" });
+      const status = statusParts.length ? `<span class="field-card-status status-icons">${statusIconHtml(statusParts)}</span>` : "";
       const hasStats = card.type !== "environment" && card.type !== "item";
       const typeLabel = card.type === "environment" ? `<span class="field-card-type">${escapeHtml(labelForType(card.type))}</span>` : "";
       const stats = hasStats
@@ -17238,6 +17318,12 @@
         ${stats}
         ${status}
       `;
+    }
+
+    function statusIconHtml(statusParts) {
+      return statusParts
+        .map((part) => `<span class="status-icon" title="${escapeHtml(part.title)}">${escapeHtml(part.icon)}</span>`)
+        .join("");
     }
 
     function cardShellTemplate(card, extraClass = "") {
@@ -17707,6 +17793,7 @@
       state.currentSide = "player";
       state.selectedHandId = null;
       state.selectedAttacker = null;
+      state.attackFocus = null;
       state.pendingItemConfirmId = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
@@ -17984,6 +18071,7 @@
       state.currentSide = "player";
       state.selectedHandId = null;
       state.selectedAttacker = null;
+      state.attackFocus = null;
       state.pendingItemConfirmId = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
@@ -18482,7 +18570,7 @@
         abyss: "使用後2回、自分のターン終了時に相手の出席者1人をランダムに破壊する。",
         dropped_cards: "自分のデッキから2枚を選び、校外エリアへ送る。",
         set_log: "自分の学生1人を指名する。その学生は陽気を持つ。",
-        sage_legacy: "後攻1ターン目にのみ使用できる。自分のデッキからカード1枚を選び、手札に加える。後攻6ターン目、自分はデッキを上から2枚引く。",
+        sage_legacy: "後攻1ターン目または後攻7ターン目にのみ使用できる。自分のデッキからカード1枚を選び、手札に加える。",
         reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は発動しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。",
