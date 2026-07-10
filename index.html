@@ -5803,7 +5803,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.8.0";
+    const GAME_DATA_VERSION = "0.11.0";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -5833,7 +5833,7 @@
       "handy_jet_engine", "i_got_it", "quiet_please", "vampirization", "panpan",
       "favorite_number_s", "namen_tenno", "sock_block", "capture", "abyss", "donguri",
       "night_pool_water", "substitute_attendance", "greeting_3000", "dos_attack",
-      "destroy_dos_attack", "dropped_cards", "thanks_all_students", "yakiniku",
+      "destroy_dos_attack", "dropped_cards", "set_log", "sage_legacy", "thanks_all_students", "yakiniku",
       "dont_worry", "gamma"
     ]);
     const PLAY_REVEAL_MS = 1450;
@@ -5934,13 +5934,18 @@
       greeting_3000: ["yuta", "dark_yuta"],
       failure_student: ["general_student", "ruler"],
       success_student: ["failure_student", "general_student", "ruler"],
-      bounce_day: []
+      bounce_day: [],
+      yocchan: ["set_log"],
+      trendy_student: [],
+      rebirth_student: [],
+      set_log: ["general_student"],
+      sage_legacy: ["onigiri_draw"]
     };
     const ALL_DECK_IDS = [
       "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "fridge_thief",
-      "failure_student", "success_student", "bounce_day", "lone_wolf", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
+      "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
       "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
       "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire",
@@ -5948,7 +5953,7 @@
       "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi",
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture",
-      "paired_existence", "peaceful_mind", "abyss", "dropped_cards", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
+      "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
       "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
       "classroom", "cafeteria", "night_pool", "gangi_fortress", "seat_rules", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur"
     ];
@@ -5962,7 +5967,7 @@
       "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
       "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
-      "dropped_cards", "reversal", "dont_worry", "yutakun_yutakun",
+      "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun",
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo", "chigauyo_kanji",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
@@ -5991,7 +5996,7 @@
       cancel_student: { name: "ドタキャン学生", type: "student", cost: 3, attack: 3, hp: 3, late: 2, allowedZones: ["seat", "teacher"] },
       laughing_front_student: { name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 2, hp: 2, rowOnly: 1, allowedZones: ["seat"] },
       eaten_student: { name: "飯を食ってきた学生", type: "student", cost: 4, attack: 3, hp: 1, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
-      loud_student: { name: "バカでかい声の学生", type: "student", cost: 8, attack: 7, hp: 9, keywords: ["陽気"], allowedZones: ["seat"] },
+      loud_student: { name: "バカでかい声の学生", type: "student", cost: 8, attack: 7, hp: 9, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       best_friend: { name: "ベストフレンド", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"] },
       ttb: { name: "TTB", type: "student", cost: 5, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       predator: { name: "捕食者", type: "student", cost: 5, attack: 5, hp: 5, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
@@ -6012,6 +6017,9 @@
       failure_student: { name: "何をやってもダメな学生", type: "student", cost: 3, attack: 0, hp: 3, allowedZones: ["seat", "teacher"] },
       success_student: { name: "何をやっても成功する学生", type: "student", cost: 0, attack: 2, hp: 4, evolutionFrom: "failure_student", allowedZones: ["evolution"] },
       bounce_day: { name: "バウンスディ", type: "student", cost: 3, attack: 1, hp: 3, allowedZones: ["seat", "teacher"] },
+      yocchan: { name: "よっちゃん", type: "student", cost: 4, attack: 0, hp: 1, allowedZones: ["seat", "teacher"] },
+      trendy_student: { name: "ミーハー学生", type: "student", cost: 4, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+      rebirth_student: { name: "再\"履\"生", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       lone_wolf: { name: "狼(いっぴきおおかみ)", type: "student", cost: 5, attack: 2, hp: 2, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
       general_teacher: { name: "一般教師", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
       pro_k: { name: "プロ言の長", type: "teacher", cost: 5, attack: 2, hp: 2, allowedZones: ["teacher"] },
@@ -6050,11 +6058,11 @@
       handmade_ctoc: { name: "お手製C to C", type: "item", cost: 2, target: "anyBoard" },
       onigiri_draw: { name: "おにぎりドロー", type: "item", cost: 3, target: "self" },
       hondara: { name: "ほんだら", type: "item", cost: 1, target: "self" },
-      fire_touch: { name: "火に触れてしまう", type: "item", cost: 4, target: "self" },
+      fire_touch: { name: "火に触れてしまう", type: "item", cost: 3, target: "self" },
       thin_item: { name: "細い", type: "item", cost: 4, target: "self" },
       sock_block: { name: "靴下ブロック", type: "item", cost: 4, target: "self" },
       go_home: { name: "帰っていいぞ", type: "item", cost: 3, target: "friendlyAny" },
-      deck_without: { name: "〇〇デッキ〇〇抜き", type: "item", cost: 4, target: "self" },
+      deck_without: { name: "〇〇デッキ〇〇抜き", type: "item", cost: 3, target: "self" },
       handy_jet_engine: { name: "ハンディジェットエンジン", type: "item", cost: 3, target: "self" },
       dos_attack: { name: "Dos攻撃", type: "item", cost: 3, target: "self" },
       destroy_dos_attack: { name: "デストロイDos攻撃", type: "item", cost: 5, target: "self" },
@@ -6086,18 +6094,20 @@
       peaceful_mind: { name: "心安らか", type: "item", cost: 2, target: "self" },
       abyss: { name: "深淵", type: "item", cost: 6, target: "global" },
       dropped_cards: { name: "カードを落としてしまったのですが", type: "item", cost: 3, target: "self" },
+      set_log: { name: "セットするログ", type: "item", cost: 2, target: "friendlyAny" },
+      sage_legacy: { name: "賢者の遺産", type: "item", cost: 1, target: "self" },
       reversal: { name: "逆行", type: "item", cost: 4, target: "self" },
       dont_worry: { name: "気にするな", type: "item", cost: 2, target: "self" },
       namen_tenno: { name: "なめてるの？", type: "item", cost: 0, noCost: true, target: "enemy" },
       panpan: { name: "パンパン", type: "item", cost: 2, target: "enemyPair" },
       capture: { name: "キャプチャー", type: "item", cost: 3, target: "enemySlot" },
       yutakun_yutakun: { name: "U太くんU太くん", type: "item", cost: 3, target: "self" },
-      three_gestures: { name: "３つジェスチャー", type: "item", cost: 5, target: "self" },
+      three_gestures: { name: "３つジェスチャー", type: "item", cost: 4, target: "self" },
       substitute_attendance: { name: "代返", type: "item", cost: 3, target: "self" },
       music_detergent: { name: "music洗剤", type: "item", cost: 3, target: "self" },
       donguri: { name: "どんぐり", type: "item", cost: 0, target: "self" },
       smart_me: { name: "スマートミー", type: "item", cost: 3, target: "self" },
-      greeting_3000: { name: "挨拶だけで3000字", type: "item", cost: 8, target: "self" },
+      greeting_3000: { name: "挨拶だけで3000字", type: "item", cost: 7, target: "self" },
       thanks_all_students: { name: "全ての学生に感謝を込めて", type: "item", cost: 6, target: "global" },
       alpha: { name: "アルファ", type: "item", cost: 0, noCost: true, target: "none", unusable: true },
       beta: { name: "ベータ", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
@@ -6113,7 +6123,7 @@
       dark_student_council: { name: "裏学友会", type: "environment", cost: 0, noCost: true, generated: true, allowedZones: ["environment"] },
       student_council: { name: "学友会", type: "environment", cost: 6, allowedZones: ["environment"] },
       full_lock: { name: "全ロック", type: "environment", cost: 8, allowedZones: ["environment"] },
-      design_domain: { name: "デザイン領域", type: "environment", cost: 7, allowedZones: ["environment"] },
+      design_domain: { name: "デザイン領域", type: "environment", cost: 6, allowedZones: ["environment"] },
       chaos_world: { name: "カオスワールド", type: "environment", cost: 9, allowedZones: ["environment"] },
       no_late_time: { name: "遅刻じゃない時間", type: "environment", cost: 6, allowedZones: ["environment"] },
       meguro_library: { name: "目黒区図書館", type: "environment", cost: 5, allowedZones: ["environment"] },
@@ -6661,6 +6671,8 @@
       designTextbookUntilTurn: 0,
       lifeShieldUntilTurn: 0,
       lifeShieldUntilSide: null,
+      sageLegacyDrawTurn: null,
+      sageLegacyDrawCount: 0,
       board: { seats: Array(9).fill(null), teacher: null }
       };
     }
@@ -8803,6 +8815,14 @@
           const item = getHandCard("opponent", payload.instanceId);
           if (item) resolveDeckWithout("opponent", item, payload.selectedIds || [], true);
         }
+        if (command.type === "droppedCards") {
+          const item = getHandCard("opponent", payload.instanceId);
+          if (item) resolveDroppedCardsChoice("opponent", item, payload.selectedIds || [], true);
+        }
+        if (command.type === "sageLegacy") {
+          const item = getHandCard("opponent", payload.instanceId);
+          if (item) resolveSageLegacyChoice("opponent", item, payload.selectedId || null, true);
+        }
         if (command.type === "musicDetergent") {
           const item = getHandCard("opponent", payload.instanceId);
           if (item) resolveMusicDetergentChoice("opponent", item, payload.selectedBaseId || null, true);
@@ -9484,7 +9504,16 @@
       resolveOpponentTurnStartEffects(side);
       if (state.gameOver) return;
       if (!drawOne(side, true)) return;
-      const drawText = "1枚ドロー。";
+      let extraDrawText = "";
+      if (player.sageLegacyDrawTurn === player.turnsTaken) {
+        const drawCount = Math.max(0, Number(player.sageLegacyDrawCount) || 2);
+        const extraDrawn = drawUpTo(side, drawCount);
+        player.sageLegacyDrawTurn = null;
+        player.sageLegacyDrawCount = 0;
+        extraDrawText = ` 賢者の遺産で${extraDrawn}枚ドロー。`;
+        addLog(`賢者の遺産の効果：${SIDES[side]}は${extraDrawn}枚ドローしました。`);
+      }
+      const drawText = `1枚ドロー。${extraDrawText}`;
       state.message = `${turnLabel(side)} ${SIDES[side]}。戦意${player.will}/${player.maxWill}、${drawText}`;
       addLog(`${turnLabel(side)} ${SIDES[side]}開始。戦意${player.will}/${player.maxWill}、${drawText}`);
       analyticsRecordTurnStart(side);
@@ -9947,7 +9976,7 @@
         const utaCount = opponent.trash.filter((card) => ["yuta", "dark_yuta"].includes(card.baseId)).length;
         return utaCount > 0 ? 3 + utaCount * 2 : 0;
       }
-      if (item.baseId === "fire_touch") return deck.length >= 4 && opponent.life > 4 ? 7 : 0;
+      if (item.baseId === "fire_touch") return deck.length >= 3 && opponent.life > 4 ? 6 : 0;
       if (item.baseId === "sexual_eye") return deck.some((card) => card.baseId === "yuta") ? 5 : 0;
       if (item.baseId === "yoyu_announce") return deck.length >= 1 ? 5 : 0;
       if (item.baseId === "environment_setup") return deck.some((card) => card.type === "environment") ? 5 : 0;
@@ -10008,6 +10037,10 @@
         return effectTargetEntries("opponent", "player", (card) => hasOpposingSameNameAttendee(card)).length > 0 ? 6 : 0;
       }
       if (item.baseId === "dropped_cards") return opponent.deck.length >= 2 ? 2 : 0;
+      if (item.baseId === "sage_legacy") return canUseSageLegacy("opponent") ? 9 : 0;
+      if (item.baseId === "set_log") {
+        return friendlyCards.some((card) => card.type === "student" && !hasKeyword(card, "陽気")) ? 7 : 0;
+      }
       if (item.baseId === "yutakun_yutakun") return opponent.trash.some((card) => card.baseId === "yuta") ? 6 : 0;
       if (item.baseId === "three_gestures") return opponent.deck.length >= 6 ? 8 : 0;
       if (item.baseId === "donguri") return canUseDonguri("opponent", item) ? 18 : 0;
@@ -10076,6 +10109,13 @@
           .filter((entry) => entry.card.currentHp < entry.card.maxHp)
           .sort((a, b) => (b.card.maxHp - b.card.currentHp) - (a.card.maxHp - a.card.currentHp))[0];
         return damaged ? castItemOnCard("opponent", item, damaged.ref.owner, damaged.ref.zone, damaged.ref.index, false) : false;
+      }
+      if (item.baseId === "set_log") {
+        const target = listBoardRefs("opponent")
+          .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+          .filter((entry) => entry.card?.type === "student" && !hasKeyword(entry.card, "陽気"))
+          .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0))[0];
+        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "go_home") {
         const damagedStudent = listBoardRefs("opponent")
@@ -10312,20 +10352,23 @@
       const opponent = oppositeSide(side);
       clearExpiredTemporarySeatBlocks(side);
       const teacher = state.players[side].board.teacher;
-      if (teacher && teacher.type === "teacher" && state.environment?.baseId !== "on_demand_business") {
+      if (teacher && teacher.type === "teacher") {
         const lectureTargetTypes = teacher.baseId === "lightning_n" ? ["vampire"] : ["student"];
         const lectureTargetLabel = teacher.baseId === "lightning_n" ? "ヴァンパイア" : "学生";
+        const onDemandProtectsStudents = state.environment?.baseId === "on_demand_business";
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const card = getBoardCardFromRef(ref);
+          if (onDemandProtectsStudents && card?.type === "student") return;
           if (card && lectureTargetTypes.includes(card.type)) {
             dealDamageToCard(card, 1, teacher, { ignoreWeakness: teacher.baseId === "lightning_n" });
             affected += 1;
           }
         });
-        addLog(`${teacher.name}の講義：相手の${lectureTargetLabel}${affected}人に1ダメージ。`);
-      } else if (teacher && teacher.type === "teacher" && state.environment?.baseId === "on_demand_business") {
-        addLog("オンデマンド授業の効果：講義は発動しません。");
+        const onDemandText = onDemandProtectsStudents && lectureTargetTypes.includes("student")
+          ? " オンデマンド授業により、学生は講義を受けません。"
+          : "";
+        addLog(`${teacher.name}の講義：相手の${lectureTargetLabel}${affected}人に1ダメージ。${onDemandText}`);
       }
       resolveHandEndTurnEffects(side);
       listBoardRefs(side).forEach((ref) => {
@@ -10989,6 +11032,32 @@
         }
         resolveMusicDetergentChoice("player", item, selectedIds[0], true);
       }
+      if (mode === "dropped_cards") {
+        const item = getHandCard("player", itemId);
+        if (!item) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("droppedCards", { instanceId: item.instanceId, selectedIds });
+          state.message = "カードを落としてしまったのですがの選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveDroppedCardsChoice("player", item, selectedIds, true);
+        return;
+      }
+      if (mode === "sage_legacy") {
+        const item = getHandCard("player", itemId);
+        if (!item) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("sageLegacy", { instanceId: item.instanceId, selectedId: selectedIds[0] || null });
+          state.message = "賢者の遺産の選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveSageLegacyChoice("player", item, selectedIds[0] || null, true);
+        return;
+      }
       if (mode === "deck_without_discard") {
         const item = getHandCard("player", itemId);
         if (!item) return;
@@ -11059,6 +11128,8 @@
         return;
       }
       if (item.baseId === "music_detergent" && openMusicDetergentChoice(item)) return;
+      if (item.baseId === "dropped_cards" && openDroppedCardsChoice(item)) return;
+      if (item.baseId === "sage_legacy" && openSageLegacyChoice(item)) return;
       if (item.baseId === "deck_without") {
         openDeckWithoutDiscardChoice(item);
         return;
@@ -11117,6 +11188,79 @@
 
     function getSelectedHandCard() {
       return state.players.player.hand.find((card) => card.instanceId === state.selectedHandId);
+    }
+
+    function sortCardsByCostForChoice(cards, direction = "desc") {
+      const order = direction === "asc" ? 1 : -1;
+      return [...cards].sort((a, b) =>
+        ((effectiveCardCost(a) || 0) - (effectiveCardCost(b) || 0)) * order
+        || String(a.name || "").localeCompare(String(b.name || ""), "ja")
+        || String(a.instanceId || "").localeCompare(String(b.instanceId || ""))
+      );
+    }
+
+    function openDroppedCardsChoice(item) {
+      if (!item || item.baseId !== "dropped_cards") return false;
+      const deck = state.players.player.deck;
+      if (deck.length <= 0) {
+        addLog("カードを落としてしまったのですがはデッキがないため使えません。");
+        render();
+        return true;
+      }
+      if (effectiveCardCost(item) > state.players.player.will) {
+        addLog(`戦意が足りません。${item.name}のコストは${effectiveCardCost(item)}です。`);
+        render();
+        return true;
+      }
+      const pickCount = Math.min(2, deck.length);
+      state.selectedAttacker = null;
+      state.selectedHandId = item.instanceId;
+      return openCardChoice({
+        mode: "dropped_cards",
+        itemId: item.instanceId,
+        title: "カードを落としてしまったのですが",
+        message: `自分のデッキから校外エリアへ送るカードを${pickCount}枚選んでください。`,
+        cards: sortCardsByCostForChoice(deck, "asc"),
+        min: pickCount,
+        max: pickCount,
+        confirmLabel: "選んだカードを校外へ送る"
+      });
+    }
+
+    function isSecondPlayerFirstTurn(side) {
+      return state.phase === "battle"
+        && side !== state.firstSide
+        && state.players[side]?.turnsTaken === 1;
+    }
+
+    function canUseSageLegacy(side) {
+      return isSecondPlayerFirstTurn(side) && state.players[side]?.deck.length > 0;
+    }
+
+    function openSageLegacyChoice(item) {
+      if (!item || item.baseId !== "sage_legacy") return false;
+      if (!canUseSageLegacy("player")) {
+        addLog("賢者の遺産は後攻1ターン目にしか使えません。");
+        render();
+        return true;
+      }
+      if (effectiveCardCost(item) > state.players.player.will) {
+        addLog(`戦意が足りません。${item.name}のコストは${effectiveCardCost(item)}です。`);
+        render();
+        return true;
+      }
+      state.selectedAttacker = null;
+      state.selectedHandId = item.instanceId;
+      return openCardChoice({
+        mode: "sage_legacy",
+        itemId: item.instanceId,
+        title: "賢者の遺産",
+        message: "自分のデッキから手札に加えるカードを1枚選んでください。",
+        cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
+        min: 1,
+        max: 1,
+        confirmLabel: "このカードを手札へ加える"
+      });
     }
 
     function openDeckWithoutDiscardChoice(item) {
@@ -11282,6 +11426,86 @@
       moveHandCardToTrash(side, item);
       const movedText = trashDetailCountText(side, discardCards, "〇〇デッキ〇〇抜きで校外へ送られたカード");
       addLog(`${SIDES[side]}は〇〇デッキ〇〇抜きを使い、デッキを2枚引き、手札から${movedText}を校外エリアへ送りました。`);
+      state.pendingCardChoice = null;
+      state.selectionOverlayPeek = false;
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function resolveDroppedCardsChoice(side, item, selectedIds = [], renderAfter = true) {
+      if (!item || item.baseId !== "dropped_cards") return false;
+      const player = state.players[side];
+      if (player.deck.length <= 0) {
+        addLog("カードを落としてしまったのですがはデッキがないため不発になりました。");
+        if (renderAfter) render();
+        return false;
+      }
+      if (!payForItem(side, item)) {
+        if (renderAfter) render();
+        return false;
+      }
+      showCardPlayAnimation(item, "trash");
+      const pickCount = Math.min(2, player.deck.length);
+      const selectedSet = new Set(selectedIds);
+      const selected = [];
+      player.deck.forEach((card) => {
+        if (selected.length < pickCount && selectedSet.has(card.instanceId)) selected.push(card);
+      });
+      sortCardsByCostForChoice(player.deck, "asc").forEach((card) => {
+        if (selected.length < pickCount && !selected.some((entry) => entry.instanceId === card.instanceId)) selected.push(card);
+      });
+      const movedIds = new Set(selected.map((card) => card.instanceId));
+      const moved = [];
+      player.deck = player.deck.filter((card) => {
+        if (movedIds.has(card.instanceId)) {
+          moved.push(card);
+          return false;
+        }
+        return true;
+      });
+      moveCardsToTrash(side, moved, { title: "カードを落としてしまったのですがで校外へ送られたカード" });
+      moveHandCardToTrash(side, item);
+      const movedText = trashDetailCountText(side, moved, "カードを落としてしまったのですがで校外へ送られたカード");
+      addLog(`${SIDES[side]}はカードを落としてしまったのですがを使い、自分のデッキから${movedText}を校外エリアへ送りました。`);
+      state.pendingCardChoice = null;
+      state.selectionOverlayPeek = false;
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function resolveSageLegacyChoice(side, item, selectedId = null, renderAfter = true) {
+      if (!item || item.baseId !== "sage_legacy") return false;
+      const player = state.players[side];
+      if (!canUseSageLegacy(side)) {
+        addLog("賢者の遺産は後攻1ターン目にしか使えません。");
+        if (renderAfter) render();
+        return false;
+      }
+      if (!payForItem(side, item)) {
+        if (renderAfter) render();
+        return false;
+      }
+      showCardPlayAnimation(item, "trash");
+      let index = player.deck.findIndex((card) => card.instanceId === selectedId);
+      if (index < 0) {
+        const fallback = sortCardsByCostForChoice(player.deck, "desc")[0];
+        index = player.deck.findIndex((card) => card.instanceId === fallback?.instanceId);
+      }
+      let pickedName = "カード";
+      if (index >= 0) {
+        const [picked] = player.deck.splice(index, 1);
+        picked.owner = side;
+        picked.handTurns = 0;
+        player.hand.push(picked);
+        queueAnimation("draw", side, 1);
+        pickedName = picked.name;
+      }
+      player.sageLegacyDrawTurn = 6;
+      player.sageLegacyDrawCount = (player.sageLegacyDrawCount || 0) + 2;
+      moveHandCardToTrash(side, item);
+      addLog(`${SIDES[side]}は賢者の遺産を使い、デッキから${pickedName}を手札に加えました。後攻6ターン目に2枚ドローします。`);
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
       clearSelections();
@@ -11490,22 +11714,36 @@
       if (isCouncilEnvironment(boardCard)) {
         boardCard.councilTurnsUntilTransform = card.councilTurnsUntilTransform ?? 2;
       }
-      if (state.environment?.baseId === "chaos_world" && boardCard.currentHp !== null) {
-        applyChaosWorldRandomStats(boardCard);
-      }
       return boardCard;
     }
 
-    function applyChaosWorldRandomStats(card) {
-      if (!card || card.currentHp === null) return false;
+    function applyChaosWorldRandomStats(card, options = {}) {
+      if (!card || card.type === "item" || card.type === "environment") return false;
+      const nextCost = Math.floor(Math.random() * 11);
       const nextAttack = Math.floor(Math.random() * 11);
       const nextHp = Math.floor(Math.random() * 11);
+      if (options.includeCost !== false && !card.noCost) card.cost = nextCost;
+      card.hp = nextHp;
       card.baseAttack = nextAttack;
       card.attack = nextAttack;
       card.baseMaxHp = nextHp;
       card.maxHp = nextHp;
       card.currentHp = nextHp;
       return true;
+    }
+
+    function applyChaosWorldToHandAndBoard() {
+      let affected = 0;
+      ["player", "opponent"].forEach((owner) => {
+        state.players[owner].hand.forEach((card) => {
+          if (applyChaosWorldRandomStats(card, { includeCost: true })) affected += 1;
+        });
+        listBoardRefs(owner).forEach((ref) => {
+          const card = getBoardCardFromRef(ref);
+          if (applyChaosWorldRandomStats(card, { includeCost: true })) affected += 1;
+        });
+      });
+      return affected;
     }
 
     function canPlaceCard(side, card, zone, owner, index) {
@@ -11743,7 +11981,7 @@
       if (card.type === "teacher" && zone !== "teacher") {
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
       }
-      if (card.baseId === "loud_student" && zone === "seat") {
+      if (card.baseId === "loud_student") {
         let affected = 0;
         ["player", "opponent"].forEach((owner) => {
           listBoardRefs(owner).forEach((ref) => {
@@ -12196,14 +12434,8 @@
         addLog(`${card.name}の効果：ヴァンパイアは「デザイン」と名のつく教師を攻撃できません。`);
       }
       if (card.baseId === "chaos_world" && zone === "environment") {
-        let affected = 0;
-        ["player", "opponent"].forEach((owner) => {
-          listBoardRefs(owner).forEach((ref) => {
-            const target = getBoardCardFromRef(ref);
-            if (applyChaosWorldRandomStats(target)) affected += 1;
-          });
-        });
-        addLog(`${card.name}の効果：出席者${affected}人の攻撃力と体力をランダムに変更しました。新しく出席したカードにも適用されます。`);
+        const affected = applyChaosWorldToHandAndBoard();
+        addLog(`${card.name}の効果：お互いの手札と場の出席者${affected}枚の戦意・攻撃力・体力をランダムに変更しました。`);
       }
     }
 
@@ -12803,7 +13035,7 @@
         return;
       }
       const attackDamage = attacker.attack || 0;
-      const counterDamage = target.attack || 0;
+      const counterDamage = attacker.baseId === "trendy_student" ? 0 : (target.attack || 0);
       const dealtDamage = dealDamageToCard(target, attackDamage, attacker);
       const healed = healVampireFromDamage(attacker, dealtDamage);
       const counterDealtDamage = counterDamage > 0 ? dealDamageToCard(attacker, counterDamage, target) : 0;
@@ -12846,6 +13078,14 @@
         }
       });
       addLog(`${attacker.name}が${target.name}に${dealtDamage}ダメージ。${vampireLog}${target.name}の反撃で${attacker.name}に${counterDealtDamage}ダメージ。`);
+      if (attacker.baseId === "trendy_student"
+        && target.currentHp <= 0
+        && attacker.currentHp > 0
+        && !(target.baseId === "rebirth_student" && !target.rebirthUsed)
+      ) {
+        attacker.hasAttacked = false;
+        addLog(`${attacker.name}の効果：攻撃した出席者が校外エリアへ送られるため、もう一度攻撃できます。`);
+      }
     }
 
     function resolveBounceDayCardAttack(attackerRef, targetRef, attacker, target) {
@@ -12991,6 +13231,11 @@
         if (renderAfter) render();
         return false;
       }
+      if (item.baseId === "set_log" && target.type !== "student") {
+        addLog("セットするログは自分の学生だけを指名できます。");
+        if (renderAfter) render();
+        return false;
+      }
       if (["accelerate", "chameleon", "yuta_umbrella", "red_happi"].includes(item.baseId) && !isUtaEquipmentTarget(target)) {
         addLog(`${item.name}は「U太」にだけ使えます。`);
         if (renderAfter) render();
@@ -13040,6 +13285,10 @@
         clearSelections();
         if (renderAfter) render();
         return true;
+      }
+      if (item.baseId === "set_log") {
+        addKeyword(target, "陽気");
+        addLog(`${SIDES[side]}はセットするログを使い、${target.name}に陽気を与えました。`);
       }
       if (item.baseId === "ruler") dealDamageToCard(target, 1, item);
       if (item.baseId === "bento") healCard(target, 2);
@@ -13342,6 +13591,14 @@
       if (item.baseId === "deck_without") {
         return resolveDeckWithout(side, item, options.selectedIds || [], renderAfter);
       }
+      if (item.baseId === "dropped_cards") {
+        const selectedIds = (options.selectedIds || sortCardsByCostForChoice(state.players[side].deck, "asc").slice(0, 2).map((card) => card.instanceId));
+        return resolveDroppedCardsChoice(side, item, selectedIds, renderAfter);
+      }
+      if (item.baseId === "sage_legacy") {
+        const selectedId = options.selectedId || sortCardsByCostForChoice(state.players[side].deck, "desc")[0]?.instanceId || null;
+        return resolveSageLegacyChoice(side, item, selectedId, renderAfter);
+      }
       if (item.baseId === "three_gestures" && side === "player") {
         openThreeGesturesSelection(item);
         return true;
@@ -13402,7 +13659,7 @@
       if (item.baseId === "fire_touch") {
         damagePlayer(side, 4);
         let drawn = 0;
-        for (let i = 0; i < 4; i += 1) {
+        for (let i = 0; i < 3; i += 1) {
           if (drawOne(side, false)) drawn += 1;
         }
         resultText = `自分の気力を4失い、${drawn}枚ドローしました。`;
@@ -13513,11 +13770,6 @@
         healPlayer("player", 3);
         healPlayer("opponent", 3);
         resultText = "お互いの気力を3回復しました。";
-      }
-      if (item.baseId === "dropped_cards") {
-        const moved = moveRandomDeckCardsToTrash(side, 2);
-        const movedText = trashDetailCountText(side, moved, "カードを落としてしまったのですがで校外へ送られたカード");
-        resultText = `自分のデッキからランダムで${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "reversal") {
         resultText = restoreRecentBoardCard(side) ? "前の相手ターンに校外へ送られた出席者を元の席に出席させました。" : "出席させられる出席者がいませんでした。";
@@ -13645,24 +13897,34 @@
 
     function restoreRecentBoardCard(side) {
       const player = state.players[side];
-      const entryIndex = state.recentBoardTrash.findIndex((entry) =>
-        entry.owner === side
-        && entry.actionTurn >= state.actionTurn - 2
-        && isBoardSlotOpen(side, entry.zone, entry.index)
-      );
-      if (entryIndex < 0) return false;
-      const [entry] = state.recentBoardTrash.splice(entryIndex, 1);
-      const trashIndex = player.trash.findIndex((card) =>
-        card.instanceId === entry.card.instanceId || card.baseId === entry.card.baseId
-      );
-      const trashCard = trashIndex >= 0 ? player.trash.splice(trashIndex, 1)[0] : entry.card;
-      const restored = makeBoardCard({ ...trashCard, owner: side });
-      restored.hasAttacked = false;
-      restored.playedOnTurn = state.actionTurn;
-      restored.skipAttendEffectsOnPlacement = true;
-      setBoardCard(side, entry.zone, entry.index, restored);
-      addLog(`${SIDES[side]}は逆行で${restored.name}を元のマスへ出席させました。`);
-      return true;
+      const previousOpponentTurn = state.actionTurn - 1;
+      const candidates = state.recentBoardTrash
+        .map((entry, index) => ({ entry, index }))
+        .filter(({ entry }) =>
+          entry.owner === side
+          && entry.actionTurn === previousOpponentTurn
+          && entry.card?.lastDamageSource
+          && isBoardSlotOpen(side, entry.zone, entry.index)
+        );
+      const chosen = shuffle(candidates).slice(0, 2);
+      if (chosen.length <= 0) return false;
+      const chosenIndexes = new Set(chosen.map(({ index }) => index));
+      state.recentBoardTrash = state.recentBoardTrash.filter((_entry, index) => !chosenIndexes.has(index));
+      let restoredCount = 0;
+      chosen.forEach(({ entry }) => {
+        const trashIndex = player.trash.findIndex((card) =>
+          card.instanceId === entry.card.instanceId || card.baseId === entry.card.baseId
+        );
+        const trashCard = trashIndex >= 0 ? player.trash.splice(trashIndex, 1)[0] : entry.card;
+        const restored = makeBoardCard({ ...trashCard, owner: side });
+        restored.hasAttacked = false;
+        restored.playedOnTurn = state.actionTurn;
+        restored.skipAttendEffectsOnPlacement = true;
+        setBoardCard(side, entry.zone, entry.index, restored);
+        restoredCount += 1;
+        addLog(`${SIDES[side]}は逆行で${restored.name}を元のマスへ出席させました。`);
+      });
+      return restoredCount > 0;
     }
 
     function findDonguriEvolutionTarget(side) {
@@ -13795,13 +14057,11 @@
     function placeCopiedCardInFirstOpenSlot(side, card) {
       const seatIndex = AI_SEAT_PRIORITY.find((index) => isBoardSlotOpen(side, "seat", index));
       if (seatIndex !== undefined && ["student", "teacher", "vampire"].includes(card.type)) {
-        if (state.environment?.baseId === "chaos_world") applyChaosWorldRandomStats(card);
         setBoardCard(side, "seat", seatIndex, card);
         if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, "seat", seatIndex);
         return true;
       }
       if (isBoardSlotOpen(side, "teacher") && ["student", "teacher", "vampire"].includes(card.type)) {
-        if (state.environment?.baseId === "chaos_world") applyChaosWorldRandomStats(card);
         setBoardCard(side, "teacher", null, card);
         if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, "teacher", null);
         return true;
@@ -13825,7 +14085,6 @@
       const card = state.pendingCopiedCard;
       if (!card || owner !== side || !["seat", "teacher"].includes(zone)) return false;
       if (!isBoardSlotOpen(owner, zone, index) || !["student", "teacher", "vampire"].includes(card.type)) return false;
-      if (state.environment?.baseId === "chaos_world") applyChaosWorldRandomStats(card);
       setBoardCard(owner, zone, index, card);
       if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(owner, card, zone, index);
       state.pendingCopiedCard = null;
@@ -13860,7 +14119,25 @@
           willAfter: state.players[side].will
         }
       });
+      buffYocchanInHand(side, item);
       return true;
+    }
+
+    function buffYocchanInHand(side, sourceItem) {
+      let affected = 0;
+      state.players[side].hand.forEach((card) => {
+        if (card.baseId !== "yocchan") return;
+        const nextAttack = (card.attack ?? card.baseAttack ?? 0) + 1;
+        const nextHp = (card.hp ?? card.maxHp ?? card.baseMaxHp ?? 0) + 1;
+        card.attack = nextAttack;
+        card.hp = nextHp;
+        card.baseAttack = nextAttack;
+        card.baseMaxHp = nextHp;
+        card.maxHp = nextHp;
+        card.currentHp = nextHp;
+        affected += 1;
+      });
+      if (affected > 0) addLog(`よっちゃんの効果：${sourceItem.name}を使ったため、手札のよっちゃん${affected}枚の攻撃力と体力を+1しました。`);
     }
 
     function moveHandCardToTrash(side, card, options = {}) {
@@ -14084,6 +14361,10 @@
         && listBoardRefs(owner).some((ref) => getBoardCardFromRef(ref)?.baseId === "tissue_distributor");
     }
 
+    function isAeNameCard(card) {
+      return Boolean(card && String(card.name || "").includes("あえー"));
+    }
+
     function cafeteriaVampireStatBonus(card) {
       const bonus = { attack: 0, hp: 0 };
       if (!card || card.type !== "vampire" || state.environment?.baseId !== "cafeteria") return bonus;
@@ -14150,7 +14431,7 @@
           if (card.baseId === "enemy_student" && listBoardRefs(oppositeSide(owner)).some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member")) {
             newAttack += 5;
           }
-          if (card.baseId === "ae_student" && state.environment?.baseId === "cote_dazur") {
+          if (isAeNameCard(card) && state.environment?.baseId === "cote_dazur") {
             newAttack += 10;
             newMaxHp += 10;
           }
@@ -14175,7 +14456,7 @@
       if (!card || card.currentHp === null) return;
       const baseAttack = card.baseAttack ?? card.attack;
       const baseMaxHp = card.baseMaxHp ?? card.maxHp;
-      const coteBonus = card.baseId === "ae_student" && state.environment?.baseId === "cote_dazur" ? 10 : 0;
+      const coteBonus = isAeNameCard(card) && state.environment?.baseId === "cote_dazur" ? 10 : 0;
       const newAttack = baseAttack + (state.environment?.baseId === "dark_student_council" ? 2 : 0) + coteBonus;
       const newMaxHp = baseMaxHp + (state.environment?.baseId === "student_council" ? 2 : 0) + coteBonus + designTextbookHpBonus(card);
       applyDerivedStats(card, newAttack, newMaxHp);
@@ -14720,11 +15001,21 @@
       return moved;
     }
 
+    function tryResolveRebirthStudent(card) {
+      if (!card || card.baseId !== "rebirth_student" || card.rebirthUsed) return false;
+      card.rebirthUsed = true;
+      card.currentHp = card.maxHp ?? card.baseMaxHp ?? card.hp ?? 0;
+      showFloatingTextForCard(card, "全回復", "heal");
+      addLog(`${card.name}の効果：一度だけ校外エリアへ送られず、体力を全回復しました。`);
+      return true;
+    }
+
     function cleanupDestroyedCards() {
       let movedCount = 0;
       ["player", "opponent"].forEach((owner) => {
         state.players[owner].board.seats.forEach((card, index) => {
           if (card && card.currentHp <= 0) {
+            if (tryResolveRebirthStudent(card)) return;
             recordRecentBoardTrash(owner, card, { owner, zone: "seat", index });
             moveToTrash(owner, card, { suppressToast: true, suppressLog: true, reason: "体力0" });
             state.players[owner].board.seats[index] = null;
@@ -14734,6 +15025,7 @@
         });
         const teacher = state.players[owner].board.teacher;
         if (teacher && teacher.currentHp <= 0) {
+          if (tryResolveRebirthStudent(teacher)) return;
           recordRecentBoardTrash(owner, teacher, { owner, zone: "teacher", index: null });
           moveToTrash(owner, teacher, { suppressToast: true, suppressLog: true, reason: "体力0" });
           state.players[owner].board.teacher = null;
@@ -15762,6 +16054,8 @@
       if (item.baseId === "yutakun_yutakun" && !state.players.player.trash.some((card) => card.baseId === "yuta")) return false;
       if (item.baseId === "three_gestures" && state.players.player.deck.length < 6) return false;
       if (item.baseId === "deck_without" && state.players.player.deck.length < 2) return false;
+      if (item.baseId === "dropped_cards" && state.players.player.deck.length <= 0) return false;
+      if (item.baseId === "sage_legacy" && !canUseSageLegacy("player")) return false;
       if (item.baseId === "smart_me" && !state.players.opponent.late.some((entry) => entry.card?.type === "student")) return false;
       if (item.baseId === "music_detergent" && uniqueDesignDeckCandidates("player").length === 0 && countFriendlyDesignTeachers("player") === 0) return false;
       if (item.baseId === "donguri") return canUseDonguri("player", item);
@@ -15798,6 +16092,9 @@
         });
       }
       if (item.target === "friendly" || item.target === "friendlyAny") {
+        if (item.baseId === "set_log") {
+          return listBoardRefs("player").some((ref) => getBoardCardFromRef(ref)?.type === "student");
+        }
         if (item.baseId === "go_home") {
           return listBoardRefs("player").some((ref) => getBoardCardFromRef(ref)?.type === "student");
         }
@@ -15862,6 +16159,7 @@
       if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
       if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("player", target)) return false;
       if (item.baseId === "go_home" && target.type !== "student") return false;
+      if (item.baseId === "set_log" && target.type !== "student") return false;
       if (item.target === "enemy" && !isAllowedEffectTarget("player", target)) return false;
       if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
       return ["enemy", "friendly", "friendlyAny"].includes(item.target);
@@ -15933,6 +16231,8 @@
         return true;
       }
       if (item.baseId === "music_detergent" && openMusicDetergentChoice(item)) return true;
+      if (item.baseId === "dropped_cards" && openDroppedCardsChoice(item)) return true;
+      if (item.baseId === "sage_legacy" && openSageLegacyChoice(item)) return true;
       if (item.baseId === "deck_without") {
         openDeckWithoutDiscardChoice(item);
         return true;
@@ -18072,6 +18372,9 @@
         organism: "陽気を持つ。このカードが出席したとき、相手の出席者すべてに2ダメージを与える。自分の場に「生物」「ミジンコ」「単細胞生物」がいる場合、それらを破壊し、「生物」がいた席マスに「完全変異体」を出席させる。",
         perfect_mutant: "超陽気を持つ。このカードが出席したとき、相手の出席者すべてを破壊する。",
         adjective_student: "遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。",
+        yocchan: "このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。",
+        trendy_student: "このカードは反撃ダメージを受けない。このカードが攻撃した出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",
+        rebirth_student: "このカードは一度だけ、体力が0以下になっても校外エリアへ送られず、体力を全回復する。",
         yuta: "余裕を持つ。このカードに装備カードがついたとき、陽気を持つ。",
         aggro_queen: "このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。",
         ae_student: "注目を持つ。",
@@ -18142,7 +18445,7 @@
         handmade_ctoc: "お互いの場に同名の出席者がいる場合、その中から出席者1人を指名する。その出席者は、相手の場に同名の出席者がいるかぎり攻撃できない。",
         onigiri_draw: "自分のデッキからカードを2枚引き、自分の気力を2回復する。",
         hondara: "カードを1枚ドローする。",
-        fire_touch: "自分の気力を4失い、カードを4枚ドローする。",
+        fire_touch: "自分の気力を4失い、自分のデッキを上から3枚引く。",
         thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードを校外エリアへ送る。",
         sock_block: "相手の場の3行目を1ターン出席不可にする。すでに3行目にいる出席者は校外エリアへ送る。",
         go_home: "自分の学生1人を指名し、そのカードを手札に戻す。",
@@ -18177,8 +18480,10 @@
         paired_existence: "自分の手札1枚を選んで校外エリアへ送る。相手の手札に同名カードがある場合、それも1枚校外エリアへ送る。",
         peaceful_mind: "お互いの気力を3回復する。",
         abyss: "使用後2回、自分のターン終了時に相手の出席者1人をランダムに破壊する。",
-        dropped_cards: "自分のデッキからランダムで2枚を校外エリアへ送る。",
-        reversal: "前の相手ターンに校外エリアへ送られた自分の出席者1人を、元のマスが空いていれば出席させる。出席時効果は発動しない。",
+        dropped_cards: "自分のデッキから2枚を選び、校外エリアへ送る。",
+        set_log: "自分の学生1人を指名する。その学生は陽気を持つ。",
+        sage_legacy: "後攻1ターン目にのみ使用できる。自分のデッキからカード1枚を選び、手札に加える。後攻6ターン目、自分はデッキを上から2枚引く。",
+        reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は発動しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。",
         panpan: "相手の出席者1人を指名する。自分の出席者1人と、その相手の出席者を破壊する。",
@@ -18207,12 +18512,12 @@
         student_council: "場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。",
         full_lock: "お互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
         design_domain: "このカードは、自分の教卓マスに「デザイン」と名のつく教師がいなければ置けない。ヴァンパイアは「デザイン」と名のつく教師を攻撃できない。",
-        chaos_world: "すべての出席者の攻撃力と体力を0〜10のランダムな値に変更する。新しく出席したカードにもこの効果を適用する。",
+        chaos_world: "お互いの手札と場の出席者の戦意、攻撃力、体力を0〜10のランダムな値に変更する。このカードが校外エリアへ送られても、変更された値はそのまま。",
         no_late_time: "「遅刻」の効果をなくす。",
         meguro_library: "お互いにプレイヤー本体を攻撃できない。このカードをプレイしたプレイヤーは、このカードが環境マスにある間、自分のターン終了時に手札1枚を選び、校外エリアへ送る。",
         dorm_council: "お互いのプレイヤーは自分のターン終了時、自分のデッキから注目を持つカードをランダムに1枚まで引く。",
-        on_demand_business: "講義は発動しない。",
-        cote_dazur: "お互いの場の「あえー学生」の攻撃力を+10、体力を+10する。",
+        on_demand_business: "場の学生は講義の効果を受けない。",
+        cote_dazur: "お互いの場の「あえー」と名のつく出席者の攻撃力を+10、体力を+10する。",
         ta_killer: "このカードが出席したとき、相手の場に同名の出席者が複数いる場合、その同名出席者すべてに同名の人数分のダメージを与える。",
         ta: "カードの効果によって召喚される学生トークン。"
       };
