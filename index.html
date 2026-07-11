@@ -1394,7 +1394,7 @@
     }
 
     .field-card.attack-ready {
-      /* 攻撃可能であることだけでは、盤面に枠を出さない。 */
+      border-color: #16a34a;
     }
 
     .field-card.exhausted {
@@ -1466,8 +1466,9 @@
 
     .field-card-status {
       position: absolute;
-      top: 1px;
-      right: 3px;
+      top: -5px;
+      right: -4px;
+      z-index: 2;
       border-radius: 999px;
       padding: 1px 4px;
       background: rgba(255, 255, 255, 0.78);
@@ -1500,12 +1501,6 @@
       font-weight: 1000;
       line-height: 1;
       box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
-    }
-
-    .status-icon.attack-ready {
-      border-color: rgba(22, 163, 74, 0.58);
-      background: #dcfce7;
-      color: #166534;
     }
 
     .field-card-status.status-icons {
@@ -4183,8 +4178,8 @@
     }
 
     .field-card-status {
-      top: 3px;
-      right: 5px;
+      top: -5px;
+      right: -4px;
       color: var(--muted);
       font-size: 9px;
     }
@@ -13204,8 +13199,8 @@
         return;
       }
       const attackDamage = attacker.attack || 0;
-      const counterDamage = attacker.baseId === "trendy_student" ? 0 : (target.attack || 0);
       const dealtDamage = dealDamageToCard(target, attackDamage, attacker);
+      const counterDamage = attacker.baseId === "trendy_student" && target.currentHp <= 0 ? 0 : (target.attack || 0);
       const healed = healVampireFromDamage(attacker, dealtDamage);
       const counterDealtDamage = counterDamage > 0 ? dealDamageToCard(attacker, counterDamage, target) : 0;
       if (attacker.baseId === "zombie" && target.type !== "vampire" && target.currentHp > 0) {
@@ -17418,7 +17413,6 @@
 
     function cardTemplate(card, boardCard) {
       const statusParts = [];
-      if (boardCard && canShowAttackReady(card, card.owner)) statusParts.push({ icon: "攻", title: "攻撃可能", tone: "attack-ready" });
       if (boardCard && card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
@@ -17479,7 +17473,6 @@
 
     function fieldCardTemplate(card) {
       const statusParts = [];
-      if (canShowAttackReady(card, card.owner)) statusParts.push({ icon: "攻", title: "攻撃可能", tone: "attack-ready" });
       if (card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
@@ -18650,7 +18643,7 @@
         perfect_mutant: "超陽気を持つ。このカードが出席したとき、相手の出席者すべてを破壊する。",
         adjective_student: "遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。",
         yocchan: "このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。",
-        trendy_student: "このカードは反撃ダメージを受けない。このカードが攻撃した出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",
+        trendy_student: "このカードが攻撃した出席者の体力を0にした場合、反撃ダメージを受けない。その出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",
         rebirth_student: "このカードは一度だけ、体力が0以下になっても校外エリアへ送られず、体力を全回復する。",
         yuta: "余裕を持つ。このカードに装備カードがついたとき、陽気を持つ。",
         aggro_queen: "このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。",
