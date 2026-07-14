@@ -5958,6 +5958,7 @@
       acting_out_man: ["general_teacher"],
       seat_taking_group: [],
       predator: ["general_student"],
+      ttb: ["suspicious_document"],
       sniper: [],
       extra_people: [],
       trpg_member: [],
@@ -6064,7 +6065,7 @@
       predator: { name: "捕食者", type: "student", cost: 5, attack: 5, hp: 5, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       student_comedy: { name: "学生お笑い", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
       seat_taking_group: { name: "席取り軍団", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat"] },
-      sniper: { name: "スナイパー", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+      sniper: { name: "スナイパー", type: "student", cost: 4, attack: 2, hp: 1, allowedZones: ["seat", "teacher"] },
       cynical_student: { name: "冷笑学生", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       extra_people: { name: "エキストラの皆さん", type: "student", cost: 9, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       extra_student: { name: "エキストラ学生", type: "student", cost: 0, noCost: true, attack: 1, hp: 1, keywords: ["陽気"], allowedZones: ["seat"] },
@@ -6079,7 +6080,7 @@
       failure_student: { name: "何をやってもダメな学生", type: "student", cost: 3, attack: 0, hp: 3, allowedZones: ["seat", "teacher"] },
       success_student: { name: "何をやっても成功する学生", type: "student", cost: 0, attack: 2, hp: 4, evolutionFrom: "failure_student", allowedZones: ["evolution"] },
       bounce_day: { name: "バウンスディ", type: "student", cost: 3, attack: 1, hp: 3, allowedZones: ["seat", "teacher"] },
-      yocchan: { name: "よっちゃん", type: "student", cost: 4, attack: 0, hp: 1, allowedZones: ["seat", "teacher"] },
+      yocchan: { name: "よっちゃん", type: "student", cost: 4, attack: 0, hp: 1, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
       trendy_student: { name: "ミーハー学生", type: "student", cost: 4, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       rebirth_student: { name: "再\"履\"生", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       lone_wolf: { name: "狼(いっぴきおおかみ)", type: "student", cost: 5, attack: 2, hp: 2, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
@@ -10045,7 +10046,10 @@
       if (item.baseId === "onigiri_draw") return deck.length >= 2 ? 7 + (opponent.life < 20 ? 4 : 0) : 0;
       if (item.baseId === "hondara") return deck.length >= 1 ? 4 : 0;
       if (item.baseId === "ux_design_textbook") return countFriendlyDesignTeachers("opponent") > 0 ? 4 + countFriendlyDesignTeachers("opponent") : 0;
-      if (item.baseId === "aggro_eater") return opponent.life < 20 ? 3 : 0;
+      if (item.baseId === "aggro_eater") {
+        const woundedAttendees = friendlyCards.filter((card) => card.currentHp < card.maxHp).length;
+        return (opponent.life < 20 ? 3 : 0) + woundedAttendees * 2;
+      }
       if (item.baseId === "deck_without") return deck.length >= 2 && opponent.hand.length >= 2 ? 5 : 0;
       if (item.baseId === "smart_me") return state.players.player.late.some((entry) => entry.card?.type === "student") ? 6 : 0;
       if (item.baseId === "greeting_3000") {
@@ -10524,6 +10528,10 @@
             if (teacherCard && teacherCard.type === "teacher") healCard(teacherCard, 1);
           });
           addLog(`${card.name}の効果：自分と教師を1回復。`);
+        }
+        if (card.baseId === "ttb") {
+          generateCardsIntoDeck(opponent, "suspicious_document", 2);
+          addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を2枚生成しました。`);
         }
       });
       listBoardRefs(side).forEach((ref) => {
@@ -13816,9 +13824,18 @@
         resultText = "自分の「デザイン」と名のつく教師の体力を+1しました。";
       }
       if (item.baseId === "aggro_eater") {
+        let attendeeHealed = 0;
+        listBoardRefs(side).forEach((ref) => {
+          const card = getBoardCardFromRef(ref);
+          if (!card) return;
+          const before = card.currentHp;
+          healCard(card, 1);
+          attendeeHealed += card.currentHp - before;
+        });
         const before = state.players[side].life;
         healPlayer(side, 1);
-        resultText = `自分の気力を${state.players[side].life - before}回復しました。`;
+        const lifeHealed = state.players[side].life - before;
+        resultText = `自分の出席者を合計${attendeeHealed}回復し、気力を${lifeHealed}回復しました。`;
       }
       if (item.baseId === "fire_touch") {
         damagePlayer(side, 4);
@@ -13931,9 +13948,9 @@
         resultText = `U太を1枚生成し、カードを${drawn}枚ドローしました。`;
       }
       if (item.baseId === "peaceful_mind") {
-        healPlayer("player", 3);
-        healPlayer("opponent", 3);
-        resultText = "お互いの気力を3回復しました。";
+        healPlayer("player", 5);
+        healPlayer("opponent", 5);
+        resultText = "お互いの気力を5回復しました。";
       }
       if (item.baseId === "reversal") {
         resultText = restoreRecentBoardCard(side) ? "前の相手ターンに校外へ送られた出席者を元の席に出席させました。" : "出席させられる出席者がいませんでした。";
@@ -18642,7 +18659,7 @@
         organism: "陽気を持つ。このカードが出席したとき、相手の出席者すべてに2ダメージを与える。自分の場に「生物」「ミジンコ」「単細胞生物」がいる場合、それらを破壊し、「生物」がいた席マスに「完全変異体」を出席させる。",
         perfect_mutant: "超陽気を持つ。このカードが出席したとき、相手の出席者すべてを破壊する。",
         adjective_student: "遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。",
-        yocchan: "このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。",
+        yocchan: "超陽気を持つ。このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。",
         trendy_student: "このカードが攻撃した出席者の体力を0にした場合、反撃ダメージを受けない。その出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",
         rebirth_student: "このカードは一度だけ、体力が0以下になっても校外エリアへ送られず、体力を全回復する。",
         yuta: "余裕を持つ。このカードに装備カードがついたとき、陽気を持つ。",
@@ -18656,7 +18673,7 @@
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
         loud_student: "陽気を持つ。このカードが出席したとき、お互いの場の他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。このカードは注目と超注目を無視して攻撃できる。「ベストフレンド」と隣接しているかぎり、超陽気を持つ。",
         best_friend: "このカードは「バカでかい声の学生」の効果によるダメージを受けない。このカードが「バカでかい声の学生」と隣接しているかぎり、攻撃力を+2、体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。",
-        ttb: "このカードが出席したとき、自分のデッキに「怪しげな文書」を1枚、相手のデッキに「怪しげな文書」を3枚生成する。",
+        ttb: "このカードが出席したとき、自分のデッキに「怪しげな文書」を1枚、相手のデッキに「怪しげな文書」を3枚生成する。自分のターンを終了したとき、このカードが自分の場にいるなら、相手のデッキに「怪しげな文書」を2枚生成する。",
         predator: "陽気を持つ。このカードを出席させるには、自分の場の出席者1人を破壊する。その場所に、このカードを出席させる。このカードが出席したとき、隣接する空いている席マスに「ベストフレンド」を1人出席させる。",
         trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
@@ -18708,7 +18725,7 @@
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に3ダメージを与える。",
         acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
-        aggro_eater: "自分の気力を1回復する。",
+        aggro_eater: "自分の場の出席者すべてと自分の気力を1回復する。",
         ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
         bento: "自分の出席者1人を指名し、その体力を2回復する。",
         yakiniku: "お互いの出席者すべての攻撃力を+1し、体力を2回復する。",
@@ -18748,7 +18765,7 @@
         sexual_eye: "自分のデッキから「U太」を1枚まで引く。",
         yoyu_announce: "「U太」を1枚手札に生成し、カードを1枚ドローする。",
         paired_existence: "自分の手札1枚を選んで校外エリアへ送る。相手の手札に同名カードがある場合、それも1枚校外エリアへ送る。",
-        peaceful_mind: "お互いの気力を3回復する。",
+        peaceful_mind: "お互いの気力を5回復する。",
         abyss: "使用後2回、自分のターン終了時に相手の出席者1人をランダムに破壊する。",
         dropped_cards: "自分のデッキから2枚を選び、校外エリアへ送る。",
         set_log: "自分の学生1人を指名する。その学生は陽気を持つ。",
