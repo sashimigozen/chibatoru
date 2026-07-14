@@ -14474,7 +14474,7 @@
       if (card.keywords?.includes(keyword)) {
         return true;
       }
-      if (keyword === "眠気" && isCardCurrentlyOnBoard(card) && hasPresidentDrowsinessAura()) return true;
+      if (keyword === "眠気" && card.baseId !== "president" && isCardCurrentlyOnBoard(card) && hasPresidentDrowsinessAura()) return true;
       if (keyword === "注目" && card.keywords?.includes("超注目")) return true;
       if (keyword === "陽気" && hasKeyword(card, "超陽気")) return true;
       if (keyword === "超陽気" && card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
@@ -18709,7 +18709,7 @@
         kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人召喚する。",
         signal_professor_m: "このカードが教卓マスにいるかぎり、自分の場に他の教師がいなければ陽気を持つ。このカードが席マスにいるかぎり、自分の教師は攻撃できない。",
         logic_hunter: "このカードが教卓マスに出席したとき、相手の手札を見て、その中から1枚を選び、校外エリアへ送る。",
-        president: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の出席者は眠気を持つ。",
+        president: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。",
         suzaku: "自分の教卓マスに「デザイン」と名のつく出席者がいなければ出席できない。このカードが席マスに出席したとき、相手のヴァンパイアを2人までランダムに指名し、それらに3ダメージを与える。",
         ai_chan: "このカードが席マスに出席したとき、陽気を持つ。",
         oni_shima_ai: "進化：「愛ちゃん」。陽気を持つ。進化したとき、相手の学生すべてに1ダメージを与える。",
