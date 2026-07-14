@@ -5898,6 +5898,16 @@
       "destroy_dos_attack", "dropped_cards", "set_log", "sage_legacy", "thanks_all_students", "yakiniku",
       "dont_worry", "gamma"
     ]);
+    const AI_DRAW_OR_SEARCH_CARD_IDS = new Set([
+      "alpha", "hondara", "onigiri_draw", "fire_touch", "deck_without",
+      "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
+      "sexual_eye", "yoyu_announce", "three_gestures", "music_detergent",
+      "sage_legacy", "trpg_member", "lightning_n", "curry_treater"
+    ]);
+    const AI_MULLIGAN_PRIORITY_IDS = new Set([
+      "alpha", "hondara", "onigiri_draw", "deck_without",
+      "environment_setup", "wet_meal_ticket"
+    ]);
     const PLAY_REVEAL_MS = 1450;
     const EVOLUTION_REVEAL_MS = 2200;
     const DONGURI_EVOLUTION_REVEAL_MS = 3800;
@@ -9523,13 +9533,35 @@
     function autoOpponentMulligan() {
       const opponent = state.players.opponent;
       if (opponent.mulliganUsed) return;
-      const studentCount = opponent.hand.filter((card) => card.type === "student").length;
-      const selected = opponent.hand
-        .filter((card) => (studentCount === 0 && card.type !== "student") || card.cost >= 7)
-        .slice(0, 5)
-        .map((card) => card.instanceId);
+      const selected = chooseAiMulliganReturnIds(opponent.hand);
       replaceSelectedCards("opponent", selected);
       opponent.mulliganUsed = true;
+    }
+
+    function scoreAiMulliganKeep(card, hand) {
+      const cost = effectiveCardCost(card);
+      const attendees = hand.filter((entry) => ["student", "teacher", "vampire"].includes(entry.type));
+      const hasEarlyAttendee = attendees.some((entry) => effectiveCardCost(entry) <= 3);
+      const cheapestAttendee = [...attendees].sort((a, b) => effectiveCardCost(a) - effectiveCardCost(b))[0];
+      let score = 8 - cost * 2;
+      if (["student", "teacher", "vampire"].includes(card.type)) score += cost <= 3 ? 6 : 1;
+      if (AI_MULLIGAN_PRIORITY_IDS.has(card.baseId)) score += 10;
+      if (card.baseId === "alpha") score += 12;
+      if (!hasEarlyAttendee && card.instanceId === cheapestAttendee?.instanceId) score += 5;
+      if (card.evolutionFrom) {
+        score += hand.some((entry) => entry.baseId === card.evolutionFrom) ? 6 : -6;
+      }
+      if (card.unusable && card.baseId !== "alpha") score -= 30;
+      return score;
+    }
+
+    function chooseAiMulliganReturnIds(hand) {
+      return hand
+        .map((card) => ({ card, score: scoreAiMulliganKeep(card, hand) }))
+        .filter((entry) => entry.score <= 0)
+        .sort((a, b) => a.score - b.score || effectiveCardCost(b.card) - effectiveCardCost(a.card))
+        .slice(0, 5)
+        .map((entry) => entry.card.instanceId);
     }
 
     function startBattle() {
@@ -9845,6 +9877,7 @@
       } else if (card.type === "teacher") {
         score -= 5;
       }
+      score += scoreAiPreferredPlacement(card, zone, index, context);
 
       if (zone === "seat" && card.baseId === "aggro_king") score += index === 6 ? 12 : -2;
       if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 11 : -2;
@@ -9971,34 +10004,76 @@
       return score + (teacherBonuses[card.baseId] || 0);
     }
 
+    function scoreAiPreferredPlacement(card, zone, index, context) {
+      let score = 0;
+      if (zone === "seat" && card.baseId === "aggro_student") {
+        const reservations = state.players.player.late.filter((entry) =>
+          entry.owner === "player" && entry.zone === "seat" && entry.index === index
+        );
+        if (reservations.length > 0) {
+          const soonest = Math.min(...reservations.map((entry) => Math.max(1, entry.remaining || 1)));
+          score += 24 + Math.max(0, 5 - soonest) * 3;
+        }
+      }
+      if (card.baseId === "ai_chan") score += zone === "seat" ? 14 : -3;
+      if (card.baseId === "extra_people" && zone === "teacher") score += 18;
+      if (zone === "seat" && card.baseId === "college_student_vibe") {
+        const rightIndex = index + 1;
+        score += seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex) ? 12 : -5;
+      }
+      if (zone === "seat" && card.baseId === "loud_group") {
+        const openRight = [index + 1, index + 2].filter((rightIndex) =>
+          seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex)
+        ).length;
+        score += openRight * 6 - (openRight === 0 ? 4 : 0);
+      }
+      if (zone === "seat" && card.baseId === "apprentice_vampire") {
+        score += adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex)) ? 9 : -3;
+      }
+      if (card.baseId === "bird_a") {
+        const hasEnemy = context.enemyRefs.length > 0;
+        const hasFirstRowEnemy = context.enemyRefs.some((ref) => ref.zone === "seat" && seatRow(ref.index) === 1);
+        if (zone === "teacher") score += hasFirstRowEnemy ? 10 : -4;
+        if (zone === "seat") score += hasEnemy ? 8 : -3;
+      }
+      if (zone === "teacher" && ["signal_professor_m", "ninety_three_teacher", "president"].includes(card.baseId)) {
+        score += 6;
+      }
+      return score;
+    }
+
     function scoreAiEnvironment(card) {
       if (state.environment?.baseId === card.baseId && card.baseId !== "seat_rules") return -100;
       const friendlySeats = state.players.opponent.board.seats;
       const enemySeats = state.players.player.board.seats;
-      if (card.baseId === "classroom") return state.environment ? 0 : 1;
+      const replacementBonus = state.environment?.owner === "player" ? 4 : 0;
+      if (card.baseId === "classroom") {
+        if (!state.environment) return 1;
+        return replacementBonus > 0 ? replacementBonus + 3 : 0;
+      }
       if (card.baseId === "cafeteria") {
         const cafeteriaCards = state.players.opponent.hand.filter((handCard) =>
           ["cafeteria_lady", "curry_treater", "chen_san", "dry_meal_ticket", "impossible_high_note"].includes(handCard.baseId)).length;
-        return 4 + cafeteriaCards * 3 + (state.players.opponent.life < 20 ? 2 : 0);
+        return 4 + cafeteriaCards * 3 + (state.players.opponent.life < 20 ? 2 : 0) + replacementBonus;
       }
       if (card.baseId === "night_pool") {
         const friendlyOpen = friendlySeats.filter((fieldCard, index) => !fieldCard && isBoardSlotOpen("opponent", "seat", index)).length;
         const enemyOpen = enemySeats.filter((fieldCard, index) => !fieldCard && isBoardSlotOpen("player", "seat", index)).length;
-        return 2 + friendlyOpen - enemyOpen * 0.4;
+        return 2 + friendlyOpen - enemyOpen * 0.4 + replacementBonus;
       }
       if (card.baseId === "gangi_fortress") {
         const buffSeats = [3, 4, 6, 7];
         const friendlyCount = buffSeats.filter((index) => friendlySeats[index]).length;
         const enemyCount = buffSeats.filter((index) => enemySeats[index]).length;
-        return 3 + friendlyCount * 3 - enemyCount * 2;
+        return 3 + friendlyCount * 3 - enemyCount * 2 + replacementBonus;
       }
       if (card.baseId === "seat_rules") {
         const friendlyLost = friendlySeats.filter((fieldCard, index) => fieldCard && seatCol(index) === 1).length;
         const enemyLost = enemySeats.filter((fieldCard, index) => fieldCard && seatCol(index) === 1).length;
-        return enemyLost * 7 - friendlyLost * 6 + 2;
+        return enemyLost * 7 - friendlyLost * 6 + 2 + replacementBonus;
       }
-      if (card.baseId === "design_domain") return hasDesignTeacherOnTeacherSlot("opponent") ? 8 : -100;
-      if (card.baseId === "chaos_world") return listBoardRefs("player").length > listBoardRefs("opponent").length ? 4 : 1;
+      if (card.baseId === "design_domain") return hasDesignTeacherOnTeacherSlot("opponent") ? 8 + replacementBonus : -100;
+      if (card.baseId === "chaos_world") return (listBoardRefs("player").length > listBoardRefs("opponent").length ? 4 : 1) + replacementBonus;
       return 0;
     }
 
@@ -10339,15 +10414,19 @@
         .map((target) => {
           const canDefeat = (attacker.attack || 0) >= target.card.currentHp;
           const survivesCounter = (target.card.attack || 0) < attacker.currentHp;
+          const lectureWillDefeat = willAiLectureDefeatAtEndTurn(target.card);
           const score = (canDefeat ? 14 : 0)
             + (survivesCounter ? 4 : -8)
             + (target.card.attack || 0) * 1.5
-            - target.card.currentHp * 0.25;
-          return { ...target, score, canDefeat, survivesCounter };
+            - target.card.currentHp * 0.25
+            - (lectureWillDefeat ? 20 : 0);
+          return { ...target, score, canDefeat, survivesCounter, lectureWillDefeat };
         })
         .sort((a, b) => b.score - a.score);
-      const best = targets[0];
+      const bestWithoutLecture = targets.find((target) => !target.lectureWillDefeat);
+      const best = bestWithoutLecture || targets[0];
       if (!best) return null;
+      if (!bestWithoutLecture && best.lectureWillDefeat) return null;
       const cannotAttackLife = (attentionIds.size > 0 && attacker.baseId !== "loud_student")
         || state.environment?.baseId === "meguro_library"
         || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気"));
@@ -10361,6 +10440,13 @@
         if (faceScore > best.score + 2) return null;
       }
       return best;
+    }
+
+    function willAiLectureDefeatAtEndTurn(card) {
+      const teacher = state.players.opponent.board.teacher;
+      if (!teacher || teacher.type !== "teacher" || !card || card.currentHp > 1) return false;
+      if (state.environment?.baseId === "on_demand_business" && card.type === "student") return false;
+      return teacher.baseId === "lightning_n" ? card.type === "vampire" : card.type === "student";
     }
 
     function endTurn(options = {}) {
@@ -11504,6 +11590,7 @@
         }
       });
       moveCardsToTrash(side, sentToTrash);
+      shuffleDeckAfterSearch(side);
       moveHandCardToTrash(side, item);
       queueAnimation("draw", side, kept);
       const trashText = trashDetailCountText(side, sentToTrash, "3つジェスチャーで校外へ送られたカード");
@@ -11593,6 +11680,7 @@
         }
         return true;
       });
+      shuffleDeckAfterSearch(side);
       moveCardsToTrash(side, moved, { title: "カードを落としてしまったのですがで校外へ送られたカード" });
       moveHandCardToTrash(side, item);
       const movedText = trashDetailCountText(side, moved, "カードを落としてしまったのですがで校外へ送られたカード");
@@ -11631,6 +11719,7 @@
         queueAnimation("draw", side, 1);
         pickedName = picked.name;
       }
+      shuffleDeckAfterSearch(side);
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は賢者の遺産を使い、デッキから${pickedName}を手札に加えました。`);
       state.pendingCardChoice = null;
@@ -12221,6 +12310,7 @@
         } else {
           addLog(`${card.name}の効果：相手のデッキに水2Lがありませんでした。`);
         }
+        shuffleDeckAfterSearch(opponent);
       }
       if (card.baseId === "failure_student") {
         const discardCount = Math.min(2, state.players[side].hand.length);
@@ -12427,7 +12517,9 @@
         } else if (isOnlineHost() && state.online.isHandlingRemoteCommand && requestRemoteLogicHunterChoice(side, card, options.commandId || "")) {
           addLog(`${card.name}の効果：相手が校外エリアへ送る手札を選んでいます。`);
         } else {
-          const target = opponentHand[Math.floor(Math.random() * opponentHand.length)];
+          const target = side === "opponent" && !isOnlineBattle()
+            ? chooseAiOpponentHandDiscardTarget(opponentHand, opponent)
+            : opponentHand[Math.floor(Math.random() * opponentHand.length)];
           discardOpponentHandCardById(side, target.instanceId, card, false);
         }
       }
@@ -12574,7 +12666,15 @@
         return true;
       });
       if (pulled > 0) queueAnimation("draw", side, pulled);
+      shuffleDeckAfterSearch(side);
       return pulled;
+    }
+
+    function shuffleDeckAfterSearch(side) {
+      const player = state.players[side];
+      if (!player) return;
+      player.deck = shuffle(player.deck);
+      queueAnimation("shuffle", side);
     }
 
     function generateCardsIntoDeck(side, baseId, count) {
@@ -12595,6 +12695,7 @@
         player.hand.push(card);
       });
       if (selected.length > 0) queueAnimation("draw", side, selected.length);
+      shuffleDeckAfterSearch(side);
       return selected.length;
     }
 
@@ -12651,6 +12752,7 @@
         moved.push(card);
       }
       moveCardsToTrash(side, moved);
+      if (moved.length > 0) shuffleDeckAfterSearch(side);
       return moved;
     }
 
@@ -12847,6 +12949,34 @@
       return true;
     }
 
+    function scoreAiKnownOpponentHandCard(card, targetSide) {
+      if (!card) return -100;
+      if (card.baseId === "suspicious_document") return -100;
+      const target = state.players[targetSide];
+      const cost = effectiveCardCost(card);
+      let score = Math.max(0, card.attack || 0) * 1.4
+        + Math.max(0, card.hp || 0) * 0.8
+        + Math.max(0, cost) * 0.35;
+      if (AI_DRAW_OR_SEARCH_CARD_IDS.has(card.baseId)) score += 11;
+      if (card.baseId === "alpha") score += 12;
+      if (card.evolutionFrom) {
+        const hasEvolutionSource = target.hand.some((entry) => entry.baseId === card.evolutionFrom)
+          || listBoardRefs(targetSide).some((ref) => getBoardCardFromRef(ref)?.baseId === card.evolutionFrom);
+        score += hasEvolutionSource ? 12 : 4;
+      }
+      if (card.type === "item" && AI_TACTICAL_ITEM_IDS.has(card.baseId)) score += 6;
+      if (cost <= target.maxWill + 1) score += 3;
+      if (card.unusable && card.baseId !== "alpha") score -= 40;
+      return score;
+    }
+
+    function chooseAiOpponentHandDiscardTarget(hand, targetSide) {
+      return [...hand]
+        .sort((a, b) => scoreAiKnownOpponentHandCard(b, targetSide) - scoreAiKnownOpponentHandCard(a, targetSide)
+          || effectiveCardCost(b) - effectiveCardCost(a)
+          || String(a.instanceId || "").localeCompare(String(b.instanceId || "")))[0] || null;
+    }
+
     function uniqueDesignDeckCandidates(side) {
       const seen = new Set();
       return state.players[side].deck.filter((card) => {
@@ -12883,6 +13013,7 @@
         queueAnimation("draw", side, 1);
         pulled = 1;
       }
+      shuffleDeckAfterSearch(side);
       const count = countFriendlyDesignTeachers(side);
       const drawn = drawUpTo(side, count);
       const resultText = `「デザイン」と名のつく教師カードを${pulled}枚手札に加え、自分の場の「デザイン」と名のつく教師の人数だけ${drawn}枚ドローしました。`;
@@ -14015,6 +14146,7 @@
           }
         });
         moveCardsToTrash(side, sentToTrash);
+        shuffleDeckAfterSearch(side);
         queueAnimation("draw", side, kept);
         const trashText = trashDetailCountText(side, sentToTrash, "3つジェスチャーで校外へ送られたカード");
         resultText = `デッキ上6枚から${kept}枚を手札に加え、残り${trashText}を校外エリアへ送りました。`;
@@ -14026,6 +14158,8 @@
           const pickedBaseId = candidates
             .sort((a, b) => (effectiveCardCost(b) || 0) - (effectiveCardCost(a) || 0))[0].baseId;
           pulled = pullCardsFromDeck(side, pickedBaseId, 1);
+        } else {
+          shuffleDeckAfterSearch(side);
         }
         const count = countFriendlyDesignTeachers(side);
         const drawn = drawUpTo(side, count);
@@ -14183,6 +14317,7 @@
         card.handTurns = 0;
         player.hand.push(card);
       });
+      shuffleDeckAfterSearch(side);
       return picked.length;
     }
 
