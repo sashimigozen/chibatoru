@@ -10006,6 +10006,17 @@
 
     function scoreAiPreferredPlacement(card, zone, index, context) {
       let score = 0;
+      if (zone === "seat") {
+        const enemyHand = state.players.player.hand;
+        const ownSeats = state.players.opponent.board.seats;
+        const betaNeedsCare = enemyHand.some((entry) => entry.baseId === "beta")
+          && !ownSeats[3]
+          && !ownSeats[5];
+        const gammaNeedsCare = enemyHand.some((entry) => entry.baseId === "gamma")
+          && !ownSeats[4];
+        if (betaNeedsCare && [3, 5].includes(index)) score += 26;
+        if (gammaNeedsCare && index === 4) score += 32;
+      }
       if (zone === "seat" && card.baseId === "aggro_student") {
         const reservations = state.players.player.late.filter((entry) =>
           entry.owner === "player" && entry.zone === "seat" && entry.index === index
@@ -10174,7 +10185,12 @@
       if (item.baseId === "chigauyo" || item.baseId === "chigauyo_kanji") {
         const enemyHandSize = state.players.player.hand.length;
         const ownHandSize = opponent.hand.length;
-        return enemyHandSize > ownHandSize ? 4 + enemyHandSize - ownHandSize : 0;
+        const ownSeats = state.players.opponent.board.seats;
+        const gammaThreat = state.players.player.hand.some((card) => card.baseId === "gamma") && !ownSeats[4];
+        const betaThreat = state.players.player.hand.some((card) => card.baseId === "beta") && !ownSeats[3] && !ownSeats[5];
+        const comboThreatScore = gammaThreat ? 14 : (betaThreat ? 12 : 0);
+        const handSizeScore = enemyHandSize > ownHandSize ? 4 + enemyHandSize - ownHandSize : 0;
+        return Math.max(comboThreatScore, handSizeScore);
       }
       if (CRAB_SET_IDS.includes(item.baseId)) {
         if (hasCompleteCrabSet("opponent") || opponent.crabCountdown !== null) return 0;
@@ -12959,6 +12975,8 @@
         + Math.max(0, cost) * 0.35;
       if (AI_DRAW_OR_SEARCH_CARD_IDS.has(card.baseId)) score += 11;
       if (card.baseId === "alpha") score += 12;
+      if (card.baseId === "beta") score += 60;
+      if (card.baseId === "gamma") score += 30;
       if (card.evolutionFrom) {
         const hasEvolutionSource = target.hand.some((entry) => entry.baseId === card.evolutionFrom)
           || listBoardRefs(targetSide).some((ref) => getBoardCardFromRef(ref)?.baseId === card.evolutionFrom);
