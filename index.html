@@ -12510,10 +12510,6 @@
         if (destroyed.baseId === "full_lock") state.fullLockSeatBlocks = [];
         addLog(`${card.name}の効果：環境カード「${destroyed.name}」を破壊しました。`);
       }
-      if (card.type === "student" && ["player", "opponent"].some((owner) => state.players[owner].board.teacher?.baseId === "president")) {
-        card.keywords = [...new Set([...(card.keywords || []), "眠気"])];
-        addLog(`${card.name}は学長の効果で眠気を持ちました。`);
-      }
       if (card.baseId === "bird_a") {
         if (zone === "teacher") {
           const target = effectTargetEntries(side, opponent, (_targetCard, ref) =>
@@ -14478,6 +14474,7 @@
       if (card.keywords?.includes(keyword)) {
         return true;
       }
+      if (keyword === "眠気" && isCardCurrentlyOnBoard(card) && hasPresidentDrowsinessAura()) return true;
       if (keyword === "注目" && card.keywords?.includes("超注目")) return true;
       if (keyword === "陽気" && hasKeyword(card, "超陽気")) return true;
       if (keyword === "超陽気" && card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
@@ -14489,6 +14486,10 @@
       if (keyword === "陽気" && card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") return true;
       if (keyword === "陽気" && card.baseId === "curry_treater" && state.environment?.baseId === "cafeteria") return true;
       return false;
+    }
+
+    function hasPresidentDrowsinessAura() {
+      return ["player", "opponent"].some((owner) => state.players[owner]?.board.teacher?.baseId === "president");
     }
 
     function hasOpposingSameNameAttendee(card) {
@@ -18708,7 +18709,7 @@
         kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人召喚する。",
         signal_professor_m: "このカードが教卓マスにいるかぎり、自分の場に他の教師がいなければ陽気を持つ。このカードが席マスにいるかぎり、自分の教師は攻撃できない。",
         logic_hunter: "このカードが教卓マスに出席したとき、相手の手札を見て、その中から1枚を選び、校外エリアへ送る。",
-        president: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場に新しく出席した学生は眠気を持つ。",
+        president: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の出席者は眠気を持つ。",
         suzaku: "自分の教卓マスに「デザイン」と名のつく出席者がいなければ出席できない。このカードが席マスに出席したとき、相手のヴァンパイアを2人までランダムに指名し、それらに3ダメージを与える。",
         ai_chan: "このカードが席マスに出席したとき、陽気を持つ。",
         oni_shima_ai: "進化：「愛ちゃん」。陽気を持つ。進化したとき、相手の学生すべてに1ダメージを与える。",
