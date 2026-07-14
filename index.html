@@ -9879,8 +9879,8 @@
       }
       score += scoreAiPreferredPlacement(card, zone, index, context);
 
-      if (zone === "seat" && card.baseId === "aggro_king") score += index === 6 ? 12 : -2;
-      if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 11 : -2;
+      if (zone === "seat" && card.baseId === "aggro_king") score += index === 6 ? 40 : -12;
+      if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 40 : -12;
       if (card.baseId === "ae_student") score += 7;
       if (card.baseId === "hurried_student") score += 4;
       if (card.baseId === "cancel_student") {
@@ -9911,23 +9911,26 @@
       }
       if (zone === "seat" && card.baseId === "student_comedy") {
         score += surroundingIndexes(index)
-          .filter((seatIndex) => state.players.opponent.board.seats[seatIndex]?.type === "student").length * 3;
+          .filter((seatIndex) => state.players.opponent.board.seats[seatIndex]?.type === "student").length * 40;
       }
       if (zone === "seat" && card.baseId === "lone_wolf") {
         const hasNeighbor = surroundingIndexes(index).some((seatIndex) => state.players.opponent.board.seats[seatIndex]);
-        score += hasNeighbor ? -3 : 8;
+        score += hasNeighbor ? -15 : 40;
       }
       if (zone === "seat" && card.baseId === "seat_taking_group") score += index === 4 ? 12 : -20;
       if (card.baseId === "predator") {
         const prey = getBoardCard("opponent", zone, index);
         score += prey ? 11 - (prey.attack || 0) - (prey.currentHp || 0) * 0.5 : -30;
+        const canSummonBestFriend = zone === "seat"
+          && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
+        score += canSummonBestFriend ? 45 : 0;
       }
       if (zone === "seat" && card.baseId === "back_question_student") {
-        score += seatRow(index) === 3 && state.players.player.board.teacher ? 10 : -1;
+        score += seatRow(index) === 3 && state.players.player.board.teacher ? 40 : -12;
       }
       if (zone === "seat" && card.baseId === "best_friend") {
         const besideLoud = adjacentIndexes(index).some((neighbor) => state.players.opponent.board.seats[neighbor]?.baseId === "loud_student");
-        score += besideLoud ? 10 : 0;
+        score += besideLoud ? 40 : 0;
       }
       if (zone === "seat" && card.baseId === "loud_student") {
         const friendlyVictims = friendlyRefs
@@ -9937,6 +9940,9 @@
           .map((ref) => getBoardCardFromRef(ref))
           .filter((fieldCard) => fieldCard && fieldCard.baseId !== "best_friend").length;
         score += enemyVictims * 2 - friendlyVictims * 1.5;
+        if (adjacentIndexes(index).some((neighbor) => state.players.opponent.board.seats[neighbor]?.baseId === "best_friend")) {
+          score += 40;
+        }
       }
       if (card.baseId === "laughing_front_student") {
         const usefulHealing = state.players.opponent.life < 20 || friendlyRefs.some((ref) => {
@@ -9958,7 +9964,7 @@
       }
       if (card.baseId === "apprentice_vampire") {
         const openNeighbor = zone === "seat" && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
-        score += (state.environment?.baseId === "cafeteria" ? 5 : 0) + (openNeighbor ? 8 : -2);
+        score += (state.environment?.baseId === "cafeteria" ? 5 : 0) + (openNeighbor ? 45 : 0);
       }
       if (card.baseId === "curry_treater") {
         score += state.players.opponent.deck.some((deckCard) => deckCard.baseId === "green_curry") ? 5 : -2;
@@ -9973,7 +9979,7 @@
         const vampireTargets = enemyRefs.filter((ref) => getBoardCardFromRef(ref)?.type === "vampire").length;
         score += vampireTargets ? vampireTargets * 5 : -4;
       }
-      if (zone === "seat" && card.baseId === "ai_chan") score += 5;
+      if (zone === "seat" && card.baseId === "ai_chan") score += 20;
       if (card.baseId === "france_asakura") score += state.environment ? 6 : 0;
       if (zone === "seat" && card.baseId === "bird_a") {
         score += enemyRefs.length ? 9 : 0;
@@ -9986,16 +9992,17 @@
       const friendlyMiddleColumn = friendlyRefs.filter((ref) => ref.zone === "seat" && seatCol(ref.index) === 1);
       const teacherBonuses = {
         general_teacher: enemyStudents.length * 1.5,
-        pro_k: [0, 2].filter((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex)).length * 4,
+        pro_k: 20 + [0, 2].filter((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex)).length * 40,
         lightning_n: state.players.opponent.deck.some((deckCard) => deckCard.baseId === "ruler") ? 5 : 2,
         fairy_t: enemyThirdRowStudents.length * 3,
-        popular_c: friendlyRefs.some((ref) => getBoardCardFromRef(ref)?.type === "teacher" && String(getBoardCardFromRef(ref)?.name || "").includes("デザイン")) ? 6 : 3,
+        popular_c: (isBoardSlotOpen("opponent", "seat", 0) ? 40 : 0)
+          + (friendlyRefs.some((ref) => getBoardCardFromRef(ref)?.type === "teacher" && String(getBoardCardFromRef(ref)?.name || "").includes("デザイン")) ? 6 : 3),
         bird_a: enemyRefs.some((ref) => ref.zone === "seat" && seatRow(ref.index) === 1) ? 5 : 0,
         thin_professor_h: enemyOuterColumns.length * 5 - friendlyMiddleColumn.length * 5,
         kansai_voice_t: enemyRefs.length ? 5 : 0,
         kyoto_sound_i: enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp <= 2).length * 5
           - enemyStudents.filter((ref) => getBoardCardFromRef(ref).currentHp > 2).length * 2,
-        kyushu_info_c: isBoardSlotOpen("opponent", "seat", 1) ? 5 : -2,
+        kyushu_info_c: isBoardSlotOpen("opponent", "seat", 1) ? 40 : -2,
         signal_professor_m: friendlyRefs.some((ref) => getBoardCardFromRef(ref)?.type === "teacher") ? 1 : 5,
         logic_hunter: state.players.player.hand.length > 0 ? 7 + state.players.player.hand.length : 0,
         ninety_three_teacher: 8 + Math.max(0, 6 - state.players.player.life),
@@ -10026,20 +10033,20 @@
           score += 24 + Math.max(0, 5 - soonest) * 3;
         }
       }
-      if (card.baseId === "ai_chan") score += zone === "seat" ? 14 : -3;
+      if (card.baseId === "ai_chan") score += zone === "seat" ? 20 : -12;
       if (card.baseId === "extra_people" && zone === "teacher") score += 18;
       if (zone === "seat" && card.baseId === "college_student_vibe") {
         const rightIndex = index + 1;
-        score += seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex) ? 12 : -5;
+        score += seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex) ? 45 : 0;
       }
       if (zone === "seat" && card.baseId === "loud_group") {
         const openRight = [index + 1, index + 2].filter((rightIndex) =>
           seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex)
         ).length;
-        score += openRight * 6 - (openRight === 0 ? 4 : 0);
+        score += openRight * 40;
       }
       if (zone === "seat" && card.baseId === "apprentice_vampire") {
-        score += adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex)) ? 9 : -3;
+        score += adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex)) ? 20 : 0;
       }
       if (card.baseId === "bird_a") {
         const hasEnemy = context.enemyRefs.length > 0;
@@ -14385,15 +14392,20 @@
     }
 
     function placeCopiedCardInFirstOpenSlot(side, card) {
-      const seatIndex = AI_SEAT_PRIORITY.find((index) => isBoardSlotOpen(side, "seat", index));
-      if (seatIndex !== undefined && ["student", "teacher", "vampire"].includes(card.type)) {
-        setBoardCard(side, "seat", seatIndex, card);
-        if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, "seat", seatIndex);
-        return true;
+      const attendeeTypes = ["student", "teacher", "vampire"];
+      const candidates = attendeeTypes.includes(card.type)
+        ? AI_SEAT_PRIORITY
+          .filter((index) => isBoardSlotOpen(side, "seat", index))
+          .map((index) => ({ zone: "seat", index, score: side === "opponent" ? scoreAiPlacement(card, "seat", index) : 0 }))
+        : [];
+      if (attendeeTypes.includes(card.type) && isBoardSlotOpen(side, "teacher")) {
+        candidates.push({ zone: "teacher", index: null, score: side === "opponent" ? scoreAiPlacement(card, "teacher", null) : -1 });
       }
-      if (isBoardSlotOpen(side, "teacher") && ["student", "teacher", "vampire"].includes(card.type)) {
-        setBoardCard(side, "teacher", null, card);
-        if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, "teacher", null);
+      candidates.sort((a, b) => b.score - a.score);
+      const destination = candidates[0];
+      if (destination) {
+        setBoardCard(side, destination.zone, destination.index, card);
+        if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, destination.zone, destination.index);
         return true;
       }
       moveToTrash(side, card);
