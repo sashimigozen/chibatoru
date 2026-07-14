@@ -5567,7 +5567,7 @@
           </select>
           <button class="button secondary" id="saveDeckButton" type="button">保存</button>
           <button class="button secondary" id="loadDeckButton" type="button">保存デッキを読み込む</button>
-          <button class="button secondary" id="exportDeckButton" type="button">jsonファイルに書き出し</button>
+          <button class="button secondary" id="exportDeckButton" type="button">保存先を選んで書き出し</button>
           <button class="button secondary" id="importDeckButton" type="button">jsonファイルを読み込む</button>
           <button class="button secondary" id="deleteDeckButton" type="button">削除</button>
           <input id="deckFileInput" type="file" accept="application/json" hidden>
@@ -18017,13 +18017,19 @@
       renderSavedDeckOptions();
     }
 
-    function exportActiveDeckFile() {
+    async function exportActiveDeckFile() {
       const side = state.deckBuilder.activeSide;
       const selectedName = elements.savedDeckSelect.value;
       const typedName = elements.deckSaveNameInput.value.trim();
       const name = typedName || selectedName || `${SIDES[side]}デッキ`;
-      downloadDeckFile(name, state.deckBuilder.counts[side]);
-      state.message = `${SIDES[side]}のデッキをjsonファイルに書き出しました。`;
+      const result = await saveDeckFile(name, state.deckBuilder.counts[side]);
+      if (result === "cancelled") {
+        state.message = "デッキの書き出しをキャンセルしました。";
+      } else if (result === "picker") {
+        state.message = `${SIDES[side]}のデッキを選択した場所へ保存しました。`;
+      } else {
+        state.message = `${SIDES[side]}のデッキを書き出しました。このブラウザでは保存先を直接選べないため、ダウンロード設定が使われます。`;
+      }
       render();
     }
 
@@ -18048,7 +18054,7 @@
       elements.deckFileInput.click();
     }
 
-    function downloadDeckFile(name, counts) {
+    function deckFileData(name, counts) {
       const payload = {
         kind: "chibattle-deck",
         version: "0.2.4",
@@ -18056,11 +18062,44 @@
         counts: copyDeckCounts(counts),
         savedAt: new Date().toISOString()
       };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      return {
+        fileName: `${name.replace(/[\\/:*?"<>|]/g, "_") || "deck"}.json`,
+        text: JSON.stringify(payload, null, 2)
+      };
+    }
+
+    async function saveDeckFile(name, counts) {
+      const data = deckFileData(name, counts);
+      if (window.isSecureContext && typeof window.showSaveFilePicker === "function") {
+        try {
+          const handle = await window.showSaveFilePicker({
+            id: "chibatoru-deck-export",
+            suggestedName: data.fileName,
+            startIn: "documents",
+            types: [{
+              description: "チバトル デッキ",
+              accept: { "application/json": [".json"] }
+            }]
+          });
+          const writable = await handle.createWritable();
+          await writable.write(data.text);
+          await writable.close();
+          return "picker";
+        } catch (error) {
+          if (error?.name === "AbortError") return "cancelled";
+          console.warn("保存先選択を使用できなかったため、通常のダウンロードに切り替えます。", error);
+        }
+      }
+      downloadDeckFile(data.fileName, data.text);
+      return "download";
+    }
+
+    function downloadDeckFile(fileName, text) {
+      const blob = new Blob([text], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${name.replace(/[\\/:*?"<>|]/g, "_") || "deck"}.json`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
