@@ -447,6 +447,9 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   const importPage = await httpGet(port, "/admin/logs/import", "secret");
   assert.equal(importPage.statusCode, 200);
   assert.match(importPage.body, /ログJSONインポート/);
+  assert.match(importPage.body, /ログファイルをここにドロップ/);
+  assert.match(importPage.body, /id="logFileInput"/);
+  assert.match(importPage.body, /normalizeJsonLines/);
 
   const importedPayload = {
     logs: [{

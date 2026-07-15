@@ -387,6 +387,14 @@ function adminPageShell(body) {
     .button.secondary { background: var(--accent-soft); color: var(--accent); }
     .button.backup { min-height: 46px; background: var(--teal); border-color: var(--teal); font-size: 17px; box-shadow: 0 8px 18px rgba(15, 118, 110, 0.18); }
     textarea { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; color: var(--ink); padding: 12px; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
+    .file-drop-zone { display: grid; min-height: 176px; place-items: center; border: 2px dashed #8aa7cd; border-radius: 8px; background: #f4f8ff; color: #29486f; padding: 24px; text-align: center; cursor: pointer; transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease; }
+    .file-drop-zone:hover, .file-drop-zone:focus-visible, .file-drop-zone.drag-active { border-color: var(--accent); background: #e8f1ff; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12); outline: none; }
+    .file-drop-zone.loaded { border-style: solid; border-color: var(--teal); background: #ecfdf5; color: #166534; }
+    .file-drop-zone strong { display: block; margin-bottom: 6px; font-size: 19px; }
+    .file-drop-zone input { display: none; }
+    .file-status { min-height: 28px; margin: 10px 0 0; font-weight: 700; }
+    .file-status.error { color: #b42318; }
+    .import-json-editor { margin-top: 18px; }
     .notice { border: 1px solid #9ec5fe; border-left: 5px solid var(--accent); border-radius: 8px; background: #eef6ff; color: #14356f; padding: 10px 12px; }
     .muted { color: var(--muted); }
   </style>
@@ -447,14 +455,105 @@ function renderAdminImportPage(message = "", kind = "muted") {
       ${message ? `<p class="${kind === "ok" ? "notice" : "muted"}">${escapeHtml(message)}</p>` : ""}
     </section>
     <section class="panel">
-      <form method="post" action="/admin/logs/import">
-        <p><textarea name="logsJson" spellcheck="false" placeholder='{"logs":[...]}'></textarea></p>
+      <form id="logImportForm" method="post" action="/admin/logs/import">
+        <label class="file-drop-zone" id="logFileDropZone" for="logFileInput" tabindex="0">
+          <input id="logFileInput" type="file" accept=".json,.jsonl,application/json,application/x-ndjson">
+          <span>
+            <strong>ログファイルをここにドロップ</strong>
+            JSON・JSONLファイルを選択する場合は、ここをクリック
+          </span>
+        </label>
+        <p class="file-status muted" id="logFileStatus" aria-live="polite">ファイルを読み込むと、下の欄で内容を確認できます。</p>
+        <p class="import-json-editor"><textarea id="logsJson" name="logsJson" spellcheck="false" placeholder='{"logs":[...]}'></textarea></p>
         <p class="actions">
           <button class="button" type="submit">インポートする</button>
           <a class="button secondary" href="/admin/logs">キャンセル</a>
         </p>
       </form>
     </section>
+    <script>
+      (() => {
+        const dropZone = document.getElementById("logFileDropZone");
+        const fileInput = document.getElementById("logFileInput");
+        const textarea = document.getElementById("logsJson");
+        const status = document.getElementById("logFileStatus");
+        const maxBytes = ${MAX_IMPORT_BYTES};
+        let dragDepth = 0;
+
+        function showStatus(text, isError = false) {
+          status.textContent = text;
+          status.classList.toggle("error", isError);
+          status.classList.toggle("muted", !isError);
+        }
+
+        function normalizeJsonLines(text) {
+          const events = text.split(/\\r?\\n/).map((line) => line.trim()).filter(Boolean).map((line) => JSON.parse(line));
+          if (!events.length || events.some((event) => !event || typeof event !== "object" || Array.isArray(event))) {
+            throw new Error("JSONLの対戦イベントを読み取れませんでした。");
+          }
+          const grouped = new Map();
+          events.forEach((event) => {
+            const gameId = String(event.gameId || "");
+            if (!gameId) throw new Error("gameIdのないイベントが含まれています。");
+            if (!grouped.has(gameId)) grouped.set(gameId, []);
+            grouped.get(gameId).push(event);
+          });
+          const logs = [...grouped.entries()].map(([gameId, groupedEvents]) => ({ gameId, events: groupedEvents }));
+          return logs.length === 1 ? logs[0] : { logs };
+        }
+
+        async function readLogFile(file) {
+          if (!file) return;
+          dropZone.classList.remove("loaded");
+          if (file.size > maxBytes) {
+            showStatus("ファイルが大きすぎます。8MB以下のファイルを選んでください。", true);
+            return;
+          }
+          try {
+            const rawText = await file.text();
+            let payload;
+            try {
+              payload = JSON.parse(rawText);
+            } catch {
+              payload = normalizeJsonLines(rawText);
+            }
+            textarea.value = JSON.stringify(payload, null, 2);
+            dropZone.classList.add("loaded");
+            showStatus(file.name + " を読み込みました。内容を確認して「インポートする」を押してください。");
+            textarea.focus();
+          } catch (error) {
+            showStatus("ファイルを読み取れませんでした: " + error.message, true);
+          }
+        }
+
+        dropZone.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          fileInput.click();
+        });
+        fileInput.addEventListener("change", () => readLogFile(fileInput.files?.[0]));
+        dropZone.addEventListener("dragenter", (event) => {
+          event.preventDefault();
+          dragDepth += 1;
+          dropZone.classList.add("drag-active");
+        });
+        dropZone.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+        });
+        dropZone.addEventListener("dragleave", (event) => {
+          event.preventDefault();
+          dragDepth = Math.max(0, dragDepth - 1);
+          if (!dragDepth) dropZone.classList.remove("drag-active");
+        });
+        dropZone.addEventListener("drop", (event) => {
+          event.preventDefault();
+          dragDepth = 0;
+          dropZone.classList.remove("drag-active");
+          readLogFile(event.dataTransfer?.files?.[0]);
+        });
+      })();
+    </script>
   `);
 }
 
