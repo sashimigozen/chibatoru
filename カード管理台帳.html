@@ -298,6 +298,47 @@
       const card = CARDS.find((entry) => entry.id === id);
       if (card) Object.assign(card, changes);
     }
+    CARDS.push(
+      {
+        id: "proliferating_enemy",
+        name: "増殖する敵",
+        type: "student",
+        cost: 5,
+        attack: 2,
+        hp: 3,
+        availability: "deck",
+        placement: "席マス / 教卓マス",
+        effect: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
+        combo: "敵",
+        notes: "相手の出席者がカードの効果で出席した場合も発動する。"
+      },
+      {
+        id: "delayed_student",
+        name: "遅延する学生",
+        type: "student",
+        cost: 6,
+        attack: 3,
+        hp: 4,
+        availability: "deck",
+        placement: "自分の3行目の席マス",
+        effect: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
+        combo: "",
+        notes: ""
+      },
+      {
+        id: "yamanashi_minimum_wage",
+        name: "山梨最低賃金2円",
+        type: "item",
+        cost: 3,
+        attack: null,
+        hp: null,
+        availability: "deck",
+        placement: "手札から使用",
+        effect: "次の自分のターン開始時まで、お互いはデッキからカードを手札に加えられない。",
+        combo: "",
+        notes: "生成や校外エリアから手札に加える効果は妨げない。"
+      }
+    );
     applyCardUpdate("back_question_student", {
       effect: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。"
     });
@@ -310,14 +351,44 @@
     applyCardUpdate("peaceful_mind", {
       effect: "お互いの気力を5回復する。"
     });
+    applyCardUpdate("abyss", {
+      effect: "このカードを使用したターンを含む2ターンの間、自分のターン終了時に、相手の出席者1人をランダムに指名し、破壊する。"
+    });
     applyCardUpdate("ttb", {
       cost: 4,
       effect: "このカードが出席したとき、お互いのデッキのランダムな位置に「怪しげな文書」を2枚ずつ生成する。自分のターン終了時、このカードが自分の場にいるなら、相手のデッキのランダムな位置に「怪しげな文書」を1枚生成する。",
       combo: "怪しげな文書"
     });
+    applyCardUpdate("bird_a", {
+      effect: "このカードが教卓マスに出席したとき、相手の1行目にいる出席者すべてに2ダメージを与える。このカードが席マスに出席したとき、相手の場の出席者1人をランダムに指名し、破壊する。"
+    });
+    applyCardUpdate("bento", {
+      cost: 3,
+      effect: "自分の出席者1人を指名し、その体力をすべて回復する。その後、その出席者の攻撃力を-2する。"
+    });
     applyCardUpdate("sniper", { attack: 2 });
     applyCardUpdate("president", {
       effect: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。"
+    });
+    applyCardUpdate("dark_yuta", {
+      effect: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを2枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
+      combo: "U太"
+    });
+    applyCardUpdate("accelerate", {
+      effect: "装備カード。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の場にいるなら、カードを1枚ドローする。装備カードは通常、1人につき1枚まで。",
+      combo: "U太 / 裏U太"
+    });
+    applyCardUpdate("chameleon", {
+      effect: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の体力を+2する。装備カードは通常、1人につき1枚まで。",
+      combo: "U太 / 裏U太"
+    });
+    applyCardUpdate("yuta_umbrella", {
+      effect: "装備カード。「U太」または「裏U太」1人に装備できる。次の相手ターン終了時まで、このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは通常、1人につき1枚まで。",
+      combo: "U太 / 裏U太"
+    });
+    applyCardUpdate("red_happi", {
+      effect: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の攻撃力を+2する。装備カードは通常、1人につき1枚まで。",
+      combo: "U太 / 裏U太"
     });
     const TYPE_LABELS = {"student":"学生","teacher":"教師","vampire":"ヴァンパイア","item":"持ち物","environment":"環境"};
     const AVAILABILITY_LABELS = {"deck":"デッキ投入","generated":"生成限定","token":"トークン"};
