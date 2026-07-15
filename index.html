@@ -10639,8 +10639,8 @@
           addLog(`${card.name}の効果：自分と教師を1回復。`);
         }
         if (card.baseId === "ttb") {
-          generateCardsIntoDeck(opponent, "suspicious_document", 2);
-          addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を2枚生成しました。`);
+          generateCardsIntoDeck(opponent, "suspicious_document", 1);
+          addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を1枚生成しました。`);
         }
       });
       listBoardRefs(side).forEach((ref) => {
@@ -12275,9 +12275,9 @@
         addLog(`${card.name}の効果：相手の学生へランダムに${hitSummary.attendees}ダメージを割り振りました。`);
       }
       if (card.baseId === "ttb") {
-        generateCardsIntoDeck(side, "suspicious_document", 1);
-        generateCardsIntoDeck(opponent, "suspicious_document", 3);
-        addLog(`${card.name}の効果：自分のデッキに「怪しげな文書」を1枚、相手のデッキに3枚生成しました。`);
+        generateCardsIntoDeck(side, "suspicious_document", 2);
+        generateCardsIntoDeck(opponent, "suspicious_document", 2);
+        addLog(`${card.name}の効果：お互いのデッキに「怪しげな文書」を2枚ずつ生成しました。`);
       }
       if (card.baseId === "seat_taking_group" && zone === "seat" && index === 4) {
         [3, 5].forEach((seatIndex) => {
@@ -18878,7 +18878,7 @@
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
         loud_student: "陽気を持つ。このカードが出席したとき、お互いの場の他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。このカードは注目と超注目を無視して攻撃できる。「ベストフレンド」と隣接しているかぎり、超陽気を持つ。",
         best_friend: "このカードは「バカでかい声の学生」の効果によるダメージを受けない。このカードが「バカでかい声の学生」と隣接しているかぎり、攻撃力を+2、体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。",
-        ttb: "このカードが出席したとき、自分のデッキに「怪しげな文書」を1枚、相手のデッキに「怪しげな文書」を3枚生成する。自分のターンを終了したとき、このカードが自分の場にいるなら、相手のデッキに「怪しげな文書」を2枚生成する。",
+        ttb: "このカードが出席したとき、お互いのデッキのランダムな位置に「怪しげな文書」を2枚ずつ生成する。自分のターン終了時、このカードが自分の場にいるなら、相手のデッキのランダムな位置に「怪しげな文書」を1枚生成する。",
         predator: "陽気を持つ。このカードを出席させるには、自分の場の出席者1人を破壊する。その場所に、このカードを出席させる。このカードが出席したとき、隣接する空いている席マスに「ベストフレンド」を1人出席させる。",
         trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
