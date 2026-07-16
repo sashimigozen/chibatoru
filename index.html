@@ -5908,6 +5908,20 @@
       "alpha", "hondara", "onigiri_draw", "deck_without",
       "environment_setup", "wet_meal_ticket"
     ]);
+    const AI_LIFE_HEAL_VALUES = Object.freeze({
+      onigiri_draw: 2,
+      aggro_eater: 1,
+      fluid_pasta: 3,
+      circle_crab: 4,
+      hair_crab: 4,
+      homeless_crab: 4,
+      peaceful_mind: 5
+    });
+    const AI_REMOVAL_CARD_IDS = new Set([
+      "ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization",
+      "panpan", "favorite_number_s", "namen_tenno", "capture", "bird_a",
+      "thin_professor_h", "demon_a_plus", "impossible_high_note"
+    ]);
     const PLAY_REVEAL_MS = 1450;
     const EVOLUTION_REVEAL_MS = 2200;
     const DONGURI_EVOLUTION_REVEAL_MS = 3800;
@@ -9762,6 +9776,206 @@
       return new Promise((resolve) => window.setTimeout(resolve, ms));
     }
 
+    function aiLifeHealingValue(card) {
+      return AI_LIFE_HEAL_VALUES[card?.baseId] || 0;
+    }
+
+    function aiDirectLifeDamageValue(card, side) {
+      if (!card) return 0;
+      if (card.baseId === "ruler") return 1;
+      if (card.baseId === "double_diamond") return 4;
+      if (card.baseId === "greeting_3000") {
+        return state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
+      }
+      return 0;
+    }
+
+    function aiCardProvidesFaceProtection(card) {
+      return Boolean(card?.keywords?.some((keyword) => keyword === "注目" || keyword === "超注目"));
+    }
+
+    function aiCardCanAttackLifeOnAttendance(card, side, zone = null, index = null) {
+      if (!card || !["student", "teacher", "vampire"].includes(card.type)) return false;
+      if (card.keywords?.includes("超陽気")) return true;
+      if (card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
+      if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(side)) return true;
+      if (card.baseId === "loud_student" && zone === "seat" && index !== null) {
+        return adjacentIndexes(index).some((seatIndex) => state.players[side].board.seats[seatIndex]?.baseId === "best_friend");
+      }
+      return false;
+    }
+
+    function aiCanCardTargetLife(card, side, options = {}) {
+      if (!card || state.environment?.baseId === "meguro_library") return false;
+      const targetSide = oppositeSide(side);
+      if (listAttentionCards(targetSide).length > 0 && card.baseId !== "loud_student") return false;
+      if (options.onAttendance && !aiCardCanAttackLifeOnAttendance(card, side, options.zone, options.index)) return false;
+      return true;
+    }
+
+    function aiAttackHitFactor(card) {
+      return hasKeyword(card, "眠気") ? 0.5 : 1;
+    }
+
+    function aiBoardFaceDamage(side, options = {}) {
+      const readyOnly = options.readyOnly === true;
+      const futureActionTurn = options.futureActionTurn ?? state.actionTurn;
+      const cards = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
+      return cards.reduce((total, card) => {
+        if (!aiCanCardTargetLife(card, side)) return total;
+        if (readyOnly) {
+          if (side !== state.currentSide || !canAttackSilently(card)) return total;
+          if (card.playedOnTurn === state.actionTurn && hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) return total;
+        } else {
+          if (state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= futureActionTurn) return total;
+          if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= futureActionTurn) return total;
+          if (isSameNameAttackLocked(card) || isFriendlyTeacherAttackBlocked(card)) return total;
+        }
+        const attack = Math.max(0, card.attack || 0);
+        const drowsy = hasKeyword(card, "眠気");
+        total.max += attack;
+        total.expected += attack * aiAttackHitFactor(card);
+        if (!drowsy) total.guaranteed += attack;
+        return total;
+      }, { max: 0, expected: 0, guaranteed: 0 });
+    }
+
+    function aiMaximizeHandValue(cards, will, valueForCard) {
+      const capacity = Math.max(0, Math.floor(will || 0));
+      const dp = Array(capacity + 1).fill(0);
+      cards.forEach((card) => {
+        const cost = Math.max(0, Math.floor(effectiveCardCost(card) || 0));
+        const value = Math.max(0, valueForCard(card) || 0);
+        if (cost > capacity || value <= 0) return;
+        for (let remaining = capacity; remaining >= cost; remaining -= 1) {
+          dp[remaining] = Math.max(dp[remaining], dp[remaining - cost] + value);
+        }
+      });
+      return Math.max(...dp);
+    }
+
+    function aiAffordableHandFaceBurst(side, will) {
+      const targetSide = oppositeSide(side);
+      if (state.environment?.baseId === "meguro_library") return 0;
+      return aiMaximizeHandValue(state.players[side].hand, will, (card) => {
+        if (!aiCardCanAttackLifeOnAttendance(card, side)) return 0;
+        if (listAttentionCards(targetSide).length > 0 && card.baseId !== "loud_student") return 0;
+        return Math.max(0, card.attack || 0);
+      });
+    }
+
+    function aiAffordableDirectLifeDamage(side, will) {
+      return aiMaximizeHandValue(state.players[side].hand, will, (card) => aiDirectLifeDamageValue(card, side));
+    }
+
+    function aiAffordableLifeHealing(side, will) {
+      return aiMaximizeHandValue(state.players[side].hand, will, aiLifeHealingValue);
+    }
+
+    function aiExpectedDeckValue(side, draws, valueForCard) {
+      const deck = state.players[side].deck;
+      if (deck.length === 0 || draws <= 0) return 0;
+      const values = deck.map(valueForCard).filter((value) => value > 0);
+      if (values.length === 0) return 0;
+      const chance = 1 - Math.pow((deck.length - values.length) / deck.length, Math.min(draws, deck.length));
+      return Math.max(...values) * chance;
+    }
+
+    function aiExpectedDeckFaceBurst(side, draws) {
+      if (state.environment?.baseId === "meguro_library") return 0;
+      const targetSide = oppositeSide(side);
+      return aiExpectedDeckValue(side, draws, (card) => {
+        if (!aiCardCanAttackLifeOnAttendance(card, side)) return 0;
+        if (listAttentionCards(targetSide).length > 0 && card.baseId !== "loud_student") return 0;
+        return Math.max(0, card.attack || 0);
+      });
+    }
+
+    function aiExpectedDeckHealing(side, draws) {
+      return aiExpectedDeckValue(side, draws, aiLifeHealingValue);
+    }
+
+    function aiEndTurnHealing(side) {
+      let healing = state.environment?.baseId === "cafeteria" ? 1 : 0;
+      healing += listBoardRefs(side)
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((card) => card?.baseId === "laughing_front_student").length;
+      return healing;
+    }
+
+    function aiHasAffordableFaceProtection(side, will) {
+      if (listAttentionCards(side).length > 0) return true;
+      return state.players[side].hand.some((card) =>
+        aiCardProvidesFaceProtection(card)
+        && effectiveCardCost(card) <= will
+        && ["student", "teacher", "vampire"].includes(card.type));
+    }
+
+    function aiBoardSurvivalFactor(attackingSide) {
+      const defendingSide = oppositeSide(attackingSide);
+      const defenders = listBoardRefs(defendingSide).length;
+      const removalCards = state.players[defendingSide].hand.filter((card) => AI_REMOVAL_CARD_IDS.has(card.baseId)).length;
+      return Math.max(0.48, 0.9 - Math.min(4, defenders) * 0.055 - Math.min(3, removalCards) * 0.09);
+    }
+
+    function getAiLethalForecast() {
+      const ai = state.players.opponent;
+      const player = state.players.player;
+      const aiNextWill = Math.min(10, ai.maxWill + 1);
+      const playerNextWill = Math.min(10, player.maxWill + 1);
+      const currentBoard = aiBoardFaceDamage("opponent", { readyOnly: true });
+      const immediateDirectDamage = aiAffordableDirectLifeDamage("opponent", ai.will);
+      const immediateMaxDamage = currentBoard.max + immediateDirectDamage;
+      const immediateExpectedDamage = currentBoard.expected + immediateDirectDamage;
+
+      const aiFutureBoard = aiBoardFaceDamage("opponent", { futureActionTurn: state.actionTurn + 2 });
+      const playerFutureBoard = aiBoardFaceDamage("player", { futureActionTurn: state.actionTurn + 1 });
+      const aiSurvival = aiBoardSurvivalFactor("opponent");
+      const projectedNextTurnDamage = aiFutureBoard.expected * aiSurvival
+        + aiAffordableHandFaceBurst("opponent", aiNextWill)
+        + aiExpectedDeckFaceBurst("opponent", 1);
+      const projectedFollowingTurnDamage = aiFutureBoard.expected * aiSurvival * 0.75
+        + aiExpectedDeckFaceBurst("opponent", 2);
+      const ownNextTurnDamage = immediateExpectedDamage + projectedNextTurnDamage;
+      const ownTwoTurnDamage = ownNextTurnDamage
+        + projectedFollowingTurnDamage;
+      // Counter-lethal is evaluated from the board that is actually left alive.
+      // Discounting it by a generic removal chance made the AI race into visible lethal.
+      const opponentNextTurnDamage = playerFutureBoard.expected
+        + aiAffordableHandFaceBurst("player", playerNextWill)
+        + aiExpectedDeckFaceBurst("player", 1);
+
+      const opponentHealingRisk = aiAffordableLifeHealing("player", playerNextWill)
+        + aiExpectedDeckHealing("player", 1)
+        + aiEndTurnHealing("player");
+      const ownEmergencyHealing = aiAffordableLifeHealing("opponent", ai.will) + aiEndTurnHealing("opponent");
+      const protectionAvailable = aiHasAffordableFaceProtection("opponent", ai.will);
+      const protectionActive = listAttentionCards("opponent").length > 0;
+      // Healing and Attention in hand only count after the AI actually commits them.
+      const opponentCounterLethal = opponentNextTurnDamage >= ai.life;
+      const effectiveEnemyLife = player.life + opponentHealingRisk;
+      const twoTurnEffectiveEnemyLife = player.life + opponentHealingRisk * 1.6;
+      const safeRace = !opponentCounterLethal || protectionActive;
+      return {
+        immediateMaxDamage,
+        immediateExpectedDamage,
+        immediateGuaranteedDamage: currentBoard.guaranteed + immediateDirectDamage,
+        immediateLethal: immediateMaxDamage >= player.life,
+        ownNextTurnDamage,
+        ownTwoTurnDamage,
+        nextTurnLethal: ownNextTurnDamage >= effectiveEnemyLife,
+        twoTurnLethal: ownTwoTurnDamage >= twoTurnEffectiveEnemyLife,
+        opponentNextTurnDamage,
+        opponentCounterLethal,
+        opponentHealingRisk,
+        ownEmergencyHealing,
+        protectionAvailable,
+        protectionActive,
+        effectiveEnemyLife,
+        safeRace
+      };
+    }
+
     function getAiDecisionContext() {
       const ai = state.players.opponent;
       const player = state.players.player;
@@ -9824,6 +10038,9 @@
       if (timing !== "beforeBoard") return true;
       if (score <= 0) return false;
       if (item.baseId === "yamanashi_minimum_wage") return false;
+      const lethalForecast = getAiLethalForecast();
+      if (aiDirectLifeDamageValue(item, "opponent") > 0 && lethalForecast.immediateLethal) return true;
+      if (aiLifeHealingValue(item) > 0 && lethalForecast.opponentCounterLethal) return true;
       const bestBoardMove = findAiPlayMove();
       if (!bestBoardMove) return true;
       const context = getAiDecisionContext();
@@ -9836,6 +10053,7 @@
     function adjustAiItemScoreForContext(item, score, timing) {
       if (score <= 0) return 0;
       const context = getAiDecisionContext();
+      const lethalForecast = getAiLethalForecast();
       const boardNeed = aiBoardNeedScore(context);
       const bestBoardMove = findAiPlayMove();
       const itemCost = effectiveCardCost(item);
@@ -9857,6 +10075,17 @@
       }
       if (context.ownLife <= 8 && ["bento", "fluid_pasta", "peaceful_mind", "aggro_eater"].includes(item.baseId)) {
         adjusted += 4;
+      }
+      const directDamage = aiDirectLifeDamageValue(item, "opponent");
+      if (directDamage > 0 && lethalForecast.immediateLethal) {
+        adjusted += 45 + directDamage * 2;
+      }
+      const healing = aiLifeHealingValue(item);
+      if (healing > 0 && lethalForecast.opponentCounterLethal) {
+        adjusted += 18 + healing * 3;
+      }
+      if (item.baseId === "peaceful_mind" && (lethalForecast.nextTurnLethal || lethalForecast.twoTurnLethal)) {
+        adjusted -= 8;
       }
       return adjusted;
     }
@@ -9910,6 +10139,7 @@
 
     function scoreAiPlacement(card, zone, index) {
       const context = getAiDecisionContext();
+      const lethalForecast = getAiLethalForecast();
       const enemyRefs = context.enemyRefs;
       const friendlyRefs = context.friendlyRefs;
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
@@ -9923,6 +10153,24 @@
         if (context.enemyLife <= 10) score += Math.min(5, (card.attack || 0) * 0.8);
         if (context.ownHandSize >= 6 && effectiveCardCost(card) <= context.will) score += 2;
         if (zone === "seat" && context.openSeatCount <= 2) score -= 2;
+        if (aiCardProvidesFaceProtection(card) && lethalForecast.opponentCounterLethal) {
+          score += 26 + Math.min(12, lethalForecast.opponentNextTurnDamage - context.ownLife);
+        }
+        const canAttackLifeNow = aiCardCanAttackLifeOnAttendance(card, "opponent", zone, index)
+          && aiCanCardTargetLife(card, "opponent", { onAttendance: true, zone, index })
+          && !isFirstPlayerFirstTurn();
+        if (canAttackLifeNow) {
+          const readyDamage = aiBoardFaceDamage("opponent", { readyOnly: true }).max;
+          const directDamage = aiAffordableDirectLifeDamage("opponent", Math.max(0, context.will - effectiveCardCost(card)));
+          if (readyDamage + directDamage + Math.max(0, card.attack || 0) >= context.enemyLife) {
+            score += 70 + Math.max(0, card.attack || 0) * 2;
+          } else if (lethalForecast.safeRace && (lethalForecast.nextTurnLethal || lethalForecast.twoTurnLethal)) {
+            score += Math.max(0, card.attack || 0) * 1.2;
+          }
+        } else if (lethalForecast.safeRace) {
+          const projectedDamage = lethalForecast.ownNextTurnDamage + Math.max(0, card.attack || 0) * aiBoardSurvivalFactor("opponent");
+          if (projectedDamage >= lethalForecast.effectiveEnemyLife) score += 12 + Math.max(0, card.attack || 0);
+        }
       }
       if (zone === "teacher") {
         score += card.type === "teacher" ? 8 : -5;
@@ -10215,7 +10463,8 @@
       if (item.baseId === "smart_me") return state.players.player.late.some((entry) => entry.card?.type === "student") ? 6 : 0;
       if (item.baseId === "greeting_3000") {
         const utaCount = opponent.trash.filter((card) => ["yuta", "dark_yuta"].includes(card.baseId)).length;
-        return utaCount > 0 ? 3 + utaCount * 2 : 0;
+        if (utaCount <= 0) return 0;
+        return getAiLethalForecast().immediateLethal ? 40 + utaCount * 2 : 3 + utaCount * 2;
       }
       if (item.baseId === "fire_touch") return deck.length >= 3 && opponent.life > 4 ? 6 : 0;
       if (item.baseId === "sexual_eye") return deck.some((card) => card.baseId === "yuta") ? 5 : 0;
@@ -10351,7 +10600,7 @@
       }
       if (item.baseId === "ruler" || item.baseId === "double_diamond") {
         const damage = item.baseId === "double_diamond" ? 4 : 1;
-        if (state.players.player.life <= damage) return 30;
+        if (state.players.player.life <= damage || getAiLethalForecast().immediateLethal) return 45 + damage;
         const killable = enemyCards.filter((card) => card.currentHp <= previewFinalDamageToCard(card, damage, item)).length;
         return 3 + killable * 4;
       }
@@ -10444,7 +10693,9 @@
       }
       if (item.baseId === "ruler" || item.baseId === "double_diamond") {
         const damage = item.baseId === "double_diamond" ? 4 : 1;
-        if (state.players.player.life <= damage) return castItemOnLife("opponent", item, "player", false);
+        if (state.players.player.life <= damage || getAiLethalForecast().immediateLethal) {
+          return castItemOnLife("opponent", item, "player", false);
+        }
         const target = effectTargetEntries("opponent", "player")
           .sort((a, b) => {
             const aKill = a.card.currentHp <= previewFinalDamageToCard(a.card, damage, item) ? 1 : 0;
@@ -10527,14 +10778,19 @@
       else if (hasKeyword(card, "注目")) score += 8;
       if (ref?.zone === "teacher" && card.type === "teacher") score += 8;
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1) score -= 2;
+      const lethalForecast = getAiLethalForecast();
+      if (lethalForecast.opponentCounterLethal) score += Math.max(0, card.attack || 0) * 1.2;
+      if (card.keywords?.includes("超陽気")) score += 6;
       return score;
     }
 
     function findAiAttackTarget(attacker) {
       const attentionIds = new Set(listAttackPriorityCards("player").map((card) => card.instanceId));
-      if (attentionIds.size === 0
-        && attacker.playedOnTurn !== state.actionTurn
-        && (attacker.attack || 0) >= state.players.player.life) return null;
+      const cannotAttackLife = (attentionIds.size > 0 && attacker.baseId !== "loud_student")
+        || state.environment?.baseId === "meguro_library"
+        || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
+      const lethalForecast = getAiLethalForecast();
+      if (!cannotAttackLife && lethalForecast.immediateLethal) return null;
       const targets = listBoardRefs("player")
         .map((ref) => ({ ...ref, card: getBoardCardFromRef(ref) }))
         .filter((target) => target.card && !(attacker.type === "teacher" && target.card.baseId === "loud_student"))
@@ -10556,15 +10812,25 @@
       const best = bestWithoutLecture || targets[0];
       if (!best) return null;
       if (!bestWithoutLecture && best.lectureWillDefeat) return null;
-      const cannotAttackLife = (attentionIds.size > 0 && attacker.baseId !== "loud_student")
-        || state.environment?.baseId === "meguro_library"
-        || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気"));
       if (!cannotAttackLife) {
         const attack = Math.max(0, attacker.attack || 0);
         const enemyLife = state.players.player.life;
+        let raceScore = 0;
+        if (lethalForecast.safeRace && lethalForecast.nextTurnLethal) {
+          raceScore += 18 + attack * 0.9;
+        } else if (lethalForecast.safeRace && lethalForecast.twoTurnLethal) {
+          raceScore += 8 + attack * 0.5;
+        }
+        if (lethalForecast.opponentCounterLethal && !lethalForecast.protectionActive) raceScore -= 24;
+        if (lethalForecast.opponentHealingRisk > 0
+          && !lethalForecast.nextTurnLethal
+          && !lethalForecast.twoTurnLethal) {
+          raceScore -= Math.min(10, lethalForecast.opponentHealingRisk);
+        }
         const faceScore = attack * 2.4
           + (enemyLife <= attack ? 30 : 0)
           + (enemyLife <= attack * 2 ? 8 : 0)
+          + raceScore
           - (best.canDefeat ? 2 : 0);
         if (faceScore > best.score + 2) return null;
       }
@@ -13291,6 +13557,20 @@
       }
       if (card.type === "item" && AI_TACTICAL_ITEM_IDS.has(card.baseId)) score += 6;
       if (cost <= target.maxWill + 1) score += 3;
+      const lethalForecast = getAiLethalForecast();
+      const immediateBurst = aiCardCanAttackLifeOnAttendance(card, targetSide)
+        ? Math.max(0, card.attack || 0)
+        : aiDirectLifeDamageValue(card, targetSide);
+      if (immediateBurst > 0 && (lethalForecast.opponentCounterLethal || state.players.opponent.life <= immediateBurst * 2)) {
+        score += 8 + immediateBurst * 2.5;
+      }
+      const healing = aiLifeHealingValue(card);
+      if (healing > 0 && (lethalForecast.nextTurnLethal || lethalForecast.twoTurnLethal)) {
+        score += 6 + healing * 3;
+      }
+      if (aiCardProvidesFaceProtection(card) && (lethalForecast.nextTurnLethal || lethalForecast.twoTurnLethal)) {
+        score += 12;
+      }
       if (card.unusable && card.baseId !== "alpha") score -= 40;
       return score;
     }
