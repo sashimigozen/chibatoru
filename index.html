@@ -130,6 +130,13 @@
       grid-column: 4;
     }
 
+    #homeCoachButton {
+      grid-column: 1 / -1;
+      min-height: 96px;
+      border-color: #0f766e;
+      background: #f0fdfa;
+    }
+
     .home-button:hover:not(:disabled) {
       transform: translateY(-3px);
       box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
@@ -3114,6 +3121,110 @@
       overflow: visible;
     }
 
+    .coach-panel {
+      border-color: #0f766e;
+      background: #f0fdfa;
+    }
+
+    .coach-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .coach-badge {
+      border: 1px solid #0f766e;
+      border-radius: 999px;
+      padding: 2px 6px;
+      color: #115e59;
+      background: #ccfbf1;
+      font-size: 9px;
+      font-weight: 1000;
+    }
+
+    .coach-status {
+      margin: 0 0 6px;
+      color: #134e4a;
+      font-size: 10px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .coach-hand-list,
+    .coach-action-list {
+      display: grid;
+      gap: 4px;
+    }
+
+    .coach-hand-list {
+      margin-bottom: 6px;
+    }
+
+    .coach-hand-row {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 5px;
+      border: 1px solid #99f6e4;
+      border-radius: 5px;
+      padding: 4px 5px;
+      background: #ffffff;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .coach-hand-cost {
+      color: #ffffff;
+      border-radius: 999px;
+      padding: 2px 0;
+      background: #0f766e;
+      text-align: center;
+    }
+
+    .coach-hand-stats {
+      color: #475569;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .coach-action-list {
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 8px;
+      scrollbar-gutter: stable;
+      overscroll-behavior: contain;
+    }
+
+    .coach-action-button {
+      width: 100%;
+      min-height: 30px;
+      border: 1px solid #5eead4;
+      border-radius: 5px;
+      padding: 5px 7px;
+      color: #134e4a;
+      background: #ffffff;
+      font-size: 9px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-align: left;
+    }
+
+    .coach-action-button:hover:not(:disabled) {
+      border-color: #0f766e;
+      background: #ccfbf1;
+    }
+
+    .coach-end-turn {
+      width: 100%;
+      margin-top: 7px;
+      min-height: 34px;
+      border-color: #9a3412;
+      color: #ffffff;
+      background: #c2410c;
+    }
+
     .trash-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -5400,6 +5511,10 @@
           <span class="home-button-main">チュートリアル</span>
           <span class="home-button-sub">基本操作を試す</span>
         </button>
+        <button class="home-button" id="homeCoachButton" type="button">
+          <span class="home-button-main">Codexコーチ対戦</span>
+          <span class="home-button-sub">Codexが一手ずつ操作し、判断理由と指摘を記録する</span>
+        </button>
       </div>
     </section>
 
@@ -5766,6 +5881,16 @@
       </div>
 
       <aside class="side">
+        <section class="panel coach-panel hidden" id="coachPanel" aria-label="Codexコーチ操作">
+          <div class="coach-panel-head">
+            <h2>Codexコーチ対戦</h2>
+            <span class="coach-badge">手札公開</span>
+          </div>
+          <p class="coach-status" id="coachStatus">対戦開始を待っています。</p>
+          <div class="coach-hand-list" id="coachHandList"></div>
+          <div class="coach-action-list" id="coachActionList"></div>
+          <button class="button coach-end-turn" id="coachEndTurnButton" type="button">Codexのターン終了</button>
+        </section>
         <section class="panel">
           <div class="panel-head">
             <h2>校外エリア</h2>
@@ -6346,6 +6471,8 @@
       gameWinner: null,
       gameResultOptions: {},
       aiThinking: false,
+      coachMode: false,
+      coachLastAction: "",
       testMode: false,
       testCardBaseId: null,
       testHistory: [],
@@ -6578,6 +6705,7 @@
       homeDeckButton: document.getElementById("homeDeckButton"),
       homeBattleButton: document.getElementById("homeBattleButton"),
       homeTutorialButton: document.getElementById("homeTutorialButton"),
+      homeCoachButton: document.getElementById("homeCoachButton"),
       tutorialBackHomeButton: document.getElementById("tutorialBackHomeButton"),
       tutorialStartButton: document.getElementById("tutorialStartButton"),
       tutorialCardPreview: document.getElementById("tutorialCardPreview"),
@@ -6617,6 +6745,11 @@
       onlineLocalReadyBadge: document.getElementById("onlineLocalReadyBadge"),
       onlineRemoteReadyBadge: document.getElementById("onlineRemoteReadyBadge"),
       homeSoloButton: document.getElementById("homeSoloButton"),
+      coachPanel: document.getElementById("coachPanel"),
+      coachStatus: document.getElementById("coachStatus"),
+      coachHandList: document.getElementById("coachHandList"),
+      coachActionList: document.getElementById("coachActionList"),
+      coachEndTurnButton: document.getElementById("coachEndTurnButton"),
       deckBackHomeButton: document.getElementById("deckBackHomeButton"),
       battleBackHomeButton: document.getElementById("battleBackHomeButton"),
       testBackDeckButton: document.getElementById("testBackDeckButton"),
@@ -9174,7 +9307,9 @@
 
     function initializeGame(options = {}) {
       const onlineHost = options.onlineHost === true;
-      SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
+      state.coachMode = !onlineHost && options.coachMode === true;
+      state.coachLastAction = "";
+      SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : (state.coachMode ? "Codex" : SOLO_OPPONENT_LABEL);
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
       const preBattleToken = state.preBattleToken;
@@ -9239,8 +9374,8 @@
       analyticsStartGame();
       queueAnimation("shuffle", "player");
       queueAnimation("shuffle", "opponent");
-      state.message = onlineHost ? "オンライン対戦" : "VS AI";
-      addLog(onlineHost ? "オンライン対戦を開始します。" : "相手AIとのバトルを開始します。");
+      state.message = onlineHost ? "オンライン対戦" : (state.coachMode ? "VS Codex" : "VS AI");
+      addLog(onlineHost ? "オンライン対戦を開始します。" : (state.coachMode ? "Codexコーチ対戦を開始します。" : "相手AIとのバトルを開始します。"));
       render();
       window.setTimeout(() => beginRpsSelection(preBattleToken), 1250);
     }
@@ -9287,7 +9422,7 @@
       const losingAiChoice = RPS_BEATS[choice];
       state.rpsOpponentChoice = Math.random() < 0.5 ? winningAiChoice : losingAiChoice;
       state.rpsRevealed = false;
-      state.message = "相手AIのカードを公開します。";
+      state.message = `${SIDES.opponent}のカードを公開します。`;
       render();
       window.setTimeout(() => {
         if (!isCurrentPreBattle(token, "rps")) return;
@@ -9346,8 +9481,8 @@
           winner: state.rpsWinner
         }
       });
-      state.message = `相手AIが${aiChoosesFirst ? "先攻" : "後攻"}を選びました。`;
-      addLog(`相手AIがカードじゃんけんに勝ち、${aiChoosesFirst ? "先攻" : "後攻"}を選びました。`);
+      state.message = `${SIDES.opponent}が${aiChoosesFirst ? "先攻" : "後攻"}を選びました。`;
+      addLog(`${SIDES.opponent}がカードじゃんけんに勝ち、${aiChoosesFirst ? "先攻" : "後攻"}を選びました。`);
       render();
       window.setTimeout(() => beginInitialDeal(token), PREBATTLE_STEP_MS);
     }
@@ -9695,6 +9830,12 @@
 
     function scheduleOpponentAI() {
       if (state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
+      if (isCoachBattle()) {
+        state.aiThinking = false;
+        state.message = "Codexの手番です。チャットで操作を待っています。";
+        render();
+        return;
+      }
       state.aiThinking = true;
       if (state.testMode) {
         const canTestProliferatingEnemy = state.testCardBaseId === "proliferating_enemy"
@@ -10277,7 +10418,7 @@
         score += state.players.opponent.deck.some((deckCard) => deckCard.baseId === "green_curry") ? 5 : -2;
       }
       if (card.baseId === "chen_san") {
-        score += state.players.player.board.seats.some(Boolean) ? 8 : -3;
+        score += state.players.player.board.seats.some(Boolean) ? 8 : -35;
       }
       if (card.baseId === "impossible_high_note") {
         score += enemyRefs.length ? (state.environment?.baseId === "cafeteria" ? 11 : 4) : -2;
@@ -10323,13 +10464,15 @@
       if (zone === "seat") {
         const enemyHand = state.players.player.hand;
         const ownSeats = state.players.opponent.board.seats;
+        const preserveChenSan = card.baseId === "chen_san"
+          && !state.players.player.board.seats.some(Boolean);
         const betaNeedsCare = enemyHand.some((entry) => entry.baseId === "beta")
           && !ownSeats[3]
           && !ownSeats[5];
         const gammaNeedsCare = enemyHand.some((entry) => entry.baseId === "gamma")
           && !ownSeats[4];
-        if (betaNeedsCare && [3, 5].includes(index)) score += 26;
-        if (gammaNeedsCare && index === 4) score += 32;
+        if (!preserveChenSan && betaNeedsCare && [3, 5].includes(index)) score += 26;
+        if (!preserveChenSan && gammaNeedsCare && index === 4) score += 32;
       }
       if (zone === "seat" && card.baseId === "aggro_student") {
         const reservations = state.players.player.late.filter((entry) =>
@@ -16081,7 +16224,7 @@
         return true;
       }
       if (opponentLife <= 0) {
-        endGame("player", "相手AIの気力が0になりました。");
+        endGame("player", `${SIDES.opponent}の気力が0になりました。`);
         return true;
       }
       return false;
@@ -16198,6 +16341,7 @@
       renderTrash();
       renderLog();
       renderControls();
+      renderCoachPanel();
       renderTutorialCoach();
       setupPlaymatDropEvents();
       setupDocumentHandDropEvents();
@@ -16476,6 +16620,217 @@
       const playerDeckValid = validateDeckCounts(state.deckBuilder.counts.player).valid;
       const opponentDeckValid = validateDeckCounts(state.deckBuilder.counts.opponent).valid;
       elements.newGameWithDeckButton.disabled = !playerDeckValid || !opponentDeckValid || state.aiThinking;
+    }
+
+    function isCoachBattle() {
+      return state.coachMode && state.screen === "battle" && !isOnlineBattle() && !state.testMode;
+    }
+
+    function coachCoordinateLabel(zone, index) {
+      if (zone === "teacher") return "教卓マス";
+      if (zone === "environment") return "環境マス";
+      return `${seatRow(index)}行${seatCol(index) + 1}列`;
+    }
+
+    function coachBoardTargetLabel(owner, zone, index) {
+      const card = getBoardCard(owner, zone, index);
+      const sideLabel = owner === "opponent" ? "Codex" : "あなた";
+      return `${sideLabel}の${card?.name || coachCoordinateLabel(zone, index)}（${coachCoordinateLabel(zone, index)}）`;
+    }
+
+    function canCoachTargetItem(item, owner, zone, index) {
+      const target = getBoardCard(owner, zone, index);
+      if (!item || item.type !== "item" || !target) return false;
+      if (item.baseId === "handmade_ctoc") return hasOpposingSameNameAttendee(target) && isAllowedEffectTarget("opponent", target);
+      if (item.target === "enemy" && owner !== "player") return false;
+      if ((item.target === "friendly" || item.target === "friendlyAny") && owner !== "opponent") return false;
+      if (item.target === "friendly" && !(target.currentHp !== null && target.currentHp < target.maxHp)) return false;
+      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId) && !canAttachUtaEquipment(target)) return false;
+      if (item.baseId === "quiet_please" && target.attack < 4) return false;
+      if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") return false;
+      if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
+      if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("opponent", target)) return false;
+      if (item.baseId === "go_home" && target.type !== "student") return false;
+      if (item.baseId === "set_log" && target.type !== "student") return false;
+      if (item.target === "enemy" && !isAllowedEffectTarget("opponent", target)) return false;
+      if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
+      return ["enemy", "friendly", "friendlyAny"].includes(item.target);
+    }
+
+    function coachLegalAttackTargets(attacker) {
+      const priorityIds = new Set(listAttackPriorityCards("player").map((card) => card.instanceId));
+      return listBoardRefs("player")
+        .map((ref) => ({ ...ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card)
+        .filter((entry) => !(attacker.type === "teacher" && entry.card.baseId === "loud_student"))
+        .filter((entry) => !isDesignDomainAttackBlocked(attacker, entry.card))
+        .filter((entry) => !(entry.card.untargetableUntilTurn && entry.card.untargetableUntilTurn >= state.actionTurn))
+        .filter((entry) => attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(entry.card.instanceId));
+    }
+
+    function buildCoachActions() {
+      if (!isCoachBattle() || state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return [];
+      if (state.attackInProgress || state.pendingCardChoice || state.pendingRemoteHandTrim || state.pendingThreeGestures) return [];
+      const actions = [];
+      const opponent = state.players.opponent;
+      const affordableCards = opponent.hand.filter((card) => effectiveCardCost(card) <= opponent.will);
+      const rulers = opponent.hand.filter((card) => card.baseId === "ruler");
+      if (rulers.length >= 2) {
+        actions.push({ kind: "fuse", label: "定規2枚を融合する" });
+      }
+      affordableCards.forEach((card) => {
+        if (card.type !== "item") {
+          for (let index = 0; index < 9; index += 1) {
+            if (canPlaceCard("opponent", card, "seat", "opponent", index)) {
+              actions.push({ kind: "play", cardId: card.instanceId, zone: "seat", index, label: `${card.name}を${coachCoordinateLabel("seat", index)}へ出席` });
+            }
+          }
+          if (canPlaceCard("opponent", card, "teacher", "opponent", null)) {
+            actions.push({ kind: "play", cardId: card.instanceId, zone: "teacher", index: null, label: `${card.name}を教卓マスへ出席` });
+          }
+          if (canPlaceCard("opponent", card, "environment", "opponent", null)) {
+            actions.push({ kind: "play", cardId: card.instanceId, zone: "environment", index: null, label: `${card.name}を環境マスへ配置` });
+          }
+          return;
+        }
+
+        let hasManualTarget = false;
+        listBoardRefs("player").forEach((ref) => {
+          if (!canCoachTargetItem(card, ref.owner, ref.zone, ref.index)) return;
+          hasManualTarget = true;
+          actions.push({ kind: "item-card", cardId: card.instanceId, owner: ref.owner, zone: ref.zone, index: ref.index, label: `${card.name}を${coachBoardTargetLabel(ref.owner, ref.zone, ref.index)}へ使用` });
+        });
+        listBoardRefs("opponent").forEach((ref) => {
+          if (!canCoachTargetItem(card, ref.owner, ref.zone, ref.index)) return;
+          hasManualTarget = true;
+          actions.push({ kind: "item-card", cardId: card.instanceId, owner: ref.owner, zone: ref.zone, index: ref.index, label: `${card.name}を${coachBoardTargetLabel(ref.owner, ref.zone, ref.index)}へ使用` });
+        });
+        if (["ruler", "double_diamond"].includes(card.baseId)) {
+          hasManualTarget = true;
+          actions.push({ kind: "item-life", cardId: card.instanceId, label: `${card.name}をあなた本体へ使用` });
+        }
+        if (card.baseId === "capture") {
+          for (let index = 0; index < 9; index += 1) {
+            if (state.players.player.board.seats[index] || isSeatBlocked("player", index)) continue;
+            hasManualTarget = true;
+            actions.push({ kind: "item-slot", cardId: card.instanceId, owner: "player", zone: "seat", index, label: `${card.name}をあなたの${coachCoordinateLabel("seat", index)}へ使用` });
+          }
+        }
+        if (!hasManualTarget || ["i_got_it", "panpan"].includes(card.baseId)) {
+          actions.push({ kind: "item-auto", cardId: card.instanceId, label: `${card.name}を使用（効果に従って対象を選ぶ）` });
+        }
+      });
+
+      listBoardRefs("opponent").forEach((attackerRef) => {
+        const attacker = getBoardCardFromRef(attackerRef);
+        if (!attacker || !canAttackSilently(attacker) || isAttackReserved(attackerRef)) return;
+        coachLegalAttackTargets(attacker).forEach((target) => {
+          actions.push({
+            kind: "attack-card",
+            attackerOwner: attackerRef.owner,
+            attackerZone: attackerRef.zone,
+            attackerIndex: attackerRef.index,
+            owner: target.owner,
+            zone: target.zone,
+            index: target.index,
+            label: `${attacker.name}で${target.card.name}を攻撃`
+          });
+        });
+        const canAttackLife = state.environment?.baseId !== "meguro_library"
+          && (listAttentionCards("player").length === 0 || attacker.baseId === "loud_student")
+          && !(attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
+        if (canAttackLife) {
+          actions.push({
+            kind: "attack-life",
+            attackerOwner: attackerRef.owner,
+            attackerZone: attackerRef.zone,
+            attackerIndex: attackerRef.index,
+            label: `${attacker.name}であなた本体を攻撃`
+          });
+        }
+      });
+      return actions;
+    }
+
+    function renderCoachPanel() {
+      if (!elements.coachPanel) return;
+      const visible = isCoachBattle();
+      elements.coachPanel.classList.toggle("hidden", !visible);
+      if (!visible) return;
+      const opponent = state.players.opponent;
+      elements.coachHandList.innerHTML = state.phase === "battle"
+        ? opponent.hand.map((card) => {
+          const stats = card.type === "item" || card.type === "environment" ? labelForType(card.type) : `攻${card.attack} / 体${card.hp}`;
+          return `<div class="coach-hand-row" title="${escapeHtml(cardRulesText(card))}"><span class="coach-hand-cost">${card.noCost ? "-" : effectiveCardCost(card)}</span><span>${escapeHtml(card.name)}</span><span class="coach-hand-stats">${escapeHtml(stats)}</span></div>`;
+        }).join("")
+        : "";
+      const coachTurn = state.phase === "battle" && state.currentSide === "opponent" && !state.gameOver;
+      if (state.phase !== "battle") {
+        elements.coachStatus.textContent = "じゃんけんとマリガンを進めています。";
+      } else if (state.gameOver) {
+        elements.coachStatus.textContent = "対戦は終了しました。";
+      } else if (!coachTurn) {
+        elements.coachStatus.textContent = state.coachLastAction ? `あなたの手番です。直前：${state.coachLastAction}` : "あなたの手番です。操作を待っています。";
+      } else if (state.attackInProgress) {
+        elements.coachStatus.textContent = "攻撃処理が終わるのを待っています。";
+      } else {
+        elements.coachStatus.textContent = `Codexの手番です。戦意${opponent.will}/${opponent.maxWill}。チャットで一手ずつ操作します。`;
+      }
+      const actions = buildCoachActions();
+      elements.coachActionList.innerHTML = coachTurn
+        ? (actions.length
+          ? actions.map((action, index) => `<button class="coach-action-button" type="button" data-coach-action-index="${index}">${escapeHtml(action.label)}</button>`).join("")
+          : `<p class="coach-status">現在選べる行動はありません。</p>`)
+        : "";
+      elements.coachPanel._actions = actions;
+      elements.coachEndTurnButton.classList.toggle("hidden", !coachTurn);
+      elements.coachEndTurnButton.disabled = !coachTurn || state.attackInProgress || state.attackQueue.length > 0 || Boolean(state.pendingCardChoice || state.pendingRemoteHandTrim || state.pendingThreeGestures);
+    }
+
+    function recordCoachAction(label) {
+      state.coachLastAction = label;
+      addLog(`Codex操作：${label}`);
+    }
+
+    async function executeCoachAction(action) {
+      if (!action || !isCoachBattle() || state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
+      const card = action.cardId ? getHandCard("opponent", action.cardId) : null;
+      if (action.kind === "fuse") {
+        if (fuseRulersForSide("opponent", false)) recordCoachAction(action.label);
+        render();
+        return;
+      }
+      if (action.kind === "play") {
+        if (card && placeCardFromHand("opponent", card.instanceId, action.zone, "opponent", action.index, false)) recordCoachAction(action.label);
+        render();
+        return;
+      }
+      if (action.kind === "item-card") {
+        if (card && castItemOnCard("opponent", card, action.owner, action.zone, action.index, false)) recordCoachAction(action.label);
+        render();
+        return;
+      }
+      if (action.kind === "item-life") {
+        if (card && castItemOnLife("opponent", card, "player", false)) recordCoachAction(action.label);
+        render();
+        return;
+      }
+      if (action.kind === "item-slot") {
+        if (card && castCaptureOnSlot("opponent", card, action.owner, action.zone, action.index, false)) recordCoachAction(action.label);
+        render();
+        return;
+      }
+      if (action.kind === "item-auto") {
+        if (card && useAiItem(card)) recordCoachAction(action.label);
+        render();
+        return;
+      }
+      if (action.kind === "attack-card" || action.kind === "attack-life") {
+        state.selectedAttacker = { owner: action.attackerOwner, zone: action.attackerZone, index: action.attackerIndex };
+        recordCoachAction(action.label);
+        if (action.kind === "attack-card") await attackCard(action.owner, action.zone, action.index);
+        else await attackLifeForCurrentSide("player");
+      }
     }
 
     function isTutorialActive() {
@@ -18762,6 +19117,8 @@
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
       resetTutorialState();
+      state.coachMode = false;
+      state.coachLastAction = "";
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
@@ -18984,6 +19341,8 @@
     function showOnlineScreen() {
       state.preBattleToken += 1;
       resetTutorialState();
+      state.coachMode = false;
+      state.coachLastAction = "";
       state.screen = "online";
       if (!state.online.role) state.online.lobbyView = "menu";
       SIDES.opponent = state.online.role ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
@@ -19026,11 +19385,20 @@
     }
 
     function startSoloBattleFromHome() {
+      state.coachMode = false;
+      state.coachLastAction = "";
       SIDES.opponent = SOLO_OPPONENT_LABEL;
       startNewGameWithDecks();
     }
 
-    function startNewGameWithDecks() {
+    function startCoachBattleFromHome() {
+      state.coachMode = true;
+      state.coachLastAction = "";
+      SIDES.opponent = "Codex";
+      startNewGameWithDecks({ coachMode: true });
+    }
+
+    function startNewGameWithDecks(options = {}) {
       resetTutorialState();
       const playerValidation = validateDeckCounts(state.deckBuilder.counts.player);
       const opponentValidation = validateDeckCounts(state.deckBuilder.counts.opponent);
@@ -19041,12 +19409,14 @@
         return;
       }
       state.screen = "battle";
-      initializeGame();
+      initializeGame({ coachMode: options.coachMode === true });
     }
 
     function startTutorialBattle() {
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
+      state.coachMode = false;
+      state.coachLastAction = "";
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
@@ -19731,6 +20101,7 @@
     elements.homeDeckButton.addEventListener("click", showDeckScreen);
     elements.homeBattleButton.addEventListener("click", showOnlineScreen);
     elements.homeSoloButton.addEventListener("click", startSoloBattleFromHome);
+    elements.homeCoachButton.addEventListener("click", startCoachBattleFromHome);
     elements.homeTutorialButton.addEventListener("click", startTutorialBattle);
     elements.tutorialBackHomeButton.addEventListener("click", showHomeScreen);
     elements.tutorialStartButton.addEventListener("click", startTutorialBattle);
@@ -19757,6 +20128,23 @@
     elements.onlineDeckSelect.addEventListener("change", onlineUpdateDeckSelection);
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineStartButton.addEventListener("click", onlineStartBattle);
+    elements.coachActionList.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-coach-action-index]");
+      if (!button || button.disabled) return;
+      const actionIndex = Number(button.dataset.coachActionIndex);
+      const action = elements.coachPanel._actions?.[actionIndex];
+      if (!action) return;
+      elements.coachActionList.querySelectorAll("button").forEach((entry) => {
+        entry.disabled = true;
+      });
+      await executeCoachAction(action);
+      render();
+    });
+    elements.coachEndTurnButton.addEventListener("click", () => {
+      if (!isCoachBattle() || state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
+      recordCoachAction("ターン終了");
+      endTurn({ fromAi: true });
+    });
     elements.deckBackHomeButton.addEventListener("click", showHomeScreen);
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.testUndoButton.addEventListener("click", goBackTestStep);
@@ -19919,7 +20307,8 @@
       clearExpiredDeckToHandLocks,
       fuseRulersForSide,
       validateDeckCounts,
-      createAutoDeckCounts
+      createAutoDeckCounts,
+      buildCoachActions
     };
 
     initializeGame();
