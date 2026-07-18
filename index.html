@@ -1228,7 +1228,7 @@
     }
 
     .player-hand-table {
-      grid-template-columns: minmax(0, 1fr) 64px;
+      grid-template-columns: minmax(0, 1fr) 124px;
     }
 
     .opponent-hand-table {
@@ -1299,6 +1299,46 @@
       background: #f8fafc;
       color: #172033;
       text-align: center;
+    }
+
+    .player-deck-column {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .player-deck-status {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .player-deck-status .hud-pill {
+      justify-content: center;
+      min-width: 0;
+      padding: 3px 5px;
+      font-size: 9px;
+    }
+
+    .player-deck-count-label {
+      display: inline-flex;
+      gap: 3px;
+      align-items: center;
+      border: 1px solid #cbd5e1;
+      border-radius: 999px;
+      padding: 3px 6px;
+      color: #334155;
+      background: #ffffff;
+      font-size: 9px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .player-deck-pile {
+      width: 100%;
+      min-height: 42px;
     }
 
     .deck-pile.detail-pressing {
@@ -4090,7 +4130,7 @@
     }
 
     .player-hand-table {
-      grid-template-columns: minmax(0, 1fr) 78px;
+      grid-template-columns: minmax(0, 1fr) 132px;
     }
 
     .opponent-hand-table {
@@ -5093,7 +5133,7 @@
       }
 
       .player-hand-table {
-        grid-template-columns: minmax(0, 1fr) 52px;
+        grid-template-columns: minmax(0, 1fr) 108px;
         gap: 4px;
       }
 
@@ -6234,11 +6274,16 @@
           </div>
           <div class="hand-table player-hand-table">
             <div class="hand player-hand" id="playerHand"></div>
-            <button class="deck-pile player-deck-pile" id="playerDeckPile" type="button" aria-label="自分の山札">
-              <span class="deck-stack"></span>
-              <span class="deck-label">山札</span>
-              <span class="deck-count-pill" id="playerDeckPileCount">35</span>
-            </button>
+            <div class="player-deck-column">
+              <div class="player-deck-status">
+                <span class="hud-pill will hidden" id="playerWillHudPill">戦意 <span id="playerWillHud">0/0</span></span>
+                <span class="player-deck-count-label">山札 <span id="playerDeckPileCount">35</span></span>
+              </div>
+              <button class="deck-pile player-deck-pile" id="playerDeckPile" type="button" aria-label="自分の山札">
+                <span class="deck-stack"></span>
+                <span class="deck-label">山札</span>
+              </button>
+            </div>
           </div>
           <p class="hint">マリガン中はカードを選択して確定。バトル中はカードをクリックしてから対応マスをクリック、またはドラッグで配置できます。</p>
         </section>
@@ -6275,10 +6320,6 @@
         <section class="panel battle-card-preview hidden" id="battleCardPreview" role="dialog" aria-label="カード詳細"></section>
       </aside>
     </section>
-    <div class="player-combat-hud" id="playerCombatHud">
-      <span class="hud-pill" id="playerLifeHudPill">気力 <span id="playerLifeHud">20</span></span>
-      <span class="hud-pill will" id="playerWillHudPill">戦意 <span id="playerWillHud">0/0</span></span>
-    </div>
     <div class="turn-overlay" id="turnOverlay" aria-live="polite"></div>
     <div class="tutorial-layer hidden" id="tutorialLayer" aria-live="polite">
       <div class="tutorial-dim"></div>
@@ -6742,7 +6783,8 @@
           { title: "アグロ喰い", before: "自分の出席者すべてと気力を1回復。", after: "自分の出席者1人を1回復し、その後、自分の気力を1回復。" },
           { title: "カオスワールド", before: "戦意9。環境マスに出したとき、数値を1回変更。", after: "戦意10。環境マスに出したときに数値を変更し、このカードが環境マスにあるかぎり、各ターン開始時にも同じ処理を行う（体力は1以上）。" },
           { title: "新カード", after: "猛禽寺、12号館の教室、バカMac、敵のボス、ライブ人、ドービィ、パチンウニー、プロテインドリンカー、いけますを追加。" },
-          { title: "眠気", after: "攻撃を外したとき、対象に「ミス」を表示。" }
+          { title: "眠気", after: "攻撃を外したとき、対象に「ミス」を表示。" },
+          { title: "バトル画面", after: "手札下の気力表示を削除し、戦意を山札の上、山札枚数の左へ移動。" }
         ]
       },
       {
@@ -7236,7 +7278,7 @@
         id: "basicLife",
         title: "基本編：気力",
         body: "気力はプレイヤー本体の体力です。\n自分の気力はここに表示されます。相手の気力を減らして勝ちを目指します。",
-        focus: "#playerLifeHudPill"
+        focus: "#playerLifeTarget"
       },
       {
         id: "basicWill",
@@ -7451,9 +7493,7 @@
       lifeText: document.getElementById("lifeText"),
       crabText: document.getElementById("crabText"),
       willText: document.getElementById("willText"),
-      playerLifeHud: document.getElementById("playerLifeHud"),
       playerWillHud: document.getElementById("playerWillHud"),
-      playerLifeHudPill: document.getElementById("playerLifeHudPill"),
       playerWillHudPill: document.getElementById("playerWillHudPill"),
       turnOverlay: document.getElementById("turnOverlay"),
       resultOverlay: document.getElementById("resultOverlay"),
@@ -7475,7 +7515,6 @@
       playerHandZone: document.querySelector(".player-hand-zone"),
       opponentHandZone: document.querySelector(".opponent-hand-zone"),
       playmat: document.querySelector(".playmat"),
-      playerCombatHud: document.getElementById("playerCombatHud"),
       preBattleStage: document.getElementById("preBattleStage"),
       preBattleTitle: document.getElementById("preBattleTitle"),
       preBattleMessage: document.getElementById("preBattleMessage"),
@@ -17335,14 +17374,13 @@
       elements.lifeText.textContent = `${state.players.player.life} / ${state.players.opponent.life}`;
       elements.crabText.textContent = `${crabCountLabel("player")} / ${crabCountLabel("opponent")}`;
       elements.willText.textContent = `${current.will}/${current.maxWill}`;
-      elements.playerLifeHud.textContent = state.players.player.life;
       elements.playerWillHud.textContent = `${state.players.player.will}/${state.players.player.maxWill}`;
+      elements.playerWillHudPill.classList.toggle("hidden", state.phase !== "battle");
       elements.deckText.textContent = `${state.players.player.deck.length} / ${state.players.opponent.deck.length}`;
       elements.message.textContent = state.message;
       elements.deckRuleText.textContent = deckValidation.valid ? `${deckValidation.size}枚 / 同名3枚OK` : "デッキ要確認";
       elements.playerBoardPanel.classList.toggle("current", state.currentSide === "player" && state.phase === "battle");
       elements.opponentBoardPanel.classList.toggle("current", state.currentSide === "opponent" && state.phase === "battle");
-      elements.playerCombatHud.classList.toggle("hidden", state.phase !== "battle");
     }
 
     function phaseLabel() {
