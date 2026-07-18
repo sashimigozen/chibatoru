@@ -6085,7 +6085,7 @@
         </div>
         <div class="controls">
           <button class="button secondary" id="battleBackHomeButton" type="button">勝てない</button>
-          <button class="button secondary hidden" id="testBackDeckButton" type="button">デッキ変更へ戻る</button>
+          <button class="button secondary hidden" id="testBackDeckButton" type="button">デッキ制作へ戻る</button>
           <button class="button secondary hidden" id="testUndoButton" type="button">一手戻る</button>
           <button class="button secondary" id="analyticsJsonlButton" type="button">ログJSONL</button>
           <button class="button secondary" id="analyticsCsvButton" type="button">ログCSV</button>
@@ -20386,7 +20386,17 @@
       state.gameOver = false;
       state.phase = "deck";
       clearSelections();
-      showDeckScreen();
+      state.preBattleToken += 1;
+      state.screen = "deck";
+      state.deckBuilder.view = "editor";
+      hideCardTooltip();
+      hideBattleCardPreview();
+      hideDeckInspectPrompt();
+      closeItemConfirm();
+      closeCardTestConfirm();
+      hidePlayReveal();
+      hideResultOverlay();
+      render();
     }
 
     function showHomeScreen() {
