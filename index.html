@@ -6740,7 +6740,7 @@
           { title: "カード検索", after: "最初は折り畳んで表示。開くと、カード名、タイプ、複数の戦意、効果カテゴリを組み合わせて絞り込み可能。" },
           { title: "細い", before: "残さなかった手札を校外エリアへ送る。", after: "残さなかった手札をデッキへ戻してシャッフルする。" },
           { title: "アグロ喰い", before: "自分の出席者すべてと気力を1回復。", after: "自分の出席者1人を1回復し、その後、自分の気力を1回復。" },
-          { title: "カオスワールド", before: "戦意9。出席時に数値を変更。", after: "戦意10。各ターン開始時、手札の戦意と場の出席者の攻撃力・体力を0〜10で変更（体力は1以上）。" },
+          { title: "カオスワールド", before: "戦意9。環境マスに出したとき、数値を1回変更。", after: "戦意10。環境マスに出したときに数値を変更し、このカードが環境マスにあるかぎり、各ターン開始時にも同じ処理を行う（体力は1以上）。" },
           { title: "新カード", after: "猛禽寺、12号館の教室、バカMac、敵のボス、ライブ人、ドービィ、パチンウニー、プロテインドリンカー、いけますを追加。" },
           { title: "眠気", after: "攻撃を外したとき、対象に「ミス」を表示。" }
         ]
@@ -13403,12 +13403,17 @@
       return { handAffected, boardAffected };
     }
 
+    function resolveChaosWorldEffect(timing) {
+      const affected = applyChaosWorldToHandAndBoard();
+      applyBoardAuras();
+      addLog(`カオスワールドの効果（${timing}）：手札${affected.handAffected}枚の戦意と、場の出席者${affected.boardAffected}人の攻撃力・体力をランダムに変更しました。`);
+      return affected;
+    }
+
     function resolveChaosWorldAtTurnStart() {
       if (state.environment?.baseId !== "chaos_world") return;
       showCardPlayAnimation(state.environment, "environment");
-      const affected = applyChaosWorldToHandAndBoard();
-      applyBoardAuras();
-      addLog(`カオスワールドの効果：手札${affected.handAffected}枚の戦意と、場の出席者${affected.boardAffected}人の攻撃力・体力をランダムに変更しました。`);
+      resolveChaosWorldEffect("ターン開始時");
     }
 
     function canPlaceCard(side, card, zone, owner, index) {
@@ -14166,7 +14171,7 @@
         addLog(`${card.name}の効果：各プレイヤーは自分のターンに1回、デザイン教師を入れ替えられます。`);
       }
       if (card.baseId === "chaos_world" && zone === "environment") {
-        addLog(`${card.name}の効果：各ターン開始時、手札の戦意と場の出席者の攻撃力・体力をランダムに変更します。`);
+        resolveChaosWorldEffect("環境マスに出したとき");
       }
       resolveProliferatingEnemyTriggers(side, card);
     }
@@ -21061,7 +21066,7 @@
         design_domain: "このカードは、自分の教卓マスに「デザイン」と名のつく教師がいなければ置けない。ヴァンパイアは「デザイン」と名のつく教師を攻撃できない。",
         building_12_classroom: "お互いの教師すべての攻撃力を+1し、お互いの学生すべての攻撃力を-1する。",
         raptor_temple: "各プレイヤーは自分のターンに1回、自分の場の「デザイン」と名のつく教師1人を指名し、校外エリアへ送ってもよい。そうした場合、自分の校外エリアにある進化前の「デザイン」と名のつく教師1人を指名し、同じマスに出席させる。出席時効果は発動する。",
-        chaos_world: "各ターン開始時、お互いの手札にあるカードすべての戦意を0〜10のランダムな値にし、お互いの場の出席者すべての攻撃力を0〜10、体力を1〜10のランダムな値にする。このカードが校外エリアへ送られても、変更された値はそのまま。",
+        chaos_world: "このカードを環境マスに出したとき、お互いの手札にあるカードすべての戦意を0〜10のランダムな値にし、お互いの場の出席者すべての攻撃力を0〜10、体力を1〜10のランダムな値にする。このカードが環境マスにあるかぎり、各ターン開始時にも同じ処理を行う。このカードが校外エリアへ送られても、変更された値はそのまま。",
         no_late_time: "「遅刻」の効果をなくす。",
         meguro_library: "お互いにプレイヤー本体を攻撃できない。このカードをプレイしたプレイヤーは、このカードが環境マスにある間、自分のターン終了時に手札1枚を選び、校外エリアへ送る。",
         dorm_council: "お互いのプレイヤーは自分のターン終了時、自分のデッキから注目を持つカードをランダムに1枚まで引く。",
