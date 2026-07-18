@@ -337,6 +337,123 @@
         effect: "次の自分のターン開始時まで、お互いはデッキからカードを手札に加えられない。",
         combo: "",
         notes: "生成や校外エリアから手札に加える効果は妨げない。"
+      },
+      {
+        id: "enemy_boss",
+        name: "敵のボス",
+        type: "student",
+        cost: 4,
+        attack: 1,
+        hp: 1,
+        availability: "deck",
+        placement: "席マス / 教卓マス",
+        effect: "このカードが出席したとき、自分の場に「敵」と名のつく出席者が3人いるなら、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
+        combo: "敵 / 増殖する敵",
+        notes: ""
+      },
+      {
+        id: "live_person",
+        name: "ライブ人",
+        type: "student",
+        cost: 4,
+        attack: 1,
+        hp: 2,
+        availability: "deck",
+        placement: "席マス / 教卓マス",
+        effect: "このカードが出席したとき、相手の出席者すべての攻撃力を3にする。",
+        combo: "",
+        notes: ""
+      },
+      {
+        id: "dobby",
+        name: "ドービィ",
+        type: "student",
+        cost: 6,
+        attack: 2,
+        hp: 2,
+        availability: "deck",
+        placement: "席マス / 教卓マス",
+        effect: "このカードが出席したとき、攻撃力3以上の相手の学生すべての攻撃力を-2する。",
+        combo: "",
+        notes: ""
+      },
+      {
+        id: "pachin_uni",
+        name: "パチンウニー",
+        type: "student",
+        cost: 3,
+        attack: 1,
+        hp: 1,
+        availability: "deck",
+        placement: "席マス / 教卓マス",
+        effect: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
+        combo: "一般学生",
+        notes: ""
+      },
+      {
+        id: "protein_drinker",
+        name: "プロテインドリンカー",
+        type: "student",
+        cost: 4,
+        attack: 1,
+        hp: 7,
+        availability: "deck",
+        placement: "席マス / 教卓マス",
+        effect: "自分のターン終了時、このカードの攻撃力を+1する。",
+        combo: "",
+        notes: ""
+      },
+      {
+        id: "baka_mac",
+        name: "バカMac",
+        type: "item",
+        cost: 4,
+        attack: null,
+        hp: null,
+        availability: "deck",
+        placement: "手札から使用",
+        effect: "次の自分のターン開始時まで、相手の手札にあるカードすべての戦意を+1する。",
+        combo: "",
+        notes: ""
+      },
+      {
+        id: "ikemasu",
+        name: "いけます",
+        type: "item",
+        cost: 1,
+        attack: null,
+        hp: null,
+        availability: "deck",
+        placement: "手札から使用",
+        effect: "「一般学生」1枚を手札に生成する。",
+        combo: "一般学生",
+        notes: ""
+      },
+      {
+        id: "building_12_classroom",
+        name: "12号館の教室",
+        type: "environment",
+        cost: 3,
+        attack: null,
+        hp: null,
+        availability: "deck",
+        placement: "環境マス",
+        effect: "お互いの教師すべての攻撃力を+1し、お互いの学生すべての攻撃力を-1する。",
+        combo: "教師 / 学生",
+        notes: ""
+      },
+      {
+        id: "raptor_temple",
+        name: "猛禽寺",
+        type: "environment",
+        cost: 5,
+        attack: null,
+        hp: null,
+        availability: "deck",
+        placement: "環境マス",
+        effect: "各プレイヤーは自分のターンに1回、自分の場の「デザイン」と名のつく教師1人を指名し、校外エリアへ送ってもよい。そうした場合、自分の校外エリアにある進化前の「デザイン」と名のつく教師1人を指名し、同じマスに出席させる。出席時効果は発動する。",
+        combo: "デザイン教師",
+        notes: "この効果で出席した教師は召喚酔いになる。"
       }
     );
     applyCardUpdate("back_question_student", {
@@ -346,7 +463,14 @@
       effect: "超陽気を持つ。このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。"
     });
     applyCardUpdate("aggro_eater", {
-      effect: "自分の場の出席者すべてと自分の気力を1回復する。"
+      effect: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。"
+    });
+    applyCardUpdate("thin_item", {
+      effect: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。"
+    });
+    applyCardUpdate("chaos_world", {
+      cost: 10,
+      effect: "各ターン開始時、お互いの手札にあるカードすべての戦意を0〜10のランダムな値にし、お互いの場の出席者すべての攻撃力を0〜10、体力を1〜10のランダムな値にする。このカードが校外エリアへ送られても、変更された値はそのまま。"
     });
     applyCardUpdate("peaceful_mind", {
       effect: "お互いの気力を5回復する。"

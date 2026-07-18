@@ -130,13 +130,6 @@
       grid-column: 4;
     }
 
-    #homeCoachButton {
-      grid-column: 1 / -1;
-      min-height: 96px;
-      border-color: #0f766e;
-      background: #f0fdfa;
-    }
-
     .home-button:hover:not(:disabled) {
       transform: translateY(-3px);
       box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
@@ -2936,6 +2929,13 @@
       color: #0f766e;
     }
 
+    .floating-pop.miss {
+      border-color: rgba(71, 85, 105, 0.5);
+      background: #f8fafc;
+      color: #334155;
+      font-size: 19px;
+    }
+
     .damage-impact {
       animation: damageImpact 0.48s ease-out;
     }
@@ -3119,110 +3119,6 @@
       align-self: start;
       max-height: calc(100dvh - 132px);
       overflow: visible;
-    }
-
-    .coach-panel {
-      border-color: #0f766e;
-      background: #f0fdfa;
-    }
-
-    .coach-panel-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    .coach-badge {
-      border: 1px solid #0f766e;
-      border-radius: 999px;
-      padding: 2px 6px;
-      color: #115e59;
-      background: #ccfbf1;
-      font-size: 9px;
-      font-weight: 1000;
-    }
-
-    .coach-status {
-      margin: 0 0 6px;
-      color: #134e4a;
-      font-size: 10px;
-      font-weight: 900;
-      line-height: 1.45;
-    }
-
-    .coach-hand-list,
-    .coach-action-list {
-      display: grid;
-      gap: 4px;
-    }
-
-    .coach-hand-list {
-      margin-bottom: 6px;
-    }
-
-    .coach-hand-row {
-      display: grid;
-      grid-template-columns: 28px minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 5px;
-      border: 1px solid #99f6e4;
-      border-radius: 5px;
-      padding: 4px 5px;
-      background: #ffffff;
-      font-size: 10px;
-      font-weight: 900;
-    }
-
-    .coach-hand-cost {
-      color: #ffffff;
-      border-radius: 999px;
-      padding: 2px 0;
-      background: #0f766e;
-      text-align: center;
-    }
-
-    .coach-hand-stats {
-      color: #475569;
-      font-size: 9px;
-      white-space: nowrap;
-    }
-
-    .coach-action-list {
-      max-height: 220px;
-      overflow-y: auto;
-      padding-right: 8px;
-      scrollbar-gutter: stable;
-      overscroll-behavior: contain;
-    }
-
-    .coach-action-button {
-      width: 100%;
-      min-height: 30px;
-      border: 1px solid #5eead4;
-      border-radius: 5px;
-      padding: 5px 7px;
-      color: #134e4a;
-      background: #ffffff;
-      font-size: 9px;
-      font-weight: 900;
-      line-height: 1.25;
-      text-align: left;
-    }
-
-    .coach-action-button:hover:not(:disabled) {
-      border-color: #0f766e;
-      background: #ccfbf1;
-    }
-
-    .coach-end-turn {
-      width: 100%;
-      margin-top: 7px;
-      min-height: 34px;
-      border-color: #9a3412;
-      color: #ffffff;
-      background: #c2410c;
     }
 
     .trash-row {
@@ -5485,11 +5381,425 @@
       min-height: 58px;
       pointer-events: auto;
     }
+
+    .home-news-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      min-width: 118px;
+      min-height: 42px;
+      border: 2px solid #334155;
+      border-radius: 6px;
+      color: #172033;
+      background: #ffffff;
+      font-weight: 1000;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #cbd5e1;
+    }
+
+    .notification-dot {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      width: 12px;
+      height: 12px;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      background: #dc2626;
+    }
+
+    .update-list {
+      display: grid;
+      gap: 8px;
+      max-height: min(70vh, 720px);
+      overflow-y: auto;
+      padding-right: 10px;
+      scrollbar-gutter: stable;
+    }
+
+    .update-entry {
+      border: 1px solid #b8c5d8;
+      border-radius: 6px;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .update-entry summary {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 50px;
+      padding: 10px 14px;
+      font-size: 15px;
+      font-weight: 1000;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .update-entry summary::-webkit-details-marker { display: none; }
+
+    .update-entry summary::after {
+      content: "+";
+      margin-left: auto;
+      font-size: 20px;
+    }
+
+    .update-entry[open] summary::after { content: "-"; }
+
+    .update-entry.unread summary::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #dc2626;
+      flex: 0 0 auto;
+    }
+
+    .update-body {
+      display: grid;
+      gap: 8px;
+      padding: 0 14px 14px;
+      color: #334155;
+      line-height: 1.65;
+    }
+
+    .update-change {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      padding: 9px;
+      border: 1px solid #dbe3ef;
+      border-radius: 5px;
+      background: #f8fafc;
+    }
+
+    .update-before { color: #9f1239; }
+    .update-after { color: #166534; }
+    .update-arrow { text-align: center; font-weight: 1000; }
+
+    .deck-library-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .deck-library-card {
+      display: grid;
+      place-items: center;
+      min-height: 112px;
+      border: 2px solid #a8b8ce;
+      border-radius: 6px;
+      padding: 14px;
+      color: #172033;
+      background: #ffffff;
+      font-size: 15px;
+      font-weight: 1000;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #dbe3ef;
+    }
+
+    .deck-library-card:hover,
+    .deck-library-card.selected {
+      border-color: #2563eb;
+      background: #eff6ff;
+      transform: translateY(-2px);
+    }
+
+    .deck-library-card.new-deck {
+      border-style: dashed;
+      border-color: #0f766e;
+      color: #0f766e;
+      background: #f0fdfa;
+      font-size: 17px;
+    }
+
+    .deck-library-detail {
+      margin-top: 18px;
+      border-top: 2px solid #dbe3ef;
+      padding-top: 16px;
+    }
+
+    .deck-library-detail-actions,
+    .solo-deck-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .deck-detail-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .deck-detail-stat {
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 8px;
+      background: #f8fafc;
+      font-weight: 900;
+    }
+
+    .deck-curve-card {
+      margin-top: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 5px;
+      padding: 10px 12px 8px;
+      background: #f8fafc;
+    }
+
+    .deck-curve-card h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+    }
+
+    .deck-curve-chart {
+      display: grid;
+      grid-template-columns: 20px 28px minmax(0, 1fr);
+      grid-template-rows: 142px 22px;
+      min-width: 0;
+    }
+
+    .deck-curve-y-title {
+      grid-column: 1;
+      grid-row: 1;
+      align-self: center;
+      justify-self: center;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      color: #475569;
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .deck-curve-y-scale {
+      grid-column: 2;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 0 5px 18px 0;
+      color: #64748b;
+      font-size: 10px;
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .deck-curve-plot {
+      grid-column: 3;
+      grid-row: 1;
+      display: grid;
+      grid-template-columns: repeat(12, minmax(18px, 1fr));
+      align-items: end;
+      gap: 5px;
+      min-width: 0;
+      border-left: 2px solid #94a3b8;
+      border-bottom: 2px solid #94a3b8;
+      padding: 8px 7px 0;
+      background: repeating-linear-gradient(to bottom, transparent 0, transparent 32px, #dbe3ef 33px);
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .deck-curve-column {
+      display: grid;
+      grid-template-rows: 16px minmax(0, 1fr) 18px;
+      align-items: end;
+      justify-items: center;
+      height: 132px;
+      min-width: 18px;
+    }
+
+    .deck-curve-count {
+      align-self: center;
+      min-height: 14px;
+      color: #172033;
+      font-size: 9px;
+      font-weight: 1000;
+    }
+
+    .deck-curve-bar-space {
+      position: relative;
+      width: min(24px, 80%);
+      height: 90px;
+    }
+
+    .deck-curve-bar {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      min-height: 0;
+      border: 1px solid #1d4ed8;
+      border-bottom: 0;
+      background: #3b82f6;
+    }
+
+    .deck-curve-bar.empty {
+      border: 0;
+      background: transparent;
+    }
+
+    .deck-curve-cost {
+      align-self: center;
+      color: #475569;
+      font-size: 9px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .deck-curve-x-title {
+      grid-column: 3;
+      grid-row: 2;
+      align-self: end;
+      justify-self: center;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
+    .deck-filter-bar {
+      margin-bottom: 12px;
+      border: 1px solid #b8c5d8;
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+
+    .deck-filter-bar > summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 44px;
+      padding: 10px 12px;
+      color: #334155;
+      font-weight: 1000;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+
+    .deck-filter-bar > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .deck-filter-bar > summary::after {
+      content: "▼";
+      color: #2563eb;
+      font-size: 13px;
+    }
+
+    .deck-filter-bar[open] > summary::after {
+      content: "▲";
+    }
+
+    .deck-filter-content {
+      display: grid;
+      gap: 10px;
+      padding: 0 12px 12px;
+      border-top: 1px solid #dbe4f0;
+      padding-top: 12px;
+    }
+
+    .deck-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .deck-filter-label {
+      min-width: 62px;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .filter-chip {
+      min-height: 32px;
+      border: 1px solid #94a3b8;
+      border-radius: 999px;
+      padding: 5px 10px;
+      color: #334155;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .filter-chip.active {
+      border-color: #1d4ed8;
+      color: #ffffff;
+      background: #2563eb;
+    }
+
+    .deck-editor-search { min-width: min(100%, 320px); }
+
+    .solo-selection-status {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .solo-slot {
+      border: 2px solid #b8c5d8;
+      border-radius: 6px;
+      padding: 12px;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .solo-slot.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    .solo-slot strong { display: block; margin-bottom: 4px; }
+
+    .environment-action-button {
+      position: absolute;
+      right: 6px;
+      bottom: 6px;
+      z-index: 5;
+      min-height: 30px;
+      border: 1px solid #0f766e;
+      border-radius: 5px;
+      padding: 5px 9px;
+      color: #ffffff;
+      background: #0f766e;
+      font-size: 11px;
+      font-weight: 1000;
+      cursor: pointer;
+    }
+
+    .environment-action-button:disabled {
+      border-color: #94a3b8;
+      background: #94a3b8;
+      cursor: default;
+    }
+
+    @media (max-width: 760px) {
+      .home-news-button { top: 10px; right: 10px; min-width: 98px; }
+      .deck-library-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .deck-detail-summary { grid-template-columns: 1fr; }
+      .update-change { grid-template-columns: 1fr; }
+      .update-arrow { transform: rotate(90deg); }
+    }
   </style>
 </head>
 <body>
   <main class="app">
     <section class="screen home-screen" id="homeScreen">
+      <button class="home-news-button" id="homeUpdatesButton" type="button">
+        更新情報
+        <span class="notification-dot hidden" id="homeUpdatesDot" aria-label="未読の更新情報あり"></span>
+      </button>
       <div class="home-title">
         <h1>チバトル（仮）</h1>
         <p>デジタルカードゲーム プロトタイプ</p>
@@ -5511,11 +5821,47 @@
           <span class="home-button-main">チュートリアル</span>
           <span class="home-button-sub">基本操作を試す</span>
         </button>
-        <button class="home-button" id="homeCoachButton" type="button">
-          <span class="home-button-main">Codexコーチ対戦</span>
-          <span class="home-button-sub">Codexが一手ずつ操作し、判断理由と指摘を記録する</span>
-        </button>
       </div>
+    </section>
+
+    <section class="screen updates-screen hidden" id="updatesScreen">
+      <div class="screen-head">
+        <div>
+          <h1>アップデート情報</h1>
+          <p class="subtitle">新しい順に、カード・ルール・操作画面の変更を確認できます</p>
+        </div>
+        <button class="button secondary" id="updatesBackHomeButton" type="button">ホーム</button>
+      </div>
+      <section class="panel">
+        <div class="update-list" id="updateList"></div>
+      </section>
+    </section>
+
+    <section class="screen solo-deck-screen hidden" id="soloDeckScreen">
+      <div class="screen-head">
+        <div>
+          <h1>ソロバトル</h1>
+          <p class="subtitle">自分とAIが使う保存デッキを選んでください</p>
+        </div>
+        <button class="button secondary" id="soloDeckBackHomeButton" type="button">ホーム</button>
+      </div>
+      <section class="panel">
+        <div class="solo-selection-status">
+          <button class="solo-slot active" id="soloPlayerSlot" type="button">
+            <strong>自分のデッキ</strong>
+            <span id="soloPlayerDeckName">未選択</span>
+          </button>
+          <button class="solo-slot" id="soloAiSlot" type="button">
+            <strong>AIのデッキ</strong>
+            <span id="soloAiDeckName">未選択</span>
+          </button>
+        </div>
+        <div class="deck-library-grid" id="soloDeckGrid"></div>
+        <div class="deck-library-detail hidden" id="soloDeckDetail"></div>
+        <div class="solo-deck-actions">
+          <button class="button" id="soloBattleStartButton" type="button" disabled>このデッキで開始</button>
+        </div>
+      </section>
     </section>
 
     <section class="screen online-screen hidden" id="onlineScreen">
@@ -5661,32 +6007,56 @@
         </div>
         <button class="button secondary" id="deckBackHomeButton" type="button">ホーム</button>
       </div>
-      <section class="panel deck-panel">
+      <section class="panel deck-panel" id="deckLibraryView">
         <div class="panel-head">
-          <h2>デッキ</h2>
+          <h2>保存デッキ</h2>
+          <span class="small-info" id="deckLibraryCount">0個</span>
+        </div>
+        <div class="deck-library-grid" id="deckLibraryGrid"></div>
+        <div class="deck-library-detail hidden" id="deckLibraryDetail"></div>
+      </section>
+      <section class="panel deck-panel hidden" id="deckEditorView">
+        <div class="panel-head">
+          <div>
+            <h2 id="deckEditorTitle">新規デッキ</h2>
+            <button class="button secondary" id="deckEditorBackButton" type="button">デッキ一覧へ</button>
+          </div>
           <span class="small-info" id="deckEditorStatus">40/60 OK</span>
         </div>
-        <div class="deck-tabs">
+        <div class="deck-tabs hidden" aria-hidden="true">
           <button class="button secondary active" id="playerDeckTab" data-deck-side="player">あなた</button>
           <button class="button secondary" id="opponentDeckTab" data-deck-side="opponent">AI</button>
         </div>
         <div class="deck-actions">
           <button class="button secondary" id="autoDeckButton">お任せ</button>
           <button class="button warning" id="clearDeckButton" type="button">全削除</button>
-          <button class="button" id="newGameWithDeckButton">ソロ開始</button>
+          <button class="button hidden" id="newGameWithDeckButton">ソロ開始</button>
         </div>
         <div class="deck-save-tools">
           <input class="control" id="deckSaveNameInput" type="text" maxlength="30" placeholder="保存名">
-          <select class="control" id="savedDeckSelect" aria-label="保存デッキ">
+          <select class="control hidden" id="savedDeckSelect" aria-label="保存デッキ" aria-hidden="true">
             <option value="">保存デッキを選択</option>
           </select>
-          <button class="button secondary" id="saveDeckButton" type="button">保存</button>
-          <button class="button secondary" id="loadDeckButton" type="button">保存デッキを読み込む</button>
+          <button class="button" id="saveDeckButton" type="button">保存</button>
+          <button class="button secondary hidden" id="loadDeckButton" type="button" aria-hidden="true">保存デッキを読み込む</button>
           <button class="button secondary" id="exportDeckButton" type="button">保存先を選んで書き出し</button>
           <button class="button secondary" id="importDeckButton" type="button">jsonファイルを読み込む</button>
-          <button class="button secondary" id="deleteDeckButton" type="button">削除</button>
+          <button class="button secondary hidden" id="deleteDeckButton" type="button" aria-hidden="true">削除</button>
           <input id="deckFileInput" type="file" accept="application/json" hidden>
         </div>
+        <details class="deck-filter-bar" id="deckFilterPanel">
+          <summary>カード検索・絞り込み</summary>
+          <div class="deck-filter-content">
+            <div class="deck-filter-row">
+              <label class="deck-filter-label" for="deckSearchInput">カード検索</label>
+              <input class="control deck-editor-search" id="deckSearchInput" type="search" placeholder="カード名を検索">
+              <button class="button secondary" id="deckFilterClearButton" type="button">クリア</button>
+            </div>
+            <div class="deck-filter-row" id="deckTypeFilters"><span class="deck-filter-label">タイプ</span></div>
+            <div class="deck-filter-row" id="deckCostFilters"><span class="deck-filter-label">戦意</span></div>
+            <div class="deck-filter-row" id="deckCategoryFilters"><span class="deck-filter-label">分類</span></div>
+          </div>
+        </details>
         <div class="deck-workspace">
           <aside class="current-deck-panel">
             <h3>現在のデッキ</h3>
@@ -5881,16 +6251,6 @@
       </div>
 
       <aside class="side">
-        <section class="panel coach-panel hidden" id="coachPanel" aria-label="Codexコーチ操作">
-          <div class="coach-panel-head">
-            <h2>Codexコーチ対戦</h2>
-            <span class="coach-badge">手札公開</span>
-          </div>
-          <p class="coach-status" id="coachStatus">対戦開始を待っています。</p>
-          <div class="coach-hand-list" id="coachHandList"></div>
-          <div class="coach-action-list" id="coachActionList"></div>
-          <button class="button coach-end-turn" id="coachEndTurnButton" type="button">Codexのターン終了</button>
-        </section>
         <section class="panel">
           <div class="panel-head">
             <h2>校外エリア</h2>
@@ -5990,7 +6350,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.12.0";
+    const GAME_DATA_VERSION = "0.13.0";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -6156,11 +6516,15 @@
       delayed_student: ["abyss", "lazy_student", "student_council"],
       proliferating_enemy: [],
       yamanashi_minimum_wage: ["onigiri_draw", "environment_setup"]
+      ,raptor_temple: ["bird_a", "demon_a_plus", "popular_c"]
+      ,enemy_boss: ["enemy_student"]
+      ,pachin_uni: ["general_student"]
+      ,ikemasu: ["general_student"]
     };
     const ALL_DECK_IDS = [
       "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
-      "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "fridge_thief",
+      "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
       "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
@@ -6168,10 +6532,10 @@
       "ruler", "aggro_eater", "ux_design_textbook", "bento", "yakiniku", "handmade_ctoc", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
       "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi",
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo", "yamanashi_minimum_wage",
-      "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture",
+      "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture", "baka_mac", "ikemasu",
       "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
       "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
-      "classroom", "cafeteria", "night_pool", "gangi_fortress", "seat_rules", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur"
+      "classroom", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur"
     ];
     const CARD_COPY_LIMITS = {
       circle_crab: 2,
@@ -6187,8 +6551,8 @@
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo", "chigauyo_kanji",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
-      "ux_design_textbook", "sock_block", "deck_without", "aggro_eater", "smart_me", "greeting_3000",
-      "yamanashi_minimum_wage"
+      "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000",
+      "yamanashi_minimum_wage", "baka_mac", "ikemasu"
     ];
 
     function isImmediateItemBaseId(baseId) {
@@ -6230,6 +6594,11 @@
       trpg_member: { name: "TRPGサークルメンバー", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
       college_student_vibe: { name: "大学生って感じの学生", type: "student", cost: 4, attack: 1, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       enemy_student: { name: "敵", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+      enemy_boss: { name: "敵のボス", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+      live_person: { name: "ライブ人", type: "student", cost: 4, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
+      dobby: { name: "ドービィ", type: "student", cost: 6, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+      pachin_uni: { name: "パチンウニー", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+      protein_drinker: { name: "プロテインドリンカー", type: "student", cost: 4, attack: 1, hp: 7, allowedZones: ["seat", "teacher"] },
       proliferating_enemy: { name: "増殖する敵", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
       delayed_student: { name: "遅延する学生", type: "student", cost: 6, attack: 3, hp: 4, rowOnly: 3, allowedZones: ["seat"] },
       fridge_thief: { name: "冷蔵庫泥棒", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
@@ -6270,7 +6639,7 @@
       back_question_student: { name: "後ろから質問する学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       ruler: { name: "定規", type: "item", cost: 1, target: "enemy" },
-      aggro_eater: { name: "アグロ喰い", type: "item", cost: 1, target: "self" },
+      aggro_eater: { name: "アグロ喰い", type: "item", cost: 1, target: "friendlyAny" },
       ux_design_textbook: { name: "UXデザインの教科書", type: "item", cost: 1, target: "self" },
       bento: { name: "お弁当", type: "item", cost: 3, target: "friendly" },
       yakiniku: { name: "焼肉", type: "item", cost: 2, target: "global" },
@@ -6328,6 +6697,8 @@
       smart_me: { name: "スマートミー", type: "item", cost: 3, target: "self" },
       greeting_3000: { name: "挨拶だけで3000字", type: "item", cost: 7, target: "self" },
       yamanashi_minimum_wage: { name: "山梨最低賃金2円", type: "item", cost: 3, target: "self" },
+      baka_mac: { name: "バカMac", type: "item", cost: 4, target: "self" },
+      ikemasu: { name: "いけます", type: "item", cost: 1, target: "self" },
       thanks_all_students: { name: "全ての学生に感謝を込めて", type: "item", cost: 6, target: "global" },
       alpha: { name: "アルファ", type: "item", cost: 0, noCost: true, target: "none", unusable: true },
       beta: { name: "ベータ", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
@@ -6338,13 +6709,15 @@
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
       cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
       night_pool: { name: "ナイトプール", type: "environment", cost: 2, allowedZones: ["environment"] },
+      building_12_classroom: { name: "12号館の教室", type: "environment", cost: 3, allowedZones: ["environment"] },
       seat_rules: { name: "座れる席と座れない席の存在", type: "environment", cost: 5, allowedZones: ["environment"] },
       gangi_fortress: { name: "雁木囲い", type: "environment", cost: 3, allowedZones: ["environment"] },
       dark_student_council: { name: "裏学友会", type: "environment", cost: 0, noCost: true, generated: true, allowedZones: ["environment"] },
       student_council: { name: "学友会", type: "environment", cost: 6, allowedZones: ["environment"] },
       full_lock: { name: "全ロック", type: "environment", cost: 8, allowedZones: ["environment"] },
       design_domain: { name: "デザイン領域", type: "environment", cost: 6, allowedZones: ["environment"] },
-      chaos_world: { name: "カオスワールド", type: "environment", cost: 9, allowedZones: ["environment"] },
+      raptor_temple: { name: "猛禽寺", type: "environment", cost: 5, allowedZones: ["environment"] },
+      chaos_world: { name: "カオスワールド", type: "environment", cost: 10, allowedZones: ["environment"] },
       no_late_time: { name: "遅刻じゃない時間", type: "environment", cost: 6, allowedZones: ["environment"] },
       meguro_library: { name: "目黒区図書館", type: "environment", cost: 5, allowedZones: ["environment"] },
       dorm_council: { name: "寮友会", type: "environment", cost: 3, allowedZones: ["environment"] },
@@ -6355,6 +6728,298 @@
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
+
+    const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v1";
+    const UPDATE_HISTORY = [
+      {
+        version: "ver.0.13.0",
+        date: "2026年7月18日",
+        summary: "デッキ管理とカード検索を作り直し、新カード9種を追加。",
+        changes: [
+          { title: "デッキ変更", after: "保存デッキを3列の一覧から選び、変更・確認・削除できる画面に変更。ソロバトルでは自分とAIのデッキを別々に選択。" },
+          { title: "カード検索", after: "最初は折り畳んで表示。開くと、カード名、タイプ、複数の戦意、効果カテゴリを組み合わせて絞り込み可能。" },
+          { title: "細い", before: "残さなかった手札を校外エリアへ送る。", after: "残さなかった手札をデッキへ戻してシャッフルする。" },
+          { title: "アグロ喰い", before: "自分の出席者すべてと気力を1回復。", after: "自分の出席者1人を1回復し、その後、自分の気力を1回復。" },
+          { title: "カオスワールド", before: "戦意9。出席時に数値を変更。", after: "戦意10。各ターン開始時、手札の戦意と場の出席者の攻撃力・体力を0〜10で変更（体力は1以上）。" },
+          { title: "新カード", after: "猛禽寺、12号館の教室、バカMac、敵のボス、ライブ人、ドービィ、パチンウニー、プロテインドリンカー、いけますを追加。" },
+          { title: "眠気", after: "攻撃を外したとき、対象に「ミス」を表示。" }
+        ]
+      },
+      {
+        version: "ver.0.12.4",
+        date: "2026年7月16日",
+        summary: "AIの配置判断とデッキ評価を調整。",
+        changes: [
+          { title: "AI", after: "展開効果の空席、配置条件、リーサル、防御、妨害を含めて行動評価を改善。" },
+          { title: "後ろから質問する学生", before: "教師へ2ダメージ。", after: "教師へ4ダメージ。" }
+        ]
+      },
+      {
+        version: "ver.0.12.2",
+        date: "2026年7月16日",
+        summary: "TTBと深淵の効果表記・処理を調整。",
+        changes: [
+          { title: "TTB", after: "怪しげな文書を両者のデッキへ生成し、場にいる間は自分のターン終了時にも相手デッキへ生成。" },
+          { title: "深淵", after: "効果が2ターン続くことを明記。" }
+        ]
+      },
+      {
+        version: "ver.0.12.1",
+        date: "2026年7月15日",
+        summary: "カード効果とオンライン対戦ログ周辺を改善。",
+        changes: [
+          { title: "定規", before: "ヴァンパイアへの共通弱点の対象外。", after: "ヴァンパイアに与えるダメージも2倍。" },
+          { title: "裏U太", after: "進化元の装備を引き継ぎ、装備上限を2枚に変更。進化時にU太を1枚生成。" }
+        ]
+      },
+      {
+        version: "ver.0.12.0",
+        date: "2026年7月15日",
+        summary: "カードプールと複数の既存効果を更新。",
+        changes: [
+          { title: "カード更新", after: "ver.0.12.0仕様書のカード追加・変更をゲーム、カード一覧、ルールへ反映。" }
+        ]
+      },
+      {
+        version: "ver.0.11.10",
+        date: "2026年7月15日",
+        summary: "TTBが生成する「怪しげな文書」の枚数を調整。",
+        changes: [
+          { title: "TTB（出席時）", before: "自分のデッキに1枚、相手のデッキに3枚生成。", after: "お互いのデッキに2枚ずつ生成。" },
+          { title: "TTB（ターン終了時）", before: "相手のデッキに2枚生成。", after: "相手のデッキに1枚生成。" }
+        ]
+      },
+      {
+        version: "ver.0.11.9",
+        date: "2026年7月15日",
+        summary: "後ろから質問する学生を強化。",
+        changes: [
+          { title: "後ろから質問する学生", before: "教師に3ダメージ。", after: "教師に4ダメージ。" }
+        ]
+      },
+      {
+        version: "ver.0.11.8",
+        date: "2026年7月15日",
+        summary: "デッキの書き出し方法を改善。",
+        changes: [
+          { title: "デッキ書き出し", before: "ダウンロードフォルダへ保存。", after: "対応ブラウザでは保存先を選択可能。非対応ブラウザでは従来どおりダウンロード。" }
+        ]
+      },
+      {
+        version: "ver.0.11.7",
+        date: "2026年7月15日",
+        summary: "AIがベータ・ガンマへの妨害を考慮するように改善。",
+        changes: [
+          { title: "AI", after: "相手のベータ・ガンマの使用を防ぐ価値を行動評価へ追加。" }
+        ]
+      },
+      {
+        version: "ver.0.11.6",
+        date: "2026年7月14日",
+        summary: "AIのマリガン、配置、リーサル判断を改善。",
+        changes: [
+          { title: "AI", after: "低戦意カードのマリガン、効果を活かす配置、リーサル、ドロー・サーチの優先度を調整。" }
+        ]
+      },
+      {
+        version: "ver.0.11.5",
+        date: "2026年7月14日",
+        summary: "学長の「眠気」付与を修正。",
+        changes: [
+          { title: "学長", before: "学長自身にも眠気が付く場合がある。", after: "教卓マスにいる間、お互いの他の出席者は眠気を持つ。学長自身は持たない。" }
+        ]
+      },
+      {
+        version: "ver.0.11.4",
+        date: "2026年7月14日",
+        summary: "TTBの戦意を変更。",
+        changes: [
+          { title: "TTB", before: "戦意5。", after: "戦意4。" }
+        ]
+      },
+      {
+        version: "ver.0.11.3",
+        date: "2026年7月11日",
+        summary: "攻撃可能表示とミーハー学生の反撃条件を調整。",
+        changes: [
+          { title: "ミーハー学生", before: "反撃ダメージを受けない。", after: "攻撃した出席者の体力を0にした場合だけ、反撃ダメージを受けない。" },
+          { title: "攻撃可能表示", after: "攻撃できる自分の出席者を細い緑色の縁で表示し、「攻」アイコンを削除。" }
+        ]
+      },
+      {
+        version: "ver.0.11.2",
+        date: "2026年7月11日",
+        summary: "公開ページへのリンクを更新。",
+        changes: [
+          { title: "README", after: "ゲーム、カード一覧、ルール帳へのリンクを最新の公開先へ更新。" }
+        ]
+      },
+      {
+        version: "ver.0.11.1",
+        date: "2026年7月10日",
+        summary: "攻撃時以外に表示されていたカードの強調枠を修正。",
+        changes: [
+          { title: "攻撃対象表示", before: "通常時にも強い枠が残る場合がある。", after: "攻撃者を選んだときだけ、攻撃できる対象を強調。" }
+        ]
+      },
+      {
+        version: "ver.0.11.0",
+        date: "2026年7月10日",
+        summary: "新カードの追加とカードバランスの更新。",
+        changes: [
+          { title: "カード追加", after: "よっちゃん、ミーハー学生、再履生、セットするログ、賢者の遺産などを追加。" },
+          { title: "カード更新", after: "複数の既存カードについて戦意・能力・処理順を調整。" }
+        ]
+      },
+      {
+        version: "ver.0.10.1",
+        date: "2026年7月9日",
+        summary: "進化と超陽気の処理を修正。",
+        changes: [
+          { title: "どんぐり進化", after: "進化元を出席させたターンでも進化可能。" },
+          { title: "超陽気", after: "完全変異体などが場に出た直後から、超陽気として正しく攻撃可能。" }
+        ]
+      },
+      {
+        version: "ver.0.10.0",
+        date: "2026年7月6日",
+        summary: "超注目と持ち物の操作性を追加・改善。",
+        changes: [
+          { title: "超注目", after: "攻撃、指名、ランダム指名の対象を超注目を持つ出席者へ限定する能力を追加。" },
+          { title: "持ち物の使用", after: "ドラッグ中のカードを手札へ戻すと使用をキャンセル可能。" },
+          { title: "靴下ブロック", after: "自分の次のターンが戻ってくるまでを1ターンとして処理。" }
+        ]
+      },
+      {
+        version: "ver.0.9.0",
+        date: "2026年7月6日",
+        summary: "オンライン対戦の入口と観戦機能を拡張。",
+        changes: [
+          { title: "オンラインバトル", after: "ランダムマッチ、プライベートマッチ、観戦を選べる画面へ変更。" },
+          { title: "対戦画面", after: "部屋コードを右上へ表示し、観戦する部屋の検索・一覧表示を追加。" }
+        ]
+      },
+      {
+        version: "ver.0.8.4",
+        date: "2026年7月3日",
+        summary: "オンライン対戦でゲストが進化した際の同期を改善。",
+        changes: [
+          { title: "オンライン進化", before: "ゲスト側だけで進化効果が見え、ターン終了時に巻き戻る場合がある。", after: "ホスト側を正本として進化と進化後効果を両者へ同期。" }
+        ]
+      },
+      {
+        version: "ver.0.8.3",
+        date: "2026年7月3日",
+        summary: "オンライン対戦の選択式効果とカードテストを改善。",
+        changes: [
+          { title: "選択式効果", after: "ホスト・ゲストのどちらでも、対象や手札を選ぶ効果を同じ手順で処理。" },
+          { title: "カードテスト", after: "一手戻る操作とテスト用盤面を改善。" }
+        ]
+      },
+      {
+        version: "ver.0.8.2",
+        date: "2026年7月2日",
+        summary: "チュートリアルと関連カード表示を拡張。",
+        changes: [
+          { title: "チュートリアル", after: "基本、学生、教師、ヴァンパイア、持ち物、環境、陽気・超陽気、余裕の各編を追加。" },
+          { title: "関連カード", after: "カード本文に登場するカードとトークンだけを表示。" }
+        ]
+      },
+      {
+        version: "ver.0.8.1",
+        date: "2026年7月1日",
+        summary: "カード選択中に盤面を確認できる操作を追加。",
+        changes: [
+          { title: "選択画面", after: "目のアイコンで選択画面を一時的に隠し、盤面とログを確認可能。" }
+        ]
+      },
+      {
+        version: "ver.0.8.0",
+        date: "2026年7月1日",
+        summary: "ホーム画面とプレイ中チュートリアルを刷新。",
+        changes: [
+          { title: "チュートリアル", after: "実際の対戦画面で対象箇所を明るく強調しながら、基本ルールを順番に説明。" }
+        ]
+      },
+      {
+        version: "ver.0.7.2",
+        date: "2026年6月30日",
+        summary: "校外エリアの確認方法とオンライン同期を改善。",
+        changes: [
+          { title: "校外エリア", after: "送られたカードが多い場合、枚数から一覧を開いて内容を確認可能。" }
+        ]
+      },
+      {
+        version: "ver.0.7.1",
+        date: "2026年6月30日",
+        summary: "カード一覧・ルール帳と対戦ログの見やすさを改善。",
+        changes: [
+          { title: "カード一覧・ルール帳", after: "ゲームに合わせた色へ統一し、関連用語から説明へ移動できるリンクを追加。" },
+          { title: "校外ログ", after: "自分のカードを青、相手のカードを赤で表示。" }
+        ]
+      },
+      {
+        version: "ver.0.6.11",
+        date: "2026年6月29日",
+        summary: "公開ページとオンライン対戦の基盤を更新。",
+        changes: [
+          { title: "公開版", after: "ゲーム、カード一覧、ルール帳の公開先とオンライン接続設定を整理。" }
+        ]
+      },
+      {
+        version: "ver.0.5.10",
+        date: "2026年6月28日",
+        summary: "カードとルールを仕様書に合わせて更新。",
+        changes: [
+          { title: "カード・ルール", after: "ver.0.5.10時点の追加・変更をゲームと管理台帳へ反映。" }
+        ]
+      },
+      {
+        version: "ver.0.5.8",
+        date: "2026年6月27日",
+        summary: "カード表示とテスト操作を改善。",
+        changes: [
+          { title: "カード表示", after: "場のカードテキストと現在の攻撃力・体力を読みやすく調整。" },
+          { title: "カードテスト", after: "カード一覧から選んだカードを専用の手札で試せる機能を拡張。" }
+        ]
+      },
+      {
+        version: "ver.0.3.7",
+        date: "2026年6月27日",
+        summary: "初期プロトタイプのカード・ルール・操作を拡張。",
+        changes: [
+          { title: "ゲーム基盤", after: "デッキ作成、AI対戦、カード効果、カード管理台帳とルール帳を段階的に追加。" }
+        ]
+      }
+    ];
+
+    const LATEST_UPDATE_VERSION = UPDATE_HISTORY[0]?.version || "";
+
+    const DECK_FILTER_TYPES = ["student", "teacher", "vampire", "item", "environment"];
+    const DECK_FILTER_CATEGORIES = ["ドロー", "サーチ・生成", "回復", "除去", "バフ・デバフ", "妨害", "展開", "進化", "融合", "装備"];
+    const CARD_CATEGORY_GROUPS = Object.freeze({
+      "ドロー": ["onigiri_draw", "hondara", "fire_touch", "wet_meal_ticket", "dry_meal_ticket", "deck_without", "three_gestures", "sage_legacy", "ttb"],
+      "サーチ・生成": ["lightning_n", "pro_k", "trpg_member", "curry_treater", "environment_setup", "iv_pack", "music_detergent", "ikemasu", "ttb", "alpha", "beta", "gamma"],
+      "回復": ["aggro_eater", "bento", "fluid_pasta", "peaceful_mind", "onigiri_draw", "circle_crab", "hair_crab", "homeless_crab", "laughing_front_student"],
+      "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student"],
+      "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "protein_drinker", "dobby", "live_person", "chaos_world"],
+      "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
+      "展開": ["pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu"],
+      "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
+      "融合": ["ruler", "double_diamond"],
+      "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
+    });
+
+    const CARD_CATEGORIES = (() => {
+      const result = {};
+      Object.entries(CARD_CATEGORY_GROUPS).forEach(([category, ids]) => {
+        ids.forEach((baseId) => {
+          if (!result[baseId]) result[baseId] = [];
+          if (!result[baseId].includes(category)) result[baseId].push(category);
+        });
+      });
+      return Object.freeze(result);
+    })();
 
     const STARTER_DECK_RECIPES = {
       "スターター：出席ビギナーズ": {
@@ -6459,6 +7124,7 @@
       selectionOverlayPeek: false,
       pendingTestCardId: null,
       pendingCopiedCard: null,
+      pendingRaptorTemple: null,
       environment: null,
       temporarySeatBlocks: [],
       deckToHandLocks: [],
@@ -6471,8 +7137,6 @@
       gameWinner: null,
       gameResultOptions: {},
       aiThinking: false,
-      coachMode: false,
-      coachLastAction: "",
       testMode: false,
       testCardBaseId: null,
       testHistory: [],
@@ -6491,7 +7155,23 @@
           player: createDefaultDeckCounts(),
           opponent: createDefaultDeckCounts()
         },
-        savedDecks: loadSavedDecks()
+        savedDecks: loadSavedDecks(),
+        view: "library",
+        selectedName: "",
+        editingName: "",
+        originalFingerprint: "",
+        filters: {
+          query: "",
+          types: [],
+          costs: [],
+          categories: []
+        }
+      },
+      soloSelection: {
+        activeSide: "player",
+        playerDeckName: "",
+        opponentDeckName: "",
+        previewName: ""
       },
       online: {
         screenStatus: "idle",
@@ -6695,6 +7375,8 @@
 
     const elements = {
       homeScreen: document.getElementById("homeScreen"),
+      updatesScreen: document.getElementById("updatesScreen"),
+      soloDeckScreen: document.getElementById("soloDeckScreen"),
       onlineScreen: document.getElementById("onlineScreen"),
       tutorialScreen: document.getElementById("tutorialScreen"),
       deckScreen: document.getElementById("deckScreen"),
@@ -6703,9 +7385,12 @@
       battleRoomCode: document.getElementById("battleRoomCode"),
       battleRoomCodeValue: document.getElementById("battleRoomCodeValue"),
       homeDeckButton: document.getElementById("homeDeckButton"),
+      homeUpdatesButton: document.getElementById("homeUpdatesButton"),
+      homeUpdatesDot: document.getElementById("homeUpdatesDot"),
+      updatesBackHomeButton: document.getElementById("updatesBackHomeButton"),
+      updateList: document.getElementById("updateList"),
       homeBattleButton: document.getElementById("homeBattleButton"),
       homeTutorialButton: document.getElementById("homeTutorialButton"),
-      homeCoachButton: document.getElementById("homeCoachButton"),
       tutorialBackHomeButton: document.getElementById("tutorialBackHomeButton"),
       tutorialStartButton: document.getElementById("tutorialStartButton"),
       tutorialCardPreview: document.getElementById("tutorialCardPreview"),
@@ -6745,11 +7430,14 @@
       onlineLocalReadyBadge: document.getElementById("onlineLocalReadyBadge"),
       onlineRemoteReadyBadge: document.getElementById("onlineRemoteReadyBadge"),
       homeSoloButton: document.getElementById("homeSoloButton"),
-      coachPanel: document.getElementById("coachPanel"),
-      coachStatus: document.getElementById("coachStatus"),
-      coachHandList: document.getElementById("coachHandList"),
-      coachActionList: document.getElementById("coachActionList"),
-      coachEndTurnButton: document.getElementById("coachEndTurnButton"),
+      soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
+      soloPlayerSlot: document.getElementById("soloPlayerSlot"),
+      soloAiSlot: document.getElementById("soloAiSlot"),
+      soloPlayerDeckName: document.getElementById("soloPlayerDeckName"),
+      soloAiDeckName: document.getElementById("soloAiDeckName"),
+      soloDeckGrid: document.getElementById("soloDeckGrid"),
+      soloDeckDetail: document.getElementById("soloDeckDetail"),
+      soloBattleStartButton: document.getElementById("soloBattleStartButton"),
       deckBackHomeButton: document.getElementById("deckBackHomeButton"),
       battleBackHomeButton: document.getElementById("battleBackHomeButton"),
       testBackDeckButton: document.getElementById("testBackDeckButton"),
@@ -6842,6 +7530,13 @@
       opponentTrash: document.getElementById("opponentTrash"),
       log: document.getElementById("log"),
       deckEditorStatus: document.getElementById("deckEditorStatus"),
+      deckLibraryView: document.getElementById("deckLibraryView"),
+      deckEditorView: document.getElementById("deckEditorView"),
+      deckLibraryGrid: document.getElementById("deckLibraryGrid"),
+      deckLibraryDetail: document.getElementById("deckLibraryDetail"),
+      deckLibraryCount: document.getElementById("deckLibraryCount"),
+      deckEditorTitle: document.getElementById("deckEditorTitle"),
+      deckEditorBackButton: document.getElementById("deckEditorBackButton"),
       deckEditorList: document.getElementById("deckEditorList"),
       currentDeckList: document.getElementById("currentDeckList"),
       deckCostCurve: document.getElementById("deckCostCurve"),
@@ -6858,6 +7553,11 @@
       loadDeckButton: document.getElementById("loadDeckButton"),
       deckFileInput: document.getElementById("deckFileInput"),
       deleteDeckButton: document.getElementById("deleteDeckButton"),
+      deckSearchInput: document.getElementById("deckSearchInput"),
+      deckFilterClearButton: document.getElementById("deckFilterClearButton"),
+      deckTypeFilters: document.getElementById("deckTypeFilters"),
+      deckCostFilters: document.getElementById("deckCostFilters"),
+      deckCategoryFilters: document.getElementById("deckCategoryFilters"),
       usedDeckInfo: document.getElementById("usedDeckInfo"),
       usedDeckList: document.getElementById("usedDeckList"),
       cardTooltip: document.getElementById("cardTooltip"),
@@ -6905,6 +7605,7 @@
       abyssTurns: 0,
       designTextbookBonus: 0,
       designTextbookUntilTurn: 0,
+      handCostTaxUntilActionTurn: 0,
       lifeShieldUntilTurn: 0,
       lifeShieldUntilSide: null,
       board: { seats: Array(9).fill(null), teacher: null }
@@ -8570,8 +9271,7 @@
       const pending = state.pendingRemoteHandTrim;
       if (!pending || pending.requestId !== requestId || pending.mode === "bad_student_discard") return;
       const moved = discardHandDownToKeptIds(pending.targetSide, keepIds, 4);
-      const movedText = trashDetailCountText(pending.targetSide, moved, "細いで校外へ送られたカード");
-      addLog(`細いの効果：${SIDES[pending.targetSide]}は手札から${movedText}を校外エリアへ送りました。`);
+      addLog(`細いの効果：${SIDES[pending.targetSide]}は手札から${moved.length}枚をデッキへ戻し、シャッフルしました。`);
       state.pendingRemoteHandTrim = null;
       clearSelections();
       cleanupDestroyedCards();
@@ -9119,6 +9819,10 @@
           if (target) placePendingCopiedCardForSide("opponent", target.zone, target.owner, target.index ?? null);
         }
         if (command.type === "fuse") fuseRulersForSide("opponent", true);
+        if (command.type === "raptorTemple") {
+          const source = onlineMapRefForHost(payload.source);
+          if (source) resolveRaptorTempleExchange("opponent", source, payload.targetInstanceId, true);
+        }
         if (command.type === "endTurn") endTurn({ fromAi: true, meguroDiscardId: payload.meguroDiscardId || null });
         if (command.type === "concede") endGame("player", "相手が勝てないを選びました。", { retire: true });
       } finally {
@@ -9307,9 +10011,7 @@
 
     function initializeGame(options = {}) {
       const onlineHost = options.onlineHost === true;
-      state.coachMode = !onlineHost && options.coachMode === true;
-      state.coachLastAction = "";
-      SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : (state.coachMode ? "Codex" : SOLO_OPPONENT_LABEL);
+      SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
       const preBattleToken = state.preBattleToken;
@@ -9340,6 +10042,7 @@
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
+      state.pendingRaptorTemple = null;
       state.pendingTestCardId = null;
       state.online.localMulliganPending = false;
       state.environment = null;
@@ -9374,8 +10077,8 @@
       analyticsStartGame();
       queueAnimation("shuffle", "player");
       queueAnimation("shuffle", "opponent");
-      state.message = onlineHost ? "オンライン対戦" : (state.coachMode ? "VS Codex" : "VS AI");
-      addLog(onlineHost ? "オンライン対戦を開始します。" : (state.coachMode ? "Codexコーチ対戦を開始します。" : "相手AIとのバトルを開始します。"));
+      state.message = onlineHost ? "オンライン対戦" : "VS AI";
+      addLog(onlineHost ? "オンライン対戦を開始します。" : "相手AIとのバトルを開始します。");
       render();
       window.setTimeout(() => beginRpsSelection(preBattleToken), 1250);
     }
@@ -9795,6 +10498,7 @@
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
+      state.pendingRaptorTemple = null;
       hideBattleCardPreview();
       clearTurnStartTemporarySeatBlocks(side);
       clearExpiredDeckToHandLocks(side);
@@ -9808,6 +10512,7 @@
       if (state.gameOver) return;
       const drawWasBlocked = isDeckToHandLocked();
       if (!drawOne(side, true) && !drawWasBlocked) return;
+      resolveChaosWorldAtTurnStart();
       const drawText = drawWasBlocked
         ? "山梨最低賃金2円の効果によりドローできません。"
         : "1枚ドロー。";
@@ -9830,12 +10535,6 @@
 
     function scheduleOpponentAI() {
       if (state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
-      if (isCoachBattle()) {
-        state.aiThinking = false;
-        state.message = "Codexの手番です。チャットで操作を待っています。";
-        render();
-        return;
-      }
       state.aiThinking = true;
       if (state.testMode) {
         const canTestProliferatingEnemy = state.testCardBaseId === "proliferating_enemy"
@@ -9870,6 +10569,10 @@
       render();
       await sleep(AI_STEP_DELAY);
       if (!isOpponentAiActive()) return;
+      if (tryUseAiRaptorTemple()) {
+        render();
+        await sleep(AI_STEP_DELAY);
+      }
       await tryUseAiItems({ timing: "beforeBoard" });
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
@@ -10599,8 +11302,9 @@
       if (item.baseId === "hondara") return deck.length >= 1 ? 4 : 0;
       if (item.baseId === "ux_design_textbook") return countFriendlyDesignTeachers("opponent") > 0 ? 4 + countFriendlyDesignTeachers("opponent") : 0;
       if (item.baseId === "aggro_eater") {
+        if (friendlyCards.length === 0) return 0;
         const woundedAttendees = friendlyCards.filter((card) => card.currentHp < card.maxHp).length;
-        return (opponent.life < 20 ? 3 : 0) + woundedAttendees * 2;
+        return (opponent.life < 20 ? 3 : 0) + woundedAttendees * 2 + 1;
       }
       if (item.baseId === "deck_without") return deck.length >= 2 && opponent.hand.length >= 2 ? 5 : 0;
       if (item.baseId === "smart_me") return state.players.player.late.some((entry) => entry.card?.type === "student") ? 6 : 0;
@@ -10613,6 +11317,8 @@
       if (item.baseId === "sexual_eye") return deck.some((card) => card.baseId === "yuta") ? 5 : 0;
       if (item.baseId === "yoyu_announce") return deck.length >= 1 ? 5 : 0;
       if (item.baseId === "environment_setup") return deck.some((card) => card.type === "environment") ? 5 : 0;
+      if (item.baseId === "baka_mac") return state.players.player.hand.length > 0 ? 4 + Math.min(5, state.players.player.hand.length) : 0;
+      if (item.baseId === "ikemasu") return 4;
       if (item.baseId === "iv_pack") return deck.some((card) => card.type === "vampire") ? 6 : 0;
       if (item.baseId === "wet_meal_ticket") return deck.length > 0 ? 4 : 0;
       if (item.baseId === "dry_meal_ticket") {
@@ -10754,6 +11460,12 @@
       if (isImmediateItemBaseId(item.baseId)) {
         return castImmediateItem("opponent", item, false);
       }
+      if (item.baseId === "aggro_eater") {
+        const target = listBoardRefs("opponent")
+          .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+          .sort((a, b) => (b.card.maxHp - b.card.currentHp) - (a.card.maxHp - a.card.currentHp))[0];
+        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
+      }
       if (item.baseId === "bento") {
         const damaged = listBoardRefs("opponent")
           .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
@@ -10871,6 +11583,7 @@
           resolvingAttacker.hasAttacked = true;
           if (attackMissesFromDrowsiness(resolvingAttacker)) {
             addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
+            showFloatingTextForCard(targetCard, "ミス", "miss");
           } else {
             resolveCardAttack(resolvingAttacker, targetCard);
             cleanupDestroyedCards();
@@ -10891,6 +11604,7 @@
           resolvingAttacker.hasAttacked = true;
           if (attackMissesFromDrowsiness(resolvingAttacker)) {
             addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
+            showFloatingTextForLife("player", "ミス", "miss");
           } else {
             const dealtDamage = resolveLifeAttack(resolvingAttacker, "player");
             addLog(`${resolvingAttacker.name}があなた本体に${dealtDamage}ダメージ。`);
@@ -11157,6 +11871,10 @@
         if (card.baseId === "ttb") {
           generateCardsIntoDeck(opponent, "suspicious_document", 1);
           addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を1枚生成しました。`);
+        }
+        if (card.baseId === "protein_drinker") {
+          applyPermanentStatBuff(card, 1, 0);
+          addLog(`${card.name}の効果：攻撃力を+1しました。`);
         }
       });
       listBoardRefs(side).forEach((ref) => {
@@ -11810,6 +12528,24 @@
         state.message = "校外エリアへ送る手札を送信しました。";
         clearSelections();
         render();
+        return;
+      }
+      if (mode === "raptor_temple_source") {
+        openRaptorTempleTargetChoice(selectedIds[0]);
+        return;
+      }
+      if (mode === "raptor_temple_target") {
+        const sourceRef = state.pendingRaptorTemple?.sourceRef;
+        if (!sourceRef) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("raptorTemple", { source: sourceRef, targetInstanceId: selectedIds[0] });
+          state.pendingRaptorTemple = null;
+          state.message = "猛禽寺の選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveRaptorTempleExchange("player", sourceRef, selectedIds[0], true);
         return;
       }
       if (mode === "bad_student_online_play") {
@@ -12642,33 +13378,37 @@
       return boardCard;
     }
 
-    function applyChaosWorldRandomStats(card, options = {}) {
-      if (!card || card.type === "item" || card.type === "environment") return false;
-      const nextCost = Math.floor(Math.random() * 11);
-      const nextAttack = Math.floor(Math.random() * 11);
-      const nextHp = Math.floor(Math.random() * 11);
-      if (options.includeCost !== false && !card.noCost) card.cost = nextCost;
-      card.hp = nextHp;
-      card.baseAttack = nextAttack;
-      card.attack = nextAttack;
-      card.baseMaxHp = nextHp;
-      card.maxHp = nextHp;
-      card.currentHp = nextHp;
-      return true;
-    }
-
     function applyChaosWorldToHandAndBoard() {
-      let affected = 0;
+      let handAffected = 0;
+      let boardAffected = 0;
       ["player", "opponent"].forEach((owner) => {
         state.players[owner].hand.forEach((card) => {
-          if (applyChaosWorldRandomStats(card, { includeCost: true })) affected += 1;
+          if (card.noCost) return;
+          card.cost = Math.floor(Math.random() * 11);
+          handAffected += 1;
         });
         listBoardRefs(owner).forEach((ref) => {
           const card = getBoardCardFromRef(ref);
-          if (applyChaosWorldRandomStats(card, { includeCost: true })) affected += 1;
+          if (!card || !["student", "teacher", "vampire"].includes(card.type)) return;
+          const nextAttack = Math.floor(Math.random() * 11);
+          const nextHp = 1 + Math.floor(Math.random() * 10);
+          card.baseAttack = nextAttack;
+          card.attack = nextAttack;
+          card.baseMaxHp = nextHp;
+          card.maxHp = nextHp;
+          card.currentHp = nextHp;
+          boardAffected += 1;
         });
       });
-      return affected;
+      return { handAffected, boardAffected };
+    }
+
+    function resolveChaosWorldAtTurnStart() {
+      if (state.environment?.baseId !== "chaos_world") return;
+      showCardPlayAnimation(state.environment, "environment");
+      const affected = applyChaosWorldToHandAndBoard();
+      applyBoardAuras();
+      addLog(`カオスワールドの効果：手札${affected.handAffected}枚の戦意と、場の出席者${affected.boardAffected}人の攻撃力・体力をランダムに変更しました。`);
     }
 
     function canPlaceCard(side, card, zone, owner, index) {
@@ -12906,6 +13646,49 @@
       if (card.type === "teacher" && zone !== "teacher") {
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
       }
+      if (card.baseId === "enemy_boss") {
+        const enemyCount = listBoardRefs(side)
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((attendee) => attendee?.name?.includes("敵")).length;
+        if (enemyCount >= 3 && summonToRandomOpenSeat(side, "enemy_student", card.name)) {
+          addLog(`${card.name}の効果：自分の場に「敵」と名のつく出席者が3人いるため、「敵」をランダムな空席に1人召喚しました。`);
+        } else {
+          addLog(`${card.name}の効果：条件を満たす空席または「敵」と名のつく出席者が足りないため、不発になりました。`);
+        }
+      }
+      if (card.baseId === "live_person") {
+        let affected = 0;
+        listBoardRefs(opponent).forEach((ref) => {
+          const target = getBoardCardFromRef(ref);
+          if (!target) return;
+          target.baseAttack = 3;
+          target.attack = 3;
+          affected += 1;
+        });
+        addLog(`${card.name}の効果：相手の出席者${affected}人の攻撃力を3にしました。`);
+      }
+      if (card.baseId === "dobby") {
+        let affected = 0;
+        listBoardRefs(opponent).forEach((ref) => {
+          const target = getBoardCardFromRef(ref);
+          if (target?.type !== "student" || target.attack < 3) return;
+          applyPermanentStatBuff(target, -2, 0);
+          affected += 1;
+        });
+        addLog(`${card.name}の効果：攻撃力3以上の相手の学生${affected}人の攻撃力を-2しました。`);
+      }
+      if (card.baseId === "pachin_uni") {
+        let summoned = 0;
+        [6, 7, 8].forEach((seatIndex) => {
+          if (!isBoardSlotOpen(opponent, "seat", seatIndex)) return;
+          const student = makeBoardCard(createCardFromBase("general_student", opponent));
+          student.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 2;
+          state.players[opponent].board.seats[seatIndex] = student;
+          resolveProliferatingEnemyTriggers(opponent, student);
+          summoned += 1;
+        });
+        addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人召喚しました。それらは相手が自分のターンを2回終了するまで攻撃できません。`);
+      }
       if (card.baseId === "loud_student") {
         let affected = 0;
         ["player", "opponent"].forEach((owner) => {
@@ -12960,7 +13743,7 @@
         cleanupDestroyedCards();
         addLog(`${card.name}の効果：相手の学生へランダムに${hitSummary.attendees}ダメージを割り振りました。`);
       }
-      if (card.baseId === "ttb") {
+        if (card.baseId === "ttb") {
         generateCardsIntoDeck(side, "suspicious_document", 2);
         generateCardsIntoDeck(opponent, "suspicious_document", 2);
         addLog(`${card.name}の効果：お互いのデッキに「怪しげな文書」を2枚ずつ生成しました。`);
@@ -13376,9 +14159,14 @@
       if (card.baseId === "design_domain" && zone === "environment") {
         addLog(`${card.name}の効果：ヴァンパイアは「デザイン」と名のつく教師を攻撃できません。`);
       }
+      if (card.baseId === "building_12_classroom" && zone === "environment") {
+        addLog(`${card.name}の効果：教師の攻撃力を+1し、学生の攻撃力を-1します。`);
+      }
+      if (card.baseId === "raptor_temple" && zone === "environment") {
+        addLog(`${card.name}の効果：各プレイヤーは自分のターンに1回、デザイン教師を入れ替えられます。`);
+      }
       if (card.baseId === "chaos_world" && zone === "environment") {
-        const affected = applyChaosWorldToHandAndBoard();
-        addLog(`${card.name}の効果：お互いの手札と場の出席者${affected}枚の戦意・攻撃力・体力をランダムに変更しました。`);
+        addLog(`${card.name}の効果：各ターン開始時、手札の戦意と場の出席者の攻撃力・体力をランダムに変更します。`);
       }
       resolveProliferatingEnemyTriggers(side, card);
     }
@@ -13539,7 +14327,7 @@
         .map((card) => card.instanceId);
     }
 
-    function discardHandDownToKeptIds(side, keepIds, targetCount, title = "細いで校外へ送られたカード") {
+    function discardHandDownToKeptIds(side, keepIds, targetCount) {
       const player = state.players[side];
       if (player.hand.length <= targetCount) return [];
       const keepSet = new Set((keepIds || []).slice(0, targetCount));
@@ -13557,7 +14345,8 @@
         moved.push(card);
         return false;
       });
-      moveCardsToTrash(side, moved, { title });
+      player.deck = shuffle([...player.deck, ...moved]);
+      queueAnimation("shuffle", side);
       return moved;
     }
 
@@ -13615,7 +14404,7 @@
       return openCardChoice({
         mode: options.onlineResponse ? "thin_item_online_response" : "thin_item_keep",
         title: "細い",
-        message: "手札が4枚になるように、残すカードを4枚選んでください。選ばなかったカードは校外エリアへ送られます。",
+        message: "手札が4枚になるように、残すカードを4枚選んでください。選ばなかったカードはデッキへ戻してシャッフルします。",
         cards: hand,
         min: 4,
         max: 4,
@@ -13628,8 +14417,7 @@
 
     function resolveThinItemKeepChoice(targetSide, keepIds, options = {}) {
       const moved = discardHandDownToKeptIds(targetSide, keepIds, 4);
-      const movedText = trashDetailCountText(targetSide, moved, "細いで校外へ送られたカード");
-      addLog(`細いの効果：${SIDES[targetSide]}は手札から${movedText}を校外エリアへ送りました。`);
+      addLog(`細いの効果：${SIDES[targetSide]}は手札から${moved.length}枚をデッキへ戻し、シャッフルしました。`);
       state.pendingCardChoice = null;
       state.pendingRemoteHandTrim = null;
       clearSelections();
@@ -13921,6 +14709,7 @@
       resolvingAttacker.hasAttacked = true;
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
+        showFloatingTextForCard(target, "ミス", "miss");
         clearSelections();
         finishAttackResolution();
         render();
@@ -14049,6 +14838,7 @@
       resolvingAttacker.hasAttacked = true;
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
+        showFloatingTextForLife(targetSide, "ミス", "miss");
         clearSelections();
         finishAttackResolution();
         render();
@@ -14340,6 +15130,13 @@
         healCard(target, target.maxHp);
         applyPermanentStatBuff(target, -2, 0);
         addLog(`${SIDES[side]}はお弁当を使い、${target.name}の体力をすべて回復し、攻撃力を-2しました。`);
+      }
+      if (item.baseId === "aggro_eater") {
+        const beforeCardHp = target.currentHp;
+        const beforeLife = state.players[side].life;
+        healCard(target, 1);
+        healPlayer(side, 1);
+        addLog(`${SIDES[side]}はアグロ喰いを使い、${target.name}を${target.currentHp - beforeCardHp}回復し、気力を${state.players[side].life - beforeLife}回復しました。`);
       }
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) attachUtaEquipment(target, item.baseId);
       if (item.baseId === "quiet_please") {
@@ -14683,20 +15480,6 @@
         applyBoardAuras();
         resultText = "自分の「デザイン」と名のつく教師の体力を+1しました。";
       }
-      if (item.baseId === "aggro_eater") {
-        let attendeeHealed = 0;
-        listBoardRefs(side).forEach((ref) => {
-          const card = getBoardCardFromRef(ref);
-          if (!card) return;
-          const before = card.currentHp;
-          healCard(card, 1);
-          attendeeHealed += card.currentHp - before;
-        });
-        const before = state.players[side].life;
-        healPlayer(side, 1);
-        const lifeHealed = state.players[side].life - before;
-        resultText = `自分の出席者を合計${attendeeHealed}回復し、気力を${lifeHealed}回復しました。`;
-      }
       if (item.baseId === "fire_touch") {
         damagePlayer(side, 4);
         let drawn = 0;
@@ -14723,8 +15506,7 @@
         }
         const keepIds = chooseHandKeepIdsForAi(targetSide, 4);
         const moved = discardHandDownToKeptIds(targetSide, keepIds, 4);
-        const movedText = trashDetailCountText(targetSide, moved, "細いで校外へ送られたカード");
-        resultText = `相手の手札が4枚になるよう、${movedText}を校外エリアへ送りました。`;
+        resultText = `相手の手札が4枚になるよう、${moved.length}枚をデッキへ戻してシャッフルしました。`;
       }
       if (item.baseId === "handy_jet_engine") {
         const targetSide = oppositeSide(side);
@@ -14935,6 +15717,18 @@
       if (item.baseId === "yamanashi_minimum_wage") {
         addDeckToHandLock(side);
         resultText = "次の自分のターン開始時まで、お互いはデッキからカードを手札に加えられません。";
+      }
+      if (item.baseId === "baka_mac") {
+        const targetSide = oppositeSide(side);
+        state.players[targetSide].handCostTaxUntilActionTurn = Math.max(
+          state.players[targetSide].handCostTaxUntilActionTurn || 0,
+          state.actionTurn + 1
+        );
+        resultText = "次の自分のターン開始時まで、相手の手札にあるカードの戦意を+1しました。";
+      }
+      if (item.baseId === "ikemasu") {
+        state.players[side].hand.push(createCardFromBase("general_student", side));
+        resultText = "「一般学生」を1枚手札に生成しました。";
       }
       if (!itemAlreadyMovedToTrash) moveHandCardToTrash(side, item);
       if (state.players[oppositeSide(side)]?.life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(item);
@@ -15248,6 +16042,10 @@
         addLog(`${card.name}はこのターン攻撃できません。`);
         return false;
       }
+      if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) {
+        addLog(`${card.name}はまだ攻撃できません。`);
+        return false;
+      }
       if (isSameNameAttackLocked(card)) {
         addLog(`${card.name}はお手製C to Cの効果で攻撃できません。`);
         return false;
@@ -15271,6 +16069,7 @@
       return !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
         && !isFirstPlayerFirstTurn()
         && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
+        && !(card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
         && !isSameNameAttackLocked(card)
         && !isFriendlyTeacherAttackBlocked(card)
         && (card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気"))
@@ -15502,6 +16301,10 @@
           if (isGangiBuffSeat(index)) newMaxHp += 2;
           if (state.environment?.baseId === "dark_student_council") newAttack += 2;
           if (state.environment?.baseId === "student_council") newMaxHp += 2;
+          if (state.environment?.baseId === "building_12_classroom") {
+            if (card.type === "teacher") newAttack += 1;
+            if (card.type === "student") newAttack -= 1;
+          }
           applyDerivedStats(card, newAttack, newMaxHp);
         });
       });
@@ -15511,7 +16314,7 @@
       if (!card || card.currentHp === null) return;
       const previousMaxHp = card.maxHp ?? newMaxHp;
       const currentDamage = Math.max(0, previousMaxHp - (card.currentHp ?? previousMaxHp));
-      card.attack = newAttack;
+      card.attack = Math.max(0, newAttack);
       card.maxHp = Math.max(0, newMaxHp);
       card.currentHp = Math.max(0, card.maxHp - currentDamage);
     }
@@ -15521,7 +16324,11 @@
       const baseAttack = card.baseAttack ?? card.attack;
       const baseMaxHp = card.baseMaxHp ?? card.maxHp;
       const coteBonus = isAeNameCard(card) && state.environment?.baseId === "cote_dazur" ? 10 : 0;
-      const newAttack = baseAttack + (state.environment?.baseId === "dark_student_council" ? 2 : 0) + coteBonus;
+      let newAttack = baseAttack + (state.environment?.baseId === "dark_student_council" ? 2 : 0) + coteBonus;
+      if (state.environment?.baseId === "building_12_classroom") {
+        if (card.type === "teacher") newAttack += 1;
+        if (card.type === "student") newAttack -= 1;
+      }
       const newMaxHp = baseMaxHp + (state.environment?.baseId === "student_council" ? 2 : 0) + coteBonus + designTextbookHpBonus(card);
       applyDerivedStats(card, newAttack, newMaxHp);
     }
@@ -15762,6 +16569,7 @@
     }
 
     function playTargetImpact(target, kind, rect) {
+      if (kind === "miss") return;
       const className = kind === "heal" ? "heal-impact" : "damage-impact";
       target.classList.remove(className);
       void target.offsetWidth;
@@ -16337,11 +17145,14 @@
       renderSelectionPeekReturn();
       renderTrashDetailStage();
       renderBoards();
+      renderHomeUpdateStatus();
+      renderUpdateHistory();
+      renderDeckLibrary();
+      renderSoloDeckSelection();
       renderDeckEditor();
       renderTrash();
       renderLog();
       renderControls();
-      renderCoachPanel();
       renderTutorialCoach();
       setupPlaymatDropEvents();
       setupDocumentHandDropEvents();
@@ -16351,6 +17162,8 @@
 
     function renderScreen() {
       elements.homeScreen.classList.toggle("hidden", state.screen !== "home");
+      elements.updatesScreen.classList.toggle("hidden", state.screen !== "updates");
+      elements.soloDeckScreen.classList.toggle("hidden", state.screen !== "soloDeck");
       elements.onlineScreen.classList.toggle("hidden", state.screen !== "online");
       elements.tutorialScreen.classList.toggle("hidden", state.screen !== "tutorial");
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
@@ -16620,217 +17433,6 @@
       const playerDeckValid = validateDeckCounts(state.deckBuilder.counts.player).valid;
       const opponentDeckValid = validateDeckCounts(state.deckBuilder.counts.opponent).valid;
       elements.newGameWithDeckButton.disabled = !playerDeckValid || !opponentDeckValid || state.aiThinking;
-    }
-
-    function isCoachBattle() {
-      return state.coachMode && state.screen === "battle" && !isOnlineBattle() && !state.testMode;
-    }
-
-    function coachCoordinateLabel(zone, index) {
-      if (zone === "teacher") return "教卓マス";
-      if (zone === "environment") return "環境マス";
-      return `${seatRow(index)}行${seatCol(index) + 1}列`;
-    }
-
-    function coachBoardTargetLabel(owner, zone, index) {
-      const card = getBoardCard(owner, zone, index);
-      const sideLabel = owner === "opponent" ? "Codex" : "あなた";
-      return `${sideLabel}の${card?.name || coachCoordinateLabel(zone, index)}（${coachCoordinateLabel(zone, index)}）`;
-    }
-
-    function canCoachTargetItem(item, owner, zone, index) {
-      const target = getBoardCard(owner, zone, index);
-      if (!item || item.type !== "item" || !target) return false;
-      if (item.baseId === "handmade_ctoc") return hasOpposingSameNameAttendee(target) && isAllowedEffectTarget("opponent", target);
-      if (item.target === "enemy" && owner !== "player") return false;
-      if ((item.target === "friendly" || item.target === "friendlyAny") && owner !== "opponent") return false;
-      if (item.target === "friendly" && !(target.currentHp !== null && target.currentHp < target.maxHp)) return false;
-      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId) && !canAttachUtaEquipment(target)) return false;
-      if (item.baseId === "quiet_please" && target.attack < 4) return false;
-      if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") return false;
-      if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
-      if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("opponent", target)) return false;
-      if (item.baseId === "go_home" && target.type !== "student") return false;
-      if (item.baseId === "set_log" && target.type !== "student") return false;
-      if (item.target === "enemy" && !isAllowedEffectTarget("opponent", target)) return false;
-      if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
-      return ["enemy", "friendly", "friendlyAny"].includes(item.target);
-    }
-
-    function coachLegalAttackTargets(attacker) {
-      const priorityIds = new Set(listAttackPriorityCards("player").map((card) => card.instanceId));
-      return listBoardRefs("player")
-        .map((ref) => ({ ...ref, card: getBoardCardFromRef(ref) }))
-        .filter((entry) => entry.card)
-        .filter((entry) => !(attacker.type === "teacher" && entry.card.baseId === "loud_student"))
-        .filter((entry) => !isDesignDomainAttackBlocked(attacker, entry.card))
-        .filter((entry) => !(entry.card.untargetableUntilTurn && entry.card.untargetableUntilTurn >= state.actionTurn))
-        .filter((entry) => attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(entry.card.instanceId));
-    }
-
-    function buildCoachActions() {
-      if (!isCoachBattle() || state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return [];
-      if (state.attackInProgress || state.pendingCardChoice || state.pendingRemoteHandTrim || state.pendingThreeGestures) return [];
-      const actions = [];
-      const opponent = state.players.opponent;
-      const affordableCards = opponent.hand.filter((card) => effectiveCardCost(card) <= opponent.will);
-      const rulers = opponent.hand.filter((card) => card.baseId === "ruler");
-      if (rulers.length >= 2) {
-        actions.push({ kind: "fuse", label: "定規2枚を融合する" });
-      }
-      affordableCards.forEach((card) => {
-        if (card.type !== "item") {
-          for (let index = 0; index < 9; index += 1) {
-            if (canPlaceCard("opponent", card, "seat", "opponent", index)) {
-              actions.push({ kind: "play", cardId: card.instanceId, zone: "seat", index, label: `${card.name}を${coachCoordinateLabel("seat", index)}へ出席` });
-            }
-          }
-          if (canPlaceCard("opponent", card, "teacher", "opponent", null)) {
-            actions.push({ kind: "play", cardId: card.instanceId, zone: "teacher", index: null, label: `${card.name}を教卓マスへ出席` });
-          }
-          if (canPlaceCard("opponent", card, "environment", "opponent", null)) {
-            actions.push({ kind: "play", cardId: card.instanceId, zone: "environment", index: null, label: `${card.name}を環境マスへ配置` });
-          }
-          return;
-        }
-
-        let hasManualTarget = false;
-        listBoardRefs("player").forEach((ref) => {
-          if (!canCoachTargetItem(card, ref.owner, ref.zone, ref.index)) return;
-          hasManualTarget = true;
-          actions.push({ kind: "item-card", cardId: card.instanceId, owner: ref.owner, zone: ref.zone, index: ref.index, label: `${card.name}を${coachBoardTargetLabel(ref.owner, ref.zone, ref.index)}へ使用` });
-        });
-        listBoardRefs("opponent").forEach((ref) => {
-          if (!canCoachTargetItem(card, ref.owner, ref.zone, ref.index)) return;
-          hasManualTarget = true;
-          actions.push({ kind: "item-card", cardId: card.instanceId, owner: ref.owner, zone: ref.zone, index: ref.index, label: `${card.name}を${coachBoardTargetLabel(ref.owner, ref.zone, ref.index)}へ使用` });
-        });
-        if (["ruler", "double_diamond"].includes(card.baseId)) {
-          hasManualTarget = true;
-          actions.push({ kind: "item-life", cardId: card.instanceId, label: `${card.name}をあなた本体へ使用` });
-        }
-        if (card.baseId === "capture") {
-          for (let index = 0; index < 9; index += 1) {
-            if (state.players.player.board.seats[index] || isSeatBlocked("player", index)) continue;
-            hasManualTarget = true;
-            actions.push({ kind: "item-slot", cardId: card.instanceId, owner: "player", zone: "seat", index, label: `${card.name}をあなたの${coachCoordinateLabel("seat", index)}へ使用` });
-          }
-        }
-        if (!hasManualTarget || ["i_got_it", "panpan"].includes(card.baseId)) {
-          actions.push({ kind: "item-auto", cardId: card.instanceId, label: `${card.name}を使用（効果に従って対象を選ぶ）` });
-        }
-      });
-
-      listBoardRefs("opponent").forEach((attackerRef) => {
-        const attacker = getBoardCardFromRef(attackerRef);
-        if (!attacker || !canAttackSilently(attacker) || isAttackReserved(attackerRef)) return;
-        coachLegalAttackTargets(attacker).forEach((target) => {
-          actions.push({
-            kind: "attack-card",
-            attackerOwner: attackerRef.owner,
-            attackerZone: attackerRef.zone,
-            attackerIndex: attackerRef.index,
-            owner: target.owner,
-            zone: target.zone,
-            index: target.index,
-            label: `${attacker.name}で${target.card.name}を攻撃`
-          });
-        });
-        const canAttackLife = state.environment?.baseId !== "meguro_library"
-          && (listAttentionCards("player").length === 0 || attacker.baseId === "loud_student")
-          && !(attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
-        if (canAttackLife) {
-          actions.push({
-            kind: "attack-life",
-            attackerOwner: attackerRef.owner,
-            attackerZone: attackerRef.zone,
-            attackerIndex: attackerRef.index,
-            label: `${attacker.name}であなた本体を攻撃`
-          });
-        }
-      });
-      return actions;
-    }
-
-    function renderCoachPanel() {
-      if (!elements.coachPanel) return;
-      const visible = isCoachBattle();
-      elements.coachPanel.classList.toggle("hidden", !visible);
-      if (!visible) return;
-      const opponent = state.players.opponent;
-      elements.coachHandList.innerHTML = state.phase === "battle"
-        ? opponent.hand.map((card) => {
-          const stats = card.type === "item" || card.type === "environment" ? labelForType(card.type) : `攻${card.attack} / 体${card.hp}`;
-          return `<div class="coach-hand-row" title="${escapeHtml(cardRulesText(card))}"><span class="coach-hand-cost">${card.noCost ? "-" : effectiveCardCost(card)}</span><span>${escapeHtml(card.name)}</span><span class="coach-hand-stats">${escapeHtml(stats)}</span></div>`;
-        }).join("")
-        : "";
-      const coachTurn = state.phase === "battle" && state.currentSide === "opponent" && !state.gameOver;
-      if (state.phase !== "battle") {
-        elements.coachStatus.textContent = "じゃんけんとマリガンを進めています。";
-      } else if (state.gameOver) {
-        elements.coachStatus.textContent = "対戦は終了しました。";
-      } else if (!coachTurn) {
-        elements.coachStatus.textContent = state.coachLastAction ? `あなたの手番です。直前：${state.coachLastAction}` : "あなたの手番です。操作を待っています。";
-      } else if (state.attackInProgress) {
-        elements.coachStatus.textContent = "攻撃処理が終わるのを待っています。";
-      } else {
-        elements.coachStatus.textContent = `Codexの手番です。戦意${opponent.will}/${opponent.maxWill}。チャットで一手ずつ操作します。`;
-      }
-      const actions = buildCoachActions();
-      elements.coachActionList.innerHTML = coachTurn
-        ? (actions.length
-          ? actions.map((action, index) => `<button class="coach-action-button" type="button" data-coach-action-index="${index}">${escapeHtml(action.label)}</button>`).join("")
-          : `<p class="coach-status">現在選べる行動はありません。</p>`)
-        : "";
-      elements.coachPanel._actions = actions;
-      elements.coachEndTurnButton.classList.toggle("hidden", !coachTurn);
-      elements.coachEndTurnButton.disabled = !coachTurn || state.attackInProgress || state.attackQueue.length > 0 || Boolean(state.pendingCardChoice || state.pendingRemoteHandTrim || state.pendingThreeGestures);
-    }
-
-    function recordCoachAction(label) {
-      state.coachLastAction = label;
-      addLog(`Codex操作：${label}`);
-    }
-
-    async function executeCoachAction(action) {
-      if (!action || !isCoachBattle() || state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
-      const card = action.cardId ? getHandCard("opponent", action.cardId) : null;
-      if (action.kind === "fuse") {
-        if (fuseRulersForSide("opponent", false)) recordCoachAction(action.label);
-        render();
-        return;
-      }
-      if (action.kind === "play") {
-        if (card && placeCardFromHand("opponent", card.instanceId, action.zone, "opponent", action.index, false)) recordCoachAction(action.label);
-        render();
-        return;
-      }
-      if (action.kind === "item-card") {
-        if (card && castItemOnCard("opponent", card, action.owner, action.zone, action.index, false)) recordCoachAction(action.label);
-        render();
-        return;
-      }
-      if (action.kind === "item-life") {
-        if (card && castItemOnLife("opponent", card, "player", false)) recordCoachAction(action.label);
-        render();
-        return;
-      }
-      if (action.kind === "item-slot") {
-        if (card && castCaptureOnSlot("opponent", card, action.owner, action.zone, action.index, false)) recordCoachAction(action.label);
-        render();
-        return;
-      }
-      if (action.kind === "item-auto") {
-        if (card && useAiItem(card)) recordCoachAction(action.label);
-        render();
-        return;
-      }
-      if (action.kind === "attack-card" || action.kind === "attack-life") {
-        state.selectedAttacker = { owner: action.attackerOwner, zone: action.attackerZone, index: action.attackerIndex };
-        recordCoachAction(action.label);
-        if (action.kind === "attack-card") await attackCard(action.owner, action.zone, action.index);
-        else await attackLifeForCurrentSide("player");
-      }
     }
 
     function isTutorialActive() {
@@ -18218,6 +18820,120 @@
       elements.environmentSlot.innerHTML = "";
       setupSlotEvents(elements.environmentSlot, "environment", null, null);
       if (state.environment) elements.environmentSlot.appendChild(createEnvironmentCard(state.environment));
+      if (state.environment?.baseId === "raptor_temple") {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "environment-action-button";
+        button.textContent = raptorTempleUsedThisTurn("player") ? "使用済み" : "効果を使う";
+        button.disabled = !canUseRaptorTemple("player");
+        button.addEventListener("click", openRaptorTempleSourceChoice);
+        elements.environmentSlot.appendChild(button);
+      }
+    }
+
+    function isPreEvolutionDesignTeacher(card) {
+      return Boolean(card?.type === "teacher" && isDesignTeacher(card) && !card.evolutionFrom);
+    }
+
+    function raptorTempleUsedThisTurn(side) {
+      const used = state.environment?.raptorUsedTurns || {};
+      return used[side] === state.players[side].turnsTaken;
+    }
+
+    function raptorTempleSourceEntries(side) {
+      return listBoardRefs(side)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card?.type === "teacher" && isDesignTeacher(entry.card));
+    }
+
+    function raptorTempleTargetCandidates(side, sourceCard = null) {
+      const cards = state.players[side].trash.filter(isPreEvolutionDesignTeacher);
+      if (sourceCard && isPreEvolutionDesignTeacher(sourceCard) && !cards.some((card) => card.instanceId === sourceCard.instanceId)) {
+        cards.push(sourceCard);
+      }
+      return cards;
+    }
+
+    function canUseRaptorTemple(side) {
+      if (state.environment?.baseId !== "raptor_temple" || state.phase !== "battle" || state.gameOver) return false;
+      if (state.currentSide !== side || raptorTempleUsedThisTurn(side)) return false;
+      if (side === "player" && isOnlineSpectator()) return false;
+      return raptorTempleSourceEntries(side).some((entry) => raptorTempleTargetCandidates(side, entry.card).length > 0);
+    }
+
+    function openRaptorTempleSourceChoice() {
+      if (!canUseRaptorTemple("player")) return;
+      const entries = raptorTempleSourceEntries("player")
+        .filter((entry) => raptorTempleTargetCandidates("player", entry.card).length > 0);
+      state.pendingRaptorTemple = { sourceRef: null };
+      openCardChoice({
+        mode: "raptor_temple_source",
+        title: "猛禽寺",
+        message: "校外エリアへ送る、自分の「デザイン」と名のつく教師を1人指名してください。",
+        cards: entries.map((entry) => entry.card),
+        min: 1,
+        max: 1,
+        confirmLabel: "この教師を選ぶ"
+      });
+    }
+
+    function openRaptorTempleTargetChoice(sourceInstanceId) {
+      const sourceEntry = raptorTempleSourceEntries("player").find((entry) => entry.card.instanceId === sourceInstanceId);
+      if (!sourceEntry) {
+        state.pendingRaptorTemple = null;
+        render();
+        return;
+      }
+      const candidates = raptorTempleTargetCandidates("player", sourceEntry.card);
+      state.pendingRaptorTemple = { sourceRef: sourceEntry.ref, sourceInstanceId };
+      openCardChoice({
+        mode: "raptor_temple_target",
+        title: "猛禽寺",
+        message: "同じマスに出席させる、校外エリアの進化前の「デザイン」と名のつく教師を1人指名してください。",
+        cards: candidates,
+        min: 1,
+        max: 1,
+        confirmLabel: "この教師を出席させる"
+      });
+    }
+
+    function resolveRaptorTempleExchange(side, sourceRef, targetInstanceId, renderAfter = true) {
+      if (!canUseRaptorTemple(side)) return false;
+      const source = getBoardCardFromRef(sourceRef);
+      if (!source || source.type !== "teacher" || !isDesignTeacher(source)) return false;
+      const candidates = raptorTempleTargetCandidates(side, source);
+      const selected = candidates.find((card) => card.instanceId === targetInstanceId);
+      if (!selected) return false;
+      destroyBoardCard(sourceRef, { reason: "猛禽寺" });
+      const trashIndex = state.players[side].trash.findIndex((card) => card.instanceId === selected.instanceId);
+      if (trashIndex >= 0) state.players[side].trash.splice(trashIndex, 1);
+      const placed = makeBoardCard(createCardFromBase(selected.baseId, side));
+      setBoardCard(side, sourceRef.zone, sourceRef.index ?? null, placed);
+      if (!state.environment.raptorUsedTurns) state.environment.raptorUsedTurns = {};
+      state.environment.raptorUsedTurns[side] = state.players[side].turnsTaken;
+      showCardPlayAnimation(placed, "board");
+      addLog(`猛禽寺の効果：${source.name}を校外エリアへ送り、${placed.name}を同じマスに出席させました。`);
+      resolveAttendEffects(side, placed, sourceRef.zone, sourceRef.index ?? null);
+      state.pendingRaptorTemple = null;
+      clearSelections();
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function tryUseAiRaptorTemple() {
+      if (!canUseRaptorTemple("opponent")) return false;
+      const options = raptorTempleSourceEntries("opponent").flatMap((entry) =>
+        raptorTempleTargetCandidates("opponent", entry.card).map((target) => ({
+          source: entry,
+          target,
+          score: (target.cost || 0) * 2 + (target.attack || 0) + (target.hp || 0)
+            - ((entry.card.attack || 0) + (entry.card.currentHp || 0))
+        }))
+      ).sort((a, b) => b.score - a.score);
+      const best = options[0];
+      return best ? resolveRaptorTempleExchange("opponent", best.source.ref, best.target.instanceId, false) : false;
     }
 
     function renderLifeTargets() {
@@ -18533,6 +19249,7 @@
       if (boardCard && card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
+      if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
       if (hasKeyword(card, "超陽気")) statusParts.push({ icon: "陽+", title: "超陽気" });
       else if (hasKeyword(card, "陽気")) statusParts.push({ icon: "陽", title: "陽気" });
@@ -18593,6 +19310,7 @@
       if (card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
+      if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
       if (hasKeyword(card, "超陽気")) statusParts.push({ icon: "陽+", title: "超陽気" });
       else if (hasKeyword(card, "陽気")) statusParts.push({ icon: "陽", title: "陽気" });
@@ -18645,7 +19363,12 @@
         && listBoardRefs(card.owner).some((ref) => getBoardCardFromRef(ref)?.type === "vampire")) {
         discount += 3;
       }
-      return Math.max(0, (card.cost || 0) - discount);
+      const tax = inBattle
+        && card.owner
+        && state.players[card.owner]?.handCostTaxUntilActionTurn >= state.actionTurn
+        ? 1
+        : 0;
+      return Math.max(0, (card.cost || 0) - discount + tax);
     }
 
     function hasActiveCafeteriaVampireBuff(card) {
@@ -18688,17 +19411,324 @@
       return type;
     }
 
+    function loadReadUpdateVersions() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(UPDATE_READ_STORAGE_KEY) || "[]");
+        return new Set(Array.isArray(parsed) ? parsed : []);
+      } catch {
+        return new Set();
+      }
+    }
+
+    function markUpdateVersionRead(version) {
+      const read = loadReadUpdateVersions();
+      read.add(version);
+      localStorage.setItem(UPDATE_READ_STORAGE_KEY, JSON.stringify([...read]));
+      renderHomeUpdateStatus();
+    }
+
+    function renderHomeUpdateStatus() {
+      if (!elements.homeUpdatesDot) return;
+      const read = loadReadUpdateVersions();
+      elements.homeUpdatesDot.classList.toggle("hidden", !LATEST_UPDATE_VERSION || read.has(LATEST_UPDATE_VERSION));
+    }
+
+    function renderUpdateHistory() {
+      if (state.screen !== "updates" || !elements.updateList) return;
+      const read = loadReadUpdateVersions();
+      elements.updateList.innerHTML = "";
+      UPDATE_HISTORY.forEach((entry) => {
+        const details = document.createElement("details");
+        const unread = entry.version === LATEST_UPDATE_VERSION && !read.has(entry.version);
+        details.className = `update-entry${unread ? " unread" : ""}`;
+        const changes = entry.changes.map((change) => {
+          if (change.before) {
+            return `<div class="update-change"><div class="update-before"><strong>${escapeHtml(change.title)}</strong><br>${escapeHtml(change.before)}</div><div class="update-arrow">→</div><div class="update-after"><strong>変更後</strong><br>${escapeHtml(change.after)}</div></div>`;
+          }
+          return `<div class="update-change"><div class="update-after"><strong>${escapeHtml(change.title)}</strong><br>${escapeHtml(change.after)}</div></div>`;
+        }).join("");
+        details.innerHTML = `
+          <summary><span>${escapeHtml(entry.version)}（${escapeHtml(entry.date)}）</span></summary>
+          <div class="update-body"><p>${escapeHtml(entry.summary)}</p>${changes}</div>
+        `;
+        details.addEventListener("toggle", () => {
+          if (!details.open) return;
+          details.classList.remove("unread");
+          markUpdateVersionRead(entry.version);
+        });
+        elements.updateList.appendChild(details);
+      });
+    }
+
+    function deckCountsFingerprint(counts) {
+      return JSON.stringify(ALL_DECK_IDS.map((baseId) => Number(counts?.[baseId]) || 0));
+    }
+
+    function deckTypeSummary(counts) {
+      const totals = {};
+      ALL_DECK_IDS.forEach((baseId) => {
+        const count = Number(counts?.[baseId]) || 0;
+        if (!count) return;
+        const type = CARD_BASES[baseId]?.type;
+        totals[type] = (totals[type] || 0) + count;
+      });
+      return DECK_FILTER_TYPES.filter((type) => totals[type]).map((type) => `${labelForType(type)}${totals[type]}`).join(" / ") || "カードなし";
+    }
+
+    function deckCurveData(counts) {
+      const buckets = new Map([["なし", 0], ...Array.from({ length: 11 }, (_, cost) => [String(cost), 0])]);
+      ALL_DECK_IDS.forEach((baseId) => {
+        const count = Number(counts?.[baseId]) || 0;
+        if (!count) return;
+        const base = CARD_BASES[baseId];
+        const key = base.noCost ? "なし" : String(base.cost ?? 0);
+        buckets.set(key, (buckets.get(key) || 0) + count);
+      });
+      return [...buckets.entries()].map(([cost, count]) => ({ cost, count }));
+    }
+
+    function deckCurveHtml(counts) {
+      const curve = deckCurveData(counts);
+      const highest = Math.max(0, ...curve.map((entry) => entry.count));
+      const scaleMax = Math.max(5, Math.ceil(highest / 5) * 5);
+      const middle = Math.ceil(scaleMax / 2);
+      const columns = curve.map(({ cost, count }) => {
+        const height = count ? Math.max(3, Math.round((count / scaleMax) * 100)) : 0;
+        const label = cost === "なし" ? "なし" : cost;
+        return `<div class="deck-curve-column" title="戦意${escapeHtml(label)}：${count}枚">
+          <span class="deck-curve-count">${count || ""}</span>
+          <span class="deck-curve-bar-space"><span class="deck-curve-bar${count ? "" : " empty"}" style="height:${height}%"></span></span>
+          <span class="deck-curve-cost">${escapeHtml(label)}</span>
+        </div>`;
+      }).join("");
+      return `<section class="deck-curve-card" aria-label="戦意別のカード枚数">
+        <h3>戦意カーブ</h3>
+        <div class="deck-curve-chart">
+          <div class="deck-curve-y-title">枚数</div>
+          <div class="deck-curve-y-scale"><span>${scaleMax}</span><span>${middle}</span><span>0</span></div>
+          <div class="deck-curve-plot">${columns}</div>
+          <div class="deck-curve-x-title">戦意</div>
+        </div>
+      </section>`;
+    }
+
+    function deckDetailHtml(name, saved, options = {}) {
+      const counts = saved?.counts || {};
+      const validation = validateDeckCounts(counts);
+      const cards = options.showCards
+        ? `<div class="deck-window-grid">${getDeckEditorIds().filter((baseId) => counts[baseId] > 0).map((baseId) => {
+            const card = makePreviewCard(baseId, "player");
+            return `<button class="card deck-window-card ${card.type}" type="button" data-library-card="${baseId}">${cardTemplate(card, false)}<span class="deck-copy-badge">x${counts[baseId]}</span></button>`;
+          }).join("")}</div>`
+        : "";
+      return `
+        <h2>${escapeHtml(name)}</h2>
+        <div class="deck-detail-summary">
+          <div class="deck-detail-stat">枚数<br>${validation.size}枚</div>
+          <div class="deck-detail-stat">タイプ<br>${escapeHtml(deckTypeSummary(counts))}</div>
+        </div>
+        ${deckCurveHtml(counts)}
+        ${saved?.theme ? `<p>${escapeHtml(saved.theme)}</p>` : ""}
+        ${cards}
+      `;
+    }
+
+    function attachLibraryCardDetails(container) {
+      container?.querySelectorAll("[data-library-card]").forEach((button) => {
+        const baseId = button.dataset.libraryCard;
+        attachCardDetailEvents(button, makePreviewCard(baseId, "player"), { previewOnClick: true });
+      });
+    }
+
+    function renderDeckLibrary() {
+      if (!elements.deckLibraryView || !elements.deckEditorView) return;
+      const editing = state.deckBuilder.view === "editor";
+      elements.deckLibraryView.classList.toggle("hidden", editing);
+      elements.deckEditorView.classList.toggle("hidden", !editing);
+      if (state.screen !== "deck" || editing) return;
+      const names = Object.keys(state.deckBuilder.savedDecks).sort((a, b) => a.localeCompare(b, "ja"));
+      elements.deckLibraryCount.textContent = `${names.length}個`;
+      elements.deckLibraryGrid.innerHTML = "";
+      const newButton = document.createElement("button");
+      newButton.type = "button";
+      newButton.className = "deck-library-card new-deck";
+      newButton.textContent = "+ 新規作成";
+      newButton.addEventListener("click", beginNewDeckEditor);
+      elements.deckLibraryGrid.appendChild(newButton);
+      names.forEach((name) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `deck-library-card${state.deckBuilder.selectedName === name ? " selected" : ""}`;
+        button.textContent = name;
+        button.addEventListener("click", () => {
+          state.deckBuilder.selectedName = name;
+          state.deckBuilder.detailExpanded = false;
+          render();
+        });
+        elements.deckLibraryGrid.appendChild(button);
+      });
+      renderDeckLibraryDetail();
+    }
+
+    function renderDeckLibraryDetail() {
+      const name = state.deckBuilder.selectedName;
+      const saved = state.deckBuilder.savedDecks[name];
+      elements.deckLibraryDetail.classList.toggle("hidden", !saved);
+      if (!saved) {
+        elements.deckLibraryDetail.innerHTML = "";
+        return;
+      }
+      elements.deckLibraryDetail.innerHTML = `${deckDetailHtml(name, saved, { showCards: state.deckBuilder.detailExpanded })}
+        <div class="deck-library-detail-actions">
+          <button class="button" type="button" data-deck-edit>変更する</button>
+          <button class="button secondary" type="button" data-deck-view>${state.deckBuilder.detailExpanded ? "内容を閉じる" : "内容を見る"}</button>
+          <button class="button warning" type="button" data-deck-remove ${isStarterDeckName(name) ? "disabled" : ""}>削除する</button>
+          <button class="button secondary" type="button" data-deck-close>閉じる</button>
+        </div>`;
+      elements.deckLibraryDetail.querySelector("[data-deck-edit]").addEventListener("click", () => beginExistingDeckEditor(name));
+      elements.deckLibraryDetail.querySelector("[data-deck-view]").addEventListener("click", () => {
+        state.deckBuilder.detailExpanded = !state.deckBuilder.detailExpanded;
+        render();
+      });
+      elements.deckLibraryDetail.querySelector("[data-deck-remove]").addEventListener("click", () => deleteSavedDeckByName(name));
+      elements.deckLibraryDetail.querySelector("[data-deck-close]").addEventListener("click", () => {
+        state.deckBuilder.selectedName = "";
+        state.deckBuilder.detailExpanded = false;
+        render();
+      });
+      attachLibraryCardDetails(elements.deckLibraryDetail);
+    }
+
+    function resetDeckFilters() {
+      state.deckBuilder.filters = { query: "", types: [], costs: [], categories: [] };
+      if (elements.deckSearchInput) elements.deckSearchInput.value = "";
+    }
+
+    function beginNewDeckEditor() {
+      state.deckBuilder.activeSide = "player";
+      state.deckBuilder.counts.player = createEmptyDeckCounts();
+      state.deckBuilder.editingName = "";
+      state.deckBuilder.originalFingerprint = deckCountsFingerprint(state.deckBuilder.counts.player);
+      state.deckBuilder.view = "editor";
+      elements.deckSaveNameInput.value = "";
+      resetDeckFilters();
+      document.getElementById("deckFilterPanel")?.removeAttribute("open");
+      render();
+    }
+
+    function beginExistingDeckEditor(name) {
+      const saved = state.deckBuilder.savedDecks[name];
+      if (!saved) return;
+      state.deckBuilder.activeSide = "player";
+      state.deckBuilder.counts.player = copyDeckCounts(saved.counts || {});
+      state.deckBuilder.editingName = name;
+      state.deckBuilder.originalFingerprint = deckCountsFingerprint(state.deckBuilder.counts.player);
+      state.deckBuilder.view = "editor";
+      elements.deckSaveNameInput.value = name;
+      resetDeckFilters();
+      document.getElementById("deckFilterPanel")?.removeAttribute("open");
+      render();
+    }
+
+    function returnToDeckLibrary() {
+      const current = deckCountsFingerprint(state.deckBuilder.counts.player);
+      if (current !== state.deckBuilder.originalFingerprint && !window.confirm("保存していない変更を破棄して、デッキ一覧へ戻りますか？")) return;
+      state.deckBuilder.view = "library";
+      state.deckBuilder.editingName = "";
+      state.deckBuilder.selectedName = "";
+      state.deckBuilder.detailExpanded = false;
+      render();
+    }
+
+    function toggleDeckFilter(group, value) {
+      const list = state.deckBuilder.filters[group];
+      state.deckBuilder.filters[group] = list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+      render();
+    }
+
+    function renderDeckFilterControls() {
+      if (!elements.deckTypeFilters) return;
+      const filters = state.deckBuilder.filters;
+      const renderChips = (container, values, group, labelForValue) => {
+        const label = container.querySelector(".deck-filter-label")?.outerHTML || "";
+        container.innerHTML = label;
+        values.forEach((value) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `filter-chip${filters[group].includes(value) ? " active" : ""}`;
+          button.textContent = labelForValue(value);
+          button.addEventListener("click", () => toggleDeckFilter(group, value));
+          container.appendChild(button);
+        });
+      };
+      renderChips(elements.deckTypeFilters, DECK_FILTER_TYPES, "types", labelForType);
+      renderChips(elements.deckCostFilters, ["なし", ...Array.from({ length: 11 }, (_, index) => String(index))], "costs", (value) => value);
+      renderChips(elements.deckCategoryFilters, DECK_FILTER_CATEGORIES, "categories", (value) => value);
+    }
+
+    function deckCardMatchesFilters(baseId) {
+      const card = CARD_BASES[baseId];
+      const filters = state.deckBuilder.filters;
+      const query = filters.query.trim().toLocaleLowerCase("ja");
+      if (query && !card.name.toLocaleLowerCase("ja").includes(query)) return false;
+      if (filters.types.length && !filters.types.includes(card.type)) return false;
+      const costKey = card.noCost ? "なし" : String(card.cost ?? 0);
+      if (filters.costs.length && !filters.costs.includes(costKey)) return false;
+      const categories = CARD_CATEGORIES[baseId] || [];
+      if (filters.categories.length && !filters.categories.some((category) => categories.includes(category))) return false;
+      return true;
+    }
+
+    function renderSoloDeckSelection() {
+      if (state.screen !== "soloDeck" || !elements.soloDeckGrid) return;
+      const selection = state.soloSelection;
+      const names = Object.keys(state.deckBuilder.savedDecks).sort((a, b) => a.localeCompare(b, "ja"));
+      elements.soloPlayerSlot.classList.toggle("active", selection.activeSide === "player");
+      elements.soloAiSlot.classList.toggle("active", selection.activeSide === "opponent");
+      elements.soloPlayerDeckName.textContent = selection.playerDeckName || "未選択";
+      elements.soloAiDeckName.textContent = selection.opponentDeckName || "未選択";
+      elements.soloDeckGrid.innerHTML = "";
+      names.forEach((name) => {
+        const selected = selection.playerDeckName === name || selection.opponentDeckName === name;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `deck-library-card${selected ? " selected" : ""}`;
+        button.textContent = name;
+        button.addEventListener("click", () => {
+          const key = selection.activeSide === "player" ? "playerDeckName" : "opponentDeckName";
+          selection[key] = name;
+          selection.previewName = name;
+          if (selection.activeSide === "player") selection.activeSide = "opponent";
+          render();
+        });
+        elements.soloDeckGrid.appendChild(button);
+      });
+      const preview = state.deckBuilder.savedDecks[selection.previewName];
+      elements.soloDeckDetail.classList.toggle("hidden", !preview);
+      elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded })}
+        <div class="deck-library-detail-actions"><button class="button secondary" type="button" data-solo-view>${selection.previewExpanded ? "内容を閉じる" : "内容を見る"}</button></div>` : "";
+      elements.soloDeckDetail.querySelector("[data-solo-view]")?.addEventListener("click", () => {
+        selection.previewExpanded = !selection.previewExpanded;
+        render();
+      });
+      attachLibraryCardDetails(elements.soloDeckDetail);
+      elements.soloBattleStartButton.disabled = !selection.playerDeckName || !selection.opponentDeckName;
+    }
+
     function renderDeckEditor() {
+      if (state.screen !== "deck" || state.deckBuilder.view !== "editor") return;
       const activeSide = state.deckBuilder.activeSide;
       const counts = state.deckBuilder.counts[activeSide];
       const validation = validateDeckCounts(counts);
       elements.deckEditorStatus.textContent = `${validation.size}/${DECK_MAX} ${validation.valid ? "OK" : "要調整"}`;
-      elements.autoDeckButton.textContent = `${activeSide === "player" ? "あなた" : "AI"}お任せ`;
+      elements.deckEditorTitle.textContent = state.deckBuilder.editingName || "新規デッキ";
+      elements.autoDeckButton.textContent = "お任せ";
       elements.playerDeckTab.classList.toggle("active", activeSide === "player");
       elements.opponentDeckTab.classList.toggle("active", activeSide === "opponent");
       elements.deckEditorList.innerHTML = "";
       let previousType = null;
-      getDeckEditorIds().forEach((baseId) => {
+      renderDeckFilterControls();
+      getDeckEditorIds().filter(deckCardMatchesFilters).forEach((baseId) => {
         const count = counts[baseId] || 0;
         const card = makePreviewCard(baseId, activeSide);
         if (card.type !== previousType) {
@@ -18735,7 +19765,6 @@
         });
         elements.deckEditorList.appendChild(row);
       });
-      renderSavedDeckOptions();
       renderDeckCostCurve();
       renderCurrentDeckList();
       renderUsedDeckList();
@@ -18949,18 +19978,35 @@
         return;
       }
       const side = state.deckBuilder.activeSide;
+      const counts = state.deckBuilder.counts[side];
+      const validation = validateDeckCounts(counts);
+      if (!validation.valid) {
+        state.message = `デッキは40〜60枚にしてください。現在は${validation.size}枚です。`;
+        render();
+        return;
+      }
+      const currentFingerprint = deckCountsFingerprint(counts);
+      const sameEditingName = state.deckBuilder.editingName === name;
+      if (sameEditingName && currentFingerprint === state.deckBuilder.originalFingerprint) {
+        state.message = "変更点はありません。";
+        render();
+        return;
+      }
+      if (state.deckBuilder.savedDecks[name] && !window.confirm(`保存デッキ「${name}」を上書きしますか？`)) return;
       state.deckBuilder.savedDecks[name] = {
-        counts: copyDeckCounts(state.deckBuilder.counts[side]),
+        counts: copyDeckCounts(counts),
         savedAt: new Date().toISOString()
       };
       if (!persistSavedDecks()) {
         render();
         return;
       }
-      state.message = `${SIDES[side]}のデッキを「${name}」として保存しました。`;
+      state.deckBuilder.editingName = name;
+      state.deckBuilder.originalFingerprint = currentFingerprint;
+      state.deckBuilder.selectedName = name;
+      state.deckBuilder.view = "library";
+      state.message = `デッキ「${name}」を保存しました。`;
       render();
-      elements.savedDeckSelect.value = name;
-      renderSavedDeckOptions();
     }
 
     async function exportActiveDeckFile() {
@@ -19078,15 +20124,22 @@
 
     function deleteSavedDeck() {
       const name = elements.savedDeckSelect.value;
+      deleteSavedDeckByName(name);
+    }
+
+    function deleteSavedDeckByName(name) {
       if (!name || !state.deckBuilder.savedDecks[name]) return;
       if (isStarterDeckName(name)) {
         state.message = "スターターデッキは固定のため削除できません。";
         render();
         return;
       }
+      if (!window.confirm(`保存デッキ「${name}」を削除しますか？`)) return;
       delete state.deckBuilder.savedDecks[name];
       persistSavedDecks();
       state.message = `保存デッキ「${name}」を削除しました。`;
+      state.deckBuilder.selectedName = "";
+      state.deckBuilder.detailExpanded = false;
       elements.deckSaveNameInput.value = "";
       render();
     }
@@ -19117,8 +20170,6 @@
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
       resetTutorialState();
-      state.coachMode = false;
-      state.coachLastAction = "";
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
@@ -19140,6 +20191,7 @@
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
+      state.pendingRaptorTemple = null;
       state.environment = null;
       state.temporarySeatBlocks = [];
       state.deckToHandLocks = [];
@@ -19227,6 +20279,19 @@
         const falcon = makeBoardCard(createCardFromBase("bird_a", "player"));
         falcon.playedOnTurn = 0;
         player.board.teacher = falcon;
+      }
+      if (baseId === "raptor_temple") {
+        const designTeacher = makeBoardCard(createCardFromBase("bird_a", "player"));
+        designTeacher.playedOnTurn = 0;
+        player.board.teacher = designTeacher;
+        player.trash.push(createCardFromBase("popular_c", "player"));
+      }
+      if (baseId === "enemy_boss") {
+        [0, 1].forEach((seatIndex) => {
+          const enemy = makeBoardCard(createCardFromBase("enemy_student", "player"));
+          enemy.playedOnTurn = 0;
+          player.board.seats[seatIndex] = enemy;
+        });
       }
       if (baseId === "substitute_attendance") {
         player.late.push({
@@ -19338,11 +20403,17 @@
       render();
     }
 
+    function showUpdatesScreen() {
+      state.preBattleToken += 1;
+      state.screen = "updates";
+      hideCardTooltip();
+      hideBattleCardPreview();
+      render();
+    }
+
     function showOnlineScreen() {
       state.preBattleToken += 1;
       resetTutorialState();
-      state.coachMode = false;
-      state.coachLastAction = "";
       state.screen = "online";
       if (!state.online.role) state.online.lobbyView = "menu";
       SIDES.opponent = state.online.role ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
@@ -19374,6 +20445,9 @@
       state.preBattleToken += 1;
       resetTutorialState();
       state.screen = "deck";
+      state.deckBuilder.view = "library";
+      state.deckBuilder.selectedName = "";
+      state.deckBuilder.detailExpanded = false;
       hideCardTooltip();
       hideBattleCardPreview();
       hideDeckInspectPrompt();
@@ -19385,20 +20459,28 @@
     }
 
     function startSoloBattleFromHome() {
-      state.coachMode = false;
-      state.coachLastAction = "";
       SIDES.opponent = SOLO_OPPONENT_LABEL;
+      state.screen = "soloDeck";
+      state.soloSelection.activeSide = "player";
+      state.soloSelection.previewName = "";
+      state.soloSelection.previewExpanded = false;
+      render();
+    }
+
+    function startSoloBattleWithSelectedDecks() {
+      const playerSaved = state.deckBuilder.savedDecks[state.soloSelection.playerDeckName];
+      const opponentSaved = state.deckBuilder.savedDecks[state.soloSelection.opponentDeckName];
+      if (!playerSaved || !opponentSaved) {
+        state.message = "自分とAIのデッキを選んでください。";
+        render();
+        return;
+      }
+      state.deckBuilder.counts.player = copyDeckCounts(playerSaved.counts || {});
+      state.deckBuilder.counts.opponent = copyDeckCounts(opponentSaved.counts || {});
       startNewGameWithDecks();
     }
 
-    function startCoachBattleFromHome() {
-      state.coachMode = true;
-      state.coachLastAction = "";
-      SIDES.opponent = "Codex";
-      startNewGameWithDecks({ coachMode: true });
-    }
-
-    function startNewGameWithDecks(options = {}) {
+    function startNewGameWithDecks() {
       resetTutorialState();
       const playerValidation = validateDeckCounts(state.deckBuilder.counts.player);
       const opponentValidation = validateDeckCounts(state.deckBuilder.counts.opponent);
@@ -19409,14 +20491,12 @@
         return;
       }
       state.screen = "battle";
-      initializeGame({ coachMode: options.coachMode === true });
+      initializeGame();
     }
 
     function startTutorialBattle() {
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
-      state.coachMode = false;
-      state.coachLastAction = "";
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
@@ -19782,6 +20862,7 @@
       if (card.hasAttacked) parts.push("攻撃済み");
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) parts.push("出席ターン");
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) parts.push("攻撃不可");
+      if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) parts.push("攻撃不可");
       if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) parts.push("破壊予約");
       return parts.join(" / ");
     }
@@ -19838,6 +20919,11 @@
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
         loud_group: "注目を持つ。このカードは3行目にも出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
         enemy_student: "相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
+        enemy_boss: "このカードが出席したとき、自分の場に「敵」と名のつく出席者が3人いるなら、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
+        live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を3にする。",
+        dobby: "このカードが出席したとき、攻撃力3以上の相手の学生すべての攻撃力を-2する。",
+        pachin_uni: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
+        protein_drinker: "自分のターン終了時、このカードの攻撃力を+1する。",
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
@@ -19886,7 +20972,7 @@
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
         acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
-        aggro_eater: "自分の場の出席者すべてと自分の気力を1回復する。",
+        aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
         bento: "自分の出席者1人を指名し、その体力をすべて回復する。その後、その出席者の攻撃力を-2する。",
         yakiniku: "お互いの出席者すべての攻撃力を+1し、体力を2回復する。",
@@ -19894,7 +20980,7 @@
         onigiri_draw: "自分のデッキからカードを2枚引き、自分の気力を2回復する。",
         hondara: "カードを1枚ドローする。",
         fire_touch: "自分の気力を4失い、自分のデッキを上から3枚引く。",
-        thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードを校外エリアへ送る。",
+        thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
         sock_block: "相手の場の3行目を1ターン出席不可にする。すでに3行目にいる出席者は校外エリアへ送る。",
         go_home: "自分の学生1人を指名し、そのカードを手札に戻す。",
         deck_without: "自分のデッキを上から2枚引く。その後、自分の手札を2枚選び、校外エリアへ送る。",
@@ -19945,6 +21031,8 @@
         smart_me: "相手の遅刻ゾーンにいる学生1人をランダムに指名し、そのカードを校外エリアへ送る。",
         greeting_3000: "自分の校外エリアにある「U太」と「裏U太」の合計人数分、相手本体にダメージを与える。",
         yamanashi_minimum_wage: "次の自分のターン開始時まで、お互いはデッキからカードを手札に加えられない。",
+        baka_mac: "次の自分のターン開始時まで、相手の手札にあるカードすべての戦意を+1する。",
+        ikemasu: "「一般学生」1枚を手札に生成する。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
         alpha: "このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。",
         beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。",
@@ -19961,7 +21049,9 @@
         student_council: "場にいるすべての出席者の体力を+2する。このカードが出てからターンが2回終了すると、「裏学友会」に変化する。",
         full_lock: "お互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
         design_domain: "このカードは、自分の教卓マスに「デザイン」と名のつく教師がいなければ置けない。ヴァンパイアは「デザイン」と名のつく教師を攻撃できない。",
-        chaos_world: "お互いの手札と場の出席者の戦意、攻撃力、体力を0〜10のランダムな値に変更する。このカードが校外エリアへ送られても、変更された値はそのまま。",
+        building_12_classroom: "お互いの教師すべての攻撃力を+1し、お互いの学生すべての攻撃力を-1する。",
+        raptor_temple: "各プレイヤーは自分のターンに1回、自分の場の「デザイン」と名のつく教師1人を指名し、校外エリアへ送ってもよい。そうした場合、自分の校外エリアにある進化前の「デザイン」と名のつく教師1人を指名し、同じマスに出席させる。出席時効果は発動する。",
+        chaos_world: "各ターン開始時、お互いの手札にあるカードすべての戦意を0〜10のランダムな値にし、お互いの場の出席者すべての攻撃力を0〜10、体力を1〜10のランダムな値にする。このカードが校外エリアへ送られても、変更された値はそのまま。",
         no_late_time: "「遅刻」の効果をなくす。",
         meguro_library: "お互いにプレイヤー本体を攻撃できない。このカードをプレイしたプレイヤーは、このカードが環境マスにある間、自分のターン終了時に手札1枚を選び、校外エリアへ送る。",
         dorm_council: "お互いのプレイヤーは自分のターン終了時、自分のデッキから注目を持つカードをランダムに1枚まで引く。",
@@ -20099,9 +21189,20 @@
     renderRpsChoiceButtons();
 
     elements.homeDeckButton.addEventListener("click", showDeckScreen);
+    elements.homeUpdatesButton.addEventListener("click", showUpdatesScreen);
+    elements.updatesBackHomeButton.addEventListener("click", showHomeScreen);
     elements.homeBattleButton.addEventListener("click", showOnlineScreen);
     elements.homeSoloButton.addEventListener("click", startSoloBattleFromHome);
-    elements.homeCoachButton.addEventListener("click", startCoachBattleFromHome);
+    elements.soloDeckBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.soloPlayerSlot.addEventListener("click", () => {
+      state.soloSelection.activeSide = "player";
+      render();
+    });
+    elements.soloAiSlot.addEventListener("click", () => {
+      state.soloSelection.activeSide = "opponent";
+      render();
+    });
+    elements.soloBattleStartButton.addEventListener("click", startSoloBattleWithSelectedDecks);
     elements.homeTutorialButton.addEventListener("click", startTutorialBattle);
     elements.tutorialBackHomeButton.addEventListener("click", showHomeScreen);
     elements.tutorialStartButton.addEventListener("click", startTutorialBattle);
@@ -20128,23 +21229,6 @@
     elements.onlineDeckSelect.addEventListener("change", onlineUpdateDeckSelection);
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineStartButton.addEventListener("click", onlineStartBattle);
-    elements.coachActionList.addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-coach-action-index]");
-      if (!button || button.disabled) return;
-      const actionIndex = Number(button.dataset.coachActionIndex);
-      const action = elements.coachPanel._actions?.[actionIndex];
-      if (!action) return;
-      elements.coachActionList.querySelectorAll("button").forEach((entry) => {
-        entry.disabled = true;
-      });
-      await executeCoachAction(action);
-      render();
-    });
-    elements.coachEndTurnButton.addEventListener("click", () => {
-      if (!isCoachBattle() || state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
-      recordCoachAction("ターン終了");
-      endTurn({ fromAi: true });
-    });
     elements.deckBackHomeButton.addEventListener("click", showHomeScreen);
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.testUndoButton.addEventListener("click", goBackTestStep);
@@ -20214,6 +21298,17 @@
       elements.deckFileInput.value = "";
     });
     elements.deleteDeckButton.addEventListener("click", deleteSavedDeck);
+    elements.deckEditorBackButton.addEventListener("click", returnToDeckLibrary);
+    elements.deckSearchInput.addEventListener("input", () => {
+      state.deckBuilder.filters.query = elements.deckSearchInput.value;
+      render();
+      elements.deckSearchInput.focus();
+      elements.deckSearchInput.setSelectionRange(elements.deckSearchInput.value.length, elements.deckSearchInput.value.length);
+    });
+    elements.deckFilterClearButton.addEventListener("click", () => {
+      resetDeckFilters();
+      render();
+    });
     elements.savedDeckSelect.addEventListener("change", () => {
       elements.deckSaveNameInput.value = elements.savedDeckSelect.value;
       renderSavedDeckOptions();
@@ -20302,13 +21397,16 @@
       castImmediateItem,
       castItemOnCard,
       drawOne,
+      resolveStudentEndTurnEffects,
+      resolveChaosWorldAtTurnStart,
+      resolveRaptorTempleExchange,
+      applyBoardAuras,
       extendAllCountdownEffects,
       isDeckToHandLocked,
       clearExpiredDeckToHandLocks,
       fuseRulersForSide,
       validateDeckCounts,
-      createAutoDeckCounts,
-      buildCoachActions
+      createAutoDeckCounts
     };
 
     initializeGame();
