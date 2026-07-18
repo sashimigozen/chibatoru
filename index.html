@@ -1228,7 +1228,7 @@
     }
 
     .player-hand-table {
-      grid-template-columns: minmax(0, 1fr) 124px;
+      grid-template-columns: minmax(0, 1fr) 78px;
     }
 
     .opponent-hand-table {
@@ -1301,44 +1301,36 @@
       text-align: center;
     }
 
-    .player-deck-column {
-      display: grid;
-      grid-template-rows: auto minmax(0, 1fr);
-      gap: 4px;
-      min-width: 0;
-    }
-
-    .player-deck-status {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 4px;
+    .player-hand-status {
+      display: flex;
+      gap: 6px;
       align-items: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.2;
+      letter-spacing: 0;
     }
 
-    .player-deck-status .hud-pill {
+    .player-hand-status .hud-pill {
       justify-content: center;
       min-width: 0;
       padding: 3px 5px;
-      font-size: 9px;
-    }
-
-    .player-deck-count-label {
-      display: inline-flex;
-      gap: 3px;
-      align-items: center;
-      border: 1px solid #cbd5e1;
-      border-radius: 999px;
-      padding: 3px 6px;
-      color: #334155;
-      background: #ffffff;
-      font-size: 9px;
-      font-weight: 1000;
-      white-space: nowrap;
+      font: inherit;
+      letter-spacing: 0;
     }
 
     .player-deck-pile {
-      width: 100%;
-      min-height: 42px;
+      align-self: end;
+      justify-self: end;
+      width: 62px;
+      min-height: 87px;
+      aspect-ratio: 5 / 7;
+    }
+
+    .player-deck-pile .deck-stack {
+      width: 38px;
+      height: 54px;
     }
 
     .deck-pile.detail-pressing {
@@ -4130,7 +4122,7 @@
     }
 
     .player-hand-table {
-      grid-template-columns: minmax(0, 1fr) 132px;
+      grid-template-columns: minmax(0, 1fr) 78px;
     }
 
     .opponent-hand-table {
@@ -5133,7 +5125,7 @@
       }
 
       .player-hand-table {
-        grid-template-columns: minmax(0, 1fr) 108px;
+        grid-template-columns: minmax(0, 1fr) 52px;
         gap: 4px;
       }
 
@@ -5204,6 +5196,17 @@
       .deck-stack {
         width: 27px;
         height: 14px;
+      }
+
+      .player-deck-pile {
+        width: 42px;
+        min-height: 59px;
+        aspect-ratio: 5 / 7;
+      }
+
+      .player-deck-pile .deck-stack {
+        width: 25px;
+        height: 34px;
       }
 
       .deck-count-pill {
@@ -6270,20 +6273,18 @@
         <section class="hand-zone player-hand-zone">
           <div class="hand-head">
             <h2 id="playerHandTitle">あなたの手札</h2>
-            <span class="small-info" id="playerHandInfo">5枚</span>
+            <div class="player-hand-status">
+              <span class="hud-pill will hidden" id="playerWillHudPill">戦意 <span id="playerWillHud">0/0</span></span>
+              <span class="small-info" id="playerHandInfo">5枚</span>
+            </div>
           </div>
           <div class="hand-table player-hand-table">
             <div class="hand player-hand" id="playerHand"></div>
-            <div class="player-deck-column">
-              <div class="player-deck-status">
-                <span class="hud-pill will hidden" id="playerWillHudPill">戦意 <span id="playerWillHud">0/0</span></span>
-                <span class="player-deck-count-label">山札 <span id="playerDeckPileCount">35</span></span>
-              </div>
-              <button class="deck-pile player-deck-pile" id="playerDeckPile" type="button" aria-label="自分の山札">
-                <span class="deck-stack"></span>
-                <span class="deck-label">山札</span>
-              </button>
-            </div>
+            <button class="deck-pile player-deck-pile" id="playerDeckPile" type="button" aria-label="自分の山札">
+              <span class="deck-stack"></span>
+              <span class="deck-label">山札</span>
+              <span class="deck-count-pill" id="playerDeckPileCount">35</span>
+            </button>
           </div>
           <p class="hint">マリガン中はカードを選択して確定。バトル中はカードをクリックしてから対応マスをクリック、またはドラッグで配置できます。</p>
         </section>
@@ -6784,7 +6785,7 @@
           { title: "カオスワールド", before: "戦意9。環境マスに出したとき、数値を1回変更。", after: "戦意10。環境マスに出したときに数値を変更し、このカードが環境マスにあるかぎり、各ターン開始時にも同じ処理を行う（体力は1以上）。" },
           { title: "新カード", after: "猛禽寺、12号館の教室、バカMac、敵のボス、ライブ人、ドービィ、パチンウニー、プロテインドリンカー、いけますを追加。" },
           { title: "眠気", after: "攻撃を外したとき、対象に「ミス」を表示。" },
-          { title: "バトル画面", after: "手札下の気力表示を削除し、戦意を山札の上、山札枚数の左へ移動。" }
+          { title: "バトル画面", after: "手札下の気力表示を削除し、戦意を手札枚数の左へ移動。自分の山札枚数は縦向きの山札に表示。" }
         ]
       },
       {
