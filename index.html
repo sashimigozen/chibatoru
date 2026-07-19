@@ -2955,6 +2955,13 @@
       text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
     }
 
+    .floating-pop.destroy {
+      border-color: rgba(127, 29, 29, 0.72);
+      background: #7f1d1d;
+      color: #ffffff;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
+    }
+
     .floating-pop.heal {
       border-color: rgba(15, 118, 110, 0.45);
       background: #ecfdf5;
@@ -6392,7 +6399,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.13.0";
+    const GAME_DATA_VERSION = "0.13.1";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -6774,6 +6781,15 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.13.1",
+        date: "2026年7月19日",
+        summary: "ダメージと直接破壊の演出を見やすく改善。",
+        changes: [
+          { title: "ダメージ表示", after: "同じ効果による複数対象へのダメージは同時に表示し、別々の効果は処理順に少し間を空けて、すべて表示。" },
+          { title: "直接破壊", after: "ガチでしばくぞ、深淵など、効果で直接破壊された出席者に「破壊」と表示。" }
+        ]
+      },
+      {
         version: "ver.0.13.0",
         date: "2026年7月18日",
         summary: "デッキ管理とカード検索を作り直し、新カード9種を追加。",
@@ -7134,6 +7150,11 @@
     const HAND_DRAG_THRESHOLD = 10;
     const FAST_ATTACK_FOCUS_STEP_DELAY = 300;
     const ATTACK_FOCUS_STEP_DELAY = 700;
+    const EFFECT_FEEDBACK_GAP_MS = 280;
+    let activeEffectFeedbackSequence = null;
+    let activeEffectFeedbackDelay = 0;
+    let effectFeedbackEventSerial = 0;
+    let nextSharedFeedbackId = 1;
     const pendingAnimations = [];
 
     const state = {
@@ -7175,6 +7196,7 @@
       noAttackUntilActionTurn: 0,
       recentBoardTrash: [],
       trashDetailEvents: [],
+      effectFeedbackEvents: [],
       activeTrashDetailId: null,
       gameOver: false,
       gameWinner: null,
@@ -9529,6 +9551,7 @@
         phase: state.phase,
         currentSide: state.currentSide,
         actionTurn: state.actionTurn,
+        feedbackEventIds: new Set((state.effectFeedbackEvents || []).map((event) => event.id)),
         players: {
           player: capturePlayerVisualState("player"),
           opponent: capturePlayerVisualState("opponent")
@@ -9552,33 +9575,79 @@
       const entries = [];
       if (player.board.teacher) entries.push({
         ref: { owner: side, zone: "teacher", index: null },
-        card: { ...player.board.teacher }
+        card: { ...player.board.teacher },
+        rect: captureCardVisualRect(player.board.teacher)
       });
       player.board.seats.forEach((card, index) => {
         if (card) entries.push({
           ref: { owner: side, zone: "seat", index },
-          card: { ...card }
+          card: { ...card },
+          rect: captureCardVisualRect(card)
         });
       });
       return entries;
     }
 
+    function captureCardVisualRect(card) {
+      const target = card?.instanceId
+        ? document.querySelector(`[data-card-id="${card.instanceId}"]`)
+        : null;
+      if (!target) return null;
+      const rect = target.getBoundingClientRect();
+      return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+    }
+
+    function showOnlineEffectFeedbackEvents(before) {
+      if (before?.screen !== "battle") return false;
+      const knownIds = before.feedbackEventIds || new Set();
+      const events = (state.effectFeedbackEvents || []).filter((event) => event?.id && !knownIds.has(event.id));
+      if (events.length === 0) return false;
+      const firstOccurredAt = Math.min(...events.map((event) => Number(event.occurredAt) || Date.now()));
+      events.forEach((event) => {
+        let target = null;
+        let rect = null;
+        if (event.target === "life") {
+          target = document.querySelector(`[data-life-target="${event.owner}"]`);
+        } else if (event.target === "card") {
+          target = document.querySelector(`[data-card-id="${event.instanceId}"]`);
+          if (!target) {
+            const previousEntry = ["player", "opponent"]
+              .flatMap((side) => before.players?.[side]?.board || [])
+              .find((entry) => entry.card?.instanceId === event.instanceId);
+            rect = previousEntry?.rect || null;
+          }
+        }
+        if (target) {
+          const bounds = target.getBoundingClientRect();
+          rect = { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height };
+        }
+        if (!rect) return;
+        const occurredOffset = Math.max(0, (Number(event.occurredAt) || firstOccurredAt) - firstOccurredAt);
+        const delay = occurredOffset + Math.max(0, Number(event.delayMs) || 0);
+        showFloatingTextAtRect(rect, event.text, event.kind, { target, delay });
+      });
+      return true;
+    }
+
     function showOnlineSnapshotVisuals(before) {
       if (!before || state.screen !== "battle") return;
+      const sharedFeedbackShown = showOnlineEffectFeedbackEvents(before);
       ["player", "opponent"].forEach((side) => {
         const previous = before.players?.[side];
         const current = state.players[side];
         if (!previous || !current) return;
-        const lifeDiff = current.life - previous.life;
-        if (lifeDiff < 0) showFloatingTextForLife(side, String(lifeDiff), "damage");
-        if (lifeDiff > 0) showFloatingTextForLife(side, `+${lifeDiff}`, "heal");
-        previous.board.forEach((entry) => {
-          const next = findBoardCardByInstanceId(entry.card.instanceId);
-          if (!next?.card || entry.card.currentHp === null || next.card.currentHp === null) return;
-          const hpDiff = next.card.currentHp - entry.card.currentHp;
-          if (hpDiff < 0) showFloatingTextForCard(next.card, String(hpDiff), "damage");
-          if (hpDiff > 0) showFloatingTextForCard(next.card, `+${hpDiff}`, "heal");
-        });
+        if (!sharedFeedbackShown) {
+          const lifeDiff = current.life - previous.life;
+          if (lifeDiff < 0) showFloatingTextForLife(side, String(lifeDiff), "damage");
+          if (lifeDiff > 0) showFloatingTextForLife(side, `+${lifeDiff}`, "heal");
+          previous.board.forEach((entry) => {
+            const next = findBoardCardByInstanceId(entry.card.instanceId);
+            if (!next?.card || entry.card.currentHp === null || next.card.currentHp === null) return;
+            const hpDiff = next.card.currentHp - entry.card.currentHp;
+            if (hpDiff < 0) showFloatingTextForCard(next.card, String(hpDiff), "damage");
+            if (hpDiff > 0) showFloatingTextForCard(next.card, `+${hpDiff}`, "heal");
+          });
+        }
         current.trash.forEach((card) => {
           if (!previous.trashIds.has(card.instanceId) && !card.suppressTrashToast) announceTrashMove(side, card);
         });
@@ -10092,6 +10161,7 @@
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
       state.trashDetailEvents = [];
+      state.effectFeedbackEvents = [];
       state.activeTrashDetailId = null;
       state.gameOver = false;
       state.gameWinner = null;
@@ -11826,16 +11896,18 @@
     }
 
     function resolveEndTurnEffects(side, options = {}) {
-      resolveItemEndTurnEffects(side);
-      settleEndTurnStep();
-      resolveLectureEndTurnEffect(side);
-      settleEndTurnStep();
-      resolveTeacherEndTurnEffects(side);
-      settleEndTurnStep();
-      resolveStudentEndTurnEffects(side);
-      settleEndTurnStep();
-      resolveEnvironmentEndTurnEffects(side, options);
-      settleEndTurnStep();
+      runEffectFeedbackSequence(() => {
+        runEffectFeedbackBatch(() => resolveItemEndTurnEffects(side));
+        settleEndTurnStep();
+        runEffectFeedbackBatch(() => resolveLectureEndTurnEffect(side));
+        settleEndTurnStep();
+        runEffectFeedbackBatch(() => resolveTeacherEndTurnEffects(side));
+        settleEndTurnStep();
+        resolveStudentEndTurnEffects(side);
+        settleEndTurnStep();
+        runEffectFeedbackBatch(() => resolveEnvironmentEndTurnEffects(side, options));
+        settleEndTurnStep();
+      });
     }
 
     function resolveItemEndTurnEffects(side) {
@@ -11892,30 +11964,32 @@
     function resolveStudentEndTurnEffects(side) {
       const opponent = oppositeSide(side);
       listBoardRefs(side).forEach((ref) => {
-        const card = getBoardCardFromRef(ref);
-        if (!card) return;
-        if (hasKeyword(card, "余裕")) {
-          const before = card.currentHp;
-          healCard(card, 2);
-          const healed = card.currentHp - before;
-          if (healed > 0) addLog(`${card.name}の余裕：体力を${healed}回復しました。`);
-        }
-        if (card.baseId === "laughing_front_student") {
-          healPlayer(side, 1);
-          listBoardRefs(side).forEach((teacherRef) => {
-            const teacherCard = getBoardCardFromRef(teacherRef);
-            if (teacherCard && teacherCard.type === "teacher") healCard(teacherCard, 1);
-          });
-          addLog(`${card.name}の効果：自分と教師を1回復。`);
-        }
-        if (card.baseId === "ttb") {
-          generateCardsIntoDeck(opponent, "suspicious_document", 1);
-          addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を1枚生成しました。`);
-        }
-        if (card.baseId === "protein_drinker") {
-          applyPermanentStatBuff(card, 1, 0);
-          addLog(`${card.name}の効果：攻撃力を+1しました。`);
-        }
+        runEffectFeedbackBatch(() => {
+          const card = getBoardCardFromRef(ref);
+          if (!card) return;
+          if (hasKeyword(card, "余裕")) {
+            const before = card.currentHp;
+            healCard(card, 2);
+            const healed = card.currentHp - before;
+            if (healed > 0) addLog(`${card.name}の余裕：体力を${healed}回復しました。`);
+          }
+          if (card.baseId === "laughing_front_student") {
+            healPlayer(side, 1);
+            listBoardRefs(side).forEach((teacherRef) => {
+              const teacherCard = getBoardCardFromRef(teacherRef);
+              if (teacherCard && teacherCard.type === "teacher") healCard(teacherCard, 1);
+            });
+            addLog(`${card.name}の効果：自分と教師を1回復。`);
+          }
+          if (card.baseId === "ttb") {
+            generateCardsIntoDeck(opponent, "suspicious_document", 1);
+            addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を1枚生成しました。`);
+          }
+          if (card.baseId === "protein_drinker") {
+            applyPermanentStatBuff(card, 1, 0);
+            addLog(`${card.name}の効果：攻撃力を+1しました。`);
+          }
+        });
       });
       listBoardRefs(side).forEach((ref) => {
         const card = getBoardCardFromRef(ref);
@@ -12093,19 +12167,21 @@
 
     function resolveBestFriendEndTurnEffect(side) {
       listBoardRefs(side).forEach((ref) => {
-        const card = getBoardCardFromRef(ref);
-        if (card?.baseId !== "best_friend" || ref.zone !== "seat") return;
-        const hasLoudNeighbor = adjacentIndexes(ref.index).some((neighbor) => state.players[side].board.seats[neighbor]?.baseId === "loud_student");
-        if (!hasLoudNeighbor) return;
-        const opponent = oppositeSide(side);
-        const targetEntry = randomEffectTargetEntry(side, opponent);
-        const target = targetEntry?.card || null;
-        if (!target) {
-          addLog(`${card.name}の効果：相手の出席者がいないため不発。`);
-          return;
-        }
-        dealDamageToCard(target, 3, card);
-        addLog(`${card.name}の効果：隣接するバカでかい声の学生により、${target.name}に3ダメージ。`);
+        runEffectFeedbackBatch(() => {
+          const card = getBoardCardFromRef(ref);
+          if (card?.baseId !== "best_friend" || ref.zone !== "seat") return;
+          const hasLoudNeighbor = adjacentIndexes(ref.index).some((neighbor) => state.players[side].board.seats[neighbor]?.baseId === "loud_student");
+          if (!hasLoudNeighbor) return;
+          const opponent = oppositeSide(side);
+          const targetEntry = randomEffectTargetEntry(side, opponent);
+          const target = targetEntry?.card || null;
+          if (!target) {
+            addLog(`${card.name}の効果：相手の出席者がいないため不発。`);
+            return;
+          }
+          dealDamageToCard(target, 3, card);
+          addLog(`${card.name}の効果：隣接するバカでかい声の学生により、${target.name}に3ダメージ。`);
+        });
       });
     }
 
@@ -12173,30 +12249,32 @@
     function resolveAggroStudentEffects(side) {
       const opponent = oppositeSide(side);
       listBoardRefs(side).forEach((ref) => {
-        const card = getBoardCardFromRef(ref);
-        if (!card) return;
-        if (card.baseId === "aggro_king") {
-          if (ref.zone === "seat" && ref.index === 6 && card.playedOnTurn < state.actionTurn && !card.aggroKingBuffed) {
-            card.aggroKingTurns = (card.aggroKingTurns || 0) + 1;
-            if (card.aggroKingTurns >= 2) {
-              applyPermanentStatBuff(card, 2, 1);
-              card.aggroKingBuffed = true;
-              showFloatingTextForCard(card, "+2/+1", "heal");
-              addLog(`${card.name}の効果：自分のターンを2回終了し、攻撃力+2/体力+1。`);
+        runEffectFeedbackBatch(() => {
+          const card = getBoardCardFromRef(ref);
+          if (!card) return;
+          if (card.baseId === "aggro_king") {
+            if (ref.zone === "seat" && ref.index === 6 && card.playedOnTurn < state.actionTurn && !card.aggroKingBuffed) {
+              card.aggroKingTurns = (card.aggroKingTurns || 0) + 1;
+              if (card.aggroKingTurns >= 2) {
+                applyPermanentStatBuff(card, 2, 1);
+                card.aggroKingBuffed = true;
+                showFloatingTextForCard(card, "+2/+1", "heal");
+                addLog(`${card.name}の効果：自分のターンを2回終了し、攻撃力+2/体力+1。`);
+              }
+            } else if (ref.zone !== "seat" || ref.index !== 6) {
+              card.aggroKingTurns = 0;
             }
-          } else if (ref.zone !== "seat" || ref.index !== 6) {
-            card.aggroKingTurns = 0;
           }
-        }
-        if (card.baseId === "aggro_queen" && ref.zone === "seat" && ref.index === 5) {
-          const target = randomEffectTargetEntry(side, opponent, (targetCard) => targetCard.type === "student");
-          if (target) {
-            dealDamageToCard(target.card, 2, card);
-            addLog(`${card.name}の効果：相手の学生1人をランダムに指名し、2ダメージ。`);
-          } else {
-            addLog(`${card.name}の効果：相手の学生がいないため不発。`);
+          if (card.baseId === "aggro_queen" && ref.zone === "seat" && ref.index === 5) {
+            const target = randomEffectTargetEntry(side, opponent, (targetCard) => targetCard.type === "student");
+            if (target) {
+              dealDamageToCard(target.card, 2, card);
+              addLog(`${card.name}の効果：相手の学生1人をランダムに指名し、2ダメージ。`);
+            } else {
+              addLog(`${card.name}の効果：相手の学生がいないため不発。`);
+            }
           }
-        }
+        });
       });
     }
 
@@ -13351,7 +13429,7 @@
         if (card.baseId === "predator") {
           const prey = getBoardCard(owner, zone, index);
           if (prey) {
-            moveToTrash(owner, prey);
+            destroyBoardCard({ owner, zone, index }, { reason: "捕食者" });
             addLog(`${card.name}は${prey.name}を破壊し、その場所に出席しました。`);
           }
         }
@@ -14150,7 +14228,8 @@
       }
       if (card.baseId === "france_asakura" && state.environment) {
         const destroyed = state.environment;
-        moveToTrash(destroyed.owner || side, destroyed);
+        showFloatingTextForCard(destroyed, "破壊", "destroy");
+        moveToTrash(destroyed.owner || side, destroyed, { reason: "破壊", directDestruction: true });
         state.environment = null;
         if (destroyed.baseId === "full_lock") state.fullLockSeatBlocks = [];
         addLog(`${card.name}の効果：環境カード「${destroyed.name}」を破壊しました。`);
@@ -14971,7 +15050,7 @@
       const returned = createCardFromBase(returnedBaseId, targetRef.owner);
       returned.handTurns = 0;
       state.players[targetRef.owner].hand.push(returned);
-      destroyBoardCard(attackerRef, { reason: "バウンスディ" });
+      destroyBoardCard(attackerRef, { reason: "バウンスディ", showDestroyFeedback: false });
       analyticsRecordAction({
         side: attacker.owner,
         actionType: "attack_card",
@@ -14995,7 +15074,7 @@
       damagePlayer(targetSide, attacker.attack || 0);
       const dealtDamage = beforeLife - state.players[targetSide].life;
       if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(attacker);
-      destroyBoardCard(attackerRef, { reason: "バウンスディ" });
+      destroyBoardCard(attackerRef, { reason: "バウンスディ", showDestroyFeedback: false });
       analyticsRecordAction({
         side: attacker.owner,
         actionType: "attack_life",
@@ -15573,7 +15652,7 @@
       if (item.baseId === "sock_block") {
         const targetSide = oppositeSide(side);
         const rowRefs = [6, 7, 8].map((index) => ({ owner: targetSide, zone: "seat", index }));
-        const moved = destroyBoardRefsToTrash(rowRefs);
+        const moved = destroyBoardRefsToTrash(rowRefs, { reason: "靴下ブロック", showDestroyFeedback: false });
         rowRefs.forEach((ref) => {
           state.temporarySeatBlocks.push({
             owner: ref.owner,
@@ -16413,7 +16492,8 @@
       const beforeHp = Math.max(0, card.currentHp);
       const ignoreWeakness = options.ignoreWeakness === true;
       if (!ignoreWeakness && isVampireDestroyedByDoubleDiamond(card, source)) {
-        showFloatingTextForCard(card, "破壊", "damage");
+        showFloatingTextForCard(card, "破壊", "destroy");
+        card.pendingDirectDestruction = true;
         card.currentHp = 0;
         if (source) {
           card.lastDamageSource = analyticsCardInfo(source);
@@ -16587,27 +16667,102 @@
       if (healed > 0) showFloatingTextForLife(side, `+${healed}`, "heal");
     }
 
+    function runEffectFeedbackSequence(callback) {
+      if (activeEffectFeedbackSequence) return callback();
+      const previousDelay = activeEffectFeedbackDelay;
+      activeEffectFeedbackSequence = { nextDelay: 0 };
+      activeEffectFeedbackDelay = 0;
+      try {
+        return callback();
+      } finally {
+        activeEffectFeedbackSequence = null;
+        activeEffectFeedbackDelay = previousDelay;
+      }
+    }
+
+    function runEffectFeedbackBatch(callback) {
+      if (!activeEffectFeedbackSequence) return callback();
+      const sequence = activeEffectFeedbackSequence;
+      const batchDelay = sequence.nextDelay;
+      const previousDelay = activeEffectFeedbackDelay;
+      const beforeSerial = effectFeedbackEventSerial;
+      activeEffectFeedbackDelay = batchDelay;
+      try {
+        return callback();
+      } finally {
+        activeEffectFeedbackDelay = previousDelay;
+        if (effectFeedbackEventSerial > beforeSerial) {
+          sequence.nextDelay = Math.max(sequence.nextDelay, batchDelay + EFFECT_FEEDBACK_GAP_MS);
+        }
+      }
+    }
+
+    function recordOnlineEffectFeedback(event) {
+      if (!isOnlineHost() || !state.online?.started || state.online.isApplyingRemote) return;
+      if (!Array.isArray(state.effectFeedbackEvents)) state.effectFeedbackEvents = [];
+      state.effectFeedbackEvents.push({
+        id: `feedback-${state.actionTurn}-${Date.now()}-${nextSharedFeedbackId++}`,
+        occurredAt: Date.now(),
+        delayMs: activeEffectFeedbackDelay,
+        ...event
+      });
+      state.effectFeedbackEvents = state.effectFeedbackEvents.slice(-80);
+    }
+
     function showFloatingTextForCard(card, text, kind) {
+      if (!card) return;
+      recordOnlineEffectFeedback({
+        target: "card",
+        instanceId: card.instanceId,
+        owner: card.owner || null,
+        text,
+        kind
+      });
       const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
       showFloatingText(target, text, kind);
     }
 
     function showFloatingTextForLife(side, text, kind) {
+      recordOnlineEffectFeedback({ target: "life", owner: side, text, kind });
       const target = document.querySelector(`[data-life-target="${side}"]`);
       showFloatingText(target, text, kind);
     }
 
     function showFloatingText(target, text, kind) {
       if (!target) return;
-      const rect = target.getBoundingClientRect();
-      playTargetImpact(target, kind, rect);
-      const pop = document.createElement("div");
-      pop.className = `floating-pop ${kind}`;
-      pop.textContent = text;
-      pop.style.left = `${rect.left + rect.width / 2}px`;
-      pop.style.top = `${rect.top + rect.height / 2}px`;
-      document.body.appendChild(pop);
-      window.setTimeout(() => pop.remove(), 1600);
+      const bounds = target.getBoundingClientRect();
+      showFloatingTextAtRect({
+        left: bounds.left,
+        top: bounds.top,
+        width: bounds.width,
+        height: bounds.height
+      }, text, kind, { target });
+    }
+
+    function showFloatingTextAtRect(rect, text, kind, options = {}) {
+      if (!rect) return;
+      const delay = Number.isFinite(options.delay) ? Math.max(0, options.delay) : activeEffectFeedbackDelay;
+      const target = options.target || null;
+      effectFeedbackEventSerial += 1;
+      const display = () => {
+        if (target?.isConnected) {
+          playTargetImpact(target, kind, rect);
+        } else if (kind === "damage" || kind === "destroy") {
+          createDamageSparks(rect);
+        }
+        const pop = document.createElement("div");
+        pop.className = `floating-pop ${kind}`;
+        pop.textContent = text;
+        pop.style.left = `${rect.left + rect.width / 2}px`;
+        pop.style.top = `${rect.top + rect.height / 2}px`;
+        document.body.appendChild(pop);
+        window.setTimeout(() => pop.remove(), 1600);
+      };
+      if (delay > 0) {
+        window.setTimeout(display, delay);
+      } else {
+        display();
+      }
     }
 
     function playTargetImpact(target, kind, rect) {
@@ -16617,7 +16772,7 @@
       void target.offsetWidth;
       target.classList.add(className);
       window.setTimeout(() => target.classList.remove(className), 560);
-      if (kind !== "damage") return;
+      if (kind !== "damage" && kind !== "destroy") return;
       if (elements.battleScreen && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
         elements.battleScreen.classList.remove("hit-shake");
         void elements.battleScreen.offsetWidth;
@@ -16896,8 +17051,16 @@
     function destroyBoardCard(ref, trashOptions = {}) {
       const card = getBoardCardFromRef(ref);
       if (!card) return null;
+      const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
+      if (showDestroyFeedback) showFloatingTextForCard(card, "破壊", "destroy");
       recordRecentBoardTrash(ref.owner, card, ref);
-      moveToTrash(ref.owner, card, trashOptions);
+      const moveOptions = {
+        ...trashOptions,
+        directDestruction: showDestroyFeedback,
+        reason: trashOptions.reason || (showDestroyFeedback ? "破壊" : "")
+      };
+      delete moveOptions.showDestroyFeedback;
+      moveToTrash(ref.owner, card, moveOptions);
       if (ref.zone === "seat") state.players[ref.owner].board.seats[ref.index] = null;
       if (ref.zone === "teacher") state.players[ref.owner].board.teacher = null;
       return card;
@@ -16909,7 +17072,8 @@
         const card = destroyBoardCard(ref, {
           suppressLog: options.suppressIndividual !== false,
           suppressToast: options.suppressIndividual !== false,
-          reason: options.reason || "まとめ破壊"
+          reason: options.reason || "まとめ破壊",
+          showDestroyFeedback: options.showDestroyFeedback !== false
         });
         if (card) moved.push(card);
       });
@@ -16964,6 +17128,8 @@
     }
 
     function moveToTrash(owner, card, options = {}) {
+      card.directlyDestroyed = options.directDestruction === true || card.pendingDirectDestruction === true;
+      delete card.pendingDirectDestruction;
       card.suppressTrashToast = options.suppressToast === true;
       card.trashReason = options.reason || "";
       state.players[owner].trash.push(card);
@@ -18945,7 +19111,7 @@
       const candidates = raptorTempleTargetCandidates(side, source);
       const selected = candidates.find((card) => card.instanceId === targetInstanceId);
       if (!selected) return false;
-      destroyBoardCard(sourceRef, { reason: "猛禽寺" });
+      destroyBoardCard(sourceRef, { reason: "猛禽寺", showDestroyFeedback: false });
       const trashIndex = state.players[side].trash.findIndex((card) => card.instanceId === selected.instanceId);
       if (trashIndex >= 0) state.players[side].trash.splice(trashIndex, 1);
       const placed = makeBoardCard(createCardFromBase(selected.baseId, side));
@@ -20239,6 +20405,7 @@
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
       state.trashDetailEvents = [];
+      state.effectFeedbackEvents = [];
       state.activeTrashDetailId = null;
       state.gameOver = false;
       state.gameWinner = null;
@@ -20569,6 +20736,7 @@
       state.noAttackUntilActionTurn = 0;
       state.recentBoardTrash = [];
       state.trashDetailEvents = [];
+      state.effectFeedbackEvents = [];
       state.activeTrashDetailId = null;
       state.gameOver = false;
       state.gameWinner = null;
