@@ -6566,7 +6566,7 @@
       proliferating_enemy: [],
       yamanashi_minimum_wage: ["onigiri_draw", "environment_setup"]
       ,raptor_temple: ["bird_a", "demon_a_plus", "popular_c"]
-      ,enemy_boss: ["enemy_student"]
+      ,enemy_boss: ["enemy_student", "enemy_student"]
       ,pachin_uni: ["general_student"]
       ,ikemasu: ["general_student"]
     };
@@ -13770,11 +13770,18 @@
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
       }
       if (card.baseId === "enemy_boss") {
-        let summoned = 0;
-        for (let count = 0; count < 2; count += 1) {
-          if (summonToRandomOpenSeat(side, "enemy_student", card.name)) summoned += 1;
+        const enemyCount = listBoardRefs(side).filter((ref) => (
+          getBoardCardFromRef(ref)?.baseId === "enemy_student"
+        )).length;
+        if (enemyCount >= 2) {
+          let summoned = 0;
+          for (let count = 0; count < 2; count += 1) {
+            if (summonToRandomOpenSeat(side, "enemy_student", card.name)) summoned += 1;
+          }
+          addLog(`${card.name}の効果：「敵」を${summoned}人出席させました。`);
+        } else {
+          addLog(`${card.name}の効果：自分の場の「敵」が2人未満のため、発動しませんでした。`);
         }
-        addLog(`${card.name}の効果：「敵」を${summoned}人出席させました。`);
       }
       if (card.baseId === "live_person") {
         let affected = 0;
@@ -21131,7 +21138,7 @@
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
         loud_group: "注目を持つ。このカードは3行目にも出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
         enemy_student: "相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
-        enemy_boss: "このカードが出席したとき、自分の空いている席マスに「敵」を2人出席させる。",
+        enemy_boss: "このカードが出席したとき、自分の場に「敵」が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。",
         live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を3にする。",
         dobby: "このカードが出席したとき、攻撃力3以上の相手の学生すべての攻撃力を-2する。",
         pachin_uni: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
