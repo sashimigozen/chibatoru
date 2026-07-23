@@ -514,6 +514,130 @@
       effect: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の攻撃力を+2する。装備カードは通常、1人につき1枚まで。",
       combo: "U太 / 裏U太"
     });
+    function upsertCard(entry) {
+      const existing = CARDS.find((card) => card.id === entry.id);
+      if (existing) Object.assign(existing, entry);
+      else CARDS.push(entry);
+    }
+    applyCardUpdate("delayed_student", {
+      cost: 4,
+      attack: 1,
+      hp: 2,
+      effect: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。"
+    });
+    applyCardUpdate("live_person", {
+      cost: 3,
+      attack: 1,
+      hp: 1,
+      effect: "このカードが出席したとき、相手の講義室にいる出席者すべての攻撃力を2にする。"
+    });
+    applyCardUpdate("dobby", {
+      effect: "このカードが出席したとき、攻撃力3以上の相手の出席者すべての攻撃力を-2する。"
+    });
+    applyCardUpdate("ikemasu", {
+      effect: "陽気を持つ「一般学生」1枚を手札に生成する。",
+      combo: "一般学生"
+    });
+    applyCardUpdate("panpan", {
+      effect: "自分の出席者1人を指名する。その後、相手の出席者1人を指名する。それらを破壊する。",
+      notes: "自分の出席者を選んで確定した後、相手の出席者を選ぶ。"
+    });
+    upsertCard({
+      id: "infight_shogi", name: "インファイト将棋部", type: "student", cost: 10, attack: 0, hp: 0,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "超陽気を持つ。このカードが出席したとき、自分の気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
+      combo: "将棋部の決闘フィールド", notes: "出席時効果を解決した後、体力0のため校外エリアへ送られる。"
+    });
+    upsertCard({
+      id: "aiben", name: "アイベン", type: "student", cost: 3, attack: 2, hp: 2,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "このカードが出席したとき、相手の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
+      combo: "にょてい / アイベンVSにょていタイトルマッチ", notes: "「にょてい」の出席時効果により、空席が続くかぎり連鎖する。"
+    });
+    upsertCard({
+      id: "nyotei", name: "にょてい", type: "student", cost: 3, attack: 2, hp: 2,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "このカードが出席したとき、相手の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
+      combo: "アイベン / アイベンVSにょていタイトルマッチ", notes: "「アイベン」の出席時効果により、空席が続くかぎり連鎖する。"
+    });
+    upsertCard({
+      id: "full_throttle", name: "フルスロットルだぜ！", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "自分の手札にある持ち物を好きな枚数だけ選び、校外エリアへ送る。選んだ枚数と同じダメージを、相手の出席者にランダムに割り振る。",
+      combo: "持ち物", notes: "このカード自身は選べない。"
+    });
+    upsertCard({
+      id: "scared_me", name: "ケっ！びびらせやがって", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "相手の学生のうち、体力が最も高い学生1人をランダムに指名し、破壊する。",
+      combo: "学生", notes: "体力が最も高い学生が複数いる場合、その中からランダムに選ぶ。"
+    });
+    upsertCard({
+      id: "front_door", name: "前ドア前", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "環境が「ドア前戦争」の場合にのみ使える。相手の講義室にいる学生に7ダメージをランダムに割り振る。",
+      combo: "ドア前戦争", notes: "割り振り先は毎回ランダムに選ばれる。"
+    });
+    upsertCard({
+      id: "door_front", name: "ドア前", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "環境が「ドア前戦争」の場合にのみ使える。自分の2行目にいる学生すべてに超陽気を与える。",
+      combo: "ドア前戦争", notes: ""
+    });
+    upsertCard({
+      id: "back_door", name: "後ドア前", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "環境が「ドア前戦争」の場合にのみ使える。自分の気力を7回復する。",
+      combo: "ドア前戦争", notes: "気力は現在の最大気力を超えて回復しない。"
+    });
+    upsertCard({
+      id: "furious_comeback", name: "怒涛のまくり", type: "item", cost: 2, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "自分の気力が10以下の場合にのみ使える。自分の出席者すべての攻撃力を+2する。",
+      combo: "気力", notes: "攻撃力の増加は永続する。"
+    });
+    upsertCard({
+      id: "stand_up", name: "立てー！！", type: "item", cost: 1, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "環境が「将棋部の決闘フィールド」の場合にのみ使える。次の相手ターン中、自分の気力が1未満になる場合、代わりに1になる。この効果は重複する。",
+      combo: "将棋部の決闘フィールド", notes: "複数回使った場合、気力が1未満になるたびに1回ずつ使う。"
+    });
+    upsertCard({
+      id: "door_war", name: "ドア前戦争", type: "environment", cost: 2, attack: null, hp: null,
+      availability: "deck", placement: "環境マス",
+      effect: "各プレイヤーのターン終了時、そのターンに自分が講義室へ出席させた出席者の中から1人をランダムに選び、その出席者に1ダメージを与える。",
+      combo: "前ドア前 / ドア前 / 後ドア前", notes: "そのターンに出席した出席者がいない場合、この効果は何もしない。"
+    });
+    upsertCard({
+      id: "shogi_duel_field", name: "将棋部の決闘フィールド", type: "environment", cost: 5, attack: null, hp: null,
+      availability: "deck", placement: "環境マス",
+      effect: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
+      combo: "立てー！！ / インファイト将棋部", notes: "この環境が講義室を離れると、最大気力は通常の20に戻る。"
+    });
+    upsertCard({
+      id: "aiben_vs_nyotei_title_match", name: "アイベンVSにょていタイトルマッチ", type: "environment", cost: 2, attack: null, hp: null,
+      availability: "deck", placement: "環境マス",
+      effect: "各プレイヤーは自分のターンに1回、自分のデッキから「アイベン」または「にょてい」1枚を選び、手札に加えてよい。そうした場合、相手は選ばなかったもう一方を自分のデッキから手札に加える。加えられない場合、相手はカードを2枚ドローする。",
+      combo: "アイベン / にょてい", notes: "選ぶ側のデッキに選んだカードがある場合にのみ使える。"
+    });
+    function normalizeLectureRoomText(value) {
+      return String(value || "")
+        .replaceAll("お互いの場", "お互いの講義室")
+        .replaceAll("自分の場", "自分の講義室")
+        .replaceAll("相手の場", "相手の講義室")
+        .replaceAll("場の", "講義室の")
+        .replaceAll("場に", "講義室に")
+        .replaceAll("場を", "講義室を")
+        .replaceAll("場へ", "講義室へ")
+        .replaceAll("場から", "講義室から")
+        .replaceAll("場が", "講義室が")
+        .replaceAll("場は", "講義室は")
+        .replaceAll("場で", "講義室で");
+    }
+    CARDS.forEach((card) => {
+      card.effect = normalizeLectureRoomText(card.effect);
+      card.notes = normalizeLectureRoomText(card.notes);
+    });
     const TYPE_LABELS = {"student":"学生","teacher":"教師","vampire":"ヴァンパイア","item":"持ち物","environment":"環境"};
     const AVAILABILITY_LABELS = {"deck":"デッキ投入","generated":"生成限定","token":"トークン"};
     const TYPE_ORDER = { student: 0, teacher: 1, vampire: 2, item: 3, environment: 4 };

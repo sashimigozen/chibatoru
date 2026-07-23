@@ -1425,6 +1425,11 @@
       transform: translateY(-1px);
     }
 
+    .field-card.selection-candidate {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.28);
+    }
+
     .field-card.attack-ready {
       border-color: #16a34a;
     }
@@ -1494,6 +1499,10 @@
 
     .field-stat.hp {
       background: #15803d;
+    }
+
+    .field-stat.defense {
+      background: #4f46e5;
     }
 
     .field-card-status {
@@ -1819,6 +1828,12 @@
       right: -1px;
       bottom: -1px;
       background: #15803d;
+    }
+
+    .stat-defense {
+      top: -1px;
+      right: -1px;
+      background: #4f46e5;
     }
 
     .board-card .card-stat {
@@ -6196,7 +6211,7 @@
         <div class="mulligan-hand" id="mulliganHand"></div>
         <div class="mulligan-action-row hidden" id="thinItemChoiceActions">
           <button class="button mulligan-hand-button" id="thinItemKeepConfirmButton" type="button">この4枚を残す</button>
-          <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="盤面を見る" title="盤面を見る">
+          <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="講義室を見る" title="講義室を見る">
             <span class="eye-icon closed" aria-hidden="true"></span>
           </button>
         </div>
@@ -6210,7 +6225,7 @@
         <div class="mulligan-hand" id="threeGesturesHand"></div>
         <div class="mulligan-action-row">
           <button class="button mulligan-hand-button" id="threeGesturesConfirmButton" type="button">3枚選択で確定</button>
-          <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="盤面を見る" title="盤面を見る">
+          <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="講義室を見る" title="講義室を見る">
             <span class="eye-icon closed" aria-hidden="true"></span>
           </button>
         </div>
@@ -6249,7 +6264,7 @@
 
         <section class="panel player-board opponent-board" id="opponentBoardPanel">
           <div class="panel-head">
-            <h2 id="opponentBoardTitle">相手の盤面</h2>
+            <h2 id="opponentBoardTitle">相手の講義室</h2>
             <button class="life-target" data-life-target="opponent" id="opponentLifeTarget">相手本体</button>
           </div>
           <div class="late-zone" id="opponentLateZone"></div>
@@ -6269,7 +6284,7 @@
 
         <section class="panel player-board" id="playerBoardPanel">
           <div class="panel-head">
-            <h2 id="playerBoardTitle">あなたの盤面</h2>
+            <h2 id="playerBoardTitle">あなたの講義室</h2>
             <button class="life-target" data-life-target="player" id="playerLifeTarget">あなた本体</button>
           </div>
           <div class="professor-lane" id="playerProfessorLane"></div>
@@ -6399,7 +6414,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.13.1";
+    const GAME_DATA_VERSION = "0.14.0";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -6569,12 +6584,21 @@
       ,enemy_boss: ["enemy_student", "enemy_student"]
       ,pachin_uni: ["general_student"]
       ,ikemasu: ["general_student"]
+      ,full_throttle: ["ruler", "bento"]
+      ,front_door: ["door_war"]
+      ,door_front: ["door_war"]
+      ,back_door: ["door_war"]
+      ,furious_comeback: ["general_student"]
+      ,stand_up: ["shogi_duel_field"]
+      ,door_war: ["general_student"]
+      ,shogi_duel_field: []
+      ,aiben_vs_nyotei_title_match: []
     };
     const ALL_DECK_IDS = [
       "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
-      "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
+      "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
       "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
       "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire",
@@ -6583,8 +6607,9 @@
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo", "yamanashi_minimum_wage",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture", "baka_mac", "ikemasu",
       "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
+      "full_throttle", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
       "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
-      "classroom", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur"
+      "classroom", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur", "door_war", "shogi_duel_field", "aiben_vs_nyotei_title_match"
     ];
     const CARD_COPY_LIMITS = {
       circle_crab: 2,
@@ -6596,7 +6621,7 @@
       "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
       "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
-      "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun",
+      "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo", "chigauyo_kanji",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
@@ -6644,12 +6669,15 @@
       college_student_vibe: { name: "大学生って感じの学生", type: "student", cost: 4, attack: 1, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       enemy_student: { name: "敵", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       enemy_boss: { name: "敵のボス", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
-      live_person: { name: "ライブ人", type: "student", cost: 4, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
+      live_person: { name: "ライブ人", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       dobby: { name: "ドービィ", type: "student", cost: 6, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       pachin_uni: { name: "パチンウニー", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       protein_drinker: { name: "プロテインドリンカー", type: "student", cost: 4, attack: 1, hp: 7, allowedZones: ["seat", "teacher"] },
       proliferating_enemy: { name: "増殖する敵", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
-      delayed_student: { name: "遅延する学生", type: "student", cost: 6, attack: 3, hp: 4, rowOnly: 3, allowedZones: ["seat"] },
+      delayed_student: { name: "遅延する学生", type: "student", cost: 4, attack: 1, hp: 2, rowOnly: 3, allowedZones: ["seat"] },
+      infight_shogi: { name: "インファイト将棋部", type: "student", cost: 10, attack: 0, hp: 0, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
+      aiben: { name: "アイベン", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+      nyotei: { name: "にょてい", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       fridge_thief: { name: "冷蔵庫泥棒", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       failure_student: { name: "何をやってもダメな学生", type: "student", cost: 3, attack: 0, hp: 3, allowedZones: ["seat", "teacher"] },
       success_student: { name: "何をやっても成功する学生", type: "student", cost: 0, attack: 2, hp: 4, evolutionFrom: "failure_student", allowedZones: ["evolution"] },
@@ -6748,6 +6776,13 @@
       yamanashi_minimum_wage: { name: "山梨最低賃金2円", type: "item", cost: 3, target: "self" },
       baka_mac: { name: "バカMac", type: "item", cost: 4, target: "self" },
       ikemasu: { name: "いけます", type: "item", cost: 1, target: "self" },
+      full_throttle: { name: "フルスロットルだぜ！", type: "item", cost: 3, target: "self" },
+      scared_me: { name: "ケっ！びびらせやがって", type: "item", cost: 3, target: "self" },
+      front_door: { name: "前ドア前", type: "item", cost: 3, target: "self" },
+      door_front: { name: "ドア前", type: "item", cost: 3, target: "self" },
+      back_door: { name: "後ドア前", type: "item", cost: 3, target: "self" },
+      furious_comeback: { name: "怒涛のまくり", type: "item", cost: 2, target: "self" },
+      stand_up: { name: "立てー！！", type: "item", cost: 1, target: "self" },
       thanks_all_students: { name: "全ての学生に感謝を込めて", type: "item", cost: 6, target: "global" },
       alpha: { name: "アルファ", type: "item", cost: 0, noCost: true, target: "none", unusable: true },
       beta: { name: "ベータ", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
@@ -6772,6 +6807,9 @@
       dorm_council: { name: "寮友会", type: "environment", cost: 3, allowedZones: ["environment"] },
       on_demand_business: { name: "オンデマンド授業", type: "environment", cost: 3, allowedZones: ["environment"] },
       cote_dazur: { name: "コートダジュール", type: "environment", cost: 8, allowedZones: ["environment"] },
+      door_war: { name: "ドア前戦争", type: "environment", cost: 2, allowedZones: ["environment"] },
+      shogi_duel_field: { name: "将棋部の決闘フィールド", type: "environment", cost: 5, allowedZones: ["environment"] },
+      aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "environment", cost: 2, allowedZones: ["environment"] },
       loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       ta_killer: { name: "TAキラー", type: "student", cost: 5, attack: 2, hp: 4, allowedZones: ["seat", "teacher"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
@@ -6780,6 +6818,21 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.14.0",
+        date: "2026年7月23日",
+        summary: "講義室・防御力と、新しいドア前／将棋部／アイベンVSにょていのカード群を追加。",
+        changes: [
+          { title: "用語", before: "場", after: "講義室。席マス・教卓マス・環境マスをまとめて指す呼び方に変更。" },
+          { title: "防御力", after: "出席者の防御力を追加。受けるダメージは防御力ぶん減り、0未満にはならない。直接破壊には影響しない。" },
+          { title: "新カード", after: "フルスロットルだぜ！、ケっ！びびらせやがって、ドア前戦争、前ドア前、ドア前、後ドア前、怒涛のまくり、立てー！！、将棋部の決闘フィールド、インファイト将棋部、アイベン、にょてい、アイベンVSにょていタイトルマッチを追加。" },
+          { title: "遅延する学生", before: "戦意6／攻撃力3／体力4。", after: "戦意4／攻撃力1／体力2。" },
+          { title: "ライブ人", before: "戦意4／攻撃力1／体力2。相手の出席者の攻撃力を3にする。", after: "戦意3／攻撃力1／体力1。相手の出席者の攻撃力を2にする。" },
+          { title: "ドービィ", before: "攻撃力3以上の相手の学生を対象にする。", after: "攻撃力3以上の相手の出席者を対象にする。" },
+          { title: "いけます", before: "一般学生を手札に生成する。", after: "陽気を持つ一般学生を手札に生成する。" },
+          { title: "パンパン", after: "自分の出席者を指名・確定してから、相手の出席者を指名・確定する二段階の操作に変更。選べる出席者は青く表示される。" }
+        ]
+      },
       {
         version: "ver.0.13.1",
         date: "2026年7月19日",
@@ -7060,10 +7113,10 @@
       "ドロー": ["onigiri_draw", "hondara", "fire_touch", "wet_meal_ticket", "dry_meal_ticket", "deck_without", "three_gestures", "sage_legacy", "ttb"],
       "サーチ・生成": ["lightning_n", "pro_k", "trpg_member", "curry_treater", "environment_setup", "iv_pack", "music_detergent", "ikemasu", "ttb", "alpha", "beta", "gamma"],
       "回復": ["aggro_eater", "bento", "fluid_pasta", "peaceful_mind", "onigiri_draw", "circle_crab", "hair_crab", "homeless_crab", "laughing_front_student"],
-      "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student"],
-      "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "protein_drinker", "dobby", "live_person", "chaos_world"],
+      "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "scared_me", "front_door"],
+      "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
-      "展開": ["pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu"],
+      "展開": ["pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
       "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
       "融合": ["ruler", "double_diamond"],
       "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
@@ -7312,7 +7365,7 @@
       {
         id: "basicStats",
         title: "基本編：カードの数字",
-        body: "カード左上が必要戦意、左下が攻撃力、右下が体力です。\n場に出ているカードは「出席者」と呼びます。",
+        body: "カード左上が必要戦意、左下が攻撃力、右下が体力です。\n講義室に出ているカードは「出席者」と呼びます。",
         focus: ".player-hand [data-base-id='general_student']"
       },
       {
@@ -7378,7 +7431,7 @@
       {
         id: "environmentIntro",
         title: "環境編：環境の特徴",
-        body: "環境は共有の環境マスに置くタイプです。\n場全体に影響し、別の環境で上書きできます。同名での上書きは原則できません。",
+        body: "環境は共有の環境マスに置くタイプです。\n講義室全体に影響し、別の環境で上書きできます。同名での上書きは原則できません。",
         focus: ".player-hand [data-base-id='cafeteria']"
       },
       {
@@ -7670,6 +7723,7 @@
       handCostTaxUntilActionTurn: 0,
       lifeShieldUntilTurn: 0,
       lifeShieldUntilSide: null,
+      lifeFloorShields: [],
       board: { seats: Array(9).fill(null), teacher: null }
       };
     }
@@ -8169,6 +8223,7 @@
         baseId,
         owner,
         handTurns: 0,
+        defense: base.defense ?? 0,
         maxHp: base.hp ?? null,
         currentHp: base.hp ?? null,
         instanceId: `${owner}-${baseId}-${nextCardInstanceId++}`
@@ -9177,7 +9232,7 @@
     }
 
     function onlineCommandCard(type, payload = {}) {
-      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent"]
+      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent", "fullThrottle"]
         .includes(type)
         ? getHandCard("player", payload.instanceId)
         : null;
@@ -9881,6 +9936,10 @@
           const item = getHandCard("opponent", payload.instanceId);
           if (item) resolveMusicDetergentChoice("opponent", item, payload.selectedBaseId || null, true);
         }
+        if (command.type === "fullThrottle") {
+          const item = getHandCard("opponent", payload.instanceId);
+          if (item) resolveFullThrottle("opponent", item, payload.selectedIds || [], true);
+        }
         if (command.type === "itemGlobal") {
           const item = getHandCard("opponent", payload.instanceId);
           if (item) castItemGlobal("opponent", item, true);
@@ -9931,6 +9990,9 @@
         if (command.type === "raptorTemple") {
           const source = onlineMapRefForHost(payload.source);
           if (source) resolveRaptorTempleExchange("opponent", source, payload.targetInstanceId, true);
+        }
+        if (command.type === "titleMatch") {
+          resolveTitleMatch("opponent", payload.selectedBaseId, true);
         }
         if (command.type === "endTurn") endTurn({ fromAi: true, meguroDiscardId: payload.meguroDiscardId || null });
         if (command.type === "concede") endGame("player", "相手が勝てないを選びました。", { retire: true });
@@ -10683,6 +10745,10 @@
         render();
         await sleep(AI_STEP_DELAY);
       }
+      if (tryUseAiTitleMatch()) {
+        render();
+        await sleep(AI_STEP_DELAY);
+      }
       await tryUseAiItems({ timing: "beforeBoard" });
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
@@ -11227,6 +11293,14 @@
         const openNeighbor = zone === "seat" && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
         score += (state.environment?.baseId === "cafeteria" ? 5 : 0) + (openNeighbor ? 45 : 0);
       }
+      if (["aiben", "nyotei"].includes(card.baseId)) {
+        const opponentOpenSeats = state.players.player.board.seats
+          .filter((seatCard, seatIndex) => !seatCard && isBoardSlotOpen("player", "seat", seatIndex)).length;
+        const ownOpenSeats = state.players.opponent.board.seats
+          .filter((seatCard, seatIndex) => !seatCard && isBoardSlotOpen("opponent", "seat", seatIndex)).length;
+        score += Math.min(opponentOpenSeats, ownOpenSeats + 1) * 4;
+        if (opponentOpenSeats === 0) score -= 8;
+      }
       if (card.baseId === "curry_treater") {
         score += state.players.opponent.deck.some((deckCard) => deckCard.baseId === "green_curry") ? 5 : -2;
       }
@@ -11360,6 +11434,25 @@
       }
       if (card.baseId === "design_domain") return hasDesignTeacherOnTeacherSlot("opponent") ? 8 + replacementBonus : -100;
       if (card.baseId === "chaos_world") return (listBoardRefs("player").length > listBoardRefs("opponent").length ? 4 : 1) + replacementBonus;
+      if (card.baseId === "door_war") {
+        const doorItems = state.players.opponent.hand.filter((handCard) => ["front_door", "door_front", "back_door"].includes(handCard.baseId)).length;
+        const sturdyNewCards = listBoardRefs("opponent").filter((ref) => {
+          const fieldCard = getBoardCardFromRef(ref);
+          return fieldCard?.playedOnTurn === state.actionTurn && (fieldCard.currentHp || 0) + (fieldCard.defense || 0) >= 3;
+        }).length;
+        return Math.max(0, 2 + doorItems * 4 + sturdyNewCards + replacementBonus);
+      }
+      if (card.baseId === "shogi_duel_field") {
+        const ownLife = state.players.opponent.life;
+        const enemyLife = state.players.player.life;
+        if (enemyLife <= 10 && ownLife > enemyLife) return 10 + replacementBonus;
+        if (ownLife <= 10 && enemyLife > ownLife) return 5 + replacementBonus;
+        return ownLife <= enemyLife ? 3 + replacementBonus : -2;
+      }
+      if (card.baseId === "aiben_vs_nyotei_title_match") {
+        const pairCards = state.players.opponent.deck.filter((deckCard) => ["aiben", "nyotei"].includes(deckCard.baseId)).length;
+        return pairCards > 0 ? 5 + pairCards * 2 + replacementBonus : -1;
+      }
       return 0;
     }
 
@@ -11429,6 +11522,26 @@
       if (item.baseId === "environment_setup") return deck.some((card) => card.type === "environment") ? 5 : 0;
       if (item.baseId === "baka_mac") return state.players.player.hand.length > 0 ? 4 + Math.min(5, state.players.player.hand.length) : 0;
       if (item.baseId === "ikemasu") return 4;
+      if (item.baseId === "full_throttle") {
+        const disposableItems = opponent.hand.filter((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId).length;
+        const enemyThreat = enemyCards.reduce((total, card) => total + scoreAiEnemyAttendeeThreat(card), 0);
+        return disposableItems > 0 && enemyCards.length > 0 ? 3 + Math.min(disposableItems, 5) * 2 + Math.min(8, enemyThreat * 0.25) : 0;
+      }
+      if (item.baseId === "scared_me") {
+        const students = enemyCards.filter((card) => card.type === "student");
+        return students.length > 0 ? 8 + Math.max(...students.map((card) => scoreAiEnemyAttendeeThreat(card) + (card.currentHp || 0) * 0.5)) : 0;
+      }
+      if (item.baseId === "front_door") {
+        const targets = enemyCards.filter((card) => card.type === "student");
+        return state.environment?.baseId === "door_war" && targets.length > 0 ? 8 + Math.min(8, targets.length * 2) : 0;
+      }
+      if (item.baseId === "door_front") {
+        const rowTwoStudents = state.players.opponent.board.seats.filter((card, seatIndex) => seatRow(seatIndex) === 2 && card?.type === "student").length;
+        return state.environment?.baseId === "door_war" && rowTwoStudents > 0 ? 5 + rowTwoStudents * 3 : 0;
+      }
+      if (item.baseId === "back_door") return state.environment?.baseId === "door_war" && opponent.life < currentLifeCap() ? 5 + (currentLifeCap() - opponent.life) : 0;
+      if (item.baseId === "furious_comeback") return opponent.life <= 10 && friendlyCards.length > 0 ? 4 + friendlyCards.length * 2 : 0;
+      if (item.baseId === "stand_up") return state.environment?.baseId === "shogi_duel_field" && opponent.life <= 4 ? 12 : 0;
       if (item.baseId === "iv_pack") return deck.some((card) => card.type === "vampire") ? 6 : 0;
       if (item.baseId === "wet_meal_ticket") return deck.length > 0 ? 4 : 0;
       if (item.baseId === "dry_meal_ticket") {
@@ -11569,6 +11682,17 @@
     function useAiItem(item) {
       if (isImmediateItemBaseId(item.baseId)) {
         return castImmediateItem("opponent", item, false);
+      }
+      if (item.baseId === "full_throttle") {
+        const discardable = state.players.opponent.hand
+          .filter((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId)
+          .sort((a, b) => baseScoreAiItem(a) - baseScoreAiItem(b));
+        const targets = effectTargetEntries("opponent", "player")
+          .sort((a, b) => scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref));
+        if (discardable.length === 0 || targets.length === 0) return false;
+        const highestNeeded = Math.max(1, ...targets.map(({ card }) => Math.max(1, (card.currentHp || 1) - (card.defense || 0))));
+        const selectedIds = discardable.slice(0, Math.min(discardable.length, highestNeeded)).map((card) => card.instanceId);
+        return resolveFullThrottle("opponent", item, selectedIds, false);
       }
       if (item.baseId === "aggro_eater") {
         const target = listBoardRefs("opponent")
@@ -11985,6 +12109,10 @@
             generateCardsIntoDeck(opponent, "suspicious_document", 1);
             addLog(`${card.name}の効果：相手のデッキに「怪しげな文書」を1枚生成しました。`);
           }
+          if (card.baseId === "nyotei") {
+            const drawn = drawOne(side, false) ? 1 : 0;
+            addLog(`${card.name}の効果：${drawn}枚ドローしました。`);
+          }
           if (card.baseId === "protein_drinker") {
             applyPermanentStatBuff(card, 1, 0);
             addLog(`${card.name}の効果：攻撃力を+1しました。`);
@@ -12008,6 +12136,16 @@
       }
       if (state.environment?.baseId === "night_pool") {
         summonToRandomOpenSeat(side, "single_cell", "ナイトプール");
+      }
+      if (state.environment?.baseId === "door_war") {
+        const candidates = listBoardRefs(side)
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((card) => card?.playedOnTurn === state.actionTurn && card.currentHp > 0);
+        const target = candidates[Math.floor(Math.random() * candidates.length)];
+        if (target) {
+          dealDamageToCard(target, 1, state.environment);
+          addLog(`ドア前戦争の効果：このターンに${SIDES[side]}が出席させた${target.name}に1ダメージ。`);
+        }
       }
       if (state.environment?.baseId === "meguro_library" && state.environment.owner === side) {
         const discarded = discardOneHandCardForMeguro(side, options.meguroDiscardId);
@@ -12149,6 +12287,25 @@
       showCardPlayAnimation(placed, "board");
       addLog(`${sourceName}の効果：${placed.name}をランダムな席マスに出席させました。`);
       resolveAttendEffects(side, placed, "seat", seatIndex);
+      return placed;
+    }
+
+    function summonAibenNyoteiChain(side, baseId, sourceName, depth = 0) {
+      if (depth >= 18) return null;
+      const targetSide = oppositeSide(side);
+      const openSeats = state.players[targetSide].board.seats
+        .map((seatCard, seatIndex) => (!seatCard && isBoardSlotOpen(targetSide, "seat", seatIndex) ? seatIndex : null))
+        .filter((seatIndex) => seatIndex !== null);
+      const seatIndex = openSeats[Math.floor(Math.random() * openSeats.length)];
+      if (seatIndex === undefined) {
+        addLog(`${sourceName}の効果：相手の空いている席マスがないため、${CARD_BASES[baseId].name}を出席させられません。`);
+        return null;
+      }
+      const placed = makeBoardCard(createCardFromBase(baseId, targetSide));
+      setBoardCard(targetSide, "seat", seatIndex, placed);
+      showCardPlayAnimation(placed, "board");
+      addLog(`${sourceName}の効果：相手のランダムな席マスに${placed.name}を出席させました。`);
+      resolveAttendEffects(targetSide, placed, "seat", seatIndex, { aibenNyoteiDepth: depth + 1 });
       return placed;
     }
 
@@ -12570,6 +12727,54 @@
       return true;
     }
 
+    function openFullThrottleChoice(item) {
+      if (!item || item.baseId !== "full_throttle") return false;
+      const candidates = state.players.player.hand.filter((handCard) => (
+        handCard.type === "item" && handCard.instanceId !== item.instanceId
+      ));
+      if (candidates.length === 0) return false;
+      state.selectedAttacker = null;
+      state.selectedHandId = item.instanceId;
+      return openCardChoice({
+        mode: "full_throttle",
+        itemId: item.instanceId,
+        title: "フルスロットルだぜ！",
+        message: "校外エリアへ送る持ち物を好きな枚数だけ選んでください。選んだ枚数と同じダメージを、相手の出席者へランダムに割り振ります。",
+        cards: candidates,
+        min: 0,
+        max: candidates.length,
+        confirmLabel: "選んだ持ち物を送る"
+      });
+    }
+
+    function resolveFullThrottle(side, item, selectedIds, renderAfter = true) {
+      if (!item || item.baseId !== "full_throttle") return false;
+      const selectedIdSet = new Set(selectedIds || []);
+      const discarded = state.players[side].hand.filter((handCard) => (
+        handCard.instanceId !== item.instanceId
+        && handCard.type === "item"
+        && selectedIdSet.has(handCard.instanceId)
+      ));
+      if (effectTargetEntries(side, oppositeSide(side)).length === 0 || !payForItem(side, item)) return false;
+      showCardPlayAnimation(item, "trash");
+      state.players[side].hand = state.players[side].hand.filter((handCard) => (
+        handCard.instanceId === item.instanceId || !selectedIdSet.has(handCard.instanceId)
+      ));
+      discarded.forEach((card) => moveToTrash(side, card));
+      const summary = dealDistributedDamageToRandomTargets({
+        source: item,
+        targetSide: oppositeSide(side),
+        hitCount: discarded.length
+      });
+      moveHandCardToTrash(side, item);
+      addLog(`${SIDES[side]}はフルスロットルだぜ！を使い、持ち物${discarded.length}枚を校外エリアへ送り、相手の出席者へ合計${summary.attendeeDamage}ダメージをランダムに割り振りました。`);
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
     function toggleCardChoiceCard(instanceId) {
       const pending = state.pendingCardChoice;
       if (!pending) return;
@@ -12592,6 +12797,19 @@
       const itemId = pending.itemId;
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
+      if (mode === "full_throttle") {
+        const item = getHandCard("player", itemId);
+        if (!item) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("fullThrottle", { instanceId: item.instanceId, selectedIds });
+          state.message = "フルスロットルだぜ！の選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveFullThrottle("player", item, selectedIds, true);
+        return;
+      }
       if (mode === "paired_existence") {
         const item = getHandCard("player", itemId);
         const target = getHandCard("player", selectedIds[0]);
@@ -12664,6 +12882,19 @@
           return;
         }
         resolveRaptorTempleExchange("player", sourceRef, selectedIds[0], true);
+        return;
+      }
+      if (mode === "title_match") {
+        const selectedBaseId = selectedCards[0]?.baseId;
+        if (!selectedBaseId) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("titleMatch", { selectedBaseId });
+          state.message = "アイベンVSにょていタイトルマッチの選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveTitleMatch("player", selectedBaseId, true);
         return;
       }
       if (mode === "bad_student_online_play") {
@@ -12790,6 +13021,7 @@
         openThreeGesturesSelection(item);
         return;
       }
+      if (item.baseId === "full_throttle" && openFullThrottleChoice(item)) return;
       if (item.baseId === "music_detergent" && openMusicDetergentChoice(item)) return;
       if (item.baseId === "dropped_cards" && openDroppedCardsChoice(item)) return;
       if (item.baseId === "sage_legacy" && openSageLegacyChoice(item)) return;
@@ -12815,8 +13047,8 @@
       if (item.baseId === "panpan") {
         state.selectedAttacker = null;
         state.selectedHandId = item.instanceId;
-        state.pendingPanpanItem = { itemId: item.instanceId, friendly: null, enemy: null };
-        state.message = "自分の出席者1人と相手の出席者1人を指名して、対象を確定してください。";
+        state.pendingPanpanItem = { itemId: item.instanceId, friendly: null, enemy: null, stage: "friendly" };
+        state.message = "パンパン：まず、自分の出席者1人を指名してください。";
         render();
         return;
       }
@@ -13444,6 +13676,11 @@
           }
           state.environment = placedCard;
           if (card.baseId !== "full_lock") state.fullLockSeatBlocks = [];
+          if (card.baseId === "shogi_duel_field") {
+            ["player", "opponent"].forEach((lifeSide) => {
+              state.players[lifeSide].life = Math.min(10, state.players[lifeSide].life);
+            });
+          }
         }
         const costLog = card.noCost ? "戦意なし" : `戦意-${playCost}`;
         addLog(`${SIDES[side]}は${card.name}を出席させました。${costLog}。`);
@@ -13483,7 +13720,9 @@
         ...card,
         baseAttack: card.attack ?? null,
         baseMaxHp: card.hp ?? null,
+        baseDefense: card.defense ?? 0,
         attack: card.attack ?? null,
+        defense: card.defense ?? 0,
         maxHp: card.hp ?? null,
         currentHp: card.hp ?? null,
         hasAttacked: false,
@@ -13783,26 +14022,39 @@
           addLog(`${card.name}の効果：自分の場の「敵」が2人未満のため、発動しませんでした。`);
         }
       }
+      if (card.baseId === "infight_shogi") {
+        state.players[side].life = 1;
+        state.players[side].lifeShieldUntilTurn = state.actionTurn + 1;
+        state.players[side].lifeShieldUntilSide = opponent;
+        showFloatingTextForLife(side, "気力1", "damage");
+        addLog(`${card.name}の効果：自分の気力を1にし、次の相手ターン終了時まで気力ダメージを受けなくしました。`);
+      }
+      if (card.baseId === "aiben") {
+        summonAibenNyoteiChain(side, "nyotei", card.name, options.aibenNyoteiDepth || 0);
+      }
+      if (card.baseId === "nyotei") {
+        summonAibenNyoteiChain(side, "aiben", card.name, options.aibenNyoteiDepth || 0);
+      }
       if (card.baseId === "live_person") {
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const target = getBoardCardFromRef(ref);
           if (!target) return;
-          target.baseAttack = 3;
-          target.attack = 3;
+          target.baseAttack = 2;
+          target.attack = 2;
           affected += 1;
         });
-        addLog(`${card.name}の効果：相手の出席者${affected}人の攻撃力を3にしました。`);
+        addLog(`${card.name}の効果：相手の出席者${affected}人の攻撃力を2にしました。`);
       }
       if (card.baseId === "dobby") {
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const target = getBoardCardFromRef(ref);
-          if (target?.type !== "student" || target.attack < 3) return;
+          if (!target || target.attack < 3) return;
           applyPermanentStatBuff(target, -2, 0);
           affected += 1;
         });
-        addLog(`${card.name}の効果：攻撃力3以上の相手の学生${affected}人の攻撃力を-2しました。`);
+        addLog(`${card.name}の効果：攻撃力3以上の相手の出席者${affected}人の攻撃力を-2しました。`);
       }
       if (card.baseId === "pachin_uni") {
         let summoned = 0;
@@ -15359,26 +15611,36 @@
       const target = getBoardCard(owner, zone, index);
       if (!pending || !target) return;
       const ref = { owner, zone, index };
-      if (owner === "player") {
+      if (pending.stage === "friendly" && owner === "player") {
         pending.friendly = isSameBoardRef(pending.friendly, ref) ? null : ref;
-      } else if (owner === "opponent") {
+      } else if (pending.stage === "enemy" && owner === "opponent") {
         if (!isAllowedEffectTarget("player", target)) {
           addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
           render();
           return;
         }
         pending.enemy = isSameBoardRef(pending.enemy, ref) ? null : ref;
+      } else {
+        return;
       }
-      const friendlyText = pending.friendly ? "自分1体" : "自分未選択";
-      const enemyText = pending.enemy ? "相手1体" : "相手未選択";
-      state.message = `パンパン：${friendlyText} / ${enemyText}`;
+      state.message = pending.stage === "friendly"
+        ? `パンパン：自分の出席者${pending.friendly ? "を選択しました。確定してください。" : "を1人指名してください。"}`
+        : `パンパン：相手の出席者${pending.enemy ? "を選択しました。確定してください。" : "を1人指名してください。"}`;
       render();
     }
 
     function confirmPanpanTargets() {
       const pending = state.pendingPanpanItem;
       const item = pending ? getHandCard("player", pending.itemId) : null;
-      if (!pending || !item || !pending.friendly || !pending.enemy) return;
+      if (!pending || !item) return;
+      if (pending.stage === "friendly") {
+        if (!pending.friendly) return;
+        pending.stage = "enemy";
+        state.message = "パンパン：次に、相手の出席者1人を指名してください。";
+        render();
+        return;
+      }
+      if (!pending.friendly || !pending.enemy) return;
       if (onlineCanSendCommand()) {
         onlineSendCommand("panpan", { instanceId: item.instanceId, friendly: pending.friendly, enemy: pending.enemy });
         state.message = "パンパンの対象を送信しました。";
@@ -15584,6 +15846,21 @@
       }
       if (item.baseId === "smart_me" && !state.players[oppositeSide(side)].late.some((entry) => entry.card?.type === "student")) {
         addLog("スマートミーは相手の遅刻ゾーンに学生がいないため使えません。");
+        if (renderAfter) render();
+        return false;
+      }
+      if (["front_door", "door_front", "back_door"].includes(item.baseId) && state.environment?.baseId !== "door_war") {
+        addLog(`${item.name}は環境がドア前戦争のときにしか使えません。`);
+        if (renderAfter) render();
+        return false;
+      }
+      if (item.baseId === "stand_up" && state.environment?.baseId !== "shogi_duel_field") {
+        addLog("立てー！！は環境が将棋部の決闘フィールドのときにしか使えません。");
+        if (renderAfter) render();
+        return false;
+      }
+      if (item.baseId === "furious_comeback" && state.players[side].life > 10) {
+        addLog("怒涛のまくりは自分の気力が10以下の場合にしか使えません。");
         if (renderAfter) render();
         return false;
       }
@@ -15855,8 +16132,64 @@
         resultText = "次の自分のターン開始時まで、相手の手札にあるカードの戦意を+1しました。";
       }
       if (item.baseId === "ikemasu") {
-        state.players[side].hand.push(createCardFromBase("general_student", side));
-        resultText = "「一般学生」を1枚手札に生成しました。";
+        const generated = createCardFromBase("general_student", side);
+        addKeyword(generated, "陽気");
+        state.players[side].hand.push(generated);
+        resultText = "陽気を持つ「一般学生」を1枚手札に生成しました。";
+      }
+      if (item.baseId === "scared_me") {
+        const candidates = effectTargetEntries(side, oppositeSide(side), (target) => target.type === "student");
+        if (candidates.length === 0) {
+          addLog("ケっ！びびらせやがっては、相手の学生がいないため使えませんでした。");
+          if (renderAfter) render();
+          return false;
+        }
+        const highestHp = Math.max(...candidates.map((entry) => entry.card.currentHp));
+        const target = candidates.filter((entry) => entry.card.currentHp === highestHp)[Math.floor(Math.random() * candidates.filter((entry) => entry.card.currentHp === highestHp).length)];
+        if (target) {
+          destroyBoardCard(target.ref);
+          resultText = `相手の学生のうち体力が最も高い${target.card.name}をランダムに指名し、破壊しました。`;
+        }
+      }
+      if (item.baseId === "front_door") {
+        const summary = dealDistributedDamageToRandomTargets({
+          source: item,
+          targetSide: oppositeSide(side),
+          hitCount: 7,
+          cardPredicate: (target) => target.type === "student"
+        });
+        resultText = `相手の学生に合計${summary.attendeeDamage}ダメージをランダムに割り振りました。`;
+      }
+      if (item.baseId === "door_front") {
+        let affected = 0;
+        state.players[side].board.seats.forEach((target, seatIndex) => {
+          if (seatRow(seatIndex) !== 2 || target?.type !== "student") return;
+          addKeyword(target, "超陽気");
+          affected += 1;
+        });
+        resultText = `自分の2行目にいる学生${affected}人に超陽気を与えました。`;
+      }
+      if (item.baseId === "back_door") {
+        healPlayer(side, 7);
+        resultText = "自分の気力を7回復しました。";
+      }
+      if (item.baseId === "furious_comeback") {
+        let affected = 0;
+        listBoardRefs(side).forEach((ref) => {
+          const target = getBoardCardFromRef(ref);
+          if (!target) return;
+          applyPermanentStatBuff(target, 2, 0);
+          affected += 1;
+        });
+        resultText = `自分の出席者${affected}人の攻撃力を+2しました。`;
+      }
+      if (item.baseId === "stand_up") {
+        const player = state.players[side];
+        player.lifeFloorShields = [...(player.lifeFloorShields || []), {
+          untilActionTurn: state.actionTurn + 1,
+          againstSide: oppositeSide(side)
+        }];
+        resultText = "次の相手ターン中、自分の気力が1未満になる場合、1になるようにしました。";
       }
       if (!itemAlreadyMovedToTrash) moveHandCardToTrash(side, item);
       if (state.players[oppositeSide(side)]?.life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(item);
@@ -16388,6 +16721,7 @@
         if (teacherSlotCard) {
           applyEnvironmentStatAura(teacherSlotCard);
           applyCafeteriaVampireAura(teacherSlotCard);
+          applyDerivedDefense(teacherSlotCard, (teacherSlotCard.baseDefense ?? 0) + aibenNyoteiStatBonus(teacherSlotCard).defense);
         }
         state.players[owner].board.seats.forEach((card, index) => {
           if (!card || card.currentHp === null) return;
@@ -16418,6 +16752,8 @@
           const cafeteriaBonus = cafeteriaVampireStatBonus(card);
           newAttack += cafeteriaBonus.attack;
           newMaxHp += cafeteriaBonus.hp;
+          const aibenNyoteiBonus = aibenNyoteiStatBonus(card);
+          newAttack += aibenNyoteiBonus.attack;
           newMaxHp += designTextbookHpBonus(card);
           if (card.baseId === "enemy_student" && listBoardRefs(oppositeSide(owner)).some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member")) {
             newAttack += 5;
@@ -16434,6 +16770,7 @@
             if (card.type === "student") newAttack -= 1;
           }
           applyDerivedStats(card, newAttack, newMaxHp);
+          applyDerivedDefense(card, (card.baseDefense ?? 0) + aibenNyoteiBonus.defense);
         });
       });
     }
@@ -16452,13 +16789,24 @@
       const baseAttack = card.baseAttack ?? card.attack;
       const baseMaxHp = card.baseMaxHp ?? card.maxHp;
       const coteBonus = isAeNameCard(card) && state.environment?.baseId === "cote_dazur" ? 10 : 0;
-      let newAttack = baseAttack + (state.environment?.baseId === "dark_student_council" ? 2 : 0) + coteBonus;
+      const aibenNyoteiBonus = aibenNyoteiStatBonus(card);
+      let newAttack = baseAttack + (state.environment?.baseId === "dark_student_council" ? 2 : 0) + coteBonus + aibenNyoteiBonus.attack;
       if (state.environment?.baseId === "building_12_classroom") {
         if (card.type === "teacher") newAttack += 1;
         if (card.type === "student") newAttack -= 1;
       }
       const newMaxHp = baseMaxHp + (state.environment?.baseId === "student_council" ? 2 : 0) + coteBonus + designTextbookHpBonus(card);
       applyDerivedStats(card, newAttack, newMaxHp);
+    }
+
+    function aibenNyoteiStatBonus(card) {
+      if (!card?.owner) return { attack: 0, defense: 0 };
+      const opponent = oppositeSide(card.owner);
+      const hasOpponentCard = (baseId) => listBoardRefs(opponent)
+        .some((ref) => getBoardCardFromRef(ref)?.baseId === baseId);
+      if (card.baseId === "aiben" && hasOpponentCard("nyotei")) return { attack: 5, defense: 0 };
+      if (card.baseId === "nyotei" && hasOpponentCard("aiben")) return { attack: 2, defense: 2 };
+      return { attack: 0, defense: 0 };
     }
 
     function designTextbookHpBonus(card) {
@@ -16477,7 +16825,7 @@
       applyDerivedStats(card, newAttack, newMaxHp);
     }
 
-    function applyPermanentStatBuff(card, attackBonus, hpBonus) {
+    function applyPermanentStatBuff(card, attackBonus, hpBonus, defenseBonus = 0) {
       if (!card) return;
       if (attackBonus) {
         card.baseAttack = (card.baseAttack ?? card.attack ?? 0) + attackBonus;
@@ -16488,6 +16836,15 @@
         card.maxHp = (card.maxHp ?? 0) + hpBonus;
         card.currentHp = (card.currentHp ?? 0) + hpBonus;
       }
+      if (defenseBonus) {
+        card.baseDefense = Math.max(0, (card.baseDefense ?? card.defense ?? 0) + defenseBonus);
+        card.defense = Math.max(0, (card.defense ?? 0) + defenseBonus);
+      }
+    }
+
+    function applyDerivedDefense(card, newDefense) {
+      if (!card) return;
+      card.defense = Math.max(0, Number(newDefense) || 0);
     }
 
     function isGangiBuffSeat(index) {
@@ -16519,9 +16876,11 @@
       }
       const multiplier = !ignoreWeakness && isVampireWeaknessDamage(card, source) ? 2 : 1;
       const finalDamage = amount * multiplier;
-      showFloatingTextForCard(card, `-${finalDamage}`, "damage");
-      card.currentHp -= finalDamage;
-      const dealt = Math.min(beforeHp, finalDamage);
+      const defense = Math.max(0, Number(card.defense) || 0);
+      const reducedDamage = Math.max(0, finalDamage - defense);
+      showFloatingTextForCard(card, reducedDamage > 0 ? `-${reducedDamage}` : "防御", reducedDamage > 0 ? "damage" : "heal");
+      card.currentHp -= reducedDamage;
+      const dealt = Math.min(beforeHp, reducedDamage);
       if (source) {
         card.lastDamageSource = analyticsCardInfo(source);
         analyticsAddDamage(source, dealt);
@@ -16531,7 +16890,7 @@
         source,
         effectType: "damage_card",
         chosenTargets: [analyticsCardInfo(card)],
-        damageDistribution: { amount, finalDamage, dealt, multiplier },
+        damageDistribution: { amount, finalDamage, defense, dealt, multiplier },
         details: {
           targetOwner: card.owner || null,
           targetDiedAfterDamage: card.currentHp <= 0,
@@ -16548,7 +16907,7 @@
         return Math.max(0, card.currentHp);
       }
       const multiplier = !ignoreWeakness && isVampireWeaknessDamage(card, source) ? 2 : 1;
-      return amount * multiplier;
+      return Math.max(0, (amount * multiplier) - Math.max(0, Number(card.defense) || 0));
     }
 
     function dealDistributedDamageToRandomTargets(options = {}) {
@@ -16654,7 +17013,17 @@
         return;
       }
       const before = state.players[side].life;
-      state.players[side].life = Math.max(0, state.players[side].life - amount);
+      const shieldIndex = (player.lifeFloorShields || []).findIndex((shield) => (
+        shield?.untilActionTurn >= state.actionTurn && shield.againstSide === state.currentSide
+      ));
+      if (before - amount <= 0 && shieldIndex >= 0) {
+        player.lifeFloorShields.splice(shieldIndex, 1);
+        player.life = 1;
+        showFloatingTextForLife(side, "踏みとどまる", "heal");
+        addLog(`${SIDES[side]}は「立てー！！」の効果で、気力が1未満になりませんでした。`);
+        return;
+      }
+      state.players[side].life = Math.max(0, before - amount);
       const dealt = before - state.players[side].life;
       analyticsRecordEffect({
         side: state.currentSide,
@@ -16669,9 +17038,13 @@
     function healPlayer(side, amount) {
       if (amount <= 0) return;
       const before = state.players[side].life;
-      state.players[side].life = Math.min(20, state.players[side].life + amount);
+      state.players[side].life = Math.min(currentLifeCap(), state.players[side].life + amount);
       const healed = state.players[side].life - before;
       if (healed > 0) showFloatingTextForLife(side, `+${healed}`, "heal");
+    }
+
+    function currentLifeCap() {
+      return state.environment?.baseId === "shogi_duel_field" ? 10 : 20;
     }
 
     function runEffectFeedbackSequence(callback) {
@@ -17344,8 +17717,24 @@
     }
 
     function addLog(message) {
-      state.log.unshift(message);
+      state.log.unshift(normalizeLectureRoomText(message));
       state.log = state.log.slice(0, 40);
+    }
+
+    function normalizeLectureRoomText(value) {
+      return String(value || "")
+        .replaceAll("お互いの場", "お互いの講義室")
+        .replaceAll("自分の場", "自分の講義室")
+        .replaceAll("相手の場", "相手の講義室")
+        .replaceAll("場全体", "講義室全体")
+        .replaceAll("場の", "講義室の")
+        .replaceAll("場に", "講義室に")
+        .replaceAll("場を", "講義室を")
+        .replaceAll("場へ", "講義室へ")
+        .replaceAll("場から", "講義室から")
+        .replaceAll("場が", "講義室が")
+        .replaceAll("場は", "講義室は")
+        .replaceAll("場で", "講義室で");
     }
 
     function render() {
@@ -17532,8 +17921,8 @@
       elements.opponentRpsLabel.textContent = spectator ? "プレイヤー2" : SIDES.opponent;
       elements.playerHandTitle.textContent = spectator ? "プレイヤー1の手札" : "あなたの手札";
       elements.opponentHandTitle.textContent = spectator ? "プレイヤー2の手札" : "相手の手札";
-      elements.playerBoardTitle.textContent = spectator ? "プレイヤー1の盤面" : "あなたの盤面";
-      elements.opponentBoardTitle.textContent = spectator ? "プレイヤー2の盤面" : "相手の盤面";
+      elements.playerBoardTitle.textContent = spectator ? "プレイヤー1の講義室" : "あなたの講義室";
+      elements.opponentBoardTitle.textContent = spectator ? "プレイヤー2の講義室" : "相手の講義室";
       elements.phaseText.textContent = phaseLabel();
       elements.currentSideText.textContent = state.phase === "battle"
         ? (spectator ? (state.currentSide === "player" ? "プレイヤー1" : "プレイヤー2") : SIDES[state.currentSide])
@@ -17548,7 +17937,7 @@
       elements.playerWillHud.textContent = `${state.players.player.will}/${state.players.player.maxWill}`;
       elements.playerWillHudPill.classList.toggle("hidden", state.phase !== "battle");
       elements.deckText.textContent = `${state.players.player.deck.length} / ${state.players.opponent.deck.length}`;
-      elements.message.textContent = state.message;
+      elements.message.textContent = normalizeLectureRoomText(state.message);
       elements.deckRuleText.textContent = deckValidation.valid ? `${deckValidation.size}枚 / 同名3枚OK` : "デッキ要確認";
       elements.playerBoardPanel.classList.toggle("current", state.currentSide === "player" && state.phase === "battle");
       elements.opponentBoardPanel.classList.toggle("current", state.currentSide === "opponent" && state.phase === "battle");
@@ -17621,11 +18010,15 @@
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? `対象${state.pendingMultiItem.targets.length}人で使用`
         : state.pendingPanpanItem
-          ? "2体を破壊"
+          ? (state.pendingPanpanItem.stage === "friendly" ? "自分の出席者を確定" : "2人を破壊")
           : "対象を確定";
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
         || (state.pendingMultiItem && state.pendingMultiItem.targets.length === 0)
-        || (state.pendingPanpanItem && (!state.pendingPanpanItem.friendly || !state.pendingPanpanItem.enemy));
+        || (state.pendingPanpanItem && (
+          state.pendingPanpanItem.stage === "friendly"
+            ? !state.pendingPanpanItem.friendly
+            : (!state.pendingPanpanItem.friendly || !state.pendingPanpanItem.enemy)
+        ));
       elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || choosingItemTargets || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
         || state.phase !== "battle"
@@ -18157,6 +18550,24 @@
       if (item.baseId === "music_detergent" && uniqueDesignDeckCandidates("player").length === 0 && countFriendlyDesignTeachers("player") === 0) return false;
       if (item.baseId === "donguri") return canUseDonguri("player", item);
       if (item.baseId === "gamma" && state.players.opponent.board.seats[4]) return false;
+      if (item.baseId === "full_throttle") {
+        return effectTargetEntries("player", "opponent").length > 0
+          && state.players.player.hand.some((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId);
+      }
+      if (item.baseId === "scared_me") {
+        return effectTargetEntries("player", "opponent", (target) => target.type === "student").length > 0;
+      }
+      if (item.baseId === "front_door") {
+        return state.environment?.baseId === "door_war"
+          && effectTargetEntries("player", "opponent", (target) => target.type === "student").length > 0;
+      }
+      if (item.baseId === "door_front") {
+        return state.environment?.baseId === "door_war"
+          && state.players.player.board.seats.some((target, seatIndex) => seatRow(seatIndex) === 2 && target?.type === "student");
+      }
+      if (item.baseId === "back_door") return state.environment?.baseId === "door_war";
+      if (item.baseId === "furious_comeback") return state.players.player.life <= 10 && listBoardRefs("player").length > 0;
+      if (item.baseId === "stand_up") return state.environment?.baseId === "shogi_duel_field";
       if (isImmediateItemBaseId(item.baseId)) return true;
       if (item.target === "global") return true;
       if (item.baseId === "paired_existence") {
@@ -18402,7 +18813,7 @@
         && !state.preBattleBusy
       ));
       elements.initialDealHand.classList.toggle("hidden", state.phase !== "dealing");
-      elements.preBattleMessage.textContent = state.message;
+      elements.preBattleMessage.textContent = normalizeLectureRoomText(state.message);
 
       if (state.phase === "versus") {
         elements.preBattleTitle.textContent = isOnlineBattle() ? "オンライン対戦" : "VS AI";
@@ -18479,7 +18890,7 @@
         : "カードを引き直しています";
       elements.mulliganMessage.textContent = state.phase === "mulligan"
         ? "引き直したいカードを0〜5枚選び、右側の「確定」を押してください。"
-        : state.message;
+        : normalizeLectureRoomText(state.message);
       elements.mulliganHand.innerHTML = "";
       player.hand.forEach((card) => {
         const button = document.createElement("button");
@@ -19043,6 +19454,15 @@
         button.addEventListener("click", openRaptorTempleSourceChoice);
         elements.environmentSlot.appendChild(button);
       }
+      if (state.environment?.baseId === "aiben_vs_nyotei_title_match") {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "environment-action-button";
+        button.textContent = titleMatchUsedThisTurn("player") ? "使用済み" : "効果を使う";
+        button.disabled = !canUseTitleMatch("player");
+        button.addEventListener("click", openTitleMatchChoice);
+        elements.environmentSlot.appendChild(button);
+      }
     }
 
     function isPreEvolutionDesignTeacher(card) {
@@ -19148,6 +19568,69 @@
       ).sort((a, b) => b.score - a.score);
       const best = options[0];
       return best ? resolveRaptorTempleExchange("opponent", best.source.ref, best.target.instanceId, false) : false;
+    }
+
+    function titleMatchUsedThisTurn(side) {
+      const used = state.environment?.titleMatchUsedTurns || {};
+      return used[side] === state.players[side].turnsTaken;
+    }
+
+    function titleMatchCandidates(side) {
+      return state.players[side].deck.filter((card) => ["aiben", "nyotei"].includes(card.baseId));
+    }
+
+    function canUseTitleMatch(side) {
+      if (state.environment?.baseId !== "aiben_vs_nyotei_title_match" || state.phase !== "battle" || state.gameOver) return false;
+      if (state.currentSide !== side || titleMatchUsedThisTurn(side)) return false;
+      if (side === "player" && isOnlineSpectator()) return false;
+      return titleMatchCandidates(side).length > 0;
+    }
+
+    function openTitleMatchChoice() {
+      if (!canUseTitleMatch("player")) return;
+      openCardChoice({
+        mode: "title_match",
+        title: "アイベンVSにょていタイトルマッチ",
+        message: "自分のデッキから手札に加えるカードを選んでください。相手は、選ばなかったもう一方を自分のデッキから手札に加えます。加えられない場合、相手は2枚ドローします。",
+        cards: titleMatchCandidates("player"),
+        min: 1,
+        max: 1,
+        confirmLabel: "このカードを手札に加える"
+      });
+    }
+
+    function resolveTitleMatch(side, selectedBaseId, renderAfter = true) {
+      if (!canUseTitleMatch(side) || !["aiben", "nyotei"].includes(selectedBaseId)) return false;
+      const ownDeck = state.players[side].deck;
+      const selectedIndex = ownDeck.findIndex((card) => card.baseId === selectedBaseId);
+      if (selectedIndex < 0) return false;
+      const [selected] = ownDeck.splice(selectedIndex, 1);
+      selected.owner = side;
+      selected.handTurns = 0;
+      state.players[side].hand.push(selected);
+      queueAnimation("draw", side, 1);
+      shuffleDeckAfterSearch(side);
+      const opponent = oppositeSide(side);
+      const otherBaseId = selectedBaseId === "aiben" ? "nyotei" : "aiben";
+      const opponentPulled = pullCardsFromDeck(opponent, otherBaseId, 1);
+      const opponentDrawn = opponentPulled > 0 ? 0 : drawUpTo(opponent, 2);
+      if (!state.environment.titleMatchUsedTurns) state.environment.titleMatchUsedTurns = {};
+      state.environment.titleMatchUsedTurns[side] = state.players[side].turnsTaken;
+      const opponentResult = opponentPulled > 0
+        ? `相手は「${CARD_BASES[otherBaseId].name}」を1枚手札に加えました。`
+        : `相手は「${CARD_BASES[otherBaseId].name}」を手札に加えられなかったため、${opponentDrawn}枚ドローしました。`;
+      addLog(`アイベンVSにょていタイトルマッチの効果：${SIDES[side]}は「${selected.name}」を手札に加えました。${opponentResult}`);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function tryUseAiTitleMatch() {
+      if (!canUseTitleMatch("opponent")) return false;
+      const candidates = titleMatchCandidates("opponent").sort((a, b) => (
+        (b.baseId === "nyotei" ? 1 : 0) - (a.baseId === "nyotei" ? 1 : 0)
+      ));
+      return candidates[0] ? resolveTitleMatch("opponent", candidates[0].baseId, false) : false;
     }
 
     function renderLifeTargets() {
@@ -19313,6 +19796,7 @@
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
         isSelectedAttacker(owner, zone, index) || isSelectedMultiItemTarget(owner, zone, index) || isSelectedPanpanTarget(owner, zone, index));
+      button.classList.toggle("selection-candidate", canSelectPanpanTarget(owner, zone, index));
       button.classList.toggle("exhausted", Boolean(card.hasAttacked));
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
@@ -19458,6 +19942,14 @@
         ref && ref.owner === owner && ref.zone === zone && ref.index === index);
     }
 
+    function canSelectPanpanTarget(owner, zone, index) {
+      const pending = state.pendingPanpanItem;
+      const target = getBoardCard(owner, zone, index);
+      if (!pending || !target) return false;
+      if (pending.stage === "friendly") return owner === "player";
+      return pending.stage === "enemy" && owner === "opponent" && isAllowedEffectTarget("player", target);
+    }
+
     function cardTemplate(card, boardCard) {
       const statusParts = [];
       if (boardCard && card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
@@ -19482,8 +19974,10 @@
       const costBadge = card.noCost ? "" : `<span class="card-stat stat-cost">${effectiveCardCost(card)}</span>`;
       const attackValue = boardCard ? `攻${card.attack}` : displayedCardAttack(card);
       const hpDisplayValue = boardCard ? `体${hpValue}` : hpValue;
+      const defenseValue = boardCard ? card.defense : (card.defense ?? 0);
       const attackBadge = hasStats ? `<span class="card-stat stat-attack">${attackValue}</span>` : "";
       const hpBadge = hasStats ? `<span class="card-stat stat-hp">${hpDisplayValue}</span>` : "";
+      const defenseBadge = hasStats && defenseValue > 0 ? `<span class="card-stat stat-defense">防${defenseValue}</span>` : "";
       const type = boardCard ? "" : `<div class="card-type">${escapeHtml(labelForType(card.type))}</div>`;
       const effect = boardCard ? "" : `<div class="card-effect">${cardEffectHtml(card)}</div>`;
       return `
@@ -19496,6 +19990,7 @@
           ${status}
           ${attackBadge}
           ${hpBadge}
+          ${defenseBadge}
         </div>
       `;
     }
@@ -19536,7 +20031,7 @@
       const hasStats = card.type !== "environment" && card.type !== "item";
       const typeLabel = card.type === "environment" ? `<span class="field-card-type">${escapeHtml(labelForType(card.type))}</span>` : "";
       const stats = hasStats
-        ? `<span class="field-card-stats"><span class="field-stat attack">攻${card.attack}</span><span class="field-stat hp">体${card.currentHp}</span></span>`
+        ? `<span class="field-card-stats"><span class="field-stat attack">攻${card.attack}</span><span class="field-stat hp">体${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
       return `
         <span class="field-card-name">${typeLabel}${escapeHtml(card.name)}</span>
@@ -20438,6 +20933,9 @@
       player.deckValid = validateDeckCounts(state.deckBuilder.counts.player);
       player.hand = testHandBaseIds(baseId).map((handBaseId) => createCardFromBase(handBaseId, "player"));
       player.deck = createTestDeck("player", baseId);
+      if (["back_door", "furious_comeback"].includes(baseId)) {
+        player.life = 10;
+      }
       opponent.maxWill = 10;
       opponent.will = 10;
       opponent.originalDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent);
@@ -21091,6 +21589,7 @@
       if (card.type !== "item" && card.type !== "environment") {
         parts.push(`攻撃力：${displayedCardAttack(card)}`);
         parts.push(`体力：${displayedCardHp(card)}/${displayedCardMaxHp(card)}`);
+        if ((card.defense ?? 0) > 0) parts.push(`防御力：${card.defense}`);
       }
       parts.push(`配置：${placementText(card)}`);
       parts.push(`効果：${cardRulesText(card)}`);
@@ -21139,12 +21638,15 @@
         loud_group: "注目を持つ。このカードは3行目にも出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
         enemy_student: "相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
         enemy_boss: "このカードが出席したとき、自分の場に「敵」が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。",
-        live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を3にする。",
-        dobby: "このカードが出席したとき、攻撃力3以上の相手の学生すべての攻撃力を-2する。",
+        live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を2にする。",
+        dobby: "このカードが出席したとき、攻撃力3以上の相手の出席者すべての攻撃力を-2する。",
         pachin_uni: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
         protein_drinker: "自分のターン終了時、このカードの攻撃力を+1する。",
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
+        infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
+        aiben: "このカードが出席したとき、相手のランダムな空いている席マスに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
+        nyotei: "このカードが出席したとき、相手のランダムな空いている席マスに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
         failure_student: "このカードが出席したとき、自分の手札を2枚選び、校外エリアへ送る。",
         success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の人数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
@@ -21239,7 +21741,7 @@
         reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は発動しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。",
-        panpan: "相手の出席者1人を指名する。自分の出席者1人と、その相手の出席者を破壊する。",
+        panpan: "自分の出席者1人を指名する。その後、相手の出席者1人を指名する。それらを破壊する。",
         capture: "相手の空いている席マス1つを3ターン出席不可にする。",
         yutakun_yutakun: "校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。",
         three_gestures: "デッキを上から6枚見る。そのうち3枚を選び、手札に加える。他のカードは校外エリアへ送る。デッキが6枚未満の場合は使えない。",
@@ -21251,7 +21753,14 @@
         greeting_3000: "自分の校外エリアにある「U太」と「裏U太」の合計人数分、相手本体にダメージを与える。",
         yamanashi_minimum_wage: "次の自分のターン開始時まで、お互いはデッキからカードを手札に加えられない。",
         baka_mac: "次の自分のターン開始時まで、相手の手札にあるカードすべての戦意を+1する。",
-        ikemasu: "「一般学生」1枚を手札に生成する。",
+        ikemasu: "陽気を持つ「一般学生」1枚を手札に生成する。",
+        full_throttle: "自分の手札にある持ち物を好きな枚数だけ選び、校外エリアへ送る。選んだ枚数と同じダメージを、相手の出席者にランダムに割り振る。",
+        scared_me: "相手の学生のうち、体力が最も高い学生1人をランダムに指名し、破壊する。",
+        front_door: "環境が「ドア前戦争」の場合にのみ使える。相手の講義室にいる学生に7ダメージをランダムに割り振る。",
+        door_front: "環境が「ドア前戦争」の場合にのみ使える。自分の2行目にいる学生すべてに超陽気を与える。",
+        back_door: "環境が「ドア前戦争」の場合にのみ使える。自分の気力を7回復する。",
+        furious_comeback: "自分の気力が10以下の場合にのみ使える。自分の出席者すべての攻撃力を+2する。",
+        stand_up: "環境が「将棋部の決闘フィールド」の場合にのみ使える。次の相手ターン中、自分の気力が1未満になる場合、代わりに1になる。この効果は重複する。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
         alpha: "このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。",
         beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。",
@@ -21276,10 +21785,13 @@
         dorm_council: "お互いのプレイヤーは自分のターン終了時、自分のデッキから注目を持つカードをランダムに1枚まで引く。",
         on_demand_business: "場の学生は講義の効果を受けない。",
         cote_dazur: "お互いの場の「あえー」と名のつく出席者の攻撃力を+10、体力を+10する。",
+        door_war: "各プレイヤーのターン終了時、そのターンに自分が講義室へ出席させた出席者の中から1人をランダムに選び、その出席者に1ダメージを与える。",
+        shogi_duel_field: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
+        aiben_vs_nyotei_title_match: "各プレイヤーは自分のターンに1回、自分のデッキから「アイベン」または「にょてい」1枚を選び、手札に加えてよい。そうした場合、相手は選ばなかったもう一方を自分のデッキから手札に加える。加えられない場合、相手はカードを2枚ドローする。",
         ta_killer: "このカードが出席したとき、相手の場に同名の出席者が複数いる場合、その同名出席者すべてに同名の人数分のダメージを与える。",
         ta: "カードの効果によって召喚される学生トークン。"
       };
-      return rules[card.baseId] || "効果なし。";
+      return normalizeLectureRoomText(rules[card.baseId] || "効果なし。");
     }
 
     function escapeHtml(value) {

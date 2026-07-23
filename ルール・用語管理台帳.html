@@ -291,6 +291,52 @@
         notes: "効果分類は、ドロー、サーチ・生成、回復、除去、バフ・デバフ、妨害、展開、進化、融合、装備。進化・融合・装備は、完成後のカードだけでなく、それに必要なカードも含む。"
       }
     );
+    function updateRule(id, changes) {
+      const rule = RULES.find((entry) => entry.id === id);
+      if (rule) Object.assign(rule, changes);
+    }
+    updateRule("field_term", {
+      title: "講義室",
+      summary: "カードが実際に出ている、講義室内の場所全体。",
+      body: "席マス、教卓マス、環境マスなど、カードが出ている場所全体を「講義室」と呼ぶ。\n手札、デッキ、遅刻ゾーン、校外エリアは講義室に含めない。",
+      related: "席マス / 教卓マス / 環境マス / 出席者"
+    });
+    updateRule("attendee", {
+      summary: "席マスまたは教卓マスに出席しているカード。",
+      body: "講義室の席マスまたは教卓マスに存在する、攻撃力と体力を持つカードを指す。\n環境カードは出席者として扱わない。",
+      related: "出席 / 講義室"
+    });
+    updateRule("destroy", {
+      summary: "カードを講義室から校外エリアへ送る。",
+      body: "カード効果によって破壊されたとき、または現在体力が0以下になったとき、そのカードを講義室から校外エリアへ送る。",
+      related: "講義室 / 校外エリア / 体力"
+    });
+    updateRule("health_value", {
+      summary: "出席者が講義室に残るための耐久値。",
+      body: "カード右下に表示される数値。\n出席者がダメージを受けると現在体力が減る。\n現在体力が0以下になった出席者は校外エリアへ送られる。",
+      related: "カードの見方 / ダメージ / 回復 / 最大体力"
+    });
+    function normalizeLectureRoomText(value) {
+      return String(value || "")
+        .replaceAll("お互いの場", "お互いの講義室")
+        .replaceAll("自分の場", "自分の講義室")
+        .replaceAll("相手の場", "相手の講義室")
+        .replaceAll("場全体", "講義室全体")
+        .replaceAll("場の", "講義室の")
+        .replaceAll("場に", "講義室に")
+        .replaceAll("場を", "講義室を")
+        .replaceAll("場へ", "講義室へ")
+        .replaceAll("場から", "講義室から")
+        .replaceAll("場が", "講義室が")
+        .replaceAll("場は", "講義室は")
+        .replaceAll("場で", "講義室で");
+    }
+    RULES.forEach((rule) => {
+      rule.summary = normalizeLectureRoomText(rule.summary);
+      rule.body = normalizeLectureRoomText(rule.body);
+      rule.related = normalizeLectureRoomText(rule.related);
+      rule.notes = normalizeLectureRoomText(rule.notes);
+    });
     const CATEGORY_LABELS = {"basic":"基本ルール","board":"盤面","turn":"ターン進行","combat":"戦闘","type":"タイプ共通効果","keyword":"キーワード","term":"用語"};
     let selectedId = RULES[0]?.id || null;
     const elements = {
@@ -310,6 +356,7 @@
       "攻撃力": "attack_power",
       "体力": "health_value",
       "最大体力": "maximum_health",
+      "講義室": "field_term",
       "デッキ": "deck",
       "手札": "hand",
       "初期手札": "initial_hand",
