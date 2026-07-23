@@ -6829,6 +6829,7 @@
         changes: [
           { title: "ドア前", before: "超陽気を与える。効果で得た超陽気は永続する。", after: "自分の2行目にいる学生すべてに超陽気を与える。" },
           { title: "インファイト将棋部", before: "戦意10／攻撃力0／体力0。", after: "戦意10／攻撃力5／体力5。" },
+          { title: "立てー！！", before: "次の相手ターン中、気力が1未満になる場合、代わりに1になる。", after: "次の相手ターン中、1回だけ、自分の気力が1未満になる場合、代わりに1になる。重複している場合は、その回数だけ発動する。" },
           { title: "アイベン・にょていの発動条件", after: "手札から出席させたときにのみ、相手の講義室へそれぞれ1人を出席させる。" },
           { title: "アイベン・にょてい", before: "出席した側も、さらに相手を出席させる。", after: "相手の講義室の空いている席マス1つへ1人を出席させる。効果で出席した側は、さらに相手を出席させない。自身の強化は通常どおり反映される。" }
         ]
@@ -16260,7 +16261,7 @@
           untilActionTurn: state.actionTurn + 1,
           againstSide: oppositeSide(side)
         }];
-        resultText = "次の相手ターン中、自分の気力が1未満になる場合、1になるようにしました。";
+        resultText = "次の相手ターン中、1回だけ自分の気力が1未満になる場合、代わりに1になるようにしました。";
       }
       if (!itemAlreadyMovedToTrash) moveHandCardToTrash(side, item);
       if (state.players[oppositeSide(side)]?.life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(item);
@@ -17152,7 +17153,7 @@
         player.lifeFloorShields.splice(shieldIndex, 1);
         player.life = 1;
         showFloatingTextForLife(side, "踏みとどまる", "heal");
-        addLog(`${SIDES[side]}は「立てー！！」の効果で、気力が1未満になりませんでした。`);
+        addLog(`${SIDES[side]}は「立てー！！」の効果で、1回だけ気力が1未満になりませんでした。`);
         return;
       }
       state.players[side].life = Math.max(0, before - amount);
@@ -22057,7 +22058,7 @@
         door_front: "環境が「ドア前戦争」の場合にのみ使える。自分の2行目にいる学生すべてに超陽気を与える。",
         back_door: "環境が「ドア前戦争」の場合にのみ使える。自分の気力を7回復する。",
         furious_comeback: "自分の気力が10以下の場合にのみ使える。自分の出席者すべての攻撃力を+2する。",
-        stand_up: "環境が「将棋部の決闘フィールド」の場合にのみ使える。次の相手ターン中、自分の気力が1未満になる場合、代わりに1になる。この効果は重複する。",
+        stand_up: "環境が「将棋部の決闘フィールド」の場合にのみ使える。次の相手ターン中、1回だけ、自分の気力が1未満になる場合、代わりに1になる。この効果は重複する。",
         thanks_all_students: "お互いの学生すべての最大体力を+1し、体力をすべて回復する。",
         alpha: "このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。",
         beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。",
