@@ -6829,7 +6829,8 @@
         changes: [
           { title: "ドア前", before: "超陽気を与える。効果で得た超陽気は永続する。", after: "自分の2行目にいる学生すべてに超陽気を与える。" },
           { title: "インファイト将棋部", before: "戦意10／攻撃力0／体力0。", after: "戦意10／攻撃力5／体力5。" },
-          { title: "アイベン・にょてい", before: "相手の空いている席マスへ出席させる。", after: "相手の講義室の空いている席マス1つをランダムに選び、それぞれ1人を出席させる表記に調整。" }
+          { title: "アイベン・にょていの発動条件", after: "手札から出席させたときにのみ、相手の講義室へそれぞれ1人を出席させる。" },
+          { title: "アイベン・にょてい", before: "出席した側も、さらに相手を出席させる。", after: "相手の講義室の空いている席マス1つへ1人を出席させる。効果で出席した側は、さらに相手を出席させない。自身の強化は通常どおり反映される。" }
         ]
       },
       {
@@ -12333,22 +12334,21 @@
       return placed;
     }
 
-    function summonAibenNyoteiChain(side, baseId, sourceName, depth = 0) {
-      if (depth >= 18) return null;
+    function summonAibenNyoteiOpponent(side, baseId, sourceName) {
       const targetSide = oppositeSide(side);
       const openSeats = state.players[targetSide].board.seats
         .map((seatCard, seatIndex) => (!seatCard && isBoardSlotOpen(targetSide, "seat", seatIndex) ? seatIndex : null))
         .filter((seatIndex) => seatIndex !== null);
       const seatIndex = openSeats[Math.floor(Math.random() * openSeats.length)];
       if (seatIndex === undefined) {
-        addLog(`${sourceName}の効果：相手の空いている席マスがないため、${CARD_BASES[baseId].name}を出席させられません。`);
+        addLog(`${sourceName}の効果：相手の講義室に空いている席マスがないため、${CARD_BASES[baseId].name}を出席させられません。`);
         return null;
       }
       const placed = makeBoardCard(createCardFromBase(baseId, targetSide));
       setBoardCard(targetSide, "seat", seatIndex, placed);
       showCardPlayAnimation(placed, "board");
-      addLog(`${sourceName}の効果：相手のランダムな席マスに${placed.name}を出席させました。`);
-      resolveAttendEffects(targetSide, placed, "seat", seatIndex, { aibenNyoteiDepth: depth + 1 });
+      addLog(`${sourceName}の効果：相手の講義室のランダムな席マスに${placed.name}を1人出席させました。`);
+      resolveAttendEffects(targetSide, placed, "seat", seatIndex);
       return placed;
     }
 
@@ -13760,7 +13760,8 @@
         });
         resolveAttendEffects(side, placedCard, zone, index, {
           commandId: options.commandId || "",
-          badStudentDiscardIds: options.badStudentDiscardIds || []
+          badStudentDiscardIds: options.badStudentDiscardIds || [],
+          fromHand: true
         });
       }
       cleanupDestroyedCards();
@@ -14085,11 +14086,11 @@
         showFloatingTextForLife(side, "気力1", "damage");
         addLog(`${card.name}の効果：自分の気力を1にし、次の相手ターン終了時まで気力ダメージを受けなくしました。`);
       }
-      if (card.baseId === "aiben") {
-        summonAibenNyoteiChain(side, "nyotei", card.name, options.aibenNyoteiDepth || 0);
+      if (card.baseId === "aiben" && options.fromHand) {
+        summonAibenNyoteiOpponent(side, "nyotei", card.name);
       }
-      if (card.baseId === "nyotei") {
-        summonAibenNyoteiChain(side, "aiben", card.name, options.aibenNyoteiDepth || 0);
+      if (card.baseId === "nyotei" && options.fromHand) {
+        summonAibenNyoteiOpponent(side, "aiben", card.name);
       }
       if (card.baseId === "live_person") {
         let affected = 0;
@@ -21941,8 +21942,8 @@
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
         infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
-        aiben: "このカードが出席したとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
-        nyotei: "このカードが出席したとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
+        aiben: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
+        nyotei: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
         failure_student: "このカードが出席したとき、自分の手札を2枚選び、校外エリアへ送る。",
         success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の人数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
