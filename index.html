@@ -2943,6 +2943,10 @@
       color: #075985;
     }
 
+    .life-target.has-active-effects {
+      box-shadow: inset 0 0 0 2px rgba(14, 165, 233, 0.22), 0 3px 0 rgba(15, 23, 42, 0.16), 0 7px 14px rgba(15, 23, 42, 0.08);
+    }
+
     .floating-pop {
       position: fixed;
       z-index: 86;
@@ -6834,6 +6838,19 @@
         ]
       },
       {
+        version: "ver.0.13.2",
+        date: "2026年7月22日",
+        summary: "対象選択が必要な効果と、場で確認できる情報を分かりやすく改善。",
+        changes: [
+          { title: "どんぐり", before: "自分のデザインファルコンを自動で進化。", after: "自分のデザインファルコンを選んで、デザインデーモンへ進化させる方式に変更。" },
+          { title: "猛禽寺", after: "自分の場にいる出席者を直接選んでから、進化先を選べるように変更。" },
+          { title: "静かにしましょうね？", before: "対象の攻撃を一時的に止める。", after: "攻撃力4以上の相手出席者1人を指名し、その出席者が以後攻撃できなくなる効果に変更。" },
+          { title: "U太・裏U太", after: "効果欄で装備中の持ち物を確認できるように改善。" },
+          { title: "気力", after: "深淵、気にするな、カニカウント、バカMacなど、現在有効な効果を長押しで確認可能。" },
+          { title: "操作表示", after: "どんぐり・猛禽寺で選べる出席者を青く光らせ、選択対象を分かりやすく表示。" }
+        ]
+      },
+      {
         version: "ver.0.13.1",
         date: "2026年7月19日",
         summary: "ダメージと直接破壊の演出を見やすく改善。",
@@ -7194,6 +7211,8 @@
     let detailPressStart = null;
     let detailHoverTimer = null;
     let detailHideTimer = null;
+    let lifeDetailPressTimer = null;
+    let lifeDetailPressStart = null;
     let deckPressTimer = null;
     let deckPressActive = false;
     let playRevealTimer = null;
@@ -9227,12 +9246,14 @@
 
     function onlineCommandNeedsHostResolution(type, commandCard) {
       return type === "endTurn"
+        || type === "donguri"
+        || type === "raptorTemple"
         || Boolean(commandCard?.evolutionFrom)
         || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
     }
 
     function onlineCommandCard(type, payload = {}) {
-      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent", "fullThrottle"]
+      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent", "donguri", "fullThrottle"]
         .includes(type)
         ? getHandCard("player", payload.instanceId)
         : null;
@@ -9450,6 +9471,7 @@
         || state.pendingThreeGestures
         || state.pendingCardChoice
         || state.pendingRemoteHandTrim
+        || state.pendingRaptorTemple
         || state.pendingCopiedCard
         || state.players.player.mulliganSelection.length > 0
       );
@@ -9465,6 +9487,8 @@
         || state.pendingHandDiscardItem
         || state.pendingThreeGestures
         || state.pendingCardChoice
+        || state.pendingRemoteHandTrim
+        || state.pendingRaptorTemple
         || state.pendingCopiedCard
       );
     }
@@ -9491,6 +9515,7 @@
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
       snapshotState.pendingRemoteHandTrim = null;
+      snapshotState.pendingRaptorTemple = null;
       snapshotState.selectionOverlayPeek = false;
       snapshotState.pendingCopiedCard = null;
       snapshotState.activeTrashDetailId = null;
@@ -9939,6 +9964,13 @@
         if (command.type === "fullThrottle") {
           const item = getHandCard("opponent", payload.instanceId);
           if (item) resolveFullThrottle("opponent", item, payload.selectedIds || [], true);
+        }
+        if (command.type === "donguri") {
+          const item = getHandCard("opponent", payload.instanceId);
+          const target = onlineMapRefForHost(payload.target);
+          if (item && target) castDonguriEvolutionItem("opponent", item, target.owner, target.zone, target.index ?? null, true, {
+            commandId: command.id || ""
+          });
         }
         if (command.type === "itemGlobal") {
           const item = getHandCard("opponent", payload.instanceId);
@@ -10848,7 +10880,7 @@
           if (card.playedOnTurn === state.actionTurn && hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) return total;
         } else {
           if (state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= futureActionTurn) return total;
-          if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= futureActionTurn) return total;
+          if (isAttackLocked(card, futureActionTurn)) return total;
           if (isSameNameAttackLocked(card) || isFriendlyTeacherAttackBlocked(card)) return total;
         }
         const attack = Math.max(0, card.attack || 0);
@@ -11597,7 +11629,7 @@
       }
       if (item.baseId === "quiet_please") {
         return effectTargetEntries("opponent", "player", (card) => card.attack >= 4
-          && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)).length > 0 ? 6 : 0;
+          && !isAttackLocked(card, state.actionTurn + 1)).length > 0 ? 6 : 0;
       }
       if (item.baseId === "namen_tenno") {
         return enemyCards.some((card) => card.baseId === "cynical_student") ? 10 : 0;
@@ -11647,7 +11679,7 @@
           card.type === "student"
           && ref.zone === "seat"
           && seatRow(ref.index) === 3
-          && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)).length;
+          && !isAttackLocked(card, state.actionTurn + 1)).length;
         return targets > 0 ? 5 + targets * 2 : 0;
       }
       if (item.baseId === "green_curry") {
@@ -11730,7 +11762,7 @@
           ref.zone === "seat"
           && seatRow(ref.index) === 3
           && target.type === "student"
-          && !(target.attackLockedThroughTurn && target.attackLockedThroughTurn >= state.actionTurn + 1))
+          && !isAttackLocked(target, state.actionTurn + 1))
           .map((entry) => entry.ref)
           .slice(0, 2);
         return castIGotIt("opponent", item, targets, false);
@@ -11738,7 +11770,7 @@
       if (item.baseId === "quiet_please") {
         const target = effectTargetEntries("opponent", "player", (card) =>
           card.attack >= 4
-            && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1)
+            && !isAttackLocked(card, state.actionTurn + 1)
         )[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
@@ -11868,7 +11900,7 @@
       if (hasKeyword(card, "超注目")) score += 12;
       else if (hasKeyword(card, "注目")) score += 8;
       if (ref?.zone === "teacher" && card.type === "teacher") score += 8;
-      if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn + 1) score -= 2;
+      if (isAttackLocked(card, state.actionTurn + 1)) score -= 2;
       const lethalForecast = getAiLethalForecast();
       if (lethalForecast.opponentCounterLethal) score += Math.max(0, card.attack || 0) * 1.2;
       if (card.keywords?.includes("超陽気")) score += 6;
@@ -12699,6 +12731,7 @@
       state.pendingPanpanItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
+      state.pendingRaptorTemple = null;
       state.selectionOverlayPeek = false;
     }
 
@@ -13027,6 +13060,10 @@
       if (item.baseId === "sage_legacy" && openSageLegacyChoice(item)) return;
       if (item.baseId === "deck_without") {
         openDeckWithoutDiscardChoice(item);
+        return;
+      }
+      if (item.baseId === "donguri") {
+        openDonguriTargetMode(item);
         return;
       }
       if (onlineCanSendCommand() && item.baseId !== "i_got_it" && (item.target === "global" || isImmediateItemBaseId(item.baseId))) {
@@ -13477,6 +13514,14 @@
 
     function canAttachUtaEquipment(card) {
       return isUtaEquipmentTarget(card) && utaEquipmentCount(card) < utaEquipmentLimit(card);
+    }
+
+    function yutaEquipmentDetailText(card) {
+      if (!isUtaEquipmentTarget(card)) return "";
+      const names = normalizeUtaEquipmentEntries(card)
+        .map((entry) => CARD_BASES[entry.baseId]?.name || entry.baseId)
+        .filter(Boolean);
+      return names.length ? `装備：${names.join(" / ")}` : "装備：なし";
     }
 
     function attachUtaEquipment(card, baseId) {
@@ -14957,6 +15002,10 @@
       }
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
+      if (state.pendingRaptorTemple && !state.pendingRaptorTemple.sourceRef) {
+        selectRaptorTempleSource(owner, zone, index);
+        return;
+      }
       const selectedCard = getSelectedHandCard();
       if (state.pendingMultiItem && selectedCard?.baseId === "i_got_it") {
         toggleMultiItemTarget(owner, zone, index);
@@ -14970,6 +15019,16 @@
         if (!canUseItemOnBoardTarget(selectedCard, owner, zone, index)) {
           state.message = `${selectedCard.name}はその出席者を対象にできません。`;
           render();
+          return;
+        }
+        if (selectedCard.baseId === "donguri") {
+          if (onlineCanSendCommand()) {
+            onlineSendCommand("donguri", { instanceId: selectedCard.instanceId, target: { owner, zone, index } });
+            state.message = `${selectedCard.name}の対象を送信しました。`;
+            render();
+            return;
+          }
+          castDonguriEvolutionItem("player", selectedCard, owner, zone, index, true);
           return;
         }
         if (onlineCanSendCommand()) {
@@ -15520,7 +15579,7 @@
       }
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) attachUtaEquipment(target, item.baseId);
       if (item.baseId === "quiet_please") {
-        target.attackLockedThroughTurn = Math.max(target.attackLockedThroughTurn || 0, state.actionTurn + 1);
+        target.attackLockedPermanently = true;
       }
       if (item.baseId === "seriously_hit") {
         destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
@@ -16235,13 +16294,24 @@
       return restoredCount > 0;
     }
 
-    function findDonguriEvolutionTarget(side) {
+    function findDonguriEvolutionTarget(side, targetRef = null) {
+      if (targetRef) {
+        const ref = {
+          owner: targetRef.owner || side,
+          zone: targetRef.zone,
+          index: targetRef.index ?? null
+        };
+        if (ref.owner !== side) return null;
+        return findEvolveTarget(side, { evolutionFrom: "bird_a" }, ref.owner, ref.zone, ref.index, {
+          allowSameTurnEvolution: true
+        });
+      }
       return findEvolveTarget(side, { evolutionFrom: "bird_a" }, side, null, null, {
         allowSameTurnEvolution: true
       });
     }
 
-    function canUseDonguri(side, item = null) {
+    function canUseDonguri(side, item = null, targetRef = null) {
       const player = state.players[side];
       if (!player || state.phase !== "battle" || state.currentSide !== side) return false;
       const donguriCount = player.hand.filter((card) => card.baseId === "donguri").length;
@@ -16249,13 +16319,54 @@
       return hasItem
         && donguriCount >= 2
         && player.hand.some((card) => card.baseId === "demon_a_plus")
-        && Boolean(findDonguriEvolutionTarget(side));
+        && Boolean(findDonguriEvolutionTarget(side, targetRef));
+    }
+
+    function openDonguriTargetMode(item) {
+      if (!item || item.baseId !== "donguri") return false;
+      closeItemConfirm();
+      if (!canUseDonguri("player", item)) {
+        addLog("どんぐりは、手札にどんぐり2枚とデザインデストロイファルコンがあり、自分の場に進化可能なデザインファルコンがいる場合にのみ使えます。");
+        render();
+        return false;
+      }
+      state.selectedAttacker = null;
+      state.selectedHandId = item.instanceId;
+      state.message = "自分の場の進化させるデザインファルコンを指名してください。";
+      render();
+      return true;
+    }
+
+    function castDonguriEvolutionItem(side, item, targetOwner, targetZone, targetIndex, renderAfter, options = {}) {
+      const targetRef = { owner: targetOwner, zone: targetZone, index: targetIndex ?? null };
+      if (!canUseDonguri(side, item, targetRef)) {
+        addLog("どんぐりは、指名したデザインファルコンを進化できる場合にのみ使えます。");
+        if (renderAfter) render();
+        return false;
+      }
+      if (!payForItem(side, item)) {
+        if (renderAfter) render();
+        return false;
+      }
+      const evolved = resolveDonguriEvolution(side, item, {
+        commandId: options.commandId || "",
+        targetRef
+      });
+      moveHandCardToTrash(side, item, { suppressLog: true, suppressToast: true, reason: "どんぐり" });
+      addLog(evolved
+        ? `${SIDES[side]}はどんぐり2枚を使い、手札のデザインデストロイファルコンでデザインファルコンを進化させました。`
+        : `${SIDES[side]}のどんぐりは条件を満たせず、不発になりました。`);
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      clearSelections();
+      if (renderAfter) render();
+      return evolved;
     }
 
     function resolveDonguriEvolution(side, item, options = {}) {
-      if (!canUseDonguri(side, item)) return false;
+      if (!canUseDonguri(side, item, options.targetRef || null)) return false;
       const player = state.players[side];
-      const target = findDonguriEvolutionTarget(side);
+      const target = findDonguriEvolutionTarget(side, options.targetRef || null);
       const extraDonguri = player.hand.find((card) => card.baseId === "donguri" && card.instanceId !== item.instanceId);
       const evolutionCard = player.hand.find((card) => card.baseId === "demon_a_plus");
       if (!target || !extraDonguri || !evolutionCard) return false;
@@ -16490,6 +16601,13 @@
       return true;
     }
 
+    function isAttackLocked(card, actionTurn = state.actionTurn) {
+      return Boolean(card?.attackLockedPermanently
+        || (card?.attackLockedThroughTurn && card.attackLockedThroughTurn >= actionTurn)
+        || (card?.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
+        || isSameNameAttackLocked(card));
+    }
+
     function canAttack(card) {
       if (state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn) {
         addLog("目黒区図書館の効果で、このターンは攻撃できません。");
@@ -16497,6 +16615,10 @@
       }
       if (isFirstPlayerFirstTurn()) {
         addLog("先攻1ターン目は攻撃できません。");
+        return false;
+      }
+      if (card.attackLockedPermanently) {
+        addLog(`${card.name}は効果により攻撃できません。`);
         return false;
       }
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) {
@@ -16529,9 +16651,7 @@
     function canAttackSilently(card) {
       return !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
         && !isFirstPlayerFirstTurn()
-        && !(card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
-        && !(card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
-        && !isSameNameAttackLocked(card)
+        && !isAttackLocked(card)
         && !isFriendlyTeacherAttackBlocked(card)
         && (card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気"))
         && !card.hasAttacked;
@@ -17694,6 +17814,7 @@
       state.pendingPanpanItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
+      state.pendingRaptorTemple = null;
       state.selectionOverlayPeek = false;
     }
 
@@ -18619,7 +18740,7 @@
           if (!target) return false;
           if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn) return false;
           if (!isAllowedEffectTarget("player", target)) return false;
-          if (item.baseId === "quiet_please") return target.attack >= 4;
+          if (item.baseId === "quiet_please") return target.attack >= 4 && !isAttackLocked(target, state.actionTurn + 1);
           if (item.baseId === "namen_tenno") return target.baseId === "cynical_student";
           if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && target.type === "teacher";
           if (item.baseId === "vampirization") return hasOpenBoardSlotForCard("player", target);
@@ -18648,6 +18769,7 @@
 
     function isImmediateDragItem(item) {
       return item?.type === "item"
+        && item.baseId !== "donguri"
         && (item.target === "global"
           || isImmediateItemBaseId(item.baseId));
     }
@@ -18655,6 +18777,7 @@
     function canUseItemOnBoardTarget(item, owner, zone, index) {
       const target = getBoardCard(owner, zone, index);
       if (!item || item.type !== "item" || !target) return false;
+      if (item.baseId === "donguri") return canUseDonguri("player", item, { owner, zone, index });
       if (item.baseId === "handmade_ctoc") return hasOpposingSameNameAttendee(target) && isAllowedEffectTarget("player", target);
       if (item.target === "enemy" && owner === "player") return false;
       if ((item.target === "friendly" || item.target === "friendlyAny") && owner !== "player") return false;
@@ -18662,7 +18785,7 @@
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) {
         if (!canAttachUtaEquipment(target)) return false;
       }
-      if (item.baseId === "quiet_please" && target.attack < 4) return false;
+      if (item.baseId === "quiet_please" && (target.attack < 4 || isAttackLocked(target, state.actionTurn + 1))) return false;
       if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") return false;
       if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
       if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("player", target)) return false;
@@ -18710,6 +18833,16 @@
       }
       if (card.baseId === "capture") {
         castCaptureOnSlot("player", card, owner, zone, index, true);
+        return true;
+      }
+      if (card.baseId === "donguri") {
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("donguri", { instanceId: card.instanceId, target: { owner, zone, index } });
+          state.message = `${card.name}の対象を送信しました。`;
+          render();
+          return true;
+        }
+        castDonguriEvolutionItem("player", card, owner, zone, index, true);
         return true;
       }
       if (onlineCanSendCommand()) {
@@ -19495,32 +19628,57 @@
       return raptorTempleSourceEntries(side).some((entry) => raptorTempleTargetCandidates(side, entry.card).length > 0);
     }
 
+    function isRaptorTempleSourceRef(side, owner, zone, index) {
+      if (owner !== side || !canUseRaptorTemple(side)) return false;
+      return raptorTempleSourceEntries(side).some((entry) =>
+        entry.ref.owner === owner
+        && entry.ref.zone === zone
+        && entry.ref.index === (index ?? null)
+        && raptorTempleTargetCandidates(side, entry.card).length > 0
+      );
+    }
+
     function openRaptorTempleSourceChoice() {
       if (!canUseRaptorTemple("player")) return;
-      const entries = raptorTempleSourceEntries("player")
-        .filter((entry) => raptorTempleTargetCandidates("player", entry.card).length > 0);
+      state.selectedAttacker = null;
+      state.selectedHandId = null;
       state.pendingRaptorTemple = { sourceRef: null };
-      openCardChoice({
-        mode: "raptor_temple_source",
-        title: "猛禽寺",
-        message: "校外エリアへ送る、自分の「デザイン」と名のつく教師を1人指名してください。",
-        cards: entries.map((entry) => entry.card),
-        min: 1,
-        max: 1,
-        confirmLabel: "この教師を選ぶ"
-      });
+      state.message = "校外エリアへ送る、自分の場の「デザイン」と名のつく教師を指名してください。";
+      render();
+    }
+
+    function selectRaptorTempleSource(owner, zone, index) {
+      if (!isRaptorTempleSourceRef("player", owner, zone, index)) {
+        state.message = "猛禽寺では、自分の場の入れ替え可能なデザイン教師だけを指名できます。";
+        render();
+        return false;
+      }
+      return openRaptorTempleTargetChoiceFromRef({ owner, zone, index: index ?? null });
     }
 
     function openRaptorTempleTargetChoice(sourceInstanceId) {
       const sourceEntry = raptorTempleSourceEntries("player").find((entry) => entry.card.instanceId === sourceInstanceId);
+      return openRaptorTempleTargetChoiceFromEntry(sourceEntry);
+    }
+
+    function openRaptorTempleTargetChoiceFromRef(sourceRef) {
+      const sourceEntry = raptorTempleSourceEntries("player").find((entry) =>
+        entry.ref.owner === sourceRef.owner
+        && entry.ref.zone === sourceRef.zone
+        && entry.ref.index === (sourceRef.index ?? null)
+      );
+      return openRaptorTempleTargetChoiceFromEntry(sourceEntry);
+    }
+
+    function openRaptorTempleTargetChoiceFromEntry(sourceEntry) {
       if (!sourceEntry) {
         state.pendingRaptorTemple = null;
         render();
-        return;
+        return false;
       }
       const candidates = raptorTempleTargetCandidates("player", sourceEntry.card);
-      state.pendingRaptorTemple = { sourceRef: sourceEntry.ref, sourceInstanceId };
-      openCardChoice({
+      state.pendingRaptorTemple = { sourceRef: sourceEntry.ref, sourceInstanceId: sourceEntry.card.instanceId };
+      return openCardChoice({
         mode: "raptor_temple_target",
         title: "猛禽寺",
         message: "同じマスに出席させる、校外エリアの進化前の「デザイン」と名のつく教師を1人指名してください。",
@@ -19646,8 +19804,124 @@
         const attackTarget = canSelectedAttackerTargetLife(targetSide);
         button.classList.toggle("enemy-target", enemyItemTarget || attackTarget);
         button.classList.toggle("attack-target-ready", attackTarget);
+        button.classList.toggle("has-active-effects", playerActiveEffectLines(targetSide).length > 0);
         setupLifeTargetDropEvents(button, targetSide);
+        attachLifeDetailEvents(button, targetSide);
       });
+    }
+
+    function playerActiveEffectLines(side) {
+      const player = state.players[side];
+      if (!player) return [];
+      const lines = [];
+      if (player.lifeShieldUntilTurn && player.lifeShieldUntilTurn >= state.actionTurn) {
+        lines.push("気にするな：次の相手ターン終了時まで、気力はダメージを受けません。");
+      }
+      if (player.abyssTurns && player.abyssTurns > 0) {
+        lines.push(`深淵：自分のターン終了時、相手の出席者1人をランダムに破壊します。残り${player.abyssTurns}回。`);
+      }
+      if (player.crabCountdown !== null && player.crabCountdown !== undefined) {
+        lines.push(`カニカウント：残り${Math.max(0, player.crabCountdown)}。0になると勝利します。`);
+      }
+      if (player.handCostTaxUntilActionTurn && player.handCostTaxUntilActionTurn >= state.actionTurn) {
+        lines.push("バカMac：手札のカードの戦意が+1されています。");
+      }
+      if ((state.deckToHandLocks || []).some((lock) => lock.releaseAtActionTurn > state.actionTurn)) {
+        lines.push("山梨最低賃金2円：デッキからカードを手札に加えられません。");
+      }
+      if (state.environment?.baseId === "cafeteria") {
+        lines.push("食堂：自分のターン終了時、気力を1回復します。");
+      }
+      if (state.environment?.baseId === "meguro_library") {
+        lines.push("目黒区図書館：プレイヤー本体を攻撃できません。設置した側はターン終了時に手札1枚を校外エリアへ送ります。");
+      }
+      if (state.environment?.baseId === "no_late_time") {
+        lines.push("遅刻じゃない時間：遅刻の効果がなくなっています。");
+      }
+      return lines;
+    }
+
+    function playerEffectDetailTemplate(side) {
+      const label = isOnlineSpectator()
+        ? (side === "player" ? "プレイヤー1本体" : "プレイヤー2本体")
+        : (side === "player" ? "あなた本体" : "相手本体");
+      const lines = playerActiveEffectLines(side);
+      return `
+        <div class="tooltip-title">${escapeHtml(label)}</div>
+        <div class="tooltip-meta">気力：${state.players[side]?.life ?? 0}</div>
+        <div class="tooltip-effect"><span class="tooltip-effect-label">発動中：</span>${lines.length ? lines.map(escapeHtml).join("<br>") : "なし"}</div>
+      `;
+    }
+
+    function showLifeEffectTooltip(side, event) {
+      elements.cardTooltip.innerHTML = playerEffectDetailTemplate(side);
+      elements.cardTooltip.classList.remove("hidden");
+      moveCardTooltip(event);
+    }
+
+    function attachLifeDetailEvents(button, side) {
+      if (button.dataset.lifeDetailBound === "true") return;
+      button.dataset.lifeDetailBound = "true";
+      button.addEventListener("pointerdown", (event) => startLifeEffectPress(button, side, event));
+      button.addEventListener("pointermove", (event) => moveLifeEffectPress(button, event));
+      button.addEventListener("pointerup", () => finishLifeEffectPress(button));
+      button.addEventListener("pointercancel", () => cancelLifeEffectPress(button));
+      button.addEventListener("pointerleave", () => cancelLifeEffectPress(button));
+      button.addEventListener("click", (event) => suppressLifeEffectClick(button, event), true);
+    }
+
+    function startLifeEffectPress(button, side, event) {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      window.clearTimeout(detailHideTimer);
+      window.clearTimeout(lifeDetailPressTimer);
+      lifeDetailPressStart = { x: event.clientX, y: event.clientY, button };
+      button.dataset.lifeDetailPressed = "false";
+      button.classList.add("detail-pressing");
+      lifeDetailPressTimer = window.setTimeout(() => {
+        lifeDetailPressTimer = null;
+        button.dataset.lifeDetailPressed = "true";
+        showLifeEffectTooltip(side, event);
+      }, DETAIL_LONG_PRESS_MS);
+    }
+
+    function moveLifeEffectPress(button, event) {
+      if (lifeDetailPressStart?.button === button && lifeDetailPressTimer) {
+        const moved = Math.abs(event.clientX - lifeDetailPressStart.x) + Math.abs(event.clientY - lifeDetailPressStart.y);
+        if (moved > 18) cancelLifeEffectPress(button);
+      }
+      if (button.dataset.lifeDetailPressed === "true") moveCardTooltip(event);
+    }
+
+    function finishLifeEffectPress(button) {
+      window.clearTimeout(lifeDetailPressTimer);
+      lifeDetailPressTimer = null;
+      lifeDetailPressStart = null;
+      button.classList.remove("detail-pressing");
+      if (button.dataset.lifeDetailPressed === "true") {
+        detailHideTimer = window.setTimeout(hideCardTooltip, DETAIL_HIDE_DELAY_MS);
+      } else {
+        button.dataset.lifeDetailPressed = "false";
+      }
+    }
+
+    function cancelLifeEffectPress(button) {
+      window.clearTimeout(lifeDetailPressTimer);
+      lifeDetailPressTimer = null;
+      lifeDetailPressStart = null;
+      button.classList.remove("detail-pressing");
+      if (button.dataset.lifeDetailPressed === "true") {
+        detailHideTimer = window.setTimeout(hideCardTooltip, 180);
+      } else {
+        button.dataset.lifeDetailPressed = "false";
+        hideCardTooltip();
+      }
+    }
+
+    function suppressLifeEffectClick(button, event) {
+      if (button.dataset.lifeDetailPressed !== "true") return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      button.dataset.lifeDetailPressed = "false";
     }
 
     function setupLifeTargetDropEvents(button, targetSide) {
@@ -19801,6 +20075,10 @@
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
       button.classList.toggle("attack-target-ready", canSelectedAttackerTargetCard(owner, zone, index));
+      const selectedItem = getSelectedHandCard();
+      const itemReady = Boolean(selectedItem?.type === "item" && canUseItemOnBoardTarget(selectedItem, owner, zone, index));
+      const raptorReady = Boolean(state.pendingRaptorTemple && !state.pendingRaptorTemple.sourceRef && isRaptorTempleSourceRef("player", owner, zone, index));
+      button.classList.toggle("click-ready", itemReady || raptorReady);
       button.classList.toggle("tutorial-allowed-target", isTutorialActive() && (
         tutorialAllowsAttacker(owner, zone, index) || tutorialAllowsAttackTarget(owner, zone, index)
       ));
@@ -19954,6 +20232,7 @@
       const statusParts = [];
       if (boardCard && card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
+      if (boardCard && card.attackLockedPermanently) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
@@ -20018,6 +20297,7 @@
       const statusParts = [];
       if (card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
+      if (card.attackLockedPermanently) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) statusParts.push({ icon: "止", title: "攻撃不可" });
       if (isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
@@ -21514,6 +21794,8 @@
         detailLines.push(`体力：${displayedCardHp(card)}/${displayedCardMaxHp(card)}`);
       }
       detailLines.push(`配置：${placementText(card)}`);
+      const equipmentText = yutaEquipmentDetailText(card);
+      if (equipmentText) detailLines.push(equipmentText);
       const statusText = cardStatusDetailText(card);
       if (statusText) detailLines.push(`状態：${statusText}`);
       return `
@@ -21578,6 +21860,7 @@
       if (hasKeyword(card, "眠気")) parts.push("眠気");
       if (card.hasAttacked) parts.push("攻撃済み");
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) parts.push("出席ターン");
+      if (card.attackLockedPermanently) parts.push("攻撃不可");
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) parts.push("攻撃不可");
       if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) parts.push("攻撃不可");
       if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) parts.push("破壊予約");
@@ -21592,6 +21875,8 @@
         if ((card.defense ?? 0) > 0) parts.push(`防御力：${card.defense}`);
       }
       parts.push(`配置：${placementText(card)}`);
+      const equipmentText = yutaEquipmentDetailText(card);
+      if (equipmentText) parts.push(equipmentText);
       parts.push(`効果：${cardRulesText(card)}`);
       return parts.join("\n");
     }
@@ -21671,7 +21956,7 @@
         demon_a_plus: "進化：「デザインファルコン」。このカードは進化するために戦意9を消費する。進化したとき、「相手の場の出席者1人をランダムに指名し、1ダメージを与える。」を10回行う。-我が光に仇なす者よ。今この翼を以って頽落せしめん。羽ばたけ-",
         thin_professor_h: "このカードが教卓マスに出席したとき、相手の1列目と3列目、および自分の2列目にいる出席者すべてを破壊する。",
         ninety_three_teacher: "陽気を持つ。このカードが教卓マスに出席したとき、相手本体に3ダメージを与える。このカードが教卓マスにいるかぎり、相手ターン開始時に相手本体に1ダメージを与える。",
-        kansai_voice_t: "このカードが教卓マスに出席したとき、相手の出席者1人を指名する。その出席者は次の相手のターン終了時まで攻撃できない。",
+        kansai_voice_t: "このカードが教卓マスに出席したとき、相手の出席者1人を指名する。その出席者は攻撃できない。",
         kyoto_sound_i: "このカードが教卓マスに出席したとき、相手の学生すべての攻撃力を+2し、それらに2ダメージを与える。",
         kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人召喚する。",
         signal_professor_m: "このカードが教卓マスにいるかぎり、自分の場に他の教師がいなければ陽気を持つ。このカードが席マスにいるかぎり、自分の教師は攻撃できない。",
@@ -21725,7 +22010,7 @@
         circle_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         hair_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         homeless_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
-        quiet_please: "相手の攻撃力4以上の出席者1人を指名する。その出席者は次の相手のターン終了時まで攻撃できない。",
+        quiet_please: "相手の攻撃力4以上の出席者1人を指名する。その出席者は攻撃できない。",
         seriously_hit: "相手の出席者1人を指名し、破壊する。",
         chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
         chigauyo_kanji: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
