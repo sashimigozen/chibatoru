@@ -6829,6 +6829,7 @@
         changes: [
           { title: "ドア前", before: "超陽気を与える。効果で得た超陽気は永続する。", after: "自分の2行目にいる学生すべてに超陽気を与える。" },
           { title: "インファイト将棋部", before: "戦意10／攻撃力0／体力0。", after: "戦意10／攻撃力5／体力5。" },
+          { title: "インファイト将棋部の効果", before: "自分の気力を1にし、次の相手ターン終了時まで気力ダメージを受けない。", after: "このカードが出席したとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。" },
           { title: "立てー！！", before: "次の相手ターン中、気力が1未満になる場合、代わりに1になる。", after: "次の相手ターン中、1回だけ、自分の気力が1未満になる場合、代わりに1になる。重複している場合は、その回数だけ発動する。" },
           { title: "アイベン・にょていの発動条件", after: "手札から出席させたときにのみ、相手の講義室へそれぞれ1人を出席させる。" },
           { title: "アイベン・にょてい", before: "出席した側も、さらに相手を出席させる。", after: "相手の講義室の空いている席マス1つへ1人を出席させる。効果で出席した側は、さらに相手を出席させない。自身の強化は通常どおり反映される。" }
@@ -7756,6 +7757,7 @@
       lifeShieldUntilTurn: 0,
       lifeShieldUntilSide: null,
       lifeFloorShields: [],
+      maxLifeOverride: null,
       board: { seats: Array(9).fill(null), teacher: null }
       };
     }
@@ -11584,7 +11586,10 @@
         const rowTwoStudents = state.players.opponent.board.seats.filter((card, seatIndex) => seatRow(seatIndex) === 2 && card?.type === "student").length;
         return state.environment?.baseId === "door_war" && rowTwoStudents > 0 ? 5 + rowTwoStudents * 3 : 0;
       }
-      if (item.baseId === "back_door") return state.environment?.baseId === "door_war" && opponent.life < currentLifeCap() ? 5 + (currentLifeCap() - opponent.life) : 0;
+      if (item.baseId === "back_door") {
+        const lifeCap = currentLifeCap("opponent");
+        return state.environment?.baseId === "door_war" && opponent.life < lifeCap ? 5 + (lifeCap - opponent.life) : 0;
+      }
       if (item.baseId === "furious_comeback") return opponent.life <= 10 && friendlyCards.length > 0 ? 4 + friendlyCards.length * 2 : 0;
       if (item.baseId === "stand_up") return state.environment?.baseId === "shogi_duel_field" && opponent.life <= 4 ? 12 : 0;
       if (item.baseId === "iv_pack") return deck.some((card) => card.type === "vampire") ? 6 : 0;
@@ -14081,11 +14086,13 @@
         }
       }
       if (card.baseId === "infight_shogi") {
-        state.players[side].life = 1;
-        state.players[side].lifeShieldUntilTurn = state.actionTurn + 1;
-        state.players[side].lifeShieldUntilSide = opponent;
-        showFloatingTextForLife(side, "気力1", "damage");
-        addLog(`${card.name}の効果：自分の気力を1にし、次の相手ターン終了時まで気力ダメージを受けなくしました。`);
+        const player = state.players[side];
+        player.maxLifeOverride = 1;
+        player.life = Math.min(player.life, currentLifeCap(side));
+        player.lifeShieldUntilTurn = state.actionTurn + 1;
+        player.lifeShieldUntilSide = opponent;
+        showFloatingTextForLife(side, "最大気力1", "damage");
+        addLog(`${card.name}の効果：自分の最大気力を1にし、次の相手ターン終了時まで気力ダメージを受けなくしました。`);
       }
       if (card.baseId === "aiben" && options.fromHand) {
         summonAibenNyoteiOpponent(side, "nyotei", card.name);
@@ -17171,12 +17178,14 @@
     function healPlayer(side, amount) {
       if (amount <= 0) return;
       const before = state.players[side].life;
-      state.players[side].life = Math.min(currentLifeCap(), state.players[side].life + amount);
+      state.players[side].life = Math.min(currentLifeCap(side), state.players[side].life + amount);
       const healed = state.players[side].life - before;
       if (healed > 0) showFloatingTextForLife(side, `+${healed}`, "heal");
     }
 
-    function currentLifeCap() {
+    function currentLifeCap(side = null) {
+      const override = side ? state.players[side]?.maxLifeOverride : null;
+      if (Number.isFinite(override)) return override;
       return state.environment?.baseId === "shogi_duel_field" ? 10 : 20;
     }
 
@@ -19810,7 +19819,11 @@
         const label = isOnlineSpectator()
           ? (targetSide === "player" ? "プレイヤー1本体" : "プレイヤー2本体")
           : (targetSide === "player" ? "あなた本体" : "相手本体");
-        button.innerHTML = `<span>${label}</span><span class="life-value">気力 ${state.players[targetSide].life}</span>`;
+        const lifeCap = currentLifeCap(targetSide);
+        const lifeText = lifeCap === 20
+          ? `気力 ${state.players[targetSide].life}`
+          : `気力 ${state.players[targetSide].life}/${lifeCap}`;
+        button.innerHTML = `<span>${label}</span><span class="life-value">${lifeText}</span>`;
         button.disabled = isOnlineSpectator();
         const selected = getSelectedHandCard();
         const enemyItemTarget = !hasPeekableSelectionOverlay() && canDropHandCardOnLife(selected, targetSide);
@@ -19829,6 +19842,9 @@
       const lines = [];
       if (player.lifeShieldUntilTurn && player.lifeShieldUntilTurn >= state.actionTurn) {
         lines.push("気にするな：次の相手ターン終了時まで、気力はダメージを受けません。");
+      }
+      if (player.maxLifeOverride !== null && player.maxLifeOverride !== undefined) {
+        lines.push(`インファイト将棋部：最大気力は${player.maxLifeOverride}。`);
       }
       if (player.abyssTurns && player.abyssTurns > 0) {
         lines.push(`深淵：自分のターン終了時、相手の出席者1人をランダムに破壊します。残り${player.abyssTurns}回。`);
@@ -19861,7 +19877,7 @@
       const lines = playerActiveEffectLines(side);
       return `
         <div class="tooltip-title">${escapeHtml(label)}</div>
-        <div class="tooltip-meta">気力：${state.players[side]?.life ?? 0}</div>
+        <div class="tooltip-meta">気力：${state.players[side]?.life ?? 0}／${currentLifeCap(side)}</div>
         <div class="tooltip-effect"><span class="tooltip-effect-label">発動中：</span>${lines.length ? lines.map(escapeHtml).join("<br>") : "なし"}</div>
       `;
     }
@@ -21942,7 +21958,7 @@
         protein_drinker: "自分のターン終了時、このカードの攻撃力を+1する。",
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
-        infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
+        infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         aiben: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
         nyotei: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
