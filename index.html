@@ -6418,7 +6418,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.14.0";
+    const GAME_DATA_VERSION = "0.14.1";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -6822,6 +6822,16 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.14.1",
+        date: "2026年7月23日",
+        summary: "カード本文と数値を調整。",
+        changes: [
+          { title: "ドア前", before: "超陽気を与える。効果で得た超陽気は永続する。", after: "自分の2行目にいる学生すべてに超陽気を与える。" },
+          { title: "インファイト将棋部", before: "戦意10／攻撃力0／体力0。", after: "戦意10／攻撃力5／体力5。" },
+          { title: "アイベン・にょてい", before: "相手の空いている席マスへ出席させる。", after: "相手の講義室の空いている席マス1つをランダムに選び、それぞれ1人を出席させる表記に調整。" }
+        ]
+      },
       {
         version: "ver.0.14.0",
         date: "2026年7月23日",
@@ -21931,8 +21941,8 @@
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
         infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
-        aiben: "このカードが出席したとき、相手のランダムな空いている席マスに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
-        nyotei: "このカードが出席したとき、相手のランダムな空いている席マスに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
+        aiben: "このカードが出席したとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
+        nyotei: "このカードが出席したとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
         failure_student: "このカードが出席したとき、自分の手札を2枚選び、校外エリアへ送る。",
         success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の人数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
