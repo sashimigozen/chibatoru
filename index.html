@@ -6441,7 +6441,7 @@
       "onigiri_draw", "hondara", "fire_touch", "deck_without", "three_gestures",
       "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "yoyu_announce", "music_detergent", "sexual_eye", "water_2l", "fluid_pasta",
-      "aggro_eater", "peaceful_mind", "bento", "go_home", "chigauyo", "chigauyo_kanji"
+      "aggro_eater", "peaceful_mind", "bento", "go_home", "chigauyo"
     ]);
     const AI_TACTICAL_ITEM_IDS = new Set([
       "ruler", "double_diamond", "seriously_hit", "green_curry", "roar", "thin_item",
@@ -6627,7 +6627,7 @@
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
       "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
       "dos_attack", "destroy_dos_attack",
-      "three_gestures", "music_detergent", "chigauyo", "chigauyo_kanji",
+      "three_gestures", "music_detergent", "chigauyo",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
       "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000",
       "yamanashi_minimum_wage", "baka_mac", "ikemasu"
@@ -6755,7 +6755,6 @@
       quiet_please: { name: "静かにしましょうね？", type: "item", cost: 4, target: "enemy" },
       seriously_hit: { name: "ガチでしばくぞ", type: "item", cost: 5, target: "enemy" },
       chigauyo: { name: "ちがうよ", type: "item", cost: 3, target: "self" },
-      chigauyo_kanji: { name: "違うよ", type: "item", cost: 1, target: "self" },
       favorite_number_s: { name: "好きな数字は「S」", type: "item", cost: 5, target: "enemy" },
       sexual_eye: { name: "性的な目", type: "item", cost: 2, target: "self" },
       yoyu_announce: { name: "余裕アナウンス", type: "item", cost: 3, target: "self" },
@@ -6822,6 +6821,14 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.14.2",
+        date: "2026年7月26日",
+        summary: "アイベンとにょていが相手の講義室へ出席させるカードに、攻撃不能を追加。",
+        changes: [
+          { title: "アイベン・にょてい", before: "効果で相手の講義室へ出席したカードは、次の相手ターンに攻撃できる。", after: "効果で相手の講義室へ出席したカードは、相手の次のターン終了時まで攻撃できない。" }
+        ]
+      },
       {
         version: "ver.0.14.1",
         date: "2026年7月23日",
@@ -11631,7 +11638,7 @@
         const rowTargets = state.players.player.board.seats.filter((card, index) => card && seatRow(index) === 3).length;
         return rowTargets > 0 ? 5 + rowTargets * 4 : 2;
       }
-      if (item.baseId === "chigauyo" || item.baseId === "chigauyo_kanji") {
+      if (item.baseId === "chigauyo") {
         const enemyHandSize = state.players.player.hand.length;
         const ownHandSize = opponent.hand.length;
         const ownSeats = state.players.opponent.board.seats;
@@ -12351,9 +12358,10 @@
         return null;
       }
       const placed = makeBoardCard(createCardFromBase(baseId, targetSide));
+      placed.attackLockedUntilOwnerTurnsTaken = state.players[targetSide].turnsTaken + 1;
       setBoardCard(targetSide, "seat", seatIndex, placed);
       showCardPlayAnimation(placed, "board");
-      addLog(`${sourceName}の効果：相手の講義室のランダムな席マスに${placed.name}を1人出席させました。`);
+      addLog(`${sourceName}の効果：相手の講義室のランダムな席マスに${placed.name}を1人出席させました。${placed.name}は相手の次のターン終了時まで攻撃できません。`);
       resolveAttendEffects(targetSide, placed, "seat", seatIndex);
       return placed;
     }
@@ -16176,7 +16184,7 @@
           ? "どんぐり2枚を使い、手札のデザインデストロイファルコンでデザインファルコンを進化させました。"
           : "条件を満たせず、不発になりました。";
       }
-      if (item.baseId === "chigauyo" || item.baseId === "chigauyo_kanji") {
+      if (item.baseId === "chigauyo") {
         state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
         moveToTrash(side, item);
         itemAlreadyMovedToTrash = true;
@@ -21959,8 +21967,8 @@
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
         infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
-        aiben: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
-        nyotei: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
+        aiben: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「にょてい」1人を出席させる。この効果で出席した「にょてい」は、相手の次のターン終了時まで攻撃できない。相手の講義室に「にょてい」がいるかぎり、このカードの攻撃力を+5する。",
+        nyotei: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つをランダムに選び、そこに「アイベン」1人を出席させる。この効果で出席した「アイベン」は、相手の次のターン終了時まで攻撃できない。相手の講義室に「アイベン」がいるかぎり、このカードの攻撃力を+2し、防御力を+2する。自分のターン終了時、カードを1枚ドローする。",
         fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
         failure_student: "このカードが出席したとき、自分の手札を2枚選び、校外エリアへ送る。",
         success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の人数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
@@ -22042,7 +22050,6 @@
         quiet_please: "相手の攻撃力4以上の出席者1人を指名する。その出席者は攻撃できない。",
         seriously_hit: "相手の出席者1人を指名し、破壊する。",
         chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
-        chigauyo_kanji: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
         favorite_number_s: "相手の教卓マスにいる教師1人を指名し、破壊する。その後、その教師と同名のカード1枚を自分の手札に加える。",
         sexual_eye: "自分のデッキから「U太」を1枚まで引く。",
         yoyu_announce: "「U太」を1枚手札に生成し、カードを1枚ドローする。",
