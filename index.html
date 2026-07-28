@@ -11406,7 +11406,7 @@
       return type === "endTurn"
         || type === "donguri"
         || type === "raptorTemple"
-        || type === "playCard"
+        || (type === "playCard" && isRewardFoilCard(commandCard))
         || Boolean(commandCard?.evolutionFrom)
         || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
     }
@@ -16001,6 +16001,10 @@
       placeCardFromHand("player", instanceId, zone, owner, index, true);
     }
 
+    function isRewardFoilCard(card) {
+      return Boolean(card && cardRewardStyleClass(card).includes("reward-foil"));
+    }
+
     function deferCardAttendanceUntilReveal(side, instanceId, zone, owner, index, renderAfter, options, card) {
       const deferredId = `play-${nextDeferredCardPlayId++}`;
       const commandId = options.commandId || "";
@@ -16077,7 +16081,7 @@
         if (renderAfter) render();
         return false;
       }
-      if (!card.evolutionFrom && !options.revealAlreadyShown) {
+      if (isRewardFoilCard(card) && !card.evolutionFrom && !options.revealAlreadyShown) {
         return deferCardAttendanceUntilReveal(side, instanceId, zone, owner, index, renderAfter, options, card);
       }
       const analyticsCandidates = analyticsLegalPlacementCandidates(side, card);
