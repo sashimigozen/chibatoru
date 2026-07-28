@@ -668,6 +668,112 @@
       margin: 0;
     }
 
+    .dungeon-floor-overview {
+      margin: 0;
+      color: #4b5563;
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .dungeon-floor-section {
+      display: grid;
+      gap: 8px;
+    }
+
+    .dungeon-floor-section-title {
+      margin: 0;
+      color: #1f2937;
+      font-size: 14px;
+      font-weight: 1000;
+    }
+
+    .dungeon-floor-featured-cards {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 7px;
+    }
+
+    .dungeon-floor-feature-card {
+      min-width: 0;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .dungeon-floor-feature-card .card {
+      min-height: 132px;
+      padding: 4px;
+      box-shadow: 0 2px 7px rgba(15, 23, 42, 0.15);
+      transition: transform 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .dungeon-floor-feature-card:hover .card,
+    .dungeon-floor-feature-card:focus-visible .card {
+      transform: translateY(-3px);
+      box-shadow: 0 9px 16px rgba(15, 23, 42, 0.22);
+    }
+
+    .dungeon-floor-feature-card:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+
+    .dungeon-floor-feature-card .card-name {
+      font-size: 13px;
+      -webkit-line-clamp: 3;
+    }
+
+    .dungeon-floor-feature-card .card-type,
+    .dungeon-floor-feature-card .card-effect {
+      font-size: 9px;
+    }
+
+    .dungeon-floor-feature-card .card-effect {
+      -webkit-line-clamp: 2;
+    }
+
+    .dungeon-floor-feature-card .card-stat {
+      min-width: 24px;
+      min-height: 24px;
+      font-size: 10px;
+    }
+
+    .dungeon-floor-rule {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+      align-items: start;
+      border: 1px solid #c47a1b;
+      border-radius: 6px;
+      padding: 10px;
+      background: #fff7ed;
+      color: #78350f;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .dungeon-floor-rule.none {
+      border-color: #b7c6d9;
+      background: #f8fafc;
+      color: #64748b;
+    }
+
+    .dungeon-floor-rule-audience {
+      border-radius: 999px;
+      padding: 2px 7px;
+      color: #ffffff;
+      background: #a63a18;
+      font-size: 11px;
+      font-weight: 1000;
+      white-space: nowrap;
+    }
+
+    .dungeon-floor-rule.none .dungeon-floor-rule-audience {
+      background: #64748b;
+    }
+
     .dungeon-floor-actions {
       display: flex;
       justify-content: flex-end;
@@ -6834,6 +6940,7 @@
       .solo-mode-actions { grid-template-columns: 1fr; }
       .solo-mode-button { min-height: 180px; }
       .dungeon-entrance-stage { height: min(68vh, 540px); }
+      .dungeon-floor-featured-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .dungeon-interior-windows { width: 92vw; height: min(126px, 18vh); gap: 7px; }
       body.dungeon-interior .dungeon-deck-screen,
       body.dungeon-interior .dungeon-floor-screen { padding: 14px; }
@@ -6981,8 +7088,16 @@
         <p class="dungeon-floor-number" id="dungeonFloorNumber">1階</p>
         <div>
           <h2 id="dungeonFloorTitle">この階の特徴</h2>
-          <p id="dungeonFloorText"></p>
+          <p class="dungeon-floor-overview" id="dungeonFloorOverview"></p>
         </div>
+        <section class="dungeon-floor-section" aria-labelledby="dungeonFloorFeaturedTitle">
+          <h3 class="dungeon-floor-section-title" id="dungeonFloorFeaturedTitle">主なカード</h3>
+          <div class="dungeon-floor-featured-cards" id="dungeonFloorFeaturedCards"></div>
+        </section>
+        <section class="dungeon-floor-section" aria-labelledby="dungeonFloorRuleTitle">
+          <h3 class="dungeon-floor-section-title" id="dungeonFloorRuleTitle">フロア規則</h3>
+          <div class="dungeon-floor-rule" id="dungeonFloorRule"></div>
+        </section>
         <div class="dungeon-floor-actions">
           <button class="button" id="dungeonFloorStartButton" type="button">OK</button>
         </div>
@@ -7493,9 +7608,29 @@
         <p class="dungeon-floor-number" id="dungeonInfoFloorNumber">1階</p>
         <div>
           <h2 id="dungeonInfoTitle">この階の特徴</h2>
-          <p id="dungeonInfoText"></p>
+          <p class="dungeon-floor-overview" id="dungeonInfoOverview"></p>
         </div>
+        <section class="dungeon-floor-section" aria-labelledby="dungeonInfoFeaturedTitle">
+          <h3 class="dungeon-floor-section-title" id="dungeonInfoFeaturedTitle">主なカード</h3>
+          <div class="dungeon-floor-featured-cards" id="dungeonInfoFeaturedCards"></div>
+        </section>
+        <section class="dungeon-floor-section" aria-labelledby="dungeonInfoRuleTitle">
+          <h3 class="dungeon-floor-section-title" id="dungeonInfoRuleTitle">フロア規則</h3>
+          <div class="dungeon-floor-rule" id="dungeonInfoRule"></div>
+        </section>
         <div class="dungeon-floor-actions"><button class="button" id="dungeonInfoCloseButton" type="button">閉じる</button></div>
+      </section>
+    </div>
+    <div class="item-confirm-backdrop hidden" id="dungeonCardInfoModal" role="dialog" aria-modal="true" aria-labelledby="dungeonCardInfoTitle">
+      <section class="item-confirm-dialog">
+        <div class="item-confirm-card" id="dungeonCardInfoCard"></div>
+        <div class="item-confirm-copy">
+          <h2 id="dungeonCardInfoTitle">カード詳細</h2>
+          <div id="dungeonCardInfoText"></div>
+          <div class="item-confirm-actions">
+            <button class="button secondary" id="dungeonCardInfoCloseButton" type="button">閉じる</button>
+          </div>
+        </div>
       </section>
     </div>
     <div class="play-reveal-overlay hidden" id="playRevealOverlay" aria-hidden="true">
@@ -7690,52 +7825,77 @@
       1: {
         number: 1,
         title: "学生主体のデッキ",
-        text: "注目を持つ学生、横に展開する学生、一般教師、手札を補充するカードを含む学生主体のデッキ。"
+        text: "学生を中心に、一般教師と手札を補充する持ち物を組み合わせたデッキ。",
+        featuredCards: ["general_student", "ae_student", "back_question_student", "best_friend", "general_teacher"],
+        floorRule: null
       },
       2: {
         number: 2,
         title: "遅刻学生のデッキ",
-        text: "遅刻を持つ学生を中心にしたデッキ。遅刻者ゾーンに控えた学生が、時間の経過で講義室へ出席する。"
+        text: "遅刻を持つ学生を中心に、遅刻者ゾーンからの出席を狙うデッキ。",
+        featuredCards: ["adjective_student", "lazy_student", "eaten_student", "angry_maker", "general_teacher"],
+        floorRule: null
       },
       3: {
         number: 3,
         title: "アグロ学生のデッキ",
-        text: "低い戦意の学生と、特定のマスで能力を発揮する学生を多く含むアグロ型のデッキ。"
+        text: "低い戦意の学生と、特定のマスで能力を発揮する学生を多く採用したアグロ型のデッキ。",
+        featuredCards: ["aggro_student", "aggro_king", "aggro_queen", "single_cell", "student_comedy"],
+        floorRule: null
       },
       4: {
         number: 4,
         title: "教師主体のデッキ",
-        text: "教師を中心にしたデッキ。教卓マスで発動する講義や、出席時能力を持つ教師を含む。"
+        text: "教卓マスで発動する講義や、出席時能力を持つ教師を中心にしたデッキ。",
+        featuredCards: ["general_teacher", "fairy_t", "pro_k", "signal_professor_m", "thin_professor_h"],
+        floorRule: null
       },
       5: {
         number: 5,
         title: "学生と教師の連携デッキ",
-        text: "学生と教師をあわせて採用したデッキ。学生の展開と教師の能力を組み合わせる構成。"
+        text: "学生の展開と教師の能力を組み合わせる、学生と教師の連携デッキ。",
+        featuredCards: ["general_student", "yuta", "aggro_king", "pro_k", "kyoto_sound_i"],
+        floorRule: null
       },
       6: {
         number: 6,
         title: "ロジックハンターのデッキ",
-        text: "ロジックハンターを中心に、手札と講義室を妨害するデッキ。フロア規則により、相手は自分のターン終了時にカードを1枚引く。"
+        text: "ロジックハンターを中心に、手札と講義室を妨害するデッキ。",
+        featuredCards: ["logic_hunter", "sniper", "handy_jet_engine", "yamanashi_minimum_wage", "baka_mac"],
+        floorRule: "相手は自分のターン終了時に、カードを1枚引く。",
+        floorRuleAudience: "相手のみ"
       },
       7: {
         number: 7,
         title: "U太と装備のデッキ",
-        text: "U太と裏U太を、装備カードで強化するデッキ。フロア規則により、相手は自分のターン開始時にランダムな装備カード1枚を手札に生成する。"
+        text: "U太と裏U太を、装備カードで強化するデッキ。",
+        featuredCards: ["yuta", "dark_yuta", "chameleon", "yuta_umbrella", "greeting_3000"],
+        floorRule: "相手は自分のターン開始時に、ランダムな装備カード1枚を手札に生成する。",
+        floorRuleAudience: "相手のみ"
       },
       8: {
         number: 8,
         title: "バカでかい声の学生のデッキ",
-        text: "バカでかい声の学生とベストフレンドを中心にしたデッキ。フロア規則により、プレイヤーのターン開始時、相手の講義室に以後攻撃できないベストフレンド1人が出席する。"
+        text: "バカでかい声の学生とベストフレンドを中心にしたデッキ。",
+        featuredCards: ["loud_student", "best_friend", "ae_student", "cote_dazur", "predator"],
+        floorRule: "あなたのターン開始時、相手の講義室のランダムな席マスに、以後攻撃できないベストフレンド1人を出席させる。",
+        floorRuleAudience: "相手のみ"
       },
       9: {
         number: 9,
         title: "進化する出席者のデッキ",
-        text: "複数の進化カードを採用したデッキ。同じ進化元を2人以上出席させると、その進化元は出席したターンでも進化できる。"
+        text: "複数の進化カードを採用し、進化を繰り返して戦うデッキ。",
+        featuredCards: ["failure_student", "success_student", "yuta", "ai_chan", "bird_a"],
+        floorRule: "相手が同じ進化元を2人以上出席させている場合、その進化元は出席したターンでも進化できる。",
+        floorRuleAudience: "相手のみ"
       },
       10: {
         number: 10,
         title: "学長とヴァンパイアのデッキ",
-        text: "学長とヴァンパイアを中心にしたデッキ。対戦開始時、相手のデッキのランダムな位置に、戦意7・攻撃力5・体力5の「闇学長」1枚を生成し、相手の手札に「学長の茶室」を3枚生成する。闇学長が出席すると、この対戦中は環境「食堂」の効果を得る。"
+        text: "学長とヴァンパイアを中心にした、魔の1号館の最終階。",
+        featuredCards: ["president", "vampire", "apprentice_vampire", "chen_san", "curry_treater"],
+        floorRule: "この階には、挑戦前には内容を伏せられた特別なフロア規則がある。",
+        floorRuleAudience: "相手のみ"
       }
     });
     const DUNGEON_FINAL_FLOOR = Math.max(...Object.keys(DUNGEON_FLOORS).map(Number));
@@ -8224,14 +8384,16 @@
       {
         version: "ver.0.15.0",
         date: "2026年7月27日",
-        summary: "ソロの入口を整理し、専攻デッキで挑む連戦モード「魔の1号館」を追加。入口演出、全10階、フロア規則、クリア報酬までを含む大型更新。",
+        summary: "ソロの入口を整理し、専攻デッキで挑む連戦モード「魔の1号館」を追加。入口演出、全10階、フロア規則、進行保存、クリア報酬に加え、「余裕」の回復量を調整した大型更新。",
         changes: [
           { title: "ホーム", before: "オンラインバトル／ソロバトルを直接選ぶ。", after: "マルチ／ソロの表示へ変更。ソロではAIバトルと魔の1号館を選べる。" },
           { title: "専攻デッキ", after: "通常デッキとは別に保存。新規作成時に専攻を選び、その専攻カードと共通カードだけで40枚固定のデッキを作成する。" },
           { title: "魔の1号館の入口", before: "魔の1号館へ挑戦する入口演出がない。", after: "赤黒い空と赤い月の下、灰色の大学ビルを最上階から地上まで降り、扉のない黒い入口へ入る演出を追加。" },
+          { title: "魔の1号館の画面", before: "魔の1号館専用のデッキ選択・階の説明・バトル背景がない。", after: "挑戦用のデッキ選択、各階の特徴を確認する画面、薄暗い館内を背景にしたバトル画面を追加。階の説明では主なカードとフロア規則を分けて表示し、カードを押すと詳細を確認できる。バトル中にも階の特徴を確認できる。" },
           { title: "第1〜10階", before: "階ごとの相手デッキとフロア規則がない。", after: "第1〜5階は学生・遅刻・アグロ・教師などの段階的なデッキ、第6〜9階は追加ドロー・装備生成・ベストフレンド出席・進化支援のフロア規則を持つ対戦を追加。第10階には特別なフロア規則を設定。" },
           { title: "階の気力とAI", before: "通常のVS AIと同じ判断で、前の階の気力を引き継ぐ。", after: "各階を気力20で開始。第1〜4階の相手は最大気力10、第5階以降は20。第1〜5階のAIはドローを優先する初期階用の判断で行動する。" },
           { title: "進行と再開", before: "階を進む・中断して再開する仕組みがない。", after: "勝利後に次の階の特徴を確認して進む。中断後は勝利した階の次の階から再開でき、敗北時は第1階からやり直す。" },
+          { title: "余裕", before: "余裕を持つ出席者は、自分のターン終了時に体力を2回復する。", after: "余裕を持つ出席者は、自分のターン終了時に体力を1回復する。" },
           { title: "クリア報酬", before: "魔の1号館を最後までクリアしても見た目の報酬がない。", after: "第10階勝利後に宝箱を開け、専攻の代表カードの金枠スタイルを獲得する。解放済みカードは詳細画面の循環矢印で通常／金枠を切り替えられ、バックアップJSONとして保存・復元できる。" }
         ]
       },
@@ -9057,14 +9219,23 @@
       dungeonFloorBackButton: document.getElementById("dungeonFloorBackButton"),
       dungeonFloorNumber: document.getElementById("dungeonFloorNumber"),
       dungeonFloorTitle: document.getElementById("dungeonFloorTitle"),
-      dungeonFloorText: document.getElementById("dungeonFloorText"),
+      dungeonFloorOverview: document.getElementById("dungeonFloorOverview"),
+      dungeonFloorFeaturedCards: document.getElementById("dungeonFloorFeaturedCards"),
+      dungeonFloorRule: document.getElementById("dungeonFloorRule"),
       dungeonFloorStartButton: document.getElementById("dungeonFloorStartButton"),
       dungeonFloorInfoButton: document.getElementById("dungeonFloorInfoButton"),
       dungeonInfoModal: document.getElementById("dungeonInfoModal"),
       dungeonInfoFloorNumber: document.getElementById("dungeonInfoFloorNumber"),
       dungeonInfoTitle: document.getElementById("dungeonInfoTitle"),
-      dungeonInfoText: document.getElementById("dungeonInfoText"),
+      dungeonInfoOverview: document.getElementById("dungeonInfoOverview"),
+      dungeonInfoFeaturedCards: document.getElementById("dungeonInfoFeaturedCards"),
+      dungeonInfoRule: document.getElementById("dungeonInfoRule"),
       dungeonInfoCloseButton: document.getElementById("dungeonInfoCloseButton"),
+      dungeonCardInfoModal: document.getElementById("dungeonCardInfoModal"),
+      dungeonCardInfoCard: document.getElementById("dungeonCardInfoCard"),
+      dungeonCardInfoTitle: document.getElementById("dungeonCardInfoTitle"),
+      dungeonCardInfoText: document.getElementById("dungeonCardInfoText"),
+      dungeonCardInfoCloseButton: document.getElementById("dungeonCardInfoCloseButton"),
       dungeonRewardStage: document.getElementById("dungeonRewardStage"),
       dungeonRewardTitle: document.getElementById("dungeonRewardTitle"),
       dungeonRewardCopy: document.getElementById("dungeonRewardCopy"),
@@ -22950,19 +23121,77 @@
       return floorNumber <= 4 ? 10 : 20;
     }
 
+    function dungeonFloorFeaturedCardsMarkup(floor) {
+      const ids = Array.isArray(floor.featuredCards) ? floor.featuredCards : [];
+      return ids
+        .filter((baseId) => Boolean(CARD_BASES[baseId]))
+        .map((baseId) => {
+          const card = makePreviewCard(baseId, "opponent");
+          return `<button class="dungeon-floor-feature-card" type="button" data-dungeon-floor-card="${escapeHtml(baseId)}" aria-label="${escapeHtml(card.name)}の詳細を見る">${cardShellTemplate(card)}</button>`;
+        })
+        .join("");
+    }
+
+    function attachDungeonFloorCardDetails(container) {
+      if (!container) return;
+      container.querySelectorAll("[data-dungeon-floor-card]").forEach((button) => {
+        const baseId = button.dataset.dungeonFloorCard;
+        const base = CARD_BASES[baseId];
+        if (!base) return;
+        attachCardDetailEvents(button, makePreviewCard(baseId, "opponent"), { previewOnClick: false });
+        button.addEventListener("click", () => openDungeonCardInfo(baseId));
+      });
+    }
+
+    function renderDungeonFloorDetails(floor, targets) {
+      if (targets.overview) targets.overview.textContent = floor.text;
+      if (targets.cards) {
+        targets.cards.innerHTML = dungeonFloorFeaturedCardsMarkup(floor);
+        attachDungeonFloorCardDetails(targets.cards);
+      }
+      if (!targets.rule) return;
+      const hasRule = Boolean(floor.floorRule);
+      targets.rule.classList.toggle("none", !hasRule);
+      targets.rule.innerHTML = hasRule
+        ? `<span class="dungeon-floor-rule-audience">${escapeHtml(floor.floorRuleAudience || "相手のみ")}</span><span>${escapeHtml(floor.floorRule)}</span>`
+        : `<span class="dungeon-floor-rule-audience">なし</span><span>この階にはフロア規則はありません。</span>`;
+    }
+
     function renderDungeonFloor() {
       const floor = currentDungeonFloor();
       if (elements.dungeonFloorNumber) elements.dungeonFloorNumber.textContent = `${floor.number}階`;
       if (elements.dungeonFloorTitle) elements.dungeonFloorTitle.textContent = floor.title;
-      if (elements.dungeonFloorText) elements.dungeonFloorText.textContent = floor.text;
       if (elements.dungeonInfoFloorNumber) elements.dungeonInfoFloorNumber.textContent = `${floor.number}階`;
       if (elements.dungeonInfoTitle) elements.dungeonInfoTitle.textContent = floor.title;
-      if (elements.dungeonInfoText) elements.dungeonInfoText.textContent = floor.text;
+      renderDungeonFloorDetails(floor, {
+        overview: elements.dungeonFloorOverview,
+        cards: elements.dungeonFloorFeaturedCards,
+        rule: elements.dungeonFloorRule
+      });
+      renderDungeonFloorDetails(floor, {
+        overview: elements.dungeonInfoOverview,
+        cards: elements.dungeonInfoFeaturedCards,
+        rule: elements.dungeonInfoRule
+      });
       const battleReady = Boolean(DUNGEON_FLOOR_DECKS[floor.number]);
       if (elements.dungeonFloorStartButton) {
         elements.dungeonFloorStartButton.disabled = !battleReady;
         elements.dungeonFloorStartButton.textContent = battleReady ? "OK" : "準備中";
       }
+    }
+
+    function openDungeonCardInfo(baseId) {
+      if (!CARD_BASES[baseId] || !elements.dungeonCardInfoModal) return;
+      const card = makePreviewCard(baseId, "opponent");
+      elements.dungeonCardInfoCard.innerHTML = cardShellTemplate(card);
+      elements.dungeonCardInfoTitle.textContent = card.name;
+      elements.dungeonCardInfoText.innerHTML = cardDetailTemplate(card);
+      hideCardTooltip();
+      elements.dungeonCardInfoModal.classList.remove("hidden");
+    }
+
+    function closeDungeonCardInfo() {
+      elements.dungeonCardInfoModal?.classList.add("hidden");
     }
 
     function renderDungeonReward() {
@@ -24755,6 +24984,16 @@
     elements.dungeonInfoCloseButton.addEventListener("click", closeDungeonFloorInfo);
     elements.dungeonInfoModal.addEventListener("click", (event) => {
       if (event.target === elements.dungeonInfoModal) closeDungeonFloorInfo();
+    });
+    elements.dungeonCardInfoCloseButton.addEventListener("click", closeDungeonCardInfo);
+    elements.dungeonCardInfoModal.addEventListener("click", (event) => {
+      const related = event.target.closest("[data-related-card]");
+      if (related) {
+        event.stopPropagation();
+        openDungeonCardInfo(related.dataset.relatedCard);
+        return;
+      }
+      if (event.target === elements.dungeonCardInfoModal) closeDungeonCardInfo();
     });
     elements.dungeonRewardChest.addEventListener("click", openDungeonRewardChest);
     elements.dungeonRewardHomeButton.addEventListener("click", showHomeScreen);
