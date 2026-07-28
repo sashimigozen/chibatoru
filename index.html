@@ -8988,6 +8988,7 @@
       selectedHandId: null,
       selectedAttacker: null,
       pendingCardPlay: null,
+      rewardFoilRevealKeys: {},
       attackInProgress: false,
       attackDelayToken: 0,
       currentAttack: null,
@@ -11315,7 +11316,10 @@
         return;
       }
       if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {
-        showCardPlayAnimation(message.card, message.destination || "trash", { remote: true });
+        showCardPlayAnimation(message.card, message.destination || "trash", {
+          remote: true,
+          rewardFoilReveal: Boolean(message.rewardFoilReveal)
+        });
         return;
       }
       if (message.type === "donguriReveal" && (isOnlineGuest() || isOnlineSpectator())) {
@@ -12423,6 +12427,7 @@
       state.selectedHandId = null;
       state.selectedAttacker = null;
       clearDeferredCardPlay();
+      state.rewardFoilRevealKeys = {};
       state.attackInProgress = false;
       state.attackDelayToken += 1;
       state.currentAttack = null;
@@ -19868,7 +19873,7 @@
         : destination === "board"
           ? "to-board"
           : "to-trash";
-      const rewardFoilReveal = cardRewardStyleClass(card).includes("reward-foil");
+      const rewardFoilReveal = shouldUseRewardFoilReveal(card, options);
       elements.playRevealCard.className = `play-reveal-card${rewardFoilReveal ? " reward-foil-reveal" : ""}`;
       elements.playRevealCard.innerHTML = cardShellTemplate(card);
       elements.playRevealOverlay.classList.toggle("reward-foil-reveal-active", rewardFoilReveal);
@@ -19876,12 +19881,28 @@
       void elements.playRevealCard.offsetWidth;
       elements.playRevealCard.classList.add(destinationClass);
       if (!options.remote && isOnlineHost() && state.online.started && state.online.connected) {
-        onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination });
+        onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination, rewardFoilReveal });
       }
       playRevealTimer = window.setTimeout(() => {
         hidePlayReveal();
         options.onComplete?.();
       }, rewardFoilReveal ? REWARD_FOIL_PLAY_REVEAL_MS : PLAY_REVEAL_MS);
+    }
+
+    function rewardFoilRevealKey(card) {
+      return `${card?.owner || "unknown"}:${card?.baseId || card?.instanceId || "card"}`;
+    }
+
+    function shouldUseRewardFoilReveal(card, options = {}) {
+      if (!cardRewardStyleClass(card).includes("reward-foil")) return false;
+      if (typeof options.rewardFoilReveal === "boolean") {
+        if (options.rewardFoilReveal) state.rewardFoilRevealKeys[rewardFoilRevealKey(card)] = true;
+        return options.rewardFoilReveal;
+      }
+      const key = rewardFoilRevealKey(card);
+      if (state.rewardFoilRevealKeys[key]) return false;
+      state.rewardFoilRevealKeys[key] = true;
+      return true;
     }
 
     function resultOverlayKey(winner, options = {}) {
@@ -24148,6 +24169,7 @@
       pendingAnimations.length = 0;
       resetTutorialState();
       clearDeferredCardPlay();
+      state.rewardFoilRevealKeys = {};
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
