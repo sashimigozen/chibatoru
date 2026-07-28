@@ -749,11 +749,19 @@ function sendError(ws, message, code = "bad_request") {
   send(ws, { type: "error", code, message, senderId: SERVER_ID });
 }
 
+function normalizeCardStyles(cardStyles) {
+  if (!cardStyles || typeof cardStyles !== "object" || Array.isArray(cardStyles)) return {};
+  return Object.fromEntries(Object.entries(cardStyles)
+    .filter(([baseId, mode]) => /^[a-z0-9_]{1,80}$/i.test(baseId) && mode === "reward")
+    .slice(0, 64));
+}
+
 function playerPublicState(player) {
   return {
     clientId: player.clientId,
     role: player.role,
     deckName: player.role === "spectator" ? "" : (player.deckName || "__current"),
+    cardStyles: player.role === "spectator" ? {} : (player.cardStyles || {}),
     ready: player.role === "spectator" ? false : Boolean(player.ready)
   };
 }
@@ -1084,6 +1092,7 @@ function joinRoom(ws, message) {
     ready: role === "spectator" ? false : Boolean(message.ready),
     deckName: role === "spectator" ? "" : (message.deckName || "__current"),
     deckCounts: role === "spectator" ? null : (message.deckCounts || null),
+    cardStyles: role === "spectator" ? {} : normalizeCardStyles(message.cardStyles ?? existing?.cardStyles),
     joinedAt: existing?.joinedAt || now(),
     lastSeenAt: now()
   };
@@ -1184,6 +1193,7 @@ function handleDeckUpdate(ws, message) {
   }
   player.deckName = message.deckName || "__current";
   player.deckCounts = message.deckCounts || null;
+  player.cardStyles = normalizeCardStyles(message.cardStyles ?? player.cardStyles);
   player.ready = ready;
   broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
   broadcast(room, {

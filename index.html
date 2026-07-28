@@ -5321,7 +5321,7 @@
       position: relative;
       isolation: isolate;
       overflow: hidden;
-      border: 2px solid transparent;
+      border: 1px solid transparent;
       background:
         var(--reward-foil-face) padding-box,
         linear-gradient(112deg, #72520a 0%, #f8dd74 18%, #9c7416 35%, #fff3ad 52%, #8d660e 68%, #f4cf60 86%, #72520a 100%) border-box;
@@ -5348,6 +5348,11 @@
     .card.reward-foil > * {
       position: relative;
       z-index: 1;
+    }
+
+    .field-card.reward-foil > .field-card-status {
+      position: absolute;
+      z-index: 2;
     }
 
     .field-card.reward-foil .field-card-name,
@@ -10047,6 +10052,7 @@
         ...base,
         baseId,
         owner,
+        rewardFoilStyle: rewardFoilStyleForOwner(baseId, owner),
         handTurns: 0,
         defense: base.defense ?? 0,
         maxHp: base.hp ?? null,
@@ -10257,6 +10263,45 @@
       return Boolean(reward && unlockedDungeonCardStyles[reward.specialtyId]);
     }
 
+    function localRewardFoilStyle(baseId) {
+      const reward = rewardForCardBaseId(baseId);
+      if (!reward || !hasUnlockedCardRewardStyle(baseId)) return "";
+      return selectedDungeonCardStyles[baseId] === "normal" ? "" : reward.style;
+    }
+
+    function onlineSelectedCardStyles() {
+      return Object.fromEntries(Object.values(DUNGEON_CARD_STYLE_REWARDS)
+        .flatMap((reward) => reward.cardIds)
+        .filter((baseId) => localRewardFoilStyle(baseId))
+        .map((baseId) => [baseId, "reward"]));
+    }
+
+    function normalizeOnlineCardStyles(source) {
+      if (!source || typeof source !== "object" || Array.isArray(source)) return {};
+      const rewardCardIds = new Set(Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds));
+      return Object.fromEntries(Object.entries(source)
+        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && mode === "reward"));
+    }
+
+    function rewardFoilStyleForSelection(baseId, selections) {
+      const reward = rewardForCardBaseId(baseId);
+      return reward && selections?.[baseId] === "reward" ? reward.style : "";
+    }
+
+    function onlineCardStylesForOwner(owner) {
+      if (isOnlineSpectator()) {
+        return owner === "player" ? state.online.hostCardStyles : state.online.guestCardStyles;
+      }
+      return owner === "player" ? state.online.localCardStyles : state.online.remoteCardStyles;
+    }
+
+    function rewardFoilStyleForOwner(baseId, owner) {
+      if (state.online.started) {
+        return rewardFoilStyleForSelection(baseId, onlineCardStylesForOwner(owner));
+      }
+      return owner === "player" ? localRewardFoilStyle(baseId) : "";
+    }
+
     function toggleDungeonCardStyle(baseId) {
       if (!hasUnlockedCardRewardStyle(baseId)) return false;
       selectedDungeonCardStyles[baseId] = selectedDungeonCardStyles[baseId] === "normal" ? "reward" : "normal";
@@ -10355,10 +10400,17 @@
     }
 
     function cardRewardStyleClass(card) {
-      if (isOnlineSpectator() || (card?.owner && card.owner !== "player")) return "";
       const reward = rewardForCardBaseId(card?.baseId);
-      if (!reward || !unlockedDungeonCardStyles[reward.specialtyId]) return "";
-      return selectedDungeonCardStyles[card.baseId] === "normal" ? "" : ` reward-foil reward-foil-${reward.style}`;
+      if (!reward) return "";
+      const syncedStyle = card?.rewardFoilStyle === reward.style ? reward.style : "";
+      if (syncedStyle) return ` reward-foil reward-foil-${syncedStyle}`;
+      if (state.online.started && card?.owner) {
+        const ownerStyle = rewardFoilStyleForSelection(card.baseId, onlineCardStylesForOwner(card.owner));
+        return ownerStyle ? ` reward-foil reward-foil-${ownerStyle}` : "";
+      }
+      if (isOnlineSpectator()) return "";
+      const localStyle = card?.owner === "player" || !card?.owner ? localRewardFoilStyle(card?.baseId) : "";
+      return localStyle ? ` reward-foil reward-foil-${localStyle}` : "";
     }
 
     function cardVisualClass(card) {
@@ -10739,6 +10791,13 @@
       state.online.lastAnalyticsLogFinal = false;
     }
 
+    function onlineResetCardStyles() {
+      state.online.localCardStyles = {};
+      state.online.remoteCardStyles = {};
+      state.online.hostCardStyles = {};
+      state.online.guestCardStyles = {};
+    }
+
     function onlineCloseConnection(returnHome = false) {
       onlineStopReliabilityLoop();
       try { state.online.conn?.close(); } catch {}
@@ -10757,6 +10816,7 @@
       state.online.remoteReady = false;
       state.online.remoteDeckName = "";
       state.online.remoteDeckCounts = null;
+      onlineResetCardStyles();
       state.online.localRpsChoice = null;
       state.online.remoteRpsChoice = null;
       state.online.localMulliganPending = false;
@@ -10803,6 +10863,7 @@
       state.online.remoteReady = false;
       state.online.remoteDeckName = "";
       state.online.remoteDeckCounts = null;
+      onlineResetCardStyles();
       state.online.pendingTurnCommandId = "";
       state.online.pendingAttackCommandId = "";
       state.attackInProgress = false;
@@ -11013,6 +11074,7 @@
         matchType: state.online.matchMode || "private",
         deckName: state.online.localDeckName,
         deckCounts: createOnlineDeckCounts(),
+        cardStyles: onlineSelectedCardStyles(),
         ready: state.online.localReady,
         ...payloadOverrides
       });
@@ -11036,6 +11098,10 @@
         state.online.remoteClientId = opponent?.clientId || "";
         state.online.remoteDeckName = opponent?.deckName || state.online.remoteDeckName || "";
         state.online.remoteReady = Boolean(opponent?.ready);
+        state.online.hostCardStyles = normalizeOnlineCardStyles(host?.cardStyles);
+        state.online.guestCardStyles = normalizeOnlineCardStyles(guest?.cardStyles);
+        state.online.localCardStyles = normalizeOnlineCardStyles(self?.cardStyles || onlineSelectedCardStyles());
+        state.online.remoteCardStyles = normalizeOnlineCardStyles(opponent?.cardStyles);
         state.online.connected = Boolean(host && guest);
         state.online.started = Boolean(message.started || state.online.started);
         state.online.lastSeenAt = Date.now();
@@ -11163,6 +11229,7 @@
       if (message.type === "hello" && isOnlineHost()) {
         state.online.remoteDeckName = message.deckName || "__current";
         state.online.remoteDeckCounts = copyDeckCounts(message.deckCounts || {});
+        state.online.remoteCardStyles = normalizeOnlineCardStyles(message.cardStyles);
         state.online.remoteReady = Boolean(message.ready);
         if (state.online.started) {
           onlineBroadcastState(true);
@@ -11175,6 +11242,7 @@
       if (message.type === "deckUpdate" && isOnlineHost()) {
         state.online.remoteDeckName = message.deckName || "__current";
         state.online.remoteDeckCounts = copyDeckCounts(message.deckCounts || {});
+        state.online.remoteCardStyles = normalizeOnlineCardStyles(message.cardStyles);
         state.online.remoteReady = Boolean(message.ready);
         onlineSendRoomState();
         render();
@@ -11269,9 +11337,10 @@
     function onlineUpdateDeckSelection() {
       state.online.localDeckName = elements.onlineDeckSelect.value || "__current";
       state.online.localDeckCounts = createOnlineDeckCounts();
+      state.online.localCardStyles = onlineSelectedCardStyles();
       state.online.localReady = false;
       if (state.online.role) {
-        onlineSend({ type: "deckUpdate", deckName: state.online.localDeckName, deckCounts: state.online.localDeckCounts, ready: false });
+        onlineSend({ type: "deckUpdate", deckName: state.online.localDeckName, deckCounts: state.online.localDeckCounts, cardStyles: state.online.localCardStyles, ready: false });
       }
       if (isOnlineHost()) onlineSendRoomState();
       render();
@@ -11279,6 +11348,7 @@
 
     function onlineToggleReady() {
       state.online.localDeckCounts = createOnlineDeckCounts();
+      state.online.localCardStyles = onlineSelectedCardStyles();
       const validation = validateDeckCounts(state.online.localDeckCounts);
       if (!validation.valid) {
         onlineSetStatus("選択中のデッキが40〜60枚、同名上限以内になっていません。", "bad");
@@ -11286,7 +11356,7 @@
       }
       state.online.localReady = !state.online.localReady;
       if (state.online.role) {
-        onlineSend({ type: "deckUpdate", deckName: state.online.localDeckName, deckCounts: state.online.localDeckCounts, ready: state.online.localReady });
+        onlineSend({ type: "deckUpdate", deckName: state.online.localDeckName, deckCounts: state.online.localDeckCounts, cardStyles: state.online.localCardStyles, ready: state.online.localReady });
       }
       if (isOnlineHost()) onlineSendRoomState();
       render();
@@ -11310,6 +11380,7 @@
       }
       state.deckBuilder.counts.player = localCounts;
       state.deckBuilder.counts.opponent = remoteCounts;
+      state.online.localCardStyles = onlineSelectedCardStyles();
       state.online.started = true;
       onlineResetAnalyticsLogState();
       state.screen = "battle";
@@ -12274,6 +12345,7 @@
         ...base,
         baseId,
         owner,
+        rewardFoilStyle: rewardFoilStyleForOwner(baseId, owner),
         maxHp: base.hp ?? null,
         currentHp: base.hp ?? null,
         instanceId: `preview-${owner}-${baseId}`
@@ -19625,6 +19697,7 @@
         ...base,
         baseId,
         owner,
+        rewardFoilStyle: rewardFoilStyleForOwner(baseId, owner),
         maxHp: base.hp ?? null,
         currentHp: base.hp ?? null,
         instanceId: `reveal-${owner}-${baseId}`

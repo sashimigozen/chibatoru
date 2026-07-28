@@ -259,6 +259,62 @@ test("public room list exposes spectatable battles and allows spectator joins", 
   assert.equal(spectatorJoin.hasOpponent, true);
 });
 
+test("reward card styles are shared with the opponent and spectators", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "STYLE01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectClient(url, roomId, "host-style", true);
+  const guest = await connectClient(url, roomId, "guest-style");
+  clients.push(host, guest);
+
+  const deckCounts = { test_card: 40 };
+  const hostUpdateStart = host.messages.length;
+  send(guest, {
+    type: "deckUpdate",
+    deckCounts,
+    ready: true,
+    cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal" }
+  });
+  const sharedGuestStyles = await waitFor(host, (message) =>
+    message.type === "playerJoined"
+    && message.players?.some((player) => player.clientId === "guest-style" && player.cardStyles?.vampire === "reward"), hostUpdateStart);
+  const guestPublicState = sharedGuestStyles.message.players.find((player) => player.clientId === "guest-style");
+  assert.equal(guestPublicState.cardStyles.vampire, "reward");
+  assert.equal(guestPublicState.cardStyles.unexpected, "reward");
+  assert.equal(guestPublicState.cardStyles.lazy_student, undefined);
+
+  send(host, {
+    type: "deckUpdate",
+    deckCounts,
+    ready: true,
+    cardStyles: { bird_a: "reward" }
+  });
+  await waitFor(guest, (message) =>
+    message.type === "playerJoined"
+    && message.players?.some((player) => player.clientId === "host-style" && player.cardStyles?.bird_a === "reward"));
+
+  send(host, {
+    type: "startGame",
+    snapshot: { seq: 1, state: { currentSide: "player", gameOver: false } }
+  });
+  await waitFor(guest, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
+
+  const spectator = await connectSpectatorClient(url, roomId, "spectator-style");
+  clients.push(spectator);
+  const spectatorJoin = spectator.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "spectator-style");
+  const hostState = spectatorJoin.players.find((player) => player.clientId === "host-style");
+  const spectatorGuestState = spectatorJoin.players.find((player) => player.clientId === "guest-style");
+  assert.equal(hostState.cardStyles.bird_a, "reward");
+  assert.equal(spectatorGuestState.cardStyles.vampire, "reward");
+});
+
 test("private card choice requests and responses relay between host and guest", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
