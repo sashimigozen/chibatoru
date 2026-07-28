@@ -3326,25 +3326,6 @@
         drop-shadow(0 0 32px rgba(248, 213, 92, 0.72));
     }
 
-    .reward-foil-reveal-label {
-      position: absolute;
-      top: -52px;
-      left: 50%;
-      z-index: 3;
-      width: max-content;
-      max-width: min(84vw, 420px);
-      color: #fff1b6;
-      font-size: 21px;
-      font-weight: 900;
-      letter-spacing: 0;
-      opacity: 0;
-      pointer-events: none;
-      text-align: center;
-      text-shadow: 0 0 18px rgba(251, 207, 79, 0.7);
-      transform: translate(-50%, 8px);
-      animation: reward-foil-reveal-title var(--reward-foil-reveal-duration) both;
-    }
-
     .play-reveal-card.reward-foil-reveal .card.reward-foil {
       position: relative;
       z-index: 1;
@@ -3777,21 +3758,6 @@
       52%, 100% {
         opacity: 0;
         transform: scale(1.65);
-      }
-    }
-
-    @keyframes reward-foil-reveal-title {
-      0%, 18% {
-        opacity: 0;
-        transform: translate(-50%, 8px);
-      }
-      30%, 68% {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
-      100% {
-        opacity: 0;
-        transform: translate(-50%, 0);
       }
     }
 
@@ -19741,9 +19707,8 @@
           ? "to-board"
           : "to-trash";
       const rewardFoilReveal = cardRewardStyleClass(card).includes("reward-foil");
-      const actionLabel = destination === "board" ? "出席" : destination === "environment" ? "環境に配置" : "使用";
       elements.playRevealCard.className = `play-reveal-card${rewardFoilReveal ? " reward-foil-reveal" : ""}`;
-      elements.playRevealCard.innerHTML = `${rewardFoilReveal ? `<div class="reward-foil-reveal-label">${escapeHtml(card.name)}が${actionLabel}</div>` : ""}${cardShellTemplate(card)}`;
+      elements.playRevealCard.innerHTML = cardShellTemplate(card);
       elements.playRevealOverlay.classList.toggle("reward-foil-reveal-active", rewardFoilReveal);
       elements.playRevealOverlay.classList.remove("hidden");
       void elements.playRevealCard.offsetWidth;
