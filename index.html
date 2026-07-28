@@ -3267,7 +3267,24 @@
       display: none;
     }
 
+    .play-reveal-overlay.reward-foil-reveal-active {
+      --reward-foil-reveal-duration: 3.2s;
+      isolation: isolate;
+    }
+
+    .play-reveal-overlay.reward-foil-reveal-active::before {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      background: radial-gradient(circle at 50% 48%, rgba(255, 247, 191, 0.86), rgba(246, 199, 73, 0.34) 25%, transparent 62%);
+      content: "";
+      opacity: 0;
+      pointer-events: none;
+      animation: reward-foil-reveal-burst var(--reward-foil-reveal-duration) both;
+    }
+
     .play-reveal-card {
+      position: relative;
       width: 190px;
       transform-origin: center center;
       filter: drop-shadow(0 24px 34px rgba(15, 23, 42, 0.34));
@@ -3301,6 +3318,45 @@
       font-size: 14px;
     }
 
+    /* 金枠スタイルを選んだカードだけ、出席・使用時に一度だけ強く光らせる。 */
+    .play-reveal-card.reward-foil-reveal {
+      z-index: 1;
+      filter:
+        drop-shadow(0 24px 34px rgba(15, 23, 42, 0.34))
+        drop-shadow(0 0 32px rgba(248, 213, 92, 0.72));
+    }
+
+    .reward-foil-reveal-label {
+      position: absolute;
+      top: -52px;
+      left: 50%;
+      z-index: 3;
+      width: max-content;
+      max-width: min(84vw, 420px);
+      color: #fff1b6;
+      font-size: 21px;
+      font-weight: 900;
+      letter-spacing: 0;
+      opacity: 0;
+      pointer-events: none;
+      text-align: center;
+      text-shadow: 0 0 18px rgba(251, 207, 79, 0.7);
+      transform: translate(-50%, 8px);
+      animation: reward-foil-reveal-title var(--reward-foil-reveal-duration) both;
+    }
+
+    .play-reveal-card.reward-foil-reveal .card.reward-foil {
+      position: relative;
+      z-index: 1;
+      animation: reward-foil-flow var(--reward-foil-reveal-duration) linear infinite;
+    }
+
+    .play-reveal-card.reward-foil-reveal .card.reward-foil::before {
+      background: linear-gradient(112deg, transparent 42%, rgba(255, 255, 255, 0.88) 49%, rgba(255, 244, 173, 0.72) 51%, transparent 58%);
+      transform: translateX(-74%) rotate(3deg);
+      animation: reward-foil-reveal-shine var(--reward-foil-reveal-duration) ease-in-out both;
+    }
+
     .play-reveal-card.to-trash {
       animation: revealToTrash 1.45s ease-in-out forwards;
     }
@@ -3311,6 +3367,18 @@
 
     .play-reveal-card.to-board {
       animation: revealToBoard 1.45s ease-in-out forwards;
+    }
+
+    .play-reveal-card.reward-foil-reveal.to-trash {
+      animation: reward-foil-reveal-to-trash var(--reward-foil-reveal-duration) ease-in-out forwards;
+    }
+
+    .play-reveal-card.reward-foil-reveal.to-environment {
+      animation: reward-foil-reveal-to-environment var(--reward-foil-reveal-duration) ease-in-out forwards;
+    }
+
+    .play-reveal-card.reward-foil-reveal.to-board {
+      animation: reward-foil-reveal-to-board var(--reward-foil-reveal-duration) ease-in-out forwards;
     }
 
     .play-reveal-card.donguri-evolution-card {
@@ -3637,6 +3705,111 @@
       100% {
         opacity: 0;
         transform: translateY(-16vh) scale(0.38) rotate(1deg);
+      }
+    }
+
+    @keyframes reward-foil-reveal-to-board {
+      0%, 12% {
+        opacity: 0;
+        transform: translateY(44px) scale(0.62);
+      }
+      28% {
+        opacity: 1;
+        transform: translateY(-8px) scale(1.05);
+      }
+      81% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-16vh) scale(0.38) rotate(1deg);
+      }
+    }
+
+    @keyframes reward-foil-reveal-to-environment {
+      0%, 12% {
+        opacity: 0;
+        transform: translateY(44px) scale(0.62);
+      }
+      28% {
+        opacity: 1;
+        transform: translateY(-8px) scale(1.05);
+      }
+      81% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-24vh) scale(0.42);
+      }
+    }
+
+    @keyframes reward-foil-reveal-to-trash {
+      0%, 12% {
+        opacity: 0;
+        transform: translateY(44px) scale(0.62);
+      }
+      28% {
+        opacity: 1;
+        transform: translateY(-8px) scale(1.05);
+      }
+      81% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(34vw, 22vh) scale(0.28) rotate(10deg);
+      }
+    }
+
+    @keyframes reward-foil-reveal-burst {
+      0%, 21% {
+        opacity: 0;
+        transform: scale(0.35);
+      }
+      31% {
+        opacity: 1;
+        transform: scale(1.02);
+      }
+      52%, 100% {
+        opacity: 0;
+        transform: scale(1.65);
+      }
+    }
+
+    @keyframes reward-foil-reveal-title {
+      0%, 18% {
+        opacity: 0;
+        transform: translate(-50%, 8px);
+      }
+      30%, 68% {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    @keyframes reward-foil-reveal-shine {
+      0%, 31% {
+        opacity: 0;
+        transform: translateX(-74%) rotate(3deg);
+      }
+      42% {
+        opacity: 1;
+      }
+      66% {
+        opacity: 0.76;
+        transform: translateX(76%) rotate(3deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(76%) rotate(3deg);
       }
     }
 
@@ -7731,6 +7904,7 @@
       "thin_professor_h", "demon_a_plus", "impossible_high_note"
     ]);
     const PLAY_REVEAL_MS = 1450;
+    const REWARD_FOIL_PLAY_REVEAL_MS = 3200;
     const EVOLUTION_REVEAL_MS = 2200;
     const DONGURI_EVOLUTION_REVEAL_MS = 3800;
     const PREBATTLE_STEP_MS = 950;
@@ -19489,6 +19663,7 @@
     function showEvolutionAnimation(payload = {}, options = {}) {
       if (!elements.playRevealOverlay || !elements.playRevealCard) return;
       window.clearTimeout(playRevealTimer);
+      elements.playRevealOverlay.classList.remove("reward-foil-reveal-active");
       const targetCard = payload.targetCard || revealCardFromBase(payload.evolutionFrom, payload.owner || "player");
       const evolutionCard = payload.evolutionCard || revealCardFromBase(payload.evolutionBaseId, payload.owner || "player");
       if (!targetCard || !evolutionCard) return;
@@ -19520,6 +19695,7 @@
     function showDonguriEvolutionAnimation(payload = {}, options = {}) {
       if (!elements.playRevealOverlay || !elements.playRevealCard) return;
       window.clearTimeout(playRevealTimer);
+      elements.playRevealOverlay.classList.remove("reward-foil-reveal-active");
       const donguriCards = (payload.donguriCards || []).filter(Boolean);
       const firstDonguri = donguriCards[0] || revealCardFromBase("donguri", payload.owner || "player");
       const secondDonguri = donguriCards[1] || revealCardFromBase("donguri", payload.owner || "player");
@@ -19564,15 +19740,18 @@
         : destination === "board"
           ? "to-board"
           : "to-trash";
-      elements.playRevealCard.className = "play-reveal-card";
-      elements.playRevealCard.innerHTML = cardShellTemplate(card);
+      const rewardFoilReveal = cardRewardStyleClass(card).includes("reward-foil");
+      const actionLabel = destination === "board" ? "出席" : destination === "environment" ? "環境に配置" : "使用";
+      elements.playRevealCard.className = `play-reveal-card${rewardFoilReveal ? " reward-foil-reveal" : ""}`;
+      elements.playRevealCard.innerHTML = `${rewardFoilReveal ? `<div class="reward-foil-reveal-label">${escapeHtml(card.name)}が${actionLabel}</div>` : ""}${cardShellTemplate(card)}`;
+      elements.playRevealOverlay.classList.toggle("reward-foil-reveal-active", rewardFoilReveal);
       elements.playRevealOverlay.classList.remove("hidden");
       void elements.playRevealCard.offsetWidth;
       elements.playRevealCard.classList.add(destinationClass);
       if (!options.remote && isOnlineHost() && state.online.started && state.online.connected) {
         onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination });
       }
-      playRevealTimer = window.setTimeout(hidePlayReveal, PLAY_REVEAL_MS);
+      playRevealTimer = window.setTimeout(hidePlayReveal, rewardFoilReveal ? REWARD_FOIL_PLAY_REVEAL_MS : PLAY_REVEAL_MS);
     }
 
     function resultOverlayKey(winner, options = {}) {
@@ -19588,6 +19767,7 @@
       window.clearTimeout(playRevealTimer);
       if (!elements.playRevealOverlay || !elements.playRevealCard) return;
       elements.playRevealOverlay.classList.add("hidden");
+      elements.playRevealOverlay.classList.remove("reward-foil-reveal-active");
       elements.playRevealCard.className = "play-reveal-card";
       elements.playRevealCard.innerHTML = "";
     }
