@@ -15854,7 +15854,8 @@
     const UTA_EQUIPMENT_BASE_IDS = ["accelerate", "chameleon", "yuta_umbrella", "red_happi"];
 
     function isUtaEquipmentTarget(card) {
-      return ["yuta", "dark_yuta"].includes(card?.baseId);
+      return ["yuta", "dark_yuta"].includes(card?.baseId)
+        || ["yuta", "dark_yuta"].includes(card?.originalBaseId);
     }
 
     function normalizeUtaEquipmentEntries(card) {
@@ -20161,17 +20162,43 @@
       state.recentBoardTrash = state.recentBoardTrash.slice(0, 40);
     }
 
+    function resetCardEffectsForTrash(card, owner) {
+      if (!card?.baseId) return card;
+      const base = CARD_BASES[card.baseId];
+      if (!base) return card;
+      const instanceId = card.instanceId;
+      const isDarkPresident = card.darkPresident === true;
+      const reset = createCardFromBase(card.baseId, owner);
+      reset.instanceId = instanceId || reset.instanceId;
+      if (isDarkPresident) {
+        reset.name = "闇学長";
+        reset.cost = 7;
+        reset.attack = 5;
+        reset.hp = 5;
+        reset.maxHp = 5;
+        reset.currentHp = 5;
+        reset.darkPresident = true;
+        reset.floorGenerated = true;
+      }
+      Object.keys(card).forEach((key) => delete card[key]);
+      Object.assign(card, reset);
+      return card;
+    }
+
     function moveToTrash(owner, card, options = {}) {
+      const lastDamageSource = card?.lastDamageSource;
+      const pendingDirectDestruction = card?.pendingDirectDestruction === true;
       const detachedUtaEquipments = options.detachUtaEquipment === false
         ? []
         : detachUtaEquipment(card);
-      card.directlyDestroyed = options.directDestruction === true || card.pendingDirectDestruction === true;
+      resetCardEffectsForTrash(card, owner);
+      card.directlyDestroyed = options.directDestruction === true || pendingDirectDestruction;
       delete card.pendingDirectDestruction;
       card.suppressTrashToast = options.suppressToast === true;
       card.trashReason = options.reason || "";
       state.players[owner].trash.push(card);
       analyticsAddResidence(owner, card);
-      if (options.reason === "体力0" && card.lastDamageSource) analyticsAddRemovalContribution(card.lastDamageSource);
+      if (options.reason === "体力0" && lastDamageSource) analyticsAddRemovalContribution(lastDamageSource);
       analyticsRecordAction({
         side: owner,
         actionType: "trash",
