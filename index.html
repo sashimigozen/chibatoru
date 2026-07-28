@@ -1025,6 +1025,71 @@
 
     .dungeon-clear-data-import input { display: none; }
 
+    .dungeon-clear-data-dialog {
+      width: min(100%, 440px);
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 20px;
+      background: #ffffff;
+      box-shadow: 0 20px 42px rgba(15, 23, 42, 0.3);
+    }
+
+    .dungeon-clear-data-dialog h2 {
+      margin: 0;
+      color: #172033;
+      font-size: 20px;
+    }
+
+    .dungeon-clear-data-dialog p {
+      margin: 10px 0 0;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.65;
+    }
+
+    .dungeon-clear-data-dialog p.error { color: #b91c1c; }
+
+    .dungeon-clear-data-form {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .dungeon-clear-data-field {
+      display: grid;
+      gap: 6px;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .dungeon-clear-data-field input {
+      width: 100%;
+      min-height: 40px;
+      box-sizing: border-box;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #172033;
+      background: #f8fafc;
+      font: inherit;
+      letter-spacing: 0;
+    }
+
+    .dungeon-clear-data-field input:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.2);
+      border-color: #2563eb;
+      background: #ffffff;
+    }
+
+    .dungeon-clear-data-actions-modal {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
     @keyframes dungeonChestBurst {
       0% { opacity: 0; transform: translateX(-50%) scale(0.25); }
       45% { opacity: 1; transform: translateX(-50%) scale(1.12); }
@@ -7213,7 +7278,7 @@
           <button class="button" id="dungeonDeckStartButton" type="button" disabled>このデッキで開始</button>
         </div>
         <div class="dungeon-clear-data-actions">
-          <label class="dungeon-clear-data-import">クリアデータを読み込む<input id="dungeonClearDataImportInput" type="file" accept="application/json,.json"></label>
+          <label class="dungeon-clear-data-import">クリアデータを読み込む<input id="dungeonClearDataImportInput" type="file" accept=".chibaclear,application/octet-stream,application/json"></label>
         </div>
       </section>
     </section>
@@ -7817,6 +7882,24 @@
       <div class="deck-window-grid" id="deckWindowGrid"></div>
     </section>
   </div>
+  <div class="modal-backdrop hidden" id="dungeonClearDataModal" role="dialog" aria-modal="true" aria-labelledby="dungeonClearDataModalTitle">
+    <section class="dungeon-clear-data-dialog">
+      <h2 id="dungeonClearDataModalTitle">クリアデータを保存</h2>
+      <p id="dungeonClearDataModalText"></p>
+      <form class="dungeon-clear-data-form" id="dungeonClearDataForm">
+        <label class="dungeon-clear-data-field">パスワード
+          <input id="dungeonClearDataPassword" type="password" autocomplete="new-password" minlength="8" required>
+        </label>
+        <label class="dungeon-clear-data-field" id="dungeonClearDataConfirmField">パスワードをもう一度入力
+          <input id="dungeonClearDataPasswordConfirm" type="password" autocomplete="new-password" minlength="8">
+        </label>
+        <div class="dungeon-clear-data-actions-modal">
+          <button class="button secondary" id="dungeonClearDataCancelButton" type="button">やめる</button>
+          <button class="button" id="dungeonClearDataConfirmButton" type="submit">保存する</button>
+        </div>
+      </form>
+    </section>
+  </div>
 
   <script src="websocket-client.js"></script>
   <script>
@@ -7926,6 +8009,9 @@
     const DUNGEON_RUN_STORAGE_KEY = "chibattle-dungeon-run-v1";
     const DUNGEON_CARD_STYLE_STORAGE_KEY = "chibattle-dungeon-card-styles-v1";
     const DUNGEON_PENDING_REWARD_STORAGE_KEY = "chibattle-dungeon-pending-reward-v1";
+    const DUNGEON_CLEAR_BACKUP_FORMAT = "chibattle-dungeon-clear-data";
+    const DUNGEON_CLEAR_BACKUP_VERSION = 2;
+    const DUNGEON_CLEAR_BACKUP_ITERATIONS = 250000;
     const STARTER_DECK_SEED_STORAGE_KEY = "chibattle-starter-decks-seeded-v1";
     const STARTER_DECK_SEED_VERSION = "2026-07-03-starter-v4";
     const SPECIALTY_DEFINITIONS = [
@@ -8972,6 +9058,8 @@
     let nextSharedFeedbackId = 1;
     let dungeonEntranceTimer = null;
     let dungeonRewardTimer = null;
+    let dungeonClearDataModalMode = "";
+    let pendingEncryptedDungeonClearImport = null;
     let unlockedDungeonCardStyles = loadDungeonCardStyles();
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
@@ -9367,6 +9455,15 @@
       dungeonDeckDetail: document.getElementById("dungeonDeckDetail"),
       dungeonDeckStartButton: document.getElementById("dungeonDeckStartButton"),
       dungeonClearDataImportInput: document.getElementById("dungeonClearDataImportInput"),
+      dungeonClearDataModal: document.getElementById("dungeonClearDataModal"),
+      dungeonClearDataModalTitle: document.getElementById("dungeonClearDataModalTitle"),
+      dungeonClearDataModalText: document.getElementById("dungeonClearDataModalText"),
+      dungeonClearDataForm: document.getElementById("dungeonClearDataForm"),
+      dungeonClearDataPassword: document.getElementById("dungeonClearDataPassword"),
+      dungeonClearDataPasswordConfirm: document.getElementById("dungeonClearDataPasswordConfirm"),
+      dungeonClearDataConfirmField: document.getElementById("dungeonClearDataConfirmField"),
+      dungeonClearDataCancelButton: document.getElementById("dungeonClearDataCancelButton"),
+      dungeonClearDataConfirmButton: document.getElementById("dungeonClearDataConfirmButton"),
       dungeonRewardResume: document.getElementById("dungeonRewardResume"),
       dungeonRewardResumeText: document.getElementById("dungeonRewardResumeText"),
       dungeonRewardResumeButton: document.getElementById("dungeonRewardResumeButton"),
@@ -10381,19 +10478,174 @@
       return unlocked;
     }
 
-    function exportDungeonClearData() {
-      const payload = {
-        format: "chibattle-dungeon-clear-data",
-        version: 1,
-        exportedAt: new Date().toISOString(),
-        clearData: {
-          unlocked: unlockedDungeonCardStyles,
-          selected: selectedDungeonCardStyles
-        }
+    function hasDungeonClearCrypto() {
+      return Boolean(window.crypto?.subtle && window.crypto?.getRandomValues);
+    }
+
+    function bytesToBase64(bytes) {
+      let binary = "";
+      bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+      return btoa(binary);
+    }
+
+    function base64ToBytes(value) {
+      const binary = atob(String(value || ""));
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
+      return bytes;
+    }
+
+    async function deriveDungeonClearBackupKey(password, salt) {
+      const material = await window.crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(password),
+        "PBKDF2",
+        false,
+        ["deriveKey"]
+      );
+      return window.crypto.subtle.deriveKey(
+        {
+          name: "PBKDF2",
+          salt,
+          iterations: DUNGEON_CLEAR_BACKUP_ITERATIONS,
+          hash: "SHA-256"
+        },
+        material,
+        { name: "AES-GCM", length: 256 },
+        false,
+        ["encrypt", "decrypt"]
+      );
+    }
+
+    function isEncryptedDungeonClearData(payload) {
+      return payload?.format === DUNGEON_CLEAR_BACKUP_FORMAT
+        && payload?.version === DUNGEON_CLEAR_BACKUP_VERSION
+        && payload?.crypto?.algorithm === "AES-GCM"
+        && payload?.crypto?.kdf === "PBKDF2"
+        && payload?.crypto?.hash === "SHA-256"
+        && payload?.crypto?.iterations === DUNGEON_CLEAR_BACKUP_ITERATIONS
+        && typeof payload?.crypto?.salt === "string"
+        && typeof payload?.crypto?.iv === "string"
+        && typeof payload?.ciphertext === "string";
+    }
+
+    function setDungeonClearDataModalText(text, isError = false) {
+      elements.dungeonClearDataModalText.textContent = text;
+      elements.dungeonClearDataModalText.classList.toggle("error", isError);
+    }
+
+    function closeDungeonClearDataModal() {
+      dungeonClearDataModalMode = "";
+      pendingEncryptedDungeonClearImport = null;
+      elements.dungeonClearDataPassword.value = "";
+      elements.dungeonClearDataPasswordConfirm.value = "";
+      elements.dungeonClearDataModal.classList.add("hidden");
+    }
+
+    function openDungeonClearDataModal(mode, payload = null) {
+      if (!hasDungeonClearCrypto()) {
+        state.message = "このブラウザでは暗号化したクリアデータを扱えません。HTTPSまたはlocalhostで開いてください。";
+        render();
+        return;
+      }
+      dungeonClearDataModalMode = mode;
+      pendingEncryptedDungeonClearImport = payload;
+      const importing = mode === "import";
+      elements.dungeonClearDataModalTitle.textContent = importing ? "クリアデータを読み込む" : "クリアデータを暗号化して保存";
+      setDungeonClearDataModalText(importing
+        ? "保存時に設定したパスワードを入力してください。パスワードが違う、またはファイルが変更されている場合は読み込めません。"
+        : "パスワードはブラウザにもファイルにも保存されません。忘れると、このファイルを読み込めなくなります。8文字以上で設定してください。");
+      elements.dungeonClearDataPassword.autocomplete = importing ? "current-password" : "new-password";
+      elements.dungeonClearDataConfirmField.hidden = importing;
+      elements.dungeonClearDataPasswordConfirm.disabled = importing;
+      elements.dungeonClearDataConfirmButton.textContent = importing ? "読み込む" : "保存する";
+      elements.dungeonClearDataPassword.value = "";
+      elements.dungeonClearDataPasswordConfirm.value = "";
+      elements.dungeonClearDataModal.classList.remove("hidden");
+      window.setTimeout(() => elements.dungeonClearDataPassword.focus(), 0);
+    }
+
+    async function exportDungeonClearData(password) {
+      const salt = window.crypto.getRandomValues(new Uint8Array(16));
+      const iv = window.crypto.getRandomValues(new Uint8Array(12));
+      const key = await deriveDungeonClearBackupKey(password, salt);
+      const clearData = {
+        unlocked: unlockedDungeonCardStyles,
+        selected: selectedDungeonCardStyles
       };
-      downloadTextFile(`chibattle-dungeon-clear-${new Date().toISOString().slice(0, 10)}.json`, `${JSON.stringify(payload, null, 2)}\n`, "application/json");
-      state.message = "魔の1号館のクリアデータを保存しました。";
-      render();
+      const plaintext = new TextEncoder().encode(JSON.stringify({ clearData }));
+      const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
+      const payload = {
+        format: DUNGEON_CLEAR_BACKUP_FORMAT,
+        version: DUNGEON_CLEAR_BACKUP_VERSION,
+        exportedAt: new Date().toISOString(),
+        crypto: {
+          algorithm: "AES-GCM",
+          kdf: "PBKDF2",
+          hash: "SHA-256",
+          iterations: DUNGEON_CLEAR_BACKUP_ITERATIONS,
+          salt: bytesToBase64(salt),
+          iv: bytesToBase64(iv)
+        },
+        ciphertext: bytesToBase64(new Uint8Array(encrypted))
+      };
+      downloadTextFile(
+        `chibattle-dungeon-clear-${new Date().toISOString().slice(0, 10)}.chibaclear`,
+        `${JSON.stringify(payload)}\n`,
+        "application/octet-stream"
+      );
+      state.message = "パスワード付きのクリアデータを保存しました。";
+    }
+
+    async function decryptDungeonClearData(payload, password) {
+      if (!isEncryptedDungeonClearData(payload)) throw new Error("invalid backup");
+      const salt = base64ToBytes(payload.crypto.salt);
+      const iv = base64ToBytes(payload.crypto.iv);
+      const ciphertext = base64ToBytes(payload.ciphertext);
+      if (salt.length !== 16 || iv.length !== 12 || ciphertext.length === 0) throw new Error("invalid backup");
+      const key = await deriveDungeonClearBackupKey(password, salt);
+      const decrypted = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, ciphertext);
+      const parsed = JSON.parse(new TextDecoder().decode(decrypted));
+      const source = parsed?.clearData;
+      const unlocks = normalizeDungeonCardStyleUnlocks(source);
+      if (Object.keys(unlocks).length === 0) throw new Error("invalid backup");
+      return {
+        unlocks,
+        selected: normalizeDungeonCardStyleSelections(source)
+      };
+    }
+
+    async function submitDungeonClearDataModal(event) {
+      event.preventDefault();
+      const password = elements.dungeonClearDataPassword.value;
+      if (password.length < 8) {
+        setDungeonClearDataModalText("パスワードは8文字以上で入力してください。", true);
+        return;
+      }
+      if (dungeonClearDataModalMode === "export" && password !== elements.dungeonClearDataPasswordConfirm.value) {
+        setDungeonClearDataModalText("確認用のパスワードが一致していません。", true);
+        return;
+      }
+      try {
+        elements.dungeonClearDataConfirmButton.disabled = true;
+        if (dungeonClearDataModalMode === "export") {
+          await exportDungeonClearData(password);
+        } else if (dungeonClearDataModalMode === "import" && pendingEncryptedDungeonClearImport) {
+          const imported = await decryptDungeonClearData(pendingEncryptedDungeonClearImport, password);
+          unlockedDungeonCardStyles = imported.unlocks;
+          selectedDungeonCardStyles = imported.selected;
+          persistDungeonCardStyles();
+          state.message = "魔の1号館のクリアデータを読み込みました。";
+        } else {
+          throw new Error("missing backup");
+        }
+        closeDungeonClearDataModal();
+        render();
+      } catch {
+        setDungeonClearDataModalText("パスワードが違うか、ファイルが変更・破損されています。", true);
+      } finally {
+        elements.dungeonClearDataConfirmButton.disabled = false;
+      }
     }
 
     function importDungeonClearData(file) {
@@ -10402,16 +10654,15 @@
       reader.addEventListener("load", () => {
         try {
           const parsed = JSON.parse(String(reader.result || "{}"));
-          const source = parsed?.clearData || parsed?.styles || parsed;
-          const unlocks = normalizeDungeonCardStyleUnlocks(source);
-          if (Object.keys(unlocks).length === 0) throw new Error("invalid backup");
-          unlockedDungeonCardStyles = unlocks;
-          selectedDungeonCardStyles = normalizeDungeonCardStyleSelections(source);
-          persistDungeonCardStyles();
-          state.message = "魔の1号館のクリアデータを読み込みました。";
+          if (!isEncryptedDungeonClearData(parsed)) throw new Error("invalid backup");
+          openDungeonClearDataModal("import", parsed);
         } catch {
-          state.message = "魔の1号館のクリアデータを読み込めませんでした。";
+          state.message = "暗号化されたクリアデータを読み込めませんでした。以前のJSON形式のバックアップには対応していません。";
+          render();
         }
+      });
+      reader.addEventListener("error", () => {
+        state.message = "クリアデータを読み込めませんでした。";
         render();
       });
       reader.readAsText(file);
@@ -25408,7 +25659,9 @@
     });
     elements.dungeonRewardChest.addEventListener("click", openDungeonRewardChest);
     elements.dungeonRewardHomeButton.addEventListener("click", showHomeScreen);
-    elements.dungeonClearDataSaveButton.addEventListener("click", exportDungeonClearData);
+    elements.dungeonClearDataSaveButton.addEventListener("click", () => openDungeonClearDataModal("export"));
+    elements.dungeonClearDataCancelButton.addEventListener("click", closeDungeonClearDataModal);
+    elements.dungeonClearDataForm.addEventListener("submit", submitDungeonClearDataModal);
     elements.dungeonClearDataImportInput.addEventListener("change", () => {
       importDungeonClearData(elements.dungeonClearDataImportInput.files?.[0]);
       elements.dungeonClearDataImportInput.value = "";
