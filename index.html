@@ -832,8 +832,7 @@
     .dungeon-reward-copy,
     .dungeon-treasure-chest,
     .dungeon-reward-cards,
-    .dungeon-reward-backup,
-    .dungeon-reward-home {
+    .dungeon-reward-actions {
       position: relative;
       z-index: 1;
     }
@@ -981,39 +980,35 @@
 
     .dungeon-reward-card:nth-child(2) { animation-delay: 0.12s; }
 
-    .dungeon-reward-home {
+    .dungeon-reward-actions {
       position: absolute;
       right: 18px;
       bottom: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
       opacity: 0;
       transform: translateY(12px);
       pointer-events: none;
     }
 
-    .dungeon-reward-stage.home-ready .dungeon-reward-home {
+    .dungeon-reward-stage.home-ready .dungeon-reward-actions {
       opacity: 1;
       transform: translateY(0);
       pointer-events: auto;
       transition: opacity 0.34s ease, transform 0.34s ease;
     }
 
-    .dungeon-reward-backup {
+    .dungeon-clear-data-actions {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-end;
       gap: 8px;
-      margin-top: 2px;
-      opacity: 0;
-      pointer-events: none;
+      margin-top: 14px;
     }
 
-    .dungeon-reward-stage.revealed .dungeon-reward-backup {
-      opacity: 1;
-      pointer-events: auto;
-      transition: opacity 0.34s ease 0.18s;
-    }
-
-    .dungeon-reward-import {
+    .dungeon-clear-data-import {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1028,15 +1023,7 @@
       cursor: pointer;
     }
 
-    .dungeon-reward-import input { display: none; }
-
-    .deck-style-tools {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 14px;
-    }
+    .dungeon-clear-data-import input { display: none; }
 
     @keyframes dungeonChestBurst {
       0% { opacity: 0; transform: translateX(-50%) scale(0.25); }
@@ -7073,6 +7060,9 @@
         <div class="solo-deck-actions">
           <button class="button" id="dungeonDeckStartButton" type="button" disabled>このデッキで開始</button>
         </div>
+        <div class="dungeon-clear-data-actions">
+          <label class="dungeon-clear-data-import">クリアデータを読み込む<input id="dungeonClearDataImportInput" type="file" accept="application/json,.json"></label>
+        </div>
       </section>
     </section>
 
@@ -7113,11 +7103,10 @@
           <span class="dungeon-chest-lid"></span><span class="dungeon-chest-base"></span><span class="dungeon-chest-lock"></span>
         </button>
         <div class="dungeon-reward-cards" id="dungeonRewardCards" aria-live="polite"></div>
-        <div class="dungeon-reward-backup" id="dungeonRewardBackup">
-          <button class="button secondary" id="dungeonStyleBackupButton" type="button">スタイルをバックアップ</button>
-          <label class="dungeon-reward-import">バックアップを読み込む<input id="dungeonStyleImportInput" type="file" accept="application/json,.json"></label>
+        <div class="dungeon-reward-actions">
+          <button class="button secondary" id="dungeonClearDataSaveButton" type="button">保存</button>
+          <button class="button" id="dungeonRewardHomeButton" type="button">ホームに戻る</button>
         </div>
-        <button class="button dungeon-reward-home" id="dungeonRewardHomeButton" type="button">ホームに戻る</button>
       </section>
     </section>
 
@@ -7318,10 +7307,6 @@
         <div class="deck-library-grid" id="deckLibraryGrid"></div>
         <div class="deck-specialty-choice hidden" id="deckSpecialtyChoice"></div>
         <div class="deck-library-detail hidden" id="deckLibraryDetail"></div>
-        <div class="deck-style-tools">
-          <button class="button secondary" id="deckStyleBackupButton" type="button">カードスタイルをバックアップ</button>
-          <label class="dungeon-reward-import">カードスタイルを復元<input id="deckStyleImportInput" type="file" accept="application/json,.json"></label>
-        </div>
       </section>
       <section class="panel deck-panel hidden" id="deckEditorView">
         <div class="panel-head">
@@ -8393,8 +8378,9 @@
           { title: "第1〜10階", before: "階ごとの相手デッキとフロア規則がない。", after: "第1〜5階は学生・遅刻・アグロ・教師などの段階的なデッキ、第6〜9階は追加ドロー・装備生成・ベストフレンド出席・進化支援のフロア規則を持つ対戦を追加。第10階には特別なフロア規則を設定。" },
           { title: "階の気力とAI", before: "通常のVS AIと同じ判断で、前の階の気力を引き継ぐ。", after: "各階を気力20で開始。第1〜4階の相手は最大気力10、第5階以降は20。第1〜5階のAIはドローを優先する初期階用の判断で行動する。" },
           { title: "進行と再開", before: "階を進む・中断して再開する仕組みがない。", after: "勝利後に次の階の特徴を確認して進む。中断後は勝利した階の次の階から再開でき、敗北時は第1階からやり直す。" },
+          { title: "クリアデータ", before: "カードスタイルの保存・読み込み場所が分かれ、クリア時以外にも保存できる。", after: "第10階をクリアして報酬を受け取った後にだけ、クリアデータを保存できる。読み込みは魔の1号館のデッキ選択画面から行う。" },
           { title: "余裕", before: "余裕を持つ出席者は、自分のターン終了時に体力を2回復する。", after: "余裕を持つ出席者は、自分のターン終了時に体力を1回復する。" },
-          { title: "クリア報酬", before: "魔の1号館を最後までクリアしても見た目の報酬がない。", after: "第10階勝利後に宝箱を開け、専攻の代表カードの金枠スタイルを獲得する。解放済みカードは詳細画面の循環矢印で通常／金枠を切り替えられ、バックアップJSONとして保存・復元できる。" }
+          { title: "クリア報酬", before: "魔の1号館を最後までクリアしても報酬がない。", after: "第10階をクリアすると、豪華な報酬を獲得できる。" }
         ]
       },
       {
@@ -9213,6 +9199,7 @@
       dungeonDeckGrid: document.getElementById("dungeonDeckGrid"),
       dungeonDeckDetail: document.getElementById("dungeonDeckDetail"),
       dungeonDeckStartButton: document.getElementById("dungeonDeckStartButton"),
+      dungeonClearDataImportInput: document.getElementById("dungeonClearDataImportInput"),
       dungeonRewardResume: document.getElementById("dungeonRewardResume"),
       dungeonRewardResumeText: document.getElementById("dungeonRewardResumeText"),
       dungeonRewardResumeButton: document.getElementById("dungeonRewardResumeButton"),
@@ -9241,10 +9228,8 @@
       dungeonRewardCopy: document.getElementById("dungeonRewardCopy"),
       dungeonRewardChest: document.getElementById("dungeonRewardChest"),
       dungeonRewardCards: document.getElementById("dungeonRewardCards"),
-      dungeonRewardBackup: document.getElementById("dungeonRewardBackup"),
+      dungeonClearDataSaveButton: document.getElementById("dungeonClearDataSaveButton"),
       dungeonRewardHomeButton: document.getElementById("dungeonRewardHomeButton"),
-      dungeonStyleBackupButton: document.getElementById("dungeonStyleBackupButton"),
-      dungeonStyleImportInput: document.getElementById("dungeonStyleImportInput"),
       deckBackHomeButton: document.getElementById("deckBackHomeButton"),
       battleBackHomeButton: document.getElementById("battleBackHomeButton"),
       testBackDeckButton: document.getElementById("testBackDeckButton"),
@@ -9339,8 +9324,6 @@
       deckLibraryGrid: document.getElementById("deckLibraryGrid"),
       deckLibraryDetail: document.getElementById("deckLibraryDetail"),
       deckLibraryCount: document.getElementById("deckLibraryCount"),
-      deckStyleBackupButton: document.getElementById("deckStyleBackupButton"),
-      deckStyleImportInput: document.getElementById("deckStyleImportInput"),
       deckLibraryTitle: document.getElementById("deckLibraryTitle"),
       deckScreenSubtitle: document.getElementById("deckScreenSubtitle"),
       normalDeckFormatButton: document.getElementById("normalDeckFormatButton"),
@@ -10191,36 +10174,36 @@
       return unlocked;
     }
 
-    function exportDungeonCardStyleBackup() {
+    function exportDungeonClearData() {
       const payload = {
-        format: "chibattle-dungeon-card-styles",
+        format: "chibattle-dungeon-clear-data",
         version: 1,
         exportedAt: new Date().toISOString(),
-        styles: {
+        clearData: {
           unlocked: unlockedDungeonCardStyles,
           selected: selectedDungeonCardStyles
         }
       };
-      downloadTextFile(`chibattle-card-styles-${new Date().toISOString().slice(0, 10)}.json`, `${JSON.stringify(payload, null, 2)}\n`, "application/json");
-      state.message = "カードスタイルのバックアップを書き出しました。";
+      downloadTextFile(`chibattle-dungeon-clear-${new Date().toISOString().slice(0, 10)}.json`, `${JSON.stringify(payload, null, 2)}\n`, "application/json");
+      state.message = "魔の1号館のクリアデータを保存しました。";
       render();
     }
 
-    function importDungeonCardStyleBackup(file) {
+    function importDungeonClearData(file) {
       if (!file) return;
       const reader = new FileReader();
       reader.addEventListener("load", () => {
         try {
           const parsed = JSON.parse(String(reader.result || "{}"));
-          const source = parsed?.styles || parsed;
+          const source = parsed?.clearData || parsed?.styles || parsed;
           const unlocks = normalizeDungeonCardStyleUnlocks(source);
           if (Object.keys(unlocks).length === 0) throw new Error("invalid backup");
           unlockedDungeonCardStyles = unlocks;
           selectedDungeonCardStyles = normalizeDungeonCardStyleSelections(source);
           persistDungeonCardStyles();
-          state.message = "カードスタイルのバックアップを読み込みました。";
+          state.message = "魔の1号館のクリアデータを読み込みました。";
         } catch {
-          state.message = "カードスタイルのバックアップを読み込めませんでした。";
+          state.message = "魔の1号館のクリアデータを読み込めませんでした。";
         }
         render();
       });
@@ -23259,7 +23242,7 @@
           if (state.screen !== "dungeonReward") return;
           state.dungeon.rewardPhase = "homeReady";
           render();
-        }, 1200);
+        }, 3000);
       }, 700);
     }
 
@@ -24997,15 +24980,10 @@
     });
     elements.dungeonRewardChest.addEventListener("click", openDungeonRewardChest);
     elements.dungeonRewardHomeButton.addEventListener("click", showHomeScreen);
-    elements.dungeonStyleBackupButton.addEventListener("click", exportDungeonCardStyleBackup);
-    elements.dungeonStyleImportInput.addEventListener("change", () => {
-      importDungeonCardStyleBackup(elements.dungeonStyleImportInput.files?.[0]);
-      elements.dungeonStyleImportInput.value = "";
-    });
-    elements.deckStyleBackupButton.addEventListener("click", exportDungeonCardStyleBackup);
-    elements.deckStyleImportInput.addEventListener("change", () => {
-      importDungeonCardStyleBackup(elements.deckStyleImportInput.files?.[0]);
-      elements.deckStyleImportInput.value = "";
+    elements.dungeonClearDataSaveButton.addEventListener("click", exportDungeonClearData);
+    elements.dungeonClearDataImportInput.addEventListener("change", () => {
+      importDungeonClearData(elements.dungeonClearDataImportInput.files?.[0]);
+      elements.dungeonClearDataImportInput.value = "";
     });
     elements.soloPlayerSlot.addEventListener("click", () => {
       state.soloSelection.activeSide = "player";
