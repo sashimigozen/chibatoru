@@ -8952,6 +8952,7 @@
     let deckPressTimer = null;
     let deckPressActive = false;
     let playRevealTimer = null;
+    let nextDeferredCardPlayId = 1;
     let handDragCandidate = null;
     let activeHandDrag = null;
     let handScrollDrag = null;
@@ -8986,6 +8987,7 @@
       mulliganDrawRemaining: 0,
       selectedHandId: null,
       selectedAttacker: null,
+      pendingCardPlay: null,
       attackInProgress: false,
       attackDelayToken: 0,
       currentAttack: null,
@@ -9100,6 +9102,7 @@
         pendingTurnCommandId: "",
         pendingAttackCommandId: "",
         pendingEvolutionCommandId: "",
+        pendingCardPlayCommandId: "",
         clientId: createOnlineClientId(),
         sendSeq: 0,
         pendingMessages: {},
@@ -10830,6 +10833,7 @@
       state.online.localMulliganPending = false;
       state.online.pendingTurnCommandId = "";
       state.online.pendingAttackCommandId = "";
+      clearDeferredCardPlay();
       state.attackInProgress = false;
       state.attackDelayToken += 1;
       state.currentAttack = null;
@@ -10874,6 +10878,7 @@
       onlineResetCardStyles();
       state.online.pendingTurnCommandId = "";
       state.online.pendingAttackCommandId = "";
+      clearDeferredCardPlay();
       state.attackInProgress = false;
       state.attackDelayToken += 1;
       state.currentAttack = null;
@@ -11401,6 +11406,7 @@
       return type === "endTurn"
         || type === "donguri"
         || type === "raptorTemple"
+        || type === "playCard"
         || Boolean(commandCard?.evolutionFrom)
         || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
     }
@@ -11626,6 +11632,7 @@
         || state.pendingRemoteHandTrim
         || state.pendingRaptorTemple
         || state.pendingCopiedCard
+        || state.pendingCardPlay
         || state.players.player.mulliganSelection.length > 0
       );
     }
@@ -11643,6 +11650,7 @@
         || state.pendingRemoteHandTrim
         || state.pendingRaptorTemple
         || state.pendingCopiedCard
+        || state.pendingCardPlay
       );
     }
 
@@ -11671,6 +11679,7 @@
       snapshotState.pendingRaptorTemple = null;
       snapshotState.selectionOverlayPeek = false;
       snapshotState.pendingCopiedCard = null;
+      snapshotState.pendingCardPlay = null;
       snapshotState.activeTrashDetailId = null;
       state.online.lastSnapshotSeq += 1;
       return {
@@ -12038,6 +12047,7 @@
     function onlineCanApplyRemoteCommand(command) {
       if (!command?.type || state.gameOver) return false;
       if (command.type === "concede") return Boolean(state.online.started);
+      if (state.pendingCardPlay) return false;
       if (command.type === "rps") {
         return state.phase === "rps"
           && !state.rpsOpponentChoice
@@ -12059,7 +12069,8 @@
       return state.pendingRemoteHandTrim?.commandId === commandId
         || state.pendingCardChoice?.commandId === commandId
         || state.online.pendingAttackCommandId === commandId
-        || state.online.pendingEvolutionCommandId === commandId;
+        || state.online.pendingEvolutionCommandId === commandId
+        || state.online.pendingCardPlayCommandId === commandId;
     }
 
     async function onlineApplyRemoteCommand(command) {
@@ -12226,6 +12237,7 @@
     function onlineReturnToRoom(sendRemote = true) {
       if (!state.online.role) return;
       state.online.pendingTurnCommandId = "";
+      clearDeferredCardPlay();
       onlineSubmitAnalyticsLog("return_room");
       onlineResetAnalyticsLogState();
       state.online.started = false;
@@ -12410,6 +12422,7 @@
       state.mulliganDrawRemaining = 0;
       state.selectedHandId = null;
       state.selectedAttacker = null;
+      clearDeferredCardPlay();
       state.attackInProgress = false;
       state.attackDelayToken += 1;
       state.currentAttack = null;
@@ -14333,6 +14346,7 @@
     function endTurn(options = {}) {
       const fromAi = options.fromAi === true;
       if (isOnlineSpectator() && !fromAi) return;
+      if (state.pendingCardPlay) return;
       if (state.attackInProgress || state.attackQueue.length > 0) return;
       if (isOnlineGuest() && isOnlineBattle() && state.online.pendingTurnCommandId && !fromAi) return;
       if (state.phase !== "battle" || state.gameOver) return;
@@ -15023,6 +15037,7 @@
 
     function handleHandCardClick(instanceId) {
       if (isOnlineSpectator()) return;
+      if (state.pendingCardPlay) return;
       if (state.phase === "mulligan") {
         toggleMulliganCard(instanceId);
         return;
@@ -15943,6 +15958,11 @@
     }
 
     function playCard(instanceId, zone, owner, index = null) {
+      if (state.pendingCardPlay) {
+        state.message = "カード演出が終わるまでお待ちください。";
+        render();
+        return;
+      }
       if (isOnlineCommandPending()) {
         rejectOnlinePendingAction();
         return;
@@ -15981,8 +16001,52 @@
       placeCardFromHand("player", instanceId, zone, owner, index, true);
     }
 
+    function deferCardAttendanceUntilReveal(side, instanceId, zone, owner, index, renderAfter, options, card) {
+      const deferredId = `play-${nextDeferredCardPlayId++}`;
+      const commandId = options.commandId || "";
+      const destination = zone === "environment" ? "environment" : "board";
+      state.pendingCardPlay = {
+        id: deferredId,
+        side,
+        instanceId,
+        zone,
+        owner,
+        index,
+        commandId
+      };
+      if (commandId && isOnlineHost() && state.online.isHandlingRemoteCommand) {
+        state.online.pendingCardPlayCommandId = commandId;
+      }
+      state.message = zone === "environment"
+        ? `${card.name}を環境マスに置いています。`
+        : card.late && state.environment?.baseId !== "no_late_time"
+          ? `${card.name}を遅刻ゾーンへ送っています。`
+          : `${card.name}を出席させています。`;
+      clearSelections();
+      showCardPlayAnimation(card, destination, {
+        onComplete: () => {
+          if (state.pendingCardPlay?.id !== deferredId) return;
+          state.pendingCardPlay = null;
+          const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+          if (commandId && isOnlineHost()) state.online.isHandlingRemoteCommand = true;
+          placeCardFromHand(side, instanceId, zone, owner, index, renderAfter, {
+            ...options,
+            revealAlreadyShown: true
+          });
+          state.online.isHandlingRemoteCommand = wasHandlingRemote;
+          if (state.online.pendingCardPlayCommandId === commandId) {
+            state.online.pendingCardPlayCommandId = "";
+          }
+          if (commandId && isOnlineHost()) onlineBroadcastState(true, commandId);
+        }
+      });
+      if (renderAfter) render();
+      return true;
+    }
+
     function placeCardFromHand(side, instanceId, zone, owner, index = null, renderAfter = true, options = {}) {
       if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
+      if (state.pendingCardPlay && !options.revealAlreadyShown) return false;
       const player = state.players[side];
       const card = getHandCard(side, instanceId);
       if (!card) return false;
@@ -16012,6 +16076,9 @@
         clearSelections();
         if (renderAfter) render();
         return false;
+      }
+      if (!card.evolutionFrom && !options.revealAlreadyShown) {
+        return deferCardAttendanceUntilReveal(side, instanceId, zone, owner, index, renderAfter, options, card);
       }
       const analyticsCandidates = analyticsLegalPlacementCandidates(side, card);
       const analyticsEnvironmentBefore = state.environment ? analyticsCardInfo(state.environment) : null;
@@ -16049,7 +16116,7 @@
           }
         });
       } else if (card.late && state.environment?.baseId !== "no_late_time") {
-        showCardPlayAnimation(card, "board");
+        if (!options.revealAlreadyShown) showCardPlayAnimation(card, "board");
         player.late.push({ card, owner, zone, index, remaining: card.late });
         analyticsMarkPlayed(side, card);
         analyticsRecordAction({
@@ -16077,9 +16144,9 @@
         }
         const placedCard = makeBoardCard(card);
         if (zone === "seat" || zone === "teacher") setBoardCard(owner, zone, index, placedCard);
-        if (zone === "seat" || zone === "teacher") showCardPlayAnimation(card, "board");
+        if ((zone === "seat" || zone === "teacher") && !options.revealAlreadyShown) showCardPlayAnimation(card, "board");
         if (zone === "environment") {
-          showCardPlayAnimation(card, "environment");
+          if (!options.revealAlreadyShown) showCardPlayAnimation(card, "environment");
           if (state.environment) {
             moveToTrash(state.environment.owner, state.environment);
             addLog(`${state.environment.name}は上書きされ、校外エリアへ送られました。`);
@@ -17371,6 +17438,7 @@
 
     function handleBoardCardClick(owner, zone, index = null) {
       if (isOnlineSpectator()) return;
+      if (state.pendingCardPlay) return;
       if (isOnlineCommandPending()) {
         rejectOnlinePendingAction();
         return;
@@ -17552,6 +17620,7 @@
 
     function attackLife(targetSide) {
       if (isOnlineSpectator()) return;
+      if (state.pendingCardPlay) return;
       if (isOnlineCommandPending()) {
         rejectOnlinePendingAction();
         return;
@@ -19785,7 +19854,10 @@
     }
 
     function showCardPlayAnimation(card, destination, options = {}) {
-      if (!card || !elements.playRevealOverlay || !elements.playRevealCard) return;
+      if (!card || !elements.playRevealOverlay || !elements.playRevealCard) {
+        options.onComplete?.();
+        return;
+      }
       window.clearTimeout(playRevealTimer);
       const destinationClass = destination === "environment"
         ? "to-environment"
@@ -19802,7 +19874,10 @@
       if (!options.remote && isOnlineHost() && state.online.started && state.online.connected) {
         onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination });
       }
-      playRevealTimer = window.setTimeout(hidePlayReveal, rewardFoilReveal ? REWARD_FOIL_PLAY_REVEAL_MS : PLAY_REVEAL_MS);
+      playRevealTimer = window.setTimeout(() => {
+        hidePlayReveal();
+        options.onComplete?.();
+      }, rewardFoilReveal ? REWARD_FOIL_PLAY_REVEAL_MS : PLAY_REVEAL_MS);
     }
 
     function resultOverlayKey(winner, options = {}) {
@@ -20244,6 +20319,11 @@
       state.selectionOverlayPeek = false;
     }
 
+    function clearDeferredCardPlay() {
+      state.pendingCardPlay = null;
+      state.online.pendingCardPlayCommandId = "";
+    }
+
     function hasPeekableSelectionOverlay() {
       return Boolean(state.pendingThreeGestures || state.pendingCardChoice);
     }
@@ -20588,6 +20668,7 @@
         || state.gameOver
         || state.currentSide !== "player"
         || state.aiThinking
+        || Boolean(state.pendingCardPlay)
         || (isTutorialActive() && !tutorialAllowsEndTurn())
         || Boolean(state.online.pendingTurnCommandId)
         || Boolean(state.pendingCopiedCard)
@@ -21086,11 +21167,12 @@
         && state.currentSide === "player"
         && !state.gameOver
         && !state.aiThinking
+        && !state.pendingCardPlay
         && state.players.player.hand.filter((card) => card.baseId === "ruler").length >= 2;
     }
 
     function playerHasAvailableAction() {
-      if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver || state.aiThinking) return false;
+      if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver || state.aiThinking || state.pendingCardPlay) return false;
       if (state.pendingCopiedCard || state.pendingMultiItem) return true;
       if (state.players.player.hand.filter((card) => card.baseId === "ruler").length >= 2) return true;
       if (listBoardRefs("player").some((ref) => canAttackSilently(getBoardCardFromRef(ref)))) return true;
@@ -21098,7 +21180,7 @@
     }
 
     function canUseHandCardNow(card) {
-      if (!card || card.unusable || effectiveCardCost(card) > state.players.player.will) return false;
+      if (state.pendingCardPlay || !card || card.unusable || effectiveCardCost(card) > state.players.player.will) return false;
       if (card.type === "item") return canUseItemNow(card);
       return canPlaceCardSomewhere(card);
     }
@@ -21206,6 +21288,7 @@
         && state.currentSide === "player"
         && !state.gameOver
         && !state.aiThinking
+        && !state.pendingCardPlay
         && !state.pendingCardChoice
         && !state.pendingThreeGestures
         && !state.pendingRemoteHandTrim
@@ -24060,6 +24143,7 @@
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
       resetTutorialState();
+      clearDeferredCardPlay();
       state.preBattleToken += 1;
       state.screen = "battle";
       state.phase = "battle";
