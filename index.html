@@ -8030,9 +8030,15 @@
       10: {
         number: 10,
         title: "学長とヴァンパイアのデッキ",
-        text: "学長とヴァンパイアを中心にした、魔の1号館の最終階。",
-        featuredCards: ["president", "vampire", "apprentice_vampire", "chen_san", "curry_treater"],
-        floorRule: "対戦開始時、相手のデッキのランダムな位置に、戦意7・攻撃力5・体力5の「闇学長」1枚を生成し、相手の手札に「学長の茶室」を3枚生成する。闇学長が出席したとき、この対戦中は環境「食堂」の効果を得る。",
+        text: "闇学長と食堂の効果を利用し、ヴァンパイアで盤面を制圧する、魔の1号館の最終階。",
+        featuredCards: [
+          { baseId: "president", darkPresident: true },
+          "president_tea_room",
+          "vampire",
+          "apprentice_vampire",
+          "green_curry"
+        ],
+        floorRule: "対戦開始時、相手のデッキのランダムな位置に「闇学長」1枚を生成し、相手の手札に「学長の茶室」を3枚生成する。闇学長が出席したとき、相手はこの対戦中、環境「食堂」の効果を得る。",
         floorRuleAudience: "相手のみ"
       }
     });
@@ -12849,6 +12855,7 @@
       if (["student", "teacher", "vampire"].includes(card.type)) score += cost <= 3 ? 6 : 1;
       if (AI_MULLIGAN_PRIORITY_IDS.has(card.baseId)) score += 10;
       if (card.baseId === "alpha") score += 12;
+      if (isDungeonFloorRuleActive(10) && card.darkPresident) score += 100;
       if (!hasEarlyAttendee && card.instanceId === cheapestAttendee?.instanceId) score += 5;
       if (card.evolutionFrom) {
         score += hand.some((entry) => entry.baseId === card.evolutionFrom) ? 6 : -6;
@@ -13088,7 +13095,7 @@
       for (let i = 0; i < 3; i += 1) {
         state.players.opponent.hand.push(createCardFromBase("president_tea_room", "opponent"));
       }
-      addLog("10階のフロア規則：相手のデッキのランダムな位置に、戦意7・攻撃力5・体力5の闇学長を1枚生成し、手札に学長の茶室を3枚生成しました。");
+      addLog("10階のフロア規則：相手のデッキのランダムな位置に闇学長を1枚生成し、手札に学長の茶室を3枚生成しました。");
     }
 
     function resolveDungeonFloorStartTurnEffects(side) {
@@ -15925,6 +15932,15 @@
       return true;
     }
 
+    function detachUtaEquipment(card) {
+      if (!isUtaEquipmentTarget(card)) return [];
+      const entries = normalizeUtaEquipmentEntries(card).map((entry) => ({ ...entry }));
+      if (entries.length === 0) return [];
+      card.yutaEquipments = [];
+      syncLegacyUtaEquipmentState(card);
+      return entries;
+    }
+
     function inheritUtaEquipment(previous, evolved) {
       const entries = normalizeUtaEquipmentEntries(previous).map((entry) => ({ ...entry }));
       evolved.yutaEquipments = entries;
@@ -15940,9 +15956,13 @@
       const entries = normalizeUtaEquipmentEntries(card);
       const index = entries.findIndex((entry) => entry.baseId === "yuta_umbrella" && entry.shieldActive);
       if (index < 0) return false;
-      entries.splice(index, 1);
+      const [umbrella] = entries.splice(index, 1);
       card.yutaEquipments = entries;
       syncLegacyUtaEquipmentState(card);
+      moveToTrash(card.owner, createCardFromBase(umbrella.baseId, card.owner), {
+        reason: "装備解除",
+        sourceZone: "equipment"
+      });
       return true;
     }
 
@@ -18030,7 +18050,8 @@
         healPlayer(side, 1);
         addLog(`${SIDES[side]}はアグロ喰いを使い、${target.name}を${target.currentHp - beforeCardHp}回復し、気力を${state.players[side].life - beforeLife}回復しました。`);
       }
-      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) attachUtaEquipment(target, item.baseId);
+      const attachedUtaEquipment = UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)
+        && attachUtaEquipment(target, item.baseId);
       if (item.baseId === "quiet_please") {
         target.attackLockedPermanently = true;
       }
@@ -18060,7 +18081,11 @@
           });
         if (adjacent) dealDamageToCard(getBoardCardFromRef(adjacent), 2, item);
       }
-      moveHandCardToTrash(side, item);
+      if (attachedUtaEquipment) {
+        state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
+      } else {
+        moveHandCardToTrash(side, item);
+      }
       addLog(`${SIDES[side]}は${item.name}を使いました。`);
       cleanupDestroyedCards();
       applyBoardAuras();
@@ -20137,6 +20162,9 @@
     }
 
     function moveToTrash(owner, card, options = {}) {
+      const detachedUtaEquipments = options.detachUtaEquipment === false
+        ? []
+        : detachUtaEquipment(card);
       card.directlyDestroyed = options.directDestruction === true || card.pendingDirectDestruction === true;
       delete card.pendingDirectDestruction;
       card.suppressTrashToast = options.suppressToast === true;
@@ -20154,11 +20182,21 @@
         details: {
           reason: options.reason || "",
           suppressLog: options.suppressLog === true,
-          suppressToast: options.suppressToast === true
+          suppressToast: options.suppressToast === true,
+          detachedUtaEquipments: detachedUtaEquipments.map((entry) => entry.baseId)
         }
       });
       if (!options.suppressLog) addTrashLog(owner, card, options.reason || "");
       if (!options.suppressToast) announceTrashMove(owner, card);
+      detachedUtaEquipments.forEach((entry) => {
+        moveToTrash(owner, createCardFromBase(entry.baseId, owner), {
+          suppressLog: options.suppressLog === true,
+          suppressToast: options.suppressToast === true,
+          reason: "装備解除",
+          sourceZone: "equipment",
+          detachUtaEquipment: false
+        });
+      });
       return card;
     }
 
@@ -23443,13 +23481,33 @@
       return floorNumber <= 4 ? 10 : 20;
     }
 
+    function makeDungeonFloorFeaturedCard(entry) {
+      const definition = typeof entry === "string" ? { baseId: entry } : entry;
+      const card = makePreviewCard(definition.baseId, "opponent");
+      if (!definition.darkPresident) return card;
+      card.name = "闇学長";
+      card.cost = 7;
+      card.attack = 5;
+      card.hp = 5;
+      card.baseAttack = 5;
+      card.baseMaxHp = 5;
+      card.maxHp = 5;
+      card.currentHp = 5;
+      card.darkPresident = true;
+      return card;
+    }
+
     function dungeonFloorFeaturedCardsMarkup(floor) {
-      const ids = Array.isArray(floor.featuredCards) ? floor.featuredCards : [];
-      return ids
-        .filter((baseId) => Boolean(CARD_BASES[baseId]))
-        .map((baseId) => {
-          const card = makePreviewCard(baseId, "opponent");
-          return `<button class="dungeon-floor-feature-card" type="button" data-dungeon-floor-card="${escapeHtml(baseId)}" aria-label="${escapeHtml(card.name)}の詳細を見る">${cardShellTemplate(card)}</button>`;
+      const entries = Array.isArray(floor.featuredCards) ? floor.featuredCards : [];
+      return entries
+        .filter((entry) => {
+          const definition = typeof entry === "string" ? { baseId: entry } : entry;
+          return Boolean(CARD_BASES[definition?.baseId]);
+        })
+        .map((entry) => {
+          const definition = typeof entry === "string" ? { baseId: entry } : entry;
+          const card = makeDungeonFloorFeaturedCard(definition);
+          return `<button class="dungeon-floor-feature-card" type="button" data-dungeon-floor-card="${escapeHtml(definition.baseId)}" data-dungeon-floor-dark-president="${definition.darkPresident ? "true" : "false"}" aria-label="${escapeHtml(card.name)}の詳細を見る">${cardShellTemplate(card)}</button>`;
         })
         .join("");
     }
@@ -23460,8 +23518,10 @@
         const baseId = button.dataset.dungeonFloorCard;
         const base = CARD_BASES[baseId];
         if (!base) return;
-        attachCardDetailEvents(button, makePreviewCard(baseId, "opponent"), { previewOnClick: false });
-        button.addEventListener("click", () => openDungeonCardInfo(baseId));
+        const darkPresident = button.dataset.dungeonFloorDarkPresident === "true";
+        const card = makeDungeonFloorFeaturedCard({ baseId, darkPresident });
+        attachCardDetailEvents(button, card, { previewOnClick: false });
+        button.addEventListener("click", () => openDungeonCardInfo(baseId, { darkPresident }));
       });
     }
 
@@ -23502,9 +23562,9 @@
       }
     }
 
-    function openDungeonCardInfo(baseId) {
+    function openDungeonCardInfo(baseId, options = {}) {
       if (!CARD_BASES[baseId] || !elements.dungeonCardInfoModal) return;
-      const card = makePreviewCard(baseId, "opponent");
+      const card = makeDungeonFloorFeaturedCard({ baseId, darkPresident: options.darkPresident === true });
       elements.dungeonCardInfoCard.innerHTML = cardShellTemplate(card);
       elements.dungeonCardInfoTitle.textContent = card.name;
       elements.dungeonCardInfoText.innerHTML = cardDetailTemplate(card);
