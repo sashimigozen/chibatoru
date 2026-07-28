@@ -362,6 +362,780 @@
       box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.16), 0 12px 28px rgba(15, 23, 42, 0.1);
     }
 
+    .solo-menu-screen,
+    .dungeon-deck-screen,
+    .dungeon-floor-screen,
+    .dungeon-reward-screen {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      padding: 8px 0 16px;
+    }
+
+    .solo-mode-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
+      gap: 12px;
+    }
+
+    .solo-mode-button {
+      display: grid;
+      align-content: center;
+      justify-items: start;
+      min-height: 280px;
+      gap: 8px;
+      border: 2px solid #1f2937;
+      border-radius: 8px;
+      padding: 24px;
+      color: #172033;
+      background: #ffffff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+      cursor: pointer;
+      text-align: left;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, border-color 0.14s ease;
+    }
+
+    .solo-mode-button:hover,
+    .solo-mode-button:focus-visible {
+      transform: translateY(-3px);
+      border-color: #2563eb;
+      box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
+      outline: none;
+    }
+
+    .solo-mode-button.dungeon {
+      border-color: #7c3f12;
+      background: #fff7ed;
+    }
+
+    .solo-mode-main {
+      font-size: 28px;
+      font-weight: 1000;
+      line-height: 1.15;
+    }
+
+    .solo-mode-sub {
+      color: #586677;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.5;
+    }
+
+    .dungeon-entrance-screen {
+      min-height: calc(100vh - 20px);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      background: #101827;
+      color: #f8fafc;
+    }
+
+    .dungeon-entrance-stage {
+      position: relative;
+      width: min(100%, 760px);
+      height: min(76vh, 620px);
+      overflow: hidden;
+      border: 2px solid #6b2027;
+      border-radius: 8px;
+      background: #17090d;
+      box-shadow: 0 24px 54px rgba(34, 4, 8, 0.56);
+      isolation: isolate;
+    }
+
+    .dungeon-entrance-stage::after {
+      position: absolute;
+      z-index: 5;
+      inset: 0;
+      background: #070406;
+      opacity: 1;
+      pointer-events: none;
+      content: "";
+      clip-path: circle(0% at 50% 65%);
+      animation: dungeonDoorBlackout 2.8s both ease-in;
+    }
+
+    .dungeon-sky {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 12%, rgba(223, 54, 58, 0.54) 0 12%, transparent 42%),
+        linear-gradient(180deg, #5e121d 0%, #350c17 46%, #18080d 100%);
+    }
+
+    .dungeon-sky::before,
+    .dungeon-sky::after {
+      position: absolute;
+      right: -12%;
+      left: -12%;
+      height: 126px;
+      background: rgba(27, 5, 11, 0.35);
+      filter: blur(9px);
+      content: "";
+      animation: dungeonSkyPass 2.8s both linear 1s;
+    }
+
+    .dungeon-sky::before { top: 39%; }
+    .dungeon-sky::after { top: 73%; }
+
+    .dungeon-moon {
+      position: absolute;
+      z-index: 1;
+      top: 30px;
+      right: 40px;
+      width: 58px;
+      aspect-ratio: 1;
+      border: 3px solid #ffb4a2;
+      border-radius: 50%;
+      background: #e33a42;
+      box-shadow: 0 0 34px rgba(255, 58, 68, 0.7);
+      animation: dungeonMoonPass 2.8s both linear 1s;
+    }
+
+    .dungeon-tower {
+      position: absolute;
+      z-index: 2;
+      top: 44px;
+      left: 50%;
+      display: grid;
+      grid-template-rows: 44px repeat(30, 68px);
+      width: min(64vw, 395px);
+      min-width: 280px;
+      transform: translateX(-50%);
+      transform-origin: center bottom;
+      animation: dungeonTowerDescent 2.8s both linear;
+    }
+
+    .dungeon-tower-roof {
+      border: 3px solid #30343a;
+      background: repeating-linear-gradient(90deg, #3b3f45 0 34px, #596066 35px 68px);
+    }
+
+    .dungeon-tower-floor {
+      position: relative;
+      border-right: 4px solid #30343a;
+      border-bottom: 3px solid #3b3e43;
+      border-left: 4px solid #30343a;
+      background:
+        linear-gradient(90deg, rgba(17, 20, 24, 0.24), transparent 16%, transparent 84%, rgba(17, 20, 24, 0.28)),
+        repeating-linear-gradient(180deg, #777d82 0 23px, #697075 24px 28px, #777d82 29px 68px);
+    }
+
+    .dungeon-tower-floor::before,
+    .dungeon-tower-floor::after {
+      position: absolute;
+      top: 15px;
+      width: 30px;
+      height: 38px;
+      border: 3px solid #282b30;
+      background: linear-gradient(135deg, #5b1019, #b52630 55%, #4a0b13);
+      content: "";
+      box-shadow: inset 0 0 0 4px #81202a, 0 0 10px rgba(198, 36, 46, 0.34);
+    }
+
+    .dungeon-tower-floor::before { left: 16%; }
+    .dungeon-tower-floor::after { right: 16%; }
+
+    .dungeon-tower-floor.dungeon-ground {
+      background: #50555a;
+    }
+
+    .dungeon-tower-floor.dungeon-ground::before {
+      display: none;
+    }
+
+    .dungeon-tower-floor.dungeon-ground::after {
+      position: absolute;
+      z-index: 0;
+      top: 0;
+      right: -220px;
+      left: -220px;
+      display: block;
+      width: auto;
+      height: 240px;
+      border: 0;
+      border-top: 4px solid #343a40;
+      background: linear-gradient(180deg, #73777a 0%, #626669 18%, #565a5d 100%);
+      box-shadow: inset 0 10px 18px rgba(255, 255, 255, 0.07);
+      content: "";
+    }
+
+    .dungeon-entrance-hole {
+      position: absolute;
+      z-index: 1;
+      right: 50%;
+      bottom: 0;
+      width: 92px;
+      height: 82px;
+      transform: translateX(50%);
+      transform-origin: bottom center;
+      border: 0;
+      border-radius: 48px 48px 0 0;
+      background: #050506;
+      box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.8);
+      animation: dungeonEntranceRush 2.8s both cubic-bezier(0.3, 0, 0.1, 1);
+    }
+
+    .dungeon-entrance-copy {
+      position: absolute;
+      z-index: 2;
+      top: 22px;
+      left: 22px;
+      margin: 0;
+      font-size: 22px;
+      font-weight: 1000;
+      letter-spacing: 0;
+      text-shadow: 0 2px 0 #0f172a;
+      animation: dungeonCopyFade 2.8s both ease;
+    }
+
+    @keyframes dungeonTowerDescent {
+      0%, 36% { transform: translate(-50%, 0); filter: blur(0); }
+      42% { transform: translate(-48.7%, -410px); filter: blur(1.4px); }
+      48% { transform: translate(-51.5%, -1050px); filter: blur(1.6px); }
+      55% { transform: translate(-50%, -1639px); filter: blur(0); }
+      70%, 100% { transform: translate(-50%, -1639px); filter: blur(0); }
+    }
+
+    @keyframes dungeonMoonPass {
+      0% { opacity: 1; transform: translateY(0); }
+      54% { opacity: 0; transform: translateY(-430px); }
+      100% { opacity: 0; transform: translateY(-430px); }
+    }
+
+    @keyframes dungeonSkyPass {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-390px); }
+    }
+
+    @keyframes dungeonEntranceRush {
+      0%, 70% { transform: translateX(50%) scale(1); opacity: 1; }
+      91% { transform: translateX(50%) scale(7); opacity: 1; }
+      100% { transform: translateX(50%) scale(10); opacity: 1; }
+    }
+
+    @keyframes dungeonDoorBlackout {
+      0%, 90% { clip-path: circle(0% at 50% 65%); }
+      100% { clip-path: circle(150% at 50% 65%); }
+    }
+
+    @keyframes dungeonCopyFade {
+      0%, 36% { opacity: 1; }
+      54%, 100% { opacity: 0; }
+    }
+
+    .dungeon-deck-summary,
+    .dungeon-floor-card {
+      border: 1px solid #b7c6d9;
+      border-radius: 8px;
+      padding: 16px;
+      background: #ffffff;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .dungeon-resume {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 4px 0 14px;
+      border: 1px solid #b7791f;
+      border-radius: 8px;
+      padding: 12px 14px;
+      background: #fffbeb;
+      color: #78350f;
+      font-weight: 900;
+    }
+
+    .dungeon-floor-card {
+      display: grid;
+      gap: 16px;
+      max-width: 760px;
+      margin: auto;
+      border-color: #b7791f;
+      background: #fffbeb;
+    }
+
+    .dungeon-floor-number {
+      margin: 0;
+      color: #92400e;
+      font-size: 46px;
+      font-weight: 1000;
+      line-height: 1;
+    }
+
+    .dungeon-floor-card h2,
+    .dungeon-floor-card p {
+      margin: 0;
+    }
+
+    .dungeon-floor-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .dungeon-floor-info-button {
+      border-color: #a16207;
+      color: #78350f;
+      background: #fffbeb;
+    }
+
+    .dungeon-reward-screen {
+      position: relative;
+      min-height: calc(100vh - 20px);
+      place-items: center;
+      overflow: hidden;
+      padding: 22px;
+      color: #f8fafc;
+      background:
+        radial-gradient(ellipse at 50% 12%, rgba(136, 32, 48, 0.34), transparent 42%),
+        linear-gradient(180deg, #090b10 0%, #17131a 52%, #080a0e 100%);
+    }
+
+    .dungeon-reward-stage {
+      position: relative;
+      z-index: 1;
+      width: min(720px, 100%);
+      min-height: min(620px, calc(100vh - 70px));
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(231, 197, 98, 0.64);
+      border-radius: 8px;
+      padding: 34px 24px 82px;
+      background:
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 2px, transparent 2px 96px),
+        linear-gradient(145deg, rgba(49, 17, 26, 0.96), rgba(10, 12, 17, 0.98) 64%);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58), inset 0 0 90px rgba(0, 0, 0, 0.52);
+      text-align: center;
+    }
+
+    .dungeon-reward-stage::before {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 44%, rgba(244, 193, 73, 0.16), transparent 23%),
+        linear-gradient(90deg, transparent 49.5%, rgba(239, 212, 126, 0.1) 50%, transparent 50.5%);
+      content: "";
+      pointer-events: none;
+    }
+
+    .dungeon-reward-kicker,
+    .dungeon-reward-title,
+    .dungeon-reward-copy,
+    .dungeon-treasure-chest,
+    .dungeon-reward-cards,
+    .dungeon-reward-backup,
+    .dungeon-reward-home {
+      position: relative;
+      z-index: 1;
+    }
+
+    .dungeon-reward-kicker {
+      margin: 0;
+      color: #f4d778;
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: 0;
+    }
+
+    .dungeon-reward-title {
+      margin: 0;
+      color: #fff4c4;
+      font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.12;
+      text-shadow: 0 3px 20px rgba(236, 192, 70, 0.28);
+    }
+
+    .dungeon-reward-copy {
+      max-width: 460px;
+      margin: 0;
+      color: #d7dce7;
+      font-size: 14px;
+      font-weight: 800;
+      line-height: 1.6;
+    }
+
+    .dungeon-treasure-chest {
+      width: 188px;
+      height: 130px;
+      margin: 14px 0 4px;
+      border: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      filter: drop-shadow(0 20px 16px rgba(0, 0, 0, 0.48));
+      transition: filter 0.18s ease, transform 0.18s ease;
+    }
+
+    .dungeon-treasure-chest:hover:not(:disabled),
+    .dungeon-treasure-chest:focus-visible {
+      outline: none;
+      filter: drop-shadow(0 0 18px rgba(248, 215, 120, 0.68)) drop-shadow(0 20px 16px rgba(0, 0, 0, 0.48));
+      transform: translateY(-4px) scale(1.03);
+    }
+
+    .dungeon-treasure-chest:disabled { cursor: default; }
+
+    .dungeon-chest-base,
+    .dungeon-chest-lid,
+    .dungeon-chest-lock {
+      position: absolute;
+      display: block;
+    }
+
+    .dungeon-chest-base {
+      right: 12px;
+      bottom: 9px;
+      left: 12px;
+      height: 78px;
+      border: 5px solid #4d2f0b;
+      border-radius: 5px 5px 11px 11px;
+      background:
+        linear-gradient(90deg, transparent 0 18%, rgba(255, 218, 111, 0.22) 18% 22%, transparent 22% 78%, rgba(255, 218, 111, 0.22) 78% 82%, transparent 82%),
+        repeating-linear-gradient(90deg, #8d4b12 0 26px, #a95e18 27px 50px);
+      box-shadow: inset 0 -12px 12px rgba(38, 19, 4, 0.36), 0 7px 0 #2b1907;
+    }
+
+    .dungeon-chest-lid {
+      top: 16px;
+      right: 3px;
+      left: 3px;
+      height: 56px;
+      transform-origin: center bottom;
+      border: 5px solid #4d2f0b;
+      border-radius: 58% 58% 8px 8px / 100% 100% 12px 12px;
+      background:
+        linear-gradient(90deg, transparent 0 44%, rgba(255, 220, 118, 0.58) 44% 56%, transparent 56%),
+        linear-gradient(180deg, #c17a28, #78400e);
+      box-shadow: inset 0 8px 10px rgba(255, 235, 148, 0.18), 0 7px 0 #2b1907;
+      transition: transform 0.56s cubic-bezier(0.18, 0.82, 0.23, 1.18), filter 0.32s ease;
+    }
+
+    .dungeon-chest-lock {
+      z-index: 1;
+      bottom: 46px;
+      left: 50%;
+      width: 31px;
+      height: 31px;
+      transform: translateX(-50%);
+      border: 4px solid #6d4a0a;
+      border-radius: 6px;
+      background: #f1cc50;
+      box-shadow: 0 3px 0 #3e2705;
+    }
+
+    .dungeon-treasure-chest.opening .dungeon-chest-lid,
+    .dungeon-treasure-chest.opened .dungeon-chest-lid {
+      filter: brightness(1.2);
+      transform: translateY(-16px) rotateX(62deg);
+    }
+
+    .dungeon-treasure-chest.opening::after,
+    .dungeon-treasure-chest.opened::after {
+      position: absolute;
+      z-index: -1;
+      top: 8px;
+      left: 50%;
+      width: 122px;
+      height: 116px;
+      transform: translateX(-50%);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 246, 190, 0.95) 0%, rgba(246, 201, 79, 0.7) 28%, transparent 70%);
+      content: "";
+      animation: dungeonChestBurst 0.75s ease-out both;
+    }
+
+    .dungeon-reward-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 16px;
+      min-height: 0;
+      opacity: 0;
+      transform: translateY(18px) scale(0.88);
+      pointer-events: none;
+    }
+
+    .dungeon-reward-stage.revealed .dungeon-reward-cards {
+      min-height: 202px;
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+      transition: opacity 0.42s ease, transform 0.54s cubic-bezier(0.18, 0.88, 0.25, 1.16);
+    }
+
+    .dungeon-reward-card.card {
+      width: 136px;
+      min-height: 192px;
+      flex-basis: 136px;
+      animation: dungeonRewardCardDrop 0.72s both cubic-bezier(0.18, 0.9, 0.22, 1.12);
+    }
+
+    .dungeon-reward-card:nth-child(2) { animation-delay: 0.12s; }
+
+    .dungeon-reward-home {
+      position: absolute;
+      right: 18px;
+      bottom: 18px;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+    }
+
+    .dungeon-reward-stage.home-ready .dungeon-reward-home {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+      transition: opacity 0.34s ease, transform 0.34s ease;
+    }
+
+    .dungeon-reward-backup {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 2px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .dungeon-reward-stage.revealed .dungeon-reward-backup {
+      opacity: 1;
+      pointer-events: auto;
+      transition: opacity 0.34s ease 0.18s;
+    }
+
+    .dungeon-reward-import {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      border: 1px solid #b8c5d8;
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: #334155;
+      background: #ffffff;
+      font-size: 12px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .dungeon-reward-import input { display: none; }
+
+    .deck-style-tools {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    @keyframes dungeonChestBurst {
+      0% { opacity: 0; transform: translateX(-50%) scale(0.25); }
+      45% { opacity: 1; transform: translateX(-50%) scale(1.12); }
+      100% { opacity: 0; transform: translateX(-50%) scale(1.35); }
+    }
+
+    @keyframes dungeonRewardCardDrop {
+      0% { opacity: 0; transform: translateY(-90px) rotate(-4deg) scale(0.72); }
+      70% { opacity: 1; transform: translateY(4px) rotate(1deg) scale(1.04); }
+      100% { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+    }
+
+    .dungeon-info-modal {
+      position: fixed;
+      z-index: 120;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, 0.62);
+    }
+
+    .dungeon-info-modal .dungeon-floor-card {
+      width: min(560px, 100%);
+    }
+
+    .dungeon-interior-backdrop {
+      position: fixed;
+      z-index: 0;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(105, 25, 38, 0.34), transparent 44%),
+        linear-gradient(90deg, #080b0f 0%, #17191f 12%, #22252b 50%, #17191f 88%, #080b0f 100%);
+    }
+
+    .dungeon-interior-backdrop::before {
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0 4px, transparent 4px 112px),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 24%, rgba(0, 0, 0, 0.62));
+      content: "";
+    }
+
+    .dungeon-interior-windows {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(1100px, 90vw);
+      height: min(170px, 22vh);
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 12px;
+      opacity: 0.84;
+      transform: translate(-50%, -50%) perspective(900px) rotateX(2deg);
+      transform-origin: center;
+    }
+
+    .dungeon-interior-window {
+      position: relative;
+      display: none;
+      overflow: hidden;
+      border: 11px solid #1a1d23;
+      border-top-color: #30343b;
+      border-bottom-color: #0c0e12;
+      background:
+        radial-gradient(ellipse at 50% 14%, rgba(231, 58, 73, 0.9), rgba(139, 27, 46, 0.62) 34%, transparent 62%),
+        linear-gradient(180deg, #781727 0%, #3e0d1b 54%, #12070c 100%);
+      box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.7), 0 8px 20px rgba(0, 0, 0, 0.46);
+    }
+
+    .dungeon-interior-window:nth-child(n + 8):nth-child(-n + 14) {
+      display: block;
+      height: 100%;
+      min-height: 0;
+    }
+
+    .dungeon-interior-window::before,
+    .dungeon-interior-window::after {
+      position: absolute;
+      background: rgba(9, 10, 14, 0.76);
+      content: "";
+    }
+
+    .dungeon-interior-window::before {
+      top: 0;
+      bottom: 0;
+      left: calc(50% - 3px);
+      width: 6px;
+    }
+
+    .dungeon-interior-window::after {
+      right: 0;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      height: auto;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent 0 calc(12.5% - 3px),
+        rgba(9, 10, 14, 0.76) calc(12.5% - 3px) 12.5%
+      );
+    }
+
+    body.dungeon-interior {
+      background: #090b10;
+    }
+
+    body.dungeon-interior .app {
+      position: relative;
+      z-index: 1;
+    }
+
+    body.dungeon-interior .dungeon-deck-screen,
+    body.dungeon-interior .dungeon-floor-screen {
+      min-height: calc(100vh - 20px);
+      padding: 22px;
+      border: 1px solid rgba(126, 34, 46, 0.74);
+      border-radius: 8px;
+      background: rgba(11, 14, 20, 0.73);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.42);
+    }
+
+    body.dungeon-interior .dungeon-deck-screen .screen-head h1,
+    body.dungeon-interior .dungeon-floor-screen .screen-head h1,
+    body.dungeon-interior .dungeon-deck-screen .screen-head .subtitle,
+    body.dungeon-interior .dungeon-floor-screen .screen-head .subtitle {
+      color: #f8fafc;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.7);
+    }
+
+    body.dungeon-interior .dungeon-deck-screen .panel,
+    body.dungeon-interior .dungeon-deck-screen .dungeon-deck-summary,
+    body.dungeon-interior .dungeon-floor-card {
+      background: rgba(255, 255, 255, 0.97);
+    }
+
+    body.dungeon-battle .battle-screen {
+      padding: 8px;
+      border: 1px solid rgba(126, 34, 46, 0.72);
+      border-radius: 8px;
+      background: rgba(9, 12, 17, 0.7);
+      box-shadow: 0 20px 54px rgba(0, 0, 0, 0.42);
+    }
+
+    body.dungeon-battle .panel,
+    body.dungeon-battle .hand-zone,
+    body.dungeon-battle .message {
+      background: rgba(255, 255, 255, 0.97);
+    }
+
+    .deck-format-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .deck-format-tabs .button.active {
+      border-color: #075985;
+      background: #e0f2fe;
+      color: #075985;
+      box-shadow: inset 0 0 0 1px #38bdf8;
+    }
+
+    .deck-specialty-choice {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+      padding: 14px;
+      border: 1px solid #b7c6d9;
+      border-radius: 8px;
+      background: #f8fbff;
+    }
+
+    .deck-specialty-choice-title {
+      grid-column: 1 / -1;
+      margin: 0;
+      color: #334155;
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .deck-specialty-choice button {
+      min-height: 58px;
+      border: 1px solid #7aa0c7;
+      border-radius: 7px;
+      background: #ffffff;
+      color: #172033;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 900;
+    }
+
+    .deck-specialty-choice button:hover,
+    .deck-specialty-choice button:focus-visible {
+      border-color: #0e7490;
+      background: #ecfeff;
+      outline: none;
+    }
+
     .online-match-main {
       display: flex;
       align-items: center;
@@ -2297,6 +3071,27 @@
       margin-bottom: 14px;
     }
 
+    .dungeon-reward-result {
+      display: grid;
+      gap: 5px;
+      max-width: 460px;
+      margin: 0 auto 16px;
+      border: 1px solid #d7ac31;
+      border-radius: 7px;
+      padding: 10px 14px;
+      color: #4d3205;
+      background: #fff6cf;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.82), 0 5px 13px rgba(146, 103, 11, 0.16);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .dungeon-reward-kicker {
+      color: #8a5a00;
+      font-size: 11px;
+      font-weight: 1000;
+    }
+
     .lo-result {
       display: inline-flex;
       align-items: baseline;
@@ -2319,7 +3114,7 @@
 
     .result-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 10px;
       min-width: min(520px, calc(100vw - 48px));
     }
@@ -3809,6 +4604,49 @@
       font-size: 15px;
     }
 
+    .card-test-style-frame {
+      position: relative;
+      width: 136px;
+    }
+
+    .card-style-cycle-button {
+      position: absolute;
+      z-index: 4;
+      right: -12px;
+      bottom: -12px;
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 2px solid #6b4a08;
+      border-radius: 999px;
+      padding: 0;
+      color: #5d4307;
+      background: #fff8d2;
+      box-shadow: 0 3px 0 rgba(63, 42, 5, 0.26), 0 7px 13px rgba(15, 23, 42, 0.2);
+      cursor: pointer;
+      transition: transform 0.16s ease, background 0.16s ease;
+    }
+
+    .card-style-cycle-button:hover,
+    .card-style-cycle-button:focus-visible {
+      outline: none;
+      background: #ffeb90;
+      transform: rotate(20deg) scale(1.07);
+    }
+
+    .card-style-cycle-button:active { transform: rotate(120deg) scale(0.94); }
+
+    .card-style-cycle-button svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 2.5;
+    }
+
     .item-confirm-copy {
       display: grid;
       gap: 10px;
@@ -4212,6 +5050,140 @@
     .field-card.environment,
     .card.environment {
       background: #ddf8e8;
+    }
+
+    .field-card.dark-president-foil,
+    .card.dark-president-foil {
+      border: 2px solid transparent;
+      background:
+        linear-gradient(145deg, #161b25 0%, #080a0f 48%, #222b37 100%) padding-box,
+        linear-gradient(112deg, #030406 0%, #6b7788 24%, #11151c 46%, #d5dfeb 67%, #030406 100%) border-box;
+      background-size: 100% 100%, 220% 220%;
+      background-position: 0 0, 0% 50%;
+      color: #f8fafc;
+      box-shadow: 0 0 0 1px #030406, 0 3px 10px rgba(15, 23, 42, 0.5), 0 0 14px rgba(148, 163, 184, 0.45);
+      animation: dark-president-foil 3.6s linear infinite;
+    }
+
+    .field-card.dark-president-foil .field-card-name,
+    .card.dark-president-foil .card-name,
+    .card.dark-president-foil .card-type,
+    .card.dark-president-foil .card-effect,
+    .card.dark-president-foil .card-effect-label {
+      color: #f8fafc;
+    }
+
+    @keyframes dark-president-foil {
+      to { background-position: 0 0, 200% 50%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .field-card.dark-president-foil,
+      .card.dark-president-foil {
+        animation: none;
+      }
+    }
+
+    .field-card.reward-foil,
+    .card.reward-foil {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      border: 2px solid transparent;
+      background:
+        var(--reward-foil-face) padding-box,
+        linear-gradient(112deg, #72520a 0%, #f8dd74 18%, #9c7416 35%, #fff3ad 52%, #8d660e 68%, #f4cf60 86%, #72520a 100%) border-box;
+      background-size: 100% 100%, 260% 260%;
+      background-position: 0 0, 0% 50%;
+      color: var(--reward-foil-text, #fffdf5);
+      box-shadow: 0 0 0 1px #68500e, 0 3px 10px rgba(15, 23, 42, 0.45), 0 0 15px var(--reward-foil-glow, rgba(246, 207, 99, 0.4));
+      animation: reward-foil-flow 3.5s linear infinite;
+    }
+
+    .field-card.reward-foil::before,
+    .card.reward-foil::before {
+      position: absolute;
+      z-index: 0;
+      inset: -90% -110%;
+      background: linear-gradient(115deg, transparent 43%, rgba(255, 255, 255, 0.34) 50%, transparent 57%);
+      content: "";
+      pointer-events: none;
+      transform: translateX(-68%) rotate(2deg);
+      animation: reward-foil-shine 3.5s ease-in-out infinite;
+    }
+
+    .field-card.reward-foil > *,
+    .card.reward-foil > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .field-card.reward-foil .field-card-name,
+    .card.reward-foil .card-name,
+    .card.reward-foil .card-type,
+    .card.reward-foil .card-effect,
+    .card.reward-foil .card-effect-label {
+      color: var(--reward-foil-text, #fffdf5);
+    }
+
+    .reward-foil-gakuyukai {
+      --reward-foil-face: linear-gradient(145deg, #1d5caa 0%, #10254e 48%, #174b8c 100%);
+      --reward-foil-glow: rgba(96, 165, 250, 0.56);
+    }
+
+    .reward-foil-cafeteria {
+      --reward-foil-face: linear-gradient(145deg, #601923 0%, #1b070c 45%, #4f1220 100%);
+      --reward-foil-glow: rgba(245, 113, 113, 0.5);
+    }
+
+    .reward-foil-design {
+      --reward-foil-face: linear-gradient(145deg, #6b3fa0 0%, #25134d 46%, #4d2780 100%);
+      --reward-foil-glow: rgba(196, 181, 253, 0.56);
+    }
+
+    .reward-foil-late {
+      --reward-foil-face: linear-gradient(145deg, #2563a6 0%, #11294e 48%, #1d4f8f 100%);
+      --reward-foil-glow: rgba(96, 165, 250, 0.5);
+    }
+
+    .reward-foil-expansion {
+      --reward-foil-face: linear-gradient(145deg, #3171bd 0%, #102b58 48%, #245b9f 100%);
+      --reward-foil-glow: rgba(125, 211, 252, 0.52);
+    }
+
+    .reward-foil-interference {
+      --reward-foil-face: linear-gradient(145deg, #5c3a12 0%, #251706 48%, #6b3e0c 100%);
+      --reward-foil-glow: rgba(251, 191, 36, 0.48);
+    }
+
+    .reward-foil-shogi {
+      --reward-foil-face: linear-gradient(145deg, #365f9e 0%, #14264b 48%, #274c83 100%);
+      --reward-foil-glow: rgba(147, 197, 253, 0.48);
+    }
+
+    .reward-foil-big {
+      --reward-foil-face: linear-gradient(145deg, #2563b5 0%, #102752 46%, #1c4f98 100%);
+      --reward-foil-glow: rgba(96, 165, 250, 0.54);
+    }
+
+    @keyframes reward-foil-flow {
+      to { background-position: 0 0, 220% 50%; }
+    }
+
+    @keyframes reward-foil-shine {
+      0%, 25% { transform: translateX(-68%) rotate(2deg); opacity: 0; }
+      36% { opacity: 1; }
+      63% { transform: translateX(68%) rotate(2deg); opacity: 0.72; }
+      75%, 100% { transform: translateX(68%) rotate(2deg); opacity: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .field-card.reward-foil,
+      .card.reward-foil,
+      .field-card.reward-foil::before,
+      .card.reward-foil::before {
+        animation: none;
+      }
     }
 
     .field-card.selected {
@@ -5859,10 +6831,23 @@
       .deck-detail-summary { grid-template-columns: 1fr; }
       .update-change { grid-template-columns: 1fr; }
       .update-arrow { transform: rotate(90deg); }
+      .solo-mode-actions { grid-template-columns: 1fr; }
+      .solo-mode-button { min-height: 180px; }
+      .dungeon-entrance-stage { height: min(68vh, 540px); }
+      .dungeon-interior-windows { width: 92vw; height: min(126px, 18vh); gap: 7px; }
+      body.dungeon-interior .dungeon-deck-screen,
+      body.dungeon-interior .dungeon-floor-screen { padding: 14px; }
     }
   </style>
 </head>
 <body>
+  <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
+    <div class="dungeon-interior-windows">
+      <span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span>
+      <span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span>
+      <span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span><span class="dungeon-interior-window"></span>
+    </div>
+  </div>
   <main class="app">
     <section class="screen home-screen" id="homeScreen">
       <button class="home-news-button" id="homeUpdatesButton" type="button">
@@ -5879,18 +6864,146 @@
           <span class="home-button-sub">自分とAIのデッキを作る</span>
         </button>
         <button class="home-button online featured" id="homeBattleButton" type="button">
-          <span class="home-button-main">オンラインバトル</span>
+          <span class="home-button-main">マルチ</span>
           <span class="home-button-sub">部屋を作る・入る</span>
         </button>
         <button class="home-button under-online under-online-start" id="homeSoloButton" type="button">
-          <span class="home-button-main">ソロバトル</span>
-          <span class="home-button-sub">VS AIで試す</span>
+          <span class="home-button-main">ソロ</span>
+          <span class="home-button-sub">AIバトル・魔の1号館</span>
         </button>
         <button class="home-button under-online under-online-end" id="homeTutorialButton" type="button">
           <span class="home-button-main">チュートリアル</span>
           <span class="home-button-sub">基本操作を試す</span>
         </button>
       </div>
+    </section>
+
+    <section class="screen solo-menu-screen hidden" id="soloMenuScreen">
+      <div class="screen-head">
+        <div>
+          <h1>ソロ</h1>
+          <p class="subtitle">AIとの対戦か、魔の1号館へ挑戦できます</p>
+        </div>
+        <button class="button secondary" id="soloMenuBackHomeButton" type="button">ホーム</button>
+      </div>
+      <div class="solo-mode-actions" aria-label="ソロモード">
+        <button class="solo-mode-button" id="soloAiBattleButton" type="button">
+          <span class="solo-mode-main">AIバトル</span>
+          <span class="solo-mode-sub">自分とAIのデッキを選び、通常のVS AIを始める</span>
+        </button>
+        <button class="solo-mode-button dungeon" id="soloDungeonButton" type="button">
+          <span class="solo-mode-main">魔の1号館</span>
+          <span class="solo-mode-sub">専攻デッキを選び、1階から奥へ進む連戦モード</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="screen dungeon-entrance-screen hidden" id="dungeonEntranceScreen" aria-label="魔の1号館への入口">
+      <div class="dungeon-entrance-stage">
+        <div class="dungeon-sky"></div>
+        <div class="dungeon-moon"></div>
+        <p class="dungeon-entrance-copy">魔の1号館</p>
+        <div class="dungeon-tower" aria-hidden="true">
+          <div class="dungeon-tower-roof"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor"></div>
+          <div class="dungeon-tower-floor dungeon-ground"><div class="dungeon-entrance-hole"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen dungeon-deck-screen hidden" id="dungeonDeckScreen">
+      <div class="screen-head">
+        <div>
+          <h1>魔の1号館</h1>
+          <p class="subtitle">挑戦に使う専攻デッキを選んでください。専攻デッキは40枚固定です。</p>
+        </div>
+        <button class="button secondary" id="dungeonDeckBackSoloButton" type="button">戻る</button>
+      </div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>専攻デッキ</h2>
+          <button class="button secondary" id="dungeonDeckManageButton" type="button">専攻デッキを作る</button>
+        </div>
+        <div class="dungeon-resume hidden" id="dungeonResume">
+          <span id="dungeonResumeText"></span>
+          <button class="button" id="dungeonResumeButton" type="button">再開する</button>
+        </div>
+        <div class="dungeon-resume hidden" id="dungeonRewardResume">
+          <span id="dungeonRewardResumeText"></span>
+          <button class="button" id="dungeonRewardResumeButton" type="button">報酬を受け取る</button>
+        </div>
+        <div class="deck-library-grid" id="dungeonDeckGrid"></div>
+        <div class="dungeon-deck-summary hidden" id="dungeonDeckDetail"></div>
+        <div class="solo-deck-actions">
+          <button class="button" id="dungeonDeckStartButton" type="button" disabled>このデッキで開始</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="screen dungeon-floor-screen hidden" id="dungeonFloorScreen">
+      <div class="screen-head">
+        <div>
+          <h1>魔の1号館</h1>
+          <p class="subtitle">階の特徴を確認してから対戦へ進みます</p>
+        </div>
+        <button class="button secondary" id="dungeonFloorBackButton" type="button">戻る</button>
+      </div>
+      <section class="dungeon-floor-card">
+        <p class="dungeon-floor-number" id="dungeonFloorNumber">1階</p>
+        <div>
+          <h2 id="dungeonFloorTitle">この階の特徴</h2>
+          <p id="dungeonFloorText"></p>
+        </div>
+        <div class="dungeon-floor-actions">
+          <button class="button" id="dungeonFloorStartButton" type="button">OK</button>
+        </div>
+      </section>
+    </section>
+
+    <section class="screen dungeon-reward-screen hidden" id="dungeonRewardScreen" aria-label="魔の1号館のクリア報酬">
+      <section class="dungeon-reward-stage" id="dungeonRewardStage">
+        <p class="dungeon-reward-kicker">魔の1号館・第10階クリア</p>
+        <h1 class="dungeon-reward-title" id="dungeonRewardTitle">報酬の宝箱</h1>
+        <p class="dungeon-reward-copy" id="dungeonRewardCopy">宝箱を開けて、専攻の代表カードスタイルを受け取ろう。</p>
+        <button class="dungeon-treasure-chest" id="dungeonRewardChest" type="button" aria-label="報酬の宝箱を開ける">
+          <span class="dungeon-chest-lid"></span><span class="dungeon-chest-base"></span><span class="dungeon-chest-lock"></span>
+        </button>
+        <div class="dungeon-reward-cards" id="dungeonRewardCards" aria-live="polite"></div>
+        <div class="dungeon-reward-backup" id="dungeonRewardBackup">
+          <button class="button secondary" id="dungeonStyleBackupButton" type="button">スタイルをバックアップ</button>
+          <label class="dungeon-reward-import">バックアップを読み込む<input id="dungeonStyleImportInput" type="file" accept="application/json,.json"></label>
+        </div>
+        <button class="button dungeon-reward-home" id="dungeonRewardHomeButton" type="button">ホームに戻る</button>
+      </section>
     </section>
 
     <section class="screen updates-screen hidden" id="updatesScreen">
@@ -6072,23 +7185,34 @@
       <div class="screen-head">
         <div>
           <h1>デッキ変更</h1>
-          <p class="subtitle">40〜60枚、同名は原則3枚まで（カード固有の上限あり）</p>
+          <p class="subtitle" id="deckScreenSubtitle">40〜60枚、同名は原則3枚まで（カード固有の上限あり）</p>
         </div>
         <button class="button secondary" id="deckBackHomeButton" type="button">ホーム</button>
       </div>
       <section class="panel deck-panel" id="deckLibraryView">
         <div class="panel-head">
-          <h2>保存デッキ</h2>
+          <div>
+            <h2 id="deckLibraryTitle">保存デッキ</h2>
+            <div class="deck-format-tabs" aria-label="デッキ形式">
+              <button class="button secondary active" id="normalDeckFormatButton" type="button">通常デッキ</button>
+              <button class="button secondary" id="specialtyDeckFormatButton" type="button">専攻デッキ</button>
+            </div>
+          </div>
           <span class="small-info" id="deckLibraryCount">0個</span>
         </div>
         <div class="deck-library-grid" id="deckLibraryGrid"></div>
+        <div class="deck-specialty-choice hidden" id="deckSpecialtyChoice"></div>
         <div class="deck-library-detail hidden" id="deckLibraryDetail"></div>
+        <div class="deck-style-tools">
+          <button class="button secondary" id="deckStyleBackupButton" type="button">カードスタイルをバックアップ</button>
+          <label class="dungeon-reward-import">カードスタイルを復元<input id="deckStyleImportInput" type="file" accept="application/json,.json"></label>
+        </div>
       </section>
       <section class="panel deck-panel hidden" id="deckEditorView">
         <div class="panel-head">
           <div>
             <h2 id="deckEditorTitle">新規デッキ</h2>
-            <button class="button secondary" id="deckEditorBackButton" type="button">デッキ一覧へ</button>
+            <button class="button secondary" id="deckEditorBackButton" type="button">戻る</button>
           </div>
           <span class="small-info" id="deckEditorStatus">40/60 OK</span>
         </div>
@@ -6153,8 +7277,9 @@
           <span id="battleRoomCodeValue">------</span>
         </div>
         <div class="controls">
+          <button class="button secondary dungeon-floor-info-button hidden" id="dungeonFloorInfoButton" type="button">階の特徴</button>
           <button class="button secondary" id="battleBackHomeButton" type="button">勝てない</button>
-          <button class="button secondary hidden" id="testBackDeckButton" type="button">デッキ制作へ戻る</button>
+          <button class="button secondary hidden" id="testBackDeckButton" type="button">戻る</button>
           <button class="button secondary hidden" id="testUndoButton" type="button">一手戻る</button>
           <button class="button secondary" id="analyticsJsonlButton" type="button">ログJSONL</button>
           <button class="button secondary" id="analyticsCsvButton" type="button">ログCSV</button>
@@ -6363,6 +7488,16 @@
       </section>
     </div>
     <div class="result-overlay hidden" id="resultOverlay" aria-live="assertive"></div>
+    <div class="dungeon-info-modal hidden" id="dungeonInfoModal" role="dialog" aria-modal="true" aria-label="階の特徴">
+      <section class="dungeon-floor-card">
+        <p class="dungeon-floor-number" id="dungeonInfoFloorNumber">1階</p>
+        <div>
+          <h2 id="dungeonInfoTitle">この階の特徴</h2>
+          <p id="dungeonInfoText"></p>
+        </div>
+        <div class="dungeon-floor-actions"><button class="button" id="dungeonInfoCloseButton" type="button">閉じる</button></div>
+      </section>
+    </div>
     <div class="play-reveal-overlay hidden" id="playRevealOverlay" aria-hidden="true">
       <div class="play-reveal-card" id="playRevealCard"></div>
     </div>
@@ -6514,8 +7649,269 @@
     const DECK_MAX = 60;
     const CARD_COPY_MAX = 3;
     const SAVED_DECK_STORAGE_KEY = "chibattle-saved-decks-v1";
+    const SPECIALTY_DECK_STORAGE_KEY = "chibattle-specialty-decks-v1";
+    const DUNGEON_RUN_STORAGE_KEY = "chibattle-dungeon-run-v1";
+    const DUNGEON_CARD_STYLE_STORAGE_KEY = "chibattle-dungeon-card-styles-v1";
+    const DUNGEON_PENDING_REWARD_STORAGE_KEY = "chibattle-dungeon-pending-reward-v1";
     const STARTER_DECK_SEED_STORAGE_KEY = "chibattle-starter-decks-seeded-v1";
     const STARTER_DECK_SEED_VERSION = "2026-07-03-starter-v4";
+    const SPECIALTY_DEFINITIONS = [
+      { id: "gakuyukai_item", name: "学友会・持ち物" },
+      { id: "cafeteria", name: "食堂" },
+      { id: "design", name: "デザイン" },
+      { id: "late", name: "遅刻" },
+      { id: "expansion", name: "展開・敵増殖" },
+      { id: "interference", name: "妨害・LO" },
+      { id: "shogi", name: "将棋部" },
+      { id: "big", name: "バカでかい型" }
+    ];
+    const SPECIALTY_CARD_IDS = Object.freeze({
+      common: ["ai_chan", "alpha", "beta", "chaos_world", "circle_crab", "classroom", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "hair_crab", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "ta", "three_gestures", "water_2l"],
+      gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "trendy_student", "word_increaser", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
+      cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "green_curry", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "yakiniku", "zombie"],
+      design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
+      late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance"],
+      expansion: ["aggro_king", "aggro_queen", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"],
+      interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
+      shogi: ["aiben", "aiben_vs_nyotei_title_match", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
+      big: ["ae_student", "best_friend", "chigauyo", "cote_dazur", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "lone_wolf", "loud_student", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "super_ae_student", "ta_killer"]
+    });
+    const DUNGEON_CARD_STYLE_REWARDS = Object.freeze({
+      gakuyukai_item: { label: "学友会・持ち物", cardIds: ["yuta", "dark_yuta"], style: "gakuyukai" },
+      cafeteria: { label: "食堂", cardIds: ["vampire"], style: "cafeteria" },
+      design: { label: "デザイン", cardIds: ["bird_a", "demon_a_plus"], style: "design" },
+      late: { label: "遅刻", cardIds: ["lazy_student"], style: "late" },
+      expansion: { label: "展開・敵増殖", cardIds: ["extra_people", "extra_student"], style: "expansion" },
+      interference: { label: "妨害・LO", cardIds: ["dos_attack"], style: "interference" },
+      shogi: { label: "将棋部", cardIds: ["infight_shogi"], style: "shogi" },
+      big: { label: "バカでかい型", cardIds: ["loud_student"], style: "big" }
+    });
+    const DUNGEON_FLOORS = Object.freeze({
+      1: {
+        number: 1,
+        title: "学生主体のデッキ",
+        text: "注目を持つ学生、横に展開する学生、一般教師、手札を補充するカードを含む学生主体のデッキ。"
+      },
+      2: {
+        number: 2,
+        title: "遅刻学生のデッキ",
+        text: "遅刻を持つ学生を中心にしたデッキ。遅刻者ゾーンに控えた学生が、時間の経過で講義室へ出席する。"
+      },
+      3: {
+        number: 3,
+        title: "アグロ学生のデッキ",
+        text: "低い戦意の学生と、特定のマスで能力を発揮する学生を多く含むアグロ型のデッキ。"
+      },
+      4: {
+        number: 4,
+        title: "教師主体のデッキ",
+        text: "教師を中心にしたデッキ。教卓マスで発動する講義や、出席時能力を持つ教師を含む。"
+      },
+      5: {
+        number: 5,
+        title: "学生と教師の連携デッキ",
+        text: "学生と教師をあわせて採用したデッキ。学生の展開と教師の能力を組み合わせる構成。"
+      },
+      6: {
+        number: 6,
+        title: "ロジックハンターのデッキ",
+        text: "ロジックハンターを中心に、手札と講義室を妨害するデッキ。フロア規則により、相手は自分のターン終了時にカードを1枚引く。"
+      },
+      7: {
+        number: 7,
+        title: "U太と装備のデッキ",
+        text: "U太と裏U太を、装備カードで強化するデッキ。フロア規則により、相手は自分のターン開始時にランダムな装備カード1枚を手札に生成する。"
+      },
+      8: {
+        number: 8,
+        title: "バカでかい声の学生のデッキ",
+        text: "バカでかい声の学生とベストフレンドを中心にしたデッキ。フロア規則により、プレイヤーのターン開始時、相手の講義室に以後攻撃できないベストフレンド1人が出席する。"
+      },
+      9: {
+        number: 9,
+        title: "進化する出席者のデッキ",
+        text: "複数の進化カードを採用したデッキ。同じ進化元を2人以上出席させると、その進化元は出席したターンでも進化できる。"
+      },
+      10: {
+        number: 10,
+        title: "学長とヴァンパイアのデッキ",
+        text: "学長とヴァンパイアを中心にしたデッキ。対戦開始時、相手のデッキのランダムな位置に、戦意7・攻撃力5・体力5の「闇学長」1枚を生成し、相手の手札に「学長の茶室」を3枚生成する。闇学長が出席すると、この対戦中は環境「食堂」の効果を得る。"
+      }
+    });
+    const DUNGEON_FINAL_FLOOR = Math.max(...Object.keys(DUNGEON_FLOORS).map(Number));
+    const DUNGEON_FLOOR_DECKS = Object.freeze({
+      1: Object.freeze({
+        general_student: 3,
+        ae_student: 3,
+        back_question_student: 3,
+        best_friend: 3,
+        laughing_front_student: 3,
+        trpg_member: 3,
+        acting_out_man: 3,
+        loud_student: 0,
+        college_student_vibe: 3,
+        enemy_student: 1,
+        word_increaser: 3,
+        general_teacher: 3,
+        onigiri_draw: 3,
+        hondara: 3,
+        classroom: 3
+      }),
+      2: Object.freeze({
+        adjective_student: 3,
+        general_student: 3,
+        lazy_student: 3,
+        best_friend: 3,
+        laughing_front_student: 3,
+        eaten_student: 3,
+        trpg_member: 3,
+        loud_student: 0,
+        angry_maker: 3,
+        enemy_student: 1,
+        word_increaser: 3,
+        general_teacher: 3,
+        onigiri_draw: 3,
+        hondara: 3,
+        classroom: 3
+      }),
+      3: Object.freeze({
+        aggro_student: 3,
+        aggro_king: 3,
+        single_cell: 3,
+        general_student: 3,
+        aggro_queen: 3,
+        back_question_student: 3,
+        trpg_member: 3,
+        student_comedy: 3,
+        best_friend: 1,
+        loud_student: 0,
+        enemy_student: 3,
+        general_teacher: 3,
+        onigiri_draw: 3,
+        hondara: 3,
+        classroom: 3
+      }),
+      4: Object.freeze({
+        general_student: 3,
+        general_teacher: 3,
+        fairy_t: 3,
+        pro_k: 3,
+        signal_professor_m: 3,
+        kansai_voice_t: 3,
+        thin_professor_h: 3,
+        ninety_three_teacher: 3,
+        ai_chan: 3,
+        oni_shima_ai: 3,
+        france_asakura: 1,
+        onigiri_draw: 3,
+        hondara: 3,
+        classroom: 3
+      }),
+      5: Object.freeze({
+        aggro_student: 3,
+        aggro_king: 3,
+        general_student: 3,
+        yuta: 3,
+        aggro_queen: 3,
+        trpg_member: 3,
+        seat_taking_group: 3,
+        loud_student: 1,
+        general_teacher: 3,
+        pro_k: 3,
+        kyoto_sound_i: 3,
+        onigiri_draw: 3,
+        hondara: 3,
+        classroom: 3
+      }),
+      6: Object.freeze({
+        general_student: 3,
+        sniper: 3,
+        cynical_student: 3,
+        lone_wolf: 3,
+        logic_hunter: 3,
+        kansai_voice_t: 3,
+        fluid_pasta: 3,
+        fire_touch: 3,
+        thin_item: 2,
+        handy_jet_engine: 3,
+        yamanashi_minimum_wage: 1,
+        panpan: 3,
+        baka_mac: 2,
+        alpha: 3,
+        full_lock: 2
+      }),
+      7: Object.freeze({
+        aggro_king: 3,
+        yuta: 3,
+        aggro_queen: 3,
+        dark_yuta: 3,
+        general_teacher: 2,
+        kyushu_info_c: 1,
+        accelerate: 2,
+        chameleon: 3,
+        yuta_umbrella: 1,
+        red_happi: 2,
+        deck_without: 2,
+        sexual_eye: 3,
+        yoyu_announce: 3,
+        greeting_3000: 3,
+        scared_me: 2,
+        yutakun_yutakun: 2,
+        student_council: 2
+      }),
+      8: Object.freeze({
+        aggro_king: 3,
+        aggro_queen: 3,
+        ae_student: 3,
+        best_friend: 1,
+        trpg_member: 3,
+        predator: 3,
+        loud_student: 3,
+        loud_group: 2,
+        general_teacher: 3,
+        kyoto_sound_i: 2,
+        fire_touch: 3,
+        seriously_hit: 2,
+        favorite_number_s: 1,
+        panpan: 2,
+        alpha: 3,
+        on_demand_business: 1,
+        cote_dazur: 2
+      }),
+      9: Object.freeze({
+        aggro_king: 3,
+        yuta: 3,
+        aggro_queen: 3,
+        failure_student: 3,
+        success_student: 2,
+        dark_yuta: 2,
+        fairy_t: 3,
+        bird_a: 3,
+        ai_chan: 3,
+        oni_shima_ai: 1,
+        demon_a_plus: 3,
+        onigiri_draw: 2,
+        reversal: 3,
+        alpha: 3,
+        raptor_temple: 3
+      }),
+      10: Object.freeze({
+        president: 3,
+        zombie: 3,
+        cafeteria_lady: 3,
+        tissue_distributor: 3,
+        apprentice_vampire: 3,
+        curry_treater: 3,
+        chen_san: 3,
+        impossible_high_note: 3,
+        vampire: 2,
+        fire_touch: 3,
+        iv_pack: 2,
+        green_curry: 3,
+        alpha: 3,
+        cafeteria: 3
+      })
+    });
     const DETAIL_LONG_PRESS_MS = 520;
     const DETAIL_HIDE_DELAY_MS = 900;
     const TEST_HAND_COMPANIONS = {
@@ -6630,7 +8026,7 @@
       "three_gestures", "music_detergent", "chigauyo",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
       "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000",
-      "yamanashi_minimum_wage", "baka_mac", "ikemasu"
+      "yamanashi_minimum_wage", "baka_mac", "ikemasu", "president_tea_room"
     ];
 
     function isImmediateItemBaseId(baseId) {
@@ -6792,6 +8188,7 @@
       gamma: { name: "ガンマ", type: "item", cost: 0, noCost: true, target: "self", generated: true },
       double_diamond: { name: "ダブルダイヤモンドクロス", type: "item", cost: 2, target: "enemy", generated: true },
       roar: { name: "咆哮", type: "item", cost: 5, target: "global", generated: true },
+      president_tea_room: { name: "学長の茶室", type: "item", cost: 1, target: "self", generated: true },
       suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
       cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
@@ -6818,9 +8215,27 @@
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
+    const DUNGEON_UTA_EQUIPMENT_IDS = Object.freeze([
+      "accelerate", "chameleon", "yuta_umbrella", "red_happi"
+    ]);
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.15.0",
+        date: "2026年7月27日",
+        summary: "ソロの入口を整理し、専攻デッキで挑む連戦モード「魔の1号館」を追加。入口演出、全10階、フロア規則、クリア報酬までを含む大型更新。",
+        changes: [
+          { title: "ホーム", before: "オンラインバトル／ソロバトルを直接選ぶ。", after: "マルチ／ソロの表示へ変更。ソロではAIバトルと魔の1号館を選べる。" },
+          { title: "専攻デッキ", after: "通常デッキとは別に保存。新規作成時に専攻を選び、その専攻カードと共通カードだけで40枚固定のデッキを作成する。" },
+          { title: "魔の1号館の入口", before: "魔の1号館へ挑戦する入口演出がない。", after: "赤黒い空と赤い月の下、灰色の大学ビルを最上階から地上まで降り、扉のない黒い入口へ入る演出を追加。" },
+          { title: "第1〜10階", before: "階ごとの相手デッキとフロア規則がない。", after: "第1〜5階は学生・遅刻・アグロ・教師などの段階的なデッキ、第6〜10階は追加ドロー・装備生成・ベストフレンド出席・進化支援・学長ヴァンパイアのフロア規則を持つ対戦を追加。" },
+          { title: "階の気力とAI", before: "通常のVS AIと同じ判断で、前の階の気力を引き継ぐ。", after: "各階を気力20で開始。第1〜4階の相手は最大気力10、第5階以降は20。第1〜5階のAIはドローを優先する初期階用の判断で行動する。" },
+          { title: "進行と再開", before: "階を進む・中断して再開する仕組みがない。", after: "勝利後に次の階の特徴を確認して進む。中断後は勝利した階の次の階から再開でき、敗北時は第1階からやり直す。" },
+          { title: "第10階の闇学長", before: "第10階専用の学長と食堂状態がない。", after: "戦意7・攻撃力5・体力5の闇学長を生成。闇学長が出席したとき、この対戦中は環境「食堂」の効果を得る。手札には一時的に食堂効果を得る「学長の茶室」を3枚生成する。" },
+          { title: "クリア報酬", before: "魔の1号館を最後までクリアしても見た目の報酬がない。", after: "第10階勝利後に宝箱を開け、専攻の代表カードの金枠スタイルを獲得する。解放済みカードは詳細画面の循環矢印で通常／金枠を切り替えられ、バックアップJSONとして保存・復元できる。" }
+        ]
+      },
       {
         version: "ver.0.14.2",
         date: "2026年7月26日",
@@ -7248,6 +8663,10 @@
     let activeEffectFeedbackDelay = 0;
     let effectFeedbackEventSerial = 0;
     let nextSharedFeedbackId = 1;
+    let dungeonEntranceTimer = null;
+    let dungeonRewardTimer = null;
+    let unlockedDungeonCardStyles = loadDungeonCardStyles();
+    let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
 
     const state = {
@@ -7283,6 +8702,8 @@
       pendingCopiedCard: null,
       pendingRaptorTemple: null,
       environment: null,
+      cafeteriaEffectUntilActionTurn: -1,
+      cafeteriaEffectPermanentlyActive: false,
       temporarySeatBlocks: [],
       deckToHandLocks: [],
       fullLockSeatBlocks: [],
@@ -7314,6 +8735,11 @@
           opponent: createDefaultDeckCounts()
         },
         savedDecks: loadSavedDecks(),
+        specialtyDecks: loadSpecialtyDecks(),
+        format: "normal",
+        specialtyId: "",
+        pendingSpecialtyChoice: false,
+        returnScreen: "",
         view: "library",
         selectedName: "",
         editingName: "",
@@ -7330,6 +8756,19 @@
         playerDeckName: "",
         opponentDeckName: "",
         previewName: ""
+      },
+      dungeon: {
+        entranceToken: 0,
+        selectedDeckName: "",
+        previewName: "",
+        previewExpanded: false,
+        run: null,
+        savedRun: loadDungeonRun(),
+        pendingReward: loadPendingDungeonReward(),
+        rewardPhase: "closed",
+        rewardAward: null,
+        active: false,
+        floorRuleState: null
       },
       online: {
         screenStatus: "idle",
@@ -7510,7 +8949,7 @@
       {
         id: "yoyuIntro",
         title: "余裕編：余裕の特徴",
-        body: "余裕は、自分のターン終了時に体力を2回復するキーワードです。\n次にU太を出して、ターン終了時の回復を確認します。",
+        body: "余裕は、自分のターン終了時に体力を1回復するキーワードです。\n次にU太を出して、ターン終了時の回復を確認します。",
         focus: ".player-hand [data-base-id='yuta']"
       },
       {
@@ -7532,9 +8971,15 @@
     ];
 
     const elements = {
+      dungeonInteriorBackdrop: document.getElementById("dungeonInteriorBackdrop"),
       homeScreen: document.getElementById("homeScreen"),
       updatesScreen: document.getElementById("updatesScreen"),
+      soloMenuScreen: document.getElementById("soloMenuScreen"),
       soloDeckScreen: document.getElementById("soloDeckScreen"),
+      dungeonEntranceScreen: document.getElementById("dungeonEntranceScreen"),
+      dungeonDeckScreen: document.getElementById("dungeonDeckScreen"),
+      dungeonFloorScreen: document.getElementById("dungeonFloorScreen"),
+      dungeonRewardScreen: document.getElementById("dungeonRewardScreen"),
       onlineScreen: document.getElementById("onlineScreen"),
       tutorialScreen: document.getElementById("tutorialScreen"),
       deckScreen: document.getElementById("deckScreen"),
@@ -7588,6 +9033,9 @@
       onlineLocalReadyBadge: document.getElementById("onlineLocalReadyBadge"),
       onlineRemoteReadyBadge: document.getElementById("onlineRemoteReadyBadge"),
       homeSoloButton: document.getElementById("homeSoloButton"),
+      soloMenuBackHomeButton: document.getElementById("soloMenuBackHomeButton"),
+      soloAiBattleButton: document.getElementById("soloAiBattleButton"),
+      soloDungeonButton: document.getElementById("soloDungeonButton"),
       soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
       soloPlayerSlot: document.getElementById("soloPlayerSlot"),
       soloAiSlot: document.getElementById("soloAiSlot"),
@@ -7596,6 +9044,37 @@
       soloDeckGrid: document.getElementById("soloDeckGrid"),
       soloDeckDetail: document.getElementById("soloDeckDetail"),
       soloBattleStartButton: document.getElementById("soloBattleStartButton"),
+      dungeonDeckBackSoloButton: document.getElementById("dungeonDeckBackSoloButton"),
+      dungeonDeckManageButton: document.getElementById("dungeonDeckManageButton"),
+      dungeonResume: document.getElementById("dungeonResume"),
+      dungeonResumeText: document.getElementById("dungeonResumeText"),
+      dungeonResumeButton: document.getElementById("dungeonResumeButton"),
+      dungeonDeckGrid: document.getElementById("dungeonDeckGrid"),
+      dungeonDeckDetail: document.getElementById("dungeonDeckDetail"),
+      dungeonDeckStartButton: document.getElementById("dungeonDeckStartButton"),
+      dungeonRewardResume: document.getElementById("dungeonRewardResume"),
+      dungeonRewardResumeText: document.getElementById("dungeonRewardResumeText"),
+      dungeonRewardResumeButton: document.getElementById("dungeonRewardResumeButton"),
+      dungeonFloorBackButton: document.getElementById("dungeonFloorBackButton"),
+      dungeonFloorNumber: document.getElementById("dungeonFloorNumber"),
+      dungeonFloorTitle: document.getElementById("dungeonFloorTitle"),
+      dungeonFloorText: document.getElementById("dungeonFloorText"),
+      dungeonFloorStartButton: document.getElementById("dungeonFloorStartButton"),
+      dungeonFloorInfoButton: document.getElementById("dungeonFloorInfoButton"),
+      dungeonInfoModal: document.getElementById("dungeonInfoModal"),
+      dungeonInfoFloorNumber: document.getElementById("dungeonInfoFloorNumber"),
+      dungeonInfoTitle: document.getElementById("dungeonInfoTitle"),
+      dungeonInfoText: document.getElementById("dungeonInfoText"),
+      dungeonInfoCloseButton: document.getElementById("dungeonInfoCloseButton"),
+      dungeonRewardStage: document.getElementById("dungeonRewardStage"),
+      dungeonRewardTitle: document.getElementById("dungeonRewardTitle"),
+      dungeonRewardCopy: document.getElementById("dungeonRewardCopy"),
+      dungeonRewardChest: document.getElementById("dungeonRewardChest"),
+      dungeonRewardCards: document.getElementById("dungeonRewardCards"),
+      dungeonRewardBackup: document.getElementById("dungeonRewardBackup"),
+      dungeonRewardHomeButton: document.getElementById("dungeonRewardHomeButton"),
+      dungeonStyleBackupButton: document.getElementById("dungeonStyleBackupButton"),
+      dungeonStyleImportInput: document.getElementById("dungeonStyleImportInput"),
       deckBackHomeButton: document.getElementById("deckBackHomeButton"),
       battleBackHomeButton: document.getElementById("battleBackHomeButton"),
       testBackDeckButton: document.getElementById("testBackDeckButton"),
@@ -7690,6 +9169,13 @@
       deckLibraryGrid: document.getElementById("deckLibraryGrid"),
       deckLibraryDetail: document.getElementById("deckLibraryDetail"),
       deckLibraryCount: document.getElementById("deckLibraryCount"),
+      deckStyleBackupButton: document.getElementById("deckStyleBackupButton"),
+      deckStyleImportInput: document.getElementById("deckStyleImportInput"),
+      deckLibraryTitle: document.getElementById("deckLibraryTitle"),
+      deckScreenSubtitle: document.getElementById("deckScreenSubtitle"),
+      normalDeckFormatButton: document.getElementById("normalDeckFormatButton"),
+      specialtyDeckFormatButton: document.getElementById("specialtyDeckFormatButton"),
+      deckSpecialtyChoice: document.getElementById("deckSpecialtyChoice"),
       deckEditorTitle: document.getElementById("deckEditorTitle"),
       deckEditorBackButton: document.getElementById("deckEditorBackButton"),
       deckEditorList: document.getElementById("deckEditorList"),
@@ -7765,6 +9251,7 @@
       lifeShieldUntilSide: null,
       lifeFloorShields: [],
       maxLifeOverride: null,
+      dungeonLifeCap: null,
       board: { seats: Array(9).fill(null), teacher: null }
       };
     }
@@ -7909,7 +9396,7 @@
           gameId: createAnalyticsGameId(),
           version: GAME_DATA_VERSION,
           schemaVersion: ANALYTICS_SCHEMA_VERSION,
-          mode: isOnlineBattle() ? "online" : state.testMode ? "test" : isTutorialActive() ? "tutorial" : "solo",
+          mode: isOnlineBattle() ? "online" : state.dungeon.active ? "dungeon" : state.testMode ? "test" : isTutorialActive() ? "tutorial" : "solo",
           onlineRole: state.online.role || null,
           startedAt: analyticsNow(),
           firstSide: state.firstSide,
@@ -8354,6 +9841,273 @@
         state.message = "ブラウザへデッキを保存できませんでした。";
         return false;
       }
+    }
+
+    function loadSpecialtyDecks() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(SPECIALTY_DECK_STORAGE_KEY) || "{}");
+        return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function persistSpecialtyDecks() {
+      try {
+        localStorage.setItem(SPECIALTY_DECK_STORAGE_KEY, JSON.stringify(state.deckBuilder.specialtyDecks));
+        return true;
+      } catch {
+        state.message = "ブラウザへ専攻デッキを保存できませんでした。";
+        return false;
+      }
+    }
+
+    function normalizeDungeonRun(run) {
+      if (!run || typeof run !== "object" || !run.counts || typeof run.counts !== "object") return null;
+      const floor = Math.max(1, Math.floor(Number(run.floor) || 1));
+      return {
+        floor,
+        deckName: typeof run.deckName === "string" ? run.deckName : "専攻デッキ",
+        specialtyId: typeof run.specialtyId === "string" ? run.specialtyId : "",
+        counts: copyDeckCounts(run.counts),
+        life: 20
+      };
+    }
+
+    function loadDungeonRun() {
+      try {
+        return normalizeDungeonRun(JSON.parse(localStorage.getItem(DUNGEON_RUN_STORAGE_KEY) || "null"));
+      } catch {
+        return null;
+      }
+    }
+
+    function persistDungeonRun(run = state.dungeon.run) {
+      const normalized = normalizeDungeonRun(run);
+      state.dungeon.savedRun = normalized;
+      try {
+        if (normalized) localStorage.setItem(DUNGEON_RUN_STORAGE_KEY, JSON.stringify(normalized));
+        else localStorage.removeItem(DUNGEON_RUN_STORAGE_KEY);
+        return true;
+      } catch {
+        state.message = "ブラウザへ魔の1号館の進行を保存できませんでした。";
+        return false;
+      }
+    }
+
+    function clearDungeonRun() {
+      state.dungeon.savedRun = null;
+      try {
+        localStorage.removeItem(DUNGEON_RUN_STORAGE_KEY);
+      } catch {
+        // 保存領域が利用できない場合も、メモリ上の進行は消去する。
+      }
+    }
+
+    function readDungeonCardStyleStorage() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(DUNGEON_CARD_STYLE_STORAGE_KEY) || "{}");
+        return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function normalizeDungeonCardStyleUnlocks(source) {
+      const unlocks = source?.unlocked && typeof source.unlocked === "object" ? source.unlocked : source;
+      return Object.fromEntries(Object.keys(DUNGEON_CARD_STYLE_REWARDS)
+        .filter((specialtyId) => unlocks?.[specialtyId] === true)
+        .map((specialtyId) => [specialtyId, true]));
+    }
+
+    function normalizeDungeonCardStyleSelections(source) {
+      const selected = source?.selected;
+      if (!selected || typeof selected !== "object" || Array.isArray(selected)) return {};
+      const rewardCardIds = new Set(Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds));
+      return Object.fromEntries(Object.entries(selected)
+        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["normal", "reward"].includes(mode)));
+    }
+
+    function loadDungeonCardStyles() {
+      return normalizeDungeonCardStyleUnlocks(readDungeonCardStyleStorage());
+    }
+
+    function loadDungeonCardStyleSelections() {
+      return normalizeDungeonCardStyleSelections(readDungeonCardStyleStorage());
+    }
+
+    function persistDungeonCardStyles() {
+      try {
+        localStorage.setItem(DUNGEON_CARD_STYLE_STORAGE_KEY, JSON.stringify({
+          unlocked: unlockedDungeonCardStyles,
+          selected: selectedDungeonCardStyles
+        }));
+        return true;
+      } catch {
+        state.message = "ブラウザへカードスタイルを保存できませんでした。";
+        return false;
+      }
+    }
+
+    function rewardForCardBaseId(baseId) {
+      const match = Object.entries(DUNGEON_CARD_STYLE_REWARDS)
+        .find(([, reward]) => reward.cardIds.includes(baseId));
+      return match ? { specialtyId: match[0], ...match[1] } : null;
+    }
+
+    function hasUnlockedCardRewardStyle(baseId) {
+      const reward = rewardForCardBaseId(baseId);
+      return Boolean(reward && unlockedDungeonCardStyles[reward.specialtyId]);
+    }
+
+    function toggleDungeonCardStyle(baseId) {
+      if (!hasUnlockedCardRewardStyle(baseId)) return false;
+      selectedDungeonCardStyles[baseId] = selectedDungeonCardStyles[baseId] === "normal" ? "reward" : "normal";
+      persistDungeonCardStyles();
+      return selectedDungeonCardStyles[baseId] === "reward";
+    }
+
+    function unlockDungeonCardStyle(specialtyId) {
+      const reward = DUNGEON_CARD_STYLE_REWARDS[specialtyId];
+      if (!reward) return null;
+      const newlyUnlocked = unlockedDungeonCardStyles[specialtyId] !== true;
+      unlockedDungeonCardStyles[specialtyId] = true;
+      reward.cardIds.forEach((baseId) => {
+        if (!selectedDungeonCardStyles[baseId]) selectedDungeonCardStyles[baseId] = "reward";
+      });
+      persistDungeonCardStyles();
+      return { ...reward, specialtyId, newlyUnlocked };
+    }
+
+    function normalizePendingDungeonReward(reward) {
+      const specialtyId = typeof reward?.specialtyId === "string" ? reward.specialtyId : "";
+      const base = DUNGEON_CARD_STYLE_REWARDS[specialtyId];
+      return base ? { specialtyId, label: base.label, style: base.style, cardIds: [...base.cardIds] } : null;
+    }
+
+    function loadPendingDungeonReward() {
+      try {
+        return normalizePendingDungeonReward(JSON.parse(localStorage.getItem(DUNGEON_PENDING_REWARD_STORAGE_KEY) || "null"));
+      } catch {
+        return null;
+      }
+    }
+
+    function persistPendingDungeonReward(reward = state.dungeon.pendingReward) {
+      const normalized = normalizePendingDungeonReward(reward);
+      state.dungeon.pendingReward = normalized;
+      try {
+        if (normalized) localStorage.setItem(DUNGEON_PENDING_REWARD_STORAGE_KEY, JSON.stringify(normalized));
+        else localStorage.removeItem(DUNGEON_PENDING_REWARD_STORAGE_KEY);
+        return true;
+      } catch {
+        state.message = "ブラウザへ未開封の報酬を保存できませんでした。";
+        return false;
+      }
+    }
+
+    function preparePendingDungeonReward(specialtyId) {
+      const reward = normalizePendingDungeonReward({ specialtyId });
+      if (!reward) return null;
+      persistPendingDungeonReward(reward);
+      return reward;
+    }
+
+    function claimPendingDungeonReward() {
+      const reward = normalizePendingDungeonReward(state.dungeon.pendingReward);
+      if (!reward) return null;
+      const unlocked = unlockDungeonCardStyle(reward.specialtyId);
+      persistPendingDungeonReward(null);
+      return unlocked;
+    }
+
+    function exportDungeonCardStyleBackup() {
+      const payload = {
+        format: "chibattle-dungeon-card-styles",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        styles: {
+          unlocked: unlockedDungeonCardStyles,
+          selected: selectedDungeonCardStyles
+        }
+      };
+      downloadTextFile(`chibattle-card-styles-${new Date().toISOString().slice(0, 10)}.json`, `${JSON.stringify(payload, null, 2)}\n`, "application/json");
+      state.message = "カードスタイルのバックアップを書き出しました。";
+      render();
+    }
+
+    function importDungeonCardStyleBackup(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.addEventListener("load", () => {
+        try {
+          const parsed = JSON.parse(String(reader.result || "{}"));
+          const source = parsed?.styles || parsed;
+          const unlocks = normalizeDungeonCardStyleUnlocks(source);
+          if (Object.keys(unlocks).length === 0) throw new Error("invalid backup");
+          unlockedDungeonCardStyles = unlocks;
+          selectedDungeonCardStyles = normalizeDungeonCardStyleSelections(source);
+          persistDungeonCardStyles();
+          state.message = "カードスタイルのバックアップを読み込みました。";
+        } catch {
+          state.message = "カードスタイルのバックアップを読み込めませんでした。";
+        }
+        render();
+      });
+      reader.readAsText(file);
+    }
+
+    function cardRewardStyleClass(card) {
+      const reward = rewardForCardBaseId(card?.baseId);
+      if (!reward || !unlockedDungeonCardStyles[reward.specialtyId]) return "";
+      return selectedDungeonCardStyles[card.baseId] === "normal" ? "" : ` reward-foil reward-foil-${reward.style}`;
+    }
+
+    function cardVisualClass(card) {
+      return `${card?.darkPresident ? " dark-president-foil" : ""}${cardRewardStyleClass(card)}`;
+    }
+
+    function specialtyDefinition(specialtyId) {
+      return SPECIALTY_DEFINITIONS.find((definition) => definition.id === specialtyId) || null;
+    }
+
+    function specialtyAllowedCardIds(specialtyId) {
+      const ids = new Set([...(SPECIALTY_CARD_IDS.common || []), ...(SPECIALTY_CARD_IDS[specialtyId] || [])]);
+      return new Set(ALL_DECK_IDS.filter((baseId) => ids.has(baseId)));
+    }
+
+    function isSpecialtyDeckFormat() {
+      return state.deckBuilder.format === "specialty";
+    }
+
+    function activeDeckCollection() {
+      return isSpecialtyDeckFormat() ? state.deckBuilder.specialtyDecks : state.deckBuilder.savedDecks;
+    }
+
+    function activeDeckMaxSize() {
+      return isSpecialtyDeckFormat() ? DECK_MIN : DECK_MAX;
+    }
+
+    function validateSpecialtyDeckCounts(counts, specialtyId) {
+      const size = deckSize(counts);
+      const allowed = specialtyAllowedCardIds(specialtyId);
+      const copiesOk = ALL_DECK_IDS.every((baseId) => {
+        const count = Number(counts[baseId]) || 0;
+        return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
+      });
+      const illegalIds = ALL_DECK_IDS.filter((baseId) => (Number(counts[baseId]) || 0) > 0 && !allowed.has(baseId));
+      return {
+        size,
+        lengthOk: size === DECK_MIN,
+        copiesOk,
+        specialtyOk: Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0,
+        illegalIds,
+        valid: size === DECK_MIN && copiesOk && Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0
+      };
+    }
+
+    function activeDeckValidation(counts, specialtyId = state.deckBuilder.specialtyId) {
+      return isSpecialtyDeckFormat() ? validateSpecialtyDeckCounts(counts, specialtyId) : validateDeckCounts(counts);
     }
 
     function createOnlineDeckCounts() {
@@ -10176,6 +11930,29 @@
       };
     }
 
+    function createSpecialtyAutoDeckCounts(specialtyId) {
+      const counts = createEmptyDeckCounts();
+      const ids = getDeckEditorIds(specialtyId)
+        .sort((a, b) => (CARD_BASES[a].cost || 0) - (CARD_BASES[b].cost || 0));
+      let remaining = DECK_MIN;
+      let round = 0;
+      while (remaining > 0 && ids.length > 0) {
+        let added = false;
+        ids.forEach((baseId) => {
+          if (remaining <= 0 || counts[baseId] >= maxCopiesForCard(baseId)) return;
+          const card = CARD_BASES[baseId];
+          const include = round === 0 || card.cost <= 5 || remaining > Math.max(8, ids.length / 2);
+          if (!include) return;
+          counts[baseId] += 1;
+          remaining -= 1;
+          added = true;
+        });
+        if (!added) break;
+        round += 1;
+      }
+      return counts;
+    }
+
     function copyDeckCounts(counts) {
       const copy = createEmptyDeckCounts();
       ALL_DECK_IDS.forEach((baseId) => {
@@ -10236,6 +12013,7 @@
 
     function initializeGame(options = {}) {
       const onlineHost = options.onlineHost === true;
+      const dungeonBattle = options.dungeon === true;
       SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
@@ -10271,6 +12049,8 @@
       state.pendingTestCardId = null;
       state.online.localMulliganPending = false;
       state.environment = null;
+      state.cafeteriaEffectUntilActionTurn = -1;
+      state.cafeteriaEffectPermanentlyActive = false;
       state.temporarySeatBlocks = [];
       state.deckToHandLocks = [];
       state.fullLockSeatBlocks = [];
@@ -10285,6 +12065,7 @@
       state.aiThinking = false;
       state.testMode = false;
       state.testCardBaseId = null;
+      state.dungeon.floorRuleState = null;
       state.log = [];
       closeItemConfirm();
       closeCardTestConfirm();
@@ -10292,6 +12073,13 @@
       hidePlayReveal();
       state.players.player = createPlayerState();
       state.players.opponent = createPlayerState();
+      if (dungeonBattle) {
+        const opponentLife = Number(options.opponentLife);
+        if (Number.isFinite(opponentLife)) {
+          state.players.opponent.dungeonLifeCap = Math.max(1, Math.min(20, opponentLife));
+          state.players.opponent.life = state.players.opponent.dungeonLifeCap;
+        }
+      }
       const playerDeckCounts = copyDeckCounts(state.deckBuilder.counts.player);
       const opponentDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent);
       state.players.player.originalDeckCounts = playerDeckCounts;
@@ -10300,11 +12088,16 @@
       state.players.opponent.deck = createDeckFromCounts("opponent", opponentDeckCounts);
       state.players.player.deckValid = validateDeckCounts(playerDeckCounts);
       state.players.opponent.deckValid = validateDeckCounts(opponentDeckCounts);
+      if (dungeonBattle) prepareDungeonFloorBattleRules();
       analyticsStartGame();
       queueAnimation("shuffle", "player");
       queueAnimation("shuffle", "opponent");
-      state.message = onlineHost ? "オンライン対戦" : "VS AI";
-      addLog(onlineHost ? "オンライン対戦を開始します。" : "相手AIとのバトルを開始します。");
+      state.message = onlineHost ? "オンライン対戦" : dungeonBattle ? `魔の1号館・${currentDungeonFloor().number}階` : "VS AI";
+      addLog(onlineHost
+        ? "オンライン対戦を開始します。"
+        : dungeonBattle
+          ? `魔の1号館・${currentDungeonFloor().number}階のバトルを開始します。`
+          : "相手AIとのバトルを開始します。");
       render();
       window.setTimeout(() => beginRpsSelection(preBattleToken), 1250);
     }
@@ -10665,6 +12458,8 @@
         score += hand.some((entry) => entry.baseId === card.evolutionFrom) ? 6 : -6;
       }
       if (card.unusable && card.baseId !== "alpha") score -= 30;
+      if (isEarlyDungeonAi() && card.baseId === "college_student_vibe") score -= 8;
+      if (isEarlyDungeonAi() && AI_DRAW_OR_SEARCH_CARD_IDS.has(card.baseId)) score += 8;
       return score;
     }
 
@@ -10735,6 +12530,8 @@
       applyBoardAuras();
       if (state.gameOver) return;
       resolveOpponentTurnStartEffects(side);
+      if (state.gameOver) return;
+      resolveDungeonFloorStartTurnEffects(side);
       if (state.gameOver) return;
       const drawWasBlocked = isDeckToHandLocked();
       if (!drawOne(side, true) && !drawWasBlocked) return;
@@ -10810,6 +12607,10 @@
         return;
       }
       await playAiBoardMoves();
+      if (tryUseAiRaptorTemple()) {
+        render();
+        await sleep(AI_STEP_DELAY);
+      }
       await tryUseAiItems({ timing: "afterBoard" });
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
@@ -10832,7 +12633,8 @@
 
     async function playAiBoardMoves() {
       let safety = 0;
-      while (safety < 8 && isOpponentAiActive()) {
+      const moveLimit = isEarlyDungeonAi() ? 5 : 8;
+      while (safety < moveLimit && isOpponentAiActive()) {
         safety += 1;
         const move = findAiPlayMove();
         if (!move) break;
@@ -10844,6 +12646,98 @@
 
     function isOpponentAiActive() {
       return state.phase === "battle" && state.currentSide === "opponent" && !state.gameOver;
+    }
+
+    function isEarlyDungeonAi() {
+      return state.dungeon.active && (state.dungeon.run?.floor || 1) <= 5;
+    }
+
+    function activeDungeonFloorNumber() {
+      return state.dungeon.active ? Number(state.dungeon.run?.floor || 0) : 0;
+    }
+
+    function isDungeonFloorRuleActive(floorNumber) {
+      return activeDungeonFloorNumber() === floorNumber;
+    }
+
+    function isCafeteriaEnvironmentActive() {
+      return state.environment?.baseId === "cafeteria"
+        || state.cafeteriaEffectPermanentlyActive === true
+        || (state.cafeteriaEffectUntilActionTurn ?? -1) >= state.actionTurn;
+    }
+
+    function dungeonFloorRuleState() {
+      if (!state.dungeon.floorRuleState) {
+        state.dungeon.floorRuleState = {
+          evolutionAttendCounts: {}
+        };
+      }
+      return state.dungeon.floorRuleState;
+    }
+
+    function prepareDungeonFloorBattleRules() {
+      if (!isDungeonFloorRuleActive(10)) return;
+      const president = createCardFromBase("president", "opponent");
+      president.name = "闇学長";
+      president.cost = 7;
+      president.attack = 5;
+      president.hp = 5;
+      president.maxHp = 5;
+      president.currentHp = 5;
+      president.floorGenerated = true;
+      president.darkPresident = true;
+      const deck = state.players.opponent.deck;
+      const insertAt = Math.floor(Math.random() * (deck.length + 1));
+      deck.splice(insertAt, 0, president);
+      for (let i = 0; i < 3; i += 1) {
+        state.players.opponent.hand.push(createCardFromBase("president_tea_room", "opponent"));
+      }
+      addLog("10階のフロア規則：相手のデッキのランダムな位置に、戦意7・攻撃力5・体力5の闇学長を1枚生成し、手札に学長の茶室を3枚生成しました。");
+    }
+
+    function resolveDungeonFloorStartTurnEffects(side) {
+      if (isDungeonFloorRuleActive(7) && side === "opponent") {
+        const baseId = DUNGEON_UTA_EQUIPMENT_IDS[Math.floor(Math.random() * DUNGEON_UTA_EQUIPMENT_IDS.length)];
+        const generated = createCardFromBase(baseId, "opponent");
+        state.players.opponent.hand.push(generated);
+        addLog(`7階のフロア規則：相手は${generated.name}を手札に生成しました。`);
+      }
+      if (isDungeonFloorRuleActive(8) && side === "player") {
+        const bestFriend = summonToRandomOpenSeat("opponent", "best_friend", "8階のフロア規則");
+        if (bestFriend) {
+          bestFriend.attackLockedPermanently = true;
+          addLog("8階のフロア規則：出席したベストフレンドは、以後攻撃できません。");
+        }
+      }
+    }
+
+    function resolveDungeonFloorEndTurnEffects(side) {
+      if (!isDungeonFloorRuleActive(6) || side !== "opponent") return;
+      const drawWasBlocked = isDeckToHandLocked();
+      const drawn = drawOne("opponent", false) ? 1 : 0;
+      if (drawn > 0) {
+        addLog("6階のフロア規則：相手はターン終了時にカードを1枚引きました。");
+      } else if (drawWasBlocked) {
+        addLog("6階のフロア規則：山梨最低賃金2円の効果により、相手は追加ドローできませんでした。");
+      } else {
+        addLog("6階のフロア規則：相手のデッキにカードがないため、追加ドローできませんでした。");
+      }
+    }
+
+    function recordDungeonEvolutionSourceAttendance(side, card) {
+      if (!isDungeonFloorRuleActive(9) || side !== "opponent" || !card?.baseId) return;
+      const isEvolutionSource = Object.values(CARD_BASES).some((base) => base.evolutionFrom === card.baseId);
+      if (!isEvolutionSource) return;
+      const counts = dungeonFloorRuleState().evolutionAttendCounts;
+      counts[card.baseId] = (counts[card.baseId] || 0) + 1;
+      if (counts[card.baseId] === 2) {
+        addLog(`9階のフロア規則：${card.name}を2人出席させたため、以後は出席したターンでも進化できます。`);
+      }
+    }
+
+    function canUseDungeonSameTurnEvolution(side, evolutionFrom) {
+      if (!isDungeonFloorRuleActive(9) || side !== "opponent" || !evolutionFrom) return false;
+      return (dungeonFloorRuleState().evolutionAttendCounts[evolutionFrom] || 0) >= 2;
     }
 
     function sleep(ms) {
@@ -10871,7 +12765,7 @@
     function aiCardCanAttackLifeOnAttendance(card, side, zone = null, index = null) {
       if (!card || !["student", "teacher", "vampire"].includes(card.type)) return false;
       if (card.keywords?.includes("超陽気")) return true;
-      if (card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
+      if (card.baseId === "vampire" && isCafeteriaEnvironmentActive()) return true;
       if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(side)) return true;
       if (card.baseId === "loud_student" && zone === "seat" && index !== null) {
         return adjacentIndexes(index).some((seatIndex) => state.players[side].board.seats[seatIndex]?.baseId === "best_friend");
@@ -10970,7 +12864,7 @@
     }
 
     function aiEndTurnHealing(side) {
-      let healing = state.environment?.baseId === "cafeteria" ? 1 : 0;
+      let healing = isCafeteriaEnvironmentActive() ? 1 : 0;
       healing += listBoardRefs(side)
         .map((ref) => getBoardCardFromRef(ref))
         .filter((card) => card?.baseId === "laughing_front_student").length;
@@ -11104,6 +12998,10 @@
       return AI_RESOURCE_ITEM_IDS.has(item.baseId) || CRAB_SET_IDS.includes(item.baseId);
     }
 
+    function isAiDrawItem(item) {
+      return AI_DRAW_OR_SEARCH_CARD_IDS.has(item.baseId);
+    }
+
     function isAiTacticalItem(item) {
       return AI_TACTICAL_ITEM_IDS.has(item.baseId) && !isAiResourceItem(item);
     }
@@ -11115,6 +13013,7 @@
       const lethalForecast = getAiLethalForecast();
       if (aiDirectLifeDamageValue(item, "opponent") > 0 && lethalForecast.immediateLethal) return true;
       if (aiLifeHealingValue(item) > 0 && lethalForecast.opponentCounterLethal) return true;
+      if (isEarlyDungeonAi() && isAiDrawItem(item)) return true;
       const bestBoardMove = findAiPlayMove();
       if (!bestBoardMove) return true;
       const context = getAiDecisionContext();
@@ -11160,6 +13059,9 @@
       }
       if (item.baseId === "peaceful_mind" && (lethalForecast.nextTurnLethal || lethalForecast.twoTurnLethal)) {
         adjusted -= 8;
+      }
+      if (isEarlyDungeonAi() && isAiDrawItem(item)) {
+        adjusted += timing === "beforeBoard" ? 30 : 20;
       }
       return adjusted;
     }
@@ -11251,7 +13153,9 @@
       } else if (card.type === "teacher") {
         score -= 5;
       }
-      score += scoreAiPreferredPlacement(card, zone, index, context);
+      const preferredPlacementScore = scoreAiPreferredPlacement(card, zone, index, context);
+      score += isEarlyDungeonAi() ? preferredPlacementScore * 0.55 : preferredPlacementScore;
+      if (isEarlyDungeonAi() && card.baseId === "college_student_vibe") score -= 22;
 
       if (zone === "seat" && card.baseId === "aggro_king") score += index === 6 ? 40 : -12;
       if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 40 : -12;
@@ -11340,12 +13244,17 @@
         const enemyStudents = enemyRefs.filter((ref) => getBoardCardFromRef(ref)?.type === "student").length;
         score += damagedTeachers * 3 + enemyStudents * 2;
       }
-      if (["cafeteria_lady", "curry_treater", "chen_san"].includes(card.baseId) && state.environment?.baseId === "cafeteria") {
+      if (["cafeteria_lady", "curry_treater", "chen_san"].includes(card.baseId) && isCafeteriaEnvironmentActive()) {
         score += 6;
+      }
+      if (card.darkPresident && !state.cafeteriaEffectPermanentlyActive) {
+        const cafeteriaSynergy = state.players.opponent.hand
+          .filter((handCard) => ["cafeteria_lady", "curry_treater", "chen_san", "dry_meal_ticket", "impossible_high_note"].includes(handCard.baseId)).length;
+        score += 12 + cafeteriaSynergy * 3;
       }
       if (card.baseId === "apprentice_vampire") {
         const openNeighbor = zone === "seat" && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
-        score += (state.environment?.baseId === "cafeteria" ? 5 : 0) + (openNeighbor ? 45 : 0);
+        score += (isCafeteriaEnvironmentActive() ? 5 : 0) + (openNeighbor ? 45 : 0);
       }
       if (["aiben", "nyotei"].includes(card.baseId)) {
         const opponentOpenSeats = state.players.player.board.seats
@@ -11362,7 +13271,7 @@
         score += state.players.player.board.seats.some(Boolean) ? 8 : -35;
       }
       if (card.baseId === "impossible_high_note") {
-        score += enemyRefs.length ? (state.environment?.baseId === "cafeteria" ? 11 : 4) : -2;
+        score += enemyRefs.length ? (isCafeteriaEnvironmentActive() ? 11 : 4) : -2;
       }
       if (zone === "seat" && card.baseId === "suzaku") {
         const vampireTargets = enemyRefs.filter((ref) => getBoardCardFromRef(ref)?.type === "vampire").length;
@@ -11540,6 +13449,41 @@
       return adjustAiItemScoreForContext(item, baseScore, options.timing || "normal");
     }
 
+    function aiUtaEquipmentTargets(side, item) {
+      return listBoardRefs(side)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card && isUtaEquipmentTarget(entry.card) && canAttachUtaEquipment(entry.card))
+        .map((entry) => ({ ...entry, score: scoreAiUtaEquipmentTarget(side, item, entry) }))
+        .sort((a, b) => b.score - a.score);
+    }
+
+    function scoreAiUtaEquipmentTarget(side, item, entry) {
+      const card = entry.card;
+      const enemyCards = listBoardRefs(oppositeSide(side)).map(getBoardCardFromRef).filter(Boolean);
+      const enemyAttack = enemyCards.reduce((total, enemy) => total + Math.max(0, enemy.attack || 0), 0);
+      const enemyThreat = enemyCards.reduce((total, enemy) => total + Math.max(0, scoreAiEnemyAttendeeThreat(enemy)), 0);
+      const missingHp = Math.max(0, (card.maxHp || 0) - (card.currentHp || 0));
+      const canBeAttacked = card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気") || hasKeyword(card, "超陽気");
+      let score = (card.attack || 0) * 1.4 + (card.currentHp || 0) * 0.45;
+      if (card.baseId === "dark_yuta") score += 3;
+      if (item.baseId === "accelerate") {
+        score += state.players[side].deck.length > 0 ? 11 : 0;
+        score += canBeAttacked ? 4 : 2;
+      }
+      if (item.baseId === "chameleon") {
+        score += 5 + missingHp * 2 + Math.min(8, enemyAttack * 0.45);
+      }
+      if (item.baseId === "yuta_umbrella") {
+        const lethalRisk = enemyCards.some((enemy) => (enemy.attack || 0) >= (card.currentHp || 0));
+        score += 4 + Math.min(12, enemyThreat * 0.22) + (lethalRisk ? 12 : 0);
+      }
+      if (item.baseId === "red_happi") {
+        score += 7 + (canBeAttacked ? 4 : 0);
+        if (state.players[oppositeSide(side)].life <= (card.attack || 0) + 2) score += 12;
+      }
+      return score;
+    }
+
     function baseScoreAiItem(item) {
       const opponent = state.players.opponent;
       const enemyCards = listBoardRefs("player").map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
@@ -11558,6 +13502,10 @@
       if (item.baseId === "onigiri_draw") return deck.length >= 2 ? 7 + (opponent.life < 20 ? 4 : 0) : 0;
       if (item.baseId === "hondara") return deck.length >= 1 ? 4 : 0;
       if (item.baseId === "ux_design_textbook") return countFriendlyDesignTeachers("opponent") > 0 ? 4 + countFriendlyDesignTeachers("opponent") : 0;
+      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) {
+        const target = aiUtaEquipmentTargets("opponent", item)[0];
+        return target ? 7 + target.score * 0.45 : 0;
+      }
       if (item.baseId === "aggro_eater") {
         if (friendlyCards.length === 0) return 0;
         const woundedAttendees = friendlyCards.filter((card) => card.currentHp < card.maxHp).length;
@@ -11576,6 +13524,12 @@
       if (item.baseId === "environment_setup") return deck.some((card) => card.type === "environment") ? 5 : 0;
       if (item.baseId === "baka_mac") return state.players.player.hand.length > 0 ? 4 + Math.min(5, state.players.player.hand.length) : 0;
       if (item.baseId === "ikemasu") return 4;
+      if (item.baseId === "president_tea_room") {
+        if (isCafeteriaEnvironmentActive()) return 0;
+        const cafeteriaSynergy = [...opponent.hand, ...friendlyCards]
+          .filter((card) => ["cafeteria_lady", "curry_treater", "chen_san", "tissue_distributor", "apprentice_vampire", "impossible_high_note", "dry_meal_ticket", "green_curry"].includes(card.baseId)).length;
+        return cafeteriaSynergy > 0 ? 7 + cafeteriaSynergy * 2 : 2;
+      }
       if (item.baseId === "full_throttle") {
         const disposableItems = opponent.hand.filter((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId).length;
         const enemyThreat = enemyCards.reduce((total, card) => total + scoreAiEnemyAttendeeThreat(card), 0);
@@ -11602,7 +13556,7 @@
       if (item.baseId === "iv_pack") return deck.some((card) => card.type === "vampire") ? 6 : 0;
       if (item.baseId === "wet_meal_ticket") return deck.length > 0 ? 4 : 0;
       if (item.baseId === "dry_meal_ticket") {
-        if (state.environment?.baseId !== "cafeteria") return 0;
+        if (!isCafeteriaEnvironmentActive()) return 0;
         return deck.some((card) => ["onigiri_draw", "fluid_pasta"].includes(card.baseId)) ? 7 : 0;
       }
       if (item.baseId === "fluid_pasta") return opponent.life < 20 ? 5 + Math.min(6, 20 - opponent.life) : 0;
@@ -11750,6 +13704,12 @@
         const highestNeeded = Math.max(1, ...targets.map(({ card }) => Math.max(1, (card.currentHp || 1) - (card.defense || 0))));
         const selectedIds = discardable.slice(0, Math.min(discardable.length, highestNeeded)).map((card) => card.instanceId);
         return resolveFullThrottle("opponent", item, selectedIds, false);
+      }
+      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) {
+        const target = aiUtaEquipmentTargets("opponent", item)[0];
+        return target
+          ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false)
+          : false;
       }
       if (item.baseId === "aggro_eater") {
         const target = listBoardRefs("opponent")
@@ -12088,6 +14048,8 @@
         settleEndTurnStep();
         runEffectFeedbackBatch(() => resolveEnvironmentEndTurnEffects(side, options));
         settleEndTurnStep();
+        runEffectFeedbackBatch(() => resolveDungeonFloorEndTurnEffects(side));
+        settleEndTurnStep();
       });
     }
 
@@ -12150,7 +14112,7 @@
           if (!card) return;
           if (hasKeyword(card, "余裕")) {
             const before = card.currentHp;
-            healCard(card, 2);
+            healCard(card, 1);
             const healed = card.currentHp - before;
             if (healed > 0) addLog(`${card.name}の余裕：体力を${healed}回復しました。`);
           }
@@ -12187,7 +14149,7 @@
     }
 
     function resolveEnvironmentEndTurnEffects(side, options = {}) {
-      if (state.environment?.baseId === "cafeteria") {
+      if (isCafeteriaEnvironmentActive()) {
         healPlayer(side, 1);
         addLog(`食堂の効果：${SIDES[side]}が1回復。`);
       }
@@ -13899,7 +15861,8 @@
     }
 
     function findEvolveTarget(side, card, owner = side, zone = null, index = null, options = {}) {
-      const allowSameTurnEvolution = Boolean(options.allowSameTurnEvolution);
+      const allowSameTurnEvolution = Boolean(options.allowSameTurnEvolution)
+        || canUseDungeonSameTurnEvolution(side, card?.evolutionFrom);
       const refs = listBoardRefs(owner).filter((ref) => zone === null || (ref.zone === zone && ref.index === index));
       return refs.find((ref) => {
         const target = getBoardCardFromRef(ref);
@@ -14076,6 +16039,12 @@
 
     function resolveAttendEffects(side, card, zone, index, options = {}) {
       const opponent = oppositeSide(side);
+      recordDungeonEvolutionSourceAttendance(side, card);
+      if (card.darkPresident) {
+        state.cafeteriaEffectPermanentlyActive = true;
+        applyBoardAuras();
+        addLog(`${card.name}の効果：この対戦中、環境「食堂」の効果を得ました。`);
+      }
       if (card.type === "teacher" && zone !== "teacher") {
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
       }
@@ -14378,7 +16347,7 @@
       }
       if (card.baseId === "impossible_high_note") {
         const refs = effectTargetEntries(side, opponent).map((entry) => entry.ref);
-        const targets = state.environment?.baseId === "cafeteria"
+        const targets = isCafeteriaEnvironmentActive()
           ? refs
           : [randomEffectTargetEntry(side, opponent)?.ref].filter(Boolean);
         targets.forEach((ref) => {
@@ -15874,7 +17843,7 @@
     }
 
     function castImmediateItem(side, item, renderAfter, options = {}) {
-      if (item.baseId === "dry_meal_ticket" && state.environment?.baseId !== "cafeteria") {
+      if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) {
         addLog("乾いた食券は環境が食堂の時にしか使えません。");
         if (renderAfter) render();
         return false;
@@ -16223,6 +18192,13 @@
         addKeyword(generated, "陽気");
         state.players[side].hand.push(generated);
         resultText = "陽気を持つ「一般学生」を1枚手札に生成しました。";
+      }
+      if (item.baseId === "president_tea_room") {
+        state.cafeteriaEffectUntilActionTurn = Math.max(
+          state.cafeteriaEffectUntilActionTurn ?? -1,
+          state.actionTurn + 1
+        );
+        resultText = "次の相手のターン終了時まで、環境「食堂」の効果を得ました。";
       }
       if (item.baseId === "scared_me") {
         const candidates = effectTargetEntries(side, oppositeSide(side), (target) => target.type === "student");
@@ -16767,14 +18743,14 @@
       if (keyword === "眠気" && card.baseId !== "president" && isCardCurrentlyOnBoard(card) && hasPresidentDrowsinessAura()) return true;
       if (keyword === "注目" && card.keywords?.includes("超注目")) return true;
       if (keyword === "陽気" && hasKeyword(card, "超陽気")) return true;
-      if (keyword === "超陽気" && card.baseId === "vampire" && state.environment?.baseId === "cafeteria") return true;
+      if (keyword === "超陽気" && card.baseId === "vampire" && isCafeteriaEnvironmentActive()) return true;
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
       if (keyword === "陽気" && card.baseId === "general_teacher") return isOnTeacherSlot(card);
       if (keyword === "陽気" && isUtaEquipmentTarget(card) && utaEquipmentCount(card) > 0) return true;
       if (keyword === "陽気" && card.baseId === "signal_professor_m" && isOnTeacherSlot(card) && !hasOtherFriendlyTeacher(card)) return true;
       if (keyword === "陽気" && card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") return true;
-      if (keyword === "陽気" && card.baseId === "curry_treater" && state.environment?.baseId === "cafeteria") return true;
+      if (keyword === "陽気" && card.baseId === "curry_treater" && isCafeteriaEnvironmentActive()) return true;
       return false;
     }
 
@@ -16828,7 +18804,7 @@
     }
 
     function hasFriendlyCafeteriaTissue(owner) {
-      return state.environment?.baseId === "cafeteria"
+      return isCafeteriaEnvironmentActive()
         && Boolean(owner)
         && listBoardRefs(owner).some((ref) => getBoardCardFromRef(ref)?.baseId === "tissue_distributor");
     }
@@ -16839,7 +18815,7 @@
 
     function cafeteriaVampireStatBonus(card) {
       const bonus = { attack: 0, hp: 0 };
-      if (!card || card.type !== "vampire" || state.environment?.baseId !== "cafeteria") return bonus;
+      if (!card || card.type !== "vampire" || !isCafeteriaEnvironmentActive()) return bonus;
       if (card.baseId === "cafeteria_lady") {
         bonus.attack += 1;
         bonus.hp += 2;
@@ -17192,9 +19168,12 @@
     }
 
     function currentLifeCap(side = null) {
-      const override = side ? state.players[side]?.maxLifeOverride : null;
-      if (Number.isFinite(override)) return override;
-      return state.environment?.baseId === "shogi_duel_field" ? 10 : 20;
+      const player = side ? state.players[side] : null;
+      const caps = [20];
+      if (state.environment?.baseId === "shogi_duel_field") caps.push(10);
+      if (Number.isFinite(player?.dungeonLifeCap)) caps.push(player.dungeonLifeCap);
+      if (Number.isFinite(player?.maxLifeOverride)) caps.push(player.maxLifeOverride);
+      return Math.min(...caps);
     }
 
     function runEffectFeedbackSequence(callback) {
@@ -17479,11 +19458,27 @@
         : `<span class="result-label">${escapeHtml(label)}</span>`;
       const resultClass = winner === "player" ? "victory" : winner === "opponent" ? "defeat" : "draw";
       const homeLabel = isOnlineBattle() ? "対戦部屋に戻る" : "ホームに戻る";
+      const nextDungeonFloor = state.dungeon.run ? state.dungeon.run.floor + 1 : null;
+      const isDungeonVictory = state.dungeon.active && winner === "player";
+      const canAdvanceDungeon = isDungeonVictory
+        && winner === "player"
+        && Boolean(DUNGEON_FLOORS[nextDungeonFloor]);
+      const dungeonReward = options.dungeonReward || null;
+      const resultActions = isDungeonVictory
+        ? `
+            <button class="button secondary" type="button" data-result-dungeon-interrupt="true">中断する</button>
+            ${dungeonReward
+              ? '<button class="button" type="button" data-result-dungeon-reward="true">次に進む</button>'
+              : canAdvanceDungeon ? '<button class="button" type="button" data-result-dungeon-next="true">次に進む</button>' : ""}
+          `
+        : `
+            <button class="button secondary" type="button" data-result-home="true">${escapeHtml(homeLabel)}</button>
+            ${isOnlineSpectator() ? "" : '<button class="button" type="button" data-result-deck="true">デッキを編成する</button>'}
+          `;
       elements.resultOverlay.innerHTML = `
         ${labelHtml}
         <div class="result-actions">
-          <button class="button secondary" type="button" data-result-home="true">${escapeHtml(homeLabel)}</button>
-          ${isOnlineSpectator() ? "" : '<button class="button" type="button" data-result-deck="true">デッキを編成する</button>'}
+          ${resultActions}
         </div>
       `;
       elements.resultOverlay.className = `result-overlay ${resultClass}`;
@@ -17777,9 +19772,26 @@
     }
 
     function endGame(winner, reason, options = {}) {
+      let dungeonReward = null;
+      if (state.dungeon.active && state.dungeon.run) {
+        if (winner === "player") {
+          if (state.dungeon.run.floor >= DUNGEON_FINAL_FLOOR) {
+            dungeonReward = preparePendingDungeonReward(state.dungeon.run.specialtyId);
+            clearDungeonRun();
+            state.dungeon.run = null;
+          } else {
+            persistDungeonRun({
+              ...state.dungeon.run,
+              floor: state.dungeon.run.floor + 1
+            });
+          }
+        } else {
+          clearDungeonRun();
+        }
+      }
       state.gameOver = true;
       state.gameWinner = winner;
-      state.gameResultOptions = { ...options };
+      state.gameResultOptions = dungeonReward ? { ...options, dungeonReward } : { ...options };
       state.aiThinking = false;
       state.phase = "gameover";
       clearSelections();
@@ -17787,7 +19799,7 @@
       addLog(state.message);
       analyticsFinalizeGame(winner, reason, options);
       onlineSubmitAnalyticsLog("game_end");
-      showResultOverlay(winner, options);
+      showResultOverlay(winner, state.gameResultOptions);
       if (isOnlineHost() && state.online.started && !state.online.isHandlingRemoteCommand) {
         onlineBroadcastState(true);
       }
@@ -17904,6 +19916,9 @@
       renderUpdateHistory();
       renderDeckLibrary();
       renderSoloDeckSelection();
+      renderDungeonDeckSelection();
+      renderDungeonFloor();
+      renderDungeonReward();
       renderDeckEditor();
       renderTrash();
       renderLog();
@@ -17918,7 +19933,12 @@
     function renderScreen() {
       elements.homeScreen.classList.toggle("hidden", state.screen !== "home");
       elements.updatesScreen.classList.toggle("hidden", state.screen !== "updates");
+      elements.soloMenuScreen.classList.toggle("hidden", state.screen !== "soloMenu");
       elements.soloDeckScreen.classList.toggle("hidden", state.screen !== "soloDeck");
+      elements.dungeonEntranceScreen.classList.toggle("hidden", state.screen !== "dungeonEntrance");
+      elements.dungeonDeckScreen.classList.toggle("hidden", state.screen !== "dungeonDeck");
+      elements.dungeonFloorScreen.classList.toggle("hidden", state.screen !== "dungeonFloor");
+      elements.dungeonRewardScreen.classList.toggle("hidden", state.screen !== "dungeonReward");
       elements.onlineScreen.classList.toggle("hidden", state.screen !== "online");
       elements.tutorialScreen.classList.toggle("hidden", state.screen !== "tutorial");
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
@@ -17929,6 +19949,14 @@
       if (elements.battleRoomCodeValue) {
         elements.battleRoomCodeValue.textContent = showRoomCode ? state.online.roomCode : "------";
       }
+      elements.dungeonFloorInfoButton?.classList.toggle("hidden", state.screen !== "battle" || !state.dungeon.active);
+      const showDungeonInterior = (Boolean(state.dungeon.run)
+        && ["dungeonDeck", "dungeonFloor", "battle"].includes(state.screen))
+        || state.screen === "dungeonReward";
+      const isDungeonBattle = state.screen === "battle" && state.dungeon.active;
+      elements.dungeonInteriorBackdrop?.classList.toggle("hidden", !showDungeonInterior);
+      document.body.classList.toggle("dungeon-interior", showDungeonInterior);
+      document.body.classList.toggle("dungeon-battle", isDungeonBattle);
       document.body.dataset.screen = state.screen;
     }
 
@@ -17939,7 +19967,7 @@
       previewIds.forEach((baseId) => {
         const card = createCardFromBase(baseId, "player");
         const cardElement = document.createElement("div");
-        cardElement.className = `card ${card.type}`;
+        cardElement.className = `card ${card.type}${cardVisualClass(card)}`;
         cardElement.innerHTML = cardTemplate(card, false);
         attachCardDetailEvents(cardElement, card, { previewOnClick: false });
         elements.tutorialCardPreview.appendChild(cardElement);
@@ -18233,6 +20261,8 @@
         selectionOverlayPeek: state.selectionOverlayPeek,
         pendingCopiedCard: cloneTutorialValue(state.pendingCopiedCard),
         environment: cloneTutorialValue(state.environment),
+        cafeteriaEffectUntilActionTurn: state.cafeteriaEffectUntilActionTurn,
+        cafeteriaEffectPermanentlyActive: state.cafeteriaEffectPermanentlyActive,
         temporarySeatBlocks: cloneTutorialValue(state.temporarySeatBlocks),
         deckToHandLocks: cloneTutorialValue(state.deckToHandLocks),
         fullLockSeatBlocks: cloneTutorialValue(state.fullLockSeatBlocks),
@@ -18284,6 +20314,8 @@
       state.selectionOverlayPeek = snapshot.selectionOverlayPeek;
       state.pendingCopiedCard = cloneTutorialValue(snapshot.pendingCopiedCard);
       state.environment = cloneTutorialValue(snapshot.environment);
+      state.cafeteriaEffectUntilActionTurn = snapshot.cafeteriaEffectUntilActionTurn ?? -1;
+      state.cafeteriaEffectPermanentlyActive = snapshot.cafeteriaEffectPermanentlyActive === true;
       state.temporarySeatBlocks = cloneTutorialValue(snapshot.temporarySeatBlocks);
       state.deckToHandLocks = cloneTutorialValue(snapshot.deckToHandLocks || []);
       state.fullLockSeatBlocks = cloneTutorialValue(snapshot.fullLockSeatBlocks);
@@ -18350,6 +20382,8 @@
         selectionOverlayPeek: state.selectionOverlayPeek,
         pendingCopiedCard: cloneTutorialValue(state.pendingCopiedCard),
         environment: cloneTutorialValue(state.environment),
+        cafeteriaEffectUntilActionTurn: state.cafeteriaEffectUntilActionTurn,
+        cafeteriaEffectPermanentlyActive: state.cafeteriaEffectPermanentlyActive,
         temporarySeatBlocks: cloneTutorialValue(state.temporarySeatBlocks),
         deckToHandLocks: cloneTutorialValue(state.deckToHandLocks),
         fullLockSeatBlocks: cloneTutorialValue(state.fullLockSeatBlocks),
@@ -18393,6 +20427,8 @@
       state.selectionOverlayPeek = snapshot.selectionOverlayPeek;
       state.pendingCopiedCard = cloneTutorialValue(snapshot.pendingCopiedCard);
       state.environment = cloneTutorialValue(snapshot.environment);
+      state.cafeteriaEffectUntilActionTurn = snapshot.cafeteriaEffectUntilActionTurn ?? -1;
+      state.cafeteriaEffectPermanentlyActive = snapshot.cafeteriaEffectPermanentlyActive === true;
       state.temporarySeatBlocks = cloneTutorialValue(snapshot.temporarySeatBlocks);
       state.deckToHandLocks = cloneTutorialValue(snapshot.deckToHandLocks || []);
       state.fullLockSeatBlocks = cloneTutorialValue(snapshot.fullLockSeatBlocks);
@@ -18690,7 +20726,7 @@
     }
 
     function canUseItemNow(item) {
-      if (item.baseId === "dry_meal_ticket" && state.environment?.baseId !== "cafeteria") return false;
+      if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) return false;
       if (item.baseId === "dont_worry" && state.actionTurn < 5) return false;
       if (item.baseId === "yutakun_yutakun" && !state.players.player.trash.some((card) => card.baseId === "yuta")) return false;
       if (item.baseId === "three_gestures" && state.players.player.deck.length < 6) return false;
@@ -18979,7 +21015,11 @@
       elements.preBattleMessage.textContent = normalizeLectureRoomText(state.message);
 
       if (state.phase === "versus") {
-        elements.preBattleTitle.textContent = isOnlineBattle() ? "オンライン対戦" : "VS AI";
+        elements.preBattleTitle.textContent = isOnlineBattle()
+          ? "オンライン対戦"
+          : state.dungeon.active
+            ? "VS"
+            : "VS AI";
       } else if (state.phase === "rps") {
         elements.preBattleTitle.textContent = state.rpsWinner === "draw" ? "あいこ" : "カードじゃんけん";
       } else if (state.phase === "orderChoice") {
@@ -19000,7 +21040,7 @@
       if (state.phase === "dealing") {
         state.players.player.hand.forEach((card, index) => {
           const cardElement = document.createElement("div");
-          cardElement.className = `card initial-deal-card ${card.type}`;
+          cardElement.className = `card initial-deal-card ${card.type}${cardVisualClass(card)}`;
           if (index === state.players.player.hand.length - 1) cardElement.classList.add("latest");
           cardElement.dataset.cardId = card.instanceId;
           cardElement.innerHTML = cardTemplate(card, false);
@@ -19034,7 +21074,7 @@
         elements.mulliganHand.innerHTML = "";
         thinChoice.cards.forEach((card) => {
           const button = document.createElement("button");
-          button.className = `card mulligan-card ${card.type}`;
+          button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
           button.type = "button";
           button.dataset.cardId = card.instanceId;
           button.innerHTML = cardTemplate(card, false);
@@ -19057,7 +21097,7 @@
       elements.mulliganHand.innerHTML = "";
       player.hand.forEach((card) => {
         const button = document.createElement("button");
-        button.className = `card mulligan-card ${card.type}`;
+        button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
         if (card.instanceId === state.lastMulliganDrawId) button.classList.add("latest");
         button.dataset.cardId = card.instanceId;
         button.innerHTML = cardTemplate(card, false);
@@ -19093,7 +21133,7 @@
         elements.threeGesturesHand.innerHTML = "";
         choice.cards.forEach((card) => {
           const button = document.createElement("button");
-          button.className = `card mulligan-card ${card.type}`;
+          button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
           button.dataset.cardId = card.instanceId;
           button.innerHTML = cardTemplate(card, false);
           button.classList.toggle("selected", choice.selectedIds.includes(card.instanceId));
@@ -19111,7 +21151,7 @@
       elements.threeGesturesHand.innerHTML = "";
       pending.revealed.forEach((card) => {
         const button = document.createElement("button");
-        button.className = `card mulligan-card ${card.type}`;
+        button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
         button.dataset.cardId = card.instanceId;
         button.innerHTML = cardTemplate(card, false);
         button.classList.toggle("selected", pending.selectedIds.includes(card.instanceId));
@@ -19149,7 +21189,7 @@
       elements.trashDetailHand.innerHTML = "";
       event.cards.forEach((card) => {
         const button = document.createElement("button");
-        button.className = `card mulligan-card ${card.type}`;
+        button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
         button.type = "button";
         button.dataset.cardId = card.instanceId || card.baseId || card.name;
         button.innerHTML = cardTemplate(card, false);
@@ -19193,7 +21233,7 @@
       [...hand].reverse().forEach((card) => {
         if (isOnlineSpectator()) {
           const face = document.createElement("div");
-          face.className = `card hand-card ${card.type}`;
+          face.className = `card hand-card ${card.type}${cardVisualClass(card)}`;
           face.dataset.cardId = card.instanceId;
           face.innerHTML = cardTemplate(card, false);
           attachCardDetailEvents(face, card);
@@ -19214,7 +21254,7 @@
       player.hand.forEach((card) => {
         if (isOnlineSpectator()) {
           const face = document.createElement("div");
-          face.className = `card hand-card ${card.type}`;
+          face.className = `card hand-card ${card.type}${cardVisualClass(card)}`;
           face.dataset.cardId = card.instanceId;
           face.innerHTML = cardTemplate(card, false);
           attachCardDetailEvents(face, card);
@@ -19222,7 +21262,7 @@
           return;
         }
         const button = document.createElement("button");
-        button.className = `card hand-card ${card.type}`;
+        button.className = `card hand-card ${card.type}${cardVisualClass(card)}`;
         const canDrag = canStartHandDrag(card);
         button.draggable = false;
         button.dataset.cardId = card.instanceId;
@@ -19744,18 +21784,58 @@
       return true;
     }
 
+    function scoreAiRaptorTempleSource(card, ref) {
+      if (!card) return -100;
+      let score = (card.attack || 0) + (card.currentHp || 0) * 0.65;
+      if (ref.zone === "teacher" && card.type === "teacher") score += 8;
+      if (card.baseId === "popular_c") score += 7;
+      if (card.baseId === "lightning_n") score += 6;
+      if (card.baseId === "bird_a") score += 8;
+      return score;
+    }
+
+    function scoreAiRaptorTempleAttendance(side, target, sourceRef) {
+      const enemyRefs = listBoardRefs(oppositeSide(side));
+      const enemyStudents = enemyRefs.filter((ref) => getBoardCardFromRef(ref)?.type === "student");
+      if (target.baseId === "lightning_n") {
+        const canDrawRuler = state.players[side].deck.some((card) => card.baseId === "ruler");
+        return 11 + (canDrawRuler ? 4 : 0);
+      }
+      if (target.baseId === "fairy_t" && sourceRef.zone === "teacher") {
+        return enemyStudents.filter((ref) => ref.zone === "seat" && seatRow(ref.index) === 3).length * 6;
+      }
+      if (target.baseId === "popular_c" && sourceRef.zone === "teacher") {
+        return isBoardSlotOpen(side, "seat", 0) ? 13 : 3;
+      }
+      if (target.baseId === "bird_a") {
+        if (sourceRef.zone === "teacher") {
+          return enemyRefs.filter((ref) => ref.zone === "seat" && seatRow(ref.index) === 1).length * 7;
+        }
+        return enemyRefs.length * 8;
+      }
+      return 0;
+    }
+
+    function scoreAiRaptorTempleExchange(side, sourceEntry, target) {
+      const sourceScore = scoreAiRaptorTempleSource(sourceEntry.card, sourceEntry.ref);
+      const placementScore = scoreAiPlacement(target, sourceEntry.ref.zone, sourceEntry.ref.index);
+      const attendanceScore = scoreAiRaptorTempleAttendance(side, target, sourceEntry.ref);
+      return placementScore + attendanceScore - sourceScore;
+    }
+
     function tryUseAiRaptorTemple() {
       if (!canUseRaptorTemple("opponent")) return false;
       const options = raptorTempleSourceEntries("opponent").flatMap((entry) =>
         raptorTempleTargetCandidates("opponent", entry.card).map((target) => ({
           source: entry,
           target,
-          score: (target.cost || 0) * 2 + (target.attack || 0) + (target.hp || 0)
-            - ((entry.card.attack || 0) + (entry.card.currentHp || 0))
+          score: scoreAiRaptorTempleExchange("opponent", entry, target)
         }))
       ).sort((a, b) => b.score - a.score);
       const best = options[0];
-      return best ? resolveRaptorTempleExchange("opponent", best.source.ref, best.target.instanceId, false) : false;
+      return best?.score > 0
+        ? resolveRaptorTempleExchange("opponent", best.source.ref, best.target.instanceId, false)
+        : false;
     }
 
     function titleMatchUsedThisTurn(side) {
@@ -19866,7 +21946,11 @@
       if ((state.deckToHandLocks || []).some((lock) => lock.releaseAtActionTurn > state.actionTurn)) {
         lines.push("山梨最低賃金2円：デッキからカードを手札に加えられません。");
       }
-      if (state.environment?.baseId === "cafeteria") {
+      if (state.cafeteriaEffectPermanentlyActive) {
+        lines.push("闇学長：この対戦中、環境「食堂」の効果を得ています。");
+      } else if ((state.cafeteriaEffectUntilActionTurn ?? -1) >= state.actionTurn) {
+        lines.push("学長の茶室：次の相手のターン終了時まで、環境「食堂」の効果を得ています。");
+      } else if (state.environment?.baseId === "cafeteria") {
         lines.push("食堂：自分のターン終了時、気力を1回復します。");
       }
       if (state.environment?.baseId === "meguro_library") {
@@ -20100,7 +22184,7 @@
 
     function createBoardCard(card, owner, zone, index) {
       const button = document.createElement("button");
-      button.className = `field-card board-card ${card.type}`;
+      button.className = `field-card board-card ${card.type}${cardVisualClass(card)}`;
       button.dataset.cardId = card.instanceId;
       button.dataset.baseId = card.baseId;
       button.innerHTML = fieldCardTemplate(card);
@@ -20364,7 +22448,7 @@
     }
 
     function cardShellTemplate(card, extraClass = "") {
-      return `<div class="card ${escapeHtml(card.type)} ${extraClass}">${cardTemplate(card, false)}</div>`;
+      return `<div class="card ${escapeHtml(card.type)}${cardVisualClass(card)} ${extraClass}">${cardTemplate(card, false)}</div>`;
     }
 
     function costText(card) {
@@ -20376,7 +22460,7 @@
       if (!card || card.noCost) return 0;
       let discount = 0;
       const inBattle = state.screen === "battle" && state.phase === "battle";
-      if (inBattle && state.environment?.baseId === "cafeteria") {
+      if (inBattle && isCafeteriaEnvironmentActive()) {
         if (card.baseId === "cafeteria_lady") discount += 1;
         if (card.baseId === "chen_san") discount += 2;
         if (card.baseId === "tissue_distributor") discount += 2;
@@ -20385,7 +22469,7 @@
       }
       if (inBattle
         && card.baseId === "green_curry"
-        && state.environment?.baseId === "cafeteria"
+        && isCafeteriaEnvironmentActive()
         && listBoardRefs(card.owner).some((ref) => getBoardCardFromRef(ref)?.type === "vampire")) {
         discount += 3;
       }
@@ -20401,7 +22485,7 @@
       return ["cafeteria_lady", "curry_treater"].includes(card?.baseId)
         && state.screen === "battle"
         && state.phase === "battle"
-        && state.environment?.baseId === "cafeteria";
+        && isCafeteriaEnvironmentActive();
     }
 
     function isCardCurrentlyOnBoard(card) {
@@ -20540,9 +22624,10 @@
 
     function deckDetailHtml(name, saved, options = {}) {
       const counts = saved?.counts || {};
-      const validation = validateDeckCounts(counts);
+      const specialty = specialtyDefinition(saved?.specialtyId);
+      const validation = specialty ? validateSpecialtyDeckCounts(counts, specialty.id) : validateDeckCounts(counts);
       const cards = options.showCards
-        ? `<div class="deck-window-grid">${getDeckEditorIds().filter((baseId) => counts[baseId] > 0).map((baseId) => {
+        ? `<div class="deck-window-grid">${getDeckEditorIds(specialty?.id || "").filter((baseId) => counts[baseId] > 0).map((baseId) => {
             const card = makePreviewCard(baseId, "player");
             return `<button class="card deck-window-card ${card.type}" type="button" data-library-card="${baseId}">${cardTemplate(card, false)}<span class="deck-copy-badge">x${counts[baseId]}</span></button>`;
           }).join("")}</div>`
@@ -20552,6 +22637,7 @@
         <div class="deck-detail-summary">
           <div class="deck-detail-stat">枚数<br>${validation.size}枚</div>
           <div class="deck-detail-stat">タイプ<br>${escapeHtml(deckTypeSummary(counts))}</div>
+          ${specialty ? `<div class="deck-detail-stat">専攻<br>${escapeHtml(specialty.name)}</div>` : ""}
         </div>
         ${deckCurveHtml(counts)}
         ${saved?.theme ? `<p>${escapeHtml(saved.theme)}</p>` : ""}
@@ -20566,20 +22652,70 @@
       });
     }
 
+    function setDeckFormat(format) {
+      if (!['normal', 'specialty'].includes(format)) return;
+      state.deckBuilder.format = format;
+      state.deckBuilder.view = "library";
+      state.deckBuilder.selectedName = "";
+      state.deckBuilder.detailExpanded = false;
+      state.deckBuilder.pendingSpecialtyChoice = false;
+      if (format === "normal") state.deckBuilder.specialtyId = "";
+      render();
+    }
+
+    function renderSpecialtyChoice() {
+      const choice = elements.deckSpecialtyChoice;
+      if (!choice) return;
+      const visible = isSpecialtyDeckFormat() && state.deckBuilder.pendingSpecialtyChoice;
+      choice.classList.toggle("hidden", !visible);
+      if (!visible) {
+        choice.innerHTML = "";
+        return;
+      }
+      choice.innerHTML = `<p class="deck-specialty-choice-title">作る専攻を選んでください。共通カードも選べます。</p>`;
+      SPECIALTY_DEFINITIONS.forEach((definition) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = definition.name;
+        button.addEventListener("click", () => {
+          state.deckBuilder.specialtyId = definition.id;
+          state.deckBuilder.pendingSpecialtyChoice = false;
+          beginNewDeckEditor();
+        });
+        choice.appendChild(button);
+      });
+    }
+
     function renderDeckLibrary() {
       if (!elements.deckLibraryView || !elements.deckEditorView) return;
       const editing = state.deckBuilder.view === "editor";
       elements.deckLibraryView.classList.toggle("hidden", editing);
       elements.deckEditorView.classList.toggle("hidden", !editing);
       if (state.screen !== "deck" || editing) return;
-      const names = Object.keys(state.deckBuilder.savedDecks).sort((a, b) => a.localeCompare(b, "ja"));
+      const specialty = isSpecialtyDeckFormat();
+      const collection = activeDeckCollection();
+      const names = Object.keys(collection).sort((a, b) => a.localeCompare(b, "ja"));
+      elements.deckLibraryTitle.textContent = specialty ? "専攻デッキ" : "保存デッキ";
+      elements.deckBackHomeButton.textContent = state.deckBuilder.returnScreen === "dungeonDeck" ? "戻る" : "ホーム";
+      elements.deckScreenSubtitle.textContent = specialty
+        ? "専攻カードと共通カードだけで作る、40枚固定のデッキです"
+        : "40〜60枚、同名は原則3枚まで（カード固有の上限あり）";
+      elements.normalDeckFormatButton.classList.toggle("active", !specialty);
+      elements.specialtyDeckFormatButton.classList.toggle("active", specialty);
       elements.deckLibraryCount.textContent = `${names.length}個`;
       elements.deckLibraryGrid.innerHTML = "";
       const newButton = document.createElement("button");
       newButton.type = "button";
       newButton.className = "deck-library-card new-deck";
       newButton.textContent = "+ 新規作成";
-      newButton.addEventListener("click", beginNewDeckEditor);
+      newButton.addEventListener("click", () => {
+        if (!specialty) {
+          beginNewDeckEditor();
+          return;
+        }
+        state.deckBuilder.pendingSpecialtyChoice = true;
+        render();
+      });
       elements.deckLibraryGrid.appendChild(newButton);
       names.forEach((name) => {
         const button = document.createElement("button");
@@ -20589,16 +22725,18 @@
         button.addEventListener("click", () => {
           state.deckBuilder.selectedName = name;
           state.deckBuilder.detailExpanded = false;
+          if (specialty) state.deckBuilder.specialtyId = collection[name]?.specialtyId || "";
           render();
         });
         elements.deckLibraryGrid.appendChild(button);
       });
+      renderSpecialtyChoice();
       renderDeckLibraryDetail();
     }
 
     function renderDeckLibraryDetail() {
       const name = state.deckBuilder.selectedName;
-      const saved = state.deckBuilder.savedDecks[name];
+      const saved = activeDeckCollection()[name];
       elements.deckLibraryDetail.classList.toggle("hidden", !saved);
       if (!saved) {
         elements.deckLibraryDetail.innerHTML = "";
@@ -20608,7 +22746,7 @@
         <div class="deck-library-detail-actions">
           <button class="button" type="button" data-deck-edit>変更する</button>
           <button class="button secondary" type="button" data-deck-view>${state.deckBuilder.detailExpanded ? "内容を閉じる" : "内容を見る"}</button>
-          <button class="button warning" type="button" data-deck-remove ${isStarterDeckName(name) ? "disabled" : ""}>削除する</button>
+          <button class="button warning" type="button" data-deck-remove ${!isSpecialtyDeckFormat() && isStarterDeckName(name) ? "disabled" : ""}>削除する</button>
           <button class="button secondary" type="button" data-deck-close>閉じる</button>
         </div>`;
       elements.deckLibraryDetail.querySelector("[data-deck-edit]").addEventListener("click", () => beginExistingDeckEditor(name));
@@ -20631,6 +22769,11 @@
     }
 
     function beginNewDeckEditor() {
+      if (isSpecialtyDeckFormat() && !specialtyDefinition(state.deckBuilder.specialtyId)) {
+        state.deckBuilder.pendingSpecialtyChoice = true;
+        render();
+        return;
+      }
       state.deckBuilder.activeSide = "player";
       state.deckBuilder.counts.player = createEmptyDeckCounts();
       state.deckBuilder.editingName = "";
@@ -20643,8 +22786,9 @@
     }
 
     function beginExistingDeckEditor(name) {
-      const saved = state.deckBuilder.savedDecks[name];
+      const saved = activeDeckCollection()[name];
       if (!saved) return;
+      if (isSpecialtyDeckFormat()) state.deckBuilder.specialtyId = saved.specialtyId || "";
       state.deckBuilder.activeSide = "player";
       state.deckBuilder.counts.player = copyDeckCounts(saved.counts || {});
       state.deckBuilder.editingName = name;
@@ -20663,6 +22807,7 @@
       state.deckBuilder.editingName = "";
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
+      state.deckBuilder.pendingSpecialtyChoice = false;
       render();
     }
 
@@ -20741,13 +22886,258 @@
       elements.soloBattleStartButton.disabled = !selection.playerDeckName || !selection.opponentDeckName;
     }
 
+    function renderDungeonDeckSelection() {
+      if (state.screen !== "dungeonDeck" || !elements.dungeonDeckGrid) return;
+      const dungeon = state.dungeon;
+      const decks = state.deckBuilder.specialtyDecks;
+      const names = Object.keys(decks).sort((a, b) => a.localeCompare(b, "ja"));
+      const savedRun = dungeon.savedRun;
+      const canResume = Boolean(savedRun && DUNGEON_FLOORS[savedRun.floor]);
+      elements.dungeonResume?.classList.toggle("hidden", !canResume);
+      if (canResume) {
+        elements.dungeonResumeText.textContent = `${savedRun.floor}階から再開できます`;
+        elements.dungeonResumeButton.textContent = `${savedRun.floor}階から再開`;
+      }
+      const pendingReward = normalizePendingDungeonReward(dungeon.pendingReward);
+      elements.dungeonRewardResume?.classList.toggle("hidden", !pendingReward);
+      if (pendingReward && elements.dungeonRewardResumeText) {
+        const cardNames = pendingReward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・");
+        elements.dungeonRewardResumeText.textContent = `未開封の報酬：${cardNames}`;
+      }
+      elements.dungeonDeckGrid.innerHTML = "";
+      if (names.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "current-deck-empty";
+        empty.textContent = "専攻デッキがありません。先に40枚の専攻デッキを作ってください。";
+        elements.dungeonDeckGrid.appendChild(empty);
+      }
+      names.forEach((name) => {
+        const saved = decks[name];
+        const validation = validateSpecialtyDeckCounts(saved.counts || {}, saved.specialtyId);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `deck-library-card${dungeon.selectedDeckName === name ? " selected" : ""}`;
+        button.textContent = `${name}${validation.valid ? "" : "（要調整）"}`;
+        button.addEventListener("click", () => {
+          dungeon.selectedDeckName = name;
+          dungeon.previewName = name;
+          dungeon.previewExpanded = false;
+          render();
+        });
+        elements.dungeonDeckGrid.appendChild(button);
+      });
+      const preview = decks[dungeon.previewName];
+      elements.dungeonDeckDetail.classList.toggle("hidden", !preview);
+      elements.dungeonDeckDetail.innerHTML = preview
+        ? `${deckDetailHtml(dungeon.previewName, preview, { showCards: dungeon.previewExpanded })}
+          <div class="deck-library-detail-actions"><button class="button secondary" type="button" data-dungeon-view>${dungeon.previewExpanded ? "内容を閉じる" : "内容を見る"}</button></div>`
+        : "";
+      elements.dungeonDeckDetail.querySelector("[data-dungeon-view]")?.addEventListener("click", () => {
+        dungeon.previewExpanded = !dungeon.previewExpanded;
+        render();
+      });
+      attachLibraryCardDetails(elements.dungeonDeckDetail);
+      const selected = decks[dungeon.selectedDeckName];
+      const validation = selected ? validateSpecialtyDeckCounts(selected.counts || {}, selected.specialtyId) : null;
+      elements.dungeonDeckStartButton.disabled = !selected || !validation?.valid;
+    }
+
+    function currentDungeonFloor() {
+      const floor = state.dungeon.run?.floor || 1;
+      return DUNGEON_FLOORS[floor] || DUNGEON_FLOORS[1];
+    }
+
+    function dungeonOpponentLifeForFloor(floorNumber) {
+      return floorNumber <= 4 ? 10 : 20;
+    }
+
+    function renderDungeonFloor() {
+      const floor = currentDungeonFloor();
+      if (elements.dungeonFloorNumber) elements.dungeonFloorNumber.textContent = `${floor.number}階`;
+      if (elements.dungeonFloorTitle) elements.dungeonFloorTitle.textContent = floor.title;
+      if (elements.dungeonFloorText) elements.dungeonFloorText.textContent = floor.text;
+      if (elements.dungeonInfoFloorNumber) elements.dungeonInfoFloorNumber.textContent = `${floor.number}階`;
+      if (elements.dungeonInfoTitle) elements.dungeonInfoTitle.textContent = floor.title;
+      if (elements.dungeonInfoText) elements.dungeonInfoText.textContent = floor.text;
+      const battleReady = Boolean(DUNGEON_FLOOR_DECKS[floor.number]);
+      if (elements.dungeonFloorStartButton) {
+        elements.dungeonFloorStartButton.disabled = !battleReady;
+        elements.dungeonFloorStartButton.textContent = battleReady ? "OK" : "準備中";
+      }
+    }
+
+    function renderDungeonReward() {
+      if (state.screen !== "dungeonReward" || !elements.dungeonRewardStage) return;
+      const pendingReward = normalizePendingDungeonReward(state.dungeon.pendingReward)
+        || normalizePendingDungeonReward(state.dungeon.rewardAward);
+      if (!pendingReward) {
+        showHomeScreen();
+        return;
+      }
+      const phase = state.dungeon.rewardPhase || "closed";
+      const cardNames = pendingReward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・");
+      elements.dungeonRewardStage.classList.toggle("revealed", ["revealed", "homeReady"].includes(phase));
+      elements.dungeonRewardStage.classList.toggle("home-ready", phase === "homeReady");
+      elements.dungeonRewardTitle.textContent = phase === "closed" || phase === "opening" ? "報酬の宝箱" : "カードスタイル獲得";
+      elements.dungeonRewardCopy.textContent = phase === "closed"
+        ? "宝箱を開けて、専攻の代表カードスタイルを受け取ろう。"
+        : `${cardNames}の金枠カードスタイルを獲得しました。`;
+      elements.dungeonRewardChest.className = `dungeon-treasure-chest${phase === "opening" ? " opening" : ""}${["revealed", "homeReady"].includes(phase) ? " opened" : ""}`;
+      elements.dungeonRewardChest.disabled = phase !== "closed";
+      elements.dungeonRewardChest.setAttribute("aria-label", phase === "closed" ? "報酬の宝箱を開ける" : "報酬の宝箱を開封済み");
+      elements.dungeonRewardCards.innerHTML = ["revealed", "homeReady"].includes(phase)
+        ? pendingReward.cardIds.map((baseId) => {
+          const card = makePreviewCard(baseId, "player");
+          return cardShellTemplate(card, "dungeon-reward-card");
+        }).join("")
+        : "";
+    }
+
+    function showDungeonRewardScreen() {
+      const pendingReward = normalizePendingDungeonReward(state.dungeon.pendingReward);
+      if (!pendingReward) {
+        showDungeonDeckScreen();
+        return;
+      }
+      if (dungeonRewardTimer) {
+        window.clearTimeout(dungeonRewardTimer);
+        dungeonRewardTimer = null;
+      }
+      state.dungeon.active = false;
+      state.dungeon.rewardPhase = "closed";
+      state.dungeon.rewardAward = null;
+      state.screen = "dungeonReward";
+      hideResultOverlay();
+      render();
+    }
+
+    function openDungeonRewardChest() {
+      if (state.screen !== "dungeonReward" || state.dungeon.rewardPhase !== "closed") return;
+      state.dungeon.rewardPhase = "opening";
+      render();
+      dungeonRewardTimer = window.setTimeout(() => {
+        dungeonRewardTimer = null;
+        const reward = claimPendingDungeonReward();
+        if (!reward) {
+          showDungeonDeckScreen();
+          return;
+        }
+        state.dungeon.rewardAward = reward;
+        state.dungeon.rewardPhase = "revealed";
+        state.message = `${reward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・")}の金枠カードスタイルを獲得しました。`;
+        render();
+        dungeonRewardTimer = window.setTimeout(() => {
+          dungeonRewardTimer = null;
+          if (state.screen !== "dungeonReward") return;
+          state.dungeon.rewardPhase = "homeReady";
+          render();
+        }, 1200);
+      }, 700);
+    }
+
+    function openDungeonFloorInfo() {
+      renderDungeonFloor();
+      elements.dungeonInfoModal.classList.remove("hidden");
+    }
+
+    function closeDungeonFloorInfo() {
+      elements.dungeonInfoModal.classList.add("hidden");
+    }
+
+    function beginDungeonRun() {
+      const saved = state.deckBuilder.specialtyDecks[state.dungeon.selectedDeckName];
+      if (!saved || !validateSpecialtyDeckCounts(saved.counts || {}, saved.specialtyId).valid) {
+        state.message = "40枚の専攻デッキを選んでください。";
+        render();
+        return;
+      }
+      state.dungeon.run = {
+        floor: 1,
+        deckName: state.dungeon.selectedDeckName,
+        specialtyId: saved.specialtyId,
+        counts: copyDeckCounts(saved.counts || {}),
+        life: 20
+      };
+      persistDungeonRun();
+      state.dungeon.active = false;
+      state.screen = "dungeonFloor";
+      render();
+    }
+
+    function resumeDungeonRun() {
+      const savedRun = normalizeDungeonRun(state.dungeon.savedRun);
+      if (!savedRun || !DUNGEON_FLOORS[savedRun.floor]) return;
+      state.dungeon.run = savedRun;
+      state.dungeon.selectedDeckName = savedRun.deckName;
+      state.dungeon.previewName = savedRun.deckName;
+      state.dungeon.previewExpanded = false;
+      state.dungeon.active = false;
+      state.screen = "dungeonFloor";
+      state.message = `魔の1号館・${savedRun.floor}階から再開します。`;
+      render();
+    }
+
+    function startDungeonFloorBattle() {
+      const floor = currentDungeonFloor();
+      const run = state.dungeon.run;
+      const opponentCounts = DUNGEON_FLOOR_DECKS[floor.number];
+      if (!run || !opponentCounts) {
+        state.message = `${floor.number}階のデッキを準備してから開始します。`;
+        render();
+        return;
+      }
+      state.deckBuilder.counts.player = copyDeckCounts(run.counts || {});
+      state.deckBuilder.counts.opponent = copyDeckCounts(opponentCounts);
+      state.dungeon.active = true;
+      state.screen = "battle";
+      initializeGame({
+        dungeon: true,
+        opponentLife: dungeonOpponentLifeForFloor(floor.number)
+      });
+    }
+
+    function advanceDungeonFloor() {
+      const run = state.dungeon.run;
+      const nextFloor = run ? run.floor + 1 : 0;
+      if (!run || !DUNGEON_FLOORS[nextFloor]) return;
+      state.preBattleToken += 1;
+      run.floor = nextFloor;
+      persistDungeonRun(run);
+      state.dungeon.active = false;
+      state.gameOver = false;
+      state.gameWinner = null;
+      state.gameResultOptions = {};
+      state.phase = "dungeon";
+      clearSelections();
+      hideResultOverlay();
+      state.screen = "dungeonFloor";
+      state.message = `魔の1号館・${nextFloor}階の特徴を確認してください。`;
+      render();
+    }
+
+    function interruptDungeonRun() {
+      const run = state.dungeon.run;
+      if (run && state.gameWinner === "player") {
+        run.floor += 1;
+        persistDungeonRun(run);
+      }
+      showHomeScreen();
+    }
+
     function renderDeckEditor() {
       if (state.screen !== "deck" || state.deckBuilder.view !== "editor") return;
       const activeSide = state.deckBuilder.activeSide;
       const counts = state.deckBuilder.counts[activeSide];
-      const validation = validateDeckCounts(counts);
-      elements.deckEditorStatus.textContent = `${validation.size}/${DECK_MAX} ${validation.valid ? "OK" : "要調整"}`;
-      elements.deckEditorTitle.textContent = state.deckBuilder.editingName || "新規デッキ";
+      const validation = activeDeckValidation(counts);
+      const specialty = specialtyDefinition(state.deckBuilder.specialtyId);
+      const deckMax = activeDeckMaxSize();
+      elements.deckEditorStatus.textContent = `${validation.size}/${deckMax} ${validation.valid ? "OK" : "要調整"}`;
+      elements.deckEditorTitle.textContent = isSpecialtyDeckFormat()
+        ? `${state.deckBuilder.editingName || "新規専攻デッキ"}：${specialty?.name || "専攻未選択"}`
+        : (state.deckBuilder.editingName || "新規デッキ");
+      elements.deckScreenSubtitle.textContent = isSpecialtyDeckFormat()
+        ? "専攻カードと共通カードだけで作る、40枚固定のデッキです"
+        : "40〜60枚、同名は原則3枚まで（カード固有の上限あり）";
       elements.autoDeckButton.textContent = "お任せ";
       elements.playerDeckTab.classList.toggle("active", activeSide === "player");
       elements.opponentDeckTab.classList.toggle("active", activeSide === "opponent");
@@ -20775,7 +23165,7 @@
           <div class="deck-row-controls">
             <button class="mini-button" data-deck-minus="${baseId}" ${count <= 0 ? "disabled" : ""}>-</button>
             <div class="deck-count">${count}</div>
-            <button class="mini-button" data-deck-plus="${baseId}" ${count >= maxCopiesForCard(baseId) || validation.size >= DECK_MAX ? "disabled" : ""}>+</button>
+            <button class="mini-button" data-deck-plus="${baseId}" ${count >= maxCopiesForCard(baseId) || validation.size >= deckMax ? "disabled" : ""}>+</button>
           </div>
         `;
         const testButton = row.querySelector("[data-card-test]");
@@ -20796,7 +23186,7 @@
       renderUsedDeckList();
     }
 
-    function getDeckEditorIds() {
+    function getDeckEditorIds(specialtyId = isSpecialtyDeckFormat() ? state.deckBuilder.specialtyId : "") {
       const typeOrder = ["student", "teacher", "vampire", "item", "environment"];
       const originalIndex = new Map(ALL_DECK_IDS.map((baseId, index) => [baseId, index]));
       const sortCardInfo = (baseId) => {
@@ -20815,7 +23205,8 @@
           crabRank: CRAB_SET_IDS.includes(baseId) ? 0 : 1
         };
       };
-      return [...ALL_DECK_IDS].sort((a, b) => {
+      const ids = specialtyId ? ALL_DECK_IDS.filter((baseId) => specialtyAllowedCardIds(specialtyId).has(baseId)) : ALL_DECK_IDS;
+      return [...ids].sort((a, b) => {
         const infoA = sortCardInfo(a);
         const infoB = sortCardInfo(b);
         const cardA = infoA.card;
@@ -20869,7 +23260,8 @@
         elements.currentDeckList.appendChild(empty);
         return;
       }
-      const validation = validateDeckCounts(counts);
+      const validation = activeDeckValidation(counts);
+      const deckMax = activeDeckMaxSize();
       entries.forEach(({ baseId, card, count }) => {
         const row = document.createElement("div");
         row.className = `current-deck-card ${card.type}`;
@@ -20879,7 +23271,7 @@
             <span>${escapeHtml(card.name)}</span>
             <strong>x${count}</strong>
           </button>
-          <button class="current-deck-adjust plus" type="button" data-current-plus="${baseId}" ${count >= maxCopiesForCard(baseId) || validation.size >= DECK_MAX ? "disabled" : ""} aria-label="${escapeHtml(card.name)}を1枚増やす">+</button>
+          <button class="current-deck-adjust plus" type="button" data-current-plus="${baseId}" ${count >= maxCopiesForCard(baseId) || validation.size >= deckMax ? "disabled" : ""} aria-label="${escapeHtml(card.name)}を1枚増やす">+</button>
         `;
         const detailButton = row.querySelector("[data-current-detail]");
         attachCardDetailEvents(detailButton, card);
@@ -20939,7 +23331,7 @@
       ALL_DECK_IDS.filter((baseId) => counts[baseId] > 0).forEach((baseId) => {
         const card = makePreviewCard(baseId, "player");
         const button = document.createElement("button");
-        button.className = `card deck-window-card ${card.type}`;
+      button.className = `card deck-window-card ${card.type}${cardVisualClass(card)}`;
         button.innerHTML = `${cardTemplate(card, false)}<span class="deck-copy-badge">x${counts[baseId]}</span>`;
         attachCardDetailEvents(button, card);
         elements.deckWindowGrid.appendChild(button);
@@ -20958,7 +23350,7 @@
       const current = counts[baseId] || 0;
       const next = Math.max(0, Math.min(maxCopiesForCard(baseId), current + delta));
       if (next === current) return;
-      if (delta > 0 && deckSize(counts) >= DECK_MAX) return;
+      if (delta > 0 && deckSize(counts) >= activeDeckMaxSize()) return;
       counts[baseId] = next;
       state.message = `${SIDES[side]}の${CARD_BASES[baseId].name}を${next}枚にしました。新規ゲームで反映されます。`;
       render();
@@ -20971,8 +23363,12 @@
 
     function autoBuildDeckForActiveSide() {
       const side = state.deckBuilder.activeSide;
-      state.deckBuilder.counts[side] = createAutoDeckCounts();
-      state.message = `${SIDES[side]}のデッキをお任せで作成しました。新規ゲームで反映されます。`;
+      state.deckBuilder.counts[side] = isSpecialtyDeckFormat()
+        ? createSpecialtyAutoDeckCounts(state.deckBuilder.specialtyId)
+        : createAutoDeckCounts();
+      state.message = isSpecialtyDeckFormat()
+        ? `${specialtyDefinition(state.deckBuilder.specialtyId)?.name || "専攻"}のお任せデッキを作成しました。`
+        : `${SIDES[side]}のデッキをお任せで作成しました。新規ゲームで反映されます。`;
       render();
     }
 
@@ -20998,16 +23394,18 @@
         render();
         return;
       }
-      if (isStarterDeckName(name)) {
+      if (!isSpecialtyDeckFormat() && isStarterDeckName(name)) {
         state.message = "スターターデッキは固定です。編集したい場合は別の保存名に変えてから保存してください。";
         render();
         return;
       }
       const side = state.deckBuilder.activeSide;
       const counts = state.deckBuilder.counts[side];
-      const validation = validateDeckCounts(counts);
+      const validation = activeDeckValidation(counts);
       if (!validation.valid) {
-        state.message = `デッキは40〜60枚にしてください。現在は${validation.size}枚です。`;
+        state.message = isSpecialtyDeckFormat()
+          ? `専攻デッキは、選んだ専攻と共通カードだけで40枚にしてください。現在は${validation.size}枚です。`
+          : `デッキは40〜60枚にしてください。現在は${validation.size}枚です。`;
         render();
         return;
       }
@@ -21018,12 +23416,14 @@
         render();
         return;
       }
-      if (state.deckBuilder.savedDecks[name] && !window.confirm(`保存デッキ「${name}」を上書きしますか？`)) return;
-      state.deckBuilder.savedDecks[name] = {
+      const collection = activeDeckCollection();
+      if (collection[name] && !window.confirm(`${isSpecialtyDeckFormat() ? "専攻デッキ" : "保存デッキ"}「${name}」を上書きしますか？`)) return;
+      collection[name] = {
         counts: copyDeckCounts(counts),
-        savedAt: new Date().toISOString()
+        savedAt: new Date().toISOString(),
+        ...(isSpecialtyDeckFormat() ? { specialtyId: state.deckBuilder.specialtyId } : {})
       };
-      if (!persistSavedDecks()) {
+      if (!(isSpecialtyDeckFormat() ? persistSpecialtyDecks() : persistSavedDecks())) {
         render();
         return;
       }
@@ -21031,7 +23431,7 @@
       state.deckBuilder.originalFingerprint = currentFingerprint;
       state.deckBuilder.selectedName = name;
       state.deckBuilder.view = "library";
-      state.message = `デッキ「${name}」を保存しました。`;
+      state.message = `${isSpecialtyDeckFormat() ? "専攻デッキ" : "デッキ"}「${name}」を保存しました。`;
       render();
     }
 
@@ -21074,11 +23474,12 @@
 
     function deckFileData(name, counts) {
       const payload = {
-        kind: "chibattle-deck",
+        kind: isSpecialtyDeckFormat() ? "chibattle-specialty-deck" : "chibattle-deck",
         version: "0.2.4",
         name,
         counts: copyDeckCounts(counts),
-        savedAt: new Date().toISOString()
+        savedAt: new Date().toISOString(),
+        ...(isSpecialtyDeckFormat() ? { specialtyId: state.deckBuilder.specialtyId } : {})
       };
       return {
         fileName: `${name.replace(/[\\/:*?"<>|]/g, "_") || "deck"}.json`,
@@ -21131,9 +23532,12 @@
         try {
           const parsed = JSON.parse(String(reader.result || "{}"));
           const counts = parsed.counts || parsed;
-          const validation = validateDeckCounts(counts);
+          if (isSpecialtyDeckFormat() && parsed.specialtyId) state.deckBuilder.specialtyId = parsed.specialtyId;
+          const validation = activeDeckValidation(counts);
           if (!validation.valid) {
-            state.message = `読み込んだデッキは${validation.size}枚です。40〜60枚に調整してください。`;
+            state.message = isSpecialtyDeckFormat()
+              ? `読み込んだ専攻デッキは${validation.size}枚です。選んだ専攻と共通カードだけで40枚に調整してください。`
+              : `読み込んだデッキは${validation.size}枚です。40〜60枚に調整してください。`;
           } else {
             state.message = `ファイルから${SIDES[state.deckBuilder.activeSide]}のデッキを読み込みました。`;
           }
@@ -21154,28 +23558,46 @@
     }
 
     function deleteSavedDeckByName(name) {
-      if (!name || !state.deckBuilder.savedDecks[name]) return;
-      if (isStarterDeckName(name)) {
+      const collection = activeDeckCollection();
+      if (!name || !collection[name]) return;
+      if (!isSpecialtyDeckFormat() && isStarterDeckName(name)) {
         state.message = "スターターデッキは固定のため削除できません。";
         render();
         return;
       }
-      if (!window.confirm(`保存デッキ「${name}」を削除しますか？`)) return;
-      delete state.deckBuilder.savedDecks[name];
-      persistSavedDecks();
-      state.message = `保存デッキ「${name}」を削除しました。`;
+      const label = isSpecialtyDeckFormat() ? "専攻デッキ" : "保存デッキ";
+      if (!window.confirm(`${label}「${name}」を削除しますか？`)) return;
+      delete collection[name];
+      isSpecialtyDeckFormat() ? persistSpecialtyDecks() : persistSavedDecks();
+      state.message = `${label}「${name}」を削除しました。`;
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
       elements.deckSaveNameInput.value = "";
       render();
     }
 
-    function openCardTestConfirm(baseId) {
+    function cardStyleCycleIconTemplate() {
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8.1 8.1 0 0 0-14.6-3.8L3 10"></path><path d="M3 4v6h6"></path><path d="M4 13a8.1 8.1 0 0 0 14.6 3.8L21 14"></path><path d="M21 20v-6h-6"></path></svg>`;
+    }
+
+    function renderCardTestConfirm(baseId) {
       if (!CARD_BASES[baseId]) return;
       const card = makePreviewCard(baseId, "player");
-      state.pendingTestCardId = baseId;
-      elements.cardTestCard.innerHTML = cardShellTemplate(card);
+      const unlocked = hasUnlockedCardRewardStyle(baseId);
+      const usingReward = selectedDungeonCardStyles[baseId] !== "normal";
+      const control = unlocked ? `
+        <button class="card-style-cycle-button" type="button" data-card-style-cycle="${escapeHtml(baseId)}" title="${usingReward ? "通常スタイルに戻す" : "金枠スタイルに切り替える"}" aria-label="${usingReward ? "通常スタイルに戻す" : "金枠スタイルに切り替える"}">
+          ${cardStyleCycleIconTemplate()}
+        </button>
+      ` : "";
+      elements.cardTestCard.innerHTML = `<div class="card-test-style-frame">${cardShellTemplate(card)}${control}</div>`;
       elements.cardTestText.innerHTML = cardDetailTemplate(card);
+    }
+
+    function openCardTestConfirm(baseId) {
+      if (!CARD_BASES[baseId]) return;
+      state.pendingTestCardId = baseId;
+      renderCardTestConfirm(baseId);
       hideCardTooltip();
       elements.cardTestModal.classList.remove("hidden");
     }
@@ -21219,6 +23641,8 @@
       state.pendingCopiedCard = null;
       state.pendingRaptorTemple = null;
       state.environment = null;
+      state.cafeteriaEffectUntilActionTurn = -1;
+      state.cafeteriaEffectPermanentlyActive = false;
       state.temporarySeatBlocks = [];
       state.deckToHandLocks = [];
       state.noAttackUntilActionTurn = 0;
@@ -21423,9 +23847,20 @@
     }
 
     function showHomeScreen() {
+      if (dungeonEntranceTimer) {
+        window.clearTimeout(dungeonEntranceTimer);
+        dungeonEntranceTimer = null;
+      }
+      if (dungeonRewardTimer) {
+        window.clearTimeout(dungeonRewardTimer);
+        dungeonRewardTimer = null;
+      }
       state.preBattleToken += 1;
       resetTutorialState();
       state.screen = "home";
+      state.dungeon.active = false;
+      state.dungeon.run = null;
+      state.deckBuilder.returnScreen = "";
       hideCardTooltip();
       hideBattleCardPreview();
       hideDeckInspectPrompt();
@@ -21478,6 +23913,10 @@
       state.preBattleToken += 1;
       resetTutorialState();
       state.screen = "deck";
+      state.deckBuilder.format = "normal";
+      state.deckBuilder.specialtyId = "";
+      state.deckBuilder.pendingSpecialtyChoice = false;
+      state.deckBuilder.returnScreen = "";
       state.deckBuilder.view = "library";
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
@@ -21488,6 +23927,57 @@
       closeCardTestConfirm();
       hidePlayReveal();
       hideResultOverlay();
+      render();
+    }
+
+    function showSoloMenu() {
+      state.preBattleToken += 1;
+      resetTutorialState();
+      state.screen = "soloMenu";
+      hideCardTooltip();
+      hideBattleCardPreview();
+      hideDeckInspectPrompt();
+      render();
+    }
+
+    function showDungeonEntrance() {
+      if (dungeonEntranceTimer) window.clearTimeout(dungeonEntranceTimer);
+      state.preBattleToken += 1;
+      state.dungeon.entranceToken += 1;
+      const token = state.dungeon.entranceToken;
+      state.screen = "dungeonEntrance";
+      hideCardTooltip();
+      hideBattleCardPreview();
+      render();
+      dungeonEntranceTimer = window.setTimeout(() => {
+        if (state.dungeon.entranceToken !== token || state.screen !== "dungeonEntrance") return;
+        dungeonEntranceTimer = null;
+        showDungeonDeckScreen();
+      }, 2900);
+    }
+
+    function showDungeonDeckScreen() {
+      if (dungeonEntranceTimer) {
+        window.clearTimeout(dungeonEntranceTimer);
+        dungeonEntranceTimer = null;
+      }
+      state.screen = "dungeonDeck";
+      state.dungeon.previewName = state.dungeon.selectedDeckName || "";
+      state.dungeon.previewExpanded = false;
+      hideCardTooltip();
+      hideBattleCardPreview();
+      render();
+    }
+
+    function openDungeonDeckManager() {
+      state.screen = "deck";
+      state.deckBuilder.format = "specialty";
+      state.deckBuilder.specialtyId = "";
+      state.deckBuilder.pendingSpecialtyChoice = false;
+      state.deckBuilder.returnScreen = "dungeonDeck";
+      state.deckBuilder.view = "library";
+      state.deckBuilder.selectedName = "";
+      state.deckBuilder.detailExpanded = false;
       render();
     }
 
@@ -21552,6 +24042,8 @@
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.environment = null;
+      state.cafeteriaEffectUntilActionTurn = -1;
+      state.cafeteriaEffectPermanentlyActive = false;
       state.temporarySeatBlocks = [];
       state.deckToHandLocks = [];
       state.fullLockSeatBlocks = [];
@@ -21930,6 +24422,9 @@
     }
 
     function cardRulesText(card) {
+      if (card.darkPresident) {
+        return "このカードが出席したとき、この対戦中、環境「食堂」の効果を得る。このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。";
+      }
       const rules = {
         general_student: "効果なし。",
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
@@ -22088,6 +24583,7 @@
         gamma: "相手の2行2列が空いている場合にのみ使用できる。デッキを上から3枚引く。このカードはデッキ編成に入れられない。",
         double_diamond: "融合：「定規」2枚。相手の出席者1人または相手本体を指名し、4ダメージを与える。出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。",
         roar: "お互いの学生すべてに、それぞれの体力が1になるまでダメージを与える。",
+        president_tea_room: "次の相手のターン終了時まで、環境「食堂」の効果を得る。",
         suspicious_document: "このカードは使用できない。",
         classroom: "効果なし。",
         cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。",
@@ -22244,8 +24740,35 @@
     elements.homeUpdatesButton.addEventListener("click", showUpdatesScreen);
     elements.updatesBackHomeButton.addEventListener("click", showHomeScreen);
     elements.homeBattleButton.addEventListener("click", showOnlineScreen);
-    elements.homeSoloButton.addEventListener("click", startSoloBattleFromHome);
+    elements.homeSoloButton.addEventListener("click", showSoloMenu);
+    elements.soloMenuBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.soloAiBattleButton.addEventListener("click", startSoloBattleFromHome);
+    elements.soloDungeonButton.addEventListener("click", showDungeonEntrance);
     elements.soloDeckBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.dungeonDeckBackSoloButton.addEventListener("click", showSoloMenu);
+    elements.dungeonDeckManageButton.addEventListener("click", openDungeonDeckManager);
+    elements.dungeonResumeButton.addEventListener("click", resumeDungeonRun);
+    elements.dungeonRewardResumeButton.addEventListener("click", showDungeonRewardScreen);
+    elements.dungeonDeckStartButton.addEventListener("click", beginDungeonRun);
+    elements.dungeonFloorBackButton.addEventListener("click", showDungeonDeckScreen);
+    elements.dungeonFloorStartButton.addEventListener("click", startDungeonFloorBattle);
+    elements.dungeonFloorInfoButton.addEventListener("click", openDungeonFloorInfo);
+    elements.dungeonInfoCloseButton.addEventListener("click", closeDungeonFloorInfo);
+    elements.dungeonInfoModal.addEventListener("click", (event) => {
+      if (event.target === elements.dungeonInfoModal) closeDungeonFloorInfo();
+    });
+    elements.dungeonRewardChest.addEventListener("click", openDungeonRewardChest);
+    elements.dungeonRewardHomeButton.addEventListener("click", showHomeScreen);
+    elements.dungeonStyleBackupButton.addEventListener("click", exportDungeonCardStyleBackup);
+    elements.dungeonStyleImportInput.addEventListener("change", () => {
+      importDungeonCardStyleBackup(elements.dungeonStyleImportInput.files?.[0]);
+      elements.dungeonStyleImportInput.value = "";
+    });
+    elements.deckStyleBackupButton.addEventListener("click", exportDungeonCardStyleBackup);
+    elements.deckStyleImportInput.addEventListener("change", () => {
+      importDungeonCardStyleBackup(elements.deckStyleImportInput.files?.[0]);
+      elements.deckStyleImportInput.value = "";
+    });
     elements.soloPlayerSlot.addEventListener("click", () => {
       state.soloSelection.activeSide = "player";
       render();
@@ -22281,7 +24804,16 @@
     elements.onlineDeckSelect.addEventListener("change", onlineUpdateDeckSelection);
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineStartButton.addEventListener("click", onlineStartBattle);
-    elements.deckBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.deckBackHomeButton.addEventListener("click", () => {
+      if (state.deckBuilder.returnScreen === "dungeonDeck") {
+        state.deckBuilder.returnScreen = "";
+        showDungeonDeckScreen();
+        return;
+      }
+      showHomeScreen();
+    });
+    elements.normalDeckFormatButton.addEventListener("click", () => setDeckFormat("normal"));
+    elements.specialtyDeckFormatButton.addEventListener("click", () => setDeckFormat("specialty"));
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.testUndoButton.addEventListener("click", goBackTestStep);
     elements.battleBackHomeButton.addEventListener("click", () => {
@@ -22379,6 +24911,19 @@
     elements.cardTestStartButton.addEventListener("click", confirmCardTest);
     elements.cardTestCancelButton.addEventListener("click", closeCardTestConfirm);
     elements.cardTestModal.addEventListener("click", (event) => {
+      const styleCycle = event.target.closest("[data-card-style-cycle]");
+      if (styleCycle) {
+        event.stopPropagation();
+        const baseId = styleCycle.dataset.cardStyleCycle;
+        if (toggleDungeonCardStyle(baseId)) {
+          state.message = "金枠カードスタイルに切り替えました。";
+        } else {
+          state.message = "通常のカードスタイルに戻しました。";
+        }
+        renderCardTestConfirm(baseId);
+        render();
+        return;
+      }
       const related = event.target.closest("[data-related-card]");
       if (related) {
         event.stopPropagation();
@@ -22417,6 +24962,21 @@
       hideBattleCardPreview();
     });
     elements.resultOverlay.addEventListener("click", (event) => {
+      if (event.target.closest("[data-result-dungeon-interrupt]")) {
+        event.stopPropagation();
+        interruptDungeonRun();
+        return;
+      }
+      if (event.target.closest("[data-result-dungeon-next]")) {
+        event.stopPropagation();
+        advanceDungeonFloor();
+        return;
+      }
+      if (event.target.closest("[data-result-dungeon-reward]")) {
+        event.stopPropagation();
+        showDungeonRewardScreen();
+        return;
+      }
       if (event.target.closest("[data-result-home]")) {
         event.stopPropagation();
         if (isOnlineBattle()) {
@@ -22458,6 +25018,10 @@
       clearExpiredDeckToHandLocks,
       fuseRulersForSide,
       validateDeckCounts,
+      validateSpecialtyDeckCounts,
+      specialtyAllowedCardIds,
+      SPECIALTY_DEFINITIONS,
+      SPECIALTY_CARD_IDS,
       createAutoDeckCounts
     };
 

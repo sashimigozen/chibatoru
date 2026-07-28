@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>チバトル クラス分類案</title>
+  <title>チバトル 専攻デッキ分類案</title>
   <style>
     :root {
       color-scheme: light;
@@ -375,13 +375,13 @@
 <body>
   <header>
     <div>
-      <h1>チバトル クラス分類案</h1>
-      <p class="subtitle">現在のカードプールを、連携・世界観・戦い方からクラスへ振り分けた設計案</p>
+      <h1>チバトル 専攻デッキ分類案</h1>
+      <p class="subtitle">現在のカードプールを、連携・世界観・戦い方から専攻へ振り分ける設計案</p>
     </div>
     <div class="header-actions">
       <nav class="page-tabs" aria-label="表示切替">
         <button class="page-tab" id="cardListTab" type="button" aria-selected="false">元カード一覧</button>
-        <button class="page-tab" id="categoryToolTab" type="button" aria-selected="true">クラス分類案</button>
+        <button class="page-tab" id="categoryToolTab" type="button" aria-selected="true">専攻分類案</button>
       </nav>
       <span class="readonly-badge">ゲーム本体は変更しない</span>
     </div>
@@ -407,24 +407,24 @@
     </div>
   </main>
   <section class="category-tool" id="categoryToolView">
-    <div class="category-intro">これはAIが作成したクラス分けのたたき台です。シャドーバースのように、クラスデッキは「そのクラスのカード」と「共通講義」のカードだけで組む前提です。そのため各カードは、原則として1つのクラスまたは共通講義だけに割り当てています。ゲームのデッキ構築ルールやカード効果は変更しません。</div>
+    <div class="category-intro">これはAIが作成した専攻分けのたたき台です。<strong>専攻デッキでは、選択した専攻のカードと「共通カード」だけで40枚のデッキを組む。</strong>ほかの専攻のカードは1枚でも入れられず、入っているデッキはルール違反です。そのため各カードは、原則として1つの専攻または共通カードだけに割り当てています。ゲーム本体のデッキ構築ルールやカード効果は変更しません。</div>
     <div class="category-controls">
-      <input id="newCategoryName" type="text" maxlength="30" placeholder="新しいクラス名を入力">
-      <button class="action-button" id="addCategoryButton" type="button">クラスを追加</button>
+      <input id="newCategoryName" type="text" maxlength="30" placeholder="新しい専攻名を入力">
+      <button class="action-button" id="addCategoryButton" type="button">専攻を追加</button>
       <button class="secondary-button" id="exportCategoryButton" type="button">JSONを書き出し</button>
     </div>
     <div class="pane category-definition-pane">
-      <div class="category-definition-head"><h2>クラス名</h2><p>名前はここでいつでも変更できる。共通講義は全クラスで使用可能にする想定。</p></div>
+      <div class="category-definition-head"><h2>専攻名</h2><p>名前はここでいつでも変更できる。共通カードはすべての専攻で使用可能にする想定。</p></div>
       <div class="category-definition-list" id="categoryDefinitionList"></div>
     </div>
     <div class="category-summary" id="categorySummary"></div>
-    <div class="category-folder-status is-empty" id="activeCategoryStatus">クラスフォルダを選ぶと、カード一覧からクリックしたカードの所属クラスを変更できます。</div>
+    <div class="category-folder-status is-empty" id="activeCategoryStatus">専攻フォルダを選ぶと、カード一覧からクリックしたカードの所属専攻を変更できます。</div>
     <div class="category-layout">
       <div class="pane">
         <div class="toolbar category-toolbar">
           <input id="categorySearchInput" type="search" placeholder="カード名で検索">
           <select id="categoryTypeFilter" aria-label="タイプで絞り込み"><option value="">全タイプ</option><option value="student">学生</option><option value="teacher">教師</option><option value="vampire">ヴァンパイア</option><option value="item">持ち物</option><option value="environment">環境</option></select>
-          <select id="categoryFilter" aria-label="クラスで絞り込み"></select>
+          <select id="categoryFilter" aria-label="専攻で絞り込み"></select>
         </div>
         <div class="count" id="categoryCountText"></div>
         <div class="list" id="categoryCardList"></div>
@@ -898,31 +898,262 @@
     });
     [elements.search, elements.type, elements.availability].forEach((element) => element.addEventListener('input', renderList));
 
-    const CATEGORY_STORAGE_KEY = 'chibattle-class-draft-v6';
+    const CATEGORY_STORAGE_KEY = 'chibattle-class-draft-v7';
     const CATEGORY_ROLES = ['展開', '除去', 'ドロー', '回復', '妨害', '進化', '融合', '装備'];
     const CLASS_DEFINITIONS = [
-      { id: 'common', name: '共通講義', description: '特定のクラスに依存しない、どのクラスでも使える基礎カード。', locked: true },
-      { id: 'gakuyukai', name: '学友会', description: 'U太・裏U太・装備と、学友会の環境カードを中心に戦うカード群。', locked: false },
-      { id: 'item_combo', name: '持ち物連携型（仮）', description: '持ち物カードを使うことで強くなる出席者を中心に戦うカード群。', locked: false },
-      { id: 'cafeteria', name: '食堂', description: '食べ物、食券、食堂、ヴァンパイアの連携を使うカード群。', locked: false },
-      { id: 'design', name: 'デザイン', description: '「デザイン」と名のつく教師、定規、進化、猛禽寺を中心に戦うカード群。', locked: false },
-      { id: 'late', name: '遅刻', description: '遅刻、遅刻ゾーン、遅刻カウントを利用するカード群。', locked: false },
-      { id: 'expansion', name: '展開型（仮）', description: '出席者の召喚・コピー・横展開で講義室を広げるカード群。', locked: false },
-      { id: 'interference', name: '妨害型（仮）', description: '手札、デッキ、遅刻ゾーン、盤面を妨害して相手の行動を縛るカード群。', locked: false },
-      { id: 'shogi', name: '将棋部', description: '将棋部の決闘フィールドと低気力からの反撃を扱うカード群。', locked: false },
-      { id: 'big', name: 'バカでかい型（仮）', description: '単体の能力値や戦闘能力が強力で、少数の出席者で戦うカード群。', locked: false }
+      {
+        "id": "common",
+        "name": "共通カード",
+        "description": "特定の専攻に依存せず、どの専攻デッキにも入れられる基礎カード。",
+        "locked": true
+      },
+      {
+        "id": "gakuyukai_item",
+        "name": "学友会・持ち物",
+        "description": "U太・学友会と、装備・持ち物による強化を組み合わせて戦うカード群。",
+        "locked": false
+      },
+      {
+        "id": "cafeteria",
+        "name": "食堂",
+        "description": "食べ物、食券、食堂、ヴァンパイアの連携を使うカード群。",
+        "locked": false
+      },
+      {
+        "id": "design",
+        "name": "デザイン",
+        "description": "デザイン講師、定規、進化、猛禽寺を中心に戦うカード群。",
+        "locked": false
+      },
+      {
+        "id": "late",
+        "name": "遅刻",
+        "description": "遅刻、遅刻ゾーン、遅刻カウントを利用するカード群。",
+        "locked": false
+      },
+      {
+        "id": "expansion",
+        "name": "展開・敵増殖",
+        "description": "出席者の召喚・コピー・敵の増殖で、講義室を横に広げるカード群。",
+        "locked": false
+      },
+      {
+        "id": "interference",
+        "name": "妨害・LO",
+        "description": "手札・デッキ・盤面への妨害で相手を消耗させ、LOも狙うカード群。",
+        "locked": false
+      },
+      {
+        "id": "shogi",
+        "name": "将棋部",
+        "description": "将棋部の決闘フィールドと低気力からの反撃を扱うカード群。",
+        "locked": false
+      },
+      {
+        "id": "big",
+        "name": "バカでかい型",
+        "description": "単体の能力値や戦闘能力が強力で、少数の出席者で戦うカード群。",
+        "locked": false
+      }
     ];
     const CLASS_CARD_IDS = {
-      common: ['general_student', 'general_teacher', 'classroom', 'hondara', 'aggro_eater', 'peaceful_mind', 'dont_worry', 'environment_setup', 'gangi_fortress', 'building_12_classroom'],
-      gakuyukai: ['yuta', 'dark_yuta', 'yuta_umbrella', 'accelerate', 'chameleon', 'red_happi', 'sexual_eye', 'yutakun_yutakun', 'yoyu_announce', 'greeting_3000', 'student_council', 'dark_student_council'],
-      item_combo: ['yocchan', 'trendy_student', 'set_log', 'door_war', 'front_door', 'door_front', 'back_door', 'abyss', 'delayed_student'],
-      cafeteria: ['zombie', 'cafeteria_lady', 'tissue_distributor', 'apprentice_vampire', 'curry_treater', 'chen_san', 'impossible_high_note', 'vampire', 'cafeteria', 'green_curry', 'iv_pack', 'dry_meal_ticket', 'wet_meal_ticket', 'fluid_pasta', 'bento', 'onigiri_draw', 'yakiniku', 'circle_crab', 'homeless_crab', 'hair_crab', 'water_2l', 'eaten_student', 'vampirization'],
-      design: ['fairy_t', 'suzaku', 'lightning_n', 'popular_c', 'bird_a', 'demon_a_plus', 'ux_design_textbook', 'donguri', 'ruler', 'double_diamond', 'music_detergent', 'raptor_temple', 'design_domain'],
-      late: ['adjective_student', 'lazy_student', 'hurried_student', 'cancel_student', 'substitute_attendance'],
-      expansion: ['extra_student', 'ta', 'midge', 'perfect_mutant', 'organism', 'single_cell', 'night_pool', 'night_pool_water', 'college_student_vibe', 'loud_group', 'seat_taking_group', 'extra_people', 'predator', 'trpg_member', 'enemy_student', 'proliferating_enemy', 'enemy_boss', 'pro_k', 'kyushu_info_c', 'ikemasu', 'pachin_uni', 'aiben', 'nyotei', 'aiben_vs_nyotei_title_match', 'roar'],
-      interference: ['alpha', 'beta', 'gamma', 'suspicious_document', 'ttb', 'dos_attack', 'destroy_dos_attack', 'word_increaser', 'bounce_day', 'failure_student', 'success_student', 'fridge_thief', 'sniper', 'cynical_student', 'thin_item', 'paired_existence', 'chigauyo', 'deck_without', 'dropped_cards', 'capture', 'smart_me', 'handy_jet_engine', 'fire_touch', 'sock_block', 'scared_me', 'baka_mac', 'yamanashi_minimum_wage', 'live_person', 'dobby', 'panpan', 'aggro_student', 'logic_hunter', 'france_asakura', 'kyoto_sound_i', 'kansai_voice_t', 'thin_professor_h', 'back_question_student', 'i_got_it', 'quiet_please', 'seriously_hit', 'favorite_number_s', 'seat_rules', 'meguro_library', 'no_late_time', 'full_lock', 'chaos_world', 'on_demand_business'],
-      shogi: ['infight_shogi', 'stand_up', 'shogi_duel_field', 'furious_comeback'],
-      big: ['oni_shima_ai', 'ai_chan', 'aggro_king', 'ae_student', 'super_ae_student', 'best_friend', 'ta_killer', 'rebirth_student', 'lone_wolf', 'loud_student', 'protein_drinker', 'ninety_three_teacher', 'president', 'cote_dazur', 'dorm_council']
+      "common": [
+        "ai_chan",
+        "alpha",
+        "beta",
+        "chaos_world",
+        "circle_crab",
+        "classroom",
+        "environment_setup",
+        "fridge_thief",
+        "gamma",
+        "general_student",
+        "general_teacher",
+        "hair_crab",
+        "homeless_crab",
+        "hondara",
+        "impossible_pink_fat",
+        "laughing_front_student",
+        "on_demand_business",
+        "oni_shima_ai",
+        "sage_legacy",
+        "smart_me",
+        "ta",
+        "three_gestures",
+        "water_2l",
+        "word_increaser"
+      ],
+      "gakuyukai_item": [
+        "abyss",
+        "accelerate",
+        "aggro_eater",
+        "back_door",
+        "chameleon",
+        "dark_student_council",
+        "dark_yuta",
+        "deck_without",
+        "delayed_student",
+        "door_front",
+        "door_war",
+        "dropped_cards",
+        "failure_student",
+        "front_door",
+        "full_throttle",
+        "greeting_3000",
+        "ikemasu",
+        "kansai_voice_t",
+        "paired_existence",
+        "panpan",
+        "red_happi",
+        "scared_me",
+        "set_log",
+        "sexual_eye",
+        "student_council",
+        "success_student",
+        "trendy_student",
+        "yocchan",
+        "yoyu_announce",
+        "yuta",
+        "yuta_umbrella",
+        "yutakun_yutakun"
+      ],
+      "cafeteria": [
+        "apprentice_vampire",
+        "bento",
+        "cafeteria",
+        "cafeteria_lady",
+        "chen_san",
+        "curry_treater",
+        "dry_meal_ticket",
+        "fluid_pasta",
+        "green_curry",
+        "impossible_high_note",
+        "iv_pack",
+        "onigiri_draw",
+        "reversal",
+        "tissue_distributor",
+        "vampire",
+        "vampirization",
+        "wet_meal_ticket",
+        "yakiniku",
+        "zombie"
+      ],
+      "design": [
+        "acting_out_man",
+        "back_question_student",
+        "bird_a",
+        "demon_a_plus",
+        "design_domain",
+        "donguri",
+        "double_diamond",
+        "fairy_t",
+        "lightning_n",
+        "music_detergent",
+        "namen_tenno",
+        "popular_c",
+        "raptor_temple",
+        "ruler",
+        "suzaku",
+        "ux_design_textbook"
+      ],
+      "late": [
+        "adjective_student",
+        "cancel_student",
+        "eaten_student",
+        "hurried_student",
+        "lazy_student",
+        "no_late_time",
+        "signal_professor_m",
+        "substitute_attendance"
+      ],
+      "expansion": [
+        "aggro_king",
+        "aggro_queen",
+        "college_student_vibe",
+        "enemy_boss",
+        "enemy_student",
+        "extra_people",
+        "extra_student",
+        "kyushu_info_c",
+        "loud_group",
+        "midge",
+        "night_pool",
+        "night_pool_water",
+        "organism",
+        "pachin_uni",
+        "perfect_mutant",
+        "pro_k",
+        "proliferating_enemy",
+        "roar",
+        "seat_taking_group",
+        "single_cell",
+        "sock_block",
+        "trpg_member"
+      ],
+      "interference": [
+        "aggro_student",
+        "angry_maker",
+        "baka_mac",
+        "bounce_day",
+        "building_12_classroom",
+        "capture",
+        "cynical_student",
+        "destroy_dos_attack",
+        "dobby",
+        "dont_worry",
+        "dos_attack",
+        "elite_open_chatter",
+        "france_asakura",
+        "full_lock",
+        "handmade_ctoc",
+        "handy_jet_engine",
+        "i_got_it",
+        "kyoto_sound_i",
+        "live_person",
+        "logic_hunter",
+        "meguro_library",
+        "ninety_three_teacher",
+        "peaceful_mind",
+        "quiet_please",
+        "seat_rules",
+        "sniper",
+        "student_comedy",
+        "suspicious_document",
+        "thanks_all_students",
+        "thin_item",
+        "thin_professor_h",
+        "ttb",
+        "yamanashi_minimum_wage"
+      ],
+      "shogi": [
+        "aiben",
+        "aiben_vs_nyotei_title_match",
+        "furious_comeback",
+        "gangi_fortress",
+        "infight_shogi",
+        "nyotei",
+        "shogi_duel_field",
+        "stand_up"
+      ],
+      "big": [
+        "ae_student",
+        "best_friend",
+        "chigauyo",
+        "cote_dazur",
+        "dorm_council",
+        "favorite_number_s",
+        "fire_touch",
+        "go_home",
+        "lone_wolf",
+        "loud_student",
+        "predator",
+        "president",
+        "protein_drinker",
+        "rebirth_student",
+        "seriously_hit",
+        "super_ae_student",
+        "ta_killer"
+      ]
     };
     const CLASS_REASON = Object.fromEntries(CLASS_DEFINITIONS.map((entry) => [entry.id, entry.description]));
 
@@ -1061,14 +1292,14 @@
         const locked = category.locked ? ' readonly' : '';
         const deleteButton = category.locked
           ? '<button class="icon-button" type="button" disabled title="共通は削除できません">−</button>'
-          : '<button class="icon-button" type="button" data-delete-category="' + escapeHtml(category.id) + '" title="クラスを削除">×</button>';
+          : '<button class="icon-button" type="button" data-delete-category="' + escapeHtml(category.id) + '" title="専攻を削除">×</button>';
         return '<div class="category-definition"><input type="text" maxlength="30" value="' + escapeHtml(category.name) + '" data-category-name="' + escapeHtml(category.id) + '"' + locked + '>' + deleteButton + '</div>';
       }).join('');
     }
 
     function renderCategoryFilter() {
       const value = categoryElements.filter.value;
-      const options = ['<option value="">全クラス</option>', '<option value="__unclassified">未分類</option>']
+      const options = ['<option value="">全専攻</option>', '<option value="__unclassified">未分類</option>']
         .concat(categoryState.categories.map((category) => '<option value="' + escapeHtml(category.id) + '">' + escapeHtml(category.name) + '</option>'));
       categoryElements.filter.innerHTML = options.join('');
       categoryElements.filter.value = [...categoryElements.filter.options].some((option) => option.value === value) ? value : '';
@@ -1079,7 +1310,7 @@
       const unclassifiedCard = '<button class="category-summary-button is-unclassified" type="button" data-summary-filter="__unclassified"><div class="category-summary-title"><span>未分類</span><span class="category-summary-number">' + unclassified + '</span></div><div class="category-summary-meta">デッキ投入カードのうち、まだ所属が決まっていないカード。</div></button>';
       const cards = categoryState.categories.map((category) => {
         const capacity = categoryDeckCapacity(category.id);
-        const description = category.description || (category.id === 'common' ? 'どのクラスでも使える想定。' : 'このクラスへ割り当てたカード。');
+        const description = category.description || (category.id === 'common' ? 'どの専攻でも使える想定。' : 'この専攻へ割り当てたカード。');
         const count = category.id === 'common'
           ? '直接所属 ' + capacity.direct + '種類'
           : '直接所属 ' + capacity.direct + '種類 + 共通 ' + capacity.common + '種類 / 3枚ずつで最大 ' + capacity.maxCopies + '枚';
@@ -1094,11 +1325,11 @@
       const category = activeCategory();
       if (!category) {
         categoryElements.activeStatus.className = 'category-folder-status is-empty';
-        categoryElements.activeStatus.textContent = 'クラスフォルダを選ぶと、そのクラスに所属するカードを表示します。';
+        categoryElements.activeStatus.textContent = '専攻フォルダを選ぶと、その専攻に所属するカードを表示します。';
         return;
       }
       categoryElements.activeStatus.className = 'category-folder-status';
-      categoryElements.activeStatus.innerHTML = '<strong>表示中：' + escapeHtml(category.name) + '</strong><span>カード一覧には、このクラスに所属するカードだけを表示しています。クラス用の分類では、カードは共通講義または1つのクラスだけに所属します。</span>';
+      categoryElements.activeStatus.innerHTML = '<strong>表示中：' + escapeHtml(category.name) + '</strong><span>この専攻デッキには、表示中の専攻のカードと共通カードだけを入れられます。ほかの専攻のカードは入れられません。</span>';
     }
 
     function categoryMatches(card) {
@@ -1131,7 +1362,7 @@
         const active = card.id === categorySelectedId ? ' active' : '';
         const roles = assignment.roles.length ? ' / ' + assignment.roles.join('・') : '';
         const isInActiveCategory = Boolean(activeCategoryId && assignment.categoryIds.includes(activeCategoryId));
-        const status = isInActiveCategory ? ' / 選択中のクラス' : '';
+        const status = isInActiveCategory ? ' / 選択中の専攻' : '';
         const statusClass = isInActiveCategory ? ' is-added' : '';
         return '<button class="row type-' + escapeHtml(card.type) + active + '" type="button" data-category-card="' + escapeHtml(card.id) + '"><span><span class="row-title">' + escapeHtml(card.name) + '</span><span class="category-row-category' + statusClass + '">' + escapeHtml(categoryNames(assignment.categoryIds)) + escapeHtml(roles) + escapeHtml(status) + '</span><span class="row-sub">戦意 ' + escapeHtml(stat(card.cost)) + '</span></span><span class="meta"><span class="badge ' + escapeHtml(card.type) + '">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</span><span class="badge">' + escapeHtml(AVAILABILITY_LABELS[card.availability] || card.availability) + '</span></span></button>';
       }).join('') || '<p class="muted">該当するカードがありません。</p>';
@@ -1153,12 +1384,12 @@
       const roles = CATEGORY_ROLES.map((role) => '<label class="role-option"><input type="checkbox" data-category-role="' + escapeHtml(role) + '"' + (assignment.roles.includes(role) ? ' checked' : '') + '><span>' + escapeHtml(role) + '</span></label>').join('');
       categoryElements.detail.innerHTML = '<h2>' + escapeHtml(card.name) + '</h2>'
         + '<div class="detail-meta"><span class="badge ' + escapeHtml(card.type) + '">' + escapeHtml(TYPE_LABELS[card.type] || card.type) + '</span><span class="badge">' + escapeHtml(AVAILABILITY_LABELS[card.availability] || card.availability) + '</span><span class="badge">戦意 ' + escapeHtml(stat(card.cost)) + '</span></div>'
-        + '<div class="guide-note">クラスはカードのタイプではなく、連携・世界観・戦い方で決める。クラス用の分類では、カードは共通講義または1つのクラスだけに所属する。生成限定・トークンはデッキ枚数には含めない。</div>'
-        + '<div class="field"><span class="field-label">所属クラス</span><div class="role-grid">' + categoryCheckboxes(assignment.categoryIds) + '</div></div>'
+        + '<div class="guide-note">専攻はカードのタイプではなく、連携・世界観・戦い方で決める。専攻デッキ用の分類では、カードは共通カードまたは1つの専攻だけに所属する。生成限定・トークンはデッキ枚数には含めない。</div>'
+        + '<div class="field"><span class="field-label">所属専攻</span><div class="role-grid">' + categoryCheckboxes(assignment.categoryIds) + '</div></div>'
         + '<div class="field"><span class="field-label">役割（複数選択可）</span><div class="role-grid">' + roles + '</div></div>'
-        + '<div class="field"><label class="field-label" for="categoryReason">分類理由</label><textarea id="categoryReason" maxlength="500" placeholder="例：このクラスの主要な展開役。特定の環境・カードを参照する。">' + escapeHtml(assignment.reason) + '</textarea></div>'
+        + '<div class="field"><label class="field-label" for="categoryReason">分類理由</label><textarea id="categoryReason" maxlength="500" placeholder="例：この専攻の主要な展開役。特定の環境・カードを参照する。">' + escapeHtml(assignment.reason) + '</textarea></div>'
         + '<div class="field"><span class="field-label">カード本文</span><div class="text-block">' + escapeHtml(card.effect || '効果なし。') + '</div></div>'
-        + '<p class="category-help">保存は自動。クラス名と分類内容はこのブラウザ内に保存される。</p>';
+        + '<p class="category-help">保存は自動。専攻名と分類内容はこのブラウザ内に保存される。</p>';
     }
 
     function renderCategoryTool() {
@@ -1193,7 +1424,7 @@
       const name = categoryElements.newName.value.trim().slice(0, 30);
       if (!name) return;
       if (categoryState.categories.some((category) => category.name === name)) {
-        alert('同じ名前のクラスがあります。');
+        alert('同じ名前の専攻があります。');
         return;
       }
       const category = { id: 'category-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), name, locked: false };
@@ -1213,7 +1444,7 @@
       const name = input.value.trim().slice(0, 30);
       if (!category || category.locked || !name) return renderCategoryTool();
       if (categoryState.categories.some((entry) => entry.id !== category.id && entry.name === name)) {
-        alert('同じ名前のクラスがあります。');
+        alert('同じ名前の専攻があります。');
         return renderCategoryTool();
       }
       category.name = name;
@@ -1224,7 +1455,7 @@
       const button = event.target.closest('[data-delete-category]');
       if (!button) return;
       const category = categoryState.categories.find((entry) => entry.id === button.dataset.deleteCategory);
-      if (!category || !confirm('「' + category.name + '」を削除します。このクラスのカードは未分類に戻ります。')) return;
+      if (!category || !confirm('「' + category.name + '」を削除します。この専攻のカードは未分類に戻ります。')) return;
       categoryState.categories = categoryState.categories.filter((entry) => entry.id !== category.id);
       if (activeCategoryId === category.id) activeCategoryId = null;
       Object.keys(categoryState.assignments).forEach((cardId) => {
@@ -1287,7 +1518,7 @@
       const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'チバトル-クラス分類案-' + new Date().toISOString().slice(0, 10) + '.json';
+      link.download = 'チバトル-専攻分類案-' + new Date().toISOString().slice(0, 10) + '.json';
       link.click();
       setTimeout(() => URL.revokeObjectURL(url), 0);
     });
