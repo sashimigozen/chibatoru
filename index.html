@@ -9076,6 +9076,10 @@
         remoteDeckName: "",
         localDeckCounts: null,
         remoteDeckCounts: null,
+        localCardStyles: {},
+        remoteCardStyles: {},
+        hostCardStyles: {},
+        guestCardStyles: {},
         relayMode: loadOnlineRelayMode(),
         localRpsChoice: null,
         remoteRpsChoice: null,
@@ -10351,6 +10355,7 @@
     }
 
     function cardRewardStyleClass(card) {
+      if (isOnlineSpectator() || (card?.owner && card.owner !== "player")) return "";
       const reward = rewardForCardBaseId(card?.baseId);
       if (!reward || !unlockedDungeonCardStyles[reward.specialtyId]) return "";
       return selectedDungeonCardStyles[card.baseId] === "normal" ? "" : ` reward-foil reward-foil-${reward.style}`;
