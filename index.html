@@ -13321,6 +13321,15 @@
       return activeDungeonFloorNumber() === floorNumber;
     }
 
+    function isAiUtaStrategyActive(side = "opponent") {
+      if (side !== "opponent") return false;
+      const counts = state.players.opponent?.originalDeckCounts || {};
+      const utaCount = (Number(counts.yuta) || 0) + (Number(counts.dark_yuta) || 0);
+      const equipmentCount = UTA_EQUIPMENT_BASE_IDS
+        .reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
+      return utaCount >= 2 && equipmentCount >= 2;
+    }
+
     function isCafeteriaEnvironmentActive() {
       return state.environment?.baseId === "cafeteria"
         || state.cafeteriaEffectPermanentlyActive === true
@@ -13671,6 +13680,11 @@
       if (timing !== "beforeBoard") return true;
       if (score <= 0) return false;
       if (item.baseId === "yamanashi_minimum_wage") return false;
+      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)
+        && isAiUtaStrategyActive()
+        && aiUtaEquipmentTargets("opponent", item).length > 0) {
+        return true;
+      }
       const lethalForecast = getAiLethalForecast();
       if (aiDirectLifeDamageValue(item, "opponent") > 0 && lethalForecast.immediateLethal) return true;
       if (aiLifeHealingValue(item) > 0 && lethalForecast.opponentCounterLethal) return true;
@@ -13723,6 +13737,15 @@
       }
       if (isEarlyDungeonAi() && isAiDrawItem(item)) {
         adjusted += timing === "beforeBoard" ? 30 : 20;
+      }
+      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId) && isAiUtaStrategyActive()) {
+        const target = aiUtaEquipmentTargets("opponent", item)[0];
+        if (target) {
+          adjusted += 12;
+          if (target.card.playedOnTurn === state.actionTurn && utaEquipmentCount(target.card) === 0) {
+            adjusted += 16;
+          }
+        }
       }
       return adjusted;
     }
@@ -14124,12 +14147,15 @@
       const enemyAttack = enemyCards.reduce((total, enemy) => total + Math.max(0, enemy.attack || 0), 0);
       const enemyThreat = enemyCards.reduce((total, enemy) => total + Math.max(0, scoreAiEnemyAttendeeThreat(enemy)), 0);
       const missingHp = Math.max(0, (card.maxHp || 0) - (card.currentHp || 0));
-      const canBeAttacked = card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気") || hasKeyword(card, "超陽気");
+      const canAttackNow = card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気") || hasKeyword(card, "超陽気");
+      const gainsCheerful = utaEquipmentCount(card) === 0 && !hasKeyword(card, "陽気");
+      const projectedAttack = Math.max(0, card.attack || 0) + (item.baseId === "red_happi" ? 2 : 0);
+      const canClearEnemy = enemyCards.some((enemy) => projectedAttack >= (enemy.currentHp || 0));
       let score = (card.attack || 0) * 1.4 + (card.currentHp || 0) * 0.45;
       if (card.baseId === "dark_yuta") score += 3;
       if (item.baseId === "accelerate") {
         score += state.players[side].deck.length > 0 ? 11 : 0;
-        score += canBeAttacked ? 4 : 2;
+        score += canAttackNow ? 4 : 2;
       }
       if (item.baseId === "chameleon") {
         score += 5 + missingHp * 2 + Math.min(8, enemyAttack * 0.45);
@@ -14139,8 +14165,16 @@
         score += 4 + Math.min(12, enemyThreat * 0.22) + (lethalRisk ? 12 : 0);
       }
       if (item.baseId === "red_happi") {
-        score += 7 + (canBeAttacked ? 4 : 0);
+        score += 7 + (canAttackNow ? 4 : 0);
         if (state.players[oppositeSide(side)].life <= (card.attack || 0) + 2) score += 12;
+      }
+      if (side === "opponent" && isAiUtaStrategyActive()) {
+        if (gainsCheerful) score += 14;
+        if (!card.hasAttacked && gainsCheerful && card.playedOnTurn === state.actionTurn && enemyCards.length > 0) {
+          score += canClearEnemy ? 30 : 12;
+        } else if (!card.hasAttacked && canClearEnemy) {
+          score += 10;
+        }
       }
       return score;
     }
@@ -14165,7 +14199,11 @@
       if (item.baseId === "ux_design_textbook") return countFriendlyDesignTeachers("opponent") > 0 ? 4 + countFriendlyDesignTeachers("opponent") : 0;
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) {
         const target = aiUtaEquipmentTargets("opponent", item)[0];
-        return target ? 7 + target.score * 0.45 : 0;
+        if (!target) return 0;
+        const utaStrategyBonus = isAiUtaStrategyActive()
+          ? 18 + (target.card.playedOnTurn === state.actionTurn && utaEquipmentCount(target.card) === 0 ? 12 : 0)
+          : 0;
+        return 7 + target.score * 0.45 + utaStrategyBonus;
       }
       if (item.baseId === "aggro_eater") {
         if (friendlyCards.length === 0) return 0;
@@ -14581,6 +14619,15 @@
       const best = bestWithoutLecture || targets[0];
       if (!best) return null;
       if (!bestWithoutLecture && best.lectureWillDefeat) return null;
+      const utaBoardClearer = isAiUtaStrategyActive()
+        && isUtaEquipmentTarget(attacker)
+        && utaEquipmentCount(attacker) > 0;
+      if (utaBoardClearer) {
+        const clearableTarget = targets.find((target) => target.canDefeat
+          && !target.lectureWillDefeat
+          && (target.survivesCounter || scoreAiEnemyAttendeeThreat(target.card, target) >= 12));
+        if (clearableTarget) return clearableTarget;
+      }
       if (!cannotAttackLife) {
         const attack = Math.max(0, attacker.attack || 0);
         const enemyLife = state.players.player.life;
