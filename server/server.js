@@ -1,14 +1,10 @@
 "use strict";
 
-<<<<<<< HEAD
 const crypto = require("crypto");
 const fs = require("fs");
 const http = require("http");
 const os = require("os");
 const path = require("path");
-=======
-const http = require("http");
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 const { WebSocketServer } = require("ws");
 
 const PORT = Number(process.env.PORT || 8787);
@@ -19,16 +15,11 @@ const COMMAND_RETRY_MS = Number(process.env.COMMAND_RETRY_MS || 1200);
 const COMMAND_MAX_ATTEMPTS = Number(process.env.COMMAND_MAX_ATTEMPTS || 6);
 const PROCESSED_COMMAND_LIMIT = 120;
 const MAX_PENDING_COMMANDS_PER_PLAYER = 12;
-<<<<<<< HEAD
 const MAX_MESSAGE_BYTES = Number(process.env.MAX_MESSAGE_BYTES || 2 * 1024 * 1024);
-=======
-const MAX_MESSAGE_BYTES = 512 * 1024;
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,12}$/;
 const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
 const SERVER_ID = "server";
-<<<<<<< HEAD
 const LOG_ADMIN_PASSWORD = process.env.CHIBATORU_LOG_ADMIN_PASSWORD || process.env.ADMIN_LOG_PASSWORD || "";
 const RENDER_DISK_ROOT = "/var/data";
 const DEFAULT_LOG_STORAGE_DIR = fs.existsSync(RENDER_DISK_ROOT)
@@ -63,15 +54,6 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === "/admin/logs.json") {
     handleAdminLogsJson(req, res);
-=======
-
-const rooms = new Map();
-
-const server = http.createServer((req, res) => {
-  if (req.url === "/health") {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ ok: true, rooms: rooms.size }));
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     return;
   }
   res.writeHead(200, { "content-type": "text/plain; charset=utf-8" });
@@ -92,7 +74,6 @@ function createSessionId() {
   return `srv-${now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-<<<<<<< HEAD
 function createRandomRoomId() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -103,8 +84,6 @@ function createRandomRoomId() {
   return `R${now().toString(36).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(-8)}`;
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function safeJsonParse(raw) {
   try {
     return JSON.parse(String(raw));
@@ -113,7 +92,6 @@ function safeJsonParse(raw) {
   }
 }
 
-<<<<<<< HEAD
 function jsonResponse(res, statusCode, payload) {
   res.writeHead(statusCode, {
     "content-type": "application/json; charset=utf-8",
@@ -757,8 +735,6 @@ function handleAdminLogsRequest(req, res, url) {
   htmlResponse(res, 200, renderAdminLogDetail(log));
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function send(ws, message) {
   if (!ws || ws.readyState !== ws.OPEN) return false;
   ws.send(JSON.stringify({
@@ -773,7 +749,6 @@ function sendError(ws, message, code = "bad_request") {
   send(ws, { type: "error", code, message, senderId: SERVER_ID });
 }
 
-<<<<<<< HEAD
 function normalizeCardStyles(cardStyles) {
   if (!cardStyles || typeof cardStyles !== "object" || Array.isArray(cardStyles)) return {};
   return Object.fromEntries(Object.entries(cardStyles)
@@ -781,17 +756,12 @@ function normalizeCardStyles(cardStyles) {
     .slice(0, 64));
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function playerPublicState(player) {
   return {
     clientId: player.clientId,
     role: player.role,
     deckName: player.role === "spectator" ? "" : (player.deckName || "__current"),
-<<<<<<< HEAD
     cardStyles: player.role === "spectator" ? {} : (player.cardStyles || {}),
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     ready: player.role === "spectator" ? false : Boolean(player.ready)
   };
 }
@@ -813,7 +783,6 @@ function roomHasOpponent(room, role) {
   return battlePlayers(room).some((player) => player.role !== role);
 }
 
-<<<<<<< HEAD
 function publicRoomState(room) {
   const host = hostOf(room);
   const guest = guestOf(room);
@@ -844,8 +813,6 @@ function handlePublicRoomsJson(res) {
   });
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function broadcast(room, message, exceptClientId = "") {
   room.players.forEach((player) => {
     if (player.clientId === exceptClientId) return;
@@ -861,7 +828,6 @@ function guestOf(room) {
   return [...room.players.values()].find((player) => player.role === "guest") || null;
 }
 
-<<<<<<< HEAD
 function createRoom(roomId, sessionId = "", matchType = "private") {
   return {
     roomId,
@@ -909,8 +875,6 @@ function findRandomWaitingRoom(clientId) {
     }) || null;
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function clearPendingCommand(room, commandId) {
   const pending = room?.pendingCommands?.get(commandId);
   if (!pending) return null;
@@ -1007,10 +971,7 @@ function closeWaitingRoom(roomId) {
   });
   clearWaitingRoomTimer(room);
   clearAllPendingCommands(room);
-<<<<<<< HEAD
   removeRandomQueueRoom(roomId);
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
   rooms.delete(roomId);
   room.players.forEach((player) => {
     try { player.ws.close(4002, "room_timeout"); } catch {}
@@ -1072,26 +1033,17 @@ function cleanupRooms() {
   rooms.forEach((room, roomId) => {
     if (room.players.size === 0 && room.updatedAt < cutoff) {
       clearAllPendingCommands(room);
-<<<<<<< HEAD
       removeRandomQueueRoom(roomId);
       rooms.delete(roomId);
     }
   });
   pruneRandomMatchQueue();
-=======
-      rooms.delete(roomId);
-    }
-  });
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 }
 
 function joinRoom(ws, message) {
   const roomId = normalizeRoomId(message.roomId);
   const clientId = String(message.clientId || "").slice(0, 80);
-<<<<<<< HEAD
   const wantsSpectator = message.spectate === true || message.role === "spectator";
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
   if (!ROOM_CODE_PATTERN.test(roomId)) {
     sendError(ws, "部屋コードは4〜12文字の英数字で指定してください。", "invalid_room");
     return;
@@ -1106,43 +1058,21 @@ function joinRoom(ws, message) {
     sendError(ws, "部屋が見つかりません。部屋コードを確認してください。", "room_not_found");
     return;
   }
-<<<<<<< HEAD
   if (wantsSpectator && (!room || !room.started || battlePlayers(room).length < 2)) {
     sendError(ws, "この部屋はまだ観戦できません。対戦中の部屋を選んでください。", "not_spectatable");
     return;
   }
   if (!room) {
     room = createRoom(roomId, message.roomSessionId || createSessionId(), message.matchType === "random" ? "random" : "private");
-=======
-  if (!room) {
-    room = {
-      roomId,
-      sessionId: message.roomSessionId || createSessionId(),
-      players: new Map(),
-      started: false,
-      state: null,
-      currentTurn: "",
-      snapshotSeq: 0,
-      pendingCommands: new Map(),
-      processedCommandIds: [],
-      waitingTimer: null,
-      createdAt: now(),
-      updatedAt: now()
-    };
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     rooms.set(roomId, room);
   }
 
   const existing = room.players.get(clientId);
   let role = existing?.role || "";
   if (!role) {
-<<<<<<< HEAD
     if (wantsSpectator) {
       role = "spectator";
     } else if (message.create && ![...room.players.values()].some((player) => player.role === "host")) {
-=======
-    if (message.create && ![...room.players.values()].some((player) => player.role === "host")) {
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
       role = "host";
     } else if (![...room.players.values()].some((player) => player.role === "guest")) {
       role = "guest";
@@ -1162,10 +1092,7 @@ function joinRoom(ws, message) {
     ready: role === "spectator" ? false : Boolean(message.ready),
     deckName: role === "spectator" ? "" : (message.deckName || "__current"),
     deckCounts: role === "spectator" ? null : (message.deckCounts || null),
-<<<<<<< HEAD
     cardStyles: role === "spectator" ? {} : normalizeCardStyles(message.cardStyles ?? existing?.cardStyles),
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     joinedAt: existing?.joinedAt || now(),
     lastSeenAt: now()
   };
@@ -1179,10 +1106,7 @@ function joinRoom(ws, message) {
     senderId: SERVER_ID,
     roomId,
     roomSessionId: room.sessionId,
-<<<<<<< HEAD
     matchType: room.matchType || "private",
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     you: playerPublicState(player),
     players: roomPlayers(room),
     hasOpponent: roomHasOpponent(room, role),
@@ -1201,7 +1125,6 @@ function joinRoom(ws, message) {
   if (role === "host" && room.started) {
     room.pendingCommands.forEach((_pending, commandId) => deliverPendingCommand(room, commandId));
   }
-<<<<<<< HEAD
   if (room.matchType === "random") {
     if (guestOf(room)) {
       removeRandomQueueRoom(room.roomId);
@@ -1244,11 +1167,6 @@ function handleRandomMatch(ws, message) {
   pruneRandomMatchQueue();
 }
 
-=======
-  refreshWaitingRoomTimer(room);
-}
-
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function requireJoined(ws) {
   const room = rooms.get(ws.roomId);
   const player = room?.players.get(ws.clientId);
@@ -1275,10 +1193,7 @@ function handleDeckUpdate(ws, message) {
   }
   player.deckName = message.deckName || "__current";
   player.deckCounts = message.deckCounts || null;
-<<<<<<< HEAD
   player.cardStyles = normalizeCardStyles(message.cardStyles ?? player.cardStyles);
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
   player.ready = ready;
   broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
   broadcast(room, {
@@ -1286,10 +1201,7 @@ function handleDeckUpdate(ws, message) {
     senderId: SERVER_ID,
     roomId: room.roomId,
     roomSessionId: room.sessionId,
-<<<<<<< HEAD
     matchType: room.matchType || "private",
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     you: null,
     players: roomPlayers(room),
     hasOpponent: true,
@@ -1444,7 +1356,6 @@ function handlePlayerCommand(ws, message) {
   deliverPendingCommand(room, commandId);
 }
 
-<<<<<<< HEAD
 function handlePrivateChoiceRelay(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
@@ -1473,8 +1384,6 @@ function handlePrivateChoiceRelay(ws, message) {
   send(target.ws, { ...message, senderId: player.clientId, roomSessionId: room.sessionId });
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function handleReturnRoom(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
@@ -1512,12 +1421,9 @@ function routeMessage(ws, raw) {
     case "joinRoom":
       joinRoom(ws, message);
       break;
-<<<<<<< HEAD
     case "randomMatch":
       handleRandomMatch(ws, message);
       break;
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     case "deckUpdate":
       handleDeckUpdate(ws, message);
       break;
@@ -1530,12 +1436,9 @@ function routeMessage(ws, raw) {
     case "gameState":
       handleGameState(ws, message);
       break;
-<<<<<<< HEAD
     case "analyticsLog":
       handleAnalyticsLog(ws, message);
       break;
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     case "playCard":
     case "endTurn":
     case "gameAction":
@@ -1560,7 +1463,6 @@ function routeMessage(ws, raw) {
       }
       break;
     }
-<<<<<<< HEAD
     case "thinItemChoiceRequest":
     case "thinItemChoiceResponse":
     case "badStudentDiscardRequest":
@@ -1569,8 +1471,6 @@ function routeMessage(ws, raw) {
     case "logicHunterChoiceResponse":
       handlePrivateChoiceRelay(ws, message);
       break;
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     case "returnRoom":
       handleReturnRoom(ws, message);
       break;
@@ -1591,10 +1491,7 @@ wss.on("connection", (ws) => {
     if (!player || player.ws !== ws) return;
     room.players.delete(ws.clientId);
     room.updatedAt = now();
-<<<<<<< HEAD
     if (room.matchType === "random" && !guestOf(room)) removeRandomQueueRoom(room.roomId);
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     refreshWaitingRoomTimer(room);
     if (player.role === "guest") {
       [...room.pendingCommands.entries()].forEach(([commandId, pending]) => {
@@ -1616,11 +1513,8 @@ wss.on("connection", (ws) => {
 
 setInterval(cleanupRooms, 1000 * 60 * 10).unref();
 
-<<<<<<< HEAD
 loadLogsFromDisk();
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Chibatoru WebSocket server listening on ${PORT}`);
 });
