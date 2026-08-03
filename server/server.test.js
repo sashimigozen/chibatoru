@@ -1,12 +1,9 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-<<<<<<< HEAD
 const fs = require("node:fs");
 const http = require("node:http");
 const os = require("node:os");
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 const net = require("node:net");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
@@ -24,11 +21,7 @@ function freePort() {
   });
 }
 
-<<<<<<< HEAD
 function startServer(port, env = {}) {
-=======
-function startServer(port) {
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
   const child = spawn(process.execPath, ["server.js"], {
     cwd: __dirname,
     env: {
@@ -36,12 +29,8 @@ function startServer(port) {
       PORT: String(port),
       COMMAND_RETRY_MS: "70",
       COMMAND_MAX_ATTEMPTS: "5",
-<<<<<<< HEAD
       WAITING_ROOM_TIMEOUT_MS: "300000",
       ...env
-=======
-      WAITING_ROOM_TIMEOUT_MS: "300000"
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
     },
     stdio: ["ignore", "pipe", "pipe"]
   });
@@ -80,7 +69,6 @@ function connectClient(url, roomId, clientId, create = false) {
   });
 }
 
-<<<<<<< HEAD
 function connectSpectatorClient(url, roomId, clientId) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
@@ -124,8 +112,6 @@ function connectRandomClient(url, clientId) {
   });
 }
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 function waitFor(client, predicate, fromIndex = 0, timeoutMs = 3000) {
   const existingIndex = client.messages.findIndex((message, index) => index >= fromIndex && predicate(message));
   if (existingIndex >= 0) return Promise.resolve({ message: client.messages[existingIndex], index: existingIndex });
@@ -149,7 +135,6 @@ function send(client, message) {
   client.ws.send(JSON.stringify({ protocol: 1, ...message }));
 }
 
-<<<<<<< HEAD
 function httpGet(port, pathname, password = "") {
   return new Promise((resolve, reject) => {
     const headers = {};
@@ -377,8 +362,6 @@ test("private card choice requests and responses relay between host and guest", 
   }
 });
 
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 test("guest commands retry until the host confirms an authoritative snapshot", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
@@ -443,7 +426,6 @@ test("guest commands retry until the host confirms an authoritative snapshot", a
   const forbidden = await waitFor(guest, (message) => message.type === "error" && message.code === "forbidden", forbiddenStart);
   assert.match(forbidden.message.message, /ホスト/);
 });
-<<<<<<< HEAD
 
 test("admin logs require a password and store host analytics logs", async (t) => {
   const port = await freePort();
@@ -546,5 +528,3 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   assert.equal(importedParsed.gameId, "imported-log");
   assert.equal(importedParsed.summary.reason, "import win");
 });
-=======
->>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
