@@ -12586,6 +12586,776 @@
       overflow-wrap: anywhere;
     }
     .battle-screen .player-hand .hand-card .card-effect-panel { display: none !important; }
+
+    /* v0.16.1: the classroom is the stage. Hands frame it from above and below,
+       while a single right-side rail carries the match state and main action. */
+    :root {
+      --type-icon-student: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='7' r='4' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M4 22c.6-5 3.2-8 8-8s7.4 3 8 8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='7' r='1.4' fill='none' stroke='black' stroke-width='1.4'/%3E%3Ccircle cx='14' cy='7' r='1.4' fill='none' stroke='black' stroke-width='1.4'/%3E%3Cpath d='M11.4 7h1.2' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E");
+      --type-icon-teacher: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m3 6 9-4 9 4-9 4Z' fill='black'/%3E%3Cpath d='M7 8v3c0 2.6 2.2 4.5 5 4.5s5-1.9 5-4.5V8' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M4 22c.7-4.2 3.3-6.5 8-6.5s7.3 2.3 8 6.5' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M20 7v5' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+      --type-icon-item: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 8h16l1 13H3Z' fill='black'/%3E%3Cpath d='M8 9V7a4 4 0 0 1 8 0v2' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+      --type-icon-vampire: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 21c4-5 5-10 6-18 3 3 5 4 10 5l-4 3 4 3-5 1 2 4c-5-2-8-1-13 2Z' fill='black'/%3E%3Cpath d='M10 4c1 7-1 12-5 16' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+      --type-icon-environment: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 21V9h5V4h8v5h5v12Z' fill='none' stroke='black' stroke-width='2.2' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='8' r='2.8' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M12 8V6.4M12 8l1.3 1' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    }
+
+    .card.student,
+    .field-card.student { --card-accent: #1c6395; --card-template-accent: #1c6395; --type-icon: var(--type-icon-student); }
+    .card.teacher,
+    .field-card.teacher { --card-accent: #68418d; --card-template-accent: #68418d; --type-icon: var(--type-icon-teacher); }
+    .card.item,
+    .field-card.item { --card-accent: #a97107; --card-template-accent: #a97107; --type-icon: var(--type-icon-item); }
+    .card.vampire,
+    .field-card.vampire { --card-accent: #9c2435; --card-template-accent: #9c2435; --type-icon: var(--type-icon-vampire); }
+    .card.environment,
+    .field-card.environment { --card-accent: #357c4b; --card-template-accent: #357c4b; --type-icon: var(--type-icon-environment); }
+
+    .card .card-type,
+    .field-card .field-card-type-mark {
+      position: absolute !important;
+      clip-path: none !important;
+      background: rgba(255, 255, 255, .94) !important;
+      color: transparent !important;
+    }
+
+    .card .card-type::before,
+    .field-card .field-card-type-mark::before {
+      position: absolute !important;
+      inset: 50% auto auto 50% !important;
+      display: block !important;
+      width: 78% !important;
+      height: 78% !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      max-width: none !important;
+      max-height: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: var(--card-accent) !important;
+      box-shadow: none !important;
+      clip-path: none !important;
+      content: "" !important;
+      transform: translate(-50%, -50%) !important;
+      -webkit-mask: var(--type-icon) center / contain no-repeat;
+      mask: var(--type-icon) center / contain no-repeat;
+    }
+
+    .card.item .card-type::after,
+    .field-card.item .field-card-type-mark::after { display: none !important; }
+
+    html:has(#battleScreen:not(.hidden)),
+    body:has(#battleScreen:not(.hidden)) {
+      width: 100%;
+      height: 100%;
+      overflow: hidden !important;
+      overscroll-behavior: none;
+    }
+
+    .battle-screen {
+      --battle-hud-width: clamp(82px, 8.5vw, 112px);
+      --battle-slot-w: clamp(54px, 5.6vw, 72px);
+      --battle-slot-h: clamp(72px, 10.6dvh, 92px);
+      --battle-grid-gap: 4px;
+      --battle-board-w: calc(var(--battle-slot-w) * 4 + var(--battle-grid-gap) * 2 + 14px);
+      --battle-board-inset: clamp(96px, 13.5dvh, 130px);
+      --battle-hand-top: clamp(58px, 8.5dvh, 82px);
+      --battle-hand-bottom: clamp(104px, 15dvh, 142px);
+      position: fixed;
+      inset: 0;
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden !important;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(227, 241, 247, .96), rgba(183, 202, 212, .88) 54%, rgba(77, 98, 111, .94) 100%),
+        #9db0ba;
+      color: #14283a;
+      font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", YuGothic, sans-serif;
+    }
+
+    .battle-screen .topbar { display: none !important; }
+
+    .battle-screen .game-shell {
+      position: relative !important;
+      display: block !important;
+      width: 100vw !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      height: 100dvh !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      isolation: isolate;
+    }
+
+    .battle-screen .game-shell::before {
+      position: fixed;
+      z-index: 18;
+      top: 24px;
+      right: calc(var(--battle-hud-width) / 2);
+      bottom: 24px;
+      width: 2px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, transparent, rgba(219, 234, 242, .68) 8%, rgba(70, 94, 111, .82) 50%, rgba(219, 234, 242, .68) 92%, transparent);
+      box-shadow: 0 0 0 1px rgba(24, 43, 57, .18), 0 0 18px rgba(236, 246, 250, .28);
+      content: "";
+      pointer-events: none;
+    }
+
+    .battle-screen .game-shell::after {
+      position: fixed;
+      z-index: 1;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: var(--battle-hud-width);
+      border-left: 1px solid rgba(15, 35, 49, .66);
+      background: linear-gradient(90deg, rgba(16, 33, 46, .82), rgba(7, 18, 28, .96));
+      box-shadow: -12px 0 28px rgba(17, 35, 48, .22);
+      content: "";
+      pointer-events: none;
+    }
+
+    .battle-screen .playmat {
+      position: absolute !important;
+      inset: 0 var(--battle-hud-width) 0 0 !important;
+      display: block !important;
+      width: auto !important;
+      min-width: 0 !important;
+      height: auto !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      background:
+        linear-gradient(90deg, transparent calc(50% - 1px), rgba(32, 60, 77, .24) 50%, transparent calc(50% + 1px)),
+        linear-gradient(180deg, rgba(255,255,255,.2), transparent 17%, transparent 83%, rgba(255,255,255,.18));
+    }
+
+    .battle-screen .playmat::before {
+      position: absolute;
+      inset: 50% 9% auto;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(27, 55, 72, .48), transparent);
+      content: "";
+      pointer-events: none;
+    }
+
+    .battle-screen .opponent-hand-zone,
+    .battle-screen .player-hand-zone {
+      position: absolute !important;
+      z-index: 9;
+      right: 12px !important;
+      left: 54px !important;
+      display: block !important;
+      width: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+    }
+
+    .battle-screen .opponent-hand-zone { top: 0 !important; height: var(--battle-hand-top) !important; }
+    .battle-screen .player-hand-zone { top: auto !important; bottom: 0 !important; height: var(--battle-hand-bottom) !important; }
+
+    .battle-screen .opponent-hand-zone .hand-head,
+    .battle-screen .player-hand-zone .hand-head {
+      position: absolute !important;
+      z-index: 13;
+      display: flex !important;
+      align-items: center;
+      gap: 7px;
+      margin: 0 !important;
+      padding: 4px 8px;
+      border: 1px solid rgba(37, 62, 78, .44);
+      border-radius: 999px;
+      background: rgba(245, 250, 253, .9);
+      color: #183249;
+      box-shadow: 0 3px 8px rgba(17, 37, 51, .12);
+    }
+
+    .battle-screen .opponent-hand-zone .hand-head { top: 7px !important; left: 0 !important; right: auto !important; bottom: auto !important; }
+    .battle-screen .player-hand-zone .hand-head { top: auto !important; right: 60px !important; bottom: 7px !important; left: auto !important; }
+    .battle-screen .hand-head h2 { margin: 0 !important; font-size: 10px !important; font-weight: 900; letter-spacing: .06em; }
+    .battle-screen .hand-head .small-info { color: #173e5d !important; font: 900 11px/1 "DIN Alternate", "Arial Narrow", sans-serif !important; }
+    .battle-screen .player-hand-zone .hand-head .small-info::before { content: none !important; }
+
+    .battle-screen .opponent-hand-table,
+    .battle-screen .player-hand-table {
+      position: relative !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 0 !important;
+    }
+
+    .battle-screen .opponent-hand,
+    .battle-screen .player-hand {
+      position: absolute !important;
+      z-index: 10;
+      left: 50% !important;
+      display: flex !important;
+      align-items: flex-end !important;
+      justify-content: center !important;
+      width: min(72vw, 760px) !important;
+      max-width: calc(100% - 126px) !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 4px 14px !important;
+      gap: 0 !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      scrollbar-width: thin;
+      transform: translateX(-50%) !important;
+    }
+
+    .battle-screen .opponent-hand { top: 2px !important; bottom: auto !important; height: calc(var(--battle-hand-top) - 4px) !important; align-items: flex-start !important; }
+    .battle-screen .player-hand { top: auto !important; bottom: 4px !important; height: calc(var(--battle-hand-bottom) - 8px) !important; }
+
+    .battle-screen .opponent-hand .card,
+    .battle-screen .opponent-hand .card:nth-child(n) {
+      position: relative !important;
+      flex: 0 0 38px !important;
+      width: 38px !important;
+      min-width: 38px !important;
+      height: 58px !important;
+      min-height: 58px !important;
+      margin: 0 0 0 -11px !important;
+      border-width: 2px !important;
+      border-radius: 5px !important;
+      box-shadow: 0 3px 0 rgba(8, 20, 30, .36) !important;
+      transform: none !important;
+    }
+
+    .battle-screen .opponent-hand .card:first-child { margin-left: 0 !important; }
+
+    .battle-screen .player-hand .hand-card,
+    .battle-screen .player-hand .hand-card:nth-child(n) {
+      position: relative !important;
+      flex: 0 0 66px !important;
+      width: 66px !important;
+      min-width: 66px !important;
+      height: 100px !important;
+      min-height: 100px !important;
+      margin: 0 0 0 -8px !important;
+      transform: none !important;
+      transform-origin: center bottom !important;
+      transition: transform .16s ease, margin .16s ease, filter .18s ease !important;
+    }
+
+    .battle-screen .player-hand .hand-card:first-child { margin-left: 0 !important; }
+    .battle-screen .player-hand .hand-card:hover,
+    .battle-screen .player-hand .hand-card.hand-card-hover-source {
+      z-index: 35 !important;
+      margin-right: 8px !important;
+      margin-left: 0 !important;
+      transform: translateY(-6px) scale(1.08) !important;
+    }
+
+    .battle-screen .opponent-deck-pile,
+    .battle-screen .player-deck-pile {
+      position: absolute !important;
+      z-index: 15;
+      right: 0 !important;
+      left: auto !important;
+      width: 44px !important;
+      min-width: 44px !important;
+      min-height: 62px !important;
+      height: 62px !important;
+      margin: 0 !important;
+      border: 3px solid #223d54 !important;
+      border-radius: 5px !important;
+      padding: 3px !important;
+      background: repeating-linear-gradient(135deg, #607c93 0 5px, #304d65 5px 10px) !important;
+      box-shadow: 4px 4px #182c3d !important;
+    }
+
+    .battle-screen .opponent-deck-pile { top: 7px !important; bottom: auto !important; }
+    .battle-screen .player-deck-pile { top: auto !important; bottom: 12px !important; }
+    .battle-screen .deck-pile .deck-stack { display: none !important; }
+    .battle-screen .deck-pile .deck-label { color: #eef6fb !important; font-size: 8px !important; }
+    .battle-screen .deck-pile .deck-count-pill { color: #fff !important; font: 1000 13px/1 "DIN Alternate", "Arial Narrow", sans-serif !important; }
+
+    .battle-screen .player-board {
+      position: absolute !important;
+      z-index: 7;
+      left: calc(50% - var(--battle-board-w) / 2) !important;
+      display: block !important;
+      width: var(--battle-board-w) !important;
+      height: calc(var(--battle-slot-h) + var(--battle-slot-h) + var(--battle-slot-h) + var(--battle-grid-gap) + var(--battle-grid-gap)) !important;
+      margin: 0 !important;
+      border: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      transform: none !important;
+    }
+
+    .battle-screen #opponentBoardPanel { top: var(--battle-board-inset) !important; right: auto !important; bottom: auto !important; }
+    .battle-screen #playerBoardPanel { top: auto !important; right: auto !important; bottom: var(--battle-board-inset) !important; }
+
+    .battle-screen .player-board .panel-head {
+      position: absolute !important;
+      z-index: 8;
+      top: -20px !important;
+      right: auto !important;
+      bottom: auto !important;
+      left: 0 !important;
+      display: block !important;
+      width: auto !important;
+      height: 18px !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .battle-screen #playerBoardPanel .panel-head { top: auto !important; bottom: -20px !important; }
+    .battle-screen .player-board .panel-head h2 {
+      margin: 0 !important;
+      color: rgba(18, 43, 60, .78) !important;
+      font-size: 9px !important;
+      font-weight: 1000 !important;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .battle-screen .player-board .seat-grid {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      display: grid !important;
+      width: calc(var(--battle-slot-w) + var(--battle-slot-w) + var(--battle-slot-w) + var(--battle-grid-gap) + var(--battle-grid-gap)) !important;
+      height: 100% !important;
+      grid-template-columns: repeat(3, var(--battle-slot-w)) !important;
+      grid-template-rows: repeat(3, var(--battle-slot-h)) !important;
+      grid-auto-rows: var(--battle-slot-h) !important;
+      gap: var(--battle-grid-gap) !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .battle-screen .player-board .professor-lane {
+      position: absolute !important;
+      top: 50% !important;
+      right: 0 !important;
+      left: auto !important;
+      display: grid !important;
+      width: var(--battle-slot-w) !important;
+      height: var(--battle-slot-h) !important;
+      grid-template-columns: var(--battle-slot-w) !important;
+      grid-template-rows: var(--battle-slot-h) !important;
+      grid-auto-rows: var(--battle-slot-h) !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      transform: translateY(-50%) !important;
+    }
+
+    .battle-screen .player-board .slot,
+    .battle-screen .player-board .board-card {
+      width: var(--battle-slot-w) !important;
+      height: var(--battle-slot-h) !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      aspect-ratio: auto !important;
+    }
+
+    .battle-screen .player-board .slot {
+      border: 1px solid rgba(42, 69, 85, .58) !important;
+      border-radius: 5px !important;
+      background: rgba(237, 245, 248, .38) !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.38), 0 2px 4px rgba(17, 38, 51, .12) !important;
+    }
+
+    .battle-screen .player-board.current .slot { border-color: rgba(35, 104, 148, .72) !important; }
+    .battle-screen .player-board .late-zone-row {
+      position: absolute !important;
+      z-index: 11;
+      right: auto !important;
+      left: 0 !important;
+      display: flex !important;
+      width: calc(var(--battle-slot-w) + var(--battle-slot-w) + var(--battle-slot-w) + var(--battle-grid-gap) + var(--battle-grid-gap)) !important;
+      height: 20px !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      gap: 6px !important;
+      overflow: visible !important;
+    }
+
+    .battle-screen #opponentBoardPanel .late-zone-row { top: auto !important; bottom: -23px !important; }
+    .battle-screen #playerBoardPanel .late-zone-row { top: -23px !important; bottom: auto !important; }
+    .battle-screen .player-board .late-zone { width: auto !important; min-width: 48px !important; height: 20px !important; overflow: hidden !important; }
+
+    .battle-screen .player-board .trash-box {
+      position: relative !important;
+      inset: auto !important;
+      display: inline-flex !important;
+      width: 56px !important;
+      height: 20px !important;
+      min-height: 0 !important;
+      flex: 0 0 56px;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: 1px solid #122636 !important;
+      border-radius: 4px !important;
+      padding: 0 4px !important;
+      background: rgba(14, 30, 42, .86) !important;
+      color: #eef6fb !important;
+      box-shadow: 0 2px 5px rgba(10, 24, 34, .2) !important;
+    }
+
+    .battle-screen .player-board .trash-box .trash-title,
+    .battle-screen .player-board .trash-box > div:not(.trash-title) { color: #eef6fb !important; font-size: 8px !important; }
+
+    .battle-screen .environment-panel {
+      position: absolute !important;
+      z-index: 8;
+      top: 50% !important;
+      left: 50% !important;
+      display: block !important;
+      width: calc(var(--battle-slot-w) + 8px) !important;
+      height: calc(var(--battle-slot-h) + 8px) !important;
+      margin: 0 !important;
+      border: 0 !important;
+      padding: 4px !important;
+      background: rgba(225, 239, 230, .66) !important;
+      box-shadow: 0 0 0 1px rgba(38, 89, 57, .34), 0 7px 18px rgba(20, 48, 34, .16) !important;
+      transform: translate(-50%, -50%) !important;
+    }
+
+    .battle-screen .environment-panel .area-title {
+      position: absolute !important;
+      right: calc(100% + 8px) !important;
+      top: 50% !important;
+      width: max-content !important;
+      transform: translateY(-50%);
+    }
+    .battle-screen .environment-panel .area-title h2 { margin: 0 !important; color: #2d6040 !important; font-size: 9px !important; letter-spacing: .08em; }
+    .battle-screen .environment-panel .small-info { display: none !important; }
+    .battle-screen .environment-panel .environment-row,
+    .battle-screen .environment-panel .slot {
+      width: var(--battle-slot-w) !important;
+      height: var(--battle-slot-h) !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      aspect-ratio: auto !important;
+      margin: 0 !important;
+    }
+
+    .battle-screen #opponentLifeTarget,
+    .battle-screen #playerLifeTarget,
+    .battle-screen .battle-v16-mana,
+    .battle-screen .battle-v16-turn,
+    .battle-screen .battle-action-slot {
+      position: fixed !important;
+      z-index: 42 !important;
+      right: calc((var(--battle-hud-width) - 66px) / 2) !important;
+      left: auto !important;
+      font-family: "DIN Alternate", "Avenir Next Condensed", "Arial Narrow", sans-serif !important;
+    }
+
+    .battle-screen #opponentLifeTarget,
+    .battle-screen #playerLifeTarget {
+      display: grid !important;
+      width: 66px !important;
+      height: 66px !important;
+      min-width: 0 !important;
+      place-items: center;
+      border: 2px solid rgba(255, 228, 220, .88) !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+      background: radial-gradient(circle at 38% 32%, #e66e73, #982c3a 72%) !important;
+      clip-path: none !important;
+      box-shadow: 0 0 0 4px rgba(99, 28, 40, .52), 0 7px 16px rgba(0,0,0,.3) !important;
+    }
+
+    .battle-screen #opponentLifeTarget { top: 32px !important; bottom: auto !important; }
+    .battle-screen #playerLifeTarget { top: auto !important; bottom: 32px !important; }
+    .battle-screen .life-target .life-heart-value { color: #fff !important; font-size: 25px !important; font-weight: 1000 !important; }
+    .battle-screen .life-target .life-cap-value { display: block !important; margin: -9px 0 0 !important; color: rgba(255,255,255,.76) !important; font-size: 9px !important; }
+    .battle-screen #opponentLifeTarget::after,
+    .battle-screen #playerLifeTarget::after {
+      position: absolute;
+      right: 50%;
+      width: max-content;
+      color: #dbe7ee;
+      font: 900 8px/1 "Hiragino Kaku Gothic ProN", sans-serif;
+      letter-spacing: .08em;
+      transform: translateX(50%);
+    }
+    .battle-screen #opponentLifeTarget::after { top: calc(100% + 8px); content: "相手 気力"; }
+    .battle-screen #playerLifeTarget::after { bottom: calc(100% + 8px); content: "自分 気力"; }
+
+    .battle-screen .battle-v16-mana {
+      display: grid !important;
+      width: 62px !important;
+      height: 42px !important;
+      min-width: 0 !important;
+      place-items: center;
+      border: 1px solid #d7a92e !important;
+      border-radius: 999px !important;
+      padding: 0 !important;
+      background: linear-gradient(180deg, #fff5c7, #e7b73d) !important;
+      clip-path: none !important;
+      color: #543505 !important;
+      font-size: 10px !important;
+      font-weight: 1000 !important;
+      line-height: 1 !important;
+      text-shadow: none !important;
+      box-shadow: 0 3px 8px rgba(0,0,0,.24) !important;
+    }
+
+    .battle-screen .battle-v16-opponent-mana { top: 132px !important; bottom: auto !important; }
+    .battle-screen .battle-v16-player-mana { top: auto !important; bottom: 132px !important; }
+    .battle-screen .battle-v16-turn {
+      top: calc(50% - 82px) !important;
+      bottom: auto !important;
+      display: grid !important;
+      width: 66px !important;
+      min-height: 38px !important;
+      place-items: center;
+      border: 1px solid rgba(181, 204, 217, .5) !important;
+      border-radius: 7px !important;
+      padding: 5px 4px !important;
+      background: rgba(234, 243, 248, .94) !important;
+      color: #1c3447 !important;
+      font-size: 10px !important;
+      font-weight: 1000 !important;
+      line-height: 1.2 !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,.24) !important;
+    }
+
+    .battle-screen .battle-action-slot {
+      top: 50% !important;
+      bottom: auto !important;
+      display: grid !important;
+      width: 66px !important;
+      min-height: 66px !important;
+      place-items: center;
+      transform: translateY(-50%) !important;
+    }
+
+    .battle-screen .mulligan-stage:not(.hidden) ~ .game-shell .battle-action-slot {
+      z-index: 220 !important;
+    }
+
+    .battle-screen .mulligan-stage:not(.hidden) ~ .battle-action-slot {
+      z-index: 220 !important;
+    }
+
+    .battle-screen .battle-end-button {
+      width: 66px !important;
+      min-height: 66px !important;
+      border: 3px solid #f6d274 !important;
+      border-radius: 50% !important;
+      padding: 4px !important;
+      background: radial-gradient(circle at 38% 30%, #e99133, #9a3e06 74%) !important;
+      box-shadow: 0 0 0 3px rgba(115, 61, 17, .78), 0 7px 14px rgba(0,0,0,.34) !important;
+      color: #fff !important;
+      font-size: 12px !important;
+      font-weight: 1000 !important;
+      line-height: 1.15 !important;
+    }
+
+    .battle-screen .battle-v16-corner-button {
+      position: fixed !important;
+      z-index: 70 !important;
+      top: 10px !important;
+      right: auto !important;
+      min-height: 34px;
+      border: 1px solid rgba(38, 62, 78, .62) !important;
+      border-radius: 5px !important;
+      padding: 7px 11px !important;
+      background: rgba(245, 250, 253, .94) !important;
+      color: #1b344a !important;
+      box-shadow: 0 4px 10px rgba(17, 37, 51, .16) !important;
+      font-size: 11px !important;
+    }
+
+    .battle-screen .battle-v16-menu-button { left: 10px !important; }
+    .battle-screen .battle-v16-log-button { left: 70px !important; }
+    .battle-screen .battle-v16-test-button { display: none !important; }
+
+    .battle-screen .battle-v16-menu-drawer {
+      position: fixed !important;
+      z-index: 69 !important;
+      top: 50px !important;
+      right: auto !important;
+      bottom: auto !important;
+      left: 10px !important;
+      display: block !important;
+      width: min(240px, calc(100vw - var(--battle-hud-width) - 20px)) !important;
+      max-height: calc(100dvh - 60px) !important;
+      overflow-y: auto !important;
+      border: 1px solid rgba(26,42,60,.72) !important;
+      border-radius: 8px !important;
+      background: rgba(249,252,255,.98) !important;
+      transform: translateX(-114%) !important;
+    }
+    .battle-screen .battle-v16-menu-drawer.open { transform: translateX(0) !important; }
+    .battle-screen .battle-v16-menu-drawer .battle-v16-menu-action,
+    .battle-screen .battle-v16-menu-drawer .button {
+      display: block;
+      width: calc(100% - 20px);
+      min-height: 34px;
+      margin: 8px 10px;
+      border: 1px solid #bbcad8;
+      border-radius: 5px;
+      padding: 8px 10px;
+      background: #f7fafc;
+      color: #263c55;
+      font-size: 11px;
+      font-weight: 900;
+      text-align: left;
+    }
+    .battle-screen .battle-v16-menu-drawer .hidden { display: none !important; }
+
+    .battle-screen .battle-v16-log-drawer {
+      position: fixed !important;
+      z-index: 69 !important;
+      top: 0 !important;
+      right: var(--battle-hud-width) !important;
+      bottom: 0 !important;
+      left: auto !important;
+      width: min(370px, calc(100vw - var(--battle-hud-width))) !important;
+      height: 100dvh !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: rgba(9, 18, 28, .92) !important;
+      transform: translateX(calc(100% + var(--battle-hud-width))) !important;
+    }
+    .battle-screen .battle-v16-log-drawer.open { transform: translateX(0) !important; }
+
+    .battle-screen .message {
+      position: fixed !important;
+      z-index: 34 !important;
+      right: calc(var(--battle-hud-width) + 14px) !important;
+      bottom: calc(var(--battle-hand-bottom) + 2px) !important;
+      left: auto !important;
+      width: min(440px, calc(100vw - var(--battle-hud-width) - 28px)) !important;
+      margin: 0 !important;
+      border: 1px solid rgba(61, 86, 102, .46) !important;
+      border-radius: 999px !important;
+      padding: 6px 12px !important;
+      background: rgba(244, 249, 252, .9) !important;
+      color: #1a3347 !important;
+      box-shadow: 0 4px 12px rgba(19, 38, 51, .16) !important;
+      font-size: 10px !important;
+      font-weight: 800 !important;
+      line-height: 1.25 !important;
+      text-align: center !important;
+    }
+
+    .battle-screen .battle-room-code {
+      position: fixed !important;
+      z-index: 34 !important;
+      top: 10px !important;
+      right: calc(var(--battle-hud-width) + 12px) !important;
+      display: flex !important;
+      gap: 5px;
+      border: 1px solid rgba(61, 86, 102, .46) !important;
+      border-radius: 999px !important;
+      padding: 6px 9px !important;
+      background: rgba(244, 249, 252, .92) !important;
+      color: #1a3347 !important;
+      font-size: 9px !important;
+    }
+    .battle-screen .battle-room-code.hidden { display: none !important; }
+
+    .battle-screen .spectator-banner {
+      position: fixed !important;
+      z-index: 60 !important;
+      top: 8px !important;
+      left: 132px !important;
+      max-width: calc(100vw - var(--battle-hud-width) - 290px);
+      border-radius: 999px !important;
+      padding: 7px 12px !important;
+      font-size: 10px !important;
+    }
+
+    .battle-screen .battle-card-preview {
+      position: fixed !important;
+      z-index: 66 !important;
+      top: 54px !important;
+      right: auto !important;
+      bottom: 14px !important;
+      left: 10px !important;
+      width: min(224px, calc(100vw - var(--battle-hud-width) - 20px)) !important;
+      max-height: calc(100dvh - 68px) !important;
+    }
+
+    .battle-screen .tutorial-coach { max-width: min(390px, calc(100vw - 24px)) !important; }
+
+    @media (max-height: 620px) and (orientation: landscape) {
+      .battle-screen {
+        --battle-hud-width: 80px;
+        --battle-slot-w: 32px;
+        --battle-slot-h: 48px;
+        --battle-grid-gap: 3px;
+        --battle-board-inset: 58px;
+        --battle-hand-top: 44px;
+        --battle-hand-bottom: 76px;
+      }
+      .battle-screen .opponent-hand .card,
+      .battle-screen .opponent-hand .card:nth-child(n) { flex-basis: 27px !important; width: 27px !important; min-width: 27px !important; height: 40px !important; min-height: 40px !important; margin-left: -8px !important; }
+      .battle-screen .player-hand .hand-card,
+      .battle-screen .player-hand .hand-card:nth-child(n) { flex-basis: 42px !important; width: 42px !important; min-width: 42px !important; height: 64px !important; min-height: 64px !important; margin-left: -6px !important; }
+      .battle-screen .opponent-deck-pile,
+      .battle-screen .player-deck-pile { width: 34px !important; min-width: 34px !important; height: 45px !important; min-height: 45px !important; }
+      .battle-screen #opponentLifeTarget,
+      .battle-screen #playerLifeTarget { width: 48px !important; height: 48px !important; right: 16px !important; }
+      .battle-screen #opponentLifeTarget { top: 10px !important; }
+      .battle-screen #playerLifeTarget { bottom: 10px !important; }
+      .battle-screen .life-target .life-heart-value { font-size: 19px !important; }
+      .battle-screen .battle-v16-mana { width: 48px !important; height: 30px !important; right: 16px !important; font-size: 8px !important; }
+      .battle-screen .battle-v16-opponent-mana { top: 72px !important; }
+      .battle-screen .battle-v16-player-mana { bottom: 72px !important; }
+      .battle-screen .battle-v16-turn { top: calc(50% - 63px) !important; right: 16px !important; width: 48px !important; min-height: 28px !important; font-size: 8px !important; }
+      .battle-screen .battle-action-slot { right: 8px !important; width: 64px !important; min-height: 64px !important; }
+      .battle-screen .battle-end-button { width: 60px !important; min-height: 60px !important; font-size: 10px !important; }
+      .battle-screen .message { bottom: calc(var(--battle-hand-bottom) + 1px) !important; max-width: 300px !important; padding: 4px 8px !important; font-size: 8px !important; }
+      .battle-screen .player-board .panel-head,
+      .battle-screen .player-board .late-zone-row { display: none !important; }
+      .battle-screen .environment-panel .area-title { display: none !important; }
+    }
+
+    @media (max-width: 520px) and (orientation: portrait) {
+      .battle-screen {
+        --battle-hud-width: 72px;
+        --battle-slot-w: 34px;
+        --battle-slot-h: 51px;
+        --battle-grid-gap: 3px;
+        --battle-board-inset: 15dvh;
+        --battle-hand-top: 52px;
+        --battle-hand-bottom: 92px;
+      }
+      .battle-screen .opponent-hand-zone,
+      .battle-screen .player-hand-zone { left: 8px !important; }
+      .battle-screen .opponent-hand-zone .hand-head { display: none !important; }
+      .battle-screen .player-hand-zone .hand-head { right: 42px !important; bottom: 3px !important; padding: 3px 6px !important; }
+      .battle-screen .opponent-hand,
+      .battle-screen .player-hand { width: calc(100% - 52px) !important; max-width: none !important; }
+      .battle-screen .player-hand .hand-card,
+      .battle-screen .player-hand .hand-card:nth-child(n) { flex-basis: 48px !important; width: 48px !important; min-width: 48px !important; height: 73px !important; min-height: 73px !important; }
+      .battle-screen #opponentLifeTarget,
+      .battle-screen #playerLifeTarget { width: 48px !important; height: 48px !important; right: 12px !important; }
+      .battle-screen #opponentLifeTarget { top: 12px !important; }
+      .battle-screen #playerLifeTarget { bottom: 12px !important; }
+      .battle-screen .battle-v16-mana { width: 48px !important; height: 32px !important; right: 12px !important; font-size: 8px !important; }
+      .battle-screen .battle-v16-opponent-mana { top: 82px !important; }
+      .battle-screen .battle-v16-player-mana { bottom: 82px !important; }
+      .battle-screen .battle-v16-turn { right: 12px !important; width: 48px !important; }
+      .battle-screen .battle-action-slot { right: 4px !important; width: 64px !important; }
+      .battle-screen .battle-end-button { width: 60px !important; min-height: 60px !important; font-size: 10px !important; }
+      .battle-screen .message { right: calc(var(--battle-hud-width) + 6px) !important; width: calc(100vw - var(--battle-hud-width) - 12px) !important; bottom: calc(var(--battle-hand-bottom) + 1px) !important; padding: 4px 8px !important; font-size: 8px !important; }
+      .battle-screen .player-board .panel-head h2 { font-size: 7px !important; }
+      .battle-screen .environment-panel .area-title { display: none !important; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .battle-screen *,
+      .battle-screen *::before,
+      .battle-screen *::after { scroll-behavior: auto !important; }
+    }
   </style>
 </head>
 <body>
@@ -13367,6 +14137,9 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
+    const RELEASE_VERSION = "0.16.1";
+    // GAME_DATA_VERSION tracks card/rule payload compatibility, not the UI release.
+    // Keep it stable for UI-only releases and increment it only when shared game data changes.
     const GAME_DATA_VERSION = "0.14.1";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
@@ -14070,6 +14843,19 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.16.1",
+        date: "2026年8月3日",
+        summary: "対戦画面をワンスクリーンへ再構成し、カードタイプを5種のシルエットアイコンで統一。更新情報・公開リンク・ルール表記も現行実装と照合した。",
+        changes: [
+          { title: "対戦レイアウト", before: "相手と自分の講義室を左右に分け、情報が画面の各所に散らばっていた。", after: "3×3席と教卓を中央へ上下に集約し、対戦中は縦スクロールなしで盤面全体を確認できる。" },
+          { title: "対戦HUD", before: "気力・戦意・ターン表示・ターン終了の位置関係が離れていた。", after: "右側の縦レールに両者の気力と戦意、手番表示、大きな円形のターン終了ボタンを集約した。" },
+          { title: "手札と山札", before: "自分の手札は下部、相手の手札と山札は盤面から離れた位置に表示していた。", after: "相手の裏向き手札を上端、自分の手札を下端へ横一列に置き、両者の山札残枚数を盤面脇へ常時表示する。" },
+          { title: "対戦メニュー", before: "ログ出力やカードテスト操作などの補助ボタンが対戦画面上部に並んでいた。", after: "MENUとログ以外の補助操作をドロワーへ収納し、盤面上の常時ボタンを最小限にした。" },
+          { title: "タイプアイコン", before: "タイプごとに異なる多角形記号を表示していた。", after: "学生は人物＋眼鏡、教師は人物＋角帽、持ち物はバッグ、ヴァンパイアは片翼、環境は時計付き教室の単色シルエットへ統一した。" },
+          { title: "更新情報と公開リンク", before: "READMEの公開リンクがver.0.13.1のままで、データ版とUI版の関係も明文化されていなかった。", after: "公開リンクをver.0.16.1へ更新し、ゲームデータ互換版はUIリリース版と独立して管理する方針をコードに明記した。" }
+        ]
+      },
       {
         version: "ver.0.16.0",
         date: "2026年8月1日",
@@ -15143,6 +15929,30 @@
       endTurnButton: document.getElementById("endTurnButton"),
       resetButton: document.getElementById("resetButton")
     };
+
+    // Keep utility actions available without letting them compete with the board.
+    [
+      elements.dungeonFloorInfoButton,
+      elements.testBackDeckButton,
+      elements.testUndoButton,
+      elements.analyticsJsonlButton,
+      elements.analyticsCsvButton,
+      elements.fusionButton,
+      elements.resetButton
+    ].filter(Boolean).forEach((button) => {
+      button.classList.add("battle-v16-menu-action");
+      elements.battleMenuDrawer.appendChild(button);
+    });
+    const battleShell = document.querySelector("#battleScreen .game-shell");
+    [
+      document.getElementById("opponentLifeTarget"),
+      document.getElementById("playerLifeTarget"),
+      elements.battleRoomCode,
+      elements.message
+    ].filter(Boolean).forEach((element) => battleShell?.appendChild(element));
+    const battleScreen = document.getElementById("battleScreen");
+    const battleActionSlot = document.querySelector("#battleScreen .battle-action-slot");
+    if (battleScreen && battleActionSlot) battleScreen.appendChild(battleActionSlot);
 
     function createPlayerState() {
       return {
@@ -26797,7 +27607,7 @@
       elements.mulliganButton.disabled = spectator || state.phase !== "mulligan" || state.players.player.mulliganUsed;
       elements.mulliganButton.classList.toggle("hidden", spectator || state.phase !== "mulligan" || state.players.player.mulliganUsed);
       const canFuseRulers = canPlayerFuseRulers();
-      elements.fusionButton.classList.add("hidden");
+      elements.fusionButton.classList.toggle("hidden", spectator || !canFuseRulers);
       elements.fusionButton.disabled = !canFuseRulers;
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
@@ -26834,6 +27644,7 @@
       elements.endTurnButton.classList.toggle("recommended", recommendEndTurn);
       elements.endTurnButton.textContent = recommendEndTurn ? "ターン終了" : "ターン終了";
       elements.battleBackHomeButton.textContent = spectator ? "観戦を終了" : "勝てない";
+      elements.battleConcedeButton.textContent = spectator ? "観戦を終了" : "勝てない";
       elements.resetButton.classList.toggle("hidden", spectator || !cardTestBattle);
       const playerDeckValid = validateDeckCounts(state.deckBuilder.counts.player).valid;
       const opponentDeckValid = validateDeckCounts(state.deckBuilder.counts.opponent).valid;
@@ -28575,6 +29386,7 @@
         const targetSide = button.dataset.lifeTarget;
         const lifeCap = currentLifeCap(targetSide);
         button.innerHTML = `<span class="life-heart-value">${state.players[targetSide].life}</span><span class="life-cap-value">/${lifeCap}</span>`;
+        button.setAttribute("aria-label", `${targetSide === "player" ? "自分" : "相手"}の気力 ${state.players[targetSide].life}/${lifeCap}`);
         button.disabled = isOnlineSpectator();
         const selected = getSelectedHandCard();
         const enemyItemTarget = !hasPeekableSelectionOverlay() && canDropHandCardOnLife(selected, targetSide);

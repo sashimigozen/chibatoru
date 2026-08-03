@@ -20,6 +20,11 @@
       --panel-soft: #f8fbff;
       --teal: #0f766e;
       --amber: #b45309;
+      --type-icon-student: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='7' r='4' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M4 22c.6-5 3.2-8 8-8s7.4 3 8 8' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='7' r='1.4' fill='none' stroke='black' stroke-width='1.4'/%3E%3Ccircle cx='14' cy='7' r='1.4' fill='none' stroke='black' stroke-width='1.4'/%3E%3Cpath d='M11.4 7h1.2' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E");
+      --type-icon-teacher: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m3 6 9-4 9 4-9 4Z' fill='black'/%3E%3Cpath d='M7 8v3c0 2.6 2.2 4.5 5 4.5s5-1.9 5-4.5V8' fill='none' stroke='black' stroke-width='2'/%3E%3Cpath d='M4 22c.7-4.2 3.3-6.5 8-6.5s7.3 2.3 8 6.5' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'/%3E%3Cpath d='M20 7v5' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+      --type-icon-item: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 8h16l1 13H3Z' fill='black'/%3E%3Cpath d='M8 9V7a4 4 0 0 1 8 0v2' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E");
+      --type-icon-vampire: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 21c4-5 5-10 6-18 3 3 5 4 10 5l-4 3 4 3-5 1 2 4c-5-2-8-1-13 2Z' fill='black'/%3E%3Cpath d='M10 4c1 7-1 12-5 16' fill='none' stroke='white' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+      --type-icon-environment: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 21V9h5V4h8v5h5v12Z' fill='none' stroke='black' stroke-width='2.2' stroke-linejoin='round'/%3E%3Ccircle cx='12' cy='8' r='2.8' fill='none' stroke='black' stroke-width='1.7'/%3E%3Cpath d='M12 8V6.4M12 8l1.3 1' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
     }
     * { box-sizing: border-box; }
     body {
@@ -174,11 +179,31 @@
       color: #24364d;
       white-space: nowrap;
     }
-    .student { background: #dff3ff; color: #164e63; }
-    .teacher { background: #efe9ff; color: #553c9a; }
-    .vampire { background: #ffe3e3; color: #991b1b; }
-    .item { background: #fff2bf; color: #92400e; }
-    .environment { background: #ddf8e8; color: #166534; }
+    .student { --type-color: #1c6395; --type-icon: var(--type-icon-student); background: #dff3ff; color: var(--type-color); }
+    .teacher { --type-color: #68418d; --type-icon: var(--type-icon-teacher); background: #efe9ff; color: var(--type-color); }
+    .vampire { --type-color: #9c2435; --type-icon: var(--type-icon-vampire); background: #ffe3e3; color: var(--type-color); }
+    .item { --type-color: #a97107; --type-icon: var(--type-icon-item); background: #fff2bf; color: var(--type-color); }
+    .environment { --type-color: #357c4b; --type-icon: var(--type-icon-environment); background: #ddf8e8; color: var(--type-color); }
+    .badge.student,
+    .badge.teacher,
+    .badge.vampire,
+    .badge.item,
+    .badge.environment {
+      gap: 5px;
+    }
+    .badge.student::before,
+    .badge.teacher::before,
+    .badge.vampire::before,
+    .badge.item::before,
+    .badge.environment::before {
+      content: "";
+      width: 13px;
+      height: 13px;
+      flex: 0 0 13px;
+      background: var(--type-color);
+      -webkit-mask: var(--type-icon) center / contain no-repeat;
+      mask: var(--type-icon) center / contain no-repeat;
+    }
     .detail {
       min-height: 0;
       overflow: auto;
