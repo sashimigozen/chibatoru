@@ -4,10 +4,17 @@
 
 ## プレイURL
 
+<<<<<<< HEAD
 https://sashimigozen.github.io/chibatoru/?v=0.13.1
 
 - [カード一覧 ver.0.13.1](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.13.1)
 - [ルール ver.0.13.1](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.13.1)
+=======
+https://sashimigozen.github.io/chibatoru/
+
+- [カード一覧 ver.0.8.0](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.8.0)
+- [ルール ver.0.8.0](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.8.0)
+>>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 
 GitHub Pagesで公開しているため、インストールせずにPCやスマートフォンのブラウザから遊べます。オンライン対戦をする場合は、対戦する2人が同じ公開URLを開くのがおすすめです。
 
@@ -24,12 +31,20 @@ GitHub Pagesで公開しているため、インストールせずにPCやスマ
 
 オンライン対戦はGitHub Pages側のフロントエンドから、Renderで動かすWebSocket対戦サーバーへ接続します。サーバーはDBを使わず、メモリ上で部屋、2人の参加状態、準備状態、現在ターン、最新のゲーム状態を保持します。
 
+<<<<<<< HEAD
 「オンラインバトル」には2つの入り方があります。
 
 - ランダムマッチ: マッチング中の相手と自動で同じ対戦部屋に入ります。
 - プライベートマッチ: 片方が部屋を作り、表示された部屋コードをもう片方が入力して入室します。
 
 どちらの入り方でも、2人そろった後にそれぞれデッキを選び、準備OKを押します。ホスト側が対戦開始を押すとオンライン対戦が始まります。
+=======
+1. 片方が「オンラインバトル」から部屋を作ります。
+2. 表示された部屋コードをもう片方に伝えます。
+3. もう片方が同じURLを開き、部屋コードを入力して入室します。
+4. それぞれデッキを選び、準備OKを押します。
+5. ホスト側が対戦開始を押すとオンライン対戦が始まります。
+>>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 
 対戦状態はサーバーが保持し、ホスト側が生成した最新の `gameState` を正として同期します。ゲスト側の `playCard` や `endTurn` はサーバーで部屋・人数・ターンを確認してからホストへ送られます。
 
@@ -40,16 +55,28 @@ Renderではリポジトリ直下の `render.yaml` を使い、`server` フォ�
 - Build Command: `npm install`
 - Start Command: `npm start`
 - Health Check Path: `/health`
+<<<<<<< HEAD
 - フロント側の標準接続先: `wss://chibatoru-online.onrender.com`
 
 Renderで発行されたURLが異なる場合は、オンライン画面の「サーバーURL」欄に `wss://...onrender.com` を入力して保存してください。URLに `https://` を入れた場合も自動で `wss://` に変換します。
 
 URLを共有リンクで一時指定したい場合は、公開URLに `?ws=wss://chibatoru-online.onrender.com` を付けても接続先を上書きできます。
+=======
+- フロント側の標準接続先: `wss://chibatoru-ws.onrender.com`
+
+Renderで発行されたURLが異なる場合は、オンライン画面の「サーバーURL」欄に `wss://...onrender.com` を入力して保存してください。URLに `https://` を入れた場合も自動で `wss://` に変換します。
+
+URLを共有リンクで一時指定したい場合は、公開URLに `?ws=wss://あなたのRenderサービス.onrender.com` を付けても接続先を上書きできます。
+>>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 
 ブラウザの開発者ツールから直接設定する場合は、以下でも保存できます。
 
 ```js
+<<<<<<< HEAD
 localStorage.setItem("chibattle-online-server-url-v1", "wss://chibatoru-online.onrender.com");
+=======
+localStorage.setItem("chibattle-online-server-url-v1", "wss://あなたのRenderサービス.onrender.com");
+>>>>>>> 87698a44a2b93256cbe1746d91c2747e436ba30b
 ```
 
 ## 注意
