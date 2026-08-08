@@ -24424,7 +24424,6 @@
         selectAttacker(owner, zone, index);
         return;
       }
-      addLog("先に自分のカードを攻撃役として選んでください。");
       render();
     }
 
@@ -24560,7 +24559,6 @@
       }
       if (onlineCanSendCommand()) {
         if (!state.selectedAttacker) {
-          addLog("先に自分のカードを攻撃役として選んでください。");
           render();
           return;
         }
@@ -24576,7 +24574,6 @@
     async function attackLifeForCurrentSide(targetSide) {
       if (state.phase !== "battle" || state.gameOver) return;
       if (!state.selectedAttacker) {
-        addLog("先に自分のカードを攻撃役として選んでください。");
         render();
         return;
       }
@@ -32693,7 +32690,7 @@
 
     function renderLog() {
       elements.log.innerHTML = "";
-      state.log.forEach((message) => {
+      [...state.log].reverse().forEach((message) => {
         const item = document.createElement("li");
         const text = String(message || "");
         if (/^(あなた|自分|プレイヤー1)/.test(text) || /(?:あなた|自分)が/.test(text)) {
@@ -32706,6 +32703,7 @@
         renderLogMessage(item, message);
         elements.log.appendChild(item);
       });
+      elements.log.scrollTop = elements.log.scrollHeight;
     }
 
     function renderLogMessage(container, message) {
