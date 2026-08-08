@@ -13727,6 +13727,101 @@
     .battle-screen .player-hand .hand-card .card-effect-panel .stat-hp { right: 8px !important; bottom: 8px !important; }
     .battle-screen .player-hand .hand-card .card-effect-panel .stat-defense { right: 10px !important; bottom: 76px !important; }
     .battle-screen .player-hand .hand-card .hand-card-stats { display: none !important; }
+
+    /* The special card surface uses the type's deep colour.  It deliberately
+       has no repeating shine: the normal card geometry remains the priority. */
+    .battle-screen .player-hand .hand-card.reward-foil > .card-scale-stage {
+      padding: 0 !important;
+      box-shadow: 0 6px 13px rgba(41, 25, 4, .42) !important;
+      animation: none !important;
+    }
+
+    .battle-screen .player-hand .hand-card.reward-foil > .card-scale-stage::before {
+      display: none !important;
+      animation: none !important;
+    }
+
+    .battle-screen .player-hand .hand-card.reward-foil > .card-scale-stage .card-face {
+      background: var(--reward-foil-face) !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) .card-header,
+    .card.reward-foil:has(> .card-scale-stage) .card-art-panel,
+    .card.reward-foil:has(> .card-scale-stage) .card-effect-panel {
+      background: rgba(8, 16, 28, .16) !important;
+      border-color: rgba(255, 247, 207, .8) !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) .card-art-panel::before {
+      display: none !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) .card-header .card-name,
+    .card.reward-foil:has(> .card-scale-stage) .card-art-name,
+    .card.reward-foil:has(> .card-scale-stage) .card-effect,
+    .card.reward-foil:has(> .card-scale-stage) .card-effect-label {
+      color: var(--reward-foil-text) !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, .56) !important;
+    }
+
+    /* A card on a desk must retain the ordinary rectangular footprint.  The
+       deep type colour identifies the special style without changing its form. */
+    .battle-screen .field-card.reward-foil {
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+      border: 3px solid #b88b20 !important;
+      border-radius: 6px !important;
+      background: var(--reward-foil-face) !important;
+      background-size: auto !important;
+      background-position: center !important;
+      box-shadow: 0 3px 0 rgba(11, 30, 46, .46) !important;
+      animation: none !important;
+    }
+
+    .battle-screen .field-card.reward-foil::before {
+      inset: 3px !important;
+      border-radius: 3px !important;
+      background: linear-gradient(145deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0)) !important;
+      animation: none !important;
+    }
+
+    .battle-screen .field-card.reward-foil::after {
+      display: none !important;
+      animation: none !important;
+    }
+
+    .battle-screen .field-card.reward-foil .field-card-art-name,
+    .battle-screen .field-card.reward-foil .field-card-name,
+    .battle-screen .field-card.reward-foil .field-card-stat {
+      color: #fffdf5 !important;
+      text-shadow: 0 1px 2px rgba(15, 23, 42, .72) !important;
+    }
+
+    .battle-screen .field-card.reward-foil .field-card-title {
+      border-color: rgba(255, 239, 169, .86) !important;
+      background: rgba(7, 15, 28, .26) !important;
+    }
+
+    .battle-screen .field-card.reward-foil .field-card-art-name {
+      border-color: rgba(255, 239, 169, .54) !important;
+      background: rgba(7, 15, 28, .18) !important;
+    }
+
+    .play-reveal-overlay.reward-foil-reveal-active::before,
+    .play-reveal-card.reward-foil-reveal .card.reward-foil::before {
+      display: none !important;
+      animation: none !important;
+    }
+
+    .play-reveal-card.reward-foil-reveal {
+      filter: drop-shadow(0 24px 34px rgba(15, 23, 42, .34)) !important;
+    }
+
+    .play-reveal-card.reward-foil-reveal .card.reward-foil,
+    .play-reveal-card.reward-foil-reveal .card.reward-foil > .card-scale-stage {
+      animation: none !important;
+      box-shadow: 0 6px 13px rgba(41, 25, 4, .42) !important;
+    }
   </style>
 </head>
 <body>
@@ -15219,7 +15314,8 @@
         changes: [
           { title: "チュートリアルの導線", before: "旧盤面を前提にした位置や説明が残っていた。", after: "左右の講義室、共有環境マス、遅刻ゾーン、校外、手札・山札の位置に合わせて、説明とフォーカスを更新。" },
           { title: "基本操作", before: "カード種別ごとの説明が中心で、盤面全体の読み方を最初に確認しにくかった。", after: "講義室、気力、戦意、手札・山札、カードの数字を確認してから、学生・教師・持ち物・環境・ヴァンパイアを実際に操作する流れに変更。" },
-          { title: "完了後", before: "最後の操作直後にチュートリアルが終了していた。", after: "最後に完了メッセージを表示し、「次へ」を押すと操作制限を解除して自由に戦える。" }
+          { title: "完了後", before: "最後の操作直後にチュートリアルが終了していた。", after: "最後に完了メッセージを表示し、「次へ」を押すと操作制限を解除して自由に戦える。" },
+          { title: "カード表示の大きさ", before: "手札・盤面でカードの縦横比が揃って見えない場面があった。", after: "すべてのタイプで共通の縦横比と表示寸法を使うように統一。" }
         ]
       },
       {
@@ -27133,15 +27229,7 @@
     }
 
     function shouldUseRewardFoilReveal(card, options = {}) {
-      if (!cardRewardStyleClass(card).includes("reward-foil")) return false;
-      if (typeof options.rewardFoilReveal === "boolean") {
-        if (options.rewardFoilReveal) state.rewardFoilRevealKeys[rewardFoilRevealKey(card)] = true;
-        return options.rewardFoilReveal;
-      }
-      const key = rewardFoilRevealKey(card);
-      if (state.rewardFoilRevealKeys[key]) return false;
-      state.rewardFoilRevealKeys[key] = true;
-      return true;
+      return false;
     }
 
     function resultOverlayKey(winner, options = {}) {
