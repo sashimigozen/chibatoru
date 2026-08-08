@@ -13498,8 +13498,11 @@
     .card.reward-foil:has(> .card-scale-stage) > .card-scale-stage {
       position: relative;
       isolation: isolate;
-      border: 7px solid transparent !important;
+      box-sizing: border-box !important;
+      /* The gold arch and its sides use one continuous, equally thick frame. */
+      border: 20px solid transparent !important;
       border-radius: 50% 50% 14px 14px / 15% 15% 14px 14px !important;
+      padding: 0 !important;
       background:
         linear-gradient(180deg, rgba(255, 241, 157, .98), rgba(164, 116, 13, .98)) padding-box,
         linear-gradient(112deg, var(--foil-gold-dark) 0%, var(--foil-gold-light) 18%, var(--foil-gold-mid) 35%, #fff1ab 52%, #9a6f13 69%, #f4cf61 86%, var(--foil-gold-dark) 100%) border-box !important;
@@ -13526,6 +13529,31 @@
          consistent width across the top instead of becoming a thick band. */
       border-radius: 50% 50% 8px 8px / 13% 13% 8px 8px !important;
       background: var(--reward-foil-face) !important;
+    }
+
+    /* Every type occupies the identical card footprint.  A reward style only
+       changes the frame and surface; it never changes the card's dimensions. */
+    .battle-screen .player-hand .hand-card.student,
+    .battle-screen .player-hand .hand-card.teacher,
+    .battle-screen .player-hand .hand-card.item,
+    .battle-screen .player-hand .hand-card.vampire,
+    .battle-screen .player-hand .hand-card.environment {
+      box-sizing: border-box !important;
+      width: 70px !important;
+      min-width: 70px !important;
+      height: 106.667px !important;
+      min-height: 106.667px !important;
+      aspect-ratio: 21 / 32 !important;
+    }
+
+    .battle-screen .field-card.board-card.student,
+    .battle-screen .field-card.board-card.teacher,
+    .battle-screen .field-card.board-card.item,
+    .battle-screen .field-card.board-card.vampire,
+    .battle-screen .field-card.board-card.environment {
+      box-sizing: border-box !important;
+      width: calc(var(--slot-size) - 12px) !important;
+      height: calc(var(--slot-size) - 12px) !important;
     }
 
     .card.reward-foil:has(> .card-scale-stage) .card-header,
