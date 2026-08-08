@@ -4,10 +4,10 @@
 
 ## プレイURL
 
-https://sashimigozen.github.io/chibatoru/?v=0.16.1
+https://sashimigozen.github.io/chibatoru/?v=0.16.0
 
-- [カード一覧 ver.0.16.1](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.1)
-- [ルール ver.0.16.1](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.1)
+- [カード一覧 ver.0.16.0](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.0)
+- [ルール ver.0.16.0](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.0)
 
 GitHub Pagesで公開しているため、インストールせずにPCやスマートフォンのブラウザから遊べます。オンライン対戦をする場合は、対戦する2人が同じ公開URLを開くのがおすすめです。
 
@@ -19,6 +19,14 @@ GitHub Pagesで公開しているため、インストールせずにPCやスマ
 - ミーム系カード、学生、教師、持ち物、環境カード
 - じゃんけん、マリガン、ターン制バトル
 - 手札カードのクリック操作とドラッグ操作
+
+## 最新更新（ver.0.16.0）
+
+- 対戦盤面を、相手の講義室を左、自分の講義室を右に置く教室型レイアウトへ刷新
+- 共有の環境マスを両講義室の中央に配置し、席マス・教卓マス・遅刻ゾーン・校外エリアを見分けやすく整理
+- 気力、戦意、山札、手札、ターン終了を対戦フィールドの外周へ配置し、盤面の確認をしやすく改善
+- MENUは左、ログは右から開く形式に変更。ログは相手の行動を左側、自分の行動を右側の吹き出しで表示
+- カードを選ぶと、対戦フィールド外の右上にカードと効果・現在の状態を確認できるパネルを表示
 
 ## オンライン対戦
 
