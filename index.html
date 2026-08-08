@@ -29389,6 +29389,7 @@
         const targetSide = button.dataset.lifeTarget;
         const lifeCap = currentLifeCap(targetSide);
         button.innerHTML = `<span class="life-heart-value">${state.players[targetSide].life}</span><span class="life-cap-value">/${lifeCap}</span>`;
+        button.setAttribute("aria-label", `${targetSide === "player" ? "自分" : "相手"}の気力 ${state.players[targetSide].life}/${lifeCap}`);
         button.disabled = isOnlineSpectator();
         const selected = getSelectedHandCard();
         const enemyItemTarget = !hasPeekableSelectionOverlay() && canDropHandCardOnLife(selected, targetSide);
