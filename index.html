@@ -13570,6 +13570,135 @@
     .battle-screen .field-card.reward-foil .field-card-art-name {
       background: rgba(255,255,255,.84) !important;
     }
+
+    /* Hand cards are not a separate compact design.  They are the same
+       420 x 640 card as every other card, scaled down as one object.  This
+       keeps the normal and reward-foil cards exactly the same footprint and
+       preserves every internal proportion. */
+    .battle-screen .player-hand .hand-card,
+    .battle-screen .player-hand .hand-card:nth-child(n) {
+      flex-basis: 70px !important;
+      width: 70px !important;
+      min-width: 70px !important;
+      aspect-ratio: 21 / 32 !important;
+      height: 106.667px !important;
+      min-height: 106.667px !important;
+    }
+
+    .battle-screen .player-hand .hand-card > .card-scale-stage {
+      position: absolute !important;
+      top: 0 !important;
+      right: auto !important;
+      bottom: auto !important;
+      left: 0 !important;
+      width: 420px !important;
+      height: 640px !important;
+      padding: 13px !important;
+      overflow: hidden !important;
+      transform: scale(var(--card-template-scale, .166667)) !important;
+      transform-origin: top left !important;
+    }
+
+    .battle-screen .player-hand .hand-card:not(.reward-foil) > .card-scale-stage {
+      border: 5px solid var(--card-template-outline) !important;
+      border-radius: 14px !important;
+      background: var(--card-template-band) !important;
+      box-shadow: 0 5px 11px rgba(15, 23, 42, .18) !important;
+    }
+
+    .battle-screen .player-hand .hand-card > .card-scale-stage .card-face {
+      position: relative !important;
+      display: block !important;
+      width: 100% !important;
+      height: 100% !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      border: 3px solid var(--card-template-outline) !important;
+      border-radius: 4px !important;
+      background: var(--card-template-surface) !important;
+    }
+
+    .battle-screen .player-hand .hand-card .card-header {
+      top: 14px !important;
+      right: 14px !important;
+      left: 14px !important;
+      display: grid !important;
+      height: 56px !important;
+      border: 3px solid var(--card-template-outline) !important;
+      background: rgba(255, 255, 255, .95) !important;
+    }
+
+    .battle-screen .player-hand .hand-card .card-header .card-name {
+      top: 0 !important;
+      right: 62px !important;
+      bottom: 0 !important;
+      left: 62px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 8px !important;
+      font-size: 27px !important;
+      line-height: 1.05 !important;
+      text-overflow: clip !important;
+      white-space: normal !important;
+      -webkit-line-clamp: 2 !important;
+    }
+
+    .battle-screen .player-hand .hand-card .card-header .stat-cost,
+    .battle-screen .player-hand .hand-card .card-header .card-type {
+      top: 6px !important;
+      display: grid !important;
+      width: 43px !important;
+      height: 43px !important;
+      min-width: 43px !important;
+    }
+    .battle-screen .player-hand .hand-card .card-header .stat-cost { left: 8px !important; }
+    .battle-screen .player-hand .hand-card .card-header .card-type { right: 3px !important; left: auto !important; }
+
+    .battle-screen .player-hand .hand-card .card-art-panel {
+      top: 96px !important;
+      right: 40px !important;
+      bottom: 42px !important;
+      left: 40px !important;
+      border: 3px solid var(--card-template-outline) !important;
+      background: linear-gradient(135deg, rgba(255,255,255,.9), rgba(255,255,255,.58)), var(--card-template-surface) !important;
+    }
+    .battle-screen .player-hand .hand-card .card-art-panel::before { inset: 12px !important; border-width: 2px !important; }
+    .battle-screen .player-hand .hand-card .card-art-name {
+      inset: 24px !important;
+      display: grid !important;
+      width: auto !important;
+      height: auto !important;
+      max-width: none !important;
+      place-items: center !important;
+      padding: 0 !important;
+      font-size: 46px !important;
+      line-height: 1.12 !important;
+    }
+
+    .battle-screen .player-hand .hand-card .card-effect-panel {
+      position: static !important;
+      display: block !important;
+      padding: 0 !important;
+      border: 0 !important;
+      background: transparent !important;
+    }
+    .battle-screen .player-hand .hand-card .card-effect-panel .card-stat {
+      position: absolute !important;
+      z-index: 6 !important;
+      display: inline-grid !important;
+      width: 58px !important;
+      min-width: 58px !important;
+      height: 58px !important;
+      place-items: center !important;
+      border-width: 3px !important;
+      padding: 0 !important;
+      font-size: 29px !important;
+    }
+    .battle-screen .player-hand .hand-card .card-effect-panel .stat-attack { bottom: 8px !important; left: 8px !important; }
+    .battle-screen .player-hand .hand-card .card-effect-panel .stat-hp { right: 8px !important; bottom: 8px !important; }
+    .battle-screen .player-hand .hand-card .card-effect-panel .stat-defense { right: 10px !important; bottom: 76px !important; }
+    .battle-screen .player-hand .hand-card .hand-card-stats { display: none !important; }
   </style>
 </head>
 <body>
