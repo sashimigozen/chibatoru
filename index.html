@@ -14923,6 +14923,16 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.16.1",
+        date: "2026年8月8日",
+        summary: "新しい左右配置の講義室に合わせて、チュートリアルを最初から作り直した。",
+        changes: [
+          { title: "チュートリアルの導線", before: "旧盤面を前提にした位置や説明が残っていた。", after: "左右の講義室、共有環境マス、遅刻ゾーン、校外、手札・山札の位置に合わせて、説明とフォーカスを更新。" },
+          { title: "基本操作", before: "カード種別ごとの説明が中心で、盤面全体の読み方を最初に確認しにくかった。", after: "講義室、気力、戦意、手札・山札、カードの数字を確認してから、学生・教師・持ち物・環境・ヴァンパイアを実際に操作する流れに変更。" },
+          { title: "完了後", before: "最後の操作直後にチュートリアルが終了していた。", after: "最後に完了メッセージを表示し、「次へ」を押すと操作制限を解除して自由に戦える。" }
+        ]
+      },
+      {
         version: "ver.0.16.0",
         date: "2026年8月8日",
         summary: "対戦画面を、講義室を見渡せる左右配置の教室盤面へ刷新。手札・山札・気力・戦意・校外・ログの位置を整理した。",
@@ -15562,22 +15572,34 @@
 
     const TUTORIAL_STEPS = [
       {
+        id: "basicBoard",
+        title: "基本編：講義室",
+        body: "左が相手の講義室、右が自分の講義室です。\n席マスは3行×3列、教卓マスは各講義室に1つあります。中央の環境マスは両者で共有します。",
+        focus: "#playerBoardPanel"
+      },
+      {
         id: "basicWin",
         title: "基本編：勝利条件",
-        body: "相手の気力を0にすると勝利です。\n自分のターン開始時に山札から引けないと敗北です。カードに特殊な勝利条件がある場合は、その条件でも勝利できます。",
+        body: "相手の気力を0にすると勝利です。\n自分のターン開始時に山札からカードを引けないと敗北します。特殊な勝利条件を持つカードもあります。",
         focus: "#opponentLifeTarget"
       },
       {
         id: "basicLife",
         title: "基本編：気力",
-        body: "気力はプレイヤー本体の体力です。\n自分の気力はここに表示されます。相手の気力を減らして勝ちを目指します。",
+        body: "ハートの数字が気力です。\n相手の気力を減らしながら、自分の気力も守ります。相手本体を攻撃できる時は、相手のハートを指名します。",
         focus: "#playerLifeTarget"
       },
       {
         id: "basicWill",
         title: "基本編：戦意",
-        body: "戦意はカードを使うためのコストです。\nターン開始時に最大値が1増え、全回復します。最大値は10です。",
-        focus: "#playerWillHudPill"
+        body: "戦意はカードを使うためのコストです。\nターン開始時に最大値が1増え、戦意は全回復します。最大値は10です。",
+        focus: ".battle-v16-player-mana"
+      },
+      {
+        id: "basicHand",
+        title: "基本編：手札と山札",
+        body: "自分の手札は画面下、山札は右下にあります。\n手札のカードをクリックして出席先を選ぶか、席マスへドラッグして出席させます。持ち物は右クリックでも使えます。",
+        focus: ".player-hand"
       },
       {
         id: "basicStats",
@@ -15586,15 +15608,21 @@
         focus: ".player-hand [data-base-id='general_student']"
       },
       {
+        id: "lateAndTrash",
+        title: "基本編：遅刻ゾーンと校外",
+        body: "遅刻を持つカードは、出席するまで遅刻ゾーンで待機します。\n破壊された出席者と使い終えた持ち物は校外へ送られます。どちらも押すと詳細を確認できます。",
+        focus: "#playerLateZone"
+      },
+      {
         id: "studentIntro",
         title: "学生編：学生の特徴",
-        body: "学生は主に席マスへ出席するタイプです。\n席の位置で強くなるカードもあります。出したターンは、基本的に攻撃できません。",
+        body: "学生は主に席マスへ出席するタイプです。\n置く行や列で効果が変わる学生もいます。出席したターンは、基本的に攻撃できません。",
         focus: ".player-hand [data-base-id='general_student']"
       },
       {
         id: "studentPlay",
         title: "学生編：出席",
-        body: "「一般学生」だけを使えます。\n一般学生をクリックして、自分の中央の席マスに出席させてください。",
+        body: "「一般学生」だけを使えます。\n光っている自分の2行2列の席マスへ出席させてください。",
         action: "playCard",
         allowedBaseId: "general_student",
         focus: ".player-hand [data-base-id='general_student']",
@@ -15603,13 +15631,13 @@
       {
         id: "teacherIntro",
         title: "教師編：教師の特徴",
-        body: "教師は教卓マスで力を発揮するタイプです。\n席マスに置ける教師もいますが、教卓マスにいないと発動しない効果があります。",
+        body: "教師は教卓マスで力を発揮するタイプです。\n席マスに出席できる教師もいますが、教卓マスにいないと発動しない効果があります。",
         focus: ".player-hand [data-base-id='general_teacher']"
       },
       {
         id: "teacherPlay",
         title: "教師編：出席",
-        body: "「一般教師」だけを使えます。\n一般教師を教卓マスへ出席させてください。",
+        body: "「一般教師」だけを使えます。\n光っている自分の教卓マスへ出席させてください。",
         action: "playCard",
         allowedBaseId: "general_teacher",
         focus: ".player-hand [data-base-id='general_teacher']",
@@ -15623,8 +15651,8 @@
       },
       {
         id: "cheerfulAttack",
-        title: "陽気/超陽気編：陽気",
-        body: "陽気を持つ出席者は、出したターンでも相手の出席者を攻撃できます。\n「あえー学生」は注目を持つので、先に処理します。一般教師で攻撃してください。",
+        title: "陽気編：陽気と注目",
+        body: "陽気を持つ出席者は、出席したターンでも相手の出席者を攻撃できます。\n「あえー学生」は注目を持つので、ほかの出席者より先に攻撃対象になります。一般教師で攻撃してください。",
         action: "attackCard",
         attackerBaseId: "general_teacher",
         targetBaseId: "ae_student",
@@ -15633,13 +15661,13 @@
       {
         id: "itemIntro",
         title: "持ち物編：持ち物の特徴",
-        body: "持ち物は手札から使うタイプです。\n効果を発動したあと、校外エリアへ送られます。誤タップ防止の確認が出ます。",
+        body: "持ち物は手札から使うタイプです。\n効果を発動したあと校外へ送られます。使う前には確認画面が表示されます。",
         focus: ".player-hand [data-base-id='ruler']"
       },
       {
         id: "itemRuler",
         title: "持ち物編：定規",
-        body: "「定規」だけを使えます。\n確認が出たら「使う」を押し、相手本体を指名してください。",
+        body: "「定規」だけを使えます。\n確認画面で「使う」を押し、相手本体を指名してください。",
         action: "itemLife",
         allowedBaseId: "ruler",
         targetSide: "opponent",
@@ -15648,13 +15676,13 @@
       {
         id: "environmentIntro",
         title: "環境編：環境の特徴",
-        body: "環境は共有の環境マスに置くタイプです。\n講義室全体に影響し、別の環境で上書きできます。同名での上書きは原則できません。",
+        body: "環境は中央の共有環境マスに置くタイプです。\n講義室全体に影響し、別の環境で上書きできます。同名での上書きは原則できません。",
         focus: ".player-hand [data-base-id='cafeteria']"
       },
       {
         id: "environmentPlay",
         title: "環境編：食堂",
-        body: "「食堂」だけを使えます。\n環境マスに置いてください。食堂はターン終了時に気力を1回復します。",
+        body: "「食堂」だけを使えます。\n中央の環境マスに置いてください。食堂はターン終了時に気力を1回復します。",
         action: "playCard",
         allowedBaseId: "cafeteria",
         focus: ".player-hand [data-base-id='cafeteria']",
@@ -15663,13 +15691,13 @@
       {
         id: "vampireIntro",
         title: "ヴァンパイア編：ヴァンパイアの特徴",
-        body: "ヴァンパイアは、攻撃で与えたダメージ分だけ体力を回復するタイプです。\nただし定規、「デザイン」と名のつく教師、ダブルダイヤモンドクロスから受けるダメージは2倍になります。",
+        body: "ヴァンパイアは、攻撃で与えたダメージ分だけ体力を回復するタイプです。\nただし、定規、「デザイン」と名のつく教師、ダブルダイヤモンドクロスから受けるダメージは2倍になります。",
         focus: ".player-hand [data-base-id='vampire']"
       },
       {
         id: "vampirePlay",
         title: "ヴァンパイア編：出席",
-        body: "「CITヴァンパイア」だけを使えます。\n自分の左上の席マスに出席させてください。説明用に少しダメージを受けた状態にします。",
+        body: "「CITヴァンパイア」だけを使えます。\n光っている自分の1行1列へ出席させてください。説明用に少しダメージを受けた状態にします。",
         action: "playCard",
         allowedBaseId: "vampire",
         focus: ".player-hand [data-base-id='vampire']",
@@ -15677,8 +15705,8 @@
       },
       {
         id: "superCheerfulAttack",
-        title: "陽気/超陽気編：超陽気",
-        body: "超陽気なら、出したターンでも相手本体を攻撃できます。\nCITヴァンパイアを攻撃役に選び、相手本体を攻撃してください。吸血で回復します。",
+        title: "超陽気編：本体への攻撃",
+        body: "超陽気なら、出席したターンでも相手本体を攻撃できます。\nCITヴァンパイアを攻撃役に選び、相手本体を攻撃してください。与えたダメージ分、体力を回復します。",
         action: "attackLife",
         attackerBaseId: "vampire",
         targetSide: "opponent",
@@ -15687,13 +15715,13 @@
       {
         id: "yoyuIntro",
         title: "余裕編：余裕の特徴",
-        body: "余裕は、自分のターン終了時に体力を1回復するキーワードです。\n次にU太を出して、ターン終了時の回復を確認します。",
+        body: "余裕を持つ出席者は、自分のターン終了時に体力を1回復します。\n次にU太を出して、ターン終了時の回復を確認します。",
         focus: ".player-hand [data-base-id='yuta']"
       },
       {
         id: "yutaPlay",
         title: "余裕編：U太",
-        body: "「U太」だけを使えます。\n自分の右下の席マスに出席させてください。説明用に少しダメージを受けた状態にします。",
+        body: "「U太」だけを使えます。\n光っている自分の3行3列へ出席させてください。説明用に少しダメージを受けた状態にします。",
         action: "playCard",
         allowedBaseId: "yuta",
         focus: ".player-hand [data-base-id='yuta']",
@@ -15702,9 +15730,15 @@
       {
         id: "endTurn",
         title: "ターン終了編：自動効果",
-        body: "ターン終了を押してください。\n一般教師の講義、食堂の回復、U太の余裕がまとめて処理されます。",
+        body: "ターン終了を押してください。\n一般教師の講義、食堂の回復、U太の余裕が順に処理されます。",
         action: "endTurn",
         focus: "#endTurnButton"
+      },
+      {
+        id: "freeBattle",
+        title: "チュートリアル完了",
+        body: "ここまでで基本操作は完了です。\nここからは自由に戦ってね。カードを出席させ、相手の気力を0にして勝利を目指そう。",
+        focus: "#playerBoardPanel"
       }
     ];
 
@@ -21292,6 +21326,10 @@
       }
       const tutorialCompleted = endingSide === "player" && completeTutorialAction("endTurn", { side: endingSide });
       if (tutorialCompleted && !state.tutorial.active) {
+        render();
+        return;
+      }
+      if (state.tutorial?.pauseAfterAction) {
         render();
         return;
       }
@@ -27749,7 +27787,8 @@
         log: cloneTutorialValue(state.log),
         tutorial: {
           stepIndex: state.tutorial.stepIndex,
-          intro: state.tutorial.intro
+          intro: state.tutorial.intro,
+          pauseAfterAction: state.tutorial.pauseAfterAction === true
         },
         players: cloneTutorialValue(state.players)
       };
@@ -27805,6 +27844,7 @@
         active: true,
         stepIndex: snapshot.tutorial.stepIndex,
         intro: snapshot.tutorial.intro,
+        pauseAfterAction: snapshot.tutorial.pauseAfterAction === true,
         history
       };
       pendingAnimations.length = 0;
@@ -28049,6 +28089,7 @@
       state.tutorial.stepIndex += 1;
       const nextStep = currentTutorialStep();
       if (nextStep) {
+        if (nextStep.id === "freeBattle") state.tutorial.pauseAfterAction = true;
         state.message = `チュートリアル：${nextStep.title}`;
       } else {
         resetTutorialState();
@@ -28097,10 +28138,19 @@
       const step = currentTutorialStep();
       if (!step || step.action) return;
       pushTutorialHistory();
+      if (step.id === "freeBattle") {
+        state.currentSide = "player";
+        resetTutorialState();
+        state.message = "チュートリアル完了。ここからは自由に戦ってね。";
+        addLog("チュートリアル完了。ここからは自由に戦えます。");
+        showCenterAnnouncement("ここからは自由に戦ってね！");
+        render();
+        return;
+      }
       state.tutorial.stepIndex += 1;
       state.message = currentTutorialStep()
         ? `チュートリアル：${currentTutorialStep().title}`
-        : "チュートリアル完了。";
+        : "チュートリアル完了。ここからは自由に戦ってね。";
       render();
     }
 

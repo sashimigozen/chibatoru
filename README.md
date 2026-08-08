@@ -4,10 +4,10 @@
 
 ## プレイURL
 
-https://sashimigozen.github.io/chibatoru/?v=0.16.0
+https://sashimigozen.github.io/chibatoru/?v=0.16.1
 
-- [カード一覧 ver.0.16.0](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.0)
-- [ルール ver.0.16.0](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.0)
+- [カード一覧 ver.0.16.1](https://sashimigozen.github.io/chibatoru/%E3%82%AB%E3%83%BC%E3%83%89%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.1)
+- [ルール ver.0.16.1](https://sashimigozen.github.io/chibatoru/%E3%83%AB%E3%83%BC%E3%83%AB%E3%83%BB%E7%94%A8%E8%AA%9E%E7%AE%A1%E7%90%86%E5%8F%B0%E5%B8%B3.html?v=0.16.1)
 
 GitHub Pagesで公開しているため、インストールせずにPCやスマートフォンのブラウザから遊べます。オンライン対戦をする場合は、対戦する2人が同じ公開URLを開くのがおすすめです。
 
@@ -20,7 +20,13 @@ GitHub Pagesで公開しているため、インストールせずにPCやスマ
 - じゃんけん、マリガン、ターン制バトル
 - 手札カードのクリック操作とドラッグ操作
 
-## 最新更新（ver.0.16.0）
+## 最新更新（ver.0.16.1）
+
+- 新しい左右配置の講義室に合わせて、チュートリアルの説明・フォーカス・出席先を全面更新
+- 講義室、気力、戦意、手札・山札、遅刻ゾーン、校外を確認してから、各カードタイプを操作する流れへ変更
+- 最後に「ここからは自由に戦ってね」と表示し、確認後に自由対戦へ移行
+
+## ひとつ前の更新（ver.0.16.0）
 
 - 対戦盤面を、相手の講義室を左、自分の講義室を右に置く教室型レイアウトへ刷新
 - 共有の環境マスを両講義室の中央に配置し、席マス・教卓マス・遅刻ゾーン・校外エリアを見分けやすく整理
