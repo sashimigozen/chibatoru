@@ -13437,6 +13437,136 @@
       padding: 3px 5px !important;
       font-size: 9px !important;
     }
+
+    /* Reward cards keep the ordinary card layout, but their outer frame is a
+       rounded gold arch and their face returns to a dark glossy type colour. */
+    .card.reward-foil,
+    .field-card.reward-foil {
+      --foil-gold-dark: #71500b;
+      --foil-gold-mid: #bd8d1f;
+      --foil-gold-light: #ffe48a;
+      --reward-foil-text: #fffdf5;
+    }
+
+    .card.student.reward-foil,
+    .field-card.student.reward-foil {
+      --reward-foil-face: linear-gradient(145deg, #3c9dca 0%, #143a5e 49%, #226e99 100%);
+      --reward-foil-glow: rgba(110, 214, 255, .58);
+    }
+
+    .card.teacher.reward-foil,
+    .field-card.teacher.reward-foil {
+      --reward-foil-face: linear-gradient(145deg, #8b62b2 0%, #35204f 49%, #65428c 100%);
+      --reward-foil-glow: rgba(197, 149, 255, .5);
+    }
+
+    .card.item.reward-foil,
+    .field-card.item.reward-foil {
+      --reward-foil-face: linear-gradient(145deg, #b98718 0%, #4d3306 49%, #87600e 100%);
+      --reward-foil-glow: rgba(255, 212, 91, .5);
+    }
+
+    .card.vampire.reward-foil,
+    .field-card.vampire.reward-foil {
+      --reward-foil-face: linear-gradient(145deg, #a54050 0%, #3d0d18 49%, #7d2334 100%);
+      --reward-foil-glow: rgba(255, 116, 137, .5);
+    }
+
+    .card.environment.reward-foil,
+    .field-card.environment.reward-foil {
+      --reward-foil-face: linear-gradient(145deg, #4c9a63 0%, #123c25 49%, #2f7346 100%);
+      --reward-foil-glow: rgba(106, 219, 140, .48);
+    }
+
+    /* The 420px template is scaled as a whole in each UI.  This preserves the
+       ordinary card's information geometry while changing only the gold shell. */
+    .card.reward-foil:has(> .card-scale-stage) {
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage)::before,
+    .card.reward-foil:has(> .card-scale-stage)::after {
+      display: none !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) > .card-scale-stage {
+      position: relative;
+      isolation: isolate;
+      border: 7px solid transparent !important;
+      border-radius: 50% 50% 14px 14px / 15% 15% 14px 14px !important;
+      background:
+        linear-gradient(180deg, rgba(255, 241, 157, .98), rgba(164, 116, 13, .98)) padding-box,
+        linear-gradient(112deg, var(--foil-gold-dark) 0%, var(--foil-gold-light) 18%, var(--foil-gold-mid) 35%, #fff1ab 52%, #9a6f13 69%, #f4cf61 86%, var(--foil-gold-dark) 100%) border-box !important;
+      background-size: 100% 100%, 260% 260% !important;
+      background-position: 0 0, 0% 50% !important;
+      box-shadow: 0 0 0 1px #4d3508, 0 6px 13px rgba(41, 25, 4, .42), 0 0 15px var(--reward-foil-glow, rgba(246, 207, 99, .42)) !important;
+      animation: reward-foil-flow 4.8s linear infinite !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) > .card-scale-stage::before {
+      position: absolute;
+      z-index: 6;
+      inset: 3px;
+      border-radius: 50% 50% 8px 8px / 15% 15% 8px 8px;
+      background: linear-gradient(116deg, transparent 43%, rgba(255,255,255,.46) 49%, transparent 55%);
+      content: "";
+      pointer-events: none;
+      transform: translateX(-145%);
+      animation: reward-foil-shine 4.8s ease-in-out infinite;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) .card-face {
+      /* Match the inner curve to the outer arch so the gold border keeps a
+         consistent width across the top instead of becoming a thick band. */
+      border-radius: 50% 50% 8px 8px / 13% 13% 8px 8px !important;
+      background: var(--reward-foil-face) !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) .card-header,
+    .card.reward-foil:has(> .card-scale-stage) .card-art-panel,
+    .card.reward-foil:has(> .card-scale-stage) .card-effect-panel {
+      background: rgba(255, 255, 255, .92) !important;
+    }
+
+    .card.reward-foil:has(> .card-scale-stage) .card-header .card-name,
+    .card.reward-foil:has(> .card-scale-stage) .card-art-name,
+    .card.reward-foil:has(> .card-scale-stage) .card-effect,
+    .card.reward-foil:has(> .card-scale-stage) .card-effect-label {
+      color: var(--card-template-ink) !important;
+    }
+
+    /* Board cards use the same gold arch without changing their footprint in a seat. */
+    .battle-screen .field-card.reward-foil {
+      overflow: visible;
+      border: 4px solid transparent !important;
+      border-radius: 50% 50% 6px 6px / 13% 13% 6px 6px !important;
+      background:
+        var(--reward-foil-face) padding-box,
+        linear-gradient(112deg, var(--foil-gold-dark) 0%, var(--foil-gold-light) 18%, var(--foil-gold-mid) 35%, #fff1ab 52%, #9a6f13 69%, #f4cf61 86%, var(--foil-gold-dark) 100%) border-box !important;
+      background-size: 100% 100%, 260% 260% !important;
+      background-position: 0 0, 0% 50% !important;
+      box-shadow: 0 0 0 1px #4d3508, 0 4px 9px rgba(41,25,4,.38), 0 0 12px var(--reward-foil-glow, rgba(246,207,99,.38)) !important;
+      animation: reward-foil-flow 4.8s linear infinite !important;
+    }
+
+    .battle-screen .field-card.reward-foil::before {
+      border-radius: 50% 50% 3px 3px / 13% 13% 3px 3px;
+      background: linear-gradient(145deg, rgba(255,246,180,.27), rgba(255,255,255,0)) !important;
+    }
+
+    .battle-screen .field-card.reward-foil::after {
+      inset: 3px !important;
+      border-radius: 50% 50% 3px 3px / 13% 13% 3px 3px !important;
+      background: linear-gradient(116deg, transparent 43%, rgba(255,255,255,.42) 49%, transparent 55%) !important;
+      animation: reward-foil-shine 4.8s ease-in-out infinite !important;
+    }
+
+    .battle-screen .field-card.reward-foil .field-card-art-name {
+      background: rgba(255,255,255,.84) !important;
+    }
   </style>
 </head>
 <body>
