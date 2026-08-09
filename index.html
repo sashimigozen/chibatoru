@@ -14572,7 +14572,6 @@
         <h2 id="itemConfirmTitle">この持ち物を使う？</h2>
         <p id="itemConfirmText">使うと戦意を消費して、効果の後に校外エリアへ移動する。</p>
         <div class="item-confirm-actions">
-          <button class="button" id="itemConfirmUseButton" type="button">使う</button>
           <button class="button secondary" id="itemConfirmCancelButton" type="button">やめる</button>
         </div>
       </div>
@@ -16072,13 +16071,13 @@
       {
         id: "itemIntro",
         title: "持ち物編：持ち物の特徴",
-        body: "持ち物は手札から使うタイプです。\n効果を発動したあと校外へ送られます。使う前には確認画面が表示されます。",
+        body: "持ち物は手札から対戦フィールドへドラッグして使うタイプです。\n効果を発動したあと校外へ送られます。",
         focus: ".player-hand [data-base-id='ruler']"
       },
       {
         id: "itemRuler",
         title: "持ち物編：定規",
-        body: "「定規」だけを使えます。\n確認画面で「使う」を押し、相手本体を指名してください。",
+        body: "「定規」だけを使えます。\n相手本体のハートへドラッグして離してください。",
         action: "itemLife",
         allowedBaseId: "ruler",
         targetSide: "opponent",
@@ -22427,8 +22426,10 @@
     function openItemConfirm(card) {
       if (!card || card.type !== "item") return;
       hideCardTooltip();
-      state.pendingItemConfirmId = card.instanceId;
-      showBattleCardPreview(card, { itemConfirm: true });
+      // Clicking an item only opens its details. Using an item always starts
+      // with dragging it onto the playmat or onto a valid target.
+      state.pendingItemConfirmId = null;
+      showBattleCardPreview(card);
     }
 
     function closeItemConfirm() {
@@ -22758,6 +22759,10 @@
       if (isOnlineSpectator()) return;
       const item = getHandCard("player", state.pendingItemConfirmId);
       closeItemConfirm();
+      beginItemUse(item);
+    }
+
+    function beginItemUse(item) {
       if (!item || state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (!tutorialAllowsHandCard(item)) {
         rejectTutorialAction("今は光っている持ち物だけ使えます。");
@@ -28577,8 +28582,6 @@
         return state.selectedAttacker ? "#opponentLifeTarget" : step.focus;
       }
       if (step.action === "itemLife") {
-        const pendingItem = getHandCard("player", state.pendingItemConfirmId);
-        if (pendingItem?.baseId === step.allowedBaseId) return "[data-preview-item-use]";
         const selected = getSelectedHandCard();
         return selected?.baseId === step.allowedBaseId ? "#opponentLifeTarget" : step.focus;
       }
@@ -28812,7 +28815,10 @@
     }
 
     function canDropHandCardOnPlaymat(card) {
-      return Boolean(card && canStartHandDrag(card) && isImmediateDragItem(card));
+      return Boolean(card
+        && canStartHandDrag(card)
+        && card.type === "item"
+        && canUseItemNow(card));
     }
 
     function performHandDropOnSlot(instanceId, zone, owner, index) {
@@ -28859,26 +28865,9 @@
       const item = getHandCard("player", instanceId);
       if (!item || !canDropHandCardOnPlaymat(item)) return false;
       state.selectedHandId = instanceId;
-      if (item.baseId === "three_gestures") {
-        openThreeGesturesSelection(item);
-        return true;
-      }
-      if (item.baseId === "music_detergent" && openMusicDetergentChoice(item)) return true;
-      if (item.baseId === "dropped_cards" && openDroppedCardsChoice(item)) return true;
-      if (item.baseId === "sage_legacy" && openSageLegacyChoice(item)) return true;
-      if (item.baseId === "deck_without") {
-        openDeckWithoutDiscardChoice(item);
-        return true;
-      }
-      if (onlineCanSendCommand()) {
-        const commandType = item.target === "global" ? "itemGlobal" : "itemImmediate";
-        onlineSendCommand(commandType, { instanceId: item.instanceId });
-        state.message = `${item.name}の使用を送信しました。`;
-        render();
-        return true;
-      }
-      if (item.target === "global") return castItemGlobal("player", item, true);
-      return castImmediateItem("player", item, true);
+      hideBattleCardPreview();
+      beginItemUse(item);
+      return true;
     }
 
     function clearHandDropHints() {
@@ -32435,18 +32424,14 @@
       elements.cardTooltip.classList.add("hidden");
     }
 
-    function showBattleCardPreview(card, options = {}) {
+    function showBattleCardPreview(card) {
       if (!card || state.screen !== "battle" || !elements.battleCardPreview) return;
       const fuseMarkup = card.baseId === "ruler" && canPlayerFuseRulers()
         ? `<button class="button secondary" type="button" data-preview-ruler-fuse="true">定規融合</button>`
         : "";
-      const actionMarkup = options.itemConfirm ? `
-        <div class="battle-card-preview-actions">
-          <button class="button" type="button" data-preview-item-use="true">使う</button>
-          ${fuseMarkup}
-          <button class="button secondary" type="button" data-preview-item-cancel="true">やめる</button>
-        </div>
-      ` : fuseMarkup ? `<div class="battle-card-preview-actions single"><button class="button secondary" type="button" data-preview-ruler-fuse="true">定規融合</button></div>` : "";
+      const actionMarkup = fuseMarkup
+        ? `<div class="battle-card-preview-actions single">${fuseMarkup}</div>`
+        : "";
       const previewDetail = battleCardPreviewDetailTemplate(card);
       elements.battleCardPreview.innerHTML = `
         ${cardShellTemplate(card)}
@@ -33437,7 +33422,7 @@
     elements.playerDeckPile.addEventListener("pointerleave", finishDeckPilePress);
     elements.playerDeckPile.addEventListener("click", suppressDeckPileClick, true);
     elements.deckInspectButton.addEventListener("click", openDeckWindow);
-    elements.itemConfirmUseButton.addEventListener("click", confirmPendingItemUse);
+    elements.itemConfirmUseButton?.addEventListener("click", confirmPendingItemUse);
     elements.itemConfirmCancelButton.addEventListener("click", closeItemConfirm);
     elements.itemConfirmModal.addEventListener("click", (event) => {
       if (event.target === elements.itemConfirmModal) closeItemConfirm();
@@ -33487,16 +33472,6 @@
       if (related) {
         event.stopPropagation();
         showBattleCardPreview(makePreviewCard(related.dataset.relatedCard, "player"));
-        return;
-      }
-      if (event.target.closest("[data-preview-item-use]")) {
-        event.stopPropagation();
-        confirmPendingItemUse();
-        return;
-      }
-      if (event.target.closest("[data-preview-item-cancel]")) {
-        event.stopPropagation();
-        closeItemConfirm();
         return;
       }
       if (event.target.closest("[data-preview-ruler-fuse]")) {
