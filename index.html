@@ -13854,7 +13854,7 @@
     .battle-screen .field-card.board-card.reward-foil {
       width: calc(var(--slot-size) - 10px) !important;
       height: calc(var(--slot-size) - 10px) !important;
-      border: 3px solid var(--field-band) !important;
+      border: 3px solid #d7ae3d !important;
       border-radius: 6px !important;
       background: var(--reward-foil-face) !important;
       box-shadow: 2px 3px 0 rgba(13, 39, 61, .28) !important;
@@ -13868,6 +13868,35 @@
 
     .battle-screen .field-card.board-card.reward-foil::before {
       display: none !important;
+    }
+
+    /* A reward frame never recolours game-state icons. Keep the normal
+       state palette so a gold card communicates exactly the same status. */
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="陽気"] {
+      color: #c87500 !important;
+      background: #fff3a8 !important;
+    }
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="陽気"]::before {
+      background: #f6c938 !important;
+    }
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="超陽気"] {
+      color: #c15000 !important;
+      background: #ffe27b !important;
+      border-color: #b77a00 !important;
+      box-shadow: 0 0 0 2px rgba(247,197,35,.35), 0 2px 3px rgba(12,35,58,.17) !important;
+    }
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="超陽気"]::before {
+      background: #e58a15 !important;
+    }
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="注目"],
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="超注目"] {
+      background: #ffe1fb !important;
+    }
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="眠気"] {
+      background: #e5f7ff !important;
+    }
+    .battle-screen .field-card.board-card.reward-foil .status-icon[title="眠気"]::before {
+      background: #77bce0 !important;
     }
 
     .battle-screen .field-card.board-card.reward-foil .field-card-title,
