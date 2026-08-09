@@ -4862,6 +4862,68 @@
       grid-template-columns: 1fr;
     }
 
+    .battle-card-preview .card-type[data-preview-type-help] {
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease;
+    }
+
+    .battle-card-preview .card-type[data-preview-type-help]:hover,
+    .battle-card-preview .card-type[data-preview-type-help]:focus-visible {
+      outline: 0;
+      transform: translateY(-50%) scale(1.1);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-template-accent) 24%, transparent);
+    }
+
+    .battle-card-type-help {
+      display: grid;
+      gap: 12px;
+      min-height: 250px;
+      align-content: start;
+      padding: 4px 2px;
+    }
+
+    .battle-card-type-help-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #172033;
+      font-size: 20px;
+      font-weight: 1000;
+    }
+
+    .battle-card-type-help-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 2px solid var(--type-help-color, #64748b);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--type-help-color, #64748b) 12%, #ffffff);
+      color: var(--type-help-color, #64748b);
+      font-size: 13px;
+      font-weight: 1000;
+    }
+
+    .battle-card-type-help-copy {
+      margin: 0;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 750;
+      line-height: 1.75;
+    }
+
+    .battle-card-type-help-note {
+      margin: 0;
+      padding: 10px 11px;
+      border-left: 3px solid var(--type-help-color, #64748b);
+      background: #f8fafc;
+      color: #475569;
+      font-size: 12px;
+      font-weight: 750;
+      line-height: 1.6;
+    }
+
     .detail-pressing {
       outline: 2px solid rgba(14, 165, 233, 0.35);
       outline-offset: 1px;
@@ -15508,6 +15570,14 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.16.4",
+        date: "2026年8月9日",
+        summary: "対戦中のカード確認から、カードタイプの基本説明を確認できるようにした。",
+        changes: [
+          { title: "タイプ説明", before: "タイプの表示だけでは役割を確認しにくかった。", after: "カード右上のタイプ印を押すと、同じ確認ポップ内でタイプの特徴を確認できるようにした。" }
+        ]
+      },
       {
         version: "ver.0.16.3",
         date: "2026年8月9日",
@@ -32636,8 +32706,17 @@
         ${actionMarkup}
       `;
       elements.battleCardPreview._effectDetails = previewDetail.effectDetails;
+      elements.battleCardPreview._previewCard = card;
       elements.battleCardPreview.classList.remove("preview-card-collection");
+      elements.battleCardPreview.classList.remove("preview-type-help");
       elements.battleCardPreview.classList.remove("hidden");
+      const typeHelp = elements.battleCardPreview.querySelector(".card-type");
+      if (typeHelp) {
+        typeHelp.dataset.previewTypeHelp = card.type;
+        typeHelp.setAttribute("role", "button");
+        typeHelp.tabIndex = 0;
+        typeHelp.setAttribute("aria-label", `${labelForType(card.type)}の説明を確認`);
+      }
     }
 
     function showBattleCardPreviewCollection(event) {
@@ -32652,7 +32731,9 @@
         </div>
       `;
       elements.battleCardPreview._effectDetails = null;
+      elements.battleCardPreview._previewCard = null;
       elements.battleCardPreview.classList.add("preview-card-collection");
+      elements.battleCardPreview.classList.remove("preview-type-help");
       elements.battleCardPreview.classList.remove("hidden");
       elements.battleCardPreview.querySelectorAll("[data-preview-collection-index]").forEach((button) => {
         button.addEventListener("click", (clickEvent) => {
@@ -32667,8 +32748,64 @@
       if (!elements.battleCardPreview) return;
       elements.battleCardPreview.classList.add("hidden");
       elements.battleCardPreview.classList.remove("preview-card-collection");
+      elements.battleCardPreview.classList.remove("preview-type-help");
       elements.battleCardPreview.innerHTML = "";
       elements.battleCardPreview._effectDetails = null;
+      elements.battleCardPreview._previewCard = null;
+    }
+
+    const BATTLE_CARD_TYPE_DESCRIPTIONS = {
+      student: {
+        short: "学生",
+        color: "#2378bd",
+        description: "主に席マスへ出席するタイプ。行・列・周囲のマスなど、座る場所によって能力が変わるカードが多い。",
+        note: "学生によっては、出席できる行やマスに条件がある。"
+      },
+      teacher: {
+        short: "教師",
+        color: "#794fb1",
+        description: "席マスにも教卓マスにも出席できるタイプ。教卓マスにいる間だけ講義や固有効果を発揮する教師がいる。",
+        note: "教師マスに置くか、席マスに置くかで役割が変わる。"
+      },
+      vampire: {
+        short: "吸血",
+        color: "#b64657",
+        description: "攻撃で与えたダメージと同じだけ体力を回復するタイプ。体力を保ちながら盤面に残りやすい。",
+        note: "相手のデザイン講師や一部の持ち物には注意が必要。"
+      },
+      item: {
+        short: "持物",
+        color: "#b98216",
+        description: "手札から使って、対象の出席者や本体に効果を与えるタイプ。多くは使用後に校外エリアへ送られる。",
+        note: "装備カードは出席者につけて、継続的に効果を与える。"
+      },
+      environment: {
+        short: "環境",
+        color: "#398c5e",
+        description: "両プレイヤーで共有する環境マスに置くタイプ。場にある間、両者や特定のカードへ継続的に影響する。",
+        note: "環境マスは共有。原則として同名カードでは上書きできない。"
+      }
+    };
+
+    function showBattleCardTypeDescription(card) {
+      const typeHelp = BATTLE_CARD_TYPE_DESCRIPTIONS[card?.type];
+      if (!typeHelp || !elements.battleCardPreview) return;
+      elements.battleCardPreview.innerHTML = `
+        <div class="battle-card-type-help" style="--type-help-color: ${escapeHtml(typeHelp.color)}">
+          <div class="battle-card-type-help-heading">
+            <span class="battle-card-type-help-mark">${escapeHtml(typeHelp.short)}</span>
+            <span>${escapeHtml(labelForType(card.type))}</span>
+          </div>
+          <p class="battle-card-type-help-copy">${escapeHtml(typeHelp.description)}</p>
+          <p class="battle-card-type-help-note">${escapeHtml(typeHelp.note)}</p>
+          <button class="button secondary" type="button" data-preview-return-card-detail="true">カード詳細へ戻る</button>
+        </div>
+      `;
+      elements.battleCardPreview._effectDetails = null;
+      elements.battleCardPreview.classList.remove("preview-card-collection");
+      elements.battleCardPreview.classList.add("preview-type-help");
+      elements.battleCardPreview.classList.remove("hidden");
+      elements.battleCardPreview._previewCard = card;
     }
 
     const BATTLE_CARD_TERM_DESCRIPTIONS = {
@@ -33672,6 +33809,19 @@
       if (event.target === elements.deckModal) closeDeckWindow();
     });
     elements.battleCardPreview.addEventListener("click", (event) => {
+      if (event.target.closest("[data-preview-return-card-detail]")) {
+        event.stopPropagation();
+        const card = elements.battleCardPreview._previewCard;
+        if (card) showBattleCardPreview(card);
+        return;
+      }
+      const typeHelp = event.target.closest("[data-preview-type-help]");
+      if (typeHelp) {
+        event.stopPropagation();
+        const card = elements.battleCardPreview._previewCard;
+        if (card) showBattleCardTypeDescription(card);
+        return;
+      }
       const term = event.target.closest("[data-preview-term]");
       if (term) {
         event.stopPropagation();
@@ -33697,6 +33847,14 @@
         return;
       }
       hideBattleCardPreview();
+    });
+    elements.battleCardPreview.addEventListener("keydown", (event) => {
+      if (!((event.key === "Enter") || (event.key === " "))) return;
+      const typeHelp = event.target.closest("[data-preview-type-help]");
+      if (!typeHelp) return;
+      event.preventDefault();
+      const card = elements.battleCardPreview._previewCard;
+      if (card) showBattleCardTypeDescription(card);
     });
     elements.resultOverlay.addEventListener("click", (event) => {
       if (event.target.closest("[data-result-dungeon-interrupt]")) {
