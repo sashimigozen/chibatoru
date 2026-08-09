@@ -15686,11 +15686,12 @@
       {
         version: "ver.0.16.2",
         date: "2026年8月9日",
-        summary: "盤面カードの攻撃状態と、陽気・注目系の状態アイコンを読み取りやすく整理。",
+        summary: "講義室に出席しているカードだけに表示する状態アイコンを、読み取りやすく整理。",
         changes: [
           { title: "攻撃状態", before: "盤面の出席者が、今すぐ攻撃できるかを外周だけで判断する必要があった。", after: "今すぐ攻撃できる出席者の右端に、黄色い剣アイコンを表示。攻撃済みの出席者は、同じ剣を無彩色で表示する。剣と盾は同じ線画アイコンのスタイルで統一した。" },
           { title: "陽気・超陽気", before: "陽気の能力と、今攻撃できる状態を別々の印で表示していた。", after: "盤面では右端の剣アイコンを陽気と攻撃可能の共通表示に統一。陽気は出席したターンから剣が現れ、超陽気なら淡い水色の背景と青い縁で表示する。" },
-          { title: "注目系アイコン", before: "注目と超注目を素早く見分けにくかった。", after: "注目は青い背景と青い盾、超注目は赤い背景と赤い盾に変更。状態アイコンは左からその他、注目系、攻撃状態の順に固定した。" }
+          { title: "注目系アイコン", before: "注目と超注目を素早く見分けにくかった。", after: "注目は青い背景と青い盾、超注目は赤い背景と赤い盾に変更。状態アイコンは左からその他、注目系、攻撃状態の順に固定した。" },
+          { title: "表示場所", before: "デッキ編成、カード確認、手札にも状態アイコンが表示され、カードの情報が不自然に重なることがあった。", after: "状態アイコンは講義室に出席しているカードだけに表示する。手札、デッキ編成、カード確認では表示しない。" }
         ]
       },
       {
@@ -15706,8 +15707,6 @@
           { title: "カード表示の大きさ", before: "手札・盤面でカードの縦横比が揃って見えない場面があった。", after: "すべてのタイプで共通の縦横比と表示寸法を使うように統一。" },
           { title: "MENUとログ", before: "どちらかを開くと、もう一方のパネルとボタンが閉じたり隠れたりしていた。", after: "MENUとログは同時に開ける独立したパネルに変更。どちらを開いていても、もう一方のボタンから確認できる。" },
           { title: "タイプ説明", before: "タイプの表示だけでは役割を確認しにくかった。", after: "カード右上のタイプ印を押すと、同じ確認ポップ内でタイプの特徴を確認できるようにした。" },
-          { title: "超陽気アイコン", before: "陽気と超陽気が黄色系の見た目に寄り、色覚によって違いを見分けにくいことがあった。", after: "超陽気を得た場合は陽気の印を残さず、青い縁・水色の背景・青と黄色の二色の星形へ置き換え、陽気と区別しやすくした。" },
-          { title: "状態アイコンの順序", before: "陽気・注目・眠気などのアイコンの並びが、カードごとに把握しにくかった。", after: "右端を陽気・超陽気、その左を注目・超注目、残りをさらに左へ置く順序に統一。注目は赤い「!」、超注目は青い「!!」を丸枠内で表示する。" }
         ]
       },
       {
@@ -30806,6 +30805,8 @@
     }
 
     function statusPartsForCard(card, boardCard) {
+      // 状態アイコンは講義室に出席しているカードだけに表示する。
+      if (!boardCard) return [];
       const otherParts = [];
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) otherParts.push({ icon: "酔", title: "召喚酔い" });
       if (boardCard && card.attackLockedPermanently) otherParts.push({ icon: "止", title: "攻撃不可" });
@@ -30820,12 +30821,6 @@
         ? { icon: "盾", title: "超注目" }
         : hasKeyword(card, "注目")
           ? { icon: "盾", title: "注目" }
-          : null;
-      // 手札・カード確認では能力そのものを示す。盤面では右端の剣に統合する。
-      const cheerfulPart = !boardCard && hasKeyword(card, "超陽気")
-        ? { icon: "陽+", title: "超陽気" }
-        : !boardCard && hasKeyword(card, "陽気")
-          ? { icon: "陽", title: "陽気" }
           : null;
       const canShowAttackState = boardCard && ["student", "teacher", "vampire"].includes(card.type);
       const canAttackNow = canShowAttackState && card.owner === state.currentSide && canAttackSilently(card);
@@ -30842,7 +30837,6 @@
       return [
         ...otherParts,
         ...(attentionPart ? [attentionPart] : []),
-        ...(cheerfulPart ? [cheerfulPart] : []),
         ...(attackStatePart ? [attackStatePart] : [])
       ];
     }
