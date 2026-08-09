@@ -14347,19 +14347,19 @@
       <div class="screen-head">
         <div>
           <h1>チュートリアル</h1>
-          <p class="subtitle">カードの見方、出席、攻撃、持ち物の基本を確認できます</p>
+          <p class="subtitle">画面の見方と、出席・攻撃・持ち物の基本操作を確認できます</p>
         </div>
         <button class="button secondary" id="tutorialBackHomeButton" type="button">ホーム</button>
       </div>
       <div class="tutorial-layout">
         <div class="tutorial-steps">
           <section class="tutorial-step">
-            <h2>カードの見方</h2>
-            <p>左上が必要戦意、左下が攻撃力、右下が体力です。学生・教師・ヴァンパイアは席マスか教卓マスに出席します。</p>
+            <h2>画面の見方</h2>
+            <p>講義室、手札、山札、気力、戦意、ログ、MENUの位置と、カードを出席させる基本操作を確認します。</p>
           </section>
           <section class="tutorial-step">
-            <h2>ターンの流れ</h2>
-            <p>ターン開始時に戦意が増えて全回復し、カードを1枚引きます。手札を使い、攻撃したらターン終了です。</p>
+            <h2>体験セット</h2>
+            <p>説明を読みながら、光っているカード・マス・攻撃先だけを操作してください。</p>
           </section>
           <section class="tutorial-step">
             <h2>攻撃と持ち物</h2>
@@ -15509,6 +15509,16 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.16.3",
+        date: "2026年8月9日",
+        summary: "チュートリアルを、現在の対戦画面と操作に合わせて再構成した。",
+        changes: [
+          { title: "画面の見方", before: "カード種別の説明から始まり、画面上の操作場所を最初に把握しにくかった。", after: "講義室、手札と山札、カード確認、ログ、MENU、気力・戦意、ターン終了の順に説明する流れへ変更。" },
+          { title: "持ち物の操作", before: "確認画面の「使う」ボタンを前提に案内していた。", after: "手札から対戦フィールドへドラッグし、対象の上で離して使う現在の操作に統一。" },
+          { title: "効果の説明", before: "余裕やヴァンパイアの個別効果まで段階的に説明していた。", after: "効果の説明は陽気と注目に絞り、ほかのカードの詳しい効果はカード確認で読む形に整理。" }
+        ]
+      },
+      {
         version: "ver.0.16.2",
         date: "2026年8月9日",
         summary: "対戦中のMENUとログを独立して開けるようにした。",
@@ -16168,9 +16178,33 @@
     const TUTORIAL_STEPS = [
       {
         id: "basicBoard",
-        title: "基本編：講義室",
+        title: "画面編：講義室",
         body: "左が相手の講義室、右が自分の講義室です。\n席マスは3行×3列、教卓マスは各講義室に1つあります。中央の環境マスは両者で共有します。",
         focus: "#playerBoardPanel"
+      },
+      {
+        id: "basicHand",
+        title: "画面編：手札と山札",
+        body: "自分の手札は画面下、山札は右下にあります。\n手札をクリックして出席先を選ぶか、対戦フィールドへドラッグして出席・使用します。",
+        focus: ".player-hand"
+      },
+      {
+        id: "basicCardDetail",
+        title: "画面編：カード確認",
+        body: "手札や講義室のカードを押すと、画面右上にカード確認が開きます。\nカードの効果や、今かかっている状態をここで確認できます。",
+        focus: "#opponentSeatGrid .board-card"
+      },
+      {
+        id: "basicLog",
+        title: "画面編：ログ",
+        body: "右上の「ログ」を押すと、対戦中に起きた結果を確認できます。\n相手の行動は左、自分の行動は右の吹き出しで表示されます。",
+        focus: "#battleLogButton"
+      },
+      {
+        id: "basicMenu",
+        title: "画面編：MENU",
+        body: "左上の「MENU」から、勝てない、設定、閉じるを選べます。\nログとMENUは同時に開けます。",
+        focus: "#battleMenuButton"
       },
       {
         id: "basicWin",
@@ -16191,12 +16225,6 @@
         focus: ".battle-v16-player-mana"
       },
       {
-        id: "basicHand",
-        title: "基本編：手札と山札",
-        body: "自分の手札は画面下、山札は右下にあります。\n手札のカードをクリックして出席先を選ぶか、席マスへドラッグして出席させます。持ち物は右クリックでも使えます。",
-        focus: ".player-hand"
-      },
-      {
         id: "basicStats",
         title: "基本編：カードの数字",
         body: "カード左上が必要戦意、左下が攻撃力、右下が体力です。\n講義室に出ているカードは「出席者」と呼びます。",
@@ -16207,6 +16235,12 @@
         title: "基本編：遅刻ゾーンと校外",
         body: "遅刻を持つカードは、出席するまで遅刻ゾーンで待機します。\n破壊された出席者と使い終えた持ち物は校外へ送られます。どちらも押すと詳細を確認できます。",
         focus: "#playerLateZone"
+      },
+      {
+        id: "basicEndTurn",
+        title: "画面編：ターン終了",
+        body: "右側の「ターン終了」を押すと、自分の行動を終えます。\nターン数と両者の戦意は、その近くで確認できます。",
+        focus: "#endTurnButton"
       },
       {
         id: "studentIntro",
@@ -16240,14 +16274,14 @@
       },
       {
         id: "teacherLecture",
-        title: "教師編：講義",
-        body: "講義は、教卓マスにいる教師が自分のターン終了時に行う効果です。\n一般教師の講義は、相手の学生すべてに1ダメージを与えます。",
+        title: "教師編：教卓マス",
+        body: "教師には、教卓マスにいる時だけ発動する効果を持つカードがあります。\n教師カードは、席マスにも出席できる場合があります。",
         focus: "#playerProfessorLane .board-card"
       },
       {
         id: "cheerfulAttack",
         title: "陽気編：陽気と注目",
-        body: "陽気を持つ出席者は、出席したターンでも相手の出席者を攻撃できます。\n「あえー学生」は注目を持つので、ほかの出席者より先に攻撃対象になります。一般教師で攻撃してください。",
+        body: "陽気を持つ出席者は、出席したターンでも相手の出席者を攻撃できます。\n注目を持つ「あえー学生」がいる間は、ほかの出席者より先に「あえー学生」を攻撃します。一般教師で攻撃してください。",
         action: "attackCard",
         attackerBaseId: "general_teacher",
         targetBaseId: "ae_student",
@@ -16256,13 +16290,13 @@
       {
         id: "itemIntro",
         title: "持ち物編：持ち物の特徴",
-        body: "持ち物は手札から対戦フィールドへドラッグして使うタイプです。\n効果を発動したあと校外へ送られます。",
+        body: "持ち物は、手札から対戦フィールドへドラッグして離すと使えます。\n使う相手や出席者を選ぶ持ち物は、対象の上で離してください。効果の後、校外へ送られます。",
         focus: ".player-hand [data-base-id='ruler']"
       },
       {
         id: "itemRuler",
         title: "持ち物編：定規",
-        body: "「定規」だけを使えます。\n相手本体のハートへドラッグして離してください。",
+        body: "「定規」だけを使えます。\n手札の定規を相手本体のハートまでドラッグして、そこで離してください。",
         action: "itemLife",
         allowedBaseId: "ruler",
         targetSide: "opponent",
@@ -16286,13 +16320,13 @@
       {
         id: "vampireIntro",
         title: "ヴァンパイア編：ヴァンパイアの特徴",
-        body: "ヴァンパイアは、攻撃で与えたダメージ分だけ体力を回復するタイプです。\nただし、定規、「デザイン」と名のつく教師、ダブルダイヤモンドクロスから受けるダメージは2倍になります。",
+        body: "ヴァンパイアは、学生や教師と同じように講義室へ出席するタイプです。\nカードの詳しい効果は、カード確認でいつでも読めます。",
         focus: ".player-hand [data-base-id='vampire']"
       },
       {
         id: "vampirePlay",
         title: "ヴァンパイア編：出席",
-        body: "「CITヴァンパイア」だけを使えます。\n光っている自分の1行1列へ出席させてください。説明用に少しダメージを受けた状態にします。",
+        body: "「CITヴァンパイア」だけを使えます。\n光っている自分の1行1列へ出席させてください。",
         action: "playCard",
         allowedBaseId: "vampire",
         focus: ".player-hand [data-base-id='vampire']",
@@ -16300,32 +16334,17 @@
       },
       {
         id: "superCheerfulAttack",
-        title: "超陽気編：本体への攻撃",
-        body: "超陽気なら、出席したターンでも相手本体を攻撃できます。\nCITヴァンパイアを攻撃役に選び、相手本体を攻撃してください。与えたダメージ分、体力を回復します。",
+        title: "攻撃編：相手本体を攻撃",
+        body: "出席者を攻撃役に選び、相手のハートを選ぶと相手本体を攻撃できます。\nCITヴァンパイアを攻撃役に選び、相手本体を攻撃してください。",
         action: "attackLife",
         attackerBaseId: "vampire",
         targetSide: "opponent",
         focus: ".player-board [data-base-id='vampire']"
       },
       {
-        id: "yoyuIntro",
-        title: "余裕編：余裕の特徴",
-        body: "余裕を持つ出席者は、自分のターン終了時に体力を1回復します。\n次にU太を出して、ターン終了時の回復を確認します。",
-        focus: ".player-hand [data-base-id='yuta']"
-      },
-      {
-        id: "yutaPlay",
-        title: "余裕編：U太",
-        body: "「U太」だけを使えます。\n光っている自分の3行3列へ出席させてください。説明用に少しダメージを受けた状態にします。",
-        action: "playCard",
-        allowedBaseId: "yuta",
-        focus: ".player-hand [data-base-id='yuta']",
-        target: { owner: "player", zone: "seat", index: 8 }
-      },
-      {
         id: "endTurn",
-        title: "ターン終了編：自動効果",
-        body: "ターン終了を押してください。\n一般教師の講義、食堂の回復、U太の余裕が順に処理されます。",
+        title: "ターン終了編：次のターンへ",
+        body: "ターン終了を押してください。\n自分の行動を終えると、相手のターンへ移ります。",
         action: "endTurn",
         focus: "#endTurnButton"
       },
@@ -28707,14 +28726,6 @@
           vampire.currentHp = Math.max(1, vampire.currentHp - 5);
           showFloatingTextForCard(vampire, "-5", "damage");
           addLog("説明用にCITヴァンパイアが5ダメージを受けた状態にしました。");
-        }
-      }
-      if (step.id === "yutaPlay") {
-        const yuta = getBoardCard(payload.owner, payload.zone, payload.index);
-        if (yuta) {
-          yuta.currentHp = 1;
-          showFloatingTextForCard(yuta, "-2", "damage");
-          addLog("説明用にU太が2ダメージを受けた状態にしました。");
         }
       }
     }
