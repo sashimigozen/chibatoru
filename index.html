@@ -15680,6 +15680,15 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.16.3",
+        date: "2026年8月9日",
+        summary: "出席時に相手の出席者を指名する効果を、テキストどおり盤面から選ぶ操作に修正。",
+        changes: [
+          { title: "ボイスローダー", before: "教卓マスに出席したとき、相手の出席者を自動で選んで攻撃不能にしていた。", after: "教卓マスに出席したとき、相手の講義室にいる指名可能な出席者を選び、その出席者を攻撃不能にする。" },
+          { title: "ランダム効果", before: "ランダムに指名する効果と、指名する効果の区別が動作上分かりにくかった。", after: "「ランダムに指名する」と書かれた効果だけ自動選択し、それ以外の指名効果は盤面から対象を選ぶ。" }
+        ]
+      },
+      {
         version: "ver.0.16.2",
         date: "2026年8月9日",
         summary: "盤面カードの攻撃状態と、陽気・注目系の状態アイコンを読み取りやすく整理。",
@@ -16213,6 +16222,7 @@
       pendingHandDiscardItem: null,
       pendingThreeGestures: null,
       pendingCardChoice: null,
+      pendingAttendTarget: null,
       pendingRemoteHandTrim: null,
       selectionOverlayPeek: false,
       pendingTestCardId: null,
@@ -19374,6 +19384,7 @@
       transformed.selectedAttacker = onlineMapRefForGuest(hostState.selectedAttacker);
       transformed.pendingMultiItem = onlineSwapOwnersDeep(hostState.pendingMultiItem);
       transformed.pendingPanpanItem = onlineSwapOwnersDeep(hostState.pendingPanpanItem);
+      transformed.pendingAttendTarget = onlineSwapOwnersDeep(hostState.pendingAttendTarget);
       transformed.pendingCopiedCard = onlineSwapOwnersDeep(hostState.pendingCopiedCard);
       transformed.message = onlineDisplayTextForGuest(transformed.message);
       transformed.log = (transformed.log || []).map(onlineDisplayTextForGuest);
@@ -19385,7 +19396,7 @@
       if (!value || typeof value !== "object") return value;
       const copy = {};
       Object.entries(value).forEach(([key, entry]) => {
-        if ((key === "owner" || key === "currentSide" || key === "firstSide" || key === "rpsWinner" || key === "gameWinner") && (entry === "player" || entry === "opponent")) {
+        if ((key === "owner" || key === "targetOwner" || key === "currentSide" || key === "firstSide" || key === "rpsWinner" || key === "gameWinner") && (entry === "player" || entry === "opponent")) {
           copy[key] = onlineSwapSide(entry);
         } else {
           copy[key] = onlineSwapOwnersDeep(entry);
@@ -19492,6 +19503,12 @@
       if (command.type === "mulligan") {
         return state.phase === "mulligan" && !state.players.opponent.mulliganUsed;
       }
+      if (command.type === "attendTarget") {
+        return state.phase === "battle"
+          && state.currentSide === "opponent"
+          && state.pendingAttendTarget?.owner === "opponent"
+          && !state.pendingAttendTarget.awaitingRemote;
+      }
       return state.phase === "battle" && state.currentSide === "opponent";
     }
 
@@ -19531,6 +19548,10 @@
             commandId: command.id || "",
             badStudentDiscardIds: payload.badStudentDiscardIds || []
           });
+        }
+        if (command.type === "attendTarget") {
+          const target = onlineMapRefForHost(payload.target);
+          if (target) resolveAttendTargetChoice("opponent", target, false);
         }
         if (command.type === "itemImmediate") {
           const item = getHandCard("opponent", payload.instanceId);
@@ -19865,6 +19886,7 @@
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
+      state.pendingAttendTarget = null;
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
@@ -20345,6 +20367,7 @@
       clearSelections();
       state.pendingItemConfirmId = null;
       state.pendingCardChoice = null;
+      state.pendingAttendTarget = null;
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
@@ -24648,13 +24671,7 @@
         addLog(`${card.name}の効果：相手本体に3ダメージ。`);
       }
       if (card.baseId === "kansai_voice_t" && zone === "teacher") {
-        const ref = findAttackLockTarget(opponent, side);
-        if (ref) {
-          const target = getBoardCardFromRef(ref);
-          target.attackLockedThroughTurn = state.actionTurn + 1;
-          target.attackLockSource = card.name;
-          addLog(`${card.name}の効果：${target.name}は次の自分のターンまで攻撃できません。`);
-        }
+        beginKansaiVoiceTargetChoice(side, card);
       }
       if (card.baseId === "kyoto_sound_i" && zone === "teacher") {
         let affected = 0;
@@ -24820,6 +24837,77 @@
       return effectTargetEntries(sourceSide || oppositeSide(owner), owner)
         .filter((entry) => entry.card && !(entry.card.attackLockedThroughTurn && entry.card.attackLockedThroughTurn >= state.actionTurn))
         .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0))[0]?.ref || null;
+    }
+
+    function beginKansaiVoiceTargetChoice(side, sourceCard) {
+      const targetOwner = oppositeSide(side);
+      const candidates = effectTargetEntries(side, targetOwner);
+      if (candidates.length === 0) {
+        addLog(`${sourceCard.name}の効果：相手の講義室に指名できる出席者がいません。`);
+        return false;
+      }
+
+      // AIだけは従来どおり、攻撃力の高い出席者を優先して選ぶ。
+      if (side === "opponent" && !state.online.isHandlingRemoteCommand) {
+        const targetRef = findAttackLockTarget(targetOwner, side) || candidates[0].ref;
+        return resolveKansaiVoiceTarget(side, sourceCard, targetRef, false);
+      }
+
+      state.pendingAttendTarget = {
+        owner: side,
+        targetOwner,
+        sourceCardName: sourceCard.name,
+        sourceCardInstanceId: sourceCard.instanceId,
+        awaitingRemote: false
+      };
+      state.selectedHandId = null;
+      state.selectedAttacker = null;
+      state.message = `${sourceCard.name}：相手の出席者1人を指名してください。`;
+      return true;
+    }
+
+    function isAttendTargetCandidate(owner, zone, index = null) {
+      const pending = state.pendingAttendTarget;
+      if (!pending || pending.awaitingRemote || owner !== pending.targetOwner) return false;
+      const target = getBoardCard(owner, zone, index);
+      if (!target) return false;
+      return effectTargetEntries(pending.owner, pending.targetOwner)
+        .some((entry) => refsMatch(entry.ref, { owner, zone, index }));
+    }
+
+    function resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter = true) {
+      const target = getBoardCardFromRef(targetRef);
+      if (!target) return false;
+      target.attackLockedThroughTurn = state.actionTurn + 1;
+      target.attackLockSource = sourceCard.name;
+      addLog(`${sourceCard.name}の効果：${target.name}は次の自分のターンまで攻撃できません。`);
+      if (renderAfter) render();
+      return true;
+    }
+
+    function resolveAttendTargetChoice(side, targetRef, renderAfter = true) {
+      const pending = state.pendingAttendTarget;
+      if (!pending || pending.owner !== side || pending.awaitingRemote) return false;
+      if (!isAttendTargetCandidate(targetRef.owner, targetRef.zone, targetRef.index ?? null)) {
+        state.message = "その出席者は指名できません。";
+        if (renderAfter) render();
+        return false;
+      }
+
+      if (onlineCanSendCommand()) {
+        pending.awaitingRemote = true;
+        state.message = `${pending.sourceCardName}の対象を送信しました。`;
+        onlineSendCommand("attendTarget", { target: targetRef });
+        if (renderAfter) render();
+        return true;
+      }
+
+      const sourceCard = listBoardRefs(side)
+        .map((ref) => getBoardCardFromRef(ref))
+        .find((card) => card?.instanceId === pending.sourceCardInstanceId)
+        || { name: pending.sourceCardName };
+      state.pendingAttendTarget = null;
+      return resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter);
     }
 
     function enforceSeatRulesEnvironment() {
@@ -25175,11 +25263,15 @@
     function handleBoardCardClick(owner, zone, index = null) {
       if (isOnlineSpectator()) return;
       if (state.pendingCardPlay) return;
+      if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
+      if (state.pendingAttendTarget) {
+        resolveAttendTargetChoice("player", { owner, zone, index });
+        return;
+      }
       if (isOnlineCommandPending()) {
         rejectOnlinePendingAction();
         return;
       }
-      if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (state.pendingCardChoice || state.pendingThreeGestures || state.pendingRemoteHandTrim) return;
       if (state.pendingRaptorTemple && !state.pendingRaptorTemple.sourceRef) {
         selectRaptorTempleSource(owner, zone, index);
@@ -28119,7 +28211,7 @@
     }
 
     function hasPeekableSelectionOverlay() {
-      return Boolean(state.pendingThreeGestures || state.pendingCardChoice);
+      return Boolean(state.pendingThreeGestures || state.pendingCardChoice || state.pendingAttendTarget);
     }
 
     function hideSelectionOverlayForBoard() {
@@ -28473,7 +28565,7 @@
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
       const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingThreeGestures);
-      const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingRemoteHandTrim);
+      const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingAttendTarget || state.pendingRemoteHandTrim);
       elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem));
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? `対象${state.pendingMultiItem.targets.length}人で使用`
@@ -30551,7 +30643,7 @@
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
         isSelectedAttacker(owner, zone, index) || isSelectedMultiItemTarget(owner, zone, index) || isSelectedPanpanTarget(owner, zone, index));
-      button.classList.toggle("selection-candidate", canSelectPanpanTarget(owner, zone, index));
+      button.classList.toggle("selection-candidate", canSelectPanpanTarget(owner, zone, index) || isAttendTargetCandidate(owner, zone, index));
       button.classList.toggle("exhausted", Boolean(card.hasAttacked));
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-locked", Boolean(
@@ -32158,6 +32250,7 @@
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
+      state.pendingAttendTarget = null;
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
@@ -32560,6 +32653,7 @@
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
+      state.pendingAttendTarget = null;
       state.pendingRemoteHandTrim = null;
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
