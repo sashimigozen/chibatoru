@@ -13822,6 +13822,30 @@
       animation: none !important;
       box-shadow: 0 6px 13px rgba(41, 25, 4, .42) !important;
     }
+
+    /* The battle inspector always shows one complete, proportionally scaled
+       card. Without this override the 420 x 640 source card was merely
+       clipped by the small inspector cell, which made some types appear
+       larger than others. */
+    .battle-screen .battle-card-preview > .card {
+      position: relative !important;
+      width: 84px !important;
+      min-width: 84px !important;
+      height: 128px !important;
+      min-height: 128px !important;
+      aspect-ratio: 21 / 32 !important;
+      overflow: visible !important;
+    }
+
+    .battle-screen .battle-card-preview > .card > .card-scale-stage {
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      width: 420px !important;
+      height: 640px !important;
+      transform: scale(.2) !important;
+      transform-origin: top left !important;
+    }
   </style>
 </head>
 <body>
