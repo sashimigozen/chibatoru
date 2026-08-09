@@ -15684,8 +15684,9 @@
         date: "2026年8月9日",
         summary: "出席時に相手の出席者を指名する効果を、テキストどおり盤面から選ぶ操作に修正。",
         changes: [
-          { title: "ボイスローダー", before: "教卓マスに出席したとき、相手の出席者を自動で選んで攻撃不能にしていた。", after: "教卓マスに出席したとき、相手の講義室にいる指名可能な出席者を選び、その出席者を攻撃不能にする。" },
-          { title: "ランダム効果", before: "ランダムに指名する効果と、指名する効果の区別が動作上分かりにくかった。", after: "「ランダムに指名する」と書かれた効果だけ自動選択し、それ以外の指名効果は盤面から対象を選ぶ。" }
+          { title: "ボイスローダー", before: "教卓マスに出席したとき、相手の出席者を自動で選んで一時的に攻撃不能にしていた。", after: "教卓マスに出席したとき、相手の講義室にいる指名可能な出席者を選び、その出席者を永続的に攻撃不能にする。" },
+          { title: "ランダム効果", before: "ランダムに指名する効果と、指名する効果の区別が動作上分かりにくかった。", after: "「ランダムに指名する」と書かれた効果だけ自動選択し、それ以外の指名効果は盤面から対象を選ぶ。" },
+          { title: "効果の期間", before: "本文に期間がない状態・数値変化の扱いが、カードごとに分かりにくかった。", after: "ターン数などの期間が書かれていない、出席者やプレイヤーに与える状態・数値変化は永続する。ダメージ・破壊・ドローなどの単発効果や、「このカードがいるかぎり」などの条件付き継続効果は対象外。" }
         ]
       },
       {
@@ -24835,7 +24836,7 @@
 
     function findAttackLockTarget(owner, sourceSide = null) {
       return effectTargetEntries(sourceSide || oppositeSide(owner), owner)
-        .filter((entry) => entry.card && !(entry.card.attackLockedThroughTurn && entry.card.attackLockedThroughTurn >= state.actionTurn))
+        .filter((entry) => entry.card && !isAttackLocked(entry.card))
         .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0))[0]?.ref || null;
     }
 
@@ -24878,9 +24879,9 @@
     function resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter = true) {
       const target = getBoardCardFromRef(targetRef);
       if (!target) return false;
-      target.attackLockedThroughTurn = state.actionTurn + 1;
+      target.attackLockedPermanently = true;
       target.attackLockSource = sourceCard.name;
-      addLog(`${sourceCard.name}の効果：${target.name}は次の自分のターンまで攻撃できません。`);
+      addLog(`${sourceCard.name}の効果：${target.name}は攻撃できなくなりました。`);
       if (renderAfter) render();
       return true;
     }
