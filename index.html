@@ -15509,6 +15509,14 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.16.2",
+        date: "2026年8月9日",
+        summary: "対戦中のMENUとログを独立して開けるようにした。",
+        changes: [
+          { title: "MENUとログ", before: "どちらかを開くと、もう一方のパネルとボタンが閉じたり隠れたりしていた。", after: "MENUとログは同時に開ける独立したパネルに変更。どちらを開いていても、もう一方のボタンから確認できる。" }
+        ]
+      },
+      {
         version: "ver.0.16.1",
         date: "2026年8月8日",
         summary: "新しい左右配置の講義室に合わせて、チュートリアルを最初から作り直した。",
@@ -33310,22 +33318,13 @@
       if (!drawer) return;
       const isMenu = drawer === elements.battleMenuDrawer;
       const other = isMenu ? elements.battleLogDrawer : elements.battleMenuDrawer;
-      const otherButton = isMenu ? elements.battleLogButton : elements.battleMenuButton;
       const triggerButton = isMenu ? elements.battleMenuButton : elements.battleLogButton;
       const testButtons = [elements.battleTestUndoButton, elements.battleTestExitButton];
-      if (open && other) {
-        other.classList.remove("open");
-        other.setAttribute("aria-hidden", "true");
-        otherButton?.setAttribute("aria-expanded", "false");
-        otherButton?.classList.remove("drawer-trigger-hidden");
-      }
       drawer.classList.toggle("open", open);
       drawer.setAttribute("aria-hidden", String(!open));
       triggerButton?.setAttribute("aria-expanded", String(open));
-      triggerButton?.classList.toggle("drawer-trigger-hidden", open);
-      testButtons.forEach((button) => button?.classList.toggle("drawer-trigger-hidden", open));
-      if (!isMenu) elements.battleMenuButton?.classList.toggle("drawer-trigger-hidden", open);
-      if (isMenu) elements.battleLogButton?.classList.toggle("drawer-trigger-hidden", open);
+      const hasOpenDrawer = open || Boolean(other?.classList.contains("open"));
+      testButtons.forEach((button) => button?.classList.toggle("drawer-trigger-hidden", hasOpenDrawer));
     }
 
     function renderLog() {
