@@ -14130,6 +14130,16 @@
       color: #2378c9;
     }
 
+    .status-icon.attack-state.attack-exhausted {
+      border-color: #a8b1bb;
+      background: #f1f3f5;
+      box-shadow: 0 1px 2px rgba(12,35,58,.12);
+    }
+
+    .status-icon.attack-state.attack-exhausted::before {
+      color: #8c97a4;
+    }
+
     .battle-screen .field-card.board-card.reward-foil .field-card-title,
     .battle-screen .field-card.board-card.reward-foil .field-card-art-name {
       border-color: rgba(255, 255, 255, .42) !important;
@@ -15674,7 +15684,7 @@
         date: "2026年8月9日",
         summary: "盤面カードの攻撃状態と、陽気・注目系の状態アイコンを読み取りやすく整理。",
         changes: [
-          { title: "攻撃状態", before: "盤面の出席者が、今すぐ攻撃できるかを外周だけで判断する必要があった。", after: "今すぐ攻撃できる出席者の右端に、黄色い剣アイコンを表示。攻撃できない時は剣を表示しない。" },
+          { title: "攻撃状態", before: "盤面の出席者が、今すぐ攻撃できるかを外周だけで判断する必要があった。", after: "今すぐ攻撃できる出席者の右端に、黄色い剣アイコンを表示。攻撃済みの出席者は、同じ剣を無彩色で表示する。" },
           { title: "陽気・超陽気", before: "陽気の能力と、今攻撃できる状態を別々の印で表示していた。", after: "盤面では右端の剣アイコンを陽気と攻撃可能の共通表示に統一。陽気は出席したターンから剣が現れ、超陽気なら淡い水色の背景と青い縁で表示する。" },
           { title: "注目系アイコン", before: "注目と超注目を素早く見分けにくかった。", after: "注目は赤い盾、超注目は淡い水色の背景と青い盾に変更。状態アイコンは左からその他、注目系、攻撃状態の順に固定した。" }
         ]
@@ -30710,7 +30720,6 @@
 
     function statusPartsForCard(card, boardCard) {
       const otherParts = [];
-      if (boardCard && card.hasAttacked) otherParts.push({ icon: "済", title: "攻撃済み" });
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) otherParts.push({ icon: "酔", title: "召喚酔い" });
       if (boardCard && card.attackLockedPermanently) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) otherParts.push({ icon: "止", title: "攻撃不可" });
@@ -30739,7 +30748,9 @@
           title: "攻撃可能",
           tone: `attack-state attack-ready${hasKeyword(card, "超陽気") ? " attack-super-cheerful" : ""}`
         }
-        : null;
+        : canShowAttackState && card.hasAttacked
+          ? { icon: "⚔", title: "攻撃済み", tone: "attack-state attack-exhausted" }
+          : null;
 
       return [
         ...otherParts,
