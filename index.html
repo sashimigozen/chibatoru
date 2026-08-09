@@ -14043,6 +14043,54 @@
       background: linear-gradient(135deg, #e58a15 0 47%, #2583d7 47% 100%) !important;
     }
 
+    .status-icon[title="注目"] {
+      border-color: #d33d45 !important;
+      background: #fff4f4 !important;
+    }
+
+    .status-icon[title="注目"]::before {
+      content: "!" !important;
+      display: grid !important;
+      width: auto !important;
+      height: auto !important;
+      place-items: center;
+      background: transparent !important;
+      color: #d33d45 !important;
+      font-size: 12px !important;
+      font-weight: 1000;
+      line-height: 1;
+      transform: none !important;
+      clip-path: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
+    .status-icon[title="超注目"] {
+      width: 20px !important;
+      border-color: #2378c9 !important;
+      background: #edf7ff !important;
+    }
+
+    .status-icon[title="超注目"]::before {
+      content: "!!" !important;
+      display: grid !important;
+      width: auto !important;
+      height: auto !important;
+      place-items: center;
+      background: transparent !important;
+      color: #2378c9 !important;
+      font-size: 8px !important;
+      font-weight: 1000;
+      letter-spacing: 0 !important;
+      line-height: 1;
+      transform: none !important;
+      clip-path: none !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+
     .battle-screen .field-card.board-card.reward-foil .field-card-title,
     .battle-screen .field-card.board-card.reward-foil .field-card-art-name {
       border-color: rgba(255, 255, 255, .42) !important;
@@ -15595,7 +15643,8 @@
           { title: "カード表示の大きさ", before: "手札・盤面でカードの縦横比が揃って見えない場面があった。", after: "すべてのタイプで共通の縦横比と表示寸法を使うように統一。" },
           { title: "MENUとログ", before: "どちらかを開くと、もう一方のパネルとボタンが閉じたり隠れたりしていた。", after: "MENUとログは同時に開ける独立したパネルに変更。どちらを開いていても、もう一方のボタンから確認できる。" },
           { title: "タイプ説明", before: "タイプの表示だけでは役割を確認しにくかった。", after: "カード右上のタイプ印を押すと、同じ確認ポップ内でタイプの特徴を確認できるようにした。" },
-          { title: "超陽気アイコン", before: "陽気と超陽気が黄色系の見た目に寄り、色覚によって違いを見分けにくいことがあった。", after: "超陽気は青い縁と青・黄色の二色の星形を使い、陽気と区別しやすくした。" }
+          { title: "超陽気アイコン", before: "陽気と超陽気が黄色系の見た目に寄り、色覚によって違いを見分けにくいことがあった。", after: "超陽気を得た場合は陽気の印を残さず、青い縁・水色の背景・青と黄色の二色の星形へ置き換え、陽気と区別しやすくした。" },
+          { title: "状態アイコンの順序", before: "陽気・注目・眠気などのアイコンの並びが、カードごとに把握しにくかった。", after: "右端を陽気・超陽気、その左を注目・超注目、残りをさらに左へ置く順序に統一。注目は赤い「!」、超注目は青い「!!」を丸枠内で表示する。" }
         ]
       },
       {
@@ -30610,21 +30659,35 @@
       return pending.stage === "enemy" && owner === "opponent" && isAllowedEffectTarget("player", target);
     }
 
+    function statusPartsForCard(card, boardCard) {
+      const otherParts = [];
+      if (boardCard && card.hasAttacked) otherParts.push({ icon: "済", title: "攻撃済み" });
+      if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) otherParts.push({ icon: "酔", title: "召喚酔い" });
+      if (boardCard && card.attackLockedPermanently) otherParts.push({ icon: "止", title: "攻撃不可" });
+      if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) otherParts.push({ icon: "止", title: "攻撃不可" });
+      if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) otherParts.push({ icon: "止", title: "攻撃不可" });
+      if (boardCard && isSameNameAttackLocked(card)) otherParts.push({ icon: "止", title: "同名ロック" });
+      if (hasKeyword(card, "眠気")) otherParts.push({ icon: "眠", title: "眠気" });
+      if (boardCard && card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) otherParts.push({ icon: "予", title: "破壊予約" });
+      if (card.late) otherParts.push({ icon: `遅${card.late}`, title: `遅刻${card.late}` });
+
+      const attentionPart = hasKeyword(card, "超注目")
+        ? { icon: "!!", title: "超注目" }
+        : hasKeyword(card, "注目")
+          ? { icon: "!", title: "注目" }
+          : null;
+      // 超陽気を得た場合は、通常の陽気の印を残さず強化版の印へ置き換える。
+      const cheerfulPart = hasKeyword(card, "超陽気")
+        ? { icon: "陽+", title: "超陽気" }
+        : hasKeyword(card, "陽気")
+          ? { icon: "陽", title: "陽気" }
+          : null;
+
+      return [...otherParts, ...(attentionPart ? [attentionPart] : []), ...(cheerfulPart ? [cheerfulPart] : [])];
+    }
+
     function cardTemplate(card, boardCard) {
-      const statusParts = [];
-      if (boardCard && card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
-      if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
-      if (boardCard && card.attackLockedPermanently) statusParts.push({ icon: "止", title: "攻撃不可" });
-      if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
-      if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) statusParts.push({ icon: "止", title: "攻撃不可" });
-      if (boardCard && isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
-      if (hasKeyword(card, "超陽気")) statusParts.push({ icon: "陽+", title: "超陽気" });
-      else if (hasKeyword(card, "陽気")) statusParts.push({ icon: "陽", title: "陽気" });
-      if (hasKeyword(card, "超注目")) statusParts.push({ icon: "注+", title: "超注目" });
-      else if (hasKeyword(card, "注目")) statusParts.push({ icon: "注", title: "注目" });
-      if (hasKeyword(card, "眠気")) statusParts.push({ icon: "眠", title: "眠気" });
-      if (boardCard && card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push({ icon: "予", title: "破壊予約" });
-      if (card.late) statusParts.push({ icon: `遅${card.late}`, title: `遅刻${card.late}` });
+      const statusParts = statusPartsForCard(card, boardCard);
       const status = statusParts.length ? `<div class="card-status status-icons">${statusIconHtml(statusParts)}</div>` : "";
       const privateVictoryCount = visibleCrabVictoryCount(card, boardCard);
       const privateCounter = privateVictoryCount > 0
@@ -30723,19 +30786,7 @@
     }
 
     function fieldCardTemplate(card) {
-      const statusParts = [];
-      if (card.hasAttacked) statusParts.push({ icon: "済", title: "攻撃済み" });
-      if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) statusParts.push({ icon: "酔", title: "召喚酔い" });
-      if (card.attackLockedPermanently) statusParts.push({ icon: "止", title: "攻撃不可" });
-      if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) statusParts.push({ icon: "止", title: "攻撃不可" });
-      if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) statusParts.push({ icon: "止", title: "攻撃不可" });
-      if (isSameNameAttackLocked(card)) statusParts.push({ icon: "止", title: "同名ロック" });
-      if (hasKeyword(card, "超陽気")) statusParts.push({ icon: "陽+", title: "超陽気" });
-      else if (hasKeyword(card, "陽気")) statusParts.push({ icon: "陽", title: "陽気" });
-      if (hasKeyword(card, "超注目")) statusParts.push({ icon: "注+", title: "超注目" });
-      else if (hasKeyword(card, "注目")) statusParts.push({ icon: "注", title: "注目" });
-      if (hasKeyword(card, "眠気")) statusParts.push({ icon: "眠", title: "眠気" });
-      if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) statusParts.push({ icon: "予", title: "破壊予約" });
+      const statusParts = statusPartsForCard(card, true);
       const status = statusParts.length ? `<span class="field-card-status status-icons">${statusIconHtml(statusParts)}</span>` : "";
       const hasStats = card.type !== "environment" && card.type !== "item";
       const baseAttack = CARD_BASES[card.baseId]?.attack ?? card.attack;
