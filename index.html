@@ -14045,33 +14045,45 @@
       background: linear-gradient(135deg, #e58a15 0 47%, #2583d7 47% 100%) !important;
     }
 
-    /* 攻撃と注目は、同じ単色シルエットの二本剣・盾で表す。 */
-    .status-icon.status-glyph {
+    /* 絵文字そのものを単色化して、二本剣と盾の輪郭を保つ。 */
+    .status-icon.emoji-status {
       overflow: visible !important;
       padding: 0 !important;
     }
 
-    .status-icon.status-glyph::before {
+    .status-icon.emoji-status::before {
       content: none !important;
       display: none !important;
     }
 
-    .status-icon.status-glyph svg {
-      width: 13px;
-      height: 13px;
+    .status-icon .emoji-glyph {
       display: block;
-      fill: none;
-      stroke: currentColor;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 2.8;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1;
+      transform: translateY(.25px);
+      filter: grayscale(1) brightness(0);
     }
 
-    .status-icon.status-glyph.glyph-shield svg {
-      width: 11px;
-      height: 11px;
-      fill: currentColor;
-      stroke: none;
+    .status-icon[title="注目"] .emoji-glyph {
+      filter: grayscale(1) brightness(0) sepia(1) saturate(1900%) hue-rotate(171deg) brightness(.88);
+    }
+
+    .status-icon[title="超注目"] .emoji-glyph {
+      filter: grayscale(1) brightness(0) sepia(1) saturate(1850%) hue-rotate(302deg) brightness(.9);
+    }
+
+    .status-icon.attack-ready .emoji-glyph {
+      filter: grayscale(1) brightness(0) sepia(1) saturate(1800%) hue-rotate(358deg) brightness(.92);
+    }
+
+    .status-icon.attack-super-cheerful .emoji-glyph {
+      filter: grayscale(1) brightness(0) sepia(1) saturate(1650%) hue-rotate(173deg) brightness(.9);
+    }
+
+    .status-icon.attack-exhausted .emoji-glyph {
+      filter: grayscale(1) brightness(.62);
     }
 
     .status-icon[title="注目"],
@@ -30829,20 +30841,20 @@
       if (card.late) otherParts.push({ icon: `遅${card.late}`, title: `遅刻${card.late}` });
 
       const attentionPart = hasKeyword(card, "超注目")
-        ? { glyph: "shield", title: "超注目", tone: "status-glyph glyph-shield" }
+        ? { emoji: "🛡️", title: "超注目", tone: "emoji-status" }
         : hasKeyword(card, "注目")
-          ? { glyph: "shield", title: "注目", tone: "status-glyph glyph-shield" }
+          ? { emoji: "🛡️", title: "注目", tone: "emoji-status" }
           : null;
       const canShowAttackState = boardCard && ["student", "teacher", "vampire"].includes(card.type);
       const canAttackNow = canShowAttackState && card.owner === state.currentSide && canAttackSilently(card);
       const attackStatePart = canAttackNow
         ? {
-          glyph: "swords",
+          emoji: "⚔️",
           title: "攻撃可能",
-          tone: `status-glyph glyph-swords attack-state attack-ready${hasKeyword(card, "超陽気") ? " attack-super-cheerful" : ""}`
+          tone: `emoji-status attack-state attack-ready${hasKeyword(card, "超陽気") ? " attack-super-cheerful" : ""}`
         }
         : canShowAttackState && card.hasAttacked
-          ? { glyph: "swords", title: "攻撃済み", tone: "status-glyph glyph-swords attack-state attack-exhausted" }
+          ? { emoji: "⚔️", title: "攻撃済み", tone: "emoji-status attack-state attack-exhausted" }
           : null;
 
       return [
@@ -30976,11 +30988,9 @@
     function statusIconHtml(statusParts) {
       return statusParts
         .map((part) => {
-          const glyph = part.glyph === "swords"
-            ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 16"/><path d="m20 4-16 16"/><path d="m2.5 7.5 3-3"/><path d="m5.5 2.5 3 3"/><path d="m15.5 21.5 3-3"/><path d="m18.5 18.5 3 3"/><path d="m2.5 16.5 3 3"/><path d="m5.5 21.5 3-3"/><path d="m15.5 2.5 3 3"/><path d="m18.5 5.5 3-3"/></svg>'
-            : part.glyph === "shield"
-              ? '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5.2 3.4 8.7 8 11 4.6-2.3 8-5.8 8-11V5l-8-3Z"/></svg>'
-              : escapeHtml(part.icon);
+          const glyph = part.emoji
+            ? `<span class="emoji-glyph" aria-hidden="true">${part.emoji}</span>`
+            : escapeHtml(part.icon);
           return `<span class="status-icon${part.tone ? ` ${escapeHtml(part.tone)}` : ""}" title="${escapeHtml(part.title)}">${glyph}</span>`;
         })
         .join("");
