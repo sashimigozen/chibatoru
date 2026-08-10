@@ -14172,15 +14172,15 @@
     }
 
     .battle-screen .player-hand .hand-card.affordable:not(.tutorial-muted-card) > .card-scale-stage {
-      animation: chibattle-hand-ready-breathe 3.4s ease-in-out infinite !important;
+      animation: chibattle-hand-ready-breathe 1.8s ease-in-out infinite !important;
     }
 
     @keyframes chibattle-hand-ready-breathe {
       0%, 100% {
-        filter: drop-shadow(0 0 0 rgba(116, 218, 255, 0));
+        filter: drop-shadow(0 0 3px rgba(255, 199, 45, .34)) drop-shadow(0 0 7px rgba(255, 189, 28, .2));
       }
-      46%, 54% {
-        filter: drop-shadow(0 0 7px rgba(115, 219, 255, .94)) drop-shadow(0 0 16px rgba(92, 191, 255, .52));
+      48%, 52% {
+        filter: drop-shadow(0 0 10px rgba(255, 221, 78, 1)) drop-shadow(0 0 25px rgba(255, 184, 22, .76));
       }
     }
 
@@ -14209,9 +14209,12 @@
       box-shadow: 0 3px 5px rgba(15, 23, 42, .36) !important;
     }
 
-    .battle-screen .player-hand .hand-card .hand-card-stats .stat-cost { top: -18px !important; left: -18px !important; }
-    .battle-screen .player-hand .hand-card .hand-card-stats .stat-attack { bottom: -18px !important; left: -18px !important; }
-    .battle-screen .player-hand .hand-card .hand-card-stats .stat-hp { right: -18px !important; bottom: -18px !important; }
+    /* Hand values form one evenly spaced reading rail on the card's right.
+       The circles intentionally sit a little over the frame so stacked cards
+       still keep their essential numbers readable. */
+    .battle-screen .player-hand .hand-card .hand-card-stats .stat-cost { top: -18px !important; right: -18px !important; left: auto !important; }
+    .battle-screen .player-hand .hand-card .hand-card-stats .stat-attack { top: 266px !important; right: -18px !important; bottom: auto !important; left: auto !important; }
+    .battle-screen .player-hand .hand-card .hand-card-stats .stat-hp { top: 550px !important; right: -18px !important; bottom: auto !important; left: auto !important; }
   </style>
 </head>
 <body>
