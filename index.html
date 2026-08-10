@@ -14215,6 +14215,47 @@
     .battle-screen .player-hand .hand-card .hand-card-stats .stat-cost { top: -18px !important; right: auto !important; left: -18px !important; }
     .battle-screen .player-hand .hand-card .hand-card-stats .stat-attack { top: 124px !important; right: auto !important; bottom: auto !important; left: -18px !important; }
     .battle-screen .player-hand .hand-card .hand-card-stats .stat-hp { top: 266px !important; right: auto !important; bottom: auto !important; left: -18px !important; }
+
+    /* Hand cards are deliberately larger than their visible rail. The lower
+       fifth sits below the playmat, while hovering lifts a full card into view. */
+    .battle-screen .game-shell {
+      overflow: hidden !important;
+    }
+
+    .battle-screen .player-hand-zone {
+      top: 724px !important;
+      height: 128px !important;
+    }
+
+    .battle-screen .player-hand {
+      height: 128px !important;
+      align-items: flex-start !important;
+    }
+
+    .battle-screen .player-hand .hand-card,
+    .battle-screen .player-hand .hand-card.student,
+    .battle-screen .player-hand .hand-card.teacher,
+    .battle-screen .player-hand .hand-card.item,
+    .battle-screen .player-hand .hand-card.vampire,
+    .battle-screen .player-hand .hand-card.environment {
+      flex-basis: 84px !important;
+      width: 84px !important;
+      min-width: 84px !important;
+      height: 128px !important;
+      min-height: 128px !important;
+      margin-left: calc(var(--hand-stack-step, 46px) - 84px) !important;
+    }
+
+    .battle-screen .player-hand .hand-card.hand-card-hover-source {
+      transform: translateY(-28px) scale(1.1) !important;
+      margin-right: 18px !important;
+    }
+
+    /* The deck keeps the original visible baseline while only the hand sinks. */
+    .battle-screen .player-hand-zone .player-deck-pile {
+      top: -6px !important;
+      bottom: auto !important;
+    }
   </style>
 </head>
 <body>
@@ -29657,10 +29698,10 @@
       // horizontal step, keeping every card inside the lane instead of letting
       // the hand spill over the deck or the edge of the screen.
       const handLaneWidth = 498;
-      const handCardWidth = 70;
+      const handCardWidth = 84;
       const handStep = player.hand.length > 1
-        ? Math.min(47.5, (handLaneWidth - handCardWidth) / (player.hand.length - 1))
-        : 47.5;
+        ? Math.min(46, (handLaneWidth - handCardWidth) / (player.hand.length - 1))
+        : 46;
       elements.playerHand.style.setProperty("--hand-stack-step", `${Math.max(4, handStep)}px`);
       player.hand.forEach((card) => {
         if (isOnlineSpectator()) {
