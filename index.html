@@ -14266,6 +14266,62 @@
       top: -6px !important;
       bottom: auto !important;
     }
+
+    /* Multi-seat attendees are rendered as one continuous display, like a
+       single monitor spanning the occupied desks. */
+    .battle-screen .seat-grid > .slot.multi-seat-covered {
+      background: transparent !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .battle-screen .seat-grid > .slot.multi-seat-covered::before,
+    .battle-screen .seat-grid > .slot.multi-seat-covered::after,
+    .battle-screen .seat-grid > .slot.multi-seat-covered .slot-coordinate {
+      opacity: 0 !important;
+    }
+
+    .battle-screen .seat-grid > .field-card.board-card.multi-seat-board-card {
+      /* Override the normal single-seat card dimensions.  Grid stretch turns
+         the occupied 2x2 / 3x3 desks into one continuous card surface. */
+      align-self: stretch !important;
+      justify-self: stretch !important;
+      place-self: stretch !important;
+      width: auto !important;
+      height: auto !important;
+      min-width: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      box-sizing: border-box !important;
+      border-width: 3px !important;
+      border-radius: 8px !important;
+      overflow: hidden !important;
+      z-index: 12 !important;
+      box-shadow: 0 5px 12px rgba(18, 54, 82, 0.26), inset 0 0 0 2px rgba(255, 255, 255, 0.32) !important;
+    }
+
+    .battle-screen .seat-grid > .multi-seat-board-card .field-card-art-name {
+      inset: 28px 15px 30px !important;
+      font-size: clamp(15px, 1.4vw, 27px) !important;
+      line-height: 1.18 !important;
+    }
+
+    .battle-screen .seat-grid > .multi-seat-board-card .field-card-stats {
+      left: 10px !important;
+      right: 10px !important;
+      bottom: 8px !important;
+    }
+
+    .battle-screen .seat-grid > .multi-seat-board-card .field-stat {
+      min-width: 28px !important;
+      min-height: 24px !important;
+      font-size: 13px !important;
+    }
+
+    .battle-screen .seat-grid > .multi-seat-board-card .field-card-status {
+      top: 8px !important;
+      right: 8px !important;
+    }
   </style>
 </head>
 <body>
@@ -15524,6 +15580,17 @@
       ,door_war: ["general_student"]
       ,shogi_duel_field: []
       ,aiben_vs_nyotei_title_match: []
+      ,environment_setup: [],
+      absolute_woman: ["aggro_queen"],
+      diamond_dust: [],
+      happy_experience: ["gitch"],
+      go_away: [],
+      loud_members: [],
+      small_omata: [],
+      big_omata: [],
+      wood_gitch: ["gitch"],
+      gitch: [],
+      gigi_blood: []
     };
     const ALL_DECK_IDS = [
       "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
@@ -15763,6 +15830,15 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.17.1",
+        date: "2026年8月11日",
+        summary: "新カードのテスト環境を整え、複数の席を占有する出席者を一枚の連結カードとして表示するように改善。",
+        changes: [
+          { title: "新カードのテスト", before: "新カードを単独で試すと、進化元・校外エリアのカード・必要な出席者が不足し、効果の一部を試しにくかった。", after: "カードテスト開始時に、効果を試すための進化元、対象、校外エリアのカード、必要な講義室の出席者を用意する。環境構築、ダブルダイヤモンドダスト、うれしい体験、行かれてはいかがですか、木っち系統などをすぐに試せる。" },
+          { title: "複数席を占有する出席者", before: "2行×2列・3行×3列を占有する出席者が、席の枠に区切られて見えた。", after: "占有した席の境界線と座標を隠し、複数のモニターをつないだように一枚の連結カードとして表示する。2行×2列は4席、3行×3列は9席を一人の出席者として視覚的にもまとめて表示する。" }
+        ]
+      },
       {
         version: "ver.0.17.0",
         date: "2026年8月11日",
@@ -30871,14 +30947,20 @@
         seatGrid.appendChild(slot);
       });
       multiCards.forEach(({ card, anchor }) => {
-        const positions = occupiedSeatIndexesFor(card, anchor)
+        const occupiedIndexes = occupiedSeatIndexesFor(card, anchor);
+        const positions = occupiedIndexes
           .map((seatIndex) => order.indexOf(seatIndex))
           .filter((position) => position >= 0);
         if (positions.length === 0) return;
+        const slots = Array.from(seatGrid.children);
+        positions.forEach((position) => {
+          slots[position]?.classList.add("multi-seat-covered");
+        });
         const rows = positions.map((position) => Math.floor(position / 3) + 1);
         const cols = positions.map((position) => (position % 3) + 1);
         const boardCard = createBoardCard(card, owner, "seat", anchor);
-        boardCard.classList.add("multi-seat-board-card");
+        boardCard.classList.add("multi-seat-board-card", `multi-seat-${card.occupiedSeatSize.rows}x${card.occupiedSeatSize.cols}`);
+        boardCard.dataset.occupiedSeats = occupiedIndexes.join(",");
         boardCard.style.gridRow = `${Math.min(...rows)} / ${Math.max(...rows) + 1}`;
         boardCard.style.gridColumn = `${Math.min(...cols)} / ${Math.max(...cols) + 1}`;
         seatGrid.appendChild(boardCard);
@@ -33191,6 +33273,11 @@
         attendee.playedOnTurn = 0;
         return attendee;
       };
+      const makePlayerTestAttendee = (testBaseId) => {
+        const attendee = makeBoardCard(createCardFromBase(testBaseId, "player"));
+        attendee.playedOnTurn = 0;
+        return attendee;
+      };
       opponent.board.seats[0] = makeOpponentTestAttendee("loud_student");
       opponent.board.seats[4] = makeOpponentTestAttendee("vampire");
       opponent.board.seats[8] = makeOpponentTestAttendee("general_student");
@@ -33211,6 +33298,59 @@
         const enemyTeacher = makeBoardCard(createCardFromBase("general_teacher", "opponent"));
         enemyTeacher.playedOnTurn = 0;
         opponent.board.teacher = enemyTeacher;
+      }
+      if (baseId === "environment_setup") {
+        player.deck.unshift(createCardFromBase("cafeteria", "player"));
+        player.trash.push(createCardFromBase("classroom", "player"));
+      }
+      if (baseId === "diamond_dust") {
+        player.board.teacher = makePlayerTestAttendee("lightning_n");
+        player.trash.push(
+          createCardFromBase("double_diamond", "player"),
+          createCardFromBase("double_diamond", "player")
+        );
+        state.environment = makeBoardCard(createCardFromBase("cafeteria", "opponent"));
+      }
+      if (baseId === "happy_experience") {
+        player.board.seats.fill(null);
+        player.board.seats[4] = makePlayerTestAttendee("wood_gitch");
+      }
+      if (baseId === "go_away") {
+        player.trash.push(
+          createCardFromBase("general_student", "player"),
+          createCardFromBase("general_teacher", "player"),
+          createCardFromBase("cafeteria_lady", "player"),
+          createCardFromBase("yuta", "player"),
+          createCardFromBase("wood_gitch", "player")
+        );
+      }
+      if (baseId === "loud_members") {
+        player.board.seats.fill(null);
+        const friendlySeatTarget = makePlayerTestAttendee("general_student");
+        friendlySeatTarget.currentHp = 1;
+        player.board.seats[8] = friendlySeatTarget;
+      }
+      if (baseId === "small_omata") {
+        player.board.seats.fill(null);
+        [0, 4, 8].forEach((index) => {
+          player.board.seats[index] = makePlayerTestAttendee("general_student");
+        });
+      }
+      if (baseId === "big_omata") {
+        player.board.seats.fill(null);
+      }
+      if (baseId === "gitch") {
+        player.board.seats.fill(null);
+        player.board.seats[4] = makePlayerTestAttendee("wood_gitch");
+      }
+      if (baseId === "gigi_blood") {
+        player.board.seats.fill(null);
+        player.board.seats[4] = makePlayerTestAttendee("gitch");
+        player.trash.push(
+          createCardFromBase("wood_gitch", "player"),
+          createCardFromBase("gitch", "player")
+        );
+        opponent.board.teacher = makeOpponentTestAttendee("lightning_n");
       }
 
       analyticsStartGame();
