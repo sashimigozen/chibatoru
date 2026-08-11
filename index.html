@@ -15592,7 +15592,7 @@
       ,shogi_duel_field: []
       ,aiben_vs_nyotei_title_match: []
       ,environment_setup: [],
-      absolute_woman: ["aggro_queen"],
+      absolute_woman: [],
       diamond_dust: [],
       happy_experience: ["gitch"],
       go_away: [],
@@ -15663,7 +15663,7 @@
       laughing_front_student: { name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 2, hp: 2, rowOnly: 1, allowedZones: ["seat"] },
       eaten_student: { name: "飯を食ってきた学生", type: "student", cost: 4, attack: 3, hp: 1, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       loud_student: { name: "バカでかい声の学生", type: "student", cost: 8, attack: 7, hp: 9, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
-      loud_members: { name: "バカでかい班員たち", type: "student", cost: 8, attack: 8, hp: 4, allowedZones: ["seat"], occupiedSeatSize: { rows: 2, cols: 2 } },
+      loud_members: { name: "バカでかい班員たち", type: "student", cost: 6, attack: 8, hp: 4, allowedZones: ["seat"], occupiedSeatSize: { rows: 2, cols: 2 } },
       best_friend: { name: "ベストフレンド", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"] },
       ttb: { name: "TTB", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       predator: { name: "捕食者", type: "student", cost: 5, attack: 5, hp: 5, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
@@ -15699,10 +15699,10 @@
       rebirth_student: { name: "再\"履\"生", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       lone_wolf: { name: "狼(いっぴきおおかみ)", type: "student", cost: 5, attack: 2, hp: 2, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
       general_teacher: { name: "一般教師", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
-      small_omata: { name: "スモール小俣", type: "teacher", cost: 5, attack: 1, hp: 1, allowedZones: ["teacher"] },
+      small_omata: { name: "スモール小俣", type: "teacher", cost: 4, attack: 1, hp: 1, allowedZones: ["teacher"] },
       big_omata: { name: "ビッグ小俣", type: "teacher", cost: 0, noCost: true, attack: 9, hp: 9, keywords: ["注目", "陽気"], token: true, allowedZones: ["seat"], occupiedSeatSize: { rows: 3, cols: 3 } },
-      wood_gitch: { name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 2, noLecture: true, allowedZones: ["teacher", "seat"] },
-      gitch: { name: "技議っち", type: "teacher", cost: 0, noCost: true, attack: 2, hp: 4, noLecture: true, evolutionFrom: "wood_gitch", allowedZones: ["evolution"] },
+      wood_gitch: { name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 1, noLecture: true, allowedZones: ["teacher", "seat"] },
+      gitch: { name: "技議っち", type: "teacher", cost: 4, attack: 1, hp: 2, noLecture: true, evolutionFrom: "wood_gitch", allowedZones: ["evolution"] },
       gigi_blood: { name: "偽魏義ッ血", type: "vampire", cost: 0, noCost: true, attack: 10, hp: 10, evolutionFrom: "gitch", allowedZones: ["evolution"] },
       pro_k: { name: "プロ言の長", type: "teacher", cost: 5, attack: 2, hp: 2, allowedZones: ["teacher"] },
       lightning_n: { name: "デザインデーモンスレイヤー", type: "teacher", cost: 4, attack: 2, hp: 2, allowedZones: ["teacher"] },
@@ -15841,6 +15841,18 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.17.3",
+        date: "2026年8月11日",
+        summary: "新カード群の能力・戦意・能力値を調整し、「絶対」女の効果を攻撃時破壊へ変更。",
+        changes: [
+          { title: "「絶対」女", before: "ランダムに処理する効果の対象を、条件に応じて選ぶ常在効果。", after: "このカードが出席者を攻撃したとき、その出席者を破壊する。旧ランダム効果への干渉は削除。" },
+          { title: "バカでかい班員たち", before: "戦意8。", after: "戦意6。" },
+          { title: "スモール小俣", before: "戦意5。", after: "戦意4。" },
+          { title: "木っち（ぎっち）", before: "攻撃力1／体力2。", after: "攻撃力1／体力1。" },
+          { title: "技議っち", before: "攻撃力2／体力4で、進化に戦意を消費しない。", after: "攻撃力1／体力2。進化するときに戦意4を消費する。" }
+        ]
+      },
       {
         version: "ver.0.17.2",
         date: "2026年8月11日",
@@ -22532,50 +22544,10 @@
       return entries[Math.floor(Math.random() * entries.length)] || null;
     }
 
-    // 「絶対」女がいる場合だけ、通常はランダムな対象を選択へ置き換える。
-    // 候補を状態に保存するため、オンライン対戦でも同じ候補を選べる。
-    function chooseRandomEffectTarget(sourceSide, targetSide, predicate, effect, sourceCard) {
+    function chooseRandomEffectTarget(sourceSide, targetSide, predicate) {
       const candidates = effectTargetEntries(sourceSide, targetSide, predicate);
       if (candidates.length === 0) return { target: null, pending: false };
-      const chooser = randomEffectSelectionOwner(sourceSide);
-      if (!chooser) {
-        return { target: candidates[Math.floor(Math.random() * candidates.length)], pending: false };
-      }
-
-      // ソロ戦AIが選択権を得た場合は、最も影響の大きい出席者を選ぶ。
-      if (chooser === "opponent" && !isOnlineBattle()) {
-        const ref = chooseBestBoardRef(targetSide, (card, candidateRef) => candidates.some((entry) => refsMatch(entry.ref, candidateRef)));
-        return { target: candidates.find((entry) => refsMatch(entry.ref, ref)) || candidates[0], pending: false };
-      }
-
-      state.pendingAttendTarget = {
-        owner: chooser,
-        sourceSide,
-        targetOwner: targetSide,
-        sourceCardName: sourceCard?.name || "効果",
-        sourceCardInstanceId: sourceCard?.instanceId || "",
-        effect: "absolute_random",
-        randomEffect: effect,
-        candidateRefs: candidates.map((entry) => entry.ref),
-        awaitingRemote: false
-      };
-      state.selectedHandId = null;
-      state.selectedAttacker = null;
-      state.message = `「絶対」女の効果：${SIDES[chooser]}は${sourceCard?.name || "効果"}の対象を選んでください。`;
-      render();
-      return { target: null, pending: true };
-    }
-
-    function absoluteWomanCount(side) {
-      return listBoardRefs(side).filter((ref) => getBoardCardFromRef(ref)?.baseId === "absolute_woman").length;
-    }
-
-    function randomEffectSelectionOwner(sourceSide) {
-      const otherSide = oppositeSide(sourceSide);
-      const sourceCount = absoluteWomanCount(sourceSide);
-      const otherCount = absoluteWomanCount(otherSide);
-      if (sourceCount === otherCount) return null;
-      return sourceCount > otherCount ? sourceSide : otherSide;
+      return { target: candidates[Math.floor(Math.random() * candidates.length)], pending: false };
     }
 
     function randomBoardRef(owner, predicate = null, sourceSide = null) {
@@ -24821,9 +24793,6 @@
       if (card.type === "teacher" && zone !== "teacher" && !["big_omata", "wood_gitch", "gitch"].includes(card.baseId)) {
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
       }
-      if (card.baseId === "absolute_woman") {
-        addLog(`${card.name}の効果：このカードがいる間、ランダムに処理する効果は条件に応じて選択して処理されます。`);
-      }
       if (card.baseId === "loud_members") {
         let seatAffected = 0;
         let teacherAffected = 0;
@@ -25590,44 +25559,8 @@
       if (!pending || pending.awaitingRemote || owner !== pending.targetOwner) return false;
       const target = getBoardCard(owner, zone, index);
       if (!target) return false;
-      if (pending.effect === "absolute_random") {
-        return (pending.candidateRefs || []).some((ref) => refsMatch(ref, { owner, zone, index }));
-      }
       return effectTargetEntries(pending.owner, pending.targetOwner)
         .some((entry) => refsMatch(entry.ref, { owner, zone, index }));
-    }
-
-    function resolveAbsoluteRandomEffect(pending, sourceCard, targetRef, renderAfter = true) {
-      const target = getBoardCardFromRef(targetRef);
-      if (!target) return false;
-      const sourceName = sourceCard?.name || pending.sourceCardName || "効果";
-      if (pending.randomEffect === "best_friend") {
-        dealDamageToCard(target, 3, sourceCard);
-        addLog(`${sourceName}の効果：隣接するバカでかい声の学生により、${target.name}に3ダメージ。`);
-      } else if (pending.randomEffect === "abyss") {
-        destroyBoardCard(targetRef);
-        addLog(`深淵の効果：${target.name}を破壊しました。`);
-      } else if (pending.randomEffect === "aggro_queen") {
-        dealDamageToCard(target, 2, sourceCard);
-        addLog(`${sourceName}の効果：相手の学生1人に2ダメージ。`);
-      } else if (pending.randomEffect === "midge") {
-        dealDamageToCard(target, 1, sourceCard);
-        addLog(`${sourceName}の出席時効果：相手の出席者1人に1ダメージ。`);
-      } else if (pending.randomEffect === "chen_san") {
-        destroyBoardCard(targetRef);
-        addLog(`${sourceName}の効果：相手の席マスの${target.name}を破壊しました。`);
-      } else if (pending.randomEffect === "impossible_high_note") {
-        applyPermanentStatBuff(target, -2, -1, 0, sourceName);
-        showFloatingTextForCard(target, "-2/-1", "damage");
-        addLog(`${sourceName}の効果：${target.name}の攻撃力を-2、体力を-1しました。`);
-      } else if (pending.randomEffect === "bird_a") {
-        destroyBoardCard(targetRef);
-        addLog(`${sourceName}の効果：相手の出席者1人を破壊しました。`);
-      }
-      cleanupDestroyedCards();
-      applyBoardAuras();
-      if (renderAfter) render();
-      return true;
     }
 
     function resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter = true) {
@@ -25664,9 +25597,6 @@
       state.pendingAttendTarget = null;
       if (pending.effect === "small_omata") {
         return resolveSmallOmataTarget(side, sourceCard, targetRef, renderAfter);
-      }
-      if (pending.effect === "absolute_random") {
-        return resolveAbsoluteRandomEffect(pending, sourceCard, targetRef, renderAfter);
       }
       return resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter);
     }
@@ -26344,6 +26274,34 @@
       if (consumeActiveUtaUmbrella(target)) {
         addLog(`${target.name}のU太の傘：攻撃を一度だけ防ぎ、傘を校外エリアへ送りました。`);
         showFloatingTextForCard(target, "防御", "heal");
+        return;
+      }
+      if (attacker.baseId === "absolute_woman") {
+        const targetRef = listBoardRefs(target.owner)
+          .find((ref) => getBoardCardFromRef(ref)?.instanceId === target.instanceId);
+        const destroyed = targetRef ? destroyBoardCard(targetRef, { reason: attacker.name }) : null;
+        analyticsRecordAction({
+          side: attacker.owner,
+          actionType: "attack_card",
+          card: attacker,
+          sourceZone: "board",
+          targetZone: "board",
+          targetCard: target,
+          targetCardId: target.baseId,
+          details: {
+            attacker: analyticsCardInfo(attacker),
+            target: analyticsCardInfo(target),
+            damage: 0,
+            counterDamage: 0,
+            forcedByAttention: listAttentionCards(target.owner).some((attentionCard) => attentionCard.instanceId === target.instanceId),
+            absoluteDestroy: Boolean(destroyed),
+            targetDiedAfterAttack: Boolean(destroyed),
+            attackerDiedAfterCounter: false
+          }
+        });
+        addLog(destroyed
+          ? `${attacker.name}の攻撃時効果：${target.name}を破壊しました。`
+          : `${attacker.name}の攻撃時効果：${target.name}の破壊は置き換えられました。`);
         return;
       }
       const attackDamage = attacker.attack || 0;
@@ -34489,7 +34447,7 @@
         handy_jet_engine: "相手の手札をランダムに2枚、校外エリアへ送る。",
         dos_attack: "相手のデッキの上から3枚を校外エリアへ送る。",
         destroy_dos_attack: "自分の校外エリアにある「Dos攻撃」の枚数+1を数え、その数×3枚、相手のデッキの上から校外エリアへ送る。",
-        absolute_woman: "このカードが出席している間、ランダムに対象を選ぶ効果は、このカードをより多く出席させているプレイヤーが対象を選ぶ。両者の数が同じ場合、その効果はランダムに処理する。",
+        absolute_woman: "このカードが出席者を攻撃したとき、その出席者を破壊する。",
         environment_setup: "次の2つから1つを選ぶ。1. 自分のデッキから環境カードをランダムに1枚手札に加える。2. 自分の校外エリアから環境カードをランダムに1枚手札に戻す。",
         diamond_dust: "自分の校外エリアに「ダブルダイヤモンドクロス」が2枚以上あり、自分の教卓マスに「デザインデーモンスレイヤー」がいる場合に使用できる。お互いの講義室の出席者すべてと環境を破壊する。校外エリアにあるこのカードは、手札を2枚校外エリアへ送ることで手札に戻せる。",
         happy_experience: "自分の出席者1人を指名する。手札にその進化先がある場合、そのカードに進化させる。この効果で進化したカードの出席時・進化時の能力は発動しない。",
