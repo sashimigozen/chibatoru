@@ -1967,10 +1967,21 @@
     }
 
     /* A large attendee occupies several seats, but remains a single card and target. */
-    .seat-grid > .multi-seat-board-card {
+    .seat-grid > .multi-seat-layer {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-rows: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    .seat-grid > .multi-seat-layer > .multi-seat-board-card {
       align-self: stretch;
       justify-self: stretch;
-      z-index: 4;
+      pointer-events: auto;
       min-width: 0;
       min-height: 0;
     }
@@ -14281,7 +14292,7 @@
       opacity: 0 !important;
     }
 
-    .battle-screen .seat-grid > .field-card.board-card.multi-seat-board-card {
+    .battle-screen .seat-grid > .multi-seat-layer > .field-card.board-card.multi-seat-board-card {
       /* Override the normal single-seat card dimensions.  Grid stretch turns
          the occupied 2x2 / 3x3 desks into one continuous card surface. */
       align-self: stretch !important;
@@ -14300,25 +14311,25 @@
       box-shadow: 0 5px 12px rgba(18, 54, 82, 0.26), inset 0 0 0 2px rgba(255, 255, 255, 0.32) !important;
     }
 
-    .battle-screen .seat-grid > .multi-seat-board-card .field-card-art-name {
+    .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card .field-card-art-name {
       inset: 28px 15px 30px !important;
       font-size: clamp(15px, 1.4vw, 27px) !important;
       line-height: 1.18 !important;
     }
 
-    .battle-screen .seat-grid > .multi-seat-board-card .field-card-stats {
+    .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card .field-card-stats {
       left: 10px !important;
       right: 10px !important;
       bottom: 8px !important;
     }
 
-    .battle-screen .seat-grid > .multi-seat-board-card .field-stat {
+    .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card .field-stat {
       min-width: 28px !important;
       min-height: 24px !important;
       font-size: 13px !important;
     }
 
-    .battle-screen .seat-grid > .multi-seat-board-card .field-card-status {
+    .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card .field-card-status {
       top: 8px !important;
       right: 8px !important;
     }
@@ -15830,6 +15841,15 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.17.2",
+        date: "2026年8月11日",
+        summary: "スモール小俣の大型化を自動化し、複数の席を占有する出席者で他の席が動かないように改善。",
+        changes: [
+          { title: "スモール小俣", before: "戦意10で教卓マスに出席させた場合も、相手の出席者を選んだ後にビッグ小俣へ変化していた。", after: "戦意10で教卓マスに出席させた場合は、対象選択を挟まず自動でビッグ小俣へ変化する。ビッグ小俣の出席時効果をそのまま解決する。" },
+          { title: "大型出席者の表示", before: "2行×2列や3行×3列を占有するカードが座席グリッドの要素として配置され、他の席マスが押し出されていた。", after: "席マスの配置は固定したまま、その上に連結カードを重ねる専用レイヤーで表示する。ほかの席マスは動かず、占有した範囲だけが一枚の出席者として見える。" }
+        ]
+      },
       {
         version: "ver.0.17.1",
         date: "2026年8月11日",
@@ -24824,8 +24844,14 @@
         addLog(`${card.name}の出席時効果：自分のデッキに「木っち（ぎっち）」を1枚生成しました。`);
       }
       if (card.baseId === "small_omata") {
-        if (beginSmallOmataTargetChoice(side, card)) return;
-        finishSmallOmataTransform(side, card);
+        // At 10 will, Small Omata immediately becomes Big Omata. Its single-target
+        // lock is replaced by Big Omata's full-board attendance effect.
+        if (card.forcedBigOmata) {
+          finishSmallOmataTransform(side, card);
+          return;
+        }
+        beginSmallOmataTargetChoice(side, card);
+        return;
       }
       if (card.baseId === "big_omata") {
         const affected = listBoardRefs(opponent).map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
@@ -30946,13 +30972,16 @@
         }
         seatGrid.appendChild(slot);
       });
+      const multiSeatLayer = document.createElement("div");
+      multiSeatLayer.className = "multi-seat-layer";
+      seatGrid.appendChild(multiSeatLayer);
       multiCards.forEach(({ card, anchor }) => {
         const occupiedIndexes = occupiedSeatIndexesFor(card, anchor);
         const positions = occupiedIndexes
           .map((seatIndex) => order.indexOf(seatIndex))
           .filter((position) => position >= 0);
         if (positions.length === 0) return;
-        const slots = Array.from(seatGrid.children);
+        const slots = Array.from(seatGrid.querySelectorAll(":scope > .slot"));
         positions.forEach((position) => {
           slots[position]?.classList.add("multi-seat-covered");
         });
@@ -30963,7 +30992,7 @@
         boardCard.dataset.occupiedSeats = occupiedIndexes.join(",");
         boardCard.style.gridRow = `${Math.min(...rows)} / ${Math.max(...rows) + 1}`;
         boardCard.style.gridColumn = `${Math.min(...cols)} / ${Math.max(...cols) + 1}`;
-        seatGrid.appendChild(boardCard);
+        multiSeatLayer.appendChild(boardCard);
       });
     }
 
