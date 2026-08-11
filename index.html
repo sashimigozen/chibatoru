@@ -1933,6 +1933,7 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(66px, 1fr));
       gap: 2px;
+      position: relative;
     }
 
     .professor-lane {
@@ -1963,6 +1964,15 @@
       background: #f8fafc;
       text-align: center;
       transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    /* A large attendee occupies several seats, but remains a single card and target. */
+    .seat-grid > .multi-seat-board-card {
+      align-self: stretch;
+      justify-self: stretch;
+      z-index: 4;
+      min-width: 0;
+      min-height: 0;
     }
 
     .environment-panel .slot {
@@ -15151,18 +15161,20 @@
       { id: "expansion", name: "展開・敵増殖" },
       { id: "interference", name: "妨害・LO" },
       { id: "shogi", name: "将棋部" },
-      { id: "big", name: "バカでかい型" }
+      { id: "big", name: "バカでかい型" },
+      { id: "vampire", name: "ヴァンパイア" }
     ];
     const SPECIALTY_CARD_IDS = Object.freeze({
-      common: ["ai_chan", "alpha", "beta", "chaos_world", "circle_crab", "classroom", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "hair_crab", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "ta", "three_gestures", "water_2l"],
+      common: ["ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "ta", "three_gestures", "water_2l"],
       gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "trendy_student", "word_increaser", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "green_curry", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "yakiniku", "zombie"],
-      design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
+      design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
       late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance"],
       expansion: ["aggro_king", "aggro_queen", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"],
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
-      big: ["ae_student", "best_friend", "chigauyo", "cote_dazur", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "lone_wolf", "loud_student", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "super_ae_student", "ta_killer"]
+      big: ["ae_student", "best_friend", "chigauyo", "cote_dazur", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "loud_members", "lone_wolf", "loud_student", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "super_ae_student", "ta_killer"],
+      vampire: ["wood_gitch", "gitch", "gigi_blood"]
     });
     const DUNGEON_CARD_STYLE_REWARDS = Object.freeze({
       gakuyukai_item: { label: "学友会・持ち物", cardIds: ["yuta", "dark_yuta"], style: "gakuyukai" },
@@ -15518,10 +15530,10 @@
       "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
-      "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter",
+      "absolute_woman", "loud_members", "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter", "small_omata",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
-      "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire",
-      "ruler", "aggro_eater", "ux_design_textbook", "bento", "yakiniku", "handmade_ctoc", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
+      "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire", "wood_gitch", "gitch", "gigi_blood",
+      "ruler", "aggro_eater", "ux_design_textbook", "bento", "yakiniku", "handmade_ctoc", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "diamond_dust", "happy_experience", "go_away",
       "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi",
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo", "yamanashi_minimum_wage",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture", "baka_mac", "ikemasu",
@@ -15538,14 +15550,15 @@
     const CRAB_SET_IDS = ["circle_crab", "hair_crab", "homeless_crab"];
     const IMMEDIATE_ITEM_IDS = [
       "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
-      "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
+      "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
       "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
       "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000",
-      "yamanashi_minimum_wage", "baka_mac", "ikemasu", "president_tea_room"
+      "yamanashi_minimum_wage", "baka_mac", "ikemasu", "president_tea_room", "diamond_dust",
+      "environment_setup", "go_away", "happy_experience"
     ];
 
     function isImmediateItemBaseId(baseId) {
@@ -15554,6 +15567,7 @@
 
     const CARD_BASES = {
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
+      absolute_woman: { name: "「絶対」女", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
       single_cell: { name: "単細胞生物", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
@@ -15571,6 +15585,7 @@
       laughing_front_student: { name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 2, hp: 2, rowOnly: 1, allowedZones: ["seat"] },
       eaten_student: { name: "飯を食ってきた学生", type: "student", cost: 4, attack: 3, hp: 1, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       loud_student: { name: "バカでかい声の学生", type: "student", cost: 8, attack: 7, hp: 9, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
+      loud_members: { name: "バカでかい班員たち", type: "student", cost: 8, attack: 8, hp: 4, allowedZones: ["seat"], occupiedSeatSize: { rows: 2, cols: 2 } },
       best_friend: { name: "ベストフレンド", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"] },
       ttb: { name: "TTB", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       predator: { name: "捕食者", type: "student", cost: 5, attack: 5, hp: 5, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
@@ -15606,6 +15621,11 @@
       rebirth_student: { name: "再\"履\"生", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       lone_wolf: { name: "狼(いっぴきおおかみ)", type: "student", cost: 5, attack: 2, hp: 2, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
       general_teacher: { name: "一般教師", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
+      small_omata: { name: "スモール小俣", type: "teacher", cost: 5, attack: 1, hp: 1, allowedZones: ["teacher"] },
+      big_omata: { name: "ビッグ小俣", type: "teacher", cost: 0, noCost: true, attack: 9, hp: 9, keywords: ["注目", "陽気"], token: true, allowedZones: ["seat"], occupiedSeatSize: { rows: 3, cols: 3 } },
+      wood_gitch: { name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 2, noLecture: true, allowedZones: ["teacher", "seat"] },
+      gitch: { name: "技議っち", type: "teacher", cost: 0, noCost: true, attack: 2, hp: 4, noLecture: true, evolutionFrom: "wood_gitch", allowedZones: ["evolution"] },
+      gigi_blood: { name: "偽魏義ッ血", type: "vampire", cost: 0, noCost: true, attack: 10, hp: 10, evolutionFrom: "gitch", allowedZones: ["evolution"] },
       pro_k: { name: "プロ言の長", type: "teacher", cost: 5, attack: 2, hp: 2, allowedZones: ["teacher"] },
       lightning_n: { name: "デザインデーモンスレイヤー", type: "teacher", cost: 4, attack: 2, hp: 2, allowedZones: ["teacher"] },
       fairy_t: { name: "デザインフェアリー", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
@@ -15651,6 +15671,9 @@
       dos_attack: { name: "Dos攻撃", type: "item", cost: 3, target: "self" },
       destroy_dos_attack: { name: "デストロイDos攻撃", type: "item", cost: 5, target: "self" },
       environment_setup: { name: "環境構築", type: "item", cost: 2, target: "self" },
+      diamond_dust: { name: "ダブルダイヤモンドダスト-***Angel Cross Experiencce-***", type: "item", cost: 5, target: "self" },
+      happy_experience: { name: "うれしい体験", type: "item", cost: 1, target: "friendlyAny" },
+      go_away: { name: "行かれてはいかがですか", type: "item", cost: 2, target: "self" },
       green_curry: { name: "グリーンカレー", type: "item", cost: 9, target: "global" },
       vampirization: { name: "吸血鬼化", type: "item", cost: 7, target: "enemy" },
       iv_pack: { name: "輸血パック", type: "item", cost: 2, target: "self" },
@@ -15740,6 +15763,18 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.17.0",
+        date: "2026年8月11日",
+        summary: "共通・デザイン・バカでかい・ヴァンパイアの新カードを追加し、ランダム効果を選択へ変える「絶対」女を実装。",
+        changes: [
+          { title: "共通カード", before: "環境や進化、校外エリアを使う新しい選択肢がなかった。", after: "「環境構築」「うれしい体験」「行かれてはいかがですか」「『絶対』女」を追加。環境の回収、能力を発動しない進化、校外からの再利用、ランダム効果の選択を行える。" },
+          { title: "デザイン", before: "「ダブルダイヤモンドクロス」を使い切った後の大技がなかった。", after: "条件を満たすと講義室と環境を一掃できる「ダブルダイヤモンドダスト-***Angel Cross Experiencce-***」を追加。校外から手札へ回収する効果も持つ。" },
+          { title: "バカでかい", before: "複数の席をまとめて使う大型出席者がなかった。", after: "2行×2列を占有する「バカでかい班員たち」と、9席を占有する「ビッグ小俣」、それを呼ぶ「スモール小俣」を追加。" },
+          { title: "木っち系統", before: "木っちから進化するヴァンパイアの連鎖がなかった。", after: "「木っち（ぎっち）」「技議っち」「偽魏義ッ血」を追加。デッキ生成、追加出席、攻撃力強化、校外からのヴァンパイア化出席へつながる進化系統を追加。" },
+          { title: "ランダム効果の選択", before: "オンライン対戦でゲスト側の「『絶対』女」による選択権がAIへ渡る場合があった。", after: "選択権を持つプレイヤー本人が、オンライン対戦でも候補から対象を選ぶように修正。両者の「『絶対』女」の数が同じ場合だけランダムで処理する。" }
+        ]
+      },
       {
         version: "ver.0.16.3",
         date: "2026年8月9日",
@@ -16284,6 +16319,9 @@
       pendingThreeGestures: null,
       pendingCardChoice: null,
       pendingAttendTarget: null,
+      pendingGitchSummon: null,
+      pendingGigiResurrection: null,
+      pendingSmallOmataTransform: null,
       pendingRemoteHandTrim: null,
       selectionOverlayPeek: false,
       pendingTestCardId: null,
@@ -19618,6 +19656,25 @@
           const item = getHandCard("opponent", payload.instanceId);
           if (item) castImmediateItem("opponent", item, true, { commandId: command.id || "" });
         }
+        if (command.type === "environmentSetup") {
+          const item = getHandCard("opponent", payload.instanceId);
+          if (item) resolveEnvironmentSetupChoice("opponent", item, payload.choiceId, true);
+        }
+        if (command.type === "goAway") {
+          const item = getHandCard("opponent", payload.instanceId);
+          if (item) resolveGoAwayChoice("opponent", item, payload.selectedIds || [], true);
+        }
+        if (command.type === "happyExperience") {
+          const item = getHandCard("opponent", payload.instanceId);
+          const evolutionCard = getHandCard("opponent", payload.evolutionInstanceId);
+          const targetRef = onlineMapRefForHost(payload.target);
+          if (item && evolutionCard && targetRef) {
+            resolveHappyExperienceChoice("opponent", item, evolutionCard, { targetRef }, true);
+          }
+        }
+        if (command.type === "diamondDustRecovery") {
+          resolveDiamondDustRecovery("opponent", payload.instanceId, payload.selectedIds || [], true);
+        }
         if (command.type === "threeGestures") {
           const item = getHandCard("opponent", payload.instanceId);
           if (item) resolveThreeGesturesSelection("opponent", item, payload.selectedIds || [], true);
@@ -22379,6 +22436,52 @@
       return entries[Math.floor(Math.random() * entries.length)] || null;
     }
 
+    // 「絶対」女がいる場合だけ、通常はランダムな対象を選択へ置き換える。
+    // 候補を状態に保存するため、オンライン対戦でも同じ候補を選べる。
+    function chooseRandomEffectTarget(sourceSide, targetSide, predicate, effect, sourceCard) {
+      const candidates = effectTargetEntries(sourceSide, targetSide, predicate);
+      if (candidates.length === 0) return { target: null, pending: false };
+      const chooser = randomEffectSelectionOwner(sourceSide);
+      if (!chooser) {
+        return { target: candidates[Math.floor(Math.random() * candidates.length)], pending: false };
+      }
+
+      // ソロ戦AIが選択権を得た場合は、最も影響の大きい出席者を選ぶ。
+      if (chooser === "opponent" && !isOnlineBattle()) {
+        const ref = chooseBestBoardRef(targetSide, (card, candidateRef) => candidates.some((entry) => refsMatch(entry.ref, candidateRef)));
+        return { target: candidates.find((entry) => refsMatch(entry.ref, ref)) || candidates[0], pending: false };
+      }
+
+      state.pendingAttendTarget = {
+        owner: chooser,
+        sourceSide,
+        targetOwner: targetSide,
+        sourceCardName: sourceCard?.name || "効果",
+        sourceCardInstanceId: sourceCard?.instanceId || "",
+        effect: "absolute_random",
+        randomEffect: effect,
+        candidateRefs: candidates.map((entry) => entry.ref),
+        awaitingRemote: false
+      };
+      state.selectedHandId = null;
+      state.selectedAttacker = null;
+      state.message = `「絶対」女の効果：${SIDES[chooser]}は${sourceCard?.name || "効果"}の対象を選んでください。`;
+      render();
+      return { target: null, pending: true };
+    }
+
+    function absoluteWomanCount(side) {
+      return listBoardRefs(side).filter((ref) => getBoardCardFromRef(ref)?.baseId === "absolute_woman").length;
+    }
+
+    function randomEffectSelectionOwner(sourceSide) {
+      const otherSide = oppositeSide(sourceSide);
+      const sourceCount = absoluteWomanCount(sourceSide);
+      const otherCount = absoluteWomanCount(otherSide);
+      if (sourceCount === otherCount) return null;
+      return sourceCount > otherCount ? sourceSide : otherSide;
+    }
+
     function randomBoardRef(owner, predicate = null, sourceSide = null) {
       if (sourceSide) return randomEffectTargetEntry(sourceSide, owner, predicate)?.ref || null;
       const refs = listBoardRefs(owner).filter((ref) => {
@@ -22530,7 +22633,9 @@
           const hasLoudNeighbor = adjacentIndexes(ref.index).some((neighbor) => state.players[side].board.seats[neighbor]?.baseId === "loud_student");
           if (!hasLoudNeighbor) return;
           const opponent = oppositeSide(side);
-          const targetEntry = randomEffectTargetEntry(side, opponent);
+          const choice = chooseRandomEffectTarget(side, opponent, null, "best_friend", card);
+          if (choice.pending) return;
+          const targetEntry = choice.target;
           const target = targetEntry?.card || null;
           if (!target) {
             addLog(`${card.name}の効果：相手の出席者がいないため不発。`);
@@ -22546,7 +22651,10 @@
       const player = state.players[side];
       if (!player.abyssTurns || player.abyssTurns <= 0) return;
       const opponent = oppositeSide(side);
-      const target = randomEffectTargetEntry(side, opponent);
+      const choice = chooseRandomEffectTarget(side, opponent, null, "abyss", { name: "深淵" });
+      player.abyssTurns -= 1;
+      if (choice.pending) return;
+      const target = choice.target;
       if (target) {
         const card = target.card;
         destroyBoardCard(target.ref);
@@ -22554,7 +22662,6 @@
       } else {
         addLog("深淵の効果：相手の出席者がいないため不発。");
       }
-      player.abyssTurns -= 1;
     }
 
     function isCouncilEnvironment(card) {
@@ -22623,7 +22730,9 @@
             }
           }
           if (card.baseId === "aggro_queen" && ref.zone === "seat" && ref.index === 5) {
-            const target = randomEffectTargetEntry(side, opponent, (targetCard) => targetCard.type === "student");
+            const choice = chooseRandomEffectTarget(side, opponent, (targetCard) => targetCard.type === "student", "aggro_queen", card);
+            if (choice.pending) return;
+            const target = choice.target;
             if (target) {
               dealDamageToCard(target.card, 2, card);
               addLog(`${card.name}の効果：相手の学生1人をランダムに指名し、2ダメージ。`);
@@ -22924,7 +23033,8 @@
         requestId: options.requestId || null,
         commandId: options.commandId || "",
         playCardId: options.playCardId || null,
-        playTarget: options.playTarget || null
+        playTarget: options.playTarget || null,
+        context: options.context || null
       };
       state.message = options.message || "カードを選んでください。";
       render();
@@ -22979,6 +23089,155 @@
       return true;
     }
 
+    function openEnvironmentSetupChoice(item) {
+      if (!item || item.baseId !== "environment_setup") return false;
+      if (effectiveCardCost(item) > state.players.player.will) {
+        state.message = `戦意が足りません。${item.name}のコストは${effectiveCardCost(item)}です。`;
+        render();
+        return true;
+      }
+      const canDraw = state.players.player.deck.some((card) => card.type === "environment");
+      const canReturn = state.players.player.trash.some((card) => card.type === "environment");
+      if (!canDraw && !canReturn) {
+        addLog(`${item.name}は選べる環境カードがないため使えません。`);
+        render();
+        return true;
+      }
+      return openCardChoice({
+        mode: "environment_setup",
+        itemId: item.instanceId,
+        title: item.name,
+        message: "使用する効果を1つ選んでください。",
+        cards: [
+          { instanceId: "environment_setup_deck", name: "デッキから手札へ", type: "environment", effect: "自分のデッキから環境カードをランダムに1枚手札に加える。", disabled: !canDraw },
+          { instanceId: "environment_setup_trash", name: "校外から手札へ", type: "environment", effect: "自分の校外エリアから環境カードをランダムに1枚手札に戻す。", disabled: !canReturn }
+        ].filter((choice) => !choice.disabled),
+        min: 1,
+        max: 1,
+        confirmLabel: "この効果を使う"
+      });
+    }
+
+    function resolveEnvironmentSetupChoice(side, item, choiceId, renderAfter = true) {
+      if (!item) return false;
+      const player = state.players[side];
+      let card = null;
+      const deckCandidates = player.deck.filter((entry) => entry.type === "environment");
+      const trashCandidates = player.trash.filter((entry) => entry.type === "environment");
+      if ((choiceId === "environment_setup_deck" && deckCandidates.length === 0)
+        || (choiceId !== "environment_setup_deck" && trashCandidates.length === 0)
+        || !payForItem(side, item)) return false;
+      if (choiceId === "environment_setup_deck") {
+        card = deckCandidates[Math.floor(Math.random() * deckCandidates.length)] || null;
+        if (card) {
+          player.deck = player.deck.filter((entry) => entry.instanceId !== card.instanceId);
+          card.handTurns = 0;
+          player.hand.push(card);
+          shuffleDeckAfterSearch(side);
+          queueAnimation("draw", side, 1);
+          addLog(`${item.name}の効果：${SIDES[side]}はデッキから環境カード1枚を手札に加えました。`);
+        }
+      } else {
+        card = trashCandidates[Math.floor(Math.random() * trashCandidates.length)] || null;
+        if (card) {
+          player.trash = player.trash.filter((entry) => entry.instanceId !== card.instanceId);
+          card.handTurns = 0;
+          player.hand.push(card);
+          addLog(`${item.name}の効果：${SIDES[side]}は校外エリアから環境カード1枚を手札に戻しました。`);
+        }
+      }
+      if (!card) return false;
+      showCardPlayAnimation(item, "trash");
+      moveHandCardToTrash(side, item);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function openGoAwayChoice(item) {
+      if (!item || item.baseId !== "go_away") return false;
+      if (effectiveCardCost(item) > state.players.player.will) {
+        state.message = `戦意が足りません。${item.name}のコストは${effectiveCardCost(item)}です。`;
+        render();
+        return true;
+      }
+      const candidates = state.players.player.trash.filter((card) => ["student", "teacher", "vampire"].includes(card.type));
+      if (candidates.length < 5) {
+        addLog(`${item.name}は校外エリアに学生・教師・ヴァンパイアが5枚以上ないため使えません。`);
+        render();
+        return true;
+      }
+      return openCardChoice({
+        mode: "go_away",
+        itemId: item.instanceId,
+        title: item.name,
+        message: "デッキに戻すカードを5枚選んでください。",
+        cards: candidates,
+        min: 5,
+        max: 5,
+        confirmLabel: "選んだ5枚をデッキへ戻す"
+      });
+    }
+
+    function resolveGoAwayChoice(side, item, selectedIds, renderAfter = true) {
+      const selected = new Set(selectedIds || []);
+      const cards = state.players[side].trash.filter((card) => (
+        selected.has(card.instanceId) && ["student", "teacher", "vampire"].includes(card.type)
+      ));
+      if (cards.length !== 5 || !payForItem(side, item)) return false;
+      state.players[side].trash = state.players[side].trash.filter((card) => !selected.has(card.instanceId));
+      state.players[side].deck = shuffle([...state.players[side].deck, ...cards]);
+      queueAnimation("shuffle", side);
+      const drawn = drawUpTo(side, 2);
+      showCardPlayAnimation(item, "trash");
+      moveHandCardToTrash(side, item);
+      addLog(`${item.name}の効果：${SIDES[side]}は校外エリアのカード5枚をデッキに戻してシャッフルし、${drawn}枚引きました。`);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function openHappyExperienceChoice(item, targetRef) {
+      if (!item || item.baseId !== "happy_experience") return false;
+      const target = getBoardCardFromRef(targetRef);
+      const candidates = state.players.player.hand.filter((card) => (
+        card.evolutionFrom === target?.baseId && findEvolveTarget("player", card, targetRef.owner, targetRef.zone, targetRef.index)
+      ));
+      if (candidates.length === 0) {
+        addLog(`${item.name}の効果：${target?.name || "対象"}の進化先が手札にありません。`);
+        render();
+        return true;
+      }
+      return openCardChoice({
+        mode: "happy_experience",
+        itemId: item.instanceId,
+        title: item.name,
+        message: "進化させるカードを選んでください。この進化では出席時・進化時の能力は発動しません。",
+        cards: candidates,
+        min: 1,
+        max: 1,
+        confirmLabel: "このカードに進化する",
+        context: { targetRef }
+      });
+    }
+
+    function resolveHappyExperienceChoice(side, item, evolutionCard, context, renderAfter = true) {
+      const targetRef = context?.targetRef;
+      if (!targetRef) return false;
+      const hand = state.players[side].hand;
+      const chosen = hand.find((card) => card.instanceId === evolutionCard.instanceId);
+      const target = getBoardCardFromRef(targetRef);
+      if (!chosen || !target || chosen.evolutionFrom !== target.baseId || !payForItem(side, item)) return false;
+      if (!evolveCard(side, chosen, targetRef.owner, targetRef.zone, targetRef.index, { skipEvolutionEffect: true, skipEvolutionAnimation: false })) return false;
+      state.players[side].hand = state.players[side].hand.filter((card) => card.instanceId !== item.instanceId);
+      showCardPlayAnimation(item, "trash");
+      moveToTrash(side, item);
+      addLog(`${item.name}の効果：${chosen.name}に進化しました。出席時・進化時の能力は発動しません。`);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
     function toggleCardChoiceCard(instanceId) {
       const pending = state.pendingCardChoice;
       if (!pending) return;
@@ -23012,6 +23271,61 @@
           return;
         }
         resolveFullThrottle("player", item, selectedIds, true);
+        return;
+      }
+      if (mode === "environment_setup") {
+        const item = getHandCard("player", itemId);
+        if (!item) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("environmentSetup", { instanceId: item.instanceId, choiceId: selectedIds[0] });
+          state.message = "環境構築の選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveEnvironmentSetupChoice("player", item, selectedIds[0], true);
+        return;
+      }
+      if (mode === "go_away") {
+        const item = getHandCard("player", itemId);
+        if (!item) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("goAway", { instanceId: item.instanceId, selectedIds });
+          state.message = "行かれてはいかがですかの選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveGoAwayChoice("player", item, selectedIds, true);
+        return;
+      }
+      if (mode === "happy_experience") {
+        const item = getHandCard("player", itemId);
+        const evolutionCard = getHandCard("player", selectedIds[0]);
+        if (!item || !evolutionCard) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("happyExperience", {
+            instanceId: item.instanceId,
+            evolutionInstanceId: evolutionCard.instanceId,
+            target: pending.context?.targetRef || null
+          });
+          state.message = "うれしい体験の選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveHappyExperienceChoice("player", item, evolutionCard, pending.context, true);
+        return;
+      }
+      if (mode === "diamond_dust_recovery") {
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("diamondDustRecovery", { instanceId: itemId, selectedIds });
+          state.message = "ダブルダイヤモンドダストの選択を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveDiamondDustRecovery("player", itemId, selectedIds, true);
         return;
       }
       if (mode === "paired_existence") {
@@ -23227,6 +23541,15 @@
       }
       if (item.baseId === "three_gestures") {
         openThreeGesturesSelection(item);
+        return;
+      }
+      if (item.baseId === "environment_setup" && openEnvironmentSetupChoice(item)) return;
+      if (item.baseId === "go_away" && openGoAwayChoice(item)) return;
+      if (item.baseId === "happy_experience") {
+        state.selectedAttacker = null;
+        state.selectedHandId = item.instanceId;
+        state.message = `${item.name}：自分の出席者1人を指名してください。`;
+        render();
         return;
       }
       if (item.baseId === "full_throttle" && openFullThrottleChoice(item)) return;
@@ -23883,7 +24206,9 @@
         if (renderAfter) render();
         return false;
       }
-      const playCost = effectiveCardCost(card);
+      // スモール小俣の大型化は、戦意がちょうど10のときだけ強制する。
+      const isForcedBigOmata = card.baseId === "small_omata" && player.will === 10;
+      const playCost = isForcedBigOmata ? 10 : effectiveCardCost(card);
       if (player.will < playCost) {
         state.message = `戦意が足りません。${card.name}のコストは${playCost}です。`;
         clearSelections();
@@ -23956,7 +24281,12 @@
           }
         }
         const placedCard = makeBoardCard(card);
-        if (zone === "seat" || zone === "teacher") setBoardCard(owner, zone, index, placedCard);
+        if (zone === "seat") {
+          if (isMultiSeatCard(placedCard)) placeMultiSeatCard(owner, index, placedCard);
+          else setBoardCard(owner, zone, index, placedCard);
+        }
+        if (zone === "teacher") setBoardCard(owner, zone, index, placedCard);
+        placedCard.forcedBigOmata = isForcedBigOmata;
         if ((zone === "seat" || zone === "teacher") && !options.revealAlreadyShown) showCardPlayAnimation(card, "board");
         if (zone === "environment") {
           if (!options.revealAlreadyShown) showCardPlayAnimation(card, "environment");
@@ -24096,6 +24426,8 @@
         if (!["student", "teacher", "vampire"].includes(card.type)) return false;
         if (isSeatClosedByAggro(owner, index)) return false;
         if (card.baseId === "predator") return Boolean(state.players[owner].board.seats[index]);
+        if (card.baseId === "small_omata") return false;
+        if (card.occupiedSeatSize) return canPlaceMultiSeatCard(owner, card, index);
         if (state.players[owner].board.seats[index] !== null) return false;
         if (card.baseId === "seat_taking_group") {
           return index === 4 && [3, 4, 5].every((seatIndex) => isBoardSlotOpen(owner, "seat", seatIndex));
@@ -24158,9 +24490,16 @@
           evolutionCard: card
         });
       }
-      setBoardCard(owner, target.zone, target.index, evolved);
+      if (target.zone === "seat" && evolved.occupiedSeatSize) {
+        clearBoardCardFromField(owner, target.zone, target.index, previous);
+        if (!canPlaceMultiSeatCard(owner, evolved, target.index)) return false;
+        placeMultiSeatCard(owner, target.index, evolved);
+      } else {
+        clearBoardCardFromField(owner, target.zone, target.index, previous);
+        setBoardCard(owner, target.zone, target.index, evolved);
+      }
       addLog(`${SIDES[side]}は${evolved.evolvedFrom.name}を${card.name}に進化させました。`);
-      scheduleEvolutionEffect(side, evolved, options);
+      if (!options.skipEvolutionEffect) scheduleEvolutionEffect(side, evolved, options);
       return true;
     }
 
@@ -24234,10 +24573,90 @@
           affected += 1;
         });
         addLog(`${evolved.name}の進化時効果：相手の学生${affected}人に1ダメージ。`);
+      } else if (evolved.baseId === "gitch") {
+        return resolveGitchEvolutionEffect(side, evolved, options);
+      } else if (evolved.baseId === "gigi_blood") {
+        return resolveGigiBloodEvolutionEffect(side, evolved, options);
       } else {
         addLog(`${evolved.name}の進化時効果はありません。`);
       }
       return false;
+    }
+
+    function finishEvolutionAsyncWork(commandId = "") {
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      checkLifeVictory();
+      if (!finishOnlineEvolutionCommand(commandId)) render();
+    }
+
+    function finishGitchEvolutionEffect(side, sourceCard, commandId = "") {
+      const related = listBoardRefs(side)
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((card) => card && ["wood_gitch", "gitch"].includes(card.baseId));
+      const amount = related.length;
+      related.forEach((card) => applyPermanentStatBuff(card, amount, 0, 0, sourceCard.name));
+      addLog(`${sourceCard.name}の進化時効果：自分の「木っち（ぎっち）」と「技議っち」${amount}人の攻撃力を${amount}上げました。`);
+      finishEvolutionAsyncWork(commandId);
+    }
+
+    function resolveGitchEvolutionEffect(side, sourceCard, options = {}) {
+      const summon = makeBoardCard(createCardFromBase("wood_gitch", side));
+      summon.skipAttendEffectsOnPlacement = true;
+      summon.gitchEvolutionSummon = true;
+      summon.gitchSourceInstanceId = sourceCard.instanceId;
+      summon.gitchCommandId = options.commandId || "";
+      if (side === "opponent" && !state.online.isHandlingRemoteCommand) {
+        placeCopiedCardInFirstOpenSlot(side, summon);
+        return true;
+      }
+      state.pendingCopiedCard = summon;
+      state.message = `${sourceCard.name}の進化時効果：自分の「木っち（ぎっち）」を出席させる場所を選んでください。`;
+      render();
+      return true;
+    }
+
+    function continueGigiBloodResurrection() {
+      const pending = state.pendingGigiResurrection;
+      if (!pending) return false;
+      const player = state.players[pending.side];
+      while (pending.cardIds.length > 0) {
+        const cardId = pending.cardIds.shift();
+        const trashIndex = player.trash.findIndex((card) => card.instanceId === cardId);
+        if (trashIndex < 0) continue;
+        const [card] = player.trash.splice(trashIndex, 1);
+        card.owner = pending.side;
+        card.type = "vampire";
+        card.transformedType = "vampire";
+        card.skipAttendEffectsOnPlacement = true;
+        card.gigiBloodResurrection = true;
+        card.gigiCommandId = pending.commandId;
+        if (pending.side === "opponent" && !state.online.isHandlingRemoteCommand) {
+          placeCopiedCardInFirstOpenSlot(pending.side, card);
+          continue;
+        }
+        state.pendingCopiedCard = card;
+        state.message = `偽魏義ッ血の進化時効果：${card.name}をヴァンパイアとして出席させる場所を選んでください。`;
+        render();
+        return true;
+      }
+      state.pendingGigiResurrection = null;
+      finishEvolutionAsyncWork(pending.commandId);
+      return false;
+    }
+
+    function resolveGigiBloodEvolutionEffect(side, sourceCard, options = {}) {
+      const opponent = oppositeSide(side);
+      const destroyed = destroyBoardRefsToTrash(
+        listBoardRefs(opponent).filter((ref) => getBoardCardFromRef(ref)?.baseId !== "lightning_n"),
+        { reason: sourceCard.name, showDestroyFeedback: true }
+      );
+      const cardIds = state.players[side].trash
+        .filter((card) => ["wood_gitch", "gitch"].includes(card.baseId))
+        .map((card) => card.instanceId);
+      addLog(`${sourceCard.name}の進化時効果：相手の「デザインデーモンスレイヤー」以外の出席者${destroyed.length}人を破壊しました。`);
+      state.pendingGigiResurrection = { side, cardIds, commandId: options.commandId || "" };
+      return continueGigiBloodResurrection() || true;
     }
 
     function resolveSuccessStudentEvolutionEffect(side, sourceCard) {
@@ -24303,8 +24722,42 @@
         applyBoardAuras();
         addLog(`${card.name}の効果：この対戦中、環境「食堂」の効果を得ました。`);
       }
-      if (card.type === "teacher" && zone !== "teacher") {
+      if (card.type === "teacher" && zone !== "teacher" && !["big_omata", "wood_gitch", "gitch"].includes(card.baseId)) {
         addLog(`${card.name}は席マスに出席したため、教卓マスを条件とする効果は発動しません。`);
+      }
+      if (card.baseId === "absolute_woman") {
+        addLog(`${card.name}の効果：このカードがいる間、ランダムに処理する効果は条件に応じて選択して処理されます。`);
+      }
+      if (card.baseId === "loud_members") {
+        let seatAffected = 0;
+        let teacherAffected = 0;
+        ["player", "opponent"].forEach((owner) => {
+          listBoardRefs(owner).forEach((ref) => {
+            const target = getBoardCardFromRef(ref);
+            if (!target || target.instanceId === card.instanceId) return;
+            const amount = ref.zone === "teacher" ? 2 : 1;
+            dealDamageToCard(target, amount, card);
+            if (ref.zone === "teacher") teacherAffected += 1;
+            else seatAffected += 1;
+          });
+        });
+        addLog(`${card.name}の出席時効果：お互いの席マスにいる他の出席者${seatAffected}人に1ダメージ、教卓マスにいる出席者${teacherAffected}人に2ダメージ。`);
+      }
+      if (card.baseId === "wood_gitch") {
+        generateCardsIntoDeck(side, "wood_gitch", 1);
+        addLog(`${card.name}の出席時効果：自分のデッキに「木っち（ぎっち）」を1枚生成しました。`);
+      }
+      if (card.baseId === "small_omata") {
+        if (beginSmallOmataTargetChoice(side, card)) return;
+        finishSmallOmataTransform(side, card);
+      }
+      if (card.baseId === "big_omata") {
+        const affected = listBoardRefs(opponent).map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
+        affected.forEach((target) => {
+          target.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 1;
+          target.attackLockSource = card.name;
+        });
+        addLog(`${card.name}の出席時効果：相手の出席者${affected.length}人は1ターン攻撃できません。`);
       }
       if (card.baseId === "enemy_boss") {
         const enemyCount = listBoardRefs(side).filter((ref) => (
@@ -24382,8 +24835,9 @@
         addLog(`${card.name}の効果：お互いの場の他の出席者${affected}人に1ダメージ。`);
       }
       if (card.baseId === "midge") {
-        const targetRef = randomBoardRef(opponent, null, side);
-        const target = getBoardCardFromRef(targetRef);
+        const choice = chooseRandomEffectTarget(side, opponent, null, "midge", card);
+        if (choice.pending) return;
+        const target = choice.target?.card || null;
         if (target) {
           dealDamageToCard(target, 1, card);
           addLog(`${card.name}の出席時効果：相手の出席者1人をランダムに指名し、1ダメージ。`);
@@ -24586,7 +25040,9 @@
         }
       }
       if (card.baseId === "chen_san") {
-        const targetEntry = randomEffectTargetEntry(side, opponent, (_targetCard, ref) => ref.zone === "seat");
+        const choice = chooseRandomEffectTarget(side, opponent, (_targetCard, ref) => ref.zone === "seat", "chen_san", card);
+        if (choice.pending) return;
+        const targetEntry = choice.target;
         if (targetEntry) {
           const target = targetEntry.card;
           destroyBoardCard(targetEntry.ref);
@@ -24606,9 +25062,12 @@
       }
       if (card.baseId === "impossible_high_note") {
         const refs = effectTargetEntries(side, opponent).map((entry) => entry.ref);
-        const targets = isCafeteriaEnvironmentActive()
-          ? refs
-          : [randomEffectTargetEntry(side, opponent)?.ref].filter(Boolean);
+        let targets = refs;
+        if (!isCafeteriaEnvironmentActive()) {
+          const choice = chooseRandomEffectTarget(side, opponent, null, "impossible_high_note", card);
+          if (choice.pending) return;
+          targets = [choice.target?.ref].filter(Boolean);
+        }
         targets.forEach((ref) => {
           const target = getBoardCardFromRef(ref);
           if (!target) return;
@@ -24799,7 +25258,9 @@
           addLog(`${card.name}の効果：相手の1行目にいる出席者${targets.length}人に2ダメージ。`);
         }
         if (zone === "seat") {
-          const targetEntry = randomEffectTargetEntry(side, opponent);
+          const choice = chooseRandomEffectTarget(side, opponent, null, "bird_a", card);
+          if (choice.pending) return;
+          const targetEntry = choice.target;
           if (targetEntry) {
             destroyBoardCard(targetEntry.ref);
             addLog(`${card.name}の効果：相手の場の出席者1人をランダムに指名し、破壊しました。`);
@@ -24927,13 +25388,144 @@
       return true;
     }
 
+    function beginSmallOmataTargetChoice(side, sourceCard) {
+      const targetOwner = oppositeSide(side);
+      const candidates = effectTargetEntries(side, targetOwner);
+      if (candidates.length === 0) return false;
+      if (side === "opponent" && !state.online.isHandlingRemoteCommand) {
+        const targetRef = findAttackLockTarget(targetOwner, side) || candidates[0].ref;
+        return resolveSmallOmataTarget(side, sourceCard, targetRef, false);
+      }
+      state.pendingAttendTarget = {
+        owner: side,
+        targetOwner,
+        sourceCardName: sourceCard.name,
+        sourceCardInstanceId: sourceCard.instanceId,
+        effect: "small_omata",
+        awaitingRemote: false
+      };
+      state.selectedHandId = null;
+      state.selectedAttacker = null;
+      state.message = `${sourceCard.name}：相手の出席者1人を指名してください。`;
+      return true;
+    }
+
+    function finishSmallOmataTransform(side, sourceCard) {
+      if (!sourceCard?.forcedBigOmata || sourceCard.smallOmataTransformed) return false;
+      const sourceRef = listBoardRefs(side).find((ref) => getBoardCardFromRef(ref)?.instanceId === sourceCard.instanceId);
+      if (!sourceRef) return false;
+      sourceCard.smallOmataTransformed = true;
+      destroyBoardCard(sourceRef, { reason: sourceCard.name });
+      const destroyed = destroyBoardRefsToTrash(
+        listBoardRefs(side).filter((ref) => ref.zone === "seat"),
+        { reason: sourceCard.name, showDestroyFeedback: false }
+      );
+      const big = makeBoardCard(createCardFromBase("big_omata", side));
+      placeMultiSeatCard(side, 0, big);
+      showCardPlayAnimation(big, "board");
+      addLog(`${sourceCard.name}の効果：自分の席マスにいる出席者${destroyed.length}人を破壊し、「ビッグ小俣」を出席させました。`);
+      resolveAttendEffects(side, big, "seat", 0, { fromHand: false });
+      return true;
+    }
+
+    function canUseDiamondDust(side) {
+      const player = state.players[side];
+      return player.trash.filter((card) => card.baseId === "double_diamond").length >= 2
+        && player.board.teacher?.baseId === "lightning_n";
+    }
+
+    function resolveDiamondDustRecovery(side, dustInstanceId, selectedIds, renderAfter = true) {
+      const player = state.players[side];
+      const selected = new Set(selectedIds || []);
+      const discarded = player.hand.filter((card) => selected.has(card.instanceId));
+      const trashIndex = player.trash.findIndex((card) => card.instanceId === dustInstanceId && card.baseId === "diamond_dust");
+      if (discarded.length !== 2 || trashIndex < 0) return false;
+      const [dust] = player.trash.splice(trashIndex, 1);
+      player.hand = player.hand.filter((card) => !selected.has(card.instanceId));
+      discarded.forEach((card) => moveToTrash(side, card));
+      dust.owner = side;
+      dust.handTurns = 0;
+      player.hand.push(dust);
+      addLog(`${SIDES[side]}は手札2枚を校外エリアへ送り、${dust.name}を手札に戻しました。`);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function openDiamondDustRecoveryChoice(card) {
+      if (!card || card.baseId !== "diamond_dust") return false;
+      const candidates = state.players.player.hand;
+      if (candidates.length < 2) {
+        state.message = "手札が2枚以上ないため、このカードを手札に戻せません。";
+        render();
+        return true;
+      }
+      return openCardChoice({
+        mode: "diamond_dust_recovery",
+        itemId: card.instanceId,
+        title: card.name,
+        message: "手札から校外エリアへ送るカードを2枚選んでください。",
+        cards: candidates,
+        min: 2,
+        max: 2,
+        confirmLabel: "2枚送って手札に戻す"
+      });
+    }
+
+    function resolveSmallOmataTarget(side, sourceCard, targetRef, renderAfter = true) {
+      const target = getBoardCardFromRef(targetRef);
+      if (!target) return false;
+      target.attackLockedUntilOwnerTurnsTaken = state.players[targetRef.owner].turnsTaken + 1;
+      target.attackLockSource = sourceCard.name;
+      addLog(`${sourceCard.name}の出席時効果：${target.name}は1ターン攻撃できません。`);
+      finishSmallOmataTransform(side, sourceCard);
+      if (renderAfter) render();
+      return true;
+    }
+
     function isAttendTargetCandidate(owner, zone, index = null) {
       const pending = state.pendingAttendTarget;
       if (!pending || pending.awaitingRemote || owner !== pending.targetOwner) return false;
       const target = getBoardCard(owner, zone, index);
       if (!target) return false;
+      if (pending.effect === "absolute_random") {
+        return (pending.candidateRefs || []).some((ref) => refsMatch(ref, { owner, zone, index }));
+      }
       return effectTargetEntries(pending.owner, pending.targetOwner)
         .some((entry) => refsMatch(entry.ref, { owner, zone, index }));
+    }
+
+    function resolveAbsoluteRandomEffect(pending, sourceCard, targetRef, renderAfter = true) {
+      const target = getBoardCardFromRef(targetRef);
+      if (!target) return false;
+      const sourceName = sourceCard?.name || pending.sourceCardName || "効果";
+      if (pending.randomEffect === "best_friend") {
+        dealDamageToCard(target, 3, sourceCard);
+        addLog(`${sourceName}の効果：隣接するバカでかい声の学生により、${target.name}に3ダメージ。`);
+      } else if (pending.randomEffect === "abyss") {
+        destroyBoardCard(targetRef);
+        addLog(`深淵の効果：${target.name}を破壊しました。`);
+      } else if (pending.randomEffect === "aggro_queen") {
+        dealDamageToCard(target, 2, sourceCard);
+        addLog(`${sourceName}の効果：相手の学生1人に2ダメージ。`);
+      } else if (pending.randomEffect === "midge") {
+        dealDamageToCard(target, 1, sourceCard);
+        addLog(`${sourceName}の出席時効果：相手の出席者1人に1ダメージ。`);
+      } else if (pending.randomEffect === "chen_san") {
+        destroyBoardCard(targetRef);
+        addLog(`${sourceName}の効果：相手の席マスの${target.name}を破壊しました。`);
+      } else if (pending.randomEffect === "impossible_high_note") {
+        applyPermanentStatBuff(target, -2, -1, 0, sourceName);
+        showFloatingTextForCard(target, "-2/-1", "damage");
+        addLog(`${sourceName}の効果：${target.name}の攻撃力を-2、体力を-1しました。`);
+      } else if (pending.randomEffect === "bird_a") {
+        destroyBoardCard(targetRef);
+        addLog(`${sourceName}の効果：相手の出席者1人を破壊しました。`);
+      }
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      if (renderAfter) render();
+      return true;
     }
 
     function resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter = true) {
@@ -24963,11 +25555,17 @@
         return true;
       }
 
-      const sourceCard = listBoardRefs(side)
+      const sourceCard = listBoardRefs(pending.sourceSide || side)
         .map((ref) => getBoardCardFromRef(ref))
         .find((card) => card?.instanceId === pending.sourceCardInstanceId)
         || { name: pending.sourceCardName };
       state.pendingAttendTarget = null;
+      if (pending.effect === "small_omata") {
+        return resolveSmallOmataTarget(side, sourceCard, targetRef, renderAfter);
+      }
+      if (pending.effect === "absolute_random") {
+        return resolveAbsoluteRandomEffect(pending, sourceCard, targetRef, renderAfter);
+      }
       return resolveKansaiVoiceTarget(side, sourceCard, targetRef, renderAfter);
     }
 
@@ -25361,6 +25959,15 @@
             return;
           }
           castDonguriEvolutionItem("player", selectedCard, owner, zone, index, true);
+          return;
+        }
+        if (selectedCard.baseId === "happy_experience") {
+          if (owner !== "player") {
+            state.message = `${selectedCard.name}は自分の出席者だけを指名できます。`;
+            render();
+            return;
+          }
+          openHappyExperienceChoice(selectedCard, { owner, zone, index });
           return;
         }
         if (onlineCanSendCommand()) {
@@ -26205,6 +26812,33 @@
       if (item.baseId === "deck_without") {
         return resolveDeckWithout(side, item, options.selectedIds || [], renderAfter);
       }
+      if (item.baseId === "environment_setup") {
+        const choiceId = options.choiceId || (state.players[side].deck.some((card) => card.type === "environment")
+          ? "environment_setup_deck"
+          : "environment_setup_trash");
+        return resolveEnvironmentSetupChoice(side, item, choiceId, renderAfter);
+      }
+      if (item.baseId === "go_away") {
+        const selectedIds = options.selectedIds || state.players[side].trash
+          .filter((card) => ["student", "teacher", "vampire"].includes(card.type))
+          .slice(0, 5)
+          .map((card) => card.instanceId);
+        return resolveGoAwayChoice(side, item, selectedIds, renderAfter);
+      }
+      if (item.baseId === "happy_experience") {
+        const targetRef = options.targetRef || listBoardRefs(side).find((ref) => {
+          const target = getBoardCardFromRef(ref);
+          return target && state.players[side].hand.some((card) => card.evolutionFrom === target.baseId);
+        });
+        const target = getBoardCardFromRef(targetRef);
+        const evolutionCard = target && state.players[side].hand.find((card) => card.evolutionFrom === target.baseId);
+        if (!targetRef || !evolutionCard) {
+          addLog(`${item.name}は進化できる自分の出席者と、その進化先が手札に必要です。`);
+          if (renderAfter) render();
+          return false;
+        }
+        return resolveHappyExperienceChoice(side, item, evolutionCard, { targetRef }, renderAfter);
+      }
       if (item.baseId === "dropped_cards") {
         const selectedIds = (options.selectedIds || sortCardsByCostForChoice(state.players[side].deck, "asc").slice(0, 2).map((card) => card.instanceId));
         return resolveDroppedCardsChoice(side, item, selectedIds, renderAfter);
@@ -26239,6 +26873,11 @@
         if (renderAfter) render();
         return false;
       }
+      if (item.baseId === "diamond_dust" && !canUseDiamondDust(side)) {
+        addLog(`${item.name}は校外エリアに「ダブルダイヤモンドクロス」が2枚以上あり、教卓マスにデザインデーモンスレイヤーがいる場合にのみ使えます。`);
+        if (renderAfter) render();
+        return false;
+      }
       if (item.baseId === "smart_me" && !state.players[oppositeSide(side)].late.some((entry) => entry.card?.type === "student")) {
         addLog("スマートミーは相手の遅刻ゾーンに学生がいないため使えません。");
         if (renderAfter) render();
@@ -26263,6 +26902,18 @@
       if (item.baseId !== "donguri") showCardPlayAnimation(item, "trash");
       let resultText = "";
       let itemAlreadyMovedToTrash = false;
+      if (item.baseId === "diamond_dust") {
+        const destroyed = destroyBoardRefsToTrash(
+          [...listBoardRefs("player"), ...listBoardRefs("opponent")],
+          { reason: item.name, showDestroyFeedback: true }
+        );
+        const environment = state.environment;
+        if (environment) {
+          state.environment = null;
+          moveToTrash(environment.owner, environment);
+        }
+        resultText = `お互いの講義室の出席者${destroyed.length}人${environment ? "と環境カード" : ""}を破壊しました。`;
+      }
       if (item.baseId === "onigiri_draw") {
         let drawn = 0;
         for (let i = 0; i < 2; i += 1) {
@@ -26821,7 +27472,9 @@
       const attendeeTypes = ["student", "teacher", "vampire"];
       const candidates = attendeeTypes.includes(card.type)
         ? AI_SEAT_PRIORITY
-          .filter((index) => isBoardSlotOpen(side, "seat", index))
+          .filter((index) => card.occupiedSeatSize
+            ? canPlaceMultiSeatCard(side, card, index)
+            : isBoardSlotOpen(side, "seat", index))
           .map((index) => ({ zone: "seat", index, score: side === "opponent" ? scoreAiPlacement(card, "seat", index) : 0 }))
         : [];
       if (attendeeTypes.includes(card.type) && isBoardSlotOpen(side, "teacher")) {
@@ -26830,8 +27483,18 @@
       candidates.sort((a, b) => b.score - a.score);
       const destination = candidates[0];
       if (destination) {
-        setBoardCard(side, destination.zone, destination.index, card);
+        if (destination.zone === "seat" && card.occupiedSeatSize) {
+          placeMultiSeatCard(side, destination.index, card);
+        } else {
+          setBoardCard(side, destination.zone, destination.index, card);
+        }
         if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, destination.zone, destination.index);
+        if (card.gitchEvolutionSummon) {
+          const source = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).find((entry) => entry?.instanceId === card.gitchSourceInstanceId) || card;
+          finishGitchEvolutionEffect(side, source, card.gitchCommandId || "");
+        } else if (card.gigiBloodResurrection) {
+          continueGigiBloodResurrection();
+        }
         return true;
       }
       moveToTrash(side, card);
@@ -26852,8 +27515,14 @@
     function placePendingCopiedCardForSide(side, zone, owner, index) {
       const card = state.pendingCopiedCard;
       if (!card || owner !== side || !["seat", "teacher"].includes(zone)) return false;
-      if (!isBoardSlotOpen(owner, zone, index) || !["student", "teacher", "vampire"].includes(card.type)) return false;
-      setBoardCard(owner, zone, index, card);
+      if (!["student", "teacher", "vampire"].includes(card.type)) return false;
+      if (zone === "seat" && card.occupiedSeatSize) {
+        if (!canPlaceMultiSeatCard(owner, card, index)) return false;
+        placeMultiSeatCard(owner, index, card);
+      } else {
+        if (!isBoardSlotOpen(owner, zone, index)) return false;
+        setBoardCard(owner, zone, index, card);
+      }
       if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(owner, card, zone, index);
       state.pendingCopiedCard = null;
       state.message = card.pendingMove ? `${card.name}を自分の場に移しました。` : `${card.name}のコピーを出席させました。`;
@@ -26861,6 +27530,15 @@
         ? `${card.name}が${SIDES[side]}の場に移りました。`
         : `${card.name}のコピーが${SIDES[side]}の場に出席しました。`);
       applyBoardAuras();
+      if (card.gitchEvolutionSummon) {
+        const source = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).find((entry) => entry?.instanceId === card.gitchSourceInstanceId) || card;
+        finishGitchEvolutionEffect(side, source, card.gitchCommandId || "");
+        return true;
+      }
+      if (card.gigiBloodResurrection) {
+        continueGigiBloodResurrection();
+        return true;
+      }
       render();
       return true;
     }
@@ -27872,6 +28550,57 @@
       if (zone === "teacher") state.players[owner].board.teacher = card;
     }
 
+    function occupiedSeatIndexesFor(card, anchorIndex) {
+      const size = card?.occupiedSeatSize;
+      if (!size || anchorIndex === null || anchorIndex === undefined) return [anchorIndex];
+      const startRow = seatRow(anchorIndex) - 1;
+      const startCol = seatCol(anchorIndex);
+      const indexes = [];
+      for (let row = startRow; row < startRow + size.rows; row += 1) {
+        for (let col = startCol; col < startCol + size.cols; col += 1) {
+          if (row < 0 || row > 2 || col < 0 || col > 2) return [];
+          indexes.push(row * 3 + col);
+        }
+      }
+      return indexes;
+    }
+
+    function isMultiSeatCard(card) {
+      return Boolean(card?.occupiedSeatSize);
+    }
+
+    function canPlaceMultiSeatCard(owner, card, anchorIndex) {
+      const indexes = occupiedSeatIndexesFor(card, anchorIndex);
+      return indexes.length === (card.occupiedSeatSize.rows * card.occupiedSeatSize.cols)
+        && indexes.every((seatIndex) => isBoardSlotOpen(owner, "seat", seatIndex));
+    }
+
+    function placeMultiSeatCard(owner, anchorIndex, card) {
+      const indexes = occupiedSeatIndexesFor(card, anchorIndex);
+      if (indexes.length === 0) return false;
+      card.seatAnchorIndex = anchorIndex;
+      card.occupiedSeatIndexes = indexes;
+      indexes.forEach((seatIndex) => {
+        state.players[owner].board.seats[seatIndex] = card;
+      });
+      return true;
+    }
+
+    function clearBoardCardFromField(owner, zone, index, card = null) {
+      const current = card || getBoardCard(owner, zone, index);
+      if (zone === "seat" && isMultiSeatCard(current)) {
+        (current.occupiedSeatIndexes || occupiedSeatIndexesFor(current, current.seatAnchorIndex ?? index))
+          .forEach((seatIndex) => {
+            if (state.players[owner].board.seats[seatIndex]?.instanceId === current.instanceId) {
+              state.players[owner].board.seats[seatIndex] = null;
+            }
+          });
+        return;
+      }
+      if (zone === "seat") state.players[owner].board.seats[index] = null;
+      if (zone === "teacher") state.players[owner].board.teacher = null;
+    }
+
     function isBoardSlotOpen(owner, zone, index = null) {
       if (zone === "seat") {
         return index !== null
@@ -27885,6 +28614,9 @@
 
     function hasOpenBoardSlotForCard(side, card) {
       if (!card || !["student", "teacher", "vampire"].includes(card.type)) return false;
+      if (isMultiSeatCard(card)) {
+        return state.players[side].board.seats.some((_seatCard, index) => canPlaceMultiSeatCard(side, card, index));
+      }
       return state.players[side].board.seats.some((seatCard, index) => !seatCard && isBoardSlotOpen(side, "seat", index))
         || isBoardSlotOpen(side, "teacher");
     }
@@ -27933,9 +28665,12 @@
 
     function listBoardRefs(owner) {
       const refs = [];
+      const seen = new Set();
       if (state.players[owner].board.teacher) refs.push({ owner, zone: "teacher", index: null });
       state.players[owner].board.seats.forEach((card, index) => {
-        if (card) refs.push({ owner, zone: "seat", index });
+        if (!card || seen.has(card.instanceId)) return;
+        seen.add(card.instanceId);
+        refs.push({ owner, zone: "seat", index: card.seatAnchorIndex ?? index });
       });
       return refs;
     }
@@ -27943,6 +28678,18 @@
     function destroyBoardCard(ref, trashOptions = {}) {
       const card = getBoardCardFromRef(ref);
       if (!card) return null;
+      if (!trashOptions.ignoreGigiBloodProtection && card.baseId === "gigi_blood") {
+        const protectorRef = listBoardRefs(ref.owner).find((candidateRef) => {
+          const candidate = getBoardCardFromRef(candidateRef);
+          return candidate?.baseId === "gitch" && candidate.instanceId !== card.instanceId;
+        });
+        if (protectorRef) {
+          const protector = getBoardCardFromRef(protectorRef);
+          destroyBoardCard(protectorRef, { ...trashOptions, ignoreGigiBloodProtection: true, reason: `${card.name}の身代わり` });
+          addLog(`${protector.name}の効果：${card.name}の代わりに破壊されました。`);
+          return null;
+        }
+      }
       const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
       if (showDestroyFeedback) showFloatingTextForCard(card, "破壊", "destroy");
       recordRecentBoardTrash(ref.owner, card, ref);
@@ -27953,8 +28700,7 @@
       };
       delete moveOptions.showDestroyFeedback;
       moveToTrash(ref.owner, card, moveOptions);
-      if (ref.zone === "seat") state.players[ref.owner].board.seats[ref.index] = null;
-      if (ref.zone === "teacher") state.players[ref.owner].board.teacher = null;
+      clearBoardCardFromField(ref.owner, ref.zone, ref.index, card);
       return card;
     }
 
@@ -27984,25 +28730,17 @@
     function cleanupDestroyedCards() {
       let movedCount = 0;
       ["player", "opponent"].forEach((owner) => {
-        state.players[owner].board.seats.forEach((card, index) => {
+        listBoardRefs(owner).forEach((ref) => {
+          const card = getBoardCardFromRef(ref);
           if (card && card.currentHp <= 0) {
             if (tryResolveRebirthStudent(card)) return;
-            recordRecentBoardTrash(owner, card, { owner, zone: "seat", index });
-            moveToTrash(owner, card, { suppressToast: true, suppressLog: true, reason: "体力0" });
-            state.players[owner].board.seats[index] = null;
-            addTrashLog(owner, card, "体力0");
-            movedCount += 1;
+            const moved = destroyBoardCard(ref, { suppressToast: true, suppressLog: true, showDestroyFeedback: false, reason: "体力0" });
+            if (moved) {
+              addTrashLog(owner, moved, "体力0");
+              movedCount += 1;
+            }
           }
         });
-        const teacher = state.players[owner].board.teacher;
-        if (teacher && teacher.currentHp <= 0) {
-          if (tryResolveRebirthStudent(teacher)) return;
-          recordRecentBoardTrash(owner, teacher, { owner, zone: "teacher", index: null });
-          moveToTrash(owner, teacher, { suppressToast: true, suppressLog: true, reason: "体力0" });
-          state.players[owner].board.teacher = null;
-          addTrashLog(owner, teacher, "体力0");
-          movedCount += 1;
-        }
       });
       return movedCount;
     }
@@ -28025,6 +28763,7 @@
       if (!base) return card;
       const instanceId = card.instanceId;
       const isDarkPresident = card.darkPresident === true;
+      const transformedType = card.transformedType || "";
       const reset = createCardFromBase(card.baseId, owner);
       reset.instanceId = instanceId || reset.instanceId;
       if (isDarkPresident) {
@@ -28036,6 +28775,10 @@
         reset.currentHp = 5;
         reset.darkPresident = true;
         reset.floorGenerated = true;
+      }
+      if (transformedType) {
+        reset.type = transformedType;
+        reset.transformedType = transformedType;
       }
       Object.keys(card).forEach((key) => delete card[key]);
       Object.assign(card, reset);
@@ -30115,12 +30858,30 @@
       if (state.players[owner].board.teacher) teacherSlot.appendChild(createBoardCard(state.players[owner].board.teacher, owner, "teacher", null));
       teacherLane.appendChild(teacherSlot);
       const order = owner === "opponent" ? OPPONENT_SEAT_ORDER : PLAYER_SEAT_ORDER;
+      const multiCards = new Map();
       order.forEach((index) => {
         const coordinate = `${seatRow(index)}行${seatCol(index) + 1}列`;
         const slot = createSlot("seat", owner, index, `${owner === "opponent" ? "相手" : "自分"} ${coordinate}`);
         const card = state.players[owner].board.seats[index];
-        if (card) slot.appendChild(createBoardCard(card, owner, "seat", index));
+        if (card && isMultiSeatCard(card)) {
+          if (!multiCards.has(card.instanceId)) multiCards.set(card.instanceId, { card, anchor: card.seatAnchorIndex ?? index });
+        } else if (card) {
+          slot.appendChild(createBoardCard(card, owner, "seat", index));
+        }
         seatGrid.appendChild(slot);
+      });
+      multiCards.forEach(({ card, anchor }) => {
+        const positions = occupiedSeatIndexesFor(card, anchor)
+          .map((seatIndex) => order.indexOf(seatIndex))
+          .filter((position) => position >= 0);
+        if (positions.length === 0) return;
+        const rows = positions.map((position) => Math.floor(position / 3) + 1);
+        const cols = positions.map((position) => (position % 3) + 1);
+        const boardCard = createBoardCard(card, owner, "seat", anchor);
+        boardCard.classList.add("multi-seat-board-card");
+        boardCard.style.gridRow = `${Math.min(...rows)} / ${Math.max(...rows) + 1}`;
+        boardCard.style.gridColumn = `${Math.min(...cols)} / ${Math.max(...cols) + 1}`;
+        seatGrid.appendChild(boardCard);
       });
     }
 
@@ -32967,8 +33728,14 @@
       const fuseMarkup = card.baseId === "ruler" && canPlayerFuseRulers()
         ? `<button class="button secondary" type="button" data-preview-ruler-fuse="true">定規融合</button>`
         : "";
-      const actionMarkup = fuseMarkup
-        ? `<div class="battle-card-preview-actions single">${fuseMarkup}</div>`
+      const diamondDustRecoveryMarkup = card.baseId === "diamond_dust"
+        && state.players.player.trash.some((trashCard) => trashCard.instanceId === card.instanceId)
+        && state.players.player.hand.length >= 2
+        ? `<button class="button secondary" type="button" data-preview-diamond-dust-recovery="true">手札2枚で回収</button>`
+        : "";
+      const previewActions = [fuseMarkup, diamondDustRecoveryMarkup].filter(Boolean);
+      const actionMarkup = previewActions.length > 0
+        ? `<div class="battle-card-preview-actions${previewActions.length === 1 ? " single" : ""}">${previewActions.join("")}</div>`
         : "";
       const previewDetail = battleCardPreviewDetailTemplate(card);
       elements.battleCardPreview.innerHTML = `
@@ -33553,7 +34320,17 @@
         handy_jet_engine: "相手の手札をランダムに2枚、校外エリアへ送る。",
         dos_attack: "相手のデッキの上から3枚を校外エリアへ送る。",
         destroy_dos_attack: "自分の校外エリアにある「Dos攻撃」の枚数+1を数え、その数×3枚、相手のデッキの上から校外エリアへ送る。",
-        environment_setup: "自分のデッキから環境カードをランダムに1枚引く。",
+        absolute_woman: "このカードが出席している間、ランダムに対象を選ぶ効果は、このカードをより多く出席させているプレイヤーが対象を選ぶ。両者の数が同じ場合、その効果はランダムに処理する。",
+        environment_setup: "次の2つから1つを選ぶ。1. 自分のデッキから環境カードをランダムに1枚手札に加える。2. 自分の校外エリアから環境カードをランダムに1枚手札に戻す。",
+        diamond_dust: "自分の校外エリアに「ダブルダイヤモンドクロス」が2枚以上あり、自分の教卓マスに「デザインデーモンスレイヤー」がいる場合に使用できる。お互いの講義室の出席者すべてと環境を破壊する。校外エリアにあるこのカードは、手札を2枚校外エリアへ送ることで手札に戻せる。",
+        happy_experience: "自分の出席者1人を指名する。手札にその進化先がある場合、そのカードに進化させる。この効果で進化したカードの出席時・進化時の能力は発動しない。",
+        go_away: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。",
+        loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
+        small_omata: "教卓マスにのみ出席できる。出席した時、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。自分の戦意が10のとき、このカードを出席させる場合、戦意を10支払う。出席後、このカードを破壊し、自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
+        big_omata: "注目と陽気を持つ。自分の席マスすべてを占有し、1人の出席者として扱う。出席した時、相手の講義室の出席者すべては1ターン攻撃できない。",
+        wood_gitch: "このカードが出席した時、自分のデッキに「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
+        gitch: "進化：「木っち（ぎっち）」から進化する。進化した時、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。",
+        gigi_blood: "進化：「技議っち」から進化する。進化した時、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
         vampirization: "相手の出席者1人を指名し、それをタイプ「ヴァンパイア」にした後、自分の場に移す。",
         iv_pack: "自分のデッキからヴァンパイアをランダムに2枚まで引く。",
@@ -34115,6 +34892,12 @@
         event.stopPropagation();
         closeItemConfirm();
         fuseRulersForSide("player", true);
+        return;
+      }
+      if (event.target.closest("[data-preview-diamond-dust-recovery]")) {
+        event.stopPropagation();
+        const card = elements.battleCardPreview._previewCard;
+        if (card) openDiamondDustRecoveryChoice(card);
         return;
       }
       hideBattleCardPreview();
