@@ -14522,6 +14522,7 @@
         min-height: var(--mobile-slot) !important;
         display: grid !important;
         grid-template-columns: repeat(3, var(--mobile-slot)) !important;
+        gap: 0 !important;
         overflow: visible !important;
       }
 
@@ -14536,11 +14537,15 @@
       }
 
       .battle-screen #opponentProfessorLane .slot {
-        transform: translateX(calc(var(--mobile-slot) * -1)) !important;
+        /* The central row is one continuous three-square row on mobile:
+           opponent desk | shared environment | player desk. */
+        grid-column: 1 !important;
+        transform: none !important;
       }
 
       .battle-screen #playerProfessorLane .slot {
-        transform: translateX(var(--mobile-slot)) !important;
+        grid-column: 3 !important;
+        transform: none !important;
       }
 
       .battle-screen .late-zone-row {
@@ -14677,6 +14682,7 @@
         padding: 0 !important;
         margin: 0 !important;
         border-radius: 0 !important;
+        box-sizing: border-box !important;
       }
 
       .battle-screen .environment-row .slot {
