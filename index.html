@@ -18058,12 +18058,18 @@
     function cardRewardStyleClass(card) {
       const reward = rewardForCardBaseId(card?.baseId);
       if (!reward) return "";
-      const syncedStyle = card?.rewardFoilStyle === reward.style ? reward.style : "";
-      if (syncedStyle) return ` reward-foil reward-foil-${syncedStyle}`;
-      if (state.online.started && card?.owner) {
-        const ownerStyle = rewardFoilStyleForSelection(card.baseId, onlineCardStylesForOwner(card.owner));
+
+      // Online snapshots can carry an old visual flag. The owner's published
+      // selection is the only authority so one player's style never leaks.
+      if (state.online.started) {
+        const ownerStyle = card?.owner
+          ? rewardFoilStyleForSelection(card.baseId, onlineCardStylesForOwner(card.owner))
+          : "";
         return ownerStyle ? ` reward-foil reward-foil-${ownerStyle}` : "";
       }
+
+      const syncedStyle = card?.rewardFoilStyle === reward.style ? reward.style : "";
+      if (syncedStyle) return ` reward-foil reward-foil-${syncedStyle}`;
       if (isOnlineSpectator()) return "";
       const localStyle = card?.owner === "player" || !card?.owner ? localRewardFoilStyle(card?.baseId) : "";
       return localStyle ? ` reward-foil reward-foil-${localStyle}` : "";
