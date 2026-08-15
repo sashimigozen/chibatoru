@@ -15892,7 +15892,7 @@
     const ONLINE_OPPONENT_LABEL = "相手";
     const ONLINE_PROTOCOL_VERSION = 1;
     const ANALYTICS_SCHEMA_VERSION = "1.0.0";
-    const GAME_DATA_VERSION = "0.14.1";
+    const GAME_DATA_VERSION = "0.18.0";
     const ONLINE_SERVER_URL_STORAGE_KEY = "chibattle-online-server-url-v1";
     const ONLINE_LEGACY_DEFAULT_WS_URL = "wss://chibatoru-ws.onrender.com";
     const ONLINE_DEFAULT_WS_URL = location.hostname === "localhost" || location.hostname === "127.0.0.1"
@@ -16466,8 +16466,8 @@
       proliferating_enemy: { name: "増殖する敵", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
       delayed_student: { name: "遅延する学生", type: "student", cost: 4, attack: 1, hp: 2, rowOnly: 3, allowedZones: ["seat"] },
       infight_shogi: { name: "インファイト将棋部", type: "student", cost: 10, attack: 5, hp: 5, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
-      aiben: { name: "アイベン", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
-      nyotei: { name: "にょてい", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+      aiben: { name: "アイベン", type: "student", cost: 3, attack: 2, hp: 8, allowedZones: ["seat", "teacher"] },
+      nyotei: { name: "にょてい", type: "student", cost: 3, attack: 2, hp: 8, allowedZones: ["seat", "teacher"] },
       fridge_thief: { name: "冷蔵庫泥棒", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       failure_student: { name: "何をやってもダメな学生", type: "student", cost: 3, attack: 0, hp: 3, allowedZones: ["seat", "teacher"] },
       success_student: { name: "何をやっても成功する学生", type: "student", cost: 0, attack: 2, hp: 4, evolutionFrom: "failure_student", allowedZones: ["evolution"] },
@@ -16481,7 +16481,7 @@
       big_omata: { name: "ビッグ小俣", type: "teacher", cost: 0, noCost: true, attack: 9, hp: 9, keywords: ["注目", "陽気"], token: true, allowedZones: ["seat"], occupiedSeatSize: { rows: 3, cols: 3 } },
       wood_gitch: { name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 1, noLecture: true, allowedZones: ["teacher", "seat"] },
       gitch: { name: "技議っち", type: "teacher", cost: 4, attack: 1, hp: 2, noLecture: true, evolutionFrom: "wood_gitch", allowedZones: ["evolution"] },
-      gigi_blood: { name: "偽魏義ッ血", type: "vampire", cost: 0, noCost: true, attack: 10, hp: 10, evolutionFrom: "gitch", allowedZones: ["evolution"] },
+      gigi_blood: { name: "偽魏義ッ血", type: "vampire", cost: 7, attack: 3, hp: 10, evolutionFrom: "gitch", allowedZones: ["evolution"] },
       pro_k: { name: "プロ言の長", type: "teacher", cost: 5, attack: 2, hp: 2, allowedZones: ["teacher"] },
       lightning_n: { name: "デザインデーモンスレイヤー", type: "teacher", cost: 4, attack: 2, hp: 2, allowedZones: ["teacher"] },
       fairy_t: { name: "デザインフェアリー", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
@@ -16560,7 +16560,7 @@
       sage_legacy: { name: "賢者の遺産", type: "item", cost: 1, target: "self" },
       reversal: { name: "逆行", type: "item", cost: 4, target: "self" },
       dont_worry: { name: "気にするな", type: "item", cost: 2, target: "self" },
-      namen_tenno: { name: "なめてるの？", type: "item", cost: 0, noCost: true, target: "enemy" },
+      namen_tenno: { name: "なめてるの？", type: "item", cost: 3, target: "enemy" },
       panpan: { name: "パンパン", type: "item", cost: 2, target: "enemyPair" },
       capture: { name: "キャプチャー", type: "item", cost: 3, target: "enemySlot" },
       yutakun_yutakun: { name: "U太くんU太くん", type: "item", cost: 3, target: "self" },
@@ -16607,9 +16607,9 @@
       cote_dazur: { name: "コートダジュール", type: "environment", cost: 8, allowedZones: ["environment"] },
       door_war: { name: "ドア前戦争", type: "environment", cost: 2, allowedZones: ["environment"] },
       shogi_duel_field: { name: "将棋部の決闘フィールド", type: "environment", cost: 5, allowedZones: ["environment"] },
-      aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "environment", cost: 2, allowedZones: ["environment"] },
+      aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "item", cost: 2, target: "self" },
       loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
-      ta_killer: { name: "TAキラー", type: "student", cost: 5, attack: 2, hp: 4, allowedZones: ["seat", "teacher"] },
+      ta_killer: { name: "TAキラー", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
@@ -16619,6 +16619,16 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.18.0",
+        date: "2026年8月15日",
+        summary: "出席元による出席時効果の判定を整理し、新カード群の基礎データと効果を調整。",
+        changes: [
+          { title: "出席時効果", before: "特殊出席でも、カードによっては手札から出席したとき限定の効果が発動することがあった。", after: "出席イベントに出席元を記録し、手札から出席したとき限定の効果と、出席元を問わず発動する効果を区別する。" },
+          { title: "例外となる出席時効果", before: "特殊出席でも発動するカードを一律に扱えなかった。", after: "ミジンコ、生物、完全変異体、形容詞学生、ドタキャン学生、ビッグ小俣、デザインフェアリー、デザインスレンダーウーマン、デザインファルコン、デザインデーモンスレイヤーは出席元を問わず効果を発動する。" },
+          { title: "カード調整", before: "アイベン／にょてい、偽魏義ッ血、なめてるの？、TAキラーなどの能力値・種別・効果が暫定値のままだった。", after: "最新仕様に合わせて能力値・戦意・種別を更新し、ワードインクリーサーのドロー枚数とTAキラーの出席時効果も調整。" }
+        ]
+      },
       {
         version: "ver.0.17.3",
         date: "2026年8月11日",
@@ -25177,7 +25187,8 @@
         resolveAttendEffects(side, placedCard, zone, index, {
           commandId: options.commandId || "",
           badStudentDiscardIds: options.badStudentDiscardIds || [],
-          fromHand: true
+          fromHand: true,
+          attendanceSource: "hand"
         });
       }
       cleanupDestroyedCards();
@@ -25566,9 +25577,24 @@
       }
     }
 
+    // Attendance effects must use the source recorded at the moment the card
+    // enters the classroom. Never infer it after the card has been placed.
+    const ANY_SOURCE_ATTEND_EFFECT_IDS = new Set([
+      "midge", "organism", "perfect_mutant", "adjective_student", "cancel_student",
+      "big_omata", "fairy_t", "popular_c", "bird_a", "lightning_n"
+    ]);
+
+    function attendanceSourceForEffect(options = {}) {
+      if (options.attendanceSource) return options.attendanceSource;
+      return options.fromHand ? "hand" : "effect";
+    }
+
     function resolveAttendEffects(side, card, zone, index, options = {}) {
       const opponent = oppositeSide(side);
+      const attendanceSource = attendanceSourceForEffect(options);
+      card.lastAttendanceSource = attendanceSource;
       recordDungeonEvolutionSourceAttendance(side, card);
+      if (!ANY_SOURCE_ATTEND_EFFECT_IDS.has(card.baseId) && attendanceSource !== "hand") return;
       if (card.darkPresident) {
         state.cafeteriaEffectPermanentlyActive = true;
         applyBoardAuras();
@@ -25637,10 +25663,10 @@
         showFloatingTextForLife(side, "最大気力1", "damage");
         addLog(`${card.name}の効果：自分の最大気力を1にし、次の相手ターン終了時まで気力ダメージを受けなくしました。`);
       }
-      if (card.baseId === "aiben" && options.fromHand) {
+      if (card.baseId === "aiben" && attendanceSource === "hand") {
         summonAibenNyoteiOpponent(side, "nyotei", card.name);
       }
-      if (card.baseId === "nyotei" && options.fromHand) {
+      if (card.baseId === "nyotei" && attendanceSource === "hand") {
         summonAibenNyoteiOpponent(side, "aiben", card.name);
       }
       if (card.baseId === "live_person") {
@@ -25856,7 +25882,7 @@
         state.players[side].deck = shuffle([...state.players[side].deck, ...state.players[side].hand]);
         state.players[side].hand = [];
         queueAnimation("shuffle", side);
-        const drawn = drawUpTo(side, 5);
+        const drawn = drawUpTo(side, 7);
         addLog(`${card.name}の効果：手札${returned}枚をデッキに戻してシャッフルし、${drawn}枚ドローしました。`);
       }
       if (card.baseId === "impossible_pink_fat") {
@@ -25939,23 +25965,13 @@
         }
       }
       if (card.baseId === "ta_killer") {
-        const groups = new Map();
-        listBoardRefs(opponent).forEach((ref) => {
-          const target = getBoardCardFromRef(ref);
-          if (!target) return;
-          const list = groups.get(target.name) || [];
-          list.push({ ref, card: target });
-          groups.set(target.name, list);
-        });
-        let affected = 0;
-        groups.forEach((entries) => {
-          if (entries.length < 2) return;
-          entries.forEach((entry) => {
-            dealDamageToCard(entry.card, entries.length, card);
-            affected += 1;
-          });
-        });
-        addLog(`${card.name}の効果：同名で並ぶ相手出席者${affected}人に、その人数分のダメージを与えました。`);
+        const choice = chooseRandomEffectTarget(side, opponent, (_target, ref) => ref.zone === "teacher", "ta_killer", card);
+        if (choice.pending) return;
+        const target = choice.target?.card;
+        if (target) {
+          dealDamageToCard(target, 1, card);
+          addLog(`${card.name}の出席時効果：相手の教卓マスにいる${target.name}をランダムに指名し、1ダメージを与えました。`);
+        }
       }
       if (card.baseId === "acting_out_man") {
         let healed = 0;
