@@ -16021,7 +16021,7 @@
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
       big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"],
-      vampire: ["wood_gitch"]
+      vampire: ["wood_gitch", "gitch", "gigi_blood"]
     });
     const DUNGEON_CARD_STYLE_REWARDS = Object.freeze({
       gakuyukai_item: { label: "学友会・持ち物", cardIds: ["yuta", "dark_yuta"], style: "gakuyukai" },
@@ -16396,9 +16396,9 @@
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo", "yamanashi_minimum_wage",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture", "baka_mac", "ikemasu",
       "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
-      "full_throttle", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
+      "full_throttle", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up", "aiben_vs_nyotei_title_match",
       "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
-      "classroom", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur", "door_war", "shogi_duel_field", "aiben_vs_nyotei_title_match"
+      "classroom", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur", "door_war", "shogi_duel_field"
     ];
     const CARD_COPY_LIMITS = {
       circle_crab: 2,
@@ -16407,7 +16407,7 @@
     };
     const CRAB_SET_IDS = ["circle_crab", "hair_crab", "homeless_crab"];
     const IMMEDIATE_ITEM_IDS = [
-      "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
+      "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "namen_tenno",
       "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
       "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
@@ -16534,7 +16534,6 @@
       diamond_dust: { name: "ダブルダイヤモンドダスト-***Angel Cross Experiencce-***", type: "item", cost: 5, target: "self" },
       happy_experience: { name: "うれしい体験", type: "item", cost: 1, target: "friendlyAny" },
       go_away: { name: "行かれてはいかがですか", type: "item", cost: 2, target: "self" },
-      namen_tenno: { name: "なめん天皇", type: "item", cost: 3, target: "self", ace: true },
       brother_capital: { name: "兄弟資本", type: "item", cost: 5, target: "self", ace: true },
       padlock: { name: "南京錠", type: "item", cost: 3, target: "friendlyAny" },
       crotch_febreze: { name: "股間ファブリーズ", type: "item", cost: 2, target: "self" },
@@ -16650,55 +16649,16 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
-        version: "ver.0.18.0",
-        date: "2026年8月15日",
-        summary: "出席元による出席時効果の判定を整理し、新カード群の基礎データと効果を調整。",
+        version: "ver.0.16.4",
+        date: "2026年8月16日",
+        summary: "共通・デザイン・バカでかい・ヴァンパイア・将棋部の新カードを追加し、特殊な出席と複数席を占有する出席者を実装。",
         changes: [
-          { title: "出席時効果", before: "特殊出席でも、カードによっては手札から出席したとき限定の効果が発動することがあった。", after: "出席イベントに出席元を記録し、手札から出席したとき限定の効果と、出席元を問わず発動する効果を区別する。" },
-          { title: "例外となる出席時効果", before: "特殊出席でも発動するカードを一律に扱えなかった。", after: "ミジンコ、生物、完全変異体、形容詞学生、ドタキャン学生、ビッグ小俣、デザインフェアリー、デザインスレンダーウーマン、デザインファルコン、デザインデーモンスレイヤーは出席元を問わず効果を発動する。" },
-          { title: "カード調整", before: "アイベン／にょてい、偽魏義ッ血、なめてるの？、TAキラーなどの能力値・種別・効果が暫定値のままだった。", after: "最新仕様に合わせて能力値・戦意・種別を更新し、ワードインクリーサーのドロー枚数とTAキラーの出席時効果も調整。" }
-        ]
-      },
-      {
-        version: "ver.0.17.3",
-        date: "2026年8月11日",
-        summary: "新カード群の能力・戦意・能力値を調整し、「絶対」女の効果を攻撃時破壊へ変更。",
-        changes: [
-          { title: "「絶対」女", before: "ランダムに処理する効果の対象を、条件に応じて選ぶ常在効果。", after: "このカードが出席者を攻撃したとき、その出席者を破壊する。旧ランダム効果への干渉は削除。" },
-          { title: "バカでかい班員たち", before: "戦意8。", after: "戦意6。" },
-          { title: "スモール小俣", before: "戦意5。", after: "戦意4。" },
-          { title: "木っち（ぎっち）", before: "攻撃力1／体力2。", after: "攻撃力1／体力1。" },
-          { title: "技議っち", before: "攻撃力2／体力4で、進化に戦意を消費しない。", after: "攻撃力1／体力2。進化するときに戦意4を消費する。" }
-        ]
-      },
-      {
-        version: "ver.0.17.2",
-        date: "2026年8月11日",
-        summary: "スモール小俣の大型化を自動化し、複数の席を占有する出席者で他の席が動かないように改善。",
-        changes: [
-          { title: "スモール小俣", before: "戦意10で教卓マスに出席させた場合も、相手の出席者を選んだ後にビッグ小俣へ変化していた。", after: "戦意10で教卓マスに出席させた場合は、対象選択を挟まず自動でビッグ小俣へ変化する。ビッグ小俣の出席時効果をそのまま解決する。" },
-          { title: "大型出席者の表示", before: "2行×2列や3行×3列を占有するカードが座席グリッドの要素として配置され、他の席マスが押し出されていた。", after: "席マスの配置は固定したまま、その上に連結カードを重ねる専用レイヤーで表示する。ほかの席マスは動かず、占有した範囲だけが一枚の出席者として見える。" }
-        ]
-      },
-      {
-        version: "ver.0.17.1",
-        date: "2026年8月11日",
-        summary: "新カードのテスト環境を整え、複数の席を占有する出席者を一枚の連結カードとして表示するように改善。",
-        changes: [
-          { title: "新カードのテスト", before: "新カードを単独で試すと、進化元・校外エリアのカード・必要な出席者が不足し、効果の一部を試しにくかった。", after: "カードテスト開始時に、効果を試すための進化元、対象、校外エリアのカード、必要な講義室の出席者を用意する。環境構築、ダブルダイヤモンドダスト、うれしい体験、行かれてはいかがですか、木っち系統などをすぐに試せる。" },
-          { title: "複数席を占有する出席者", before: "2行×2列・3行×3列を占有する出席者が、席の枠に区切られて見えた。", after: "占有した席の境界線と座標を隠し、複数のモニターをつないだように一枚の連結カードとして表示する。2行×2列は4席、3行×3列は9席を一人の出席者として視覚的にもまとめて表示する。" }
-        ]
-      },
-      {
-        version: "ver.0.17.0",
-        date: "2026年8月11日",
-        summary: "共通・デザイン・バカでかい・ヴァンパイアの新カードを追加し、ランダム効果を選択へ変える「絶対」女を実装。",
-        changes: [
-          { title: "共通カード", before: "環境や進化、校外エリアを使う新しい選択肢がなかった。", after: "「環境構築」「うれしい体験」「行かれてはいかがですか」「『絶対』女」を追加。環境の回収、能力を発動しない進化、校外からの再利用、ランダム効果の選択を行える。" },
-          { title: "デザイン", before: "「ダブルダイヤモンドクロス」を使い切った後の大技がなかった。", after: "条件を満たすと講義室と環境を一掃できる「ダブルダイヤモンドダスト-***Angel Cross Experiencce-***」を追加。校外から手札へ回収する効果も持つ。" },
-          { title: "バカでかい", before: "複数の席をまとめて使う大型出席者がなかった。", after: "2行×2列を占有する「バカでかい班員たち」と、9席を占有する「ビッグ小俣」、それを呼ぶ「スモール小俣」を追加。" },
-          { title: "木っち系統", before: "木っちから進化するヴァンパイアの連鎖がなかった。", after: "「木っち（ぎっち）」「技議っち」「偽魏義ッ血」を追加。デッキ生成、追加出席、攻撃力強化、校外からのヴァンパイア化出席へつながる進化系統を追加。" },
-          { title: "ランダム効果の選択", before: "オンライン対戦でゲスト側の「『絶対』女」による選択権がAIへ渡る場合があった。", after: "選択権を持つプレイヤー本人が、オンライン対戦でも候補から対象を選ぶように修正。両者の「『絶対』女」の数が同じ場合だけランダムで処理する。" }
+          { title: "共通カード", before: "環境の回収、能力を発動しない進化、校外エリアからの再利用を行うカードがなかった。", after: "「環境構築」「うれしい体験」「行かれてはいかがですか」「『絶対』女」を追加。「絶対」女は攻撃した相手を破壊する。" },
+          { title: "デザイン", before: "「ダブルダイヤモンドクロス」を使い切った後に、条件付きで盤面を一掃するカードがなかった。", after: "「ダブルダイヤモンドダスト-***Angel Cross Experiencce-***」を追加。条件を満たすと両講義室と環境を破壊し、校外エリアから手札へ戻せる。" },
+          { title: "バカでかい", before: "複数の席を一人の出席者として扱う大型カードがなかった。", after: "「バカでかい班員たち」「スモール小俣」「ビッグ小俣」を追加。4席または9席を占有する出席者は、複数のモニターをつないだように一枚のカードとして表示する。" },
+          { title: "木っち系統", before: "木っちから進化して盤面を広げるヴァンパイアの連鎖がなかった。", after: "「木っち（ぎっち）」「技議っち」「偽魏義ッ血」を追加。デッキ生成、追加出席、攻撃力強化、校外エリアからのヴァンパイア化出席につながる進化系統を追加。" },
+          { title: "将棋部", before: "アイベンとにょていを同時に使う持ち物カードがなかった。", after: "「アイベンVSにょていタイトルマッチ」を追加。自分と相手の講義室へ対となる出席者を出席させ、送った手札の枚数に応じて両者を強化する。" },
+          { title: "新カードのテスト", before: "新カードを単独で試すと、進化元・対象・校外エリアのカードが不足し、効果の一部を試しにくかった。", after: "カードテスト開始時に必要な進化元、対象、校外エリアのカード、出席者を用意し、新カードの効果をすぐ試せるようにした。" }
         ]
       },
       {
@@ -19929,13 +19889,14 @@
       return type === "endTurn"
         || type === "donguri"
         || type === "raptorTemple"
+        || type === "titleMatch"
         || (type === "playCard" && isRewardFoilCard(commandCard))
         || Boolean(commandCard?.evolutionFrom)
         || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
     }
 
     function onlineCommandCard(type, payload = {}) {
-      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent", "donguri", "fullThrottle"]
+      return ["playCard", "itemImmediate", "itemGlobal", "itemLife", "itemCard", "multiItem", "panpan", "capture", "pairedExistence", "threeGestures", "deckWithout", "musicDetergent", "donguri", "fullThrottle", "titleMatch"]
         .includes(type)
         ? getHandCard("player", payload.instanceId)
         : null;
@@ -20741,7 +20702,8 @@
           if (source) resolveRaptorTempleExchange("opponent", source, payload.targetInstanceId, true);
         }
         if (command.type === "titleMatch") {
-          resolveTitleMatch("opponent", payload.selectedBaseId, true);
+          const item = getHandCard("opponent", payload.instanceId);
+          if (item) resolveTitleMatch("opponent", item, payload.selectedBaseId, payload.discardIds || [], true);
         }
         if (command.type === "endTurn") endTurn({ fromAi: true, meguroDiscardId: payload.meguroDiscardId || null });
         if (command.type === "concede") endGame("player", "相手が勝てないを選びました。", { retire: true });
@@ -22589,8 +22551,13 @@
         return ownLife <= enemyLife ? 3 + replacementBonus : -2;
       }
       if (card.baseId === "aiben_vs_nyotei_title_match") {
-        const pairCards = state.players.opponent.deck.filter((deckCard) => ["aiben", "nyotei"].includes(deckCard.baseId)).length;
-        return pairCards > 0 ? 5 + pairCards * 2 + replacementBonus : -1;
+        const ownOpenSeat = titleMatchOpenSeat("opponent") >= 0;
+        const enemyOpenSeat = titleMatchOpenSeat("player") >= 0;
+        const pairOnBoard = listBoardRefs("opponent").filter((ref) => {
+          const fieldCard = getBoardCardFromRef(ref);
+          return ["aiben", "nyotei"].includes(fieldCard?.baseId);
+        }).length;
+        return ownOpenSeat && enemyOpenSeat ? 7 + pairOnBoard * 2 + replacementBonus : -1;
       }
       return 0;
     }
@@ -22715,6 +22682,12 @@
       if (item.baseId === "sexual_eye") return deck.some((card) => card.baseId === "yuta") ? 5 : 0;
       if (item.baseId === "yoyu_announce") return deck.length >= 1 ? 5 : 0;
       if (item.baseId === "environment_setup") return deck.some((card) => card.type === "environment") ? 5 : 0;
+      if (item.baseId === "aiben_vs_nyotei_title_match") {
+        const ownOpenSeat = titleMatchOpenSeat("opponent") >= 0;
+        const enemyOpenSeat = titleMatchOpenSeat("player") >= 0;
+        const pairOnBoard = friendlyCards.filter((card) => ["aiben", "nyotei"].includes(card.baseId)).length;
+        return ownOpenSeat && enemyOpenSeat ? 7 + pairOnBoard * 2 : 0;
+      }
       if (item.baseId === "baka_mac") return state.players.player.hand.length > 0 ? 4 + Math.min(5, state.players.player.hand.length) : 0;
       if (item.baseId === "ikemasu") return 4;
       if (item.baseId === "president_tea_room") {
@@ -22727,6 +22700,10 @@
         const disposableItems = opponent.hand.filter((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId).length;
         const enemyThreat = enemyCards.reduce((total, card) => total + scoreAiEnemyAttendeeThreat(card), 0);
         return disposableItems > 0 && enemyCards.length > 0 ? 3 + Math.min(disposableItems, 5) * 2 + Math.min(8, enemyThreat * 0.25) : 0;
+      }
+      if (item.baseId === "aiben_vs_nyotei_title_match") {
+        const preferred = state.players.opponent.board.seats.some((card) => card?.baseId === "nyotei") ? "aiben" : "nyotei";
+        return resolveTitleMatch("opponent", item, preferred, [], false);
       }
       if (item.baseId === "scared_me") {
         const students = enemyCards.filter((card) => card.type === "student");
@@ -22804,7 +22781,10 @@
           && !isAttackLocked(card, state.actionTurn + 1)).length > 0 ? 6 : 0;
       }
       if (item.baseId === "namen_tenno") {
-        return enemyCards.some((card) => card.baseId === "cynical_student") ? 10 : 0;
+        const vampires = enemyCards.filter((card) => card.type === "vampire");
+        return vampires.length > 0
+          ? 8 + vampires.reduce((sum, card) => sum + (card.attack || 0) + (card.currentHp || 0), 0)
+          : 0;
       }
       if (item.baseId === "peaceful_mind") return opponent.life <= 15 ? 3 : 0;
       if (item.baseId === "handmade_ctoc") {
@@ -22956,10 +22936,6 @@
           card.attack >= 4
             && !isAttackLocked(card, state.actionTurn + 1)
         )[0];
-        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
-      }
-      if (item.baseId === "namen_tenno") {
-        const target = effectTargetEntries("opponent", "player", (card) => card.baseId === "cynical_student")[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "seriously_hit") {
@@ -24347,16 +24323,24 @@
         return;
       }
       if (mode === "title_match") {
+        const item = getHandCard("player", itemId);
         const selectedBaseId = selectedCards[0]?.baseId;
-        if (!selectedBaseId) return;
+        if (!item || !selectedBaseId) return;
+        openTitleMatchDiscardChoice(item, selectedBaseId);
+        return;
+      }
+      if (mode === "title_match_discard") {
+        const item = getHandCard("player", itemId);
+        const selectedBaseId = pending.context?.selectedBaseId;
+        if (!item || !selectedBaseId) return;
         if (onlineCanSendCommand()) {
-          onlineSendCommand("titleMatch", { selectedBaseId });
+          onlineSendCommand("titleMatch", { instanceId: item.instanceId, selectedBaseId, discardIds: selectedIds });
           state.message = "アイベンVSにょていタイトルマッチの選択を送信しました。";
           clearSelections();
           render();
           return;
         }
-        resolveTitleMatch("player", selectedBaseId, true);
+        resolveTitleMatch("player", item, selectedBaseId, selectedIds, true);
         return;
       }
       if (mode === "bad_student_online_play") {
@@ -24485,6 +24469,10 @@
       }
       if (item.baseId === "three_gestures") {
         openThreeGesturesSelection(item);
+        return;
+      }
+      if (item.baseId === "aiben_vs_nyotei_title_match") {
+        openTitleMatchChoice(item);
         return;
       }
       if (item.baseId === "environment_setup" && openEnvironmentSetupChoice(item)) return;
@@ -27368,11 +27356,6 @@
         if (renderAfter) render();
         return false;
       }
-      if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") {
-        addLog("なめてるの？は冷笑学生だけを指名できます。");
-        if (renderAfter) render();
-        return false;
-      }
       if (item.baseId === "favorite_number_s" && !(targetZone === "teacher" && target.type === "teacher")) {
         addLog("好きな数字は「S」は教卓マスにいる教師だけを指名できます。");
         if (renderAfter) render();
@@ -27473,10 +27456,6 @@
         target.sameNameAttackLocked = true;
         target.sameNameAttackLockedBy = item.name;
         addLog(`${SIDES[side]}はお手製C to Cを使い、${target.name}は相手の場に同名の出席者がいるかぎり攻撃できなくなりました。`);
-      }
-      if (item.baseId === "namen_tenno") {
-        destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
-        damagePlayer(oppositeSide(side), 5);
       }
       if (item.baseId === "double_diamond") {
         dealDamageToCard(target, 4, item);
@@ -27855,6 +27834,15 @@
           moveToTrash(environment.owner, environment);
         }
         resultText = `お互いの講義室の出席者${destroyed.length}人${environment ? "と環境カード" : ""}を破壊しました。`;
+      }
+      if (item.baseId === "namen_tenno") {
+        const targetSide = oppositeSide(side);
+        const vampireRefs = listBoardRefs(targetSide).filter((ref) => getBoardCardFromRef(ref)?.type === "vampire");
+        const destroyed = destroyBoardRefsToTrash(vampireRefs, { reason: item.name, showDestroyFeedback: true });
+        if (destroyed.length > 0) damagePlayer(targetSide, destroyed.length);
+        resultText = destroyed.length > 0
+          ? `相手のヴァンパイア${destroyed.length}人を破壊し、相手本体に${destroyed.length}ダメージを与えました。`
+          : "相手の講義室にヴァンパイアがいないため不発になりました。";
       }
       if (item.baseId === "onigiri_draw") {
         let drawn = 0;
@@ -30938,7 +30926,6 @@
           if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn) return false;
           if (!isAllowedEffectTarget("player", target)) return false;
           if (item.baseId === "quiet_please") return target.attack >= 4 && !isAttackLocked(target, state.actionTurn + 1);
-          if (item.baseId === "namen_tenno") return target.baseId === "cynical_student";
           if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && target.type === "teacher";
           if (item.baseId === "vampirization") return hasOpenBoardSlotForCard("player", target);
           return true;
@@ -30984,7 +30971,6 @@
         if (!canAttachUtaEquipment(target)) return false;
       }
       if (item.baseId === "quiet_please" && (target.attack < 4 || isAttackLocked(target, state.actionTurn + 1))) return false;
-      if (item.baseId === "namen_tenno" && target.baseId !== "cynical_student") return false;
       if (item.baseId === "favorite_number_s" && !(zone === "teacher" && target.type === "teacher")) return false;
       if (item.baseId === "vampirization" && !hasOpenBoardSlotForCard("player", target)) return false;
       if (item.baseId === "go_home" && target.type !== "student") return false;
@@ -31887,15 +31873,6 @@
         button.addEventListener("click", openRaptorTempleSourceChoice);
         elements.environmentSlot.appendChild(button);
       }
-      if (state.environment?.baseId === "aiben_vs_nyotei_title_match") {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "environment-action-button";
-        button.textContent = titleMatchUsedThisTurn("player") ? "使用済み" : "効果を使う";
-        button.disabled = !canUseTitleMatch("player");
-        button.addEventListener("click", openTitleMatchChoice);
-        elements.environmentSlot.appendChild(button);
-      }
     }
 
     function isPreEvolutionDesignTeacher(card) {
@@ -32068,67 +32045,104 @@
         : false;
     }
 
-    function titleMatchUsedThisTurn(side) {
-      const used = state.environment?.titleMatchUsedTurns || {};
-      return used[side] === state.players[side].turnsTaken;
+    function titleMatchOpenSeat(side) {
+      return state.players[side].board.seats.findIndex((card, index) => !card && isBoardSlotOpen(side, "seat", index));
     }
 
-    function titleMatchCandidates(side) {
-      return state.players[side].deck.filter((card) => ["aiben", "nyotei"].includes(card.baseId));
+    function canUseTitleMatch(side, item) {
+      return Boolean(item)
+        && item.baseId === "aiben_vs_nyotei_title_match"
+        && state.phase === "battle"
+        && !state.gameOver
+        && state.currentSide === side
+        && effectiveCardCost(item) <= state.players[side].will
+        && titleMatchOpenSeat(side) >= 0
+        && titleMatchOpenSeat(oppositeSide(side)) >= 0;
     }
 
-    function canUseTitleMatch(side) {
-      if (state.environment?.baseId !== "aiben_vs_nyotei_title_match" || state.phase !== "battle" || state.gameOver) return false;
-      if (state.currentSide !== side || titleMatchUsedThisTurn(side)) return false;
-      if (side === "player" && isOnlineSpectator()) return false;
-      return titleMatchCandidates(side).length > 0;
-    }
-
-    function openTitleMatchChoice() {
-      if (!canUseTitleMatch("player")) return;
-      openCardChoice({
+    function openTitleMatchChoice(item) {
+      if (!canUseTitleMatch("player", item)) {
+        state.message = "アイベンVSにょていタイトルマッチは、お互いの講義室に空いている席マスが必要です。";
+        render();
+        return true;
+      }
+      state.selectedAttacker = null;
+      state.selectedHandId = item.instanceId;
+      return openCardChoice({
         mode: "title_match",
-        title: "アイベンVSにょていタイトルマッチ",
-        message: "自分のデッキから手札に加えるカードを選んでください。相手は、選ばなかったもう一方を自分のデッキから手札に加えます。加えられない場合、相手は2枚ドローします。",
-        cards: titleMatchCandidates("player"),
+        itemId: item.instanceId,
+        title: item.name,
+        message: "自分の講義室に出席させる出席者を1人選んでください。もう一方は相手の講義室に出席します。",
+        cards: [createCardFromBase("aiben", "player"), createCardFromBase("nyotei", "player")],
         min: 1,
         max: 1,
-        confirmLabel: "このカードを手札に加える"
+        confirmLabel: "次へ"
       });
     }
 
-    function resolveTitleMatch(side, selectedBaseId, renderAfter = true) {
-      if (!canUseTitleMatch(side) || !["aiben", "nyotei"].includes(selectedBaseId)) return false;
-      const ownDeck = state.players[side].deck;
-      const selectedIndex = ownDeck.findIndex((card) => card.baseId === selectedBaseId);
-      if (selectedIndex < 0) return false;
-      const [selected] = ownDeck.splice(selectedIndex, 1);
-      selected.owner = side;
-      selected.handTurns = 0;
-      state.players[side].hand.push(selected);
-      queueAnimation("draw", side, 1);
-      shuffleDeckAfterSearch(side);
+    function openTitleMatchDiscardChoice(item, selectedBaseId) {
+      const cards = state.players.player.hand.filter((card) => card.instanceId !== item.instanceId);
+      return openCardChoice({
+        mode: "title_match_discard",
+        itemId: item.instanceId,
+        title: item.name,
+        message: "校外エリアへ送る自分の手札を好きな枚数選んでください。送らない場合は、そのまま確定してください。",
+        cards,
+        min: 0,
+        max: cards.length,
+        context: { selectedBaseId },
+        confirmLabel: "出席させる"
+      });
+    }
+
+    function placeTitleMatchAttendee(side, baseId, cheerful = false) {
+      const index = titleMatchOpenSeat(side);
+      if (index < 0) return null;
+      const attendee = makeBoardCard(createCardFromBase(baseId, side));
+      if (cheerful) addKeyword(attendee, "陽気", "アイベンVSにょていタイトルマッチ");
+      state.players[side].board.seats[index] = attendee;
+      resolveAttendEffects(side, attendee, "seat", index, { fromHand: false, attendanceSource: "title_match" });
+      return attendee;
+    }
+
+    function resolveTitleMatch(side, item, selectedBaseId, discardIds = [], renderAfter = true) {
+      if (!canUseTitleMatch(side, item) || !["aiben", "nyotei"].includes(selectedBaseId)) return false;
+      const ownDiscardIds = new Set(discardIds);
+      const discardedCards = state.players[side].hand.filter((card) =>
+        card.instanceId !== item.instanceId && ownDiscardIds.has(card.instanceId)
+      );
+      discardedCards.forEach((card) => moveHandCardToTrash(side, card));
+      if (!payForItem(side, item)) return false;
+      showCardPlayAnimation(item, "trash");
+      moveHandCardToTrash(side, item);
       const opponent = oppositeSide(side);
       const otherBaseId = selectedBaseId === "aiben" ? "nyotei" : "aiben";
-      const opponentPulled = pullCardsFromDeck(opponent, otherBaseId, 1);
-      const opponentDrawn = opponentPulled > 0 ? 0 : drawUpTo(opponent, 2);
-      if (!state.environment.titleMatchUsedTurns) state.environment.titleMatchUsedTurns = {};
-      state.environment.titleMatchUsedTurns[side] = state.players[side].turnsTaken;
-      const opponentResult = opponentPulled > 0
-        ? `相手は「${CARD_BASES[otherBaseId].name}」を1枚手札に加えました。`
-        : `相手は「${CARD_BASES[otherBaseId].name}」を手札に加えられなかったため、${opponentDrawn}枚ドローしました。`;
-      addLog(`アイベンVSにょていタイトルマッチの効果：${SIDES[side]}は「${selected.name}」を手札に加えました。${opponentResult}`);
+      const own = placeTitleMatchAttendee(side, selectedBaseId, true);
+      const enemy = placeTitleMatchAttendee(opponent, otherBaseId, false);
+      const totalDiscarded = discardedCards.length;
+      if (totalDiscarded > 0) {
+        ["player", "opponent"].forEach((owner) => {
+          listBoardRefs(owner).forEach((ref) => {
+            const card = getBoardCardFromRef(ref);
+            if (card && ["aiben", "nyotei"].includes(card.baseId)) {
+              applyPermanentStatBuff(card, totalDiscarded, totalDiscarded, 0, item.name);
+            }
+          });
+        });
+      }
+      addLog(`${SIDES[side]}は${item.name}を使い、「${own?.name || CARD_BASES[selectedBaseId].name}」を自分の講義室に陽気を持つ状態で出席させました。相手の講義室には「${enemy?.name || CARD_BASES[otherBaseId].name}」が出席しました。${totalDiscarded > 0 ? `手札${totalDiscarded}枚を校外エリアへ送り、両者のアイベンとにょていを+${totalDiscarded}/+${totalDiscarded}しました。` : ""}`);
+      cleanupDestroyedCards();
+      applyBoardAuras();
       clearSelections();
       if (renderAfter) render();
       return true;
     }
 
-    function tryUseAiTitleMatch() {
-      if (!canUseTitleMatch("opponent")) return false;
-      const candidates = titleMatchCandidates("opponent").sort((a, b) => (
-        (b.baseId === "nyotei" ? 1 : 0) - (a.baseId === "nyotei" ? 1 : 0)
-      ));
-      return candidates[0] ? resolveTitleMatch("opponent", candidates[0].baseId, false) : false;
+    function tryUseAiTitleMatch(item = null) {
+      const titleMatch = item || state.players.opponent.hand.find((card) => card.baseId === "aiben_vs_nyotei_title_match");
+      if (!canUseTitleMatch("opponent", titleMatch)) return false;
+      const preferred = state.players.player.board.teacher ? "nyotei" : "aiben";
+      return resolveTitleMatch("opponent", titleMatch, preferred, [], false);
     }
 
     function renderLifeTargets() {
@@ -34183,6 +34197,14 @@
         player.deck.unshift(createCardFromBase("cafeteria", "player"));
         player.trash.push(createCardFromBase("classroom", "player"));
       }
+      if (baseId === "aiben_vs_nyotei_title_match") {
+        player.board.seats.fill(null);
+        opponent.board.seats.fill(null);
+        player.hand.push(
+          createCardFromBase("general_student", "player"),
+          createCardFromBase("ruler", "player")
+        );
+      }
       if (baseId === "diamond_dust") {
         player.board.teacher = makePlayerTestAttendee("lightning_n");
         player.trash.push(
@@ -35381,7 +35403,7 @@
         sage_legacy: "後攻1ターン目または後攻7ターン目にのみ使用できる。自分のデッキからカード1枚を選び、手札に加える。",
         reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は発動しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
-        namen_tenno: "相手の場にいる「冷笑学生」1人を指名して破壊し、相手本体に5ダメージを与える。",
+        namen_tenno: "相手の講義室にいるヴァンパイアの出席者すべてを破壊する。その後、この効果で破壊した出席者の人数と同じダメージを相手本体に与える。",
         panpan: "自分の出席者1人を指名する。その後、相手の出席者1人を指名する。それらを破壊する。",
         capture: "相手の空いている席マス1つを3ターン出席不可にする。",
         yutakun_yutakun: "校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。",
@@ -35429,7 +35451,7 @@
         cote_dazur: "お互いの場の「あえー」と名のつく出席者の攻撃力を+10、体力を+10する。",
         door_war: "各プレイヤーのターン終了時、そのターンに自分が講義室へ出席させた出席者の中から1人をランダムに選び、その出席者に1ダメージを与える。",
         shogi_duel_field: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
-        aiben_vs_nyotei_title_match: "各プレイヤーは自分のターンに1回、自分のデッキから「アイベン」または「にょてい」1枚を選び、手札に加えてよい。そうした場合、相手は選ばなかったもう一方を自分のデッキから手札に加える。加えられない場合、相手はカードを2枚ドローする。",
+        aiben_vs_nyotei_title_match: "自分の講義室に「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室に出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。送られた枚数の合計だけ、お互いの講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は発動しない。",
         ta_killer: "このカードが出席したとき、相手の場に同名の出席者が複数いる場合、その同名出席者すべてに同名の人数分のダメージを与える。",
         ta: "カードの効果によって召喚される学生トークン。"
       };
