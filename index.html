@@ -15479,6 +15479,7 @@
             <div class="deck-format-tabs" aria-label="デッキ形式">
               <button class="button secondary active" id="normalDeckFormatButton" type="button">通常デッキ</button>
               <button class="button secondary" id="specialtyDeckFormatButton" type="button">専攻デッキ</button>
+              <button class="button secondary" id="chaosDeckFormatButton" type="button">カオスデッキ</button>
             </div>
           </div>
           <span class="small-info" id="deckLibraryCount">0個</span>
@@ -15990,6 +15991,7 @@
     const CARD_COPY_MAX = 3;
     const SAVED_DECK_STORAGE_KEY = "chibattle-saved-decks-v1";
     const SPECIALTY_DECK_STORAGE_KEY = "chibattle-specialty-decks-v1";
+    const CHAOS_DECK_STORAGE_KEY = "chibattle-chaos-decks-v1";
     const DUNGEON_RUN_STORAGE_KEY = "chibattle-dungeon-run-v1";
     const DUNGEON_CARD_STYLE_STORAGE_KEY = "chibattle-dungeon-card-styles-v1";
     const DUNGEON_PENDING_REWARD_STORAGE_KEY = "chibattle-dungeon-pending-reward-v1";
@@ -16010,16 +16012,16 @@
       { id: "vampire", name: "ヴァンパイア" }
     ];
     const SPECIALTY_CARD_IDS = Object.freeze({
-      common: ["ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "ta", "three_gestures", "water_2l"],
-      gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "trendy_student", "word_increaser", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
-      cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "green_curry", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "yakiniku", "zombie"],
+      common: ["ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "ta", "three_gestures", "water_2l"],
+      gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "word_increaser", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
+      cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
-      late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance"],
-      expansion: ["aggro_king", "aggro_queen", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"],
-      interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
-      shogi: ["aiben", "aiben_vs_nyotei_title_match", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
-      big: ["ae_student", "best_friend", "chigauyo", "cote_dazur", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "loud_members", "lone_wolf", "loud_student", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "super_ae_student", "ta_killer"],
-      vampire: ["wood_gitch", "gitch", "gigi_blood"]
+      late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"],
+      expansion: ["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"],
+      interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
+      shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
+      big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"],
+      vampire: ["wood_gitch"]
     });
     const DUNGEON_CARD_STYLE_REWARDS = Object.freeze({
       gakuyukai_item: { label: "学友会・持ち物", cardIds: ["yuta", "dark_yuta"], style: "gakuyukai" },
@@ -16381,7 +16383,7 @@
       gitch: [],
       gigi_blood: []
     };
-    const ALL_DECK_IDS = [
+    let ALL_DECK_IDS = [
       "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
@@ -16450,7 +16452,7 @@
       sniper: { name: "スナイパー", type: "student", cost: 4, attack: 2, hp: 1, allowedZones: ["seat", "teacher"] },
       cynical_student: { name: "冷笑学生", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
       extra_people: { name: "エキストラの皆さん", type: "student", cost: 9, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
-      extra_student: { name: "エキストラ学生", type: "student", cost: 0, noCost: true, attack: 1, hp: 1, keywords: ["陽気"], allowedZones: ["seat"] },
+      extra_student: { name: "エキストラ学生", type: "student", cost: 0, noCost: true, attack: 1, hp: 1, keywords: ["陽気"], token: true, allowedZones: ["seat"] },
       angry_maker: { name: "アングリーメイカー", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"] },
       elite_open_chatter: { name: "エリートオープンチャッター", type: "student", cost: 4, attack: 3, hp: 6, allowedZones: ["seat"] },
       word_increaser: { name: "ワードインクリーサー", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
@@ -16468,6 +16470,8 @@
       infight_shogi: { name: "インファイト将棋部", type: "student", cost: 10, attack: 5, hp: 5, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
       aiben: { name: "アイベン", type: "student", cost: 3, attack: 2, hp: 8, allowedZones: ["seat", "teacher"] },
       nyotei: { name: "にょてい", type: "student", cost: 3, attack: 2, hp: 8, allowedZones: ["seat", "teacher"] },
+      ta_killer: { name: "TAキラー", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+      summer_teacher: { name: "夏の先生", type: "teacher", cost: 0, variableCost: true, attack: 2, hp: 2, noLecture: true, allowedZones: ["seat", "teacher"] },
       fridge_thief: { name: "冷蔵庫泥棒", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       failure_student: { name: "何をやってもダメな学生", type: "student", cost: 3, attack: 0, hp: 3, allowedZones: ["seat", "teacher"] },
       success_student: { name: "何をやっても成功する学生", type: "student", cost: 0, attack: 2, hp: 4, evolutionFrom: "failure_student", allowedZones: ["evolution"] },
@@ -16530,6 +16534,16 @@
       diamond_dust: { name: "ダブルダイヤモンドダスト-***Angel Cross Experiencce-***", type: "item", cost: 5, target: "self" },
       happy_experience: { name: "うれしい体験", type: "item", cost: 1, target: "friendlyAny" },
       go_away: { name: "行かれてはいかがですか", type: "item", cost: 2, target: "self" },
+      namen_tenno: { name: "なめん天皇", type: "item", cost: 3, target: "self", ace: true },
+      brother_capital: { name: "兄弟資本", type: "item", cost: 5, target: "self", ace: true },
+      padlock: { name: "南京錠", type: "item", cost: 3, target: "friendlyAny" },
+      crotch_febreze: { name: "股間ファブリーズ", type: "item", cost: 2, target: "self" },
+      smoke_flare: { name: "発煙筒の光の中で", type: "item", cost: 2, target: "self", ace: true },
+      one_eyed_peek: { name: "片目で覗く", type: "item", cost: 1, target: "self" },
+      big_laughter: { name: "バカでかい笑い", type: "item", cost: 1, target: "self" },
+      forbidden_book: { name: "禁断の書", type: "item", cost: 5, target: "self", ace: true },
+      philosophy_cheating: { name: "哲学のカンニング", type: "item", cost: 5, target: "self", ace: true },
+      key: { name: "鍵", type: "item", cost: 1, target: "friendlyAny", generated: true },
       green_curry: { name: "グリーンカレー", type: "item", cost: 9, target: "global" },
       vampirization: { name: "吸血鬼化", type: "item", cost: 7, target: "enemy" },
       iv_pack: { name: "輸血パック", type: "item", cost: 2, target: "self" },
@@ -16560,7 +16574,7 @@
       sage_legacy: { name: "賢者の遺産", type: "item", cost: 1, target: "self" },
       reversal: { name: "逆行", type: "item", cost: 4, target: "self" },
       dont_worry: { name: "気にするな", type: "item", cost: 2, target: "self" },
-      namen_tenno: { name: "なめてるの？", type: "item", cost: 3, target: "enemy" },
+      namen_tenno: { name: "なめてるの？", type: "item", cost: 3, target: "self", ace: true },
       panpan: { name: "パンパン", type: "item", cost: 2, target: "enemyPair" },
       capture: { name: "キャプチャー", type: "item", cost: 3, target: "enemySlot" },
       yutakun_yutakun: { name: "U太くんU太くん", type: "item", cost: 3, target: "self" },
@@ -16609,10 +16623,26 @@
       shogi_duel_field: { name: "将棋部の決闘フィールド", type: "environment", cost: 5, allowedZones: ["environment"] },
       aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "item", cost: 2, target: "self" },
       loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
-      ta_killer: { name: "TAキラー", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
+
+    const ACE_CARD_IDS = new Set(
+      Object.entries(CARD_BASES)
+        .filter(([, base]) => base.ace)
+        .map(([baseId]) => baseId)
+    );
+    const DIRECT_DECK_CARD_IDS = new Set();
+    ALL_DECK_IDS.push(
+      "summer_teacher", "namen_tenno", "brother_capital", "padlock", "crotch_febreze",
+      "smoke_flare", "one_eyed_peek", "big_laughter", "forbidden_book", "philosophy_cheating"
+    );
+    ALL_DECK_IDS = [...new Set(ALL_DECK_IDS)].filter((baseId) => {
+      const base = CARD_BASES[baseId];
+      const usable = Boolean(base && !base.generated && !base.token && !base.evolutionFrom);
+      if (usable) DIRECT_DECK_CARD_IDS.add(baseId);
+      return usable;
+    });
     const DUNGEON_UTA_EQUIPMENT_IDS = Object.freeze([
       "accelerate", "chameleon", "yuta_umbrella", "red_happi"
     ]);
@@ -17258,6 +17288,7 @@
         },
         savedDecks: loadSavedDecks(),
         specialtyDecks: loadSpecialtyDecks(),
+        chaosDecks: loadChaosDecks(),
         format: "normal",
         specialtyId: "",
         pendingSpecialtyChoice: false,
@@ -17765,6 +17796,7 @@
       deckScreenSubtitle: document.getElementById("deckScreenSubtitle"),
       normalDeckFormatButton: document.getElementById("normalDeckFormatButton"),
       specialtyDeckFormatButton: document.getElementById("specialtyDeckFormatButton"),
+      chaosDeckFormatButton: document.getElementById("chaosDeckFormatButton"),
       deckSpecialtyChoice: document.getElementById("deckSpecialtyChoice"),
       deckEditorTitle: document.getElementById("deckEditorTitle"),
       deckEditorBackButton: document.getElementById("deckEditorBackButton"),
@@ -18455,6 +18487,25 @@
       }
     }
 
+    function loadChaosDecks() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(CHAOS_DECK_STORAGE_KEY) || "{}");
+        return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function persistChaosDecks() {
+      try {
+        localStorage.setItem(CHAOS_DECK_STORAGE_KEY, JSON.stringify(state.deckBuilder.chaosDecks));
+        return true;
+      } catch {
+        state.message = "ブラウザへカオスデッキを保存できませんでした。";
+        return false;
+      }
+    }
+
     function normalizeDungeonRun(run) {
       if (!run || typeof run !== "object" || !run.counts || typeof run.counts !== "object") return null;
       const floor = Math.max(1, Math.floor(Number(run.floor) || 1));
@@ -18880,8 +18931,20 @@
       return state.deckBuilder.format === "specialty";
     }
 
+    function isChaosDeckFormat() {
+      return state.deckBuilder.format === "chaos";
+    }
+
+    function hasValidAceCounts(counts) {
+      const aceIds = ALL_DECK_IDS.filter((baseId) => CARD_BASES[baseId]?.ace);
+      const total = aceIds.reduce((sum, baseId) => sum + (Number(counts[baseId]) || 0), 0);
+      return total <= 1 && aceIds.every((baseId) => (Number(counts[baseId]) || 0) <= 1);
+    }
+
     function activeDeckCollection() {
-      return isSpecialtyDeckFormat() ? state.deckBuilder.specialtyDecks : state.deckBuilder.savedDecks;
+      if (isSpecialtyDeckFormat()) return state.deckBuilder.specialtyDecks;
+      if (isChaosDeckFormat()) return state.deckBuilder.chaosDecks;
+      return state.deckBuilder.savedDecks;
     }
 
     function activeDeckMaxSize() {
@@ -18902,12 +18965,30 @@
         copiesOk,
         specialtyOk: Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0,
         illegalIds,
-        valid: size === DECK_MIN && copiesOk && Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0
+        aceOk: hasValidAceCounts(counts),
+        valid: size === DECK_MIN && copiesOk && hasValidAceCounts(counts) && Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0
+      };
+    }
+
+    function validateChaosDeckCounts(counts) {
+      const size = deckSize(counts);
+      const copiesOk = ALL_DECK_IDS.every((baseId) => {
+        const count = Number(counts[baseId]) || 0;
+        return count >= 0 && Number.isInteger(count);
+      });
+      return {
+        size,
+        lengthOk: size >= DECK_MIN && size <= DECK_MAX,
+        copiesOk,
+        aceOk: true,
+        valid: size >= DECK_MIN && size <= DECK_MAX && copiesOk
       };
     }
 
     function activeDeckValidation(counts, specialtyId = state.deckBuilder.specialtyId) {
-      return isSpecialtyDeckFormat() ? validateSpecialtyDeckCounts(counts, specialtyId) : validateDeckCounts(counts);
+      if (isSpecialtyDeckFormat()) return validateSpecialtyDeckCounts(counts, specialtyId);
+      if (isChaosDeckFormat()) return validateChaosDeckCounts(counts);
+      return validateDeckCounts(counts);
     }
 
     function createOnlineDeckCounts() {
@@ -20866,7 +20947,8 @@
           const count = Number(counts[baseId]) || 0;
           return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
         }),
-        valid: size >= DECK_MIN && size <= DECK_MAX && ALL_DECK_IDS.every((baseId) => {
+        aceOk: hasValidAceCounts(counts),
+        valid: size >= DECK_MIN && size <= DECK_MAX && hasValidAceCounts(counts) && ALL_DECK_IDS.every((baseId) => {
           const count = Number(counts[baseId]) || 0;
           return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
         })
@@ -25068,8 +25150,8 @@
         if (renderAfter) render();
         return false;
       }
-      // スモール小俣の大型化は、戦意がちょうど10のときだけ強制する。
-      const isForcedBigOmata = card.baseId === "small_omata" && player.will === 10;
+      // 戦意10以上で出席するスモール小俣は、必ず大型化する。
+      const isForcedBigOmata = card.baseId === "small_omata" && player.will >= 10;
       const playCost = isForcedBigOmata ? 10 : effectiveCardCost(card);
       if (player.will < playCost) {
         state.message = `戦意が足りません。${card.name}のコストは${playCost}です。`;
@@ -25581,7 +25663,7 @@
     // enters the classroom. Never infer it after the card has been placed.
     const ANY_SOURCE_ATTEND_EFFECT_IDS = new Set([
       "midge", "organism", "perfect_mutant", "adjective_student", "cancel_student",
-      "big_omata", "fairy_t", "popular_c", "bird_a", "lightning_n"
+      "big_omata", "fairy_t", "thin_professor_h", "bird_a", "lightning_n"
     ]);
 
     function attendanceSourceForEffect(options = {}) {
@@ -32876,13 +32958,13 @@
     }
 
     function setDeckFormat(format) {
-      if (!['normal', 'specialty'].includes(format)) return;
+      if (!['normal', 'specialty', 'chaos'].includes(format)) return;
       state.deckBuilder.format = format;
       state.deckBuilder.view = "library";
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
       state.deckBuilder.pendingSpecialtyChoice = false;
-      if (format === "normal") state.deckBuilder.specialtyId = "";
+      if (format !== "specialty") state.deckBuilder.specialtyId = "";
       render();
     }
 
@@ -32916,15 +32998,19 @@
       elements.deckEditorView.classList.toggle("hidden", !editing);
       if (state.screen !== "deck" || editing) return;
       const specialty = isSpecialtyDeckFormat();
+      const chaos = isChaosDeckFormat();
       const collection = activeDeckCollection();
       const names = Object.keys(collection).sort((a, b) => a.localeCompare(b, "ja"));
-      elements.deckLibraryTitle.textContent = specialty ? "専攻デッキ" : "保存デッキ";
+      elements.deckLibraryTitle.textContent = specialty ? "専攻デッキ" : chaos ? "カオスデッキ" : "保存デッキ";
       elements.deckBackHomeButton.textContent = state.deckBuilder.returnScreen === "dungeonDeck" ? "戻る" : "ホーム";
       elements.deckScreenSubtitle.textContent = specialty
         ? "専攻カードと共通カードだけで作る、40枚固定のデッキです"
-        : "40〜60枚、同名は原則3枚まで（カード固有の上限あり）";
-      elements.normalDeckFormatButton.classList.toggle("active", !specialty);
+        : chaos
+          ? "全カードを自由な枚数で入れられる、40〜60枚のデッキです"
+          : "40〜60枚、同名は原則3枚まで（カード固有の上限あり）";
+      elements.normalDeckFormatButton.classList.toggle("active", !specialty && !chaos);
       elements.specialtyDeckFormatButton.classList.toggle("active", specialty);
+      elements.chaosDeckFormatButton.classList.toggle("active", chaos);
       elements.deckLibraryCount.textContent = `${names.length}個`;
       elements.deckLibraryGrid.innerHTML = "";
       const newButton = document.createElement("button");
@@ -32969,7 +33055,7 @@
         <div class="deck-library-detail-actions">
           <button class="button" type="button" data-deck-edit>変更する</button>
           <button class="button secondary" type="button" data-deck-view>${state.deckBuilder.detailExpanded ? "内容を閉じる" : "内容を見る"}</button>
-          <button class="button warning" type="button" data-deck-remove ${!isSpecialtyDeckFormat() && isStarterDeckName(name) ? "disabled" : ""}>削除する</button>
+          <button class="button warning" type="button" data-deck-remove ${!isSpecialtyDeckFormat() && !isChaosDeckFormat() && isStarterDeckName(name) ? "disabled" : ""}>削除する</button>
           <button class="button secondary" type="button" data-deck-close>閉じる</button>
         </div>`;
       elements.deckLibraryDetail.querySelector("[data-deck-edit]").addEventListener("click", () => beginExistingDeckEditor(name));
@@ -33651,7 +33737,8 @@
     function changeDeckCount(side, baseId, delta) {
       const counts = state.deckBuilder.counts[side];
       const current = counts[baseId] || 0;
-      const next = Math.max(0, Math.min(maxCopiesForCard(baseId), current + delta));
+      const limit = isChaosDeckFormat() ? DECK_MAX : maxCopiesForCard(baseId);
+      const next = Math.max(0, Math.min(limit, current + delta));
       if (next === current) return;
       if (delta > 0 && deckSize(counts) >= activeDeckMaxSize()) return;
       counts[baseId] = next;
@@ -33697,7 +33784,7 @@
         render();
         return;
       }
-      if (!isSpecialtyDeckFormat() && isStarterDeckName(name)) {
+      if (!isSpecialtyDeckFormat() && !isChaosDeckFormat() && isStarterDeckName(name)) {
         state.message = "スターターデッキは固定です。編集したい場合は別の保存名に変えてから保存してください。";
         render();
         return;
@@ -33720,13 +33807,17 @@
         return;
       }
       const collection = activeDeckCollection();
-      if (collection[name] && !window.confirm(`${isSpecialtyDeckFormat() ? "専攻デッキ" : "保存デッキ"}「${name}」を上書きしますか？`)) return;
+      const formatLabel = isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "保存デッキ";
+      if (collection[name] && !window.confirm(`${formatLabel}「${name}」を上書きしますか？`)) return;
       collection[name] = {
         counts: copyDeckCounts(counts),
         savedAt: new Date().toISOString(),
         ...(isSpecialtyDeckFormat() ? { specialtyId: state.deckBuilder.specialtyId } : {})
       };
-      if (!(isSpecialtyDeckFormat() ? persistSpecialtyDecks() : persistSavedDecks())) {
+      const persisted = isSpecialtyDeckFormat()
+        ? persistSpecialtyDecks()
+        : isChaosDeckFormat() ? persistChaosDecks() : persistSavedDecks();
+      if (!persisted) {
         render();
         return;
       }
@@ -33734,7 +33825,7 @@
       state.deckBuilder.originalFingerprint = currentFingerprint;
       state.deckBuilder.selectedName = name;
       state.deckBuilder.view = "library";
-      state.message = `${isSpecialtyDeckFormat() ? "専攻デッキ" : "デッキ"}「${name}」を保存しました。`;
+      state.message = `${isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "デッキ"}「${name}」を保存しました。`;
       render();
     }
 
@@ -33868,10 +33959,12 @@
         render();
         return;
       }
-      const label = isSpecialtyDeckFormat() ? "専攻デッキ" : "保存デッキ";
+      const label = isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "保存デッキ";
       if (!window.confirm(`${label}「${name}」を削除しますか？`)) return;
       delete collection[name];
-      isSpecialtyDeckFormat() ? persistSpecialtyDecks() : persistSavedDecks();
+      isSpecialtyDeckFormat()
+        ? persistSpecialtyDecks()
+        : isChaosDeckFormat() ? persistChaosDecks() : persistSavedDecks();
       state.message = `${label}「${name}」を削除しました。`;
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
@@ -35641,6 +35734,7 @@
     });
     elements.normalDeckFormatButton.addEventListener("click", () => setDeckFormat("normal"));
     elements.specialtyDeckFormatButton.addEventListener("click", () => setDeckFormat("specialty"));
+    elements.chaosDeckFormatButton.addEventListener("click", () => setDeckFormat("chaos"));
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.testUndoButton.addEventListener("click", goBackTestStep);
     elements.battleTestUndoButton.addEventListener("click", goBackTestStep);
