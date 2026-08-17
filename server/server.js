@@ -20,6 +20,76 @@ const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,12}$/;
 const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
 const SERVER_ID = "server";
+
+// Keep this server-side catalog in sync with the browser's direct-deck catalog.
+// The server deliberately owns a copy: clients are not authoritative for deck
+// legality, and generated, token, and evolution-only cards must never become
+// legal merely by being sent over the socket.
+const DEFAULT_ROOM_RULE_ID = "normal";
+const SPECIALTY_DEFINITIONS = Object.freeze({
+  gakuyukai_item: Object.freeze({ id: "gakuyukai_item", name: "学友会・持ち物" }),
+  cafeteria: Object.freeze({ id: "cafeteria", name: "食堂" }),
+  design: Object.freeze({ id: "design", name: "デザイン" }),
+  late: Object.freeze({ id: "late", name: "遅刻" }),
+  expansion: Object.freeze({ id: "expansion", name: "展開・敵増殖" }),
+  interference: Object.freeze({ id: "interference", name: "妨害・LO" }),
+  shogi: Object.freeze({ id: "shogi", name: "将棋部" }),
+  big: Object.freeze({ id: "big", name: "バカでかい型" }),
+  vampire: Object.freeze({ id: "vampire", name: "ヴァンパイア" })
+});
+const SPECIALTY_CARD_IDS = Object.freeze({
+  common: Object.freeze(["ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"]),
+  gakuyukai_item: Object.freeze(["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"]),
+  cafeteria: Object.freeze(["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"]),
+  design: Object.freeze(["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"]),
+  late: Object.freeze(["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"]),
+  expansion: Object.freeze(["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"]),
+  interference: Object.freeze(["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"]),
+  shogi: Object.freeze(["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"]),
+  big: Object.freeze(["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"]),
+  vampire: Object.freeze([])
+});
+const NON_DIRECT_DECK_CARD_IDS = new Set([
+  "beta", "gamma", "oni_shima_ai", "ta", "dark_student_council", "dark_yuta",
+  "success_student", "dry_meal_ticket", "demon_a_plus", "double_diamond", "extra_student",
+  "midge", "organism", "perfect_mutant", "roar", "suspicious_document", "key", "gitch", "gigi_blood"
+]);
+const DIRECT_DECK_CARD_IDS = new Set([
+  ...Object.values(SPECIALTY_CARD_IDS).flat()
+].filter((baseId) => !NON_DIRECT_DECK_CARD_IDS.has(baseId)));
+const ACE_CARD_IDS = new Set([
+  "tokyo_tech_bro", "brother_capital", "smoke_flare", "forbidden_book", "philosophy_cheating",
+  "think_so", "illegal_cafeteria", "namen_tenno"
+]);
+const CARD_COPY_LIMITS = Object.freeze({
+  circle_crab: 2,
+  hair_crab: 1,
+  homeless_crab: 1
+});
+
+// New room rules should be added here. Validation below reads this data instead
+// of hard-coding rule IDs throughout the room and deck code.
+const ROOM_RULE_DEFINITIONS = Object.freeze({
+  normal: Object.freeze({
+    id: "normal",
+    name: "通常",
+    description: "専攻を問わず通常デッキを使用します。",
+    deck: Object.freeze({ formats: Object.freeze(["normal"]), minCards: MIN_DECK_CARDS, maxCards: MAX_DECK_CARDS, copyLimit: "standard", aceLimit: 1, specialty: "none" })
+  }),
+  specialty: Object.freeze({
+    id: "specialty",
+    name: "専攻",
+    description: "選んだ専攻と共通カードだけで構成した専攻デッキを使用します。",
+    deck: Object.freeze({ formats: Object.freeze(["specialty"]), minCards: MIN_DECK_CARDS, maxCards: MIN_DECK_CARDS, copyLimit: "standard", aceLimit: 1, specialty: "required" })
+  }),
+  chaos: Object.freeze({
+    id: "chaos",
+    name: "カオス",
+    description: "すべての直接編成可能カードを、同名・エースぺ制限なしで使用します。",
+    deck: Object.freeze({ formats: Object.freeze(["chaos"]), minCards: MIN_DECK_CARDS, maxCards: MAX_DECK_CARDS, copyLimit: "none", aceLimit: null, specialty: "none" })
+  })
+});
+const ROOM_RULE_IDS = new Set(Object.keys(ROOM_RULE_DEFINITIONS));
 const LOG_ADMIN_PASSWORD = process.env.CHIBATORU_LOG_ADMIN_PASSWORD || process.env.ADMIN_LOG_PASSWORD || "";
 const RENDER_DISK_ROOT = "/var/data";
 const DEFAULT_LOG_STORAGE_DIR = fs.existsSync(RENDER_DISK_ROOT)
@@ -68,6 +138,170 @@ function now() {
 
 function normalizeRoomId(value) {
   return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function roomRuleDefinition(ruleId) {
+  const id = String(ruleId || "").trim();
+  return ROOM_RULE_IDS.has(id) ? ROOM_RULE_DEFINITIONS[id] : null;
+}
+
+function publicRoomRule(ruleId) {
+  const rule = roomRuleDefinition(ruleId) || ROOM_RULE_DEFINITIONS[DEFAULT_ROOM_RULE_ID];
+  return {
+    id: rule.id,
+    name: rule.name,
+    description: rule.description,
+    deck: {
+      formats: [...rule.deck.formats],
+      minCards: rule.deck.minCards,
+      maxCards: rule.deck.maxCards,
+      copyLimit: rule.deck.copyLimit,
+      aceLimit: rule.deck.aceLimit,
+      specialty: rule.deck.specialty
+    }
+  };
+}
+
+function normalizeDeckFormat(value) {
+  const format = String(value || "").trim().toLowerCase();
+  return format || "normal";
+}
+
+function normalizeSpecialtyId(value) {
+  return String(value || "").trim().toLowerCase().slice(0, 80);
+}
+
+function deckDescriptorFromMessage(message = {}, previous = null) {
+  const hasDeckFormat = hasOwn(message, "deckFormat");
+  const hasSpecialtyId = hasOwn(message, "specialtyId");
+  const hasDeckCounts = hasOwn(message, "deckCounts");
+  return {
+    deckFormat: hasDeckFormat
+      ? normalizeDeckFormat(message.deckFormat)
+      : normalizeDeckFormat(previous?.deckFormat || "normal"),
+    specialtyId: hasSpecialtyId
+      ? normalizeSpecialtyId(message.specialtyId)
+      : normalizeSpecialtyId(previous?.specialtyId || ""),
+    deckCounts: hasDeckCounts ? message.deckCounts : (previous?.deckCounts ?? null)
+  };
+}
+
+function specialtyAllowedCardIds(specialtyId) {
+  if (!SPECIALTY_DEFINITIONS[specialtyId]) return new Set();
+  return new Set([
+    ...(SPECIALTY_CARD_IDS.common || []),
+    ...(SPECIALTY_CARD_IDS[specialtyId] || [])
+  ].filter((baseId) => DIRECT_DECK_CARD_IDS.has(baseId)));
+}
+
+function maxCopiesForCard(baseId) {
+  return CARD_COPY_LIMITS[baseId] ?? 3;
+}
+
+function validateDeckDescriptor(ruleId, descriptor) {
+  const rule = roomRuleDefinition(ruleId);
+  const safeDescriptor = descriptor || {};
+  const deckFormat = normalizeDeckFormat(safeDescriptor.deckFormat || "normal");
+  const specialtyId = normalizeSpecialtyId(safeDescriptor.specialtyId || "");
+  const errors = [];
+  const illegalCardIds = [];
+  const invalidCountIds = [];
+  const copyOverages = [];
+  let size = 0;
+  let aceCount = 0;
+
+  if (!rule) {
+    return {
+      valid: false,
+      ruleId: String(ruleId || ""),
+      deckFormat,
+      specialtyId,
+      size,
+      errors: ["この部屋の対戦ルールが無効です。"],
+      illegalCardIds,
+      invalidCountIds,
+      copyOverages,
+      aceCount
+    };
+  }
+
+  if (!rule.deck.formats.includes(deckFormat)) {
+    errors.push(`${rule.name}ルールでは${rule.deck.formats.join("/")}デッキを選んでください。`);
+  }
+
+  const counts = safeDescriptor.deckCounts;
+  if (!counts || typeof counts !== "object" || Array.isArray(counts)) {
+    errors.push("デッキ内容がありません。");
+  } else {
+    const allowedSpecialtyCards = rule.deck.specialty === "required"
+      ? specialtyAllowedCardIds(specialtyId)
+      : null;
+    if (rule.deck.specialty === "required" && !SPECIALTY_DEFINITIONS[specialtyId]) {
+      errors.push("専攻デッキの専攻を選んでください。");
+    }
+
+    Object.entries(counts).forEach(([baseId, rawCount]) => {
+      const count = Number(rawCount);
+      if (!Number.isSafeInteger(count) || count < 0) {
+        invalidCountIds.push(baseId);
+        return;
+      }
+      if (count === 0) return;
+      if (!DIRECT_DECK_CARD_IDS.has(baseId)) {
+        illegalCardIds.push(baseId);
+        return;
+      }
+      size += count;
+      if (rule.deck.copyLimit === "standard" && count > maxCopiesForCard(baseId)) {
+        copyOverages.push(baseId);
+      }
+      if (ACE_CARD_IDS.has(baseId)) aceCount += count;
+      if (allowedSpecialtyCards && !allowedSpecialtyCards.has(baseId)) {
+        illegalCardIds.push(baseId);
+      }
+    });
+  }
+
+  if (invalidCountIds.length) errors.push("デッキ枚数は0以上の整数で指定してください。");
+  if (illegalCardIds.length) errors.push("直接編成できないカード、または選択した専攻に含まれないカードがあります。");
+  if (copyOverages.length) errors.push("同名カードの枚数制限を超えています。");
+  if (rule.deck.aceLimit !== null && aceCount > rule.deck.aceLimit) {
+    errors.push("エースぺは1種類かつ1枚までです。");
+  }
+  if (size < rule.deck.minCards || size > rule.deck.maxCards) {
+    const lengthLabel = rule.deck.minCards === rule.deck.maxCards
+      ? `${rule.deck.minCards}枚`
+      : `${rule.deck.minCards}〜${rule.deck.maxCards}枚`;
+    errors.push(`デッキは${lengthLabel}にしてください。`);
+  }
+
+  return {
+    valid: errors.length === 0,
+    ruleId: rule.id,
+    deckFormat,
+    specialtyId,
+    size,
+    errors,
+    illegalCardIds: [...new Set(illegalCardIds)],
+    invalidCountIds,
+    copyOverages: [...new Set(copyOverages)],
+    aceCount
+  };
+}
+
+function deckValidationForPlayer(room, player) {
+  if (!room || !player || !isBattleRole(player.role)) {
+    return { valid: false, errors: ["対戦者のデッキではありません。"] };
+  }
+  return validateDeckDescriptor(room.ruleId, player);
+}
+
+function deckValidationMessage(validation) {
+  return validation?.errors?.[0] || "デッキが対戦ルールを満たしていません。";
 }
 
 function createSessionId() {
@@ -756,18 +990,65 @@ function normalizeCardStyles(cardStyles) {
     .slice(0, 64));
 }
 
-function playerPublicState(player) {
+function playerPublicState(player, room = null) {
+  const validation = room && isBattleRole(player.role)
+    ? deckValidationForPlayer(room, player)
+    : null;
   return {
     clientId: player.clientId,
     role: player.role,
     deckName: player.role === "spectator" ? "" : (player.deckName || "__current"),
+    deckFormat: player.role === "spectator" ? "" : normalizeDeckFormat(player.deckFormat || "normal"),
+    specialtyId: player.role === "spectator" ? "" : normalizeSpecialtyId(player.specialtyId || ""),
+    deckValid: player.role === "spectator" ? false : Boolean(validation?.valid),
+    deckValidationErrors: player.role === "spectator" ? [] : (validation?.errors || []),
     cardStyles: player.role === "spectator" ? {} : (player.cardStyles || {}),
     ready: player.role === "spectator" ? false : Boolean(player.ready)
   };
 }
 
 function roomPlayers(room) {
-  return [...room.players.values()].map(playerPublicState);
+  return [...room.players.values()].map((player) => playerPublicState(player, room));
+}
+
+// Deck contents are needed by the authoritative host to create the initial
+// game snapshot, but are not part of ordinary public room state.  Re-send the
+// guest descriptor whenever either player joins/rejoins so a stale descriptor
+// can never be used after a disconnect.
+function privateDeckUpdateMessage(room, deckOwner) {
+  if (!room || !deckOwner || !isBattleRole(deckOwner.role)) return null;
+  const validation = deckValidationForPlayer(room, deckOwner);
+  return {
+    type: "privateDeckUpdate",
+    senderId: SERVER_ID,
+    roomId: room.roomId,
+    roomSessionId: room.sessionId,
+    ruleId: room.ruleId,
+    playerId: deckOwner.clientId,
+    deckOwnerId: deckOwner.clientId,
+    deckName: deckOwner.deckName || "__current",
+    deckFormat: normalizeDeckFormat(deckOwner.deckFormat || "normal"),
+    specialtyId: normalizeSpecialtyId(deckOwner.specialtyId || ""),
+    deckCounts: deckOwner.deckCounts || null,
+    cardStyles: deckOwner.cardStyles || {},
+    ready: Boolean(deckOwner.ready),
+    deckValid: Boolean(validation?.valid),
+    deckValidationErrors: validation?.errors || []
+  };
+}
+
+function sendPrivateDeckUpdateToHost(room, deckOwner) {
+  const host = hostOf(room);
+  if (!host || !deckOwner || host.clientId === deckOwner.clientId) return false;
+  const message = privateDeckUpdateMessage(room, deckOwner);
+  return message ? send(host.ws, message) : false;
+}
+
+function syncPrivateGuestDeckToHost(room) {
+  const host = hostOf(room);
+  const guest = guestOf(room);
+  if (!host || !guest) return false;
+  return sendPrivateDeckUpdateToHost(room, guest);
 }
 
 function isBattleRole(role) {
@@ -789,6 +1070,8 @@ function publicRoomState(room) {
   return {
     roomId: room.roomId,
     matchType: room.matchType || "private",
+    ruleId: room.ruleId,
+    roomRule: publicRoomRule(room.ruleId),
     started: Boolean(room.started),
     players: battlePlayers(room).length,
     spectators: [...room.players.values()].filter((player) => player.role === "spectator").length,
@@ -833,6 +1116,7 @@ function createRoom(roomId, sessionId = "", matchType = "private") {
     roomId,
     sessionId: sessionId || createSessionId(),
     matchType,
+    ruleId: DEFAULT_ROOM_RULE_ID,
     players: new Map(),
     started: false,
     state: null,
@@ -895,12 +1179,54 @@ function rememberProcessedCommand(room, commandId) {
 }
 
 function sendLatestState(room, ws) {
-  if (!room?.state) return;
-  send(ws, {
-    type: "gameState",
+  if (!room?.state || !ws) return;
+  const player = [...room.players.values()].find((entry) => entry.ws === ws) || null;
+  sendSnapshotMessage(room, player, "gameState");
+}
+
+// The host remains authoritative and therefore retains its complete state.
+// Other recipients only receive card backs for hands they are not allowed to
+// inspect. Keeping an array of opaque placeholders preserves hand counts for
+// the client UI without leaking a base ID, name, instance ID, or card state.
+function hiddenHandPlaceholders(hand) {
+  return Array.isArray(hand) ? hand.map(() => ({ hidden: true })) : [];
+}
+
+function snapshotForRecipient(snapshot, recipient) {
+  if (!snapshot || typeof snapshot !== "object") return snapshot;
+  const hiddenSides = recipient?.role === "guest"
+    ? ["player"]
+    : recipient?.role === "spectator"
+      ? ["player", "opponent"]
+      : [];
+  if (hiddenSides.length === 0) return snapshot;
+
+  const copy = JSON.parse(JSON.stringify(snapshot));
+  const players = copy?.state?.players;
+  if (!players || typeof players !== "object") return copy;
+  hiddenSides.forEach((side) => {
+    if (Array.isArray(players[side]?.hand)) {
+      players[side].hand = hiddenHandPlaceholders(players[side].hand);
+    }
+  });
+  return copy;
+}
+
+function sendSnapshotMessage(room, recipient, type, extra = {}) {
+  if (!room?.state || !recipient?.ws) return false;
+  return send(recipient.ws, {
+    type,
     senderId: SERVER_ID,
     roomSessionId: room.sessionId,
-    snapshot: room.state
+    ...extra,
+    snapshot: snapshotForRecipient(room.state, recipient)
+  });
+}
+
+function broadcastSnapshotMessage(room, type, extra = {}, exceptClientId = "") {
+  room.players.forEach((recipient) => {
+    if (recipient.clientId === exceptClientId) return;
+    sendSnapshotMessage(room, recipient, type, extra);
   });
 }
 
@@ -986,14 +1312,62 @@ function refreshWaitingRoomTimer(room) {
   room.waitingTimer.unref?.();
 }
 
-function deckTotal(deckCounts) {
-  if (!deckCounts || typeof deckCounts !== "object" || Array.isArray(deckCounts)) return 0;
-  return Object.values(deckCounts).reduce((sum, value) => sum + Math.max(0, Number(value) || 0), 0);
+function roomPlayerJoinedMessage(room, player = null) {
+  return {
+    type: "playerJoined",
+    senderId: SERVER_ID,
+    roomId: room.roomId,
+    roomSessionId: room.sessionId,
+    matchType: room.matchType || "private",
+    ruleId: room.ruleId,
+    roomRule: publicRoomRule(room.ruleId),
+    you: player ? playerPublicState(player, room) : null,
+    players: roomPlayers(room),
+    hasOpponent: player
+      ? roomHasOpponent(room, player.role)
+      : battlePlayers(room).length === 2,
+    started: room.started
+  };
 }
 
-function isDeckValid(deckCounts) {
-  const total = deckTotal(deckCounts);
-  return total >= MIN_DECK_CARDS && total <= MAX_DECK_CARDS;
+function roomStateMessage(room, options = {}) {
+  const host = hostOf(room);
+  const guest = guestOf(room);
+  const message = {
+    type: "roomState",
+    senderId: options.senderId || SERVER_ID,
+    roomId: room.roomId,
+    roomSessionId: room.sessionId,
+    matchType: room.matchType || "private",
+    ruleId: room.ruleId,
+    roomRule: publicRoomRule(room.ruleId),
+    players: roomPlayers(room),
+    hostReady: Boolean(host?.ready),
+    guestReady: Boolean(guest?.ready),
+    hostDeckName: host?.deckName || "",
+    guestDeckName: guest?.deckName || "",
+    hostDeckFormat: host?.deckFormat || "normal",
+    guestDeckFormat: guest?.deckFormat || "normal",
+    hostSpecialtyId: host?.specialtyId || "",
+    guestSpecialtyId: guest?.specialtyId || "",
+    hostDeckValid: Boolean(host && deckValidationForPlayer(room, host).valid),
+    guestDeckValid: Boolean(guest && deckValidationForPlayer(room, guest).valid),
+    status: typeof options.status === "string" ? options.status.slice(0, 240) : ""
+  };
+  if (Number.isSafeInteger(Number(options.roomStateSeq))) {
+    message.roomStateSeq = Number(options.roomStateSeq);
+  }
+  return message;
+}
+
+function broadcastRoomState(room, options = {}, exceptClientId = "") {
+  broadcast(room, roomStateMessage(room, options), exceptClientId);
+}
+
+function revalidateRoomPlayers(room) {
+  battlePlayers(room).forEach((player) => {
+    if (!deckValidationForPlayer(room, player).valid) player.ready = false;
+  });
 }
 
 function sideForRole(role) {
@@ -1085,13 +1459,19 @@ function joinRoom(ws, message) {
     try { existing.ws.close(4001, "replaced"); } catch {}
   }
 
+  const descriptor = role === "spectator" ? null : deckDescriptorFromMessage(message, existing);
+  const descriptorValidation = descriptor ? validateDeckDescriptor(room.ruleId, descriptor) : null;
   const player = {
     clientId,
     role,
     ws,
-    ready: role === "spectator" ? false : Boolean(message.ready),
-    deckName: role === "spectator" ? "" : (message.deckName || "__current"),
-    deckCounts: role === "spectator" ? null : (message.deckCounts || null),
+    ready: role === "spectator" ? false : (Boolean(message.ready) && Boolean(descriptorValidation?.valid)),
+    deckName: role === "spectator"
+      ? ""
+      : (hasOwn(message, "deckName") ? (message.deckName || "__current") : (existing?.deckName || "__current")),
+    deckFormat: role === "spectator" ? "" : descriptor.deckFormat,
+    specialtyId: role === "spectator" ? "" : descriptor.specialtyId,
+    deckCounts: role === "spectator" ? null : descriptor.deckCounts,
     cardStyles: role === "spectator" ? {} : normalizeCardStyles(message.cardStyles ?? existing?.cardStyles),
     joinedAt: existing?.joinedAt || now(),
     lastSeenAt: now()
@@ -1101,26 +1481,12 @@ function joinRoom(ws, message) {
   ws.roomId = roomId;
   ws.clientId = clientId;
 
-  const joinedMessage = {
-    type: "playerJoined",
-    senderId: SERVER_ID,
-    roomId,
-    roomSessionId: room.sessionId,
-    matchType: room.matchType || "private",
-    you: playerPublicState(player),
-    players: roomPlayers(room),
-    hasOpponent: roomHasOpponent(room, role),
-    started: room.started
-  };
+  const joinedMessage = roomPlayerJoinedMessage(room, player);
   send(ws, joinedMessage);
   broadcast(room, joinedMessage, clientId);
+  syncPrivateGuestDeckToHost(room);
   if (room.state) {
-    send(ws, {
-      type: "gameState",
-      senderId: SERVER_ID,
-      roomSessionId: room.sessionId,
-      snapshot: room.state
-    });
+    sendSnapshotMessage(room, player, "gameState");
   }
   if (role === "host" && room.started) {
     room.pendingCommands.forEach((_pending, commandId) => deliverPendingCommand(room, commandId));
@@ -1186,26 +1552,79 @@ function handleDeckUpdate(ws, message) {
     sendError(ws, "観戦者はデッキや準備状態を変更できません。", "forbidden");
     return;
   }
-  const ready = Boolean(message.ready);
-  if (ready && !isDeckValid(message.deckCounts)) {
-    sendError(ws, "デッキは40〜60枚で準備OKにしてください。", "invalid_deck");
+  const descriptor = deckDescriptorFromMessage(message, player);
+  const validation = validateDeckDescriptor(room.ruleId, descriptor);
+  const requestedReady = Boolean(message.ready);
+  player.deckName = hasOwn(message, "deckName") ? (message.deckName || "__current") : (player.deckName || "__current");
+  player.deckFormat = descriptor.deckFormat;
+  player.specialtyId = descriptor.specialtyId;
+  player.deckCounts = descriptor.deckCounts;
+  player.cardStyles = normalizeCardStyles(message.cardStyles ?? player.cardStyles);
+  player.ready = requestedReady && validation.valid;
+  room.updatedAt = now();
+  broadcast(room, {
+    type: "deckUpdate",
+    senderId: player.clientId,
+    roomSessionId: room.sessionId,
+    roomId: room.roomId,
+    ruleId: room.ruleId,
+    roomRule: publicRoomRule(room.ruleId),
+    deckName: player.deckName,
+    deckFormat: player.deckFormat,
+    specialtyId: player.specialtyId,
+    deckCounts: player.deckCounts,
+    cardStyles: player.cardStyles,
+    ready: player.ready,
+    deckValid: validation.valid,
+    deckValidationErrors: validation.errors
+  }, player.clientId);
+  // The host receives the deck descriptor through a recipient-only message.
+  // This is also the path used after a guest reconnects.
+  sendPrivateDeckUpdateToHost(room, player);
+  broadcast(room, roomPlayerJoinedMessage(room));
+  if (requestedReady && !validation.valid) {
+    sendError(ws, deckValidationMessage(validation), "invalid_deck");
+  }
+}
+
+function handleSetRoomRule(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player) return;
+  if (player.role !== "host") {
+    sendError(ws, "対戦ルールはホストだけが変更できます。", "forbidden");
     return;
   }
-  player.deckName = message.deckName || "__current";
-  player.deckCounts = message.deckCounts || null;
-  player.cardStyles = normalizeCardStyles(message.cardStyles ?? player.cardStyles);
-  player.ready = ready;
-  broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
+  if (room.started) {
+    sendError(ws, "対戦開始後に対戦ルールは変更できません。", "game_started");
+    return;
+  }
+  const ruleId = String(message.ruleId || "").trim();
+  const rule = roomRuleDefinition(ruleId);
+  if (!rule) {
+    sendError(ws, "指定された対戦ルールは存在しません。", "invalid_rule");
+    return;
+  }
+  room.ruleId = rule.id;
+  revalidateRoomPlayers(room);
+  room.updatedAt = now();
+  const host = hostOf(room);
+  const guest = guestOf(room);
   broadcast(room, {
-    type: "playerJoined",
+    type: "roomRuleChanged",
     senderId: SERVER_ID,
     roomId: room.roomId,
     roomSessionId: room.sessionId,
     matchType: room.matchType || "private",
-    you: null,
+    ruleId: room.ruleId,
+    roomRule: publicRoomRule(room.ruleId),
     players: roomPlayers(room),
-    hasOpponent: true,
+    hostReady: Boolean(host?.ready),
+    guestReady: Boolean(guest?.ready),
+    hasOpponent: battlePlayers(room).length === 2,
     started: room.started
+  });
+  broadcastRoomState(room, {
+    status: `ホストが対戦ルールを「${rule.name}」に変更しました。`
   });
 }
 
@@ -1216,7 +1635,11 @@ function handleRoomState(ws, message) {
     sendError(ws, "部屋状態はホストだけが送信できます。", "forbidden");
     return;
   }
-  broadcast(room, { ...message, senderId: player.clientId, roomSessionId: room.sessionId }, player.clientId);
+  broadcastRoomState(room, {
+    senderId: player.clientId,
+    roomStateSeq: message.roomStateSeq,
+    status: message.status
+  }, player.clientId);
 }
 
 function handleStartGame(ws, message) {
@@ -1231,9 +1654,12 @@ function handleStartGame(ws, message) {
     sendError(ws, "2人そろうまで開始できません。", "not_ready");
     return;
   }
-  const allReady = joinedBattlePlayers.every((joinedPlayer) => joinedPlayer.ready && isDeckValid(joinedPlayer.deckCounts));
+  revalidateRoomPlayers(room);
+  const allReady = joinedBattlePlayers.every((joinedPlayer) =>
+    joinedPlayer.ready && validateDeckDescriptor(room.ruleId, joinedPlayer).valid);
   if (!allReady) {
-    sendError(ws, "2人とも有効なデッキで準備OKにしてください。", "not_ready");
+    broadcast(room, roomPlayerJoinedMessage(room));
+    sendError(ws, "2人とも現在の対戦ルールで有効なデッキを選び、準備OKにしてください。", "not_ready");
     return;
   }
   if (!message.snapshot) {
@@ -1246,18 +1672,12 @@ function handleStartGame(ws, message) {
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
   room.currentTurn = snapshotCurrentTurn(message.snapshot);
   room.updatedAt = now();
-  broadcast(room, {
-    type: "startGame",
-    senderId: SERVER_ID,
-    roomSessionId: room.sessionId,
-    snapshot: room.state
+  broadcastSnapshotMessage(room, "startGame", {
+    ruleId: room.ruleId,
+    roomRule: publicRoomRule(room.ruleId),
+    players: roomPlayers(room)
   });
-  broadcast(room, {
-    type: "gameState",
-    senderId: SERVER_ID,
-    roomSessionId: room.sessionId,
-    snapshot: room.state
-  });
+  broadcastSnapshotMessage(room, "gameState", { ruleId: room.ruleId });
 }
 
 function handleGameState(ws, message) {
@@ -1275,13 +1695,7 @@ function handleGameState(ws, message) {
   room.currentTurn = snapshotCurrentTurn(message.snapshot) || room.currentTurn;
   room.updatedAt = now();
   const processedCommandId = String(message.processedCommandId || "").slice(0, 120);
-  broadcast(room, {
-    type: "gameState",
-    senderId: SERVER_ID,
-    roomSessionId: room.sessionId,
-    snapshot: room.state,
-    processedCommandId
-  }, player.clientId);
+  broadcastSnapshotMessage(room, "gameState", { processedCommandId }, player.clientId);
   completePendingCommand(room, processedCommandId);
 }
 
@@ -1384,6 +1798,38 @@ function handlePrivateChoiceRelay(ws, message) {
   send(target.ws, { ...message, senderId: player.clientId, roomSessionId: room.sessionId });
 }
 
+function handleOneEyedPeekReveal(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player) return;
+  if (!room.started) {
+    sendError(ws, "対戦がまだ開始されていません。", "not_started");
+    return;
+  }
+  if (player.role !== "host") {
+    sendError(ws, "片目カンニングの公開情報はホストが送信します。", "forbidden");
+    return;
+  }
+  if (message.sourceBaseId !== "one_eyed_peek") {
+    sendError(ws, "片目カンニング以外の非公開公開メッセージは送信できません。", "invalid_reveal");
+    return;
+  }
+  const guest = guestOf(room);
+  if (!guest) {
+    sendError(ws, "公開先の相手が見つかりません。", "target_missing");
+    return;
+  }
+  // Derive the reveal from the authoritative snapshot instead of trusting a
+  // client-provided card list. This message is deliberately sent only to the
+  // guest who used the effect; observers never receive it.
+  const hand = room.state?.state?.players?.player?.hand;
+  send(guest.ws, {
+    type: "oneEyedPeekReveal",
+    senderId: player.clientId,
+    roomSessionId: room.sessionId,
+    cards: Array.isArray(hand) ? hand : []
+  });
+}
+
 function handleReturnRoom(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
@@ -1427,6 +1873,9 @@ function routeMessage(ws, raw) {
     case "deckUpdate":
       handleDeckUpdate(ws, message);
       break;
+    case "setRoomRule":
+      handleSetRoomRule(ws, message);
+      break;
     case "roomState":
       handleRoomState(ws, message);
       break;
@@ -1445,8 +1894,8 @@ function routeMessage(ws, raw) {
       handlePlayerCommand(ws, message);
       break;
     case "syncRequest": {
-      const { room } = requireJoined(ws);
-      if (room?.state) send(ws, { type: "gameState", senderId: SERVER_ID, roomSessionId: room.sessionId, snapshot: room.state });
+      const { room, player } = requireJoined(ws);
+      if (room?.state) sendSnapshotMessage(room, player, "gameState");
       break;
     }
     case "snapshotAck":
@@ -1469,7 +1918,16 @@ function routeMessage(ws, raw) {
     case "badStudentDiscardResponse":
     case "logicHunterChoiceRequest":
     case "logicHunterChoiceResponse":
+    case "courseRegistrationChoiceRequest":
+    case "courseRegistrationChoiceResponse":
+    case "titleMatchChoiceRequest":
+    case "titleMatchChoiceResponse":
+    case "philosophyCheatingChoiceRequest":
+    case "philosophyCheatingChoiceResponse":
       handlePrivateChoiceRelay(ws, message);
+      break;
+    case "oneEyedPeekReveal":
+      handleOneEyedPeekReveal(ws, message);
       break;
     case "returnRoom":
       handleReturnRoom(ws, message);
