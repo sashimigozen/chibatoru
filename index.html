@@ -16489,7 +16489,7 @@
       apprentice_vampire: ["cafeteria"],
       smart_me: ["lazy_student", "cancel_student"],
       greeting_3000: ["yuta", "dark_yuta"],
-      failure_student: ["general_student", "ruler"],
+      failure_student: ["success_student", "general_student", "ruler"],
       success_student: ["failure_student", "general_student", "ruler"],
       bounce_day: [],
       yocchan: ["set_log"],
@@ -16816,10 +16816,21 @@
     );
     ALL_DECK_IDS = [...new Set(ALL_DECK_IDS)].filter((baseId) => {
       const base = CARD_BASES[baseId];
-      const usable = Boolean(base && !base.generated && !base.token && !base.evolutionFrom);
+      // Evolution cards are deck-buildable cards.  Their allowedZones setting
+      // still limits their *placement* to an evolution, while generated-only
+      // cards and tokens remain unavailable to every deck editor.
+      const usable = Boolean(base && !base.generated && !base.token);
       if (usable) DIRECT_DECK_CARD_IDS.add(baseId);
       return usable;
     });
+    // Fixed dungeon opponents keep an explicit card set derived from their
+    // floor definitions.  It still excludes generated cards and tokens.
+    const DUNGEON_INTERNAL_DECK_IDS = Object.freeze([...new Set(
+      Object.values(DUNGEON_FLOOR_DECKS).flatMap((counts) => Object.keys(counts || {}))
+    )].filter((baseId) => {
+      const base = CARD_BASES[baseId];
+      return Boolean(base && !base.generated && !base.token);
+    }));
     // Kept so existing browser-saved decks made before the card's official
     // naming can still be loaded.  The game itself only exposes the canonical
     // 東工ニキ id.
@@ -18540,8 +18551,12 @@
       };
     }
 
-    function createEmptyDeckCounts() {
-      return ALL_DECK_IDS.reduce((counts, baseId) => {
+    function deckCardIds(cardIds = ALL_DECK_IDS) {
+      return [...new Set(cardIds || ALL_DECK_IDS)].filter((baseId) => Boolean(CARD_BASES[baseId]));
+    }
+
+    function createEmptyDeckCounts(cardIds = ALL_DECK_IDS) {
+      return deckCardIds(cardIds).reduce((counts, baseId) => {
         counts[baseId] = 0;
         return counts;
       }, {});
@@ -19114,8 +19129,8 @@
       return state.deckBuilder.format === "chaos";
     }
 
-    function hasValidAceCounts(counts) {
-      const aceIds = ALL_DECK_IDS.filter((baseId) => CARD_BASES[baseId]?.ace);
+    function hasValidAceCounts(counts, cardIds = ALL_DECK_IDS) {
+      const aceIds = deckCardIds(cardIds).filter((baseId) => CARD_BASES[baseId]?.ace);
       const total = aceIds.reduce((sum, baseId) => sum + (Number(counts[baseId]) || 0), 0);
       return total <= 1 && aceIds.every((baseId) => (Number(counts[baseId]) || 0) <= 1);
     }
@@ -21900,18 +21915,19 @@
     }
 
     function copyDeckCounts(counts, options = {}) {
-      const copy = createEmptyDeckCounts();
+      const cardIds = deckCardIds(options.cardIds);
+      const copy = createEmptyDeckCounts(cardIds);
       const unlimited = options.unlimited === true;
-      ALL_DECK_IDS.forEach((baseId) => {
+      cardIds.forEach((baseId) => {
         const count = Math.max(0, Math.floor(Number(counts[baseId]) || 0));
         copy[baseId] = unlimited ? count : Math.min(maxCopiesForCard(baseId), count);
       });
       return copy;
     }
 
-    function createDeckFromCounts(owner, counts) {
+    function createDeckFromCounts(owner, counts, options = {}) {
       const deck = [];
-      ALL_DECK_IDS.forEach((baseId) => {
+      deckCardIds(options.cardIds).forEach((baseId) => {
         const copies = Number(counts[baseId]) || 0;
         for (let i = 0; i < copies; i += 1) deck.push(createCardFromBase(baseId, owner));
       });
@@ -21940,21 +21956,22 @@
       return copy;
     }
 
-    function deckSize(counts) {
-      return ALL_DECK_IDS.reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
+    function deckSize(counts, options = {}) {
+      return deckCardIds(options.cardIds).reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
     }
 
-    function validateDeckCounts(counts) {
-      const size = deckSize(counts);
+    function validateDeckCounts(counts, options = {}) {
+      const cardIds = deckCardIds(options.cardIds);
+      const size = deckSize(counts, { cardIds });
       return {
         size,
         lengthOk: size >= DECK_MIN && size <= DECK_MAX,
-        copiesOk: ALL_DECK_IDS.every((baseId) => {
+        copiesOk: cardIds.every((baseId) => {
           const count = Number(counts[baseId]) || 0;
           return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
         }),
-        aceOk: hasValidAceCounts(counts),
-        valid: size >= DECK_MIN && size <= DECK_MAX && hasValidAceCounts(counts) && ALL_DECK_IDS.every((baseId) => {
+        aceOk: hasValidAceCounts(counts, cardIds),
+        valid: size >= DECK_MIN && size <= DECK_MAX && hasValidAceCounts(counts, cardIds) && cardIds.every((baseId) => {
           const count = Number(counts[baseId]) || 0;
           return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
         })
@@ -22037,14 +22054,15 @@
           state.players.opponent.life = state.players.opponent.dungeonLifeCap;
         }
       }
+      const opponentDeckCardIds = options.opponentDeckCardIds || ALL_DECK_IDS;
       const playerDeckCounts = copyDeckCounts(state.deckBuilder.counts.player);
-      const opponentDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent);
+      const opponentDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent, { cardIds: opponentDeckCardIds });
       state.players.player.originalDeckCounts = playerDeckCounts;
       state.players.opponent.originalDeckCounts = opponentDeckCounts;
       state.players.player.deck = createDeckFromCounts("player", playerDeckCounts);
-      state.players.opponent.deck = createDeckFromCounts("opponent", opponentDeckCounts);
+      state.players.opponent.deck = createDeckFromCounts("opponent", opponentDeckCounts, { cardIds: opponentDeckCardIds });
       state.players.player.deckValid = validateDeckCounts(playerDeckCounts);
-      state.players.opponent.deckValid = validateDeckCounts(opponentDeckCounts);
+      state.players.opponent.deckValid = validateDeckCounts(opponentDeckCounts, { cardIds: opponentDeckCardIds });
       if (dungeonBattle) prepareDungeonFloorBattleRules();
       analyticsStartGame();
       queueAnimation("shuffle", "player");
@@ -27168,6 +27186,10 @@
       }
       if (card.type === "item") return false;
       if (card.evolutionFrom) {
+        // Evolution replaces a matching card in its owner's classroom.  The
+        // environment slot has no owner; do not ask the target finder to
+        // inspect it while rendering a selected evolution card.
+        if (!["seat", "teacher"].includes(zone) || owner !== side) return false;
         if (zone === "seat" && isSeatClosedByAggro(owner, index)) return false;
         return Boolean(findEvolveTarget(side, card, owner, zone, index));
       }
@@ -27213,6 +27235,7 @@
     }
 
     function findEvolveTarget(side, card, owner = side, zone = null, index = null, options = {}) {
+      if (!card?.evolutionFrom || !state.players[owner]) return null;
       const allowSameTurnEvolution = Boolean(options.allowSameTurnEvolution)
         || canUseDungeonSameTurnEvolution(side, card?.evolutionFrom);
       const refs = listBoardRefs(owner).filter((ref) => zone === null || (ref.zone === zone && ref.index === index));
@@ -27643,8 +27666,23 @@
           fromHand: attendanceSource === ATTENDANCE_SOURCE.HAND
         });
       }
+      // Biology fusion is a board-state transition (two matching organisms
+      // are present), not an individual card's printed "when attended"
+      // ability.  Keep it outside the hand-only local-effect gate so cards
+      // created by an effect, such as Night Pool's single cells, can still
+      // complete their documented fusion.  Explicitly suppressed attendance
+      // effects (for example Reversal) keep the former no-trigger behavior.
+      if (!skipLocalEffects && options.allowDerivedAttendanceTransitions !== false) {
+        resolveAttendanceStateTransitions(owner, card);
+      }
       resolveProliferatingEnemyTriggers(owner, card);
       return card;
+    }
+
+    function resolveAttendanceStateTransitions(side, card) {
+      if (["single_cell", "midge", "organism"].includes(card?.baseId)) {
+        resolveBiologyFusion(side);
+      }
     }
 
     function resolveAttendEffects(side, card, zone, index, options = {}) {
@@ -27819,7 +27857,7 @@
             attendanceSource: ATTENDANCE_SOURCE.GENERATED
           })) summoned += 1;
         });
-        addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人召喚しました。それらは相手が自分のターンを2回終了するまで攻撃できません。`);
+        addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人出席させました。それらは相手が自分のターンを2回終了するまで攻撃できません。`);
       }
       if (card.baseId === "loud_student") {
         let affected = 0;
@@ -27858,9 +27896,6 @@
         const movedText = trashDetailCountText(opponent, moved, `${card.name}で破壊された出席者`, "人");
         addLog(`${card.name}の出席時効果：相手の出席者${movedText}をすべて破壊しました。`);
       }
-      if (["single_cell", "midge", "organism"].includes(card.baseId)) {
-        resolveBiologyFusion(side);
-      }
       if (card.baseId === "adjective_student" && Math.random() < 0.5) {
         applyPermanentStatBuff(card, 3, 0, 0, card.name);
         showFloatingTextForCard(card, "+3攻", "heal");
@@ -27893,7 +27928,7 @@
             attendanceSource: ATTENDANCE_SOURCE.COPY
           });
         });
-        addLog(`${card.name}の効果：2行1列と2行3列に同名の出席者を召喚しました。`);
+        addLog(`${card.name}の効果：2行1列と2行3列に同名の出席者を出席させました。`);
       }
       if (card.baseId === "sniper") {
         const opponentHand = state.players[opponent].hand;
@@ -27985,7 +28020,7 @@
             attendanceSource: ATTENDANCE_SOURCE.GENERATED
           })) summoned += 1;
         });
-        addLog(`${card.name}の効果：空いている席マスに、1/1で陽気を持つエキストラ学生を${summoned}人召喚しました。`);
+        addLog(`${card.name}の効果：空いている席マスに、1/1で陽気を持つエキストラ学生を${summoned}人出席させました。`);
       }
       if (card.baseId === "angry_maker") {
         const ownDraw = drawUpTo(side, 2);
@@ -28120,7 +28155,7 @@
           }
         });
         state.players[side].hand.push(createCardFromBase("roar", side));
-        addLog(`${card.name}の効果：TAを召喚し、咆哮を生成。教卓マスにいる間、自分のTAの体力+1。`);
+        addLog(`${card.name}の効果：TAを出席させ、咆哮を生成。教卓マスにいる間、自分のTAの体力+1。`);
       }
       if (card.baseId === "lightning_n") {
         state.players[side].hand.push(createCardFromBase("ruler", side));
@@ -28202,9 +28237,9 @@
           const placedTa = makeBoardCard(ta);
           if (attendCard(side, placedTa, "seat", 1, {
             attendanceSource: ATTENDANCE_SOURCE.GENERATED
-          })) addLog(`${card.name}の効果：1行2列に陽気を持つTAを召喚。`);
+          })) addLog(`${card.name}の効果：1行2列に陽気を持つTAを出席させました。`);
         } else {
-          addLog(`${card.name}の効果：1行2列が空いていないためTAを召喚できません。`);
+          addLog(`${card.name}の効果：1行2列が空いていないためTAを出席させられません。`);
         }
       }
       if (card.baseId === "signal_professor_m" && zone === "teacher") {
@@ -30150,7 +30185,7 @@
         for (let i = 0; i < 2; i += 1) {
           if (summonToRandomOpenSeat(side, "single_cell", item.name)) summoned += 1;
         }
-        resultText = `単細胞生物をランダムな席マスに${summoned}人召喚しました。`;
+        resultText = `単細胞生物をランダムな席マスに${summoned}人出席させました。`;
       }
       if (CRAB_SET_IDS.includes(item.baseId)) {
         healPlayer(side, 4);
@@ -36104,12 +36139,15 @@
         return;
       }
       state.deckBuilder.counts.player = copyDeckCounts(run.counts || {});
-      state.deckBuilder.counts.opponent = copyDeckCounts(opponentCounts);
+      state.deckBuilder.counts.opponent = copyDeckCounts(opponentCounts, {
+        cardIds: DUNGEON_INTERNAL_DECK_IDS
+      });
       state.dungeon.active = true;
       state.screen = "battle";
       initializeGame({
         dungeon: true,
-        opponentLife: dungeonOpponentLifeForFloor(floor.number)
+        opponentLife: dungeonOpponentLifeForFloor(floor.number),
+        opponentDeckCardIds: DUNGEON_INTERNAL_DECK_IDS
       });
     }
 
@@ -36155,7 +36193,7 @@
       elements.deckScreenSubtitle.textContent = isSpecialtyDeckFormat()
         ? "専攻カードと共通カードだけで作る、40枚固定のデッキです"
         : isChaosDeckFormat()
-          ? "40〜60枚。専攻・同名枚数・エースぺの制限はありません（生成・進化専用・トークンは編成不可）。"
+          ? "40〜60枚。専攻・同名枚数・エースぺの制限はありません（生成専用・トークンは編成不可）。"
           : "40〜60枚、同名は原則3枚まで（カード固有の上限あり）";
       elements.autoDeckButton.textContent = "お任せ";
       elements.playerDeckTab.classList.toggle("active", activeSide === "player");
@@ -37990,18 +38028,18 @@
         bounce_day: "このカードが攻撃したとき、このカードを校外エリアへ送る。出席者を攻撃していたなら、その出席者を持ち主の手札に戻す。相手本体を攻撃していたなら、このカードの攻撃力分のダメージを与える。",
         lone_wolf: "注目を持つ。このカードの周囲1マスに出席者がいないかぎり、このカードの攻撃力を+3、体力を+3する。",
         student_comedy: "このカードが席マスに出席したとき、周囲1マスにいる自分の学生すべての攻撃力と体力を+1する。",
-        seat_taking_group: "このカードは、自分の2行目の席マスがすべて空いている場合、2行2列にのみ出席できる。このカードが出席したとき、自分の2行1列と2行3列に「席取り軍団」を1人ずつ召喚する。",
+        seat_taking_group: "このカードは、自分の2行目の席マスがすべて空いている場合、2行2列にのみ出席できる。このカードが出席したとき、自分の2行1列と2行3列に「席取り軍団」を1人ずつ出席させる。",
         sniper: "このカードが出席したとき、相手の手札からカード1枚をランダムに選び、そのカードを校外エリアへ送る。",
         cynical_student: "自分のターン終了時、このカードが自分の場にいる場合、相手は手札をすべてデッキに戻してシャッフルする。その後、戻した枚数と同じ枚数のカードを引く。",
-        extra_people: "このカードが出席したとき、自分の空いている席マスすべてに、1/1で陽気を持つ「エキストラ学生」を1人ずつ召喚する。",
-        extra_student: "陽気を持つ。カードの効果によって召喚される1/1の学生トークン。",
+        extra_people: "このカードが出席したとき、自分の空いている席マスすべてに、1/1で陽気を持つ「エキストラ学生」を1人ずつ出席させる。",
+        extra_student: "陽気を持つ。カードの効果によって出席される1/1の学生トークン。",
         angry_maker: "席マスにのみ出席できる。このカードが出席したとき、お互いのプレイヤーはデッキを2枚引く。",
         elite_open_chatter: "席マスにのみ出席できる。このカードが出席したとき、相手は手札を3枚引く。",
         word_increaser: "このカードを手札から出席させたとき、このカード自身を除く自分の手札をすべてデッキに戻してシャッフルする。その後、デッキを上から7枚まで引く。",
         summer_teacher: "手札の「ミーハー学生」「エキストラの皆さん」「ネガティブトーカー」から1枚を選んで出席させる。選んだ効果の戦意は順に4／9／6となる。このカードは講義を持たない。",
         impossible_pink_fat: "このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。",
         general_teacher: "講義。教卓マスにいるかぎり、陽気を持つ。",
-        pro_k: "このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ召喚し、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。",
+        pro_k: "このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ出席させ、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。",
         lightning_n: "出席したとき、「定規」1枚を手札に生成する。このカードが教師マスに出席したとき、自分のデッキから「定規」を1枚まで引く。このカードが教卓マスにいるかぎり、講義の対象はヴァンパイアになる。",
         fairy_t: "このカードが教卓マスに出席したとき、相手の3行目にいる学生を、空いている1行目の席マスへ移動させてもよい。",
         popular_c: "このカードが教卓マスに出席したとき、自分の1行1列に「デザインフェアリー」1人を出席させる。このカードが教卓マスにいるかぎり、自分の「デザイン」と名のつく教師は陽気を持つ。",
@@ -38011,7 +38049,7 @@
         ninety_three_teacher: "陽気を持つ。このカードが教卓マスに出席したとき、相手本体に3ダメージを与える。このカードが教卓マスにいるかぎり、相手ターン開始時に相手本体に1ダメージを与える。",
         kansai_voice_t: "このカードが教卓マスに出席したとき、相手の出席者1人を指名する。その出席者は攻撃できない。",
         kyoto_sound_i: "このカードが教卓マスに出席したとき、相手の学生すべての攻撃力を+2し、それらに2ダメージを与える。",
-        kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人召喚する。",
+        kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人出席させる。",
         signal_professor_m: "このカードが教卓マスにいるかぎり、自分の場に他の教師がいなければ陽気を持つ。このカードが席マスにいるかぎり、自分の教師は攻撃できない。",
         logic_hunter: "このカードが教卓マスに出席したとき、相手の手札を見て、その中から1枚を選び、校外エリアへ送る。",
         president: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。",
@@ -38025,7 +38063,7 @@
         tissue_distributor: "このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の場のヴァンパイアすべての体力を+2する。",
         apprentice_vampire: "このカードが席マスに出席したとき、隣の空き席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-3する。",
         vampire: "陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。",
-        zombie: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を「ゾンビ」にする。ヴァンパイアにはこの効果は発動しない。",
+        zombie: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を「ゾンビ」にする。ヴァンパイアにはこの効果は使用しない。",
         impossible_high_note: "このカードが出席したとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
         dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを2枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
@@ -38044,7 +38082,7 @@
         course_registration_party: "相手プレイヤーに効果の了承を得る。了承された場合、お互いは自身のデッキから好きなカードを5枚選び校外エリアに送る。以降の5ターンは通常のドローの代わりに、校外へ送った5枚の中から選んで1枚を手札に加える。",
         brother_capital: "自分のデッキから戦意2以下の出席者を好きなだけ選び、自分の講義室に特殊出席させる。（エースぺ）",
         padlock: "装備カード。自分の出席者1人に装備できる。装備者はすべての効果を失い、攻撃と講義と進化を行えず、ダメージを受けず、効果で破壊されない。注目・超注目は無視して攻撃対象を選べる。このカードを装備したとき、「鍵」1枚を手札に生成する。",
-        crotch_febreze: "自分の「あえー」と名のつく出席者がいる場合に使用できる。好きな人数の体力を1にし、その人数まで相手教師を選ぶ。選んだ教師の出席時効果だけを相手に対して発動する。",
+        crotch_febreze: "自分の「あえー」と名のつく出席者がいる場合に使用できる。好きな人数の体力を1にし、その人数まで相手教師を選ぶ。選んだ教師の出席時効果だけを相手に対して使用する。",
         smoke_flare: "自分の戦意最大値を+2する。+2後の値が10以上なら、自分のデッキから1枚引く。（エースぺ）",
         big_laughter: "自分の講義室に4人以上出席している時のみ使用できる。自分の気力を出席者の人数分回復する。その後、自分の学生すべてに1ダメージ。",
         lie_pekora: "お互いの講義室にいる出席者数が同じの場合のみ使用できる。双方の講義室に存在する出席者を対応するマスごと入れ替える。",
@@ -38063,7 +38101,7 @@
         absolute_woman: "このカードが出席者を攻撃したとき、その出席者を破壊する。",
         environment_setup: "次の2つから1つを選ぶ。1. 自分のデッキから環境カードをランダムに1枚手札に加える。2. 自分の校外エリアから環境カードをランダムに1枚手札に戻す。",
         diamond_dust: "自分の校外エリアに「ダブルダイヤモンドクロス」が2枚以上あり、自分の教卓マスに「デザインデーモンスレイヤー」がいる場合に使用できる。お互いの講義室の出席者すべてと環境を破壊する。校外エリアにあるこのカードは、手札を2枚校外エリアへ送ることで手札に戻せる。",
-        happy_experience: "自分の出席者1人を指名する。手札にその進化先がある場合、そのカードに進化させる。この効果で進化したカードの出席時・進化時の能力は発動しない。",
+        happy_experience: "自分の出席者1人を指名する。手札にその進化先がある場合、そのカードに進化させる。この効果で進化したカードの出席時・進化時の能力は使用しない。",
         go_away: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。",
         loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
         small_omata: "教卓マスにのみ出席できる。出席した時、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。自分の戦意が10のとき、このカードを出席させる場合、戦意を10支払う。出席後、このカードを破壊し、自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
@@ -38078,7 +38116,7 @@
         dry_meal_ticket: "環境が「食堂」の場合にのみ使用できる。自分のデッキから「おにぎりドロー」と「流動性パスタ」をそれぞれ1枚まで引く。",
         fluid_pasta: "自分の気力を3回復する。",
         water_2l: "自分の校外エリアから、カニ勝利に必要なカードを2枚まで手札に回収する。",
-        night_pool_water: "自分の空いている席マスに「単細胞生物」をランダムに2人召喚する。",
+        night_pool_water: "自分の空いている席マスに「単細胞生物」をランダムに2人出席させる。",
         i_got_it: "相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。",
         accelerate: "装備カード。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の場にいるなら、カードを1枚ドローする。装備カードは通常、1人につき1枚まで。",
         chameleon: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の体力を+2する。装備カードは通常、1人につき1枚まで。",
@@ -38099,7 +38137,7 @@
         dropped_cards: "自分のデッキから2枚を選び、校外エリアへ送る。",
         set_log: "自分の学生1人を指名する。その学生は陽気を持つ。",
         sage_legacy: "自分のデッキを1枚引く。後攻1ターン目または後攻7ターン目なら、その後さらに自分のデッキからカード1枚を選び、手札に加える。",
-        reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は発動しない。",
+        reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は使用しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の講義室にいるヴァンパイアの出席者すべてを破壊する。その後、この効果で破壊した出席者の人数と同じダメージを相手本体に与える。",
         panpan: "自分の出席者1人を指名する。その後、相手の出席者1人を指名する。それらを破壊する。",
@@ -38140,7 +38178,7 @@
         full_lock: "お互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
         design_domain: "このカードは、自分の教卓マスに「デザイン」と名のつく教師がいなければ置けない。ヴァンパイアは「デザイン」と名のつく教師を攻撃できない。",
         building_12_classroom: "お互いの教師すべての攻撃力を+1し、お互いの学生すべての攻撃力を-1する。",
-        raptor_temple: "各プレイヤーは自分のターンに1回、自分の場の「デザイン」と名のつく教師1人を指名し、校外エリアへ送ってもよい。そうした場合、自分の校外エリアにある進化前の「デザイン」と名のつく教師1人を指名し、同じマスに出席させる。出席時効果は発動する。",
+        raptor_temple: "各プレイヤーは自分のターンに1回、自分の場の「デザイン」と名のつく教師1人を指名し、校外エリアへ送ってもよい。そうした場合、自分の校外エリアにある進化前の「デザイン」と名のつく教師1人を指名し、同じマスに出席させる。出席時効果は使用する。",
         chaos_world: "このカードを環境マスに出したとき、お互いの手札にあるカードすべての戦意を0〜10のランダムな値にし、お互いの場の出席者すべての攻撃力を0〜10、体力を1〜10のランダムな値にする。このカードが環境マスにあるかぎり、各ターン開始時にも同じ処理を行う。このカードが校外エリアへ送られても、変更された値はそのまま。",
         no_late_time: "「遅刻」の効果をなくす。",
         meguro_library: "お互いにプレイヤー本体を攻撃できない。このカードをプレイしたプレイヤーは、このカードが環境マスにある間、自分のターン終了時に手札1枚を選び、校外エリアへ送る。",
@@ -38149,9 +38187,9 @@
         cote_dazur: "お互いの場の「あえー」と名のつく出席者の攻撃力を+10、体力を+10する。",
         door_war: "各プレイヤーのターン終了時、そのターンに自分が講義室へ出席させた出席者の中から1人をランダムに選び、その出席者に1ダメージを与える。",
         shogi_duel_field: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
-        aiben_vs_nyotei_title_match: "自分の講義室に「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室に出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。送られた枚数の合計だけ、お互いの講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は発動しない。",
+        aiben_vs_nyotei_title_match: "自分の講義室に「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室に出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。送られた枚数の合計だけ、お互いの講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
         ta_killer: "これは講義のダメージを受けない。手札から出席させたとき、相手のランダムな教師に1ダメージを与える。",
-        ta: "カードの効果によって召喚される学生トークン。"
+        ta: "カードの効果によって出席される学生トークン。"
       };
       return normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
     }
