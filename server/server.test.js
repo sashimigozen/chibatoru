@@ -303,6 +303,27 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
   const tokenInvalid = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", tokenInvalidStart);
   assert.match(tokenInvalid.message.message, /直接編成/);
 
+  // Evolution cards are legal deck cards in every rule format.  They can only
+  // be placed through an evolution in game, but the server must not reject
+  // them merely because their base data has evolutionFrom.
+  for (const evolutionCardId of ["success_student", "gitch", "gigi_blood", "demon_a_plus", "oni_shima_ai", "dark_yuta"]) {
+    const evolutionUpdateStart = host.messages.length;
+    send(guest, {
+      type: "deckUpdate",
+      deckCounts: createChaosDeckCounts(evolutionCardId),
+      deckFormat: "chaos",
+      specialtyId: "",
+      ready: true
+    });
+    const evolutionUpdate = await waitFor(host, (message) =>
+      message.type === "deckUpdate"
+      && message.senderId === "guest-rule"
+      && message.deckFormat === "chaos"
+      && message.ready === true,
+    evolutionUpdateStart);
+    assert.equal(evolutionUpdate.message.deckValid, true, `${evolutionCardId} should be deck-buildable`);
+  }
+
   const chaosDeck = createChaosDeckCounts();
   send(host, { type: "deckUpdate", deckCounts: chaosDeck, deckFormat: "chaos", specialtyId: "", ready: true });
   send(guest, { type: "deckUpdate", deckCounts: chaosDeck, deckFormat: "chaos", specialtyId: "", ready: true });

@@ -23,8 +23,8 @@ const SERVER_ID = "server";
 
 // Keep this server-side catalog in sync with the browser's direct-deck catalog.
 // The server deliberately owns a copy: clients are not authoritative for deck
-// legality, and generated, token, and evolution-only cards must never become
-// legal merely by being sent over the socket.
+// legality, and generated-only cards and tokens must never become legal merely
+// by being sent over the socket.
 const DEFAULT_ROOM_RULE_ID = "normal";
 const SPECIALTY_DEFINITIONS = Object.freeze({
   gakuyukai_item: Object.freeze({ id: "gakuyukai_item", name: "学友会・持ち物" }),
@@ -40,7 +40,7 @@ const SPECIALTY_DEFINITIONS = Object.freeze({
 const SPECIALTY_CARD_IDS = Object.freeze({
   common: Object.freeze(["ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"]),
   gakuyukai_item: Object.freeze(["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"]),
-  cafeteria: Object.freeze(["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"]),
+  cafeteria: Object.freeze(["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"]),
   design: Object.freeze(["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"]),
   late: Object.freeze(["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"]),
   expansion: Object.freeze(["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"]),
@@ -50,9 +50,8 @@ const SPECIALTY_CARD_IDS = Object.freeze({
   vampire: Object.freeze([])
 });
 const NON_DIRECT_DECK_CARD_IDS = new Set([
-  "beta", "gamma", "oni_shima_ai", "ta", "dark_student_council", "dark_yuta",
-  "success_student", "dry_meal_ticket", "demon_a_plus", "double_diamond", "extra_student",
-  "midge", "organism", "perfect_mutant", "roar", "suspicious_document", "key", "gitch", "gigi_blood"
+  "beta", "gamma", "ta", "dark_student_council", "dry_meal_ticket", "double_diamond",
+  "extra_student", "midge", "organism", "perfect_mutant", "roar", "suspicious_document", "key"
 ]);
 const DIRECT_DECK_CARD_IDS = new Set([
   ...Object.values(SPECIALTY_CARD_IDS).flat()
