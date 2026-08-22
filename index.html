@@ -33456,6 +33456,7 @@
     }
 
     function canUseItemNow(item) {
+      if (item.baseId === "aiben_vs_nyotei_title_match") return canUseTitleMatch("player", item);
       if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) return false;
       if (item.baseId === "dont_worry" && state.actionTurn < 5) return false;
       if (item.baseId === "yutakun_yutakun" && !state.players.player.trash.some((card) => card.baseId === "yuta")) return false;
@@ -33526,18 +33527,7 @@
           return canAttachUtaEquipment(target);
         });
       }
-      if (item.target === "friendly" || item.target === "friendlyAny") {
-        if (item.baseId === "set_log") {
-          return listBoardRefs("player").some((ref) => getBoardCardFromRef(ref)?.type === "student");
-        }
-        if (item.baseId === "go_home") {
-          return listBoardRefs("player").some((ref) => getBoardCardFromRef(ref)?.type === "student");
-        }
-        return listBoardRefs("player").some((ref) => {
-          const target = getBoardCardFromRef(ref);
-          return target && target.currentHp !== null && target.currentHp < target.maxHp;
-        });
-      }
+      if (["friendly", "friendlyAny", "anyBoard"].includes(item.target)) return hasUsableBoardTargetForItem(item);
       if (item.target === "enemy") {
         if (item.baseId === "ruler" || item.baseId === "double_diamond") return true;
         if (item.baseId === "panpan" && !listBoardRefs("player").some((ref) => getBoardCardFromRef(ref))) return false;
@@ -33602,6 +33592,11 @@
       if (item.target === "enemy" && !isAllowedEffectTarget("player", target)) return false;
       if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
       return ["enemy", "friendly", "friendlyAny", "anyBoard"].includes(item.target);
+    }
+
+    function hasUsableBoardTargetForItem(item) {
+      return ["player", "opponent"].some((owner) =>
+        listBoardRefs(owner).some((ref) => canUseItemOnBoardTarget(item, owner, ref.zone, ref.index)));
     }
 
     function canDropHandCardOnSlot(card, zone, owner, index) {
@@ -38779,6 +38774,7 @@
       state,
       CARD_BASES,
       createCardFromBase,
+      makeBoardCard,
       placeCardFromHand,
       startCardTest,
       canPlaceCard,
@@ -38787,6 +38783,12 @@
       resolveAttendEffects,
       castImmediateItem,
       castItemOnCard,
+      canUseHandCardNow,
+      canUseItemNow,
+      canUseItemOnBoardTarget,
+      canUseTitleMatch,
+      canUsePrintedCardEffects,
+      resolveTitleMatch,
       drawOne,
       resolveStudentEndTurnEffects,
       resolveChaosWorldAtTurnStart,
