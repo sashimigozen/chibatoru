@@ -73,7 +73,7 @@ const ROOM_RULE_DEFINITIONS = Object.freeze({
     id: "normal",
     name: "通常",
     description: "専攻を問わず通常デッキを使用します。",
-    deck: Object.freeze({ formats: Object.freeze(["normal"]), minCards: MIN_DECK_CARDS, maxCards: MAX_DECK_CARDS, copyLimit: "standard", aceLimit: 1, specialty: "none" })
+    deck: Object.freeze({ formats: Object.freeze(["normal"]), minCards: MIN_DECK_CARDS, maxCards: MAX_DECK_CARDS, copyLimit: "standard", aceLimit: 0, specialty: "none" })
   }),
   specialty: Object.freeze({
     id: "specialty",
@@ -201,6 +201,12 @@ function maxCopiesForCard(baseId) {
   return CARD_COPY_LIMITS[baseId] ?? 3;
 }
 
+function aceRuleErrorMessage(aceLimit) {
+  if (aceLimit === 0) return "エースぺは通常ルールでは使用できません。";
+  if (aceLimit === 1) return "エースぺは1デッキにつき1種類・1枚までです。";
+  return "";
+}
+
 function validateDeckDescriptor(ruleId, descriptor) {
   const rule = roomRuleDefinition(ruleId);
   const safeDescriptor = descriptor || {};
@@ -210,6 +216,7 @@ function validateDeckDescriptor(ruleId, descriptor) {
   const illegalCardIds = [];
   const invalidCountIds = [];
   const copyOverages = [];
+  const aceIds = new Set();
   let size = 0;
   let aceCount = 0;
 
@@ -258,7 +265,10 @@ function validateDeckDescriptor(ruleId, descriptor) {
       if (rule.deck.copyLimit === "standard" && count > maxCopiesForCard(baseId)) {
         copyOverages.push(baseId);
       }
-      if (ACE_CARD_IDS.has(baseId)) aceCount += count;
+      if (ACE_CARD_IDS.has(baseId)) {
+        aceCount += count;
+        aceIds.add(baseId);
+      }
       if (allowedSpecialtyCards && !allowedSpecialtyCards.has(baseId)) {
         illegalCardIds.push(baseId);
       }
@@ -268,8 +278,9 @@ function validateDeckDescriptor(ruleId, descriptor) {
   if (invalidCountIds.length) errors.push("デッキ枚数は0以上の整数で指定してください。");
   if (illegalCardIds.length) errors.push("直接編成できないカード、または選択した専攻に含まれないカードがあります。");
   if (copyOverages.length) errors.push("同名カードの枚数制限を超えています。");
-  if (rule.deck.aceLimit !== null && aceCount > rule.deck.aceLimit) {
-    errors.push("エースぺは1種類かつ1枚までです。");
+  const aceTypes = aceIds.size;
+  if (rule.deck.aceLimit !== null && (aceCount > rule.deck.aceLimit || aceTypes > rule.deck.aceLimit)) {
+    errors.push(aceRuleErrorMessage(rule.deck.aceLimit));
   }
   if (size < rule.deck.minCards || size > rule.deck.maxCards) {
     const lengthLabel = rule.deck.minCards === rule.deck.maxCards
@@ -288,7 +299,8 @@ function validateDeckDescriptor(ruleId, descriptor) {
     illegalCardIds: [...new Set(illegalCardIds)],
     invalidCountIds,
     copyOverages: [...new Set(copyOverages)],
-    aceCount
+    aceCount,
+    aceTypes
   };
 }
 

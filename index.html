@@ -16115,7 +16115,7 @@
           minCards: DECK_MIN,
           maxCards: DECK_MAX,
           copyLimit: "standard",
-          aceLimit: 1,
+          aceLimit: 0,
           specialty: "none",
           directDeckOnly: true
         })
@@ -19129,10 +19129,39 @@
       return state.deckBuilder.format === "chaos";
     }
 
-    function hasValidAceCounts(counts, cardIds = ALL_DECK_IDS) {
+    function deckAceLimitForFormat(format) {
+      const rule = ONLINE_RULE_DEFINITIONS.find((definition) => definition.deck.formats.includes(format));
+      return rule ? rule.deck.aceLimit : 0;
+    }
+
+    function activeDeckAceLimit() {
+      return deckAceLimitForFormat(state.deckBuilder.format);
+    }
+
+    function aceDeckSummary(counts, cardIds = ALL_DECK_IDS) {
       const aceIds = deckCardIds(cardIds).filter((baseId) => CARD_BASES[baseId]?.ace);
       const total = aceIds.reduce((sum, baseId) => sum + (Number(counts[baseId]) || 0), 0);
-      return total <= 1 && aceIds.every((baseId) => (Number(counts[baseId]) || 0) <= 1);
+      const types = aceIds.filter((baseId) => (Number(counts[baseId]) || 0) > 0).length;
+      return { aceIds, total, types };
+    }
+
+    function hasValidAceCounts(counts, cardIds = ALL_DECK_IDS, aceLimit = 1) {
+      if (aceLimit === null) return true;
+      const summary = aceDeckSummary(counts, cardIds);
+      return summary.total <= aceLimit && summary.types <= aceLimit;
+    }
+
+    function canAddAceCard(counts, baseId, aceLimit = activeDeckAceLimit()) {
+      if (!CARD_BASES[baseId]?.ace || aceLimit === null) return true;
+      if (aceLimit === 0) return false;
+      const summary = aceDeckSummary(counts);
+      return summary.total < aceLimit && (Number(counts[baseId]) || 0) < 1;
+    }
+
+    function aceRuleErrorMessage(aceLimit) {
+      if (aceLimit === 0) return "エースぺは通常ルールでは使用できません。";
+      if (aceLimit === 1) return "エースぺは1デッキにつき1種類・1枚までです。";
+      return "";
     }
 
     function activeDeckCollection() {
@@ -19160,8 +19189,8 @@
         copiesOk,
         specialtyOk: Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0,
         illegalIds,
-        aceOk: hasValidAceCounts(counts),
-        valid: size === DECK_MIN && copiesOk && hasValidAceCounts(counts) && Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0
+        aceOk: hasValidAceCounts(counts, ALL_DECK_IDS, 1),
+        valid: size === DECK_MIN && copiesOk && hasValidAceCounts(counts, ALL_DECK_IDS, 1) && Boolean(specialtyDefinition(specialtyId)) && illegalIds.length === 0
       };
     }
 
@@ -19347,6 +19376,7 @@
         : null;
       let size = 0;
       let aceCount = 0;
+      const aceIds = new Set();
 
       const formatOk = policy.formats.includes(descriptor.format);
       if (!formatOk) errors.push(`${rule.name}ルールでは${policy.formats.join("/")}デッキを選んでください。`);
@@ -19371,20 +19401,24 @@
           }
           size += count;
           if (policy.copyLimit === "standard" && count > maxCopiesForCard(baseId)) copyOverages.push(baseId);
-          if (ACE_CARD_IDS.has(baseId)) aceCount += count;
+          if (ACE_CARD_IDS.has(baseId)) {
+            aceCount += count;
+            aceIds.add(baseId);
+          }
           if (allowed && !allowed.has(baseId)) illegalIds.push(baseId);
         });
       }
 
       const lengthOk = size >= policy.minCards && size <= policy.maxCards;
       const copiesOk = copyOverages.length === 0;
-      const aceOk = policy.aceLimit === null || aceCount <= policy.aceLimit;
+      const aceTypes = aceIds.size;
+      const aceOk = policy.aceLimit === null || (aceCount <= policy.aceLimit && aceTypes <= policy.aceLimit);
       const directDeckOk = illegalIds.length === 0;
       const countsOk = invalidCountIds.length === 0;
       if (!countsOk) errors.push("デッキ枚数は0以上の整数で指定してください。");
       if (!directDeckOk) errors.push("直接編成できないカード、または選択した専攻に含まれないカードがあります。");
       if (!copiesOk) errors.push("同名カードの枚数制限を超えています。");
-      if (!aceOk) errors.push("エースぺは1種類かつ1枚までです。");
+      if (!aceOk) errors.push(aceRuleErrorMessage(policy.aceLimit));
       if (!lengthOk) {
         const lengthLabel = policy.minCards === policy.maxCards
           ? `${policy.minCards}枚`
@@ -19407,6 +19441,7 @@
         invalidCountIds,
         copyOverages: [...new Set(copyOverages)],
         aceCount,
+        aceTypes,
         errors,
         valid: errors.length === 0
       };
@@ -21901,6 +21936,7 @@
         let added = false;
         ids.forEach((baseId) => {
           if (remaining <= 0 || counts[baseId] >= maxCopiesForCard(baseId)) return;
+          if (!canAddAceCard(counts, baseId, 1)) return;
           const card = CARD_BASES[baseId];
           const include = round === 0 || card.cost <= 5 || remaining > Math.max(8, ids.length / 2);
           if (!include) return;
@@ -21963,6 +21999,7 @@
     function validateDeckCounts(counts, options = {}) {
       const cardIds = deckCardIds(options.cardIds);
       const size = deckSize(counts, { cardIds });
+      const aceLimit = deckAceLimitForFormat("normal");
       return {
         size,
         lengthOk: size >= DECK_MIN && size <= DECK_MAX,
@@ -21970,8 +22007,8 @@
           const count = Number(counts[baseId]) || 0;
           return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
         }),
-        aceOk: hasValidAceCounts(counts, cardIds),
-        valid: size >= DECK_MIN && size <= DECK_MAX && hasValidAceCounts(counts, cardIds) && cardIds.every((baseId) => {
+        aceOk: hasValidAceCounts(counts, cardIds, aceLimit),
+        valid: size >= DECK_MIN && size <= DECK_MAX && hasValidAceCounts(counts, cardIds, aceLimit) && cardIds.every((baseId) => {
           const count = Number(counts[baseId]) || 0;
           return count >= 0 && count <= maxCopiesForCard(baseId) && Number.isInteger(count);
         })
@@ -32667,7 +32704,9 @@
           ? `${policy.minCards}枚`
           : `${policy.minCards}〜${policy.maxCards}枚`;
         const copyLabel = policy.copyLimit === "standard" ? "同名枚数制限あり" : "同名枚数制限なし";
-        const aceLabel = policy.aceLimit === null ? "エースぺ制限なし" : "エースぺは1種類1枚";
+        const aceLabel = policy.aceLimit === null
+          ? "エースぺ制限なし"
+          : policy.aceLimit === 0 ? "エースぺ使用不可" : "エースぺは1種類1枚";
         elements.onlineRuleDescription.textContent = `${rule.description}（${lengthLabel} / ${copyLabel} / ${aceLabel}）`;
       }
     }
@@ -36222,7 +36261,7 @@
           <div class="deck-row-controls">
             <button class="mini-button" data-deck-minus="${baseId}" ${count <= 0 ? "disabled" : ""}>-</button>
             <div class="deck-count">${count}</div>
-            <button class="mini-button" data-deck-plus="${baseId}" ${(!isChaosDeckFormat() && count >= maxCopiesForCard(baseId)) || validation.size >= deckMax ? "disabled" : ""}>+</button>
+            <button class="mini-button" data-deck-plus="${baseId}" ${(!isChaosDeckFormat() && count >= maxCopiesForCard(baseId)) || !canAddAceCard(counts, baseId) || validation.size >= deckMax ? "disabled" : ""}>+</button>
           </div>
         `;
         const testButton = row.querySelector("[data-card-test]");
@@ -36328,7 +36367,7 @@
             <span>${escapeHtml(card.name)}${aceDeckMark(card)}</span>
             <strong>x${count}</strong>
           </button>
-          <button class="current-deck-adjust plus" type="button" data-current-plus="${baseId}" ${(!isChaosDeckFormat() && count >= maxCopiesForCard(baseId)) || validation.size >= deckMax ? "disabled" : ""} aria-label="${escapeHtml(card.name)}を1枚増やす">+</button>
+          <button class="current-deck-adjust plus" type="button" data-current-plus="${baseId}" ${(!isChaosDeckFormat() && count >= maxCopiesForCard(baseId)) || !canAddAceCard(counts, baseId) || validation.size >= deckMax ? "disabled" : ""} aria-label="${escapeHtml(card.name)}を1枚増やす">+</button>
         `;
         const detailButton = row.querySelector("[data-current-detail]");
         attachCardDetailEvents(detailButton, card);
@@ -36405,6 +36444,11 @@
     function changeDeckCount(side, baseId, delta) {
       const counts = state.deckBuilder.counts[side];
       const current = counts[baseId] || 0;
+      if (delta > 0 && !canAddAceCard(counts, baseId)) {
+        state.message = aceRuleErrorMessage(activeDeckAceLimit());
+        render();
+        return;
+      }
       const limit = isChaosDeckFormat() ? DECK_MAX : maxCopiesForCard(baseId);
       const next = Math.max(0, Math.min(limit, current + delta));
       if (next === current) return;
@@ -36461,9 +36505,13 @@
       const counts = state.deckBuilder.counts[side];
       const validation = activeDeckValidation(counts);
       if (!validation.valid) {
-        state.message = isSpecialtyDeckFormat()
-          ? `専攻デッキは、選んだ専攻と共通カードだけで40枚にしてください。現在は${validation.size}枚です。`
-          : `デッキは40〜60枚にしてください。現在は${validation.size}枚です。`;
+        if (!validation.aceOk) {
+          state.message = aceRuleErrorMessage(activeDeckAceLimit());
+        } else {
+          state.message = isSpecialtyDeckFormat()
+            ? `専攻デッキは、選んだ専攻と共通カードだけで40枚にしてください。現在は${validation.size}枚です。`
+            : `デッキは40〜60枚にしてください。現在は${validation.size}枚です。`;
+        }
         render();
         return;
       }
@@ -38750,6 +38798,9 @@
       fuseRulersForSide,
       validateDeckCounts,
       validateSpecialtyDeckCounts,
+      validateChaosDeckCounts,
+      validateOnlineDeckForRule,
+      ONLINE_RULE_DEFINITIONS,
       specialtyAllowedCardIds,
       SPECIALTY_DEFINITIONS,
       SPECIALTY_CARD_IDS,
