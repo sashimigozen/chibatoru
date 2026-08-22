@@ -135,6 +135,33 @@ function send(client, message) {
   client.ws.send(JSON.stringify({ protocol: 1, ...message }));
 }
 
+function createNormalDeckCounts() {
+  const ids = [
+    "general_student", "aggro_student", "aggro_king", "single_cell", "adjective_student", "yuta", "aggro_queen",
+    "ae_student", "hurried_student", "lazy_student", "cancel_student", "back_question_student", "best_friend", "laughing_front_student"
+  ];
+  return Object.fromEntries(ids.map((baseId) => [baseId, 3]));
+}
+
+function createLateSpecialtyDeckCounts() {
+  const counts = {};
+  [
+    "general_student", "absolute_woman", "fridge_thief", "classroom", "environment_setup",
+    "go_away", "happy_experience", "hondara", "water_2l", "word_increaser"
+  ].forEach((baseId) => { counts[baseId] = 3; });
+  ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student"]
+    .forEach((baseId) => { counts[baseId] = 2; });
+  return counts;
+}
+
+function createChaosDeckCounts(baseId = "general_student") {
+  return { [baseId]: 40 };
+}
+
+function normalDeckDescriptor(deckCounts = createNormalDeckCounts()) {
+  return { deckCounts, deckFormat: "normal", specialtyId: "" };
+}
+
 function httpGet(port, pathname, password = "") {
   return new Promise((resolve, reject) => {
     const headers = {};
@@ -214,6 +241,134 @@ test("random match pairs waiting clients into one room", async (t) => {
   assert.equal(hostUpdate.message.matchType, "random");
 });
 
+test("host-owned room rules synchronize and enforce normal, chaos, and specialty decks", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "RULE01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectClient(url, roomId, "host-rule", true);
+  const guest = await connectClient(url, roomId, "guest-rule");
+  clients.push(host, guest);
+
+  const initialJoin = host.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "host-rule");
+  assert.equal(initialJoin.ruleId, "normal");
+  assert.equal(initialJoin.roomRule?.name, "通常");
+
+  const deniedStart = guest.messages.length;
+  send(guest, { type: "setRoomRule", ruleId: "chaos" });
+  const denied = await waitFor(guest, (message) => message.type === "error" && message.code === "forbidden", deniedStart);
+  assert.match(denied.message.message, /ホスト/);
+
+  const normalInvalidStart = host.messages.length;
+  send(host, {
+    type: "deckUpdate",
+    deckCounts: createChaosDeckCounts(),
+    deckFormat: "normal",
+    specialtyId: "",
+    ready: true
+  });
+  const normalInvalid = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", normalInvalidStart);
+  assert.match(normalInvalid.message.message, /同名/);
+
+  const aceInvalidStart = guest.messages.length;
+  const tooManyAces = createNormalDeckCounts();
+  tooManyAces.think_so = 2;
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(tooManyAces), ready: true });
+  const aceInvalid = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", aceInvalidStart);
+  assert.match(aceInvalid.message.message, /エース/);
+
+  const chaosUpdateStart = guest.messages.length;
+  send(host, { type: "setRoomRule", ruleId: "chaos" });
+  const chaosUpdate = await waitFor(guest, (message) => message.type === "roomRuleChanged" && message.ruleId === "chaos", chaosUpdateStart);
+  assert.equal(chaosUpdate.message.roomRule?.name, "カオス");
+  assert.equal(chaosUpdate.message.players.find((player) => player.clientId === "host-rule")?.ready, false);
+
+  const syncedRoomState = await waitFor(guest, (message) => message.type === "roomState" && message.ruleId === "chaos", chaosUpdate.index + 1);
+  assert.equal(syncedRoomState.message.roomRule?.id, "chaos");
+
+  const tokenInvalidStart = host.messages.length;
+  send(host, {
+    type: "deckUpdate",
+    deckCounts: createChaosDeckCounts("midge"),
+    deckFormat: "chaos",
+    specialtyId: "",
+    ready: true
+  });
+  const tokenInvalid = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", tokenInvalidStart);
+  assert.match(tokenInvalid.message.message, /直接編成/);
+
+  // Evolution cards are legal deck cards in every rule format.  They can only
+  // be placed through an evolution in game, but the server must not reject
+  // them merely because their base data has evolutionFrom.
+  for (const evolutionCardId of ["success_student", "gitch", "gigi_blood", "demon_a_plus", "oni_shima_ai", "dark_yuta"]) {
+    const evolutionUpdateStart = host.messages.length;
+    send(guest, {
+      type: "deckUpdate",
+      deckCounts: createChaosDeckCounts(evolutionCardId),
+      deckFormat: "chaos",
+      specialtyId: "",
+      ready: true
+    });
+    const evolutionUpdate = await waitFor(host, (message) =>
+      message.type === "deckUpdate"
+      && message.senderId === "guest-rule"
+      && message.deckFormat === "chaos"
+      && message.ready === true,
+    evolutionUpdateStart);
+    assert.equal(evolutionUpdate.message.deckValid, true, `${evolutionCardId} should be deck-buildable`);
+  }
+
+  const chaosDeck = createChaosDeckCounts();
+  send(host, { type: "deckUpdate", deckCounts: chaosDeck, deckFormat: "chaos", specialtyId: "", ready: true });
+  send(guest, { type: "deckUpdate", deckCounts: chaosDeck, deckFormat: "chaos", specialtyId: "", ready: true });
+  await waitFor(host, (message) => message.type === "deckUpdate" && message.deckFormat === "chaos" && message.ready === true);
+
+  const specialtyUpdateStart = guest.messages.length;
+  send(host, { type: "setRoomRule", ruleId: "specialty" });
+  const specialtyUpdate = await waitFor(guest, (message) => message.type === "roomRuleChanged" && message.ruleId === "specialty", specialtyUpdateStart);
+  assert.equal(specialtyUpdate.message.players.find((player) => player.clientId === "host-rule")?.ready, false);
+  assert.equal(specialtyUpdate.message.players.find((player) => player.clientId === "guest-rule")?.deckValid, false);
+
+  const wrongSpecialtyCounts = createLateSpecialtyDeckCounts();
+  wrongSpecialtyCounts.general_student -= 1;
+  wrongSpecialtyCounts.ruler = 1;
+  const wrongSpecialtyStart = host.messages.length;
+  send(host, {
+    type: "deckUpdate",
+    deckCounts: wrongSpecialtyCounts,
+    deckFormat: "specialty",
+    specialtyId: "late",
+    ready: true
+  });
+  const wrongSpecialty = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", wrongSpecialtyStart);
+  assert.match(wrongSpecialty.message.message, /専攻/);
+
+  const specialtyDeck = createLateSpecialtyDeckCounts();
+  send(host, { type: "deckUpdate", deckCounts: specialtyDeck, deckFormat: "specialty", specialtyId: "late", ready: true });
+  send(guest, { type: "deckUpdate", deckCounts: specialtyDeck, deckFormat: "specialty", specialtyId: "late", ready: true });
+  await waitFor(host, (message) => message.type === "deckUpdate" && message.deckFormat === "specialty" && message.ready === true);
+
+  const startIndex = guest.messages.length;
+  send(host, {
+    type: "startGame",
+    snapshot: { seq: 1, state: { currentSide: "player", gameOver: false } }
+  });
+  const started = await waitFor(guest, (message) => message.type === "startGame" && message.snapshot?.seq === 1, startIndex);
+  assert.equal(started.message.ruleId, "specialty");
+  assert.equal(started.message.roomRule?.id, "specialty");
+
+  const afterStartChange = host.messages.length;
+  send(host, { type: "setRoomRule", ruleId: "normal" });
+  const changeRejected = await waitFor(host, (message) => message.type === "error" && message.code === "game_started", afterStartChange);
+  assert.match(changeRejected.message.message, /開始後/);
+});
+
 test("public room list exposes spectatable battles and allows spectator joins", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
@@ -229,9 +384,9 @@ test("public room list exposes spectatable battles and allows spectator joins", 
   const guest = await connectClient(url, roomId, "guest-watch");
   clients.push(host, guest);
 
-  const deckCounts = { test_card: 40 };
-  send(host, { type: "deckUpdate", deckCounts, ready: true });
-  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  const deckCounts = createNormalDeckCounts();
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
   await waitFor(host, (message) => message.type === "deckUpdate");
 
   const beforeStart = await httpGet(port, "/rooms.json");
@@ -274,11 +429,11 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   const guest = await connectClient(url, roomId, "guest-style");
   clients.push(host, guest);
 
-  const deckCounts = { test_card: 40 };
+  const deckCounts = createNormalDeckCounts();
   const hostUpdateStart = host.messages.length;
   send(guest, {
     type: "deckUpdate",
-    deckCounts,
+    ...normalDeckDescriptor(deckCounts),
     ready: true,
     cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal" }
   });
@@ -292,7 +447,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
 
   send(host, {
     type: "deckUpdate",
-    deckCounts,
+    ...normalDeckDescriptor(deckCounts),
     ready: true,
     cardStyles: { bird_a: "reward" }
   });
@@ -330,9 +485,9 @@ test("private card choice requests and responses relay between host and guest", 
   const guest = await connectClient(url, roomId, "guest-choice");
   clients.push(host, guest);
 
-  const deckCounts = { test_card: 40 };
-  send(host, { type: "deckUpdate", deckCounts, ready: true });
-  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  const deckCounts = createNormalDeckCounts();
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
   await waitFor(host, (message) => message.type === "deckUpdate");
   send(host, {
     type: "startGame",
@@ -343,7 +498,10 @@ test("private card choice requests and responses relay between host and guest", 
   const pairs = [
     ["thinItemChoiceRequest", "thinItemChoiceResponse", { handCount: 5 }, { keepIds: ["a", "b", "c", "d"] }],
     ["badStudentDiscardRequest", "badStudentDiscardResponse", { discardCount: 2 }, { discardIds: ["a", "b"] }],
-    ["logicHunterChoiceRequest", "logicHunterChoiceResponse", { cards: [{ instanceId: "host-card-1", name: "テストカード" }] }, { discardId: "host-card-1" }]
+    ["logicHunterChoiceRequest", "logicHunterChoiceResponse", { cards: [{ instanceId: "host-card-1", name: "テストカード" }] }, { discardId: "host-card-1" }],
+    ["courseRegistrationChoiceRequest", "courseRegistrationChoiceResponse", { sourceName: "履修登録結論パ" }, { accepted: true, selectedIds: ["a", "b", "c", "d", "e"] }],
+    ["titleMatchChoiceRequest", "titleMatchChoiceResponse", { sourceName: "アイベンVSにょていタイトルマッチ" }, { discardIds: ["a"] }],
+    ["philosophyCheatingChoiceRequest", "philosophyCheatingChoiceResponse", { cards: [{ instanceId: "host-item-1", name: "持ち物", type: "item" }] }, { selectedIds: ["host-item-1"] }]
   ];
 
   for (const [requestType, responseType, requestPayload, responsePayload] of pairs) {
@@ -362,6 +520,95 @@ test("private card choice requests and responses relay between host and guest", 
   }
 });
 
+test("host receives the current guest deck only through private deck updates", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "DECK01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectClient(url, roomId, "host-deck", true);
+  const guest = await connectClient(url, roomId, "guest-deck");
+  clients.push(host, guest);
+  const counts = createNormalDeckCounts();
+  const hostStart = host.messages.length;
+  const guestStart = guest.messages.length;
+  send(guest, { type: "deckUpdate", deckName: "guest-normal", ...normalDeckDescriptor(counts), ready: true });
+  const privateUpdate = await waitFor(host, (message) =>
+    message.type === "privateDeckUpdate"
+    && message.playerId === "guest-deck"
+    && message.deckName === "guest-normal", hostStart);
+  assert.deepEqual(privateUpdate.message.deckCounts, counts);
+  assert.equal(privateUpdate.message.deckFormat, "normal");
+  await new Promise((resolve) => setTimeout(resolve, 40));
+  assert.equal(guest.messages.slice(guestStart).some((message) => message.type === "privateDeckUpdate"), false);
+});
+
+test("snapshots redact hidden hands and one-eyed peek reveals only to its guest", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "HIDE01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectClient(url, roomId, "host-hide", true);
+  const guest = await connectClient(url, roomId, "guest-hide");
+  clients.push(host, guest);
+  const deckCounts = createNormalDeckCounts();
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  await waitFor(host, (message) => message.type === "deckUpdate");
+
+  const snapshot = {
+    seq: 1,
+    state: {
+      currentSide: "player",
+      gameOver: false,
+      players: {
+        player: {
+          hand: [{ instanceId: "host-secret", baseId: "general_student", name: "ホスト秘密カード" }]
+        },
+        opponent: {
+          hand: [{ instanceId: "guest-secret", baseId: "aggro_student", name: "ゲスト秘密カード" }]
+        }
+      }
+    }
+  };
+  const guestStart = guest.messages.length;
+  send(host, { type: "startGame", snapshot });
+  const guestStarted = await waitFor(guest, (message) => message.type === "startGame" && message.snapshot?.seq === 1, guestStart);
+  assert.deepEqual(guestStarted.message.snapshot.state.players.player.hand, [{ hidden: true }]);
+  assert.equal(guestStarted.message.snapshot.state.players.opponent.hand[0].name, "ゲスト秘密カード");
+
+  const spectator = await connectSpectatorClient(url, roomId, "spectator-hide");
+  clients.push(spectator);
+  const spectatorState = await waitFor(spectator, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
+  assert.deepEqual(spectatorState.message.snapshot.state.players.player.hand, [{ hidden: true }]);
+  assert.deepEqual(spectatorState.message.snapshot.state.players.opponent.hand, [{ hidden: true }]);
+
+  const guestRevealStart = guest.messages.length;
+  const spectatorRevealStart = spectator.messages.length;
+  send(host, { type: "oneEyedPeekReveal", sourceBaseId: "one_eyed_peek" });
+  const reveal = await waitFor(guest, (message) => message.type === "oneEyedPeekReveal", guestRevealStart);
+  assert.equal(reveal.message.cards.length, 1);
+  assert.equal(reveal.message.cards[0].name, "ホスト秘密カード");
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  assert.equal(spectator.messages.slice(spectatorRevealStart).some((message) => message.type === "oneEyedPeekReveal"), false);
+
+  const forbiddenStart = guest.messages.length;
+  send(guest, { type: "oneEyedPeekReveal", sourceBaseId: "one_eyed_peek" });
+  const forbidden = await waitFor(guest, (message) => message.type === "error" && message.code === "forbidden", forbiddenStart);
+  assert.match(forbidden.message.message, /ホスト/);
+});
+
 test("guest commands retry until the host confirms an authoritative snapshot", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
@@ -377,9 +624,9 @@ test("guest commands retry until the host confirms an authoritative snapshot", a
   const guest = await connectClient(url, roomId, "guest-test");
   clients.push(host, guest);
 
-  const deckCounts = { test_card: 40 };
-  send(host, { type: "deckUpdate", deckCounts, ready: true });
-  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  const deckCounts = createNormalDeckCounts();
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
   await waitFor(host, (message) => message.type === "deckUpdate");
 
   send(host, {
@@ -450,9 +697,9 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   const guest = await connectClient(url, roomId, "guest-log");
   clients.push(host, guest);
 
-  const deckCounts = { test_card: 40 };
-  send(host, { type: "deckUpdate", deckCounts, ready: true });
-  send(guest, { type: "deckUpdate", deckCounts, ready: true });
+  const deckCounts = createNormalDeckCounts();
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
   await waitFor(host, (message) => message.type === "deckUpdate");
   send(host, {
     type: "startGame",
