@@ -16567,6 +16567,8 @@
 
     const CARD_BASES = {
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
+      suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
+      ta_squad: { name: "TA軍団", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
       absolute_woman: { name: "「絶対」女", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
@@ -16674,6 +16676,8 @@
       dos_attack: { name: "Dos攻撃", type: "item", cost: 3, target: "self" },
       destroy_dos_attack: { name: "デストロイDos攻撃", type: "item", cost: 5, target: "self" },
       environment_setup: { name: "環境構築", type: "item", cost: 2, target: "self" },
+      intern: { name: "インターン", type: "item", cost: 2, target: "self" },
+      earphones: { name: "イヤホン", type: "item", cost: 0, target: "friendlyAny" },
       diamond_dust: { name: "ダブルダイヤモンドダスト-***Angel Cross Experiencce-***", type: "item", cost: 5, target: "self" },
       happy_experience: { name: "うれしい体験", type: "item", cost: 1, target: "friendlyAny" },
       go_away: { name: "行かれてはいかがですか", type: "item", cost: 2, target: "self" },
@@ -16750,6 +16754,7 @@
       president_tea_room: { name: "学長の茶室", type: "item", cost: 1, target: "self", generated: true },
       suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
+      quick_quiz_tournament: { name: "早押しクイズ大会", type: "environment", cost: 1, allowedZones: ["environment"] },
       cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
       night_pool: { name: "ナイトプール", type: "environment", cost: 2, allowedZones: ["environment"] },
       building_12_classroom: { name: "12号館の教室", type: "environment", cost: 3, allowedZones: ["environment"] },
@@ -16787,6 +16792,11 @@
       big_omata: "big",
       course_registration_party: "common",
       lie_pekora: "big"
+      ,suit_student: "expansion"
+      ,intern: "expansion"
+      ,ta_squad: "expansion"
+      ,quick_quiz_tournament: "common"
+      ,earphones: "common"
     });
     Object.entries(CATEGORY_BY_CARD_ID).forEach(([baseId, category]) => {
       if (CARD_BASES[baseId]) CARD_BASES[baseId].category = category;
