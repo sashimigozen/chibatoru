@@ -23486,7 +23486,7 @@
       setBoardCard(side, targetRef.zone, targetRef.index, placed);
       showCardPlayAnimation(placed, "board");
       addLog(`${entries[0].card.name}2人は合体し、${placed.name}になりました。`);
-      resolveAttendEffects(side, placed, targetRef.zone, targetRef.index);
+      resolveAttendEffects(side, placed, targetRef.zone, targetRef.index, { attendanceSource: "effect" });
       return true;
     }
 
@@ -23501,7 +23501,7 @@
       setBoardCard(side, targetRef.zone, targetRef.index, placed);
       showCardPlayAnimation(placed, "board");
       addLog(`生物、ミジンコ、単細胞生物は合体し、${placed.name}になりました。`);
-      resolveAttendEffects(side, placed, targetRef.zone, targetRef.index);
+      resolveAttendEffects(side, placed, targetRef.zone, targetRef.index, { attendanceSource: "effect" });
       return true;
     }
 
@@ -23518,7 +23518,7 @@
       setBoardCard(side, "seat", seatIndex, placed);
       showCardPlayAnimation(placed, "board");
       addLog(`${sourceName}の効果：${placed.name}をランダムな席マスに出席させました。`);
-      resolveAttendEffects(side, placed, "seat", seatIndex);
+      resolveAttendEffects(side, placed, "seat", seatIndex, { attendanceSource: "effect" });
       return placed;
     }
 
@@ -23538,7 +23538,7 @@
       setBoardCard(targetSide, "seat", seatIndex, placed);
       showCardPlayAnimation(placed, "board");
       addLog(`${sourceName}の効果：相手の講義室のランダムな席マスに${placed.name}を1人出席させました。${placed.name}は相手の次のターン終了時まで攻撃できません。`);
-      resolveAttendEffects(targetSide, placed, "seat", seatIndex);
+      resolveAttendEffects(targetSide, placed, "seat", seatIndex, { attendanceSource: "effect" });
       return placed;
     }
 
@@ -23695,7 +23695,7 @@
               seat: entry.zone === "seat" ? analyticsSeatInfo(entry.index) : null
             }
           });
-          resolveAttendEffects(entry.owner, placed, entry.zone, entry.index);
+          resolveAttendEffects(entry.owner, placed, entry.zone, entry.index, { attendanceSource: "late" });
         } else {
           moveToTrash(side, entry.card);
           addLog(`${entry.card.name}は出席先が埋まり、校外エリアへ移動しました。`);
@@ -23731,7 +23731,7 @@
           effectType: "late_resolve",
           details: { success: true, releasedBySubstituteAttendance: true }
         });
-        resolveAttendEffects(entry.owner, placed, entry.zone, entry.index);
+        resolveAttendEffects(entry.owner, placed, entry.zone, entry.index, { attendanceSource: "late" });
       } else {
         moveToTrash(side, entry.card);
         addLog(`${entry.card.name}は出席先が埋まり、校外エリアへ移動しました。`);
@@ -25283,7 +25283,6 @@
         resolveAttendEffects(side, placedCard, zone, index, {
           commandId: options.commandId || "",
           badStudentDiscardIds: options.badStudentDiscardIds || [],
-          fromHand: true,
           attendanceSource: "hand"
         });
       }
@@ -25562,6 +25561,7 @@
     function resolveGitchEvolutionEffect(side, sourceCard, options = {}) {
       const summon = makeBoardCard(createCardFromBase("wood_gitch", side));
       summon.skipAttendEffectsOnPlacement = true;
+      summon.pendingAttendanceSource = "effect";
       summon.gitchEvolutionSummon = true;
       summon.gitchSourceInstanceId = sourceCard.instanceId;
       summon.gitchCommandId = options.commandId || "";
@@ -25588,6 +25588,7 @@
         card.type = "vampire";
         card.transformedType = "vampire";
         card.skipAttendEffectsOnPlacement = true;
+        card.pendingAttendanceSource = "trash";
         card.gigiBloodResurrection = true;
         card.gigiCommandId = pending.commandId;
         if (pending.side === "opponent" && !state.online.isHandlingRemoteCommand) {
@@ -25680,15 +25681,21 @@
       "big_omata", "fairy_t", "popular_c", "bird_a", "lightning_n"
     ]);
 
+    const ATTENDANCE_SOURCES = new Set(["hand", "deck", "late", "trash", "effect", "other"]);
+
     function attendanceSourceForEffect(options = {}) {
-      if (options.attendanceSource) return options.attendanceSource;
-      return options.fromHand ? "hand" : "effect";
+      return ATTENDANCE_SOURCES.has(options.attendanceSource) ? options.attendanceSource : "other";
+    }
+
+    function recordAttendanceSource(card, source) {
+      const attendanceSource = attendanceSourceForEffect({ attendanceSource: source });
+      if (card) card.lastAttendanceSource = attendanceSource;
+      return attendanceSource;
     }
 
     function resolveAttendEffects(side, card, zone, index, options = {}) {
       const opponent = oppositeSide(side);
-      const attendanceSource = attendanceSourceForEffect(options);
-      card.lastAttendanceSource = attendanceSource;
+      const attendanceSource = recordAttendanceSource(card, options.attendanceSource);
       recordDungeonEvolutionSourceAttendance(side, card);
       if (!ANY_SOURCE_ATTEND_EFFECT_IDS.has(card.baseId) && attendanceSource !== "hand") return;
       if (card.darkPresident) {
@@ -25794,6 +25801,7 @@
           student.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 2;
           student.attackLockSource = card.name;
           state.players[opponent].board.seats[seatIndex] = student;
+          recordAttendanceSource(student, "effect");
           resolveProliferatingEnemyTriggers(opponent, student);
           summoned += 1;
         });
@@ -25868,6 +25876,7 @@
           if (!isBoardSlotOpen(side, "seat", seatIndex)) return;
           const summoned = makeBoardCard(createCardFromBase("seat_taking_group", side));
           state.players[side].board.seats[seatIndex] = summoned;
+          recordAttendanceSource(summoned, "effect");
           resolveProliferatingEnemyTriggers(side, summoned);
         });
         addLog(`${card.name}の効果：2行1列と2行3列に同名の出席者を召喚しました。`);
@@ -25893,6 +25902,7 @@
         if (seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen(side, "seat", rightIndex)) {
           const copy = makeBoardCard(createCardFromBase("college_student_vibe", side));
           state.players[side].board.seats[rightIndex] = copy;
+          recordAttendanceSource(copy, "effect");
           resolveProliferatingEnemyTriggers(side, copy);
           addLog(`${card.name}の効果：右隣に同名のコピーを出席させました。`);
         } else {
@@ -25905,6 +25915,7 @@
           if (seatRow(rightIndex) !== seatRow(index) || !isBoardSlotOpen(side, "seat", rightIndex)) return;
           const copy = makeBoardCard(createCardFromBase("loud_group", side));
           state.players[side].board.seats[rightIndex] = copy;
+          recordAttendanceSource(copy, "effect");
           resolveProliferatingEnemyTriggers(side, copy);
           copied += 1;
         });
@@ -25946,6 +25957,7 @@
         if (openNeighbor !== undefined) {
           const friend = makeBoardCard(createCardFromBase("best_friend", side));
           setBoardCard(side, "seat", openNeighbor, friend);
+          recordAttendanceSource(friend, "effect");
           resolveProliferatingEnemyTriggers(side, friend);
           addLog(`${card.name}の効果：隣接する席にベストフレンドを1人出席させました。`);
         } else {
@@ -25959,6 +25971,7 @@
           const student = createCardFromBase("extra_student", side);
           const placedStudent = makeBoardCard(student);
           state.players[side].board.seats[seatIndex] = placedStudent;
+          recordAttendanceSource(placedStudent, "effect");
           resolveProliferatingEnemyTriggers(side, placedStudent);
           summoned += 1;
         });
@@ -26010,6 +26023,7 @@
           const copy = makeBoardCard(createCardFromBase("apprentice_vampire", side));
           copy.skipAttendEffectsOnPlacement = true;
           setBoardCard(side, "seat", openNeighbor, copy);
+          recordAttendanceSource(copy, "effect");
           resolveProliferatingEnemyTriggers(side, copy);
           addLog(`${card.name}の効果：隣の席マスに${card.name}のコピーを1人出席させました。`);
         } else {
@@ -26092,6 +26106,7 @@
           if (isBoardSlotOpen(side, "seat", seatIndex)) {
             const ta = makeBoardCard(createCardFromBase("ta", side));
             state.players[side].board.seats[seatIndex] = ta;
+            recordAttendanceSource(ta, "effect");
             resolveProliferatingEnemyTriggers(side, ta);
           }
         });
@@ -26110,6 +26125,7 @@
           const fairy = makeBoardCard(createCardFromBase("fairy_t", side));
           state.players[side].board.seats[0] = fairy;
           resolveProliferatingEnemyTriggers(side, fairy);
+          resolveAttendEffects(side, fairy, "seat", 0, { attendanceSource: "effect" });
           addLog(`${card.name}の効果：1行1列にデザインフェアリーを1人出席させました。`);
         } else {
           addLog(`${card.name}の効果：1行1列が空いていないためデザインフェアリーを出席させられません。`);
@@ -26177,6 +26193,7 @@
           addKeyword(ta, "陽気", card.name);
           const placedTa = makeBoardCard(ta);
           state.players[side].board.seats[1] = placedTa;
+          recordAttendanceSource(placedTa, "effect");
           resolveProliferatingEnemyTriggers(side, placedTa);
           addLog(`${card.name}の効果：1行2列に陽気を持つTAを召喚。`);
         } else {
@@ -26391,7 +26408,7 @@
       placeMultiSeatCard(side, 0, big);
       showCardPlayAnimation(big, "board");
       addLog(`${sourceCard.name}の効果：自分の席マスにいる出席者${destroyed.length}人を破壊し、「ビッグ小俣」を出席させました。`);
-      resolveAttendEffects(side, big, "seat", 0, { fromHand: false });
+      resolveAttendEffects(side, big, "seat", 0, { attendanceSource: "effect" });
       return true;
     }
 
@@ -28236,6 +28253,7 @@
         restored.hasAttacked = false;
         restored.playedOnTurn = state.actionTurn;
         restored.skipAttendEffectsOnPlacement = true;
+        recordAttendanceSource(restored, "trash");
         setBoardCard(side, entry.zone, entry.index, restored);
         resolveProliferatingEnemyTriggers(side, restored);
         restoredCount += 1;
@@ -28439,12 +28457,19 @@
       candidates.sort((a, b) => b.score - a.score);
       const destination = candidates[0];
       if (destination) {
+        const attendanceSource = ATTENDANCE_SOURCES.has(card.pendingAttendanceSource)
+          ? card.pendingAttendanceSource
+          : "effect";
+        delete card.pendingAttendanceSource;
         if (destination.zone === "seat" && card.occupiedSeatSize) {
           placeMultiSeatCard(side, destination.index, card);
         } else {
           setBoardCard(side, destination.zone, destination.index, card);
         }
-        if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(side, card, destination.zone, destination.index);
+        recordAttendanceSource(card, attendanceSource);
+        if (!card.skipAttendEffectsOnPlacement) {
+          resolveAttendEffects(side, card, destination.zone, destination.index, { attendanceSource });
+        }
         if (card.gitchEvolutionSummon) {
           const source = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).find((entry) => entry?.instanceId === card.gitchSourceInstanceId) || card;
           finishGitchEvolutionEffect(side, source, card.gitchCommandId || "");
@@ -28472,6 +28497,10 @@
       const card = state.pendingCopiedCard;
       if (!card || owner !== side || !["seat", "teacher"].includes(zone)) return false;
       if (!["student", "teacher", "vampire"].includes(card.type)) return false;
+      const attendanceSource = ATTENDANCE_SOURCES.has(card.pendingAttendanceSource)
+        ? card.pendingAttendanceSource
+        : "effect";
+      delete card.pendingAttendanceSource;
       if (zone === "seat" && card.occupiedSeatSize) {
         if (!canPlaceMultiSeatCard(owner, card, index)) return false;
         placeMultiSeatCard(owner, index, card);
@@ -28479,7 +28508,10 @@
         if (!isBoardSlotOpen(owner, zone, index)) return false;
         setBoardCard(owner, zone, index, card);
       }
-      if (!card.skipAttendEffectsOnPlacement) resolveAttendEffects(owner, card, zone, index);
+      recordAttendanceSource(card, attendanceSource);
+      if (!card.skipAttendEffectsOnPlacement) {
+        resolveAttendEffects(owner, card, zone, index, { attendanceSource });
+      }
       state.pendingCopiedCard = null;
       state.message = card.pendingMove ? `${card.name}を自分の場に移しました。` : `${card.name}のコピーを出席させました。`;
       addLog(card.pendingMove
@@ -32008,7 +32040,7 @@
       state.environment.raptorUsedTurns[side] = state.players[side].turnsTaken;
       showCardPlayAnimation(placed, "board");
       addLog(`猛禽寺の効果：${source.name}を校外エリアへ送り、${placed.name}を同じマスに出席させました。`);
-      resolveAttendEffects(side, placed, sourceRef.zone, sourceRef.index ?? null);
+      resolveAttendEffects(side, placed, sourceRef.zone, sourceRef.index ?? null, { attendanceSource: "trash" });
       state.pendingRaptorTemple = null;
       clearSelections();
       cleanupDestroyedCards();
@@ -32127,7 +32159,7 @@
       const attendee = makeBoardCard(createCardFromBase(baseId, side));
       if (cheerful) addKeyword(attendee, "陽気", "アイベンVSにょていタイトルマッチ");
       state.players[side].board.seats[index] = attendee;
-      resolveAttendEffects(side, attendee, "seat", index, { fromHand: false, attendanceSource: "title_match" });
+      resolveAttendEffects(side, attendee, "seat", index, { attendanceSource: "effect" });
       return attendee;
     }
 
