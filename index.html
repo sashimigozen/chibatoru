@@ -15164,6 +15164,156 @@
         overflow: visible !important;
       }
     }
+
+    /* ver.0.16.5: エースぺは元タイプを保ちつつ、全表示で共通の橙色テーマを使う。 */
+    .card.ace-card {
+      --card-tone: #f28a2e;
+      --card-tint: #ffedd5;
+      --card-accent: #9a3412;
+      --card-template-surface: #fed7aa;
+      --card-template-panel: #fff7ed;
+      --card-template-ink: #7c2d12;
+      --card-template-effect-ink: #7c2d12;
+      --card-template-accent: #c2410c;
+      border-color: #9a3412 !important;
+      background: linear-gradient(145deg, #fdba74 0%, #f97316 100%) !important;
+    }
+
+    .card.ace-card::before {
+      border-color: #c2410c !important;
+      background: #ffedd5 !important;
+    }
+
+    .card.ace-card .card-face {
+      color: #431407 !important;
+      border-color: #9a3412 !important;
+      background: linear-gradient(145deg, #fff7ed 0%, #fed7aa 56%, #fb923c 100%) !important;
+    }
+
+    .card.ace-card .card-header,
+    .card.ace-card .card-art-panel,
+    .card.ace-card .card-effect-panel {
+      border-color: #9a3412 !important;
+      background: rgba(255, 247, 237, .92) !important;
+    }
+
+    .card .card-type.ace-type-label {
+      width: auto;
+      min-width: 0;
+      max-width: 44%;
+      height: 24px;
+      padding: 0 6px;
+      border-radius: 999px;
+      color: #9a3412;
+      border-color: #c2410c;
+      background: #ffedd5;
+      font-size: 8px;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .battle-screen .field-card.board-card.ace-card {
+      --field-band: #9a3412;
+      color: #431407;
+      border-color: #c2410c !important;
+      background: linear-gradient(145deg, #fff7ed 0%, #fed7aa 56%, #fb923c 100%) !important;
+      box-shadow: inset 0 0 0 1px rgba(255, 247, 237, .72), 2px 3px 0 rgba(124, 45, 18, .2) !important;
+    }
+
+    .battle-screen .field-card.board-card.ace-card .field-card-title,
+    .battle-screen .field-card.board-card.ace-card .field-card-art-name {
+      color: #7c2d12;
+      border-color: #c2410c;
+      background: rgba(255, 247, 237, .84);
+    }
+
+    /* 装備枚数にかかわらず、盤面では右下の一つの印だけで存在を示す。 */
+    .field-card-equipment-mark {
+      position: absolute;
+      right: 4px;
+      bottom: 23px;
+      z-index: 12;
+      display: grid;
+      width: 16px;
+      height: 16px;
+      place-items: center;
+      border: 1px solid #a16207;
+      border-radius: 4px;
+      color: #713f12;
+      background: #fef3c7;
+      box-shadow: 0 1px 2px rgba(66, 32, 6, .28);
+      font-size: 9px;
+      font-weight: 1000;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    /* 実際の配置可否を、置けるマスと置けないマスで明確に分ける。 */
+    .battle-screen .slot.placement-valid {
+      opacity: 1;
+      filter: none;
+      border-color: #16a34a !important;
+      background-color: rgba(220, 252, 231, .72) !important;
+      box-shadow: 0 0 0 2px rgba(34, 197, 94, .38), 0 0 16px rgba(34, 197, 94, .48) !important;
+      animation: placement-ready-pulse 1.35s ease-in-out infinite;
+    }
+
+    .battle-screen .slot.placement-invalid {
+      opacity: .38;
+      filter: grayscale(.45) saturate(.55);
+      background-color: rgba(226, 232, 240, .68) !important;
+      background-image: repeating-linear-gradient(135deg, rgba(100, 116, 139, .14) 0 5px, transparent 5px 11px) !important;
+      box-shadow: inset 0 0 0 1px rgba(100, 116, 139, .24) !important;
+    }
+
+    @keyframes placement-ready-pulse {
+      0%, 100% { box-shadow: 0 0 0 2px rgba(34, 197, 94, .3), 0 0 10px rgba(34, 197, 94, .28); }
+      50% { box-shadow: 0 0 0 3px rgba(34, 197, 94, .52), 0 0 20px rgba(34, 197, 94, .58); }
+    }
+
+    /* 使用可能判定を通った手札だけを、輪郭の外から呼吸するように光らせる。 */
+    .battle-screen .player-hand .hand-card.affordable:not(.tutorial-muted-card) > .card-scale-stage {
+      animation: chibattle-hand-ready-legal-breathe 1.8s ease-in-out infinite !important;
+    }
+
+    @keyframes chibattle-hand-ready-legal-breathe {
+      0%, 100% {
+        filter: drop-shadow(0 0 3px rgba(255, 199, 45, .38)) drop-shadow(0 0 7px rgba(255, 189, 28, .22));
+      }
+      50% {
+        filter: drop-shadow(0 0 11px rgba(255, 221, 78, 1)) drop-shadow(0 0 27px rgba(255, 184, 22, .82));
+      }
+    }
+
+    /* 進化演出の二枚は進化元の実寸と中心を共有し、重なりの基準を一つにする。 */
+    .play-reveal-card.evolution-card.source-aligned {
+      position: fixed;
+      left: var(--evolution-source-left);
+      top: var(--evolution-source-top);
+      width: var(--evolution-source-width);
+      height: var(--evolution-source-height);
+      transform: none;
+      transform-origin: center;
+    }
+
+    .play-reveal-card.evolution-card.source-aligned .evolution-scene,
+    .play-reveal-card.evolution-card.source-aligned .donguri-evolution-stack,
+    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card,
+    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card > .card,
+    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card > .card > .card-scale-stage,
+    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card > .card > .card-scale-stage > .card-face {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      box-sizing: border-box;
+    }
+
+    .play-reveal-card.evolution-card.source-aligned .evolution-scene {
+      min-height: 0;
+    }
   </style>
 </head>
 <body>
@@ -16853,6 +17003,19 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.16.5",
+        date: "2026年8月23日",
+        summary: "エースぺ・装備表示・進化演出を整理し、手札と配置先の操作状態を読み取りやすく改善。",
+        changes: [
+          { title: "エースぺの表示", before: "元タイプやエースぺであることが表示場所によって分かりにくかった。", after: "元のタイプを維持したまま「タイプ / エースぺ」と表示し、カード全体を共通のオレンジ基調と細い菱形印で統一した。" },
+          { title: "装備表示", before: "講義室の出席者に装備カードが付いているかを、カード詳細を開くまで判断しにくかった。", after: "装備カードが1枚以上付いている出席者の右下に、枚数にかかわらず装備印を1つ表示する。詳細では装備カード名を引き続き確認できる。" },
+          { title: "進化演出", before: "進化前と進化後のカードが、盤面上の進化元と異なる位置や大きさで重なることがあった。", after: "盤面上の進化元カードの実寸と中心位置を基準に、進化前後の2枚が同じ大きさで正確に重なるよう演出だけを調整した。" },
+          { title: "戦意0の表示", before: "戦意0のカードで、表示場所によって数値が省略される可能性があった。", after: "戦意表示がある場所では、戦意0も数値の0を表示する基準に統一した。" },
+          { title: "手札の使用可能表示", before: "戦意だけでは足りていても、対象や配置条件を満たさないカードが使用可能に見える場合があった。", after: "現在のターン、残り戦意、対象、配置制限などを含む実際の使用可否を満たす手札だけを、黄色い呼吸光で表示する。" },
+          { title: "配置先の表示", before: "カードを配置する時、置けるマスと置けないマスを一目で区別しにくかった。", after: "実際の配置条件に基づき、置けるマスを緑の輪郭と発光、置けない候補マスを薄い表示で区別する。操作を取り消すと強調も消える。" }
+        ]
+      },
       {
         version: "ver.0.16.4",
         date: "2026年8月16日",
@@ -19111,13 +19274,16 @@
       return localStyle ? ` reward-foil reward-foil-${localStyle}` : "";
     }
 
+    function isAceCard(card) {
+      return card?.ace === true || CARD_BASES[card?.baseId]?.ace === true;
+    }
+
     function cardVisualClass(card) {
-      const isAce = card?.ace === true || CARD_BASES[card?.baseId]?.ace === true;
-      return `${isAce ? " ace-card" : ""}${card?.darkPresident ? " dark-president-foil" : ""}${cardRewardStyleClass(card)}`;
+      return `${isAceCard(card) ? " ace-card" : ""}${card?.darkPresident ? " dark-president-foil" : ""}${cardRewardStyleClass(card)}`;
     }
 
     function aceDeckMark(card) {
-      return card?.ace === true || CARD_BASES[card?.baseId]?.ace === true
+      return isAceCard(card)
         ? '<span class="ace-deck-mark" title="エースぺ" aria-label="エースぺ">◆</span>'
         : "";
     }
@@ -31782,7 +31948,16 @@
       const targetCard = payload.targetCard || revealCardFromBase(payload.evolutionFrom, payload.owner || "player");
       const evolutionCard = payload.evolutionCard || revealCardFromBase(payload.evolutionBaseId, payload.owner || "player");
       if (!targetCard || !evolutionCard) return;
+      const sourceRect = captureCardVisualRect(targetCard);
       elements.playRevealCard.className = "play-reveal-card evolution-card";
+      elements.playRevealCard.removeAttribute("style");
+      if (sourceRect?.width > 0 && sourceRect?.height > 0) {
+        elements.playRevealCard.classList.add("source-aligned");
+        elements.playRevealCard.style.setProperty("--evolution-source-left", `${sourceRect.left}px`);
+        elements.playRevealCard.style.setProperty("--evolution-source-top", `${sourceRect.top}px`);
+        elements.playRevealCard.style.setProperty("--evolution-source-width", `${sourceRect.width}px`);
+        elements.playRevealCard.style.setProperty("--evolution-source-height", `${sourceRect.height}px`);
+      }
       elements.playRevealCard.innerHTML = `
         <div class="evolution-scene">
           <div class="donguri-evolution-stack">
@@ -31897,6 +32072,7 @@
       elements.playRevealOverlay.classList.add("hidden");
       elements.playRevealOverlay.classList.remove("reward-foil-reveal-active");
       elements.playRevealCard.className = "play-reveal-card";
+      elements.playRevealCard.removeAttribute("style");
       elements.playRevealCard.innerHTML = "";
     }
 
@@ -33695,9 +33871,15 @@
     }
 
     function clearHandDropHints() {
-      document.querySelectorAll(".drop-ready,.drag-over,.invalid").forEach((element) => {
-        element.classList.remove("drop-ready", "drag-over", "invalid");
+      document.querySelectorAll(".drop-ready,.drag-over,.invalid,.placement-valid,.placement-invalid").forEach((element) => {
+        element.classList.remove("drop-ready", "drag-over", "invalid", "placement-valid", "placement-invalid");
       });
+    }
+
+    function isPlacementSlotForCard(card, slot) {
+      if (!card || card.type === "item") return false;
+      if (card.type === "environment") return slot.dataset.zone === "environment";
+      return slot.dataset.owner === "player" && ["seat", "teacher"].includes(slot.dataset.zone);
     }
 
     function refreshHandDropHints(card = getDraggedHandCard()) {
@@ -33705,8 +33887,13 @@
       if (!card || !canStartHandDrag(card)) return;
       document.querySelectorAll(".slot").forEach((slot) => {
         const index = slot.dataset.index === "" ? null : Number(slot.dataset.index);
-        if (canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, index)) {
+        const valid = canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, index);
+        if (valid) {
           slot.classList.add("drop-ready");
+        }
+        if (isPlacementSlotForCard(card, slot)) {
+          slot.classList.toggle("placement-valid", valid);
+          slot.classList.toggle("placement-invalid", !valid);
         }
       });
       document.querySelectorAll("[data-life-target]").forEach((target) => {
@@ -35117,7 +35304,11 @@
         && zone === "seat"
         && state.players[owner].board.seats[index] === null
         && !isSeatBlocked(owner, index));
-      slot.classList.toggle("click-ready", copyReady || captureReady || Boolean(selected && canDropHandCardOnSlot(selected, zone, owner, index)));
+      const selectedPlacement = Boolean(selected && isPlacementSlotForCard(selected, slot));
+      const selectedPlacementValid = Boolean(selectedPlacement && canDropHandCardOnSlot(selected, zone, owner, index));
+      slot.classList.toggle("placement-valid", selectedPlacementValid);
+      slot.classList.toggle("placement-invalid", selectedPlacement && !selectedPlacementValid);
+      slot.classList.toggle("click-ready", copyReady || captureReady || selectedPlacementValid);
     }
 
     function createBoardCard(card, owner, zone, index) {
@@ -35350,14 +35541,18 @@
       const attackBadge = hasStats ? `<span class="card-stat stat-attack">${attackValue}</span>` : "";
       const hpBadge = hasStats ? `<span class="card-stat stat-hp">${hpDisplayValue}</span>` : "";
       const defenseBadge = hasStats && defenseValue > 0 ? `<span class="card-stat stat-defense">防${defenseValue}</span>` : "";
+      const baseTypeLabel = labelForType(card.type);
       const typeShort = {
         student: "学生",
         teacher: "教師",
         vampire: "吸血",
         item: "持物",
         environment: "環境"
-      }[card.type] || "";
-      const type = boardCard ? "" : `<div class="card-type" title="${escapeHtml(labelForType(card.type))}">${escapeHtml(typeShort)}</div>`;
+      }[card.type] || baseTypeLabel;
+      const aceCard = isAceCard(card);
+      const displayTypeLabel = aceCard ? `${baseTypeLabel} / エースぺ` : typeShort;
+      const typeTitle = aceCard ? displayTypeLabel : baseTypeLabel;
+      const type = boardCard ? "" : `<div class="card-type${aceCard ? " ace-type-label" : ""}" title="${escapeHtml(typeTitle)}">${escapeHtml(displayTypeLabel)}</div>`;
       if (!boardCard) {
         return `
           <div class="card-scale-stage">
@@ -35443,15 +35638,21 @@
       const stats = hasStats
         ? `<span class="field-card-stats"><span class="field-stat attack${attackChange}">${card.attack}${attackChange ? `<i>${attackChange.trim() === "up" ? "↑" : "↓"}</i>` : ""}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
+      const equipped = normalizeUtaEquipmentEntries(card).length > 0 || isPadlocked(card);
+      const equipmentMark = equipped
+        ? '<span class="field-card-equipment-mark" title="装備カードあり" aria-label="装備カードあり">装</span>'
+        : "";
+      const typeLabel = isAceCard(card) ? `${labelForType(card.type)} / エースぺ` : labelForType(card.type);
       return `
         <span class="field-card-title">
           ${cost}
           <span class="field-card-name">${escapeHtml(card.name)}</span>
-          <span class="field-card-type-mark" title="${escapeHtml(labelForType(card.type))}"></span>
+          <span class="field-card-type-mark" title="${escapeHtml(typeLabel)}"></span>
         </span>
         <span class="field-card-art-name" aria-label="イラスト枠">${escapeHtml(card.name)}</span>
         ${stats}
         ${status}
+        ${equipmentMark}
       `;
     }
 
