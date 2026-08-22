@@ -27251,7 +27251,7 @@
         if (card.occupiedSeatSize) return canPlaceMultiSeatCard(owner, card, index);
         if (state.players[owner].board.seats[index] !== null) return false;
         if (card.baseId === "seat_taking_group") {
-          return index === 4 && [3, 4, 5].every((seatIndex) => isBoardSlotOpen(owner, "seat", seatIndex));
+          return index === 4;
         }
         if (card.type === "student" && card.rowOnly && seatRow(index) !== card.rowOnly) return false;
         return true;
@@ -30013,8 +30013,8 @@
         if (renderAfter) render();
         return false;
       }
-      if (item.baseId === "big_laughter" && listBoardRefs(side).length < 4) {
-        addLog("バカでかい笑いは、自分の講義室に4人以上出席している場合にのみ使えます。");
+      if (item.baseId === "big_laughter" && countOccupiedClassroomSlots(side) < 4) {
+        addLog("バカでかい笑いは、自分の講義室のマスが4つ以上埋まっている場合にのみ使えます。");
         if (renderAfter) render();
         return false;
       }
@@ -30041,9 +30041,9 @@
       }
       if (item.baseId === "smoke_flare") {
         const player = state.players[side];
-        player.maxWill = Math.max(0, (player.maxWill || 0) + 2);
-        const drawn = player.maxWill >= 10 && drawOne(side, false) ? 1 : 0;
-        resultText = `自分の戦意最大値を+2しました（現在${player.maxWill}）。${drawn ? "10以上になったため1枚ドローしました。" : ""}`;
+        player.maxWill = Math.min(10, Math.max(0, (player.maxWill || 0) + 2));
+        const drawn = player.maxWill === 10 && drawOne(side, false) ? 1 : 0;
+        resultText = `自分の戦意最大値を+2しました（現在${player.maxWill}）。${drawn ? "戦意最大値が10のため1枚引きました。" : ""}`;
       }
       if (item.baseId === "forbidden_book") {
         damagePlayer(side, 3);
@@ -30051,8 +30051,8 @@
         resultText = "自分の気力に3ダメージ、相手の気力に5ダメージを与えました。";
       }
       if (item.baseId === "big_laughter") {
-        const attendeeCount = listBoardRefs(side).length;
-        healPlayer(side, attendeeCount);
+        const occupiedSlots = countOccupiedClassroomSlots(side);
+        healPlayer(side, occupiedSlots);
         let affected = 0;
         listBoardRefs(side).forEach((ref) => {
           const target = getBoardCardFromRef(ref);
@@ -30060,7 +30060,7 @@
           dealDamageToCard(target, 1, item);
           affected += 1;
         });
-        resultText = `出席者${attendeeCount}人分だけ気力を回復し、自分の学生${affected}人に1ダメージを与えました。`;
+        resultText = `埋まっているマス${occupiedSlots}個分だけ気力を回復し、自分の学生${affected}人に1ダメージを与えました。`;
       }
       if (item.baseId === "think_so") {
         const searched = pullCardsFromDeck(side, "yuta", 1);
@@ -32083,6 +32083,12 @@
       return refs;
     }
 
+    function countOccupiedClassroomSlots(owner) {
+      const player = state.players[owner];
+      if (!player) return 0;
+      return player.board.seats.filter(Boolean).length + (player.board.teacher ? 1 : 0);
+    }
+
     function destroyBoardCard(ref, trashOptions = {}) {
       const card = getBoardCardFromRef(ref);
       if (!card) return null;
@@ -33494,7 +33500,7 @@
       if (item.baseId === "furious_comeback") return state.players.player.life <= 10 && listBoardRefs("player").length > 0;
       if (item.baseId === "stand_up") return state.environment?.baseId === "shogi_duel_field";
       if (item.baseId === "lie_pekora") return listBoardRefs("player").length === listBoardRefs("opponent").length;
-      if (item.baseId === "big_laughter") return listBoardRefs("player").length >= 4;
+      if (item.baseId === "big_laughter") return countOccupiedClassroomSlots("player") >= 4;
       if (item.baseId === "forbidden_book") return state.players.player.life <= 10;
       if (isImmediateItemBaseId(item.baseId)) return true;
       if (item.target === "global") return true;
@@ -34531,6 +34537,7 @@
       if (state.environment?.baseId !== "raptor_temple" || state.phase !== "battle" || state.gameOver) return false;
       if (state.currentSide !== side || raptorTempleUsedThisTurn(side)) return false;
       if (side === "player" && isOnlineSpectator()) return false;
+      if ((state.players[side]?.will || 0) < 3) return false;
       return raptorTempleSourceEntries(side).some((entry) => raptorTempleTargetCandidates(side, entry.card).length > 0);
     }
 
@@ -34549,13 +34556,13 @@
       state.selectedAttacker = null;
       state.selectedHandId = null;
       state.pendingRaptorTemple = { sourceRef: null };
-      state.message = "校外エリアへ送る、自分の場の「デザイン」と名のつく教師を指名してください。";
+      state.message = "校外へ送る、自分の講義室の「デザイン」と名のつく教師を指名してください。";
       render();
     }
 
     function selectRaptorTempleSource(owner, zone, index) {
       if (!isRaptorTempleSourceRef("player", owner, zone, index)) {
-        state.message = "猛禽寺では、自分の場の入れ替え可能なデザイン教師だけを指名できます。";
+        state.message = "猛禽寺では、自分の講義室の入れ替え可能なデザイン教師だけを指名できます。";
         render();
         return false;
       }
@@ -34587,7 +34594,7 @@
       return openCardChoice({
         mode: "raptor_temple_target",
         title: "猛禽寺",
-        message: "同じマスに出席させる、校外エリアの進化前の「デザイン」と名のつく教師を1人指名してください。",
+        message: "同じマスに出席させる、校外の進化前の「デザイン」と名のつく教師を1人指名してください。",
         cards: candidates,
         min: 1,
         max: 1,
@@ -34609,12 +34616,13 @@
         : [selected];
       const placed = makeBoardCard({ ...trashCard, owner: side });
       if (!attendCard(side, placed, sourceRef.zone, sourceRef.index ?? null, {
-        attendanceSource: ATTENDANCE_SOURCE.TRASH
+        attendanceSource: ATTENDANCE_SOURCE.HAND
       })) return false;
+      state.players[side].will = Math.max(0, state.players[side].will - 3);
       if (!state.environment.raptorUsedTurns) state.environment.raptorUsedTurns = {};
       state.environment.raptorUsedTurns[side] = state.players[side].turnsTaken;
       showCardPlayAnimation(placed, "board");
-      addLog(`猛禽寺の効果：${source.name}を校外エリアへ送り、${placed.name}を同じマスに出席させました。`);
+      addLog(`猛禽寺の効果：戦意を3使い、${source.name}を校外へ送り、${placed.name}を同じマスに出席させました。`);
       state.pendingRaptorTemple = null;
       clearSelections();
       cleanupDestroyedCards();
@@ -37999,7 +38007,7 @@
 
     function placementText(card) {
       if (card.evolutionFrom) return `${CARD_BASES[card.evolutionFrom]?.name || "進化元"}の上に進化`;
-      if (card.baseId === "seat_taking_group") return "2行2列のみ（自分の2行目の席マスがすべて空いている場合）";
+      if (card.baseId === "seat_taking_group") return "2行2列のみ";
       if (card.baseId === "predator") return "自分の出席者がいる席マス / 教卓マス";
       if (["student", "teacher", "vampire"].includes(card.type)) return "席マス / 教卓マス";
       if (card.type === "environment") return "環境マス";
@@ -38071,7 +38079,7 @@
         bounce_day: "このカードが攻撃したとき、このカードを校外エリアへ送る。出席者を攻撃していたなら、その出席者を持ち主の手札に戻す。相手本体を攻撃していたなら、このカードの攻撃力分のダメージを与える。",
         lone_wolf: "注目を持つ。このカードの周囲1マスに出席者がいないかぎり、このカードの攻撃力を+3、体力を+3する。",
         student_comedy: "このカードが席マスに出席したとき、周囲1マスにいる自分の学生すべての攻撃力と体力を+1する。",
-        seat_taking_group: "このカードは、自分の2行目の席マスがすべて空いている場合、2行2列にのみ出席できる。このカードが出席したとき、自分の2行1列と2行3列に「席取り軍団」を1人ずつ出席させる。",
+        seat_taking_group: "このカードは2行2列にのみ出席できる。このカードを手札から出席させたとき、自分の2行1列と2行3列の空いている席マスに、「席取り軍団」を1人ずつ出席させる。",
         sniper: "このカードが出席したとき、相手の手札からカード1枚をランダムに選び、そのカードを校外エリアへ送る。",
         cynical_student: "自分のターン終了時、このカードが自分の場にいる場合、相手は手札をすべてデッキに戻してシャッフルする。その後、戻した枚数と同じ枚数のカードを引く。",
         extra_people: "このカードが出席したとき、自分の空いている席マスすべてに、1/1で陽気を持つ「エキストラ学生」を1人ずつ出席させる。",
@@ -38101,7 +38109,7 @@
         oni_shima_ai: "進化：「愛ちゃん」。陽気を持つ。進化したとき、相手の学生すべてに1ダメージを与える。",
         france_asakura: "このカードが出席したとき、場の環境カードを破壊する。",
         cafeteria_lady: "環境が「食堂」であるかぎり、このカードの戦意を-1、攻撃力を+1、体力を+2する。",
-        curry_treater: "このカードが出席したとき、自分のデッキから「グリーンカレー」を1枚まで引く。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
+        curry_treater: "このカードが出席したとき、自分のデッキから「グリーンカレー」1枚を手札に加える。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
         chen_san: "このカードが出席したとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
         tissue_distributor: "このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の場のヴァンパイアすべての体力を+2する。",
         apprentice_vampire: "このカードが席マスに出席したとき、隣の空き席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-3する。",
@@ -38121,20 +38129,20 @@
         hondara: "カードを1枚ドローする。",
         fire_touch: "自分の気力を4失い、自分のデッキを上から3枚引く。",
         thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
-        one_eyed_peek: "相手の現在の手札を見る。この公開は使用者だけに一時的に表示される。",
+        one_eyed_peek: "相手の手札を見る。",
         course_registration_party: "相手プレイヤーに効果の了承を得る。了承された場合、お互いは自身のデッキから好きなカードを5枚選び校外エリアに送る。以降の5ターンは通常のドローの代わりに、校外へ送った5枚の中から選んで1枚を手札に加える。",
         brother_capital: "自分のデッキから戦意2以下の出席者を好きなだけ選び、自分の講義室に特殊出席させる。（エースぺ）",
         padlock: "装備カード。自分の出席者1人に装備できる。装備者はすべての効果を失い、攻撃と講義と進化を行えず、ダメージを受けず、効果で破壊されない。注目・超注目は無視して攻撃対象を選べる。このカードを装備したとき、「鍵」1枚を手札に生成する。",
         crotch_febreze: "自分の「あえー」と名のつく出席者がいる場合に使用できる。好きな人数の体力を1にし、その人数まで相手教師を選ぶ。選んだ教師の出席時効果だけを相手に対して使用する。",
-        smoke_flare: "自分の戦意最大値を+2する。+2後の値が10以上なら、自分のデッキから1枚引く。（エースぺ）",
-        big_laughter: "自分の講義室に4人以上出席している時のみ使用できる。自分の気力を出席者の人数分回復する。その後、自分の学生すべてに1ダメージ。",
-        lie_pekora: "お互いの講義室にいる出席者数が同じの場合のみ使用できる。双方の講義室に存在する出席者を対応するマスごと入れ替える。",
-        big_wall: "自分の講義室の1行目の学生を2人選ぶ。それらは注目を持ち、体力が+2する。",
-        forbidden_book: "自分の気力が10以下の時のみ使用できる。自分の気力に3ダメージ、相手の気力に5ダメージを与える。（エースぺ）",
-        philosophy_cheating: "相手の手札を見て、その中の持ち物を2枚まで選んで校外エリアに送る。（エースぺ）",
-        think_so: "デッキから「U太」を1枚まで手札に加え、別に「U太」1枚を手札に生成する。その後、その時点で手札にある「U太」の戦意を-1する。（エースぺ）",
-        key: "自分・相手講義室にいる「南京錠」を装備した出席者1人を指名する。その出席者の南京錠を校外エリアに送る。",
-        illegal_cafeteria: "お互いのプレイヤーは自分のターン終了時、自分の講義室にいるヴァンパイアすべての体力を1回復する。ヴァンパイアの効果を処理する際、環境を食堂としても扱う。他の環境に上書きされた後も、この効果は2ターン継続する。（エースぺ）",
+        smoke_flare: "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
+        big_laughter: "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
+        lie_pekora: "お互いの講義室にいる出席者数が同じ場合のみ使用できる。お互いの講義室にいる出席者を対応するマスごと入れ替える。",
+        big_wall: "自分の講義室の1行目の学生2人を指名する。それらは「注目」を持ち、体力を+2する。",
+        forbidden_book: "自分の気力が10以下の時のみ使用できる。自分の気力に3ダメージ、相手の気力に5ダメージを与える。",
+        philosophy_cheating: "相手の手札を見て、その中の「持ち物」を2枚まで選んで校外に送る。",
+        think_so: "「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。",
+        key: "お互いの講義室から「南京錠」を装備している出席者1人を指名し、その「南京錠」を校外へ送る。",
+        illegal_cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の講義室にいるヴァンパイアすべての体力を1回復する。ヴァンパイアの効果を処理する際、環境を「食堂」としても扱う。このカードが他の環境に上書きされた後も、2ターンの間、この効果は継続する。",
         sock_block: "相手の場の3行目を1ターン出席不可にする。すでに3行目にいる出席者は校外エリアへ送る。",
         go_home: "自分の学生1人を指名し、そのカードを手札に戻す。",
         deck_without: "自分のデッキを上から2枚引く。その後、自分の手札を2枚選び、校外エリアへ送る。",
@@ -38154,14 +38162,14 @@
         gigi_blood: "進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
         vampirization: "相手の出席者1人を指名し、それをタイプ「ヴァンパイア」にした後、自分の場に移す。",
-        iv_pack: "自分のデッキからヴァンパイアをランダムに2枚まで引く。",
+        iv_pack: "自分のデッキからヴァンパイアをランダムに2枚まで手札に加える。",
         wet_meal_ticket: "自分のデッキからカードを1枚引く。このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「乾いた食券」にする。",
         dry_meal_ticket: "環境が「食堂」の場合にのみ使用できる。自分のデッキから「おにぎりドロー」と「流動性パスタ」をそれぞれ1枚まで引く。",
         fluid_pasta: "自分の気力を3回復する。",
         water_2l: "自分の校外エリアから、カニ勝利に必要なカードを2枚まで手札に回収する。",
         night_pool_water: "自分の空いている席マスに「単細胞生物」をランダムに2人出席させる。",
         i_got_it: "相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。",
-        accelerate: "装備カード。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の場にいるなら、カードを1枚ドローする。装備カードは通常、1人につき1枚まで。",
+        accelerate: "装備カード。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の講義室にいるなら、カードを1枚引く。装備カードは通常、1人につき1枚まで。",
         chameleon: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の体力を+2する。装備カードは通常、1人につき1枚まで。",
         yuta_umbrella: "装備カード。「U太」または「裏U太」1人に装備できる。次の相手ターン終了時まで、このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは通常、1人につき1枚まで。",
         red_happi: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の攻撃力を+2する。装備カードは通常、1人につき1枚まで。",
@@ -38187,7 +38195,7 @@
         capture: "相手の空いている席マス1つを3ターン出席不可にする。",
         yutakun_yutakun: "校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。",
         three_gestures: "デッキを上から6枚見る。そのうち3枚を選び、手札に加える。他のカードは校外エリアへ送る。デッキが6枚未満の場合は使えない。",
-        substitute_attendance: "遅刻ゾーンにいるカード1枚をランダムに指名し、そのカードの遅刻カウントを0にする。",
+        substitute_attendance: "遅刻ゾーンにいるカード1枚をランダムに選び、そのカードの遅刻カウントを0にする。",
         music_detergent: "自分のデッキから「デザイン」と名のつく教師カードを1種類ずつ表示し、その中から1枚を選び、手札に加える。その後、自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
         music_draw_option: "自分の場にいる「デザイン」と名のつく教師の人数だけカードを引く。",
         donguri: "このカードは、自分の手札に「どんぐり」が2枚あり、さらに「デザインデストロイファルコン」がある場合にのみ使える。自分の手札から「デザインデストロイファルコン」1枚を選び、自分の場の「デザインファルコン」1人を進化させる。この効果で進化する場合、進化のための戦意は消費せず、進化元を出席させたターンでも進化できる。",
@@ -38221,7 +38229,7 @@
         full_lock: "お互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
         design_domain: "このカードは、自分の教卓マスに「デザイン」と名のつく教師がいなければ置けない。ヴァンパイアは「デザイン」と名のつく教師を攻撃できない。",
         building_12_classroom: "お互いの教師すべての攻撃力を+1し、お互いの学生すべての攻撃力を-1する。",
-        raptor_temple: "各プレイヤーは自分のターンに1回、自分の場の「デザイン」と名のつく教師1人を指名し、校外エリアへ送ってもよい。そうした場合、自分の校外エリアにある進化前の「デザイン」と名のつく教師1人を指名し、同じマスに出席させる。出席時効果は使用する。",
+        raptor_temple: "各プレイヤーは自分のターンに1回、戦意を3使って、自分の講義室の「デザイン」と名のつく教師1人を指名し、校外へ送ってもよい。そうした場合、自分の校外にある進化前の「デザイン」と名のつく教師1人を選び、同じマスに出席させる。この出席は手札から出席させたものとして扱う。",
         chaos_world: "このカードを環境マスに出したとき、お互いの手札にあるカードすべての戦意を0〜10のランダムな値にし、お互いの場の出席者すべての攻撃力を0〜10、体力を1〜10のランダムな値にする。このカードが環境マスにあるかぎり、各ターン開始時にも同じ処理を行う。このカードが校外エリアへ送られても、変更された値はそのまま。",
         no_late_time: "「遅刻」の効果をなくす。",
         meguro_library: "お互いにプレイヤー本体を攻撃できない。このカードをプレイしたプレイヤーは、このカードが環境マスにある間、自分のターン終了時に手札1枚を選び、校外エリアへ送る。",
