@@ -25678,23 +25678,27 @@
         render();
         return true;
       }
-      return openCardChoice({
+      state.selectedAttacker = null;
+      state.selectedHandId = item.instanceId;
+      state.pendingMultiItem = {
         mode: "big_wall",
         itemId: item.instanceId,
-        title: item.name,
-        message: "自分の1行目にいる学生を2人選んでください。",
-        cards: candidates,
-        min: 2,
-        max: 2,
-        confirmLabel: "選んだ学生を強化"
-      });
+        targets: [],
+        maxTargets: 2
+      };
+      state.message = "バカでかい壁：自分の1行目にいる学生を、盤面から2人指名してください。";
+      render();
+      return true;
     }
 
     function resolveBigWall(side, item, selectedIds = [], renderAfter = true) {
       if (!item || item.baseId !== "big_wall") return false;
-      const targets = boardCardsForChoice(side, (card, ref) => (
-        ref.zone === "seat" && seatRow(ref.index) === 1 && card.type === "student"
-      )).filter((card) => selectedIds.includes(card.instanceId)).slice(0, 2);
+      const selected = new Set(selectedIds);
+      const targets = listBoardRefs(side)
+        .filter((ref) => ref.zone === "seat" && seatRow(ref.index) === 1)
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((card) => card?.type === "student" && selected.has(card.instanceId))
+        .slice(0, 2);
       if (targets.length !== 2 || !payForItem(side, item)) return false;
       targets.forEach((target) => {
         addKeyword(target, "注目", item.name);
@@ -29194,7 +29198,7 @@
         return;
       }
       const selectedCard = getSelectedHandCard();
-      if (state.pendingMultiItem && selectedCard?.baseId === "i_got_it") {
+      if (state.pendingMultiItem && ["i_got_it", "big_wall"].includes(selectedCard?.baseId)) {
         toggleMultiItemTarget(owner, zone, index);
         return;
       }
@@ -29891,13 +29895,21 @@
       const pending = state.pendingMultiItem;
       const item = getSelectedHandCard();
       const target = getBoardCard(owner, zone, index);
-      if (!pending || item?.baseId !== "i_got_it" || owner !== "opponent" || !target) return;
-      if (!(zone === "seat" && seatRow(index) === 3 && target.type === "student")) {
-        addLog("I GOT IT!!は相手の3行目にいる学生だけを指名できます。");
+      if (!pending || !item || !target) return;
+      const isBigWall = pending.mode === "big_wall" && item.baseId === "big_wall";
+      const isIGotIt = item.baseId === "i_got_it";
+      if (!isBigWall && !isIGotIt) return;
+      const validTarget = isBigWall
+        ? owner === "player" && zone === "seat" && seatRow(index) === 1 && target.type === "student"
+        : owner === "opponent" && zone === "seat" && seatRow(index) === 3 && target.type === "student";
+      if (!validTarget) {
+        addLog(isBigWall
+          ? "バカでかい壁は自分の1行目にいる学生だけを指名できます。"
+          : "I GOT IT!!は相手の3行目にいる学生だけを指名できます。");
         render();
         return;
       }
-      if (!isAllowedEffectTarget("player", target)) {
+      if (!isBigWall && !isAllowedEffectTarget("player", target)) {
         addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
         render();
         return;
@@ -29909,14 +29921,33 @@
       } else if (pending.targets.length < pending.maxTargets) {
         pending.targets.push({ owner, zone, index });
       }
-      state.message = `${pending.targets.length}人指名中。1〜2人を指名し、対象を確定してください。`;
+      state.message = isBigWall
+        ? `バカでかい壁：${pending.targets.length}/2人を指名中。2人選んで効果を発動してください。`
+        : `${pending.targets.length}人指名中。1〜2人を指名し、対象を確定してください。`;
       render();
     }
 
     function confirmMultiItemTargets() {
       const pending = state.pendingMultiItem;
       const item = pending ? getHandCard("player", pending.itemId) : null;
-      if (!pending || item?.baseId !== "i_got_it" || pending.targets.length === 0) return;
+      if (!pending || !item) return;
+      if (pending.mode === "big_wall" && item.baseId === "big_wall") {
+        if (pending.targets.length !== 2) return;
+        const selectedIds = pending.targets
+          .map((ref) => getBoardCardFromRef(ref)?.instanceId)
+          .filter(Boolean);
+        if (selectedIds.length !== 2) return;
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("bigWall", { instanceId: item.instanceId, selectedIds });
+          state.message = "バカでかい壁の対象を送信しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        resolveBigWall("player", item, selectedIds, true);
+        return;
+      }
+      if (item.baseId !== "i_got_it" || pending.targets.length === 0) return;
       if (onlineCanSendCommand()) {
         onlineSendCommand("multiItem", { instanceId: item.instanceId, targets: pending.targets });
         state.message = "I GOT IT!!の対象を送信しました。";
@@ -33142,12 +33173,18 @@
       const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingAttendTarget || state.pendingRemoteHandTrim);
       elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem));
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
-        ? `対象${state.pendingMultiItem.targets.length}人で使用`
+        ? state.pendingMultiItem.mode === "big_wall"
+          ? `選んだ${state.pendingMultiItem.targets.length}/2人に効果を発動`
+          : `対象${state.pendingMultiItem.targets.length}人で使用`
         : state.pendingPanpanItem
           ? (state.pendingPanpanItem.stage === "friendly" ? "自分の出席者を確定" : "2人を破壊")
           : "対象を確定";
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
-        || (state.pendingMultiItem && state.pendingMultiItem.targets.length === 0)
+        || (state.pendingMultiItem && (
+          state.pendingMultiItem.mode === "big_wall"
+            ? state.pendingMultiItem.targets.length !== 2
+            : state.pendingMultiItem.targets.length === 0
+        ))
         || (state.pendingPanpanItem && (
           state.pendingPanpanItem.stage === "friendly"
             ? !state.pendingPanpanItem.friendly
@@ -35365,7 +35402,10 @@
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
         isSelectedAttacker(owner, zone, index) || isSelectedMultiItemTarget(owner, zone, index) || isSelectedPanpanTarget(owner, zone, index));
-      button.classList.toggle("selection-candidate", canSelectPanpanTarget(owner, zone, index) || isAttendTargetCandidate(owner, zone, index));
+      button.classList.toggle("selection-candidate",
+        canSelectMultiItemTarget(owner, zone, index)
+        || canSelectPanpanTarget(owner, zone, index)
+        || isAttendTargetCandidate(owner, zone, index));
       button.classList.toggle("exhausted", Boolean(card.hasAttacked));
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-locked", Boolean(
@@ -35380,7 +35420,10 @@
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
       button.classList.toggle("attack-target-ready", canSelectedAttackerTargetCard(owner, zone, index));
       const selectedItem = getSelectedHandCard();
-      const itemReady = Boolean(selectedItem?.type === "item" && canUseItemOnBoardTarget(selectedItem, owner, zone, index));
+      const itemReady = Boolean(selectedItem?.type === "item" && (
+        canSelectMultiItemTarget(owner, zone, index)
+        || canUseItemOnBoardTarget(selectedItem, owner, zone, index)
+      ));
       const raptorReady = Boolean(state.pendingRaptorTemple && !state.pendingRaptorTemple.sourceRef && isRaptorTempleSourceRef("player", owner, zone, index));
       button.classList.toggle("click-ready", itemReady || raptorReady);
       button.classList.toggle("tutorial-allowed-target", isTutorialActive() && (
@@ -35515,6 +35558,20 @@
     function isSelectedMultiItemTarget(owner, zone, index) {
       return Boolean(state.pendingMultiItem?.targets.some((ref) =>
         ref.owner === owner && ref.zone === zone && ref.index === index));
+    }
+
+    function canSelectMultiItemTarget(owner, zone, index) {
+      const pending = state.pendingMultiItem;
+      const target = getBoardCard(owner, zone, index);
+      if (!pending || !target) return false;
+      if (pending.mode === "big_wall") {
+        return owner === "player" && zone === "seat" && seatRow(index) === 1 && target.type === "student";
+      }
+      return owner === "opponent"
+        && zone === "seat"
+        && seatRow(index) === 3
+        && target.type === "student"
+        && isAllowedEffectTarget("player", target);
     }
 
     function isSelectedPanpanTarget(owner, zone, index) {
@@ -39120,6 +39177,9 @@
       makeBoardCard,
       placeCardFromHand,
       startCardTest,
+      beginItemUse,
+      handleBoardCardClick,
+      confirmSelectedItemTargets,
       canPlaceCard,
       attendCard,
       ATTENDANCE_SOURCE,

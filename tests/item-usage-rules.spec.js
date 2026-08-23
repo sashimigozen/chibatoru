@@ -127,3 +127,38 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
     expect(passed, name).toBe(true);
   });
 });
+
+test("バカでかい壁は盤面から1行目の学生2人を選んで効果を発動する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("big_wall");
+    const item = api.state.players.player.hand.find((card) => card.baseId === "big_wall");
+    const first = api.state.players.player.board.seats[0];
+    const second = api.state.players.player.board.seats[2];
+    const initialWill = api.state.players.player.will;
+
+    api.beginItemUse(item);
+    const openedOnBoard = api.state.pendingMultiItem?.mode === "big_wall"
+      && api.state.pendingCardChoice === null;
+    api.handleBoardCardClick("player", "seat", 0);
+    api.handleBoardCardClick("player", "seat", 2);
+    const selectedTwo = api.state.pendingMultiItem?.targets.length === 2;
+    api.confirmSelectedItemTargets();
+
+    return {
+      openedOnBoard,
+      selectedTwo,
+      itemConsumed: !api.state.players.player.hand.some((card) => card.instanceId === item.instanceId),
+      spentWill: api.state.players.player.will === initialWill - 4,
+      firstBuffed: first.currentHp === 3 && first.keywords.includes("注目"),
+      secondBuffed: second.currentHp === 4 && second.keywords.includes("注目"),
+      selectionCleared: api.state.pendingMultiItem === null && api.state.selectedHandId === null
+    };
+  });
+
+  Object.entries(result).forEach(([name, passed]) => {
+    expect(passed, name).toBe(true);
+  });
+});
