@@ -16650,6 +16650,8 @@
       delayed_student: ["abyss", "lazy_student", "student_council"],
       proliferating_enemy: [],
       yamanashi_minimum_wage: ["onigiri_draw", "environment_setup"]
+      ,summer_teacher: ["trendy_student", "extra_people", "kyoto_sound_i"]
+      ,illegal_cafeteria: ["classroom"]
       ,raptor_temple: ["bird_a", "demon_a_plus", "popular_c"]
       ,enemy_boss: ["enemy_student", "enemy_student"]
       ,pachin_uni: ["general_student"]
@@ -37215,6 +37217,85 @@
           createCardFromBase("gitch", "player")
         );
         opponent.board.teacher = makeOpponentTestAttendee("lightning_n");
+      }
+      if (baseId === "tokyo_tech_bro") {
+        player.late.push(
+          {
+            card: createCardFromBase("lazy_student", "player"),
+            owner: "player",
+            zone: "seat",
+            index: 0,
+            remaining: 1
+          },
+          {
+            card: createCardFromBase("cancel_student", "player"),
+            owner: "player",
+            zone: "seat",
+            index: 1,
+            remaining: 2
+          }
+        );
+      }
+      if (baseId === "brother_capital") {
+        player.deck.unshift(
+          createCardFromBase("aggro_student", "player"),
+          createCardFromBase("single_cell", "player"),
+          createCardFromBase("ae_student", "player"),
+          createCardFromBase("general_student", "player")
+        );
+      }
+      if (baseId === "smoke_flare") {
+        player.maxWill = 8;
+        player.will = 8;
+        player.deck.unshift(createCardFromBase("general_student", "player"));
+      }
+      if (["one_eyed_peek", "philosophy_cheating"].includes(baseId)) {
+        opponent.hand = [
+          createCardFromBase("ruler", "opponent"),
+          createCardFromBase("bento", "opponent"),
+          createCardFromBase("general_student", "opponent"),
+          createCardFromBase("cafeteria", "opponent")
+        ];
+      }
+      if (baseId === "crotch_febreze") {
+        player.board.seats[0] = makePlayerTestAttendee("ae_student");
+        player.board.seats[8] = makePlayerTestAttendee("super_ae_student");
+        opponent.board.seats[1] = makeOpponentTestAttendee("bird_a");
+        opponent.board.seats[7] = makeOpponentTestAttendee("popular_c");
+      }
+      if (baseId === "big_laughter") {
+        [0, 1, 2].forEach((index) => {
+          player.board.seats[index] = makePlayerTestAttendee("general_student");
+        });
+        player.life = 10;
+      }
+      if (baseId === "lie_pekora") {
+        player.board.seats[0] = makePlayerTestAttendee("aggro_student");
+        player.board.seats[8] = makePlayerTestAttendee("cafeteria_lady");
+        player.board.teacher = makePlayerTestAttendee("general_teacher");
+      }
+      if (baseId === "big_wall") {
+        player.board.seats[0] = makePlayerTestAttendee("aggro_student");
+        player.board.seats[2] = makePlayerTestAttendee("general_student");
+      }
+      if (baseId === "forbidden_book") {
+        player.life = 10;
+      }
+      if (baseId === "think_so") {
+        player.deck.unshift(createCardFromBase("yuta", "player"));
+      }
+      if (baseId === "illegal_cafeteria") {
+        const ownVampire = makePlayerTestAttendee("cafeteria_lady");
+        ownVampire.currentHp = 1;
+        player.board.seats[0] = ownVampire;
+        const enemyVampire = makeOpponentTestAttendee("vampire");
+        enemyVampire.currentHp = 5;
+        opponent.board.seats[4] = enemyVampire;
+      }
+      if (baseId === "namen_tenno") {
+        opponent.board.seats[0] = makeOpponentTestAttendee("cafeteria_lady");
+        opponent.board.seats[4] = makeOpponentTestAttendee("vampire");
+        opponent.board.seats[8] = makeOpponentTestAttendee("zombie");
       }
 
       analyticsStartGame();
