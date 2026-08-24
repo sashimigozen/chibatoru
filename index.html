@@ -16063,6 +16063,19 @@
       </div>
     </section>
   </div>
+  <div class="item-confirm-backdrop hidden" id="courseRegistrationConsentModal">
+    <section class="item-confirm-dialog" aria-modal="true" role="dialog" aria-labelledby="courseRegistrationConsentTitle">
+      <div class="item-confirm-card" id="courseRegistrationConsentCard"></div>
+      <div class="item-confirm-copy">
+        <h2 id="courseRegistrationConsentTitle">履修登録結論パを了承しますか？</h2>
+        <div id="courseRegistrationConsentText"></div>
+        <div class="item-confirm-actions">
+          <button class="button secondary" id="courseRegistrationRejectButton" type="button">拒否する</button>
+          <button class="button" id="courseRegistrationAcceptButton" type="button">了承する</button>
+        </div>
+      </div>
+    </section>
+  </div>
   <div class="modal-backdrop hidden" id="deckModal">
     <section class="deck-window" aria-modal="true" role="dialog">
       <div class="deck-window-head">
@@ -17008,12 +17021,13 @@
       {
         version: "ver.0.19.0",
         date: "2026年8月24日",
-        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組みを追加。",
+        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの了承処理を追加。",
         changes: [
           { title: "配置できないマスの表示", before: "カードを配置するとき、配置できるマスと配置できないマスを盤面上で見分けにくい場合があった。", after: "選んだカードの配置条件に合わせて、配置できるマスと配置できないマスを視覚的に区別して表示。カードを置けない場所を、操作する前に確認しやすくした。" },
           { title: "ワードインクリーサー", before: "「このカード自身を除く自分の手札をすべてデッキに戻す」と表記していた。", after: "出席後の処理に合わせて「自分の手札をすべてデッキに戻す」へ変更。効果の処理内容を読み取りやすい表記に整理した。" },
           { title: "新カード", after: "持ち物カード「イヤホン」を追加。自分の出席者1人に装備でき、装備者は講義の効果を受けなくなる。" },
-          { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" }
+          { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" },
+          { title: "履修登録結論パ", before: "了承された場合に、お互いが自身のデッキから好きなカードを5枚選んで校外エリアへ送る効果。拒否された場合の処理と、オンライン対戦で相手が了承・拒否を選ぶ専用画面がなかった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送り、以降の5ターンはドローの代わりにその中から1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。" }
         ]
       },
       {
@@ -17600,6 +17614,7 @@
     let unlockedDungeonCardStyles = loadDungeonCardStyles();
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
+    let pendingCourseRegistrationConsent = null;
 
     const state = {
       screen: "home",
@@ -18234,6 +18249,11 @@
       cardTestText: document.getElementById("cardTestText"),
       cardTestStartButton: document.getElementById("cardTestStartButton"),
       cardTestCancelButton: document.getElementById("cardTestCancelButton"),
+      courseRegistrationConsentModal: document.getElementById("courseRegistrationConsentModal"),
+      courseRegistrationConsentCard: document.getElementById("courseRegistrationConsentCard"),
+      courseRegistrationConsentText: document.getElementById("courseRegistrationConsentText"),
+      courseRegistrationAcceptButton: document.getElementById("courseRegistrationAcceptButton"),
+      courseRegistrationRejectButton: document.getElementById("courseRegistrationRejectButton"),
       deckModal: document.getElementById("deckModal"),
       deckModalClose: document.getElementById("deckModalClose"),
       deckWindowInfo: document.getElementById("deckWindowInfo"),
@@ -20018,6 +20038,7 @@
 
     function onlineCloseConnection(returnHome = false) {
       onlineStopReliabilityLoop();
+      closeCourseRegistrationConsent();
       pendingOnlineOneEyedPeekReveal = false;
       window.clearTimeout(oneEyedPeekRevealTimer);
       oneEyedPeekRevealTimer = null;
@@ -21099,10 +21120,10 @@
       onlineBroadcastState(true, pending.commandId || "");
     }
 
-    // 履修登録結論パは、効果を使った側と相手側がそれぞれ自分の
-    // デッキから5枚を選ぶ。ホストがゲーム状態を確定するので、ゲスト
-    // の選択は既存の private-choice relay 経由で戻してから処理する。
-    function requestRemoteCourseRegistrationChoice(sourceSide, item, sourceSelectedIds, commandId = "") {
+    // 履修登録結論パは、まず相手が了承または拒否を選ぶ。了承後に
+    // 各プレイヤーが自分のデッキだけを見て5枚ずつ選び、ホストが
+    // 双方の選択を受け取ってゲーム状態を確定する。
+    function requestRemoteCourseRegistrationChoice(sourceSide, item, commandId = "") {
       if (!isOnlineHost() || !state.online.started || !state.online.connected) return false;
       const targetSide = oppositeSide(sourceSide);
       if (targetSide !== "opponent" || !item || state.players[targetSide].deck.length < 5) return false;
@@ -21113,14 +21134,15 @@
         sourceSide,
         targetSide,
         itemInstanceId: item.instanceId,
-        sourceSelectedIds: [...(sourceSelectedIds || [])],
         commandId
       };
-      state.message = `${item.name}：相手が効果の了承と、校外エリアへ送る5枚を選んでいます。`;
+      state.message = `${item.name}：相手の了承を待っています。`;
       if (!onlineSend({
         type: "courseRegistrationChoiceRequest",
         requestId,
-        sourceName: item.name
+        sourceName: item.name,
+        sourceText: cardRulesText(item),
+        consentRequired: true
       }, { track: true })) {
         state.pendingRemoteHandTrim = null;
         return false;
@@ -21131,82 +21153,185 @@
     function onlineOpenCourseRegistrationChoiceRequest(message) {
       if (!isOnlineGuest() || !state.online.started) return;
       const sourceName = message.sourceName || CARD_BASES.course_registration_party.name;
-      const canChoose = state.players.player.deck.length >= 5;
-      const accepted = canChoose && (typeof window === "undefined" || window.confirm(`${sourceName}：相手プレイヤーが効果の了承を求めています。了承しますか？`));
-      if (!accepted) {
-        onlineSend({
-          type: "courseRegistrationChoiceResponse",
-          requestId: message.requestId,
-          accepted: false,
-          selectedIds: []
-        }, { track: true });
-        state.message = canChoose ? `${sourceName}を拒否しました。` : `${sourceName}：デッキが5枚未満のため了承できません。`;
-        render();
+      if (message.selectionOnly === true) {
+        openCardChoice({
+          mode: "course_registration_online_source_response",
+          title: sourceName,
+          message: "自分のデッキから、校外エリアへ送るカードを5枚選んでください。",
+          cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
+          min: 5,
+          max: 5,
+          confirmLabel: "選んだ5枚を校外へ送る",
+          requestId: message.requestId
+        });
         return;
       }
-      openCardChoice({
-        mode: "course_registration_online_response",
-        title: sourceName,
-        message: "了承しました。校外エリアへ送る自分のデッキのカードを5枚選んでください。",
-        cards: state.players.player.deck,
-        min: 5,
-        max: 5,
-        confirmLabel: "了承して5枚を送る",
-        requestId: message.requestId
+      openCourseRegistrationConsent({
+        mode: "online_remote_target",
+        requestId: message.requestId,
+        sourceName,
+        sourceText: message.sourceText || cardRulesText(CARD_BASES.course_registration_party)
       });
     }
 
     function onlineResolveCourseRegistrationChoiceResponse(requestId, accepted, selectedIds) {
       const pending = state.pendingRemoteHandTrim;
-      if (!pending || pending.mode !== "course_registration" || pending.requestId !== requestId) return;
+      if (!pending || pending.requestId !== requestId || !pending.mode.startsWith("course_registration")) return;
       const item = getHandCard(pending.sourceSide, pending.itemInstanceId);
       state.pendingRemoteHandTrim = null;
       if (!accepted) {
-        addLog(`${item?.name || CARD_BASES.course_registration_party.name}は相手に了承されなかったため、効果は発動しませんでした。`);
+        resolveCourseRegistrationRejection(pending.sourceSide, item, { renderAfter: false });
         clearSelections();
         render();
         onlineBroadcastState(true, pending.commandId || "");
         return;
       }
-      const resolved = resolveCourseRegistration(pending.sourceSide, item, pending.sourceSelectedIds || [], {
-        accepted: true,
-        opponentSelectedIds: selectedIds || [],
-        renderAfter: false
-      });
-      if (!resolved) {
-        addLog(`${CARD_BASES.course_registration_party.name}の選択を確定できませんでした。`);
-      }
-      clearSelections();
-      cleanupDestroyedCards();
-      applyBoardAuras();
-      render();
-      onlineBroadcastState(true, pending.commandId || "");
-    }
-
-    function openCourseRegistrationHostTargetChoice(sourceSide, item, sourceSelectedIds, commandId = "") {
-      if (!isOnlineHost() || sourceSide !== "opponent" || !item) return false;
-      const canChoose = state.players.player.deck.length >= 5;
-      const accepted = canChoose && (typeof window === "undefined" || window.confirm(`${item.name}：相手プレイヤーが効果の了承を求めています。了承しますか？`));
-      if (!accepted) {
-        addLog(`${item.name}は相手に了承されなかったため、効果は発動しませんでした。`);
+      if (pending.mode === "course_registration_source_selection") {
+        const resolved = resolveCourseRegistration(pending.sourceSide, item, selectedIds || [], {
+          accepted: true,
+          opponentSelectedIds: pending.targetSelectedIds || [],
+          renderAfter: false
+        });
+        if (!resolved) addLog(`${CARD_BASES.course_registration_party.name}の選択を確定できませんでした。`);
         clearSelections();
-        return false;
+        cleanupDestroyedCards();
+        applyBoardAuras();
+        render();
+        onlineBroadcastState(true, pending.commandId || "");
+        return;
       }
-      return openCardChoice({
-        mode: "course_registration_host_target",
-        title: item.name,
-        message: "了承しました。校外エリアへ送る自分のデッキのカードを5枚選んでください。",
-        cards: state.players.player.deck,
+      openCardChoice({
+        mode: "course_registration_host_source",
+        itemId: item?.instanceId,
+        title: item?.name || CARD_BASES.course_registration_party.name,
+        message: "相手が了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+        cards: sortCardsByCostForChoice(state.players[pending.sourceSide].deck, "asc"),
         min: 5,
         max: 5,
-        confirmLabel: "了承して5枚を送る",
-        commandId,
+        confirmLabel: "選んだ5枚を校外へ送る",
+        commandId: pending.commandId || "",
         context: {
-          sourceSide,
-          itemInstanceId: item.instanceId,
-          sourceSelectedIds: [...(sourceSelectedIds || [])]
+          sourceSide: pending.sourceSide,
+          opponentSelectedIds: selectedIds || []
         }
       });
+    }
+
+    function openCourseRegistrationHostTargetChoice(sourceSide, item, commandId = "") {
+      if (!isOnlineHost() || sourceSide !== "opponent" || !item) return false;
+      return openCourseRegistrationConsent({
+        mode: "online_host_target",
+        sourceSide,
+        itemInstanceId: item.instanceId,
+        commandId,
+        sourceName: item.name,
+        sourceText: cardRulesText(item)
+      });
+    }
+
+    function requestRemoteCourseRegistrationSourceSelection(sourceSide, item, targetSelectedIds, commandId = "") {
+      if (!isOnlineHost() || sourceSide !== "opponent" || !item) return false;
+      const requestId = onlineNextMessageId("course-registration-source");
+      state.pendingRemoteHandTrim = {
+        mode: "course_registration_source_selection",
+        requestId,
+        sourceSide,
+        targetSide: "player",
+        itemInstanceId: item.instanceId,
+        targetSelectedIds: [...(targetSelectedIds || [])],
+        commandId
+      };
+      state.message = `${item.name}：使用者がデッキから5枚を選んでいます。`;
+      if (!onlineSend({
+        type: "courseRegistrationChoiceRequest",
+        requestId,
+        sourceName: item.name,
+        selectionOnly: true
+      }, { track: true })) {
+        state.pendingRemoteHandTrim = null;
+        return false;
+      }
+      return true;
+    }
+
+    function openCourseRegistrationConsent(options = {}) {
+      const preview = makePreviewCard("course_registration_party", "player");
+      pendingCourseRegistrationConsent = { ...options };
+      elements.courseRegistrationConsentCard.innerHTML = cardShellTemplate(preview);
+      elements.courseRegistrationConsentText.innerHTML = cardDetailTemplate(preview);
+      const canAccept = state.players.player.deck.length >= 5;
+      elements.courseRegistrationAcceptButton.disabled = !canAccept;
+      elements.courseRegistrationAcceptButton.title = canAccept ? "" : "デッキが5枚未満のため了承できません";
+      elements.courseRegistrationConsentModal.classList.remove("hidden");
+      state.message = `${options.sourceName || preview.name}：効果を了承するか拒否するか選んでください。`;
+      render();
+      return true;
+    }
+
+    function closeCourseRegistrationConsent() {
+      pendingCourseRegistrationConsent = null;
+      elements.courseRegistrationConsentModal.classList.add("hidden");
+      elements.courseRegistrationConsentCard.innerHTML = "";
+    }
+
+    function acceptCourseRegistrationConsent() {
+      const pending = pendingCourseRegistrationConsent;
+      if (!pending || state.players.player.deck.length < 5) return;
+      closeCourseRegistrationConsent();
+      if (pending.mode === "online_remote_target") {
+        openCardChoice({
+          mode: "course_registration_online_response",
+          title: pending.sourceName || CARD_BASES.course_registration_party.name,
+          message: "了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+          cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
+          min: 5,
+          max: 5,
+          confirmLabel: "選んだ5枚を校外へ送る",
+          requestId: pending.requestId
+        });
+        return;
+      }
+      if (pending.mode === "online_host_target") {
+        const item = getHandCard(pending.sourceSide, pending.itemInstanceId);
+        openCardChoice({
+          mode: "course_registration_host_target",
+          title: item?.name || CARD_BASES.course_registration_party.name,
+          message: "了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+          cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
+          min: 5,
+          max: 5,
+          confirmLabel: "選んだ5枚を校外へ送る",
+          commandId: pending.commandId || "",
+          context: {
+            sourceSide: pending.sourceSide,
+            itemInstanceId: pending.itemInstanceId
+          }
+        });
+      }
+    }
+
+    function rejectCourseRegistrationConsent() {
+      const pending = pendingCourseRegistrationConsent;
+      if (!pending) return;
+      closeCourseRegistrationConsent();
+      if (pending.mode === "online_remote_target") {
+        onlineSend({
+          type: "courseRegistrationChoiceResponse",
+          requestId: pending.requestId,
+          accepted: false,
+          selectedIds: []
+        }, { track: true });
+        state.message = `${pending.sourceName || CARD_BASES.course_registration_party.name}を拒否しました。`;
+        render();
+        return;
+      }
+      if (pending.mode === "online_host_target") {
+        const item = getHandCard(pending.sourceSide, pending.itemInstanceId);
+        resolveCourseRegistrationRejection(pending.sourceSide, item, { renderAfter: false });
+        clearSelections();
+        render();
+        onlineBroadcastState(true, pending.commandId || "");
+      }
     }
 
     // 哲学の不正でゲストが相手の手札を対象にする場合だけ、効果の
@@ -21841,6 +21966,7 @@
       if (!commandId) return false;
       return state.pendingRemoteHandTrim?.commandId === commandId
         || state.pendingCardChoice?.commandId === commandId
+        || pendingCourseRegistrationConsent?.commandId === commandId
         || state.online.pendingAttackCommandId === commandId
         || state.online.pendingEvolutionCommandId === commandId
         || state.online.pendingCardPlayCommandId === commandId
@@ -21912,7 +22038,7 @@
         }
         if (command.type === "courseRegistration") {
           const item = getHandCard("opponent", payload.instanceId);
-          if (item) openCourseRegistrationHostTargetChoice("opponent", item, payload.selectedIds || [], command.id || "");
+          if (item) openCourseRegistrationHostTargetChoice("opponent", item, command.id || "");
         }
         if (command.type === "happyExperience") {
           const item = getHandCard("opponent", payload.instanceId);
@@ -22248,6 +22374,7 @@
     }
 
     function initializeGame(options = {}) {
+      closeCourseRegistrationConsent();
       const onlineHost = options.onlineHost === true;
       const dungeonBattle = options.dungeon === true;
       const deferPreBattle = options.deferPreBattle === true;
@@ -22312,6 +22439,7 @@
       state.log = [];
       closeItemConfirm();
       closeCardTestConfirm();
+      closeCourseRegistrationConsent();
       hideResultOverlay();
       hidePlayReveal();
       state.players.player = createPlayerState();
@@ -25844,16 +25972,46 @@
         render();
         return true;
       }
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("courseRegistration", { instanceId: item.instanceId });
+        state.message = "履修登録結論パ：相手の了承を待っています。";
+        clearSelections();
+        render();
+        return true;
+      }
+      if (isOnlineHost()) {
+        if (requestRemoteCourseRegistrationChoice("player", item)) {
+          clearSelections();
+          render();
+          return true;
+        }
+        state.message = "履修登録結論パの了承確認を開始できませんでした。";
+        render();
+        return true;
+      }
+      addLog(`${item.name}：相手AIが効果を了承しました。`);
       return openCardChoice({
         mode: "course_registration",
         itemId: item.instanceId,
         title: item.name,
-        message: "相手が了承した場合に校外エリアへ送る、自分のデッキのカードを5枚選んでください。次の5ターンはこの中からドローします。",
-        cards: candidates,
+        message: "相手が了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+        cards: sortCardsByCostForChoice(candidates, "asc"),
         min: pickCount,
         max: pickCount,
-        confirmLabel: "相手に了承を求める"
+        confirmLabel: "選んだ5枚を校外へ送る"
       });
+    }
+
+    function resolveCourseRegistrationRejection(side, item, options = {}) {
+      if (!item || item.baseId !== "course_registration_party" || !payForItem(side, item)) return false;
+      const player = state.players[side];
+      player.will = Math.min(player.maxWill, player.will + 2);
+      showCardPlayAnimation(item, "trash");
+      moveHandCardToTrash(side, item);
+      addLog(`${item.name}は相手に拒否されたため、${SIDES[side]}は戦意を2回復しました。`);
+      clearSelections();
+      if (options.renderAfter !== false) render();
+      return true;
     }
 
     function resolveCourseRegistration(side, item, selectedIds = [], options = {}) {
@@ -26079,34 +26237,19 @@
       if (mode === "course_registration") {
         const item = getHandCard("player", itemId);
         if (!item) return;
-        if (onlineCanSendCommand()) {
-          onlineSendCommand("courseRegistration", { instanceId: item.instanceId, selectedIds });
-          state.message = "履修登録結論パの了承待ちと選択を送信しました。";
-          clearSelections();
-          render();
-          return;
-        }
-        if (isOnlineHost()) {
-          if (requestRemoteCourseRegistrationChoice("player", item, selectedIds)) {
-            clearSelections();
-            render();
-            return;
-          }
-          state.message = "履修登録結論パの相手選択を開始できませんでした。";
-          render();
-          return;
-        }
         resolveCourseRegistration("player", item, selectedIds, { renderAfter: true });
         return;
       }
-      if (mode === "course_registration_online_response") {
+      if (["course_registration_online_response", "course_registration_online_source_response"].includes(mode)) {
         onlineSend({
           type: "courseRegistrationChoiceResponse",
           requestId: pending.requestId,
           accepted: true,
           selectedIds
         }, { track: true });
-        state.message = "履修登録結論パの了承と選択を送信しました。";
+        state.message = mode === "course_registration_online_response"
+          ? "履修登録結論パを了承し、選んだ5枚を送信しました。"
+          : "履修登録結論パで選んだ5枚を送信しました。";
         clearSelections();
         render();
         return;
@@ -26115,9 +26258,19 @@
         const context = pending.context || {};
         const item = getHandCard(context.sourceSide, context.itemInstanceId);
         if (!item || !context.sourceSide) return;
-        const resolved = resolveCourseRegistration(context.sourceSide, item, context.sourceSelectedIds || [], {
+        if (!requestRemoteCourseRegistrationSourceSelection(context.sourceSide, item, selectedIds, pending.commandId || "")) {
+          addLog(`${CARD_BASES.course_registration_party.name}の使用者側の選択を開始できませんでした。`);
+          render();
+        }
+        return;
+      }
+      if (mode === "course_registration_host_source") {
+        const context = pending.context || {};
+        const item = getHandCard(context.sourceSide, itemId);
+        if (!item || !context.sourceSide) return;
+        const resolved = resolveCourseRegistration(context.sourceSide, item, selectedIds, {
           accepted: true,
-          opponentSelectedIds: selectedIds,
+          opponentSelectedIds: context.opponentSelectedIds || [],
           renderAfter: false
         });
         if (!resolved) addLog(`${CARD_BASES.course_registration_party.name}の選択を確定できませんでした。`);
@@ -38555,7 +38708,7 @@
         fire_touch: "自分の気力を4失い、自分のデッキを上から3枚引く。",
         thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
         one_eyed_peek: "相手の手札を見る。",
-        course_registration_party: "相手プレイヤーに効果の了承を得る。了承された場合、お互いは自身のデッキから好きなカードを5枚選び校外エリアに送る。以降の5ターンは通常のドローの代わりに、校外へ送った5枚の中から選んで1枚を手札に加える。",
+        course_registration_party: "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚選び校外に送る。以降の5ターンはお互いドローの代わりに、校外に送った5枚の中から選んで1枚を手札に加える。拒否された場合、戦意を2回復する。",
         brother_capital: "自分のデッキから戦意2以下の出席者を好きなだけ選び、自分の講義室に特殊出席させる。（エースぺ）",
         padlock: "装備カード。自分の出席者1人に装備できる。装備者はすべての効果を失い、攻撃と講義と進化を行えず、ダメージを受けず、効果で破壊されない。注目・超注目は無視して攻撃対象を選べる。このカードを装備したとき、「鍵」1枚を手札に生成する。",
         crotch_febreze: "自分の「あえー」と名のつく出席者がいる場合に使用できる。好きな人数の体力を1にし、その人数まで相手教師を選ぶ。選んだ教師の出席時効果だけを相手に対して使用する。",
@@ -39086,6 +39239,8 @@
     });
     elements.cardTestStartButton.addEventListener("click", confirmCardTest);
     elements.cardTestCancelButton.addEventListener("click", closeCardTestConfirm);
+    elements.courseRegistrationAcceptButton.addEventListener("click", acceptCourseRegistrationConsent);
+    elements.courseRegistrationRejectButton.addEventListener("click", rejectCourseRegistrationConsent);
     elements.cardTestModal.addEventListener("click", (event) => {
       const styleCycle = event.target.closest("[data-card-style-cycle]");
       if (styleCycle) {
@@ -39213,6 +39368,11 @@
       beginItemUse,
       handleBoardCardClick,
       confirmSelectedItemTargets,
+      openCourseRegistrationChoice,
+      openCourseRegistrationConsent,
+      rejectCourseRegistrationConsent,
+      resolveCourseRegistrationRejection,
+      confirmCardChoiceSelection,
       canPlaceCard,
       attendCard,
       ATTENDANCE_SOURCE,

@@ -162,3 +162,52 @@ test("バカでかい壁は盤面から1行目の学生2人を選んで効果を
     expect(passed, name).toBe(true);
   });
 });
+
+test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦意2を回復する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+
+    api.startCardTest("course_registration_party");
+    const consentItem = api.state.players.player.hand.find((card) => card.baseId === "course_registration_party");
+    api.openCourseRegistrationConsent({ mode: "test", sourceName: consentItem.name });
+    const consentDisplay = {
+      modalVisible: !document.getElementById("courseRegistrationConsentModal").classList.contains("hidden"),
+      cardVisible: document.getElementById("courseRegistrationConsentCard").textContent.includes("履修登録結論パ"),
+      textVisible: document.getElementById("courseRegistrationConsentText").textContent.includes("拒否された場合、戦意を2回復する。"),
+      acceptVisible: document.getElementById("courseRegistrationAcceptButton").textContent === "了承する",
+      rejectVisible: document.getElementById("courseRegistrationRejectButton").textContent === "拒否する"
+    };
+    api.rejectCourseRegistrationConsent();
+
+    api.startCardTest("course_registration_party");
+    const acceptedItem = api.state.players.player.hand.find((card) => card.baseId === "course_registration_party");
+    api.openCourseRegistrationChoice(acceptedItem);
+    const choice = api.state.pendingCardChoice;
+    const selectionUsesDeckChoice = choice?.mode === "course_registration"
+      && choice.min === 5
+      && choice.max === 5
+      && choice.cards.length === api.state.players.player.deck.length;
+    choice.selectedIds = choice.cards.slice(0, 5).map((card) => card.instanceId);
+    api.confirmCardChoiceSelection();
+    const acceptedResolved = api.state.courseRegistration?.remainingTurnStarts === 5
+      && api.state.courseRegistration.pools.player.length === 5
+      && api.state.courseRegistration.pools.opponent.length === 5;
+
+    api.startCardTest("course_registration_party");
+    const rejectedItem = api.state.players.player.hand.find((card) => card.baseId === "course_registration_party");
+    const willBeforeRejection = api.state.players.player.will;
+    const rejected = api.resolveCourseRegistrationRejection("player", rejectedItem, { renderAfter: false });
+    const rejectionResolved = rejected
+      && api.state.players.player.will === willBeforeRejection
+      && !api.state.players.player.hand.some((card) => card.instanceId === rejectedItem.instanceId)
+      && api.state.players.player.trash.some((card) => card.instanceId === rejectedItem.instanceId);
+
+    return { ...consentDisplay, selectionUsesDeckChoice, acceptedResolved, rejectionResolved };
+  });
+
+  Object.entries(result).forEach(([name, passed]) => {
+    expect(passed, name).toBe(true);
+  });
+});

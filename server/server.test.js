@@ -577,7 +577,8 @@ test("private card choice requests and responses relay between host and guest", 
     ["thinItemChoiceRequest", "thinItemChoiceResponse", { handCount: 5 }, { keepIds: ["a", "b", "c", "d"] }],
     ["badStudentDiscardRequest", "badStudentDiscardResponse", { discardCount: 2 }, { discardIds: ["a", "b"] }],
     ["logicHunterChoiceRequest", "logicHunterChoiceResponse", { cards: [{ instanceId: "host-card-1", name: "テストカード" }] }, { discardId: "host-card-1" }],
-    ["courseRegistrationChoiceRequest", "courseRegistrationChoiceResponse", { sourceName: "履修登録結論パ" }, { accepted: true, selectedIds: ["a", "b", "c", "d", "e"] }],
+    ["courseRegistrationChoiceRequest", "courseRegistrationChoiceResponse", { sourceName: "履修登録結論パ", sourceText: "カードテキスト", consentRequired: true }, { accepted: true, selectedIds: ["a", "b", "c", "d", "e"] }],
+    ["courseRegistrationChoiceRequest", "courseRegistrationChoiceResponse", { sourceName: "履修登録結論パ", selectionOnly: true }, { accepted: true, selectedIds: ["f", "g", "h", "i", "j"] }],
     ["titleMatchChoiceRequest", "titleMatchChoiceResponse", { sourceName: "アイベンVSにょていタイトルマッチ" }, { discardIds: ["a"] }],
     ["philosophyCheatingChoiceRequest", "philosophyCheatingChoiceResponse", { cards: [{ instanceId: "host-item-1", name: "持ち物", type: "item" }] }, { selectedIds: ["host-item-1"] }]
   ];
