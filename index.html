@@ -16128,6 +16128,7 @@
     const ONLINE_CONNECT_TIMEOUT_MS = 14000;
     const ONLINE_RECONNECT_MS = 2200;
     const ONLINE_SYNC_REQUEST_MS = 4200;
+    const COURSE_REGISTRATION_RELAY_KIND = "course_registration";
     const PLAYER_SEAT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
     const OPPONENT_SEAT_ORDER = [8, 7, 6, 5, 4, 3, 2, 1, 0];
     const AI_SEAT_PRIORITY = [4, 0, 2, 6, 8, 1, 3, 5, 7];
@@ -17027,7 +17028,7 @@
           { title: "ワードインクリーサー", before: "「このカード自身を除く自分の手札をすべてデッキに戻す」と表記していた。", after: "出席後の処理に合わせて「自分の手札をすべてデッキに戻す」へ変更。効果の処理内容を読み取りやすい表記に整理した。" },
           { title: "新カード", after: "持ち物カード「イヤホン」を追加。自分の出席者1人に装備でき、装備者は講義の効果を受けなくなる。" },
           { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" },
-          { title: "履修登録結論パ", before: "了承された場合に、お互いが自身のデッキから好きなカードを5枚選んで校外エリアへ送る効果。拒否された場合の処理と、オンライン対戦で相手が了承・拒否を選ぶ専用画面がなかった。また、オンライン同期が入ると、使用された側の了承・拒否画面や使用者側の5枚選択が閉じる場合があった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送り、以降の5ターンはドローの代わりにその中から1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も、使用された側の了承・拒否画面と使用者側の選択画面、選択中のカードを保持する。" },
+          { title: "履修登録結論パ", before: "了承された場合に、お互いが自身のデッキから好きなカードを5枚選んで校外エリアへ送る効果。拒否された場合の処理と、オンライン対戦で相手が了承・拒否を選ぶ専用画面がなかった。また、オンライン同期が入ると各選択画面が閉じる場合があり、公開対戦サーバーでは了承要求が相手へ届かなかった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送り、以降の5ターンはドローの代わりにその中から1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も各選択画面と選択中のカードを保持し、公開対戦サーバーでも既存の非公開選択通信を使って了承要求と選択結果を届ける。" },
           { title: "更新情報の通知", before: "同じバージョンの更新情報へ内容を追記しても、確認済みの場合は新しい更新に気づけなかった。", after: "更新情報の内容が変わるたび、ホーム画面の「更新情報」に赤い通知マークを表示。更新情報画面を一度開くと通知マークが消える。" }
         ]
       },
@@ -20703,6 +20704,18 @@
         else onlineSendRoomState();
         return;
       }
+      if (message.type === "thinItemChoiceRequest"
+        && message.privateChoiceKind === COURSE_REGISTRATION_RELAY_KIND
+        && isOnlineGuest()) {
+        onlineOpenCourseRegistrationChoiceRequest(message);
+        return;
+      }
+      if (message.type === "thinItemChoiceResponse"
+        && message.privateChoiceKind === COURSE_REGISTRATION_RELAY_KIND
+        && isOnlineHost()) {
+        onlineResolveCourseRegistrationChoiceResponse(message.requestId, message.accepted === true, message.selectedIds || []);
+        return;
+      }
       if (message.type === "thinItemChoiceRequest" && isOnlineGuest()) {
         onlineOpenThinItemChoiceRequest(message);
         return;
@@ -21151,7 +21164,8 @@
       };
       state.message = `${item.name}：相手の了承を待っています。`;
       if (!onlineSend({
-        type: "courseRegistrationChoiceRequest",
+        type: "thinItemChoiceRequest",
+        privateChoiceKind: COURSE_REGISTRATION_RELAY_KIND,
         requestId,
         sourceName: item.name,
         sourceText: cardRulesText(item),
@@ -21256,7 +21270,8 @@
       };
       state.message = `${item.name}：使用者がデッキから5枚を選んでいます。`;
       if (!onlineSend({
-        type: "courseRegistrationChoiceRequest",
+        type: "thinItemChoiceRequest",
+        privateChoiceKind: COURSE_REGISTRATION_RELAY_KIND,
         requestId,
         sourceName: item.name,
         selectionOnly: true
@@ -21347,7 +21362,8 @@
       closeCourseRegistrationConsent();
       if (pending.mode === "online_remote_target") {
         onlineSend({
-          type: "courseRegistrationChoiceResponse",
+          type: "thinItemChoiceResponse",
+          privateChoiceKind: COURSE_REGISTRATION_RELAY_KIND,
           requestId: pending.requestId,
           accepted: false,
           selectedIds: []
@@ -26312,7 +26328,8 @@
       }
       if (["course_registration_online_response", "course_registration_online_source_response"].includes(mode)) {
         onlineSend({
-          type: "courseRegistrationChoiceResponse",
+          type: "thinItemChoiceResponse",
+          privateChoiceKind: COURSE_REGISTRATION_RELAY_KIND,
           requestId: pending.requestId,
           accepted: true,
           selectedIds
@@ -39448,6 +39465,7 @@
       restoreOnlineCourseRegistrationChoice,
       preserveOnlineCourseRegistrationConsent,
       restoreOnlineCourseRegistrationConsent,
+      onlineBroadcastState,
       canPlaceCard,
       attendCard,
       ATTENDANCE_SOURCE,
