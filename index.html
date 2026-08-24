@@ -16686,7 +16686,7 @@
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
       "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire", "wood_gitch", "gitch", "gigi_blood",
       "ruler", "aggro_eater", "ux_design_textbook", "bento", "yakiniku", "handmade_ctoc", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "diamond_dust", "happy_experience", "go_away", "course_registration_party", "lie_pekora", "big_wall", "think_so", "illegal_cafeteria",
-      "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi",
+      "dos_attack", "destroy_dos_attack", "i_got_it", "substitute_attendance", "iv_pack", "accelerate", "chameleon", "yuta_umbrella", "red_happi", "earphones",
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo", "yamanashi_minimum_wage",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture", "baka_mac", "ikemasu",
       "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
@@ -24690,6 +24690,7 @@
       let affected = 0;
       listBoardRefs(opponent).forEach((ref) => {
         const card = getBoardCardFromRef(ref);
+        if (isEarphoneEquipped(card)) return;
         if (onDemandProtectsStudents && card?.type === "student") return;
         if (card && lectureTargetTypes.includes(card.type)) {
           dealDamageToCard(card, 1, teacher, {
@@ -26990,7 +26991,9 @@
     function isPadlocked(card) {
       return Boolean(card?.padlockEquipment?.baseId === "padlock");
     }
-
+    function isEarphoneEquipped(card) {
+      return Boolean(card?.earphoneEquipment?.baseId === "earphones");
+    }
     // Use this only for an effect whose source is the attendee itself.  The
     // 南京錠 equipment is deliberately represented outside the printed-card
     // effect system, so this gate cannot turn off the lock, its protections,
@@ -27009,7 +27012,16 @@
       };
       return true;
     }
-
+    function attachEarphones(card, item) {
+      if (!card || !item || item.baseId !== "earphones" || isEarphoneEquipped(card)) return false;
+      card.earphoneEquipment = {
+        ...item,
+        baseId: "earphones",
+        attachedTo: card.instanceId,
+        attachedAtTurn: state.actionTurn
+      };
+      return true;
+    }
     function detachPadlock(card) {
       if (!isPadlocked(card)) return null;
       const item = { ...card.padlockEquipment };
@@ -29786,6 +29798,15 @@
         if (renderAfter) render();
         return true;
       }
+      if (item.baseId === "earphones") {
+        if (!attachEarphones(target, item)) return false;
+        state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
+        applyBoardAuras();
+        addLog(`${SIDES[side]}は${item.name}を${target.name}に装備しました。`);
+        clearSelections();
+        if (renderAfter) render();
+        return true;
+      }     
       if (item.baseId === "key") {
         const removed = moveDetachedPadlockToTrash(target, { reason: "鍵で解除" });
         moveHandCardToTrash(side, item);
@@ -38427,6 +38448,7 @@
       }
       const rules = {
         general_student: "効果なし。",
+        earphones: "装備\n装備者は講義の効果を受けない。",
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
         aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
         single_cell: "自分の場に「単細胞生物」が2人いる場合、それらを破壊し、先に出席していた「単細胞生物」の席マスに「ミジンコ」を出席させる。",
