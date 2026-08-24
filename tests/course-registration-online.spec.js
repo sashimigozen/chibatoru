@@ -84,6 +84,10 @@ async function prepareBattle(host, guest, sourceSide) {
     api.state.currentSide = side;
     api.state.gameOver = false;
     api.state.online.started = true;
+    api.state.players.player.maxWill = 10;
+    api.state.players.player.will = 10;
+    api.state.players.opponent.maxWill = 10;
+    api.state.players.opponent.will = 10;
     api.state.players.player.deck = Array.from({ length: 8 }, () => api.createCardFromBase("general_student", "player"));
     api.state.players.opponent.deck = Array.from({ length: 8 }, () => api.createCardFromBase("general_student", "opponent"));
     const item = api.createCardFromBase("course_registration_party", side);
@@ -140,6 +144,70 @@ test("ゲストが履修登録結論パを使用するとホストに了承・�
     await expect.poll(() => players.host.evaluate(() => (
       window.__chibattle.state.pendingCardChoice?.mode
     ))).toBe("course_registration_host_target");
+  } finally {
+    await players.hostContext.close();
+    await players.guestContext.close();
+  }
+});
+
+test("ゲスト使用者は次のターン開始時に校外のカードを選んで手札に加えられる", async ({ browser }) => {
+  const players = await connectPlayers(browser);
+  try {
+    await prepareBattle(players.host, players.guest, "opponent");
+    await expect.poll(() => players.guest.evaluate(() => (
+      window.__chibattle.state.players.player.hand.some((card) => card.baseId === "course_registration_party")
+    ))).toBe(true);
+    await players.guest.evaluate(() => {
+      const api = window.__chibattle;
+      const item = api.state.players.player.hand.find((card) => card.baseId === "course_registration_party");
+      api.openCourseRegistrationChoice(item);
+    });
+
+    await expect(players.host.locator("#courseRegistrationConsentModal")).not.toHaveClass(/hidden/);
+    await players.host.locator("#courseRegistrationAcceptButton").click();
+    await expect.poll(() => players.host.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+      .toBe("course_registration_host_target");
+    await players.host.evaluate(() => {
+      const api = window.__chibattle;
+      api.state.pendingCardChoice.selectedIds = api.state.pendingCardChoice.cards.slice(0, 5).map((card) => card.instanceId);
+      api.confirmCardChoiceSelection();
+    });
+
+    await expect.poll(() => players.guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+      .toBe("course_registration_online_source_response");
+    await players.guest.evaluate(() => {
+      const api = window.__chibattle;
+      api.state.pendingCardChoice.selectedIds = api.state.pendingCardChoice.cards.slice(0, 5).map((card) => card.instanceId);
+      api.confirmCardChoiceSelection();
+    });
+    await expect.poll(() => players.host.evaluate(() => window.__chibattle.state.courseRegistration?.pools?.opponent?.length))
+      .toBe(5);
+
+    await players.host.evaluate(() => {
+      const api = window.__chibattle;
+      api.state.currentSide = "opponent";
+      api.startTurn("opponent");
+    });
+    await expect.poll(() => players.guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+      .toBe("course_registration_draw_online_response");
+    const selectedId = await players.guest.evaluate(() => {
+      const api = window.__chibattle;
+      const selected = api.state.pendingCardChoice.cards[1];
+      api.state.pendingCardChoice.selectedIds = [selected.instanceId];
+      api.confirmCardChoiceSelection();
+      return selected.instanceId;
+    });
+
+    await expect.poll(() => players.host.evaluate((id) => (
+      window.__chibattle.state.players.opponent.hand.some((card) => card.instanceId === id)
+    ), selectedId)).toBe(true);
+    await expect.poll(() => players.guest.evaluate((id) => (
+      window.__chibattle.state.players.player.hand.some((card) => card.instanceId === id)
+    ), selectedId)).toBe(true);
+    expect(await players.host.evaluate(() => ({
+      guestTurns: window.__chibattle.state.courseRegistration.remainingTurns.opponent,
+      hostTurns: window.__chibattle.state.courseRegistration.remainingTurns.player
+    }))).toEqual({ guestTurns: 4, hostTurns: 5 });
   } finally {
     await players.hostContext.close();
     await players.guestContext.close();

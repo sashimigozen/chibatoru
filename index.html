@@ -16129,6 +16129,7 @@
     const ONLINE_RECONNECT_MS = 2200;
     const ONLINE_SYNC_REQUEST_MS = 4200;
     const COURSE_REGISTRATION_RELAY_KIND = "course_registration";
+    const COURSE_REGISTRATION_DRAW_RELAY_KIND = "course_registration_draw";
     const PLAYER_SEAT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
     const OPPONENT_SEAT_ORDER = [8, 7, 6, 5, 4, 3, 2, 1, 0];
     const AI_SEAT_PRIORITY = [4, 0, 2, 6, 8, 1, 3, 5, 7];
@@ -17022,13 +17023,14 @@
       {
         version: "ver.0.19.0",
         date: "2026年8月24日",
-        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの了承処理、更新通知を追加。",
+        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの処理、カードテスト専用操作、更新通知を改善。",
         changes: [
           { title: "配置できないマスの表示", before: "カードを配置するとき、配置できるマスと配置できないマスを盤面上で見分けにくい場合があった。", after: "選んだカードの配置条件に合わせて、配置できるマスと配置できないマスを視覚的に区別して表示。カードを置けない場所を、操作する前に確認しやすくした。" },
           { title: "ワードインクリーサー", before: "「このカード自身を除く自分の手札をすべてデッキに戻す」と表記していた。", after: "出席後の処理に合わせて「自分の手札をすべてデッキに戻す」へ変更。効果の処理内容を読み取りやすい表記に整理した。" },
           { title: "新カード", after: "持ち物カード「イヤホン」を追加。自分の出席者1人に装備でき、装備者は講義の効果を受けなくなる。" },
           { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" },
-          { title: "履修登録結論パ", before: "了承された場合に、お互いが自身のデッキから好きなカードを5枚選んで校外エリアへ送る効果。拒否された場合の処理と、オンライン対戦で相手が了承・拒否を選ぶ専用画面がなかった。また、オンライン同期が入ると各選択画面が閉じる場合があり、公開対戦サーバーでは了承要求が相手へ届かなかった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送り、以降の5ターンはドローの代わりにその中から1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も各選択画面と選択中のカードを保持し、公開対戦サーバーでも既存の非公開選択通信を使って了承要求と選択結果を届ける。" },
+          { title: "履修登録結論パ", before: "オンライン同期が入ると各選択画面が閉じる場合があり、公開対戦サーバーでは了承要求が相手へ届かなかった。また、使用者側が校外へ送った5枚から手札に加えるカードを選べず、5ターンの残り回数を両者で共有していた。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送る。以降は各プレイヤーが自分の5ターンそれぞれで、通常のドローの代わりに校外の対象カードから1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も各選択画面と選択中のカードを保持し、公開対戦サーバーでも了承要求と選択結果を届ける。" },
+          { title: "カードテストの終了操作", before: "カードテスト専用の「やめる」が、通常対戦でも状態によって表示・実行される余地があった。", after: "「やめる」はデッキ変更画面から開始したカードテスト中だけ表示。通常対戦、オンライン対戦、チュートリアル、魔の1号館では表示せず、処理も実行できない。" },
           { title: "更新情報の通知", before: "同じバージョンの更新情報へ内容を追記しても、確認済みの場合は新しい更新に気づけなかった。", after: "更新情報の内容が変わるたび、ホーム画面の「更新情報」に赤い通知マークを表示。更新情報画面を一度開くと通知マークが消える。" }
         ]
       },
@@ -20710,10 +20712,22 @@
         onlineOpenCourseRegistrationChoiceRequest(message);
         return;
       }
+      if (message.type === "thinItemChoiceRequest"
+        && message.privateChoiceKind === COURSE_REGISTRATION_DRAW_RELAY_KIND
+        && isOnlineGuest()) {
+        onlineOpenCourseRegistrationDrawRequest(message);
+        return;
+      }
       if (message.type === "thinItemChoiceResponse"
         && message.privateChoiceKind === COURSE_REGISTRATION_RELAY_KIND
         && isOnlineHost()) {
         onlineResolveCourseRegistrationChoiceResponse(message.requestId, message.accepted === true, message.selectedIds || []);
+        return;
+      }
+      if (message.type === "thinItemChoiceResponse"
+        && message.privateChoiceKind === COURSE_REGISTRATION_DRAW_RELAY_KIND
+        && isOnlineHost()) {
+        onlineResolveCourseRegistrationDrawResponse(message.requestId, message.selectedId || null);
         return;
       }
       if (message.type === "thinItemChoiceRequest" && isOnlineGuest()) {
@@ -21693,7 +21707,8 @@
     function isCourseRegistrationOnlineChoice(choice) {
       return Boolean(choice && [
         "course_registration_online_response",
-        "course_registration_online_source_response"
+        "course_registration_online_source_response",
+        "course_registration_draw_online_response"
       ].includes(choice.mode));
     }
 
@@ -21710,8 +21725,11 @@
 
     function restoreOnlineCourseRegistrationChoice(choice) {
       if (!choice || !isOnlineGuest() || state.phase !== "battle" || state.gameOver) return;
-      const deckById = new Map(state.players.player.deck.map((card) => [card.instanceId, card]));
-      const cards = choice.cards.map((card) => deckById.get(card.instanceId)).filter(Boolean);
+      const sourceCards = choice.mode === "course_registration_draw_online_response"
+        ? state.players.player.trash
+        : state.players.player.deck;
+      const cardsById = new Map(sourceCards.map((card) => [card.instanceId, card]));
+      const cards = choice.cards.map((card) => cardsById.get(card.instanceId)).filter(Boolean);
       if (cards.length < choice.min) {
         state.pendingCardChoice = null;
         return;
@@ -21719,7 +21737,7 @@
       state.pendingCardChoice = {
         ...choice,
         cards,
-        selectedIds: choice.selectedIds.filter((id) => deckById.has(id)).slice(0, choice.max)
+        selectedIds: choice.selectedIds.filter((id) => cardsById.has(id)).slice(0, choice.max)
       };
       state.selectionOverlayPeek = Boolean(choice.selectionOverlayPeek);
       state.message = choice.message || "自分のデッキから校外へ送るカードを5枚選んでください。";
@@ -22794,44 +22812,126 @@
 
     function courseRegistrationAvailableCards(side) {
       const registration = state.courseRegistration;
-      if (!registration || registration.remainingTurnStarts <= 0) return [];
+      if (!registration || courseRegistrationRemainingTurns(side) <= 0) return [];
       const ids = new Set(registration.pools?.[side] || []);
       return state.players[side].trash.filter((card) => ids.has(card.instanceId));
     }
 
-    function drawCourseRegistrationCard(side) {
+    function courseRegistrationRemainingTurns(side) {
       const registration = state.courseRegistration;
-      if (!registration || registration.remainingTurnStarts <= 0) return { handled: false, drawn: null };
-      const candidates = courseRegistrationAvailableCards(side);
-      registration.remainingTurnStarts -= 1;
-      if (candidates.length === 0) {
-        if (registration.remainingTurnStarts <= 0) state.courseRegistration = null;
-        return { handled: true, drawn: null };
+      if (!registration) return 0;
+      if (!registration.remainingTurns) {
+        const legacyRemaining = Math.max(0, Number(registration.remainingTurnStarts) || 0);
+        registration.remainingTurns = { player: legacyRemaining, opponent: legacyRemaining };
+        delete registration.remainingTurnStarts;
       }
-      let selected = candidates[0];
-      if (side === "player" && typeof window !== "undefined") {
-        const choices = candidates.map((card, index) => `${index + 1}: ${card.name}`).join("\n");
-        const input = window.prompt(`履修登録結論パ：通常のドローの代わりに、校外へ送ったカードから1枚選んでください。\n${choices}`, "1");
-        const index = Number.parseInt(String(input || "1"), 10) - 1;
-        selected = candidates[index] || candidates[0];
-      } else {
-        selected = [...candidates].sort((a, b) => effectiveCardCost(b) - effectiveCardCost(a))[0];
+      return Math.max(0, Number(registration.remainingTurns?.[side]) || 0);
+    }
+
+    function completeCourseRegistrationIfFinished() {
+      const registration = state.courseRegistration;
+      if (!registration) return;
+      const finished = ["player", "opponent"].every((side) => courseRegistrationRemainingTurns(side) <= 0);
+      if (!finished) return;
+      state.courseRegistration = null;
+      addLog("履修登録結論パの5ターン効果が終了しました。");
+    }
+
+    function resolveCourseRegistrationDrawSelection(side, selectedId = null) {
+      const registration = state.courseRegistration;
+      if (!registration || courseRegistrationRemainingTurns(side) <= 0) return { handled: false, drawn: null };
+      const candidates = courseRegistrationAvailableCards(side);
+      registration.remainingTurns[side] = Math.max(0, courseRegistrationRemainingTurns(side) - 1);
+      const selected = candidates.find((card) => card.instanceId === selectedId) || candidates[0] || null;
+      if (!selected) {
+        completeCourseRegistrationIfFinished();
+        return { handled: true, drawn: null };
       }
       const trash = state.players[side].trash;
       const index = trash.findIndex((card) => card.instanceId === selected.instanceId);
+      let drawn = null;
       if (index >= 0) {
-        const [drawn] = trash.splice(index, 1);
+        [drawn] = trash.splice(index, 1);
         drawn.owner = side;
         drawn.handTurns = 0;
         state.players[side].hand.push(drawn);
         registration.pools[side] = (registration.pools[side] || []).filter((id) => id !== drawn.instanceId);
         queueAnimation("draw", side, 1);
       }
-      if (registration.remainingTurnStarts <= 0) {
-        state.courseRegistration = null;
-        addLog("履修登録結論パの5ターン効果が終了しました。");
+      completeCourseRegistrationIfFinished();
+      return { handled: true, drawn };
+    }
+
+    function requestRemoteCourseRegistrationDrawChoice(side, candidates) {
+      if (!isOnlineHost() || side !== "opponent" || candidates.length === 0) return false;
+      const requestId = onlineNextMessageId("course-registration-draw");
+      state.pendingRemoteHandTrim = {
+        mode: "course_registration_draw",
+        requestId,
+        side,
+        commandId: state.online.activeRemoteCommandId || ""
+      };
+      if (!onlineSend({
+        type: "thinItemChoiceRequest",
+        privateChoiceKind: COURSE_REGISTRATION_DRAW_RELAY_KIND,
+        requestId,
+        candidateIds: candidates.map((card) => card.instanceId)
+      }, { track: true })) {
+        state.pendingRemoteHandTrim = null;
+        return false;
       }
-      return { handled: true, drawn: selected };
+      state.message = "履修登録結論パ：相手が校外の5枚から手札に加えるカードを選んでいます。";
+      return true;
+    }
+
+    function onlineOpenCourseRegistrationDrawRequest(message) {
+      if (!isOnlineGuest() || !state.online.started) return;
+      const ids = new Set(message.candidateIds || []);
+      const cards = state.players.player.trash.filter((card) => ids.has(card.instanceId));
+      openCardChoice({
+        mode: "course_registration_draw_online_response",
+        title: CARD_BASES.course_registration_party.name,
+        message: "通常のドローの代わりに、校外へ送ったカードから手札に加える1枚を選んでください。",
+        cards,
+        min: 1,
+        max: 1,
+        confirmLabel: "このカードを手札に加える",
+        requestId: message.requestId
+      });
+    }
+
+    function onlineResolveCourseRegistrationDrawResponse(requestId, selectedId) {
+      const pending = state.pendingRemoteHandTrim;
+      if (!pending || pending.mode !== "course_registration_draw" || pending.requestId !== requestId) return;
+      state.pendingRemoteHandTrim = null;
+      const courseDraw = resolveCourseRegistrationDrawSelection(pending.side, selectedId);
+      completeTurnStartAfterDraw(pending.side, courseDraw);
+      onlineBroadcastState(true, pending.commandId || "");
+    }
+
+    function drawCourseRegistrationCard(side) {
+      const candidates = courseRegistrationAvailableCards(side);
+      if (!state.courseRegistration || courseRegistrationRemainingTurns(side) <= 0) return { handled: false, drawn: null };
+      if (candidates.length === 0) return resolveCourseRegistrationDrawSelection(side, null);
+      if (side === "player") {
+        openCardChoice({
+          mode: "course_registration_draw",
+          title: CARD_BASES.course_registration_party.name,
+          message: "通常のドローの代わりに、校外へ送ったカードから手札に加える1枚を選んでください。",
+          cards: candidates,
+          min: 1,
+          max: 1,
+          confirmLabel: "このカードを手札に加える",
+          commandId: state.online.activeRemoteCommandId || "",
+          context: { side }
+        });
+        return { handled: true, drawn: null, pending: true };
+      }
+      if (isOnlineHost() && requestRemoteCourseRegistrationDrawChoice(side, candidates)) {
+        return { handled: true, drawn: null, pending: true };
+      }
+      const selected = [...candidates].sort((a, b) => effectiveCardCost(b) - effectiveCardCost(a))[0];
+      return resolveCourseRegistrationDrawSelection(side, selected.instanceId);
     }
 
     function toggleMulliganCard(instanceId) {
@@ -23042,6 +23142,15 @@
       resolveDungeonFloorStartTurnEffects(side);
       if (state.gameOver) return;
       const courseDraw = drawCourseRegistrationCard(side);
+      if (courseDraw.pending) {
+        render();
+        return;
+      }
+      completeTurnStartAfterDraw(side, courseDraw);
+    }
+
+    function completeTurnStartAfterDraw(side, courseDraw) {
+      const player = state.players[side];
       const drawWasBlocked = !courseDraw.handled && isDeckToHandLocked();
       if (!courseDraw.handled && !drawOne(side, true) && !drawWasBlocked) return;
       resolveChaosWorldAtTurnStart();
@@ -26133,7 +26242,7 @@
       shuffleDeckAfterSearch(side);
       shuffleDeckAfterSearch(opponentSide);
       state.courseRegistration = {
-        remainingTurnStarts: 5,
+        remainingTurns: { player: 5, opponent: 5 },
         pools: {
           [side]: ownCards.map((card) => card.instanceId),
           [opponentSide]: opponentCards.map((card) => card.instanceId)
@@ -26324,6 +26433,25 @@
         const item = getHandCard("player", itemId);
         if (!item) return;
         resolveCourseRegistration("player", item, selectedIds, { renderAfter: true });
+        return;
+      }
+      if (mode === "course_registration_draw") {
+        const side = pending.context?.side || "player";
+        const courseDraw = resolveCourseRegistrationDrawSelection(side, selectedIds[0] || null);
+        completeTurnStartAfterDraw(side, courseDraw);
+        if (isOnlineHost()) onlineBroadcastState(true, pending.commandId || "");
+        return;
+      }
+      if (mode === "course_registration_draw_online_response") {
+        onlineSend({
+          type: "thinItemChoiceResponse",
+          privateChoiceKind: COURSE_REGISTRATION_DRAW_RELAY_KIND,
+          requestId: pending.requestId,
+          selectedId: selectedIds[0] || null
+        }, { track: true });
+        state.message = "履修登録結論パで手札に加えるカードを選択しました。";
+        clearSelections();
+        render();
         return;
       }
       if (["course_registration_online_response", "course_registration_online_source_response"].includes(mode)) {
@@ -33422,15 +33550,26 @@
       });
     }
 
+    function isActiveCardTestBattle() {
+      return state.screen === "battle"
+        && state.phase === "battle"
+        && state.testMode === true
+        && Boolean(state.testCardBaseId && CARD_BASES[state.testCardBaseId])
+        && !state.tutorial?.active
+        && !state.dungeon.active
+        && !state.online.role;
+    }
+
     function renderControls() {
       const spectator = isOnlineSpectator();
-      const cardTestBattle = state.screen === "battle" && state.testMode && Boolean(state.testCardBaseId);
+      const cardTestBattle = isActiveCardTestBattle();
       elements.testBackDeckButton.classList.toggle("hidden", !cardTestBattle);
       elements.testUndoButton.classList.toggle("hidden", !cardTestBattle);
       elements.testUndoButton.disabled = !cardTestBattle || !(state.testHistory || []).length;
       elements.battleTestUndoButton.classList.toggle("hidden", !cardTestBattle);
       elements.battleTestExitButton.classList.toggle("hidden", !cardTestBattle);
       elements.battleTestUndoButton.disabled = !cardTestBattle || !(state.testHistory || []).length;
+      elements.battleTestExitButton.disabled = !cardTestBattle;
       elements.battleBackHomeButton.classList.toggle("hidden", cardTestBattle);
       const selectionCount = state.players.player.mulliganSelection.length;
       elements.mulliganButton.textContent = selectionCount === 0 ? "確定" : `${selectionCount}枚で確定`;
@@ -37297,7 +37436,7 @@
     }
 
     function openCardTestConfirm(baseId) {
-      if (!CARD_BASES[baseId]) return;
+      if (!CARD_BASES[baseId] || state.screen !== "deck" || state.deckBuilder.view !== "editor") return;
       state.pendingTestCardId = baseId;
       renderCardTestConfirm(baseId);
       hideCardTooltip();
@@ -37677,6 +37816,7 @@
     }
 
     function returnFromCardTestToDeck() {
+      if (!isActiveCardTestBattle()) return false;
       state.testMode = false;
       state.testCardBaseId = null;
       state.testHistory = [];
@@ -37695,6 +37835,7 @@
       hidePlayReveal();
       hideResultOverlay();
       render();
+      return true;
     }
 
     function showHomeScreen() {
@@ -37831,6 +37972,7 @@
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
       render();
+      return true;
     }
 
     function startSoloBattleFromHome() {
@@ -39460,12 +39602,17 @@
       openCourseRegistrationConsent,
       rejectCourseRegistrationConsent,
       resolveCourseRegistrationRejection,
+      drawCourseRegistrationCard,
+      resolveCourseRegistrationDrawSelection,
       confirmCardChoiceSelection,
       preserveOnlineCourseRegistrationChoice,
       restoreOnlineCourseRegistrationChoice,
       preserveOnlineCourseRegistrationConsent,
       restoreOnlineCourseRegistrationConsent,
       onlineBroadcastState,
+      startTurn,
+      isActiveCardTestBattle,
+      returnFromCardTestToDeck,
       canPlaceCard,
       attendCard,
       ATTENDANCE_SOURCE,

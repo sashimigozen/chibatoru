@@ -576,6 +576,7 @@ test("private card choice requests and responses relay between host and guest", 
   const pairs = [
     ["thinItemChoiceRequest", "thinItemChoiceResponse", { handCount: 5 }, { keepIds: ["a", "b", "c", "d"] }],
     ["thinItemChoiceRequest", "thinItemChoiceResponse", { privateChoiceKind: "course_registration", sourceName: "履修登録結論パ", consentRequired: true }, { privateChoiceKind: "course_registration", accepted: true, selectedIds: ["a", "b", "c", "d", "e"] }],
+    ["thinItemChoiceRequest", "thinItemChoiceResponse", { privateChoiceKind: "course_registration_draw", candidateIds: ["a", "b", "c", "d", "e"] }, { privateChoiceKind: "course_registration_draw", selectedId: "c" }],
     ["badStudentDiscardRequest", "badStudentDiscardResponse", { discardCount: 2 }, { discardIds: ["a", "b"] }],
     ["logicHunterChoiceRequest", "logicHunterChoiceResponse", { cards: [{ instanceId: "host-card-1", name: "テストカード" }] }, { discardId: "host-card-1" }],
     ["courseRegistrationChoiceRequest", "courseRegistrationChoiceResponse", { sourceName: "履修登録結論パ", sourceText: "カードテキスト", consentRequired: true }, { accepted: true, selectedIds: ["a", "b", "c", "d", "e"] }],

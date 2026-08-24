@@ -190,9 +190,20 @@ test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦�
       && choice.cards.length === api.state.players.player.deck.length;
     choice.selectedIds = choice.cards.slice(0, 5).map((card) => card.instanceId);
     api.confirmCardChoiceSelection();
-    const acceptedResolved = api.state.courseRegistration?.remainingTurnStarts === 5
+    const acceptedResolved = api.state.courseRegistration?.remainingTurns?.player === 5
+      && api.state.courseRegistration?.remainingTurns?.opponent === 5
       && api.state.courseRegistration.pools.player.length === 5
       && api.state.courseRegistration.pools.opponent.length === 5;
+
+    const selectedDrawId = api.state.courseRegistration.pools.player[2];
+    const drawChoiceOpened = api.drawCourseRegistrationCard("player").pending === true
+      && api.state.pendingCardChoice?.mode === "course_registration_draw";
+    api.state.pendingCardChoice.selectedIds = [selectedDrawId];
+    api.confirmCardChoiceSelection();
+    const selectedCardAdded = api.state.players.player.hand.some((card) => card.instanceId === selectedDrawId)
+      && !api.state.players.player.trash.some((card) => card.instanceId === selectedDrawId)
+      && api.state.courseRegistration.remainingTurns.player === 4
+      && api.state.courseRegistration.remainingTurns.opponent === 5;
 
     api.startCardTest("course_registration_party");
     const rejectedItem = api.state.players.player.hand.find((card) => card.baseId === "course_registration_party");
@@ -203,7 +214,33 @@ test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦�
       && !api.state.players.player.hand.some((card) => card.instanceId === rejectedItem.instanceId)
       && api.state.players.player.trash.some((card) => card.instanceId === rejectedItem.instanceId);
 
-    return { ...consentDisplay, selectionUsesDeckChoice, acceptedResolved, rejectionResolved };
+    return { ...consentDisplay, selectionUsesDeckChoice, acceptedResolved, drawChoiceOpened, selectedCardAdded, rejectionResolved };
+  });
+
+  Object.entries(result).forEach(([name, passed]) => {
+    expect(passed, name).toBe(true);
+  });
+});
+
+test("やめるはカードテスト中だけ表示され、通常対戦では使用できない", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("general_student");
+    const visibleInCardTest = api.isActiveCardTestBattle()
+      && !document.getElementById("battleTestExitButton").classList.contains("hidden");
+    const returnedFromTest = api.returnFromCardTestToDeck() && api.state.screen === "deck";
+
+    api.state.screen = "battle";
+    api.state.phase = "battle";
+    api.state.testMode = false;
+    api.state.testCardBaseId = null;
+    const blockedOutsideTest = !api.isActiveCardTestBattle()
+      && api.returnFromCardTestToDeck() === false
+      && api.state.screen === "battle";
+
+    return { visibleInCardTest, returnedFromTest, blockedOutsideTest };
   });
 
   Object.entries(result).forEach(([name, passed]) => {
