@@ -15514,6 +15514,11 @@
         <button class="button secondary" id="soloDeckBackHomeButton" type="button">ホーム</button>
       </div>
       <section class="panel">
+        <div class="online-rule-control">
+          <label for="soloRuleSelect">対戦ルール</label>
+          <select class="control" id="soloRuleSelect" aria-label="ソロバトルの対戦ルール"></select>
+          <p class="online-rule-description" id="soloRuleDescription"></p>
+        </div>
         <div class="solo-selection-status">
           <button class="solo-slot active" id="soloPlayerSlot" type="button">
             <strong>自分のデッキ</strong>
@@ -17023,7 +17028,7 @@
       {
         version: "ver.0.19.0",
         date: "2026年8月24日",
-        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの処理、カードテスト専用操作、更新通知を改善。",
+        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの処理、カードテスト専用操作、更新通知、観戦・対戦ルール周りを改善。",
         changes: [
           { title: "配置できないマスの表示", before: "カードを配置するとき、配置できるマスと配置できないマスを盤面上で見分けにくい場合があった。", after: "選んだカードの配置条件に合わせて、配置できるマスと配置できないマスを視覚的に区別して表示。カードを置けない場所を、操作する前に確認しやすくした。" },
           { title: "ワードインクリーサー", before: "「このカード自身を除く自分の手札をすべてデッキに戻す」と表記していた。", after: "出席後の処理に合わせて「自分の手札をすべてデッキに戻す」へ変更。効果の処理内容を読み取りやすい表記に整理した。" },
@@ -17031,7 +17036,11 @@
           { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" },
           { title: "履修登録結論パ", before: "オンライン同期が入ると各選択画面が閉じる場合があり、公開対戦サーバーでは了承要求が相手へ届かなかった。また、使用者側が校外へ送った5枚から手札に加えるカードを選べず、5ターンの残り回数を両者で共有していた。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送る。以降は各プレイヤーが自分の5ターンそれぞれで、通常のドローの代わりに校外の対象カードから1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も各選択画面と選択中のカードを保持し、公開対戦サーバーでも了承要求と選択結果を届ける。" },
           { title: "カードテストの終了操作", before: "カードテスト専用の「やめる」が、通常対戦でも状態によって表示・実行される余地があった。", after: "「やめる」はデッキ変更画面から開始したカードテスト中だけ表示。通常対戦、オンライン対戦、チュートリアル、魔の1号館では表示せず、処理も実行できない。" },
-          { title: "更新情報の通知", before: "同じバージョンの更新情報へ内容を追記しても、確認済みの場合は新しい更新に気づけなかった。", after: "更新情報の内容が変わるたび、ホーム画面の「更新情報」に赤い通知マークを表示。更新情報画面を一度開くと通知マークが消える。" }
+          { title: "更新情報の通知", before: "同じバージョンの更新情報へ内容を追記しても、確認済みの場合は新しい更新に気づけなかった。", after: "更新情報の内容が変わるたび、ホーム画面の「更新情報」に赤い通知マークを表示。更新情報画面を一度開くと通知マークが消える。" },
+          { title: "オンライン観戦", before: "観戦者には両プレイヤーの手札が裏向きで表示され、手札の内容を確認できなかった。", after: "オンライン観戦中は、戦っている両プレイヤーの手札を表向きで表示。観戦者はカードの内容を確認できるが、対戦操作はできない。" },
+          { title: "マッチ画面のデッキ表示", before: "オンラインの準備画面に保存デッキ名が表示され、対戦相手にデッキの内容を推測される場合があった。", after: "対戦者欄では保存デッキ名を表示せず、通常・専攻・カオスのデッキ形式と使用可否だけを表示。自分がデッキを選ぶ一覧では、判別に必要な保存名を引き続き確認できる。" },
+          { title: "ソロバトルの対戦ルール", before: "VS AIでは通常ルールの保存デッキしか選べず、専攻ルールやカオスルールで対戦できなかった。", after: "VS AIのデッキ選択画面に通常・専攻・カオスのルール選択を追加。選んだルールに対応する保存デッキを自分とAIに設定して対戦できる。" },
+          { title: "対戦ルールの反映", before: "マッチ画面で専攻ルールやカオスルールを選んでも、対戦開始時に通常ルールのデッキ制限へ戻り、選択したルールで遊べなかった。", after: "選択した対戦ルールを対戦中の状態として保持し、専攻ルールでは専攻範囲とエースぺ制限、カオスルールでは同名枚数・エースぺ制限の解除を、実際のデッキ生成と対戦開始判定へ反映。オンライン対戦とVS AIの両方で選択したルールのまま遊べるようにした。" }
         ]
       },
       {
@@ -17699,6 +17708,7 @@
       },
       message: "",
       log: [],
+      battleRuleId: "normal",
       analytics: createAnalyticsState(),
       deckBuilder: {
         activeSide: "player",
@@ -17725,6 +17735,7 @@
         }
       },
       soloSelection: {
+        ruleId: "normal",
         activeSide: "player",
         playerDeckName: "",
         opponentDeckName: "",
@@ -18056,6 +18067,8 @@
       soloAiBattleButton: document.getElementById("soloAiBattleButton"),
       soloDungeonButton: document.getElementById("soloDungeonButton"),
       soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
+      soloRuleSelect: document.getElementById("soloRuleSelect"),
+      soloRuleDescription: document.getElementById("soloRuleDescription"),
       soloPlayerSlot: document.getElementById("soloPlayerSlot"),
       soloAiSlot: document.getElementById("soloAiSlot"),
       soloPlayerDeckName: document.getElementById("soloPlayerDeckName"),
@@ -19727,6 +19740,30 @@
       return validation?.errors?.[0] || "選択中のデッキが現在の対戦ルールを満たしていません。";
     }
 
+    function deckDescriptorForRule(ruleId, name = "", saved = null) {
+      const rule = onlineRuleDefinition(ruleId);
+      const format = rule.deck.formats[0] || "normal";
+      return normalizeOnlineDeckDescriptor({
+        format,
+        kind: name ? "saved" : "current",
+        name,
+        specialtyId: format === "specialty" ? saved?.specialtyId || "" : ""
+      });
+    }
+
+    function ruleDescriptionText(ruleId) {
+      const rule = onlineRuleDefinition(ruleId);
+      const policy = rule.deck;
+      const lengthLabel = policy.minCards === policy.maxCards
+        ? `${policy.minCards}枚`
+        : `${policy.minCards}〜${policy.maxCards}枚`;
+      const copyLabel = policy.copyLimit === "standard" ? "同名枚数制限あり" : "同名枚数制限なし";
+      const aceLabel = policy.aceLimit === null
+        ? "エースぺ制限なし"
+        : policy.aceLimit === 0 ? "エースぺ使用不可" : "エースぺは1種類1枚";
+      return `${rule.description}（${lengthLabel} / ${copyLabel} / ${aceLabel}）`;
+    }
+
     function generateOnlineRoomCode() {
       const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
       return Array.from({ length: 6 }, () => alphabet[Math.floor(Math.random() * alphabet.length)]).join("");
@@ -20485,7 +20522,7 @@
         onlineStartReliabilityLoop();
         if (isOnlineSpectator()) {
           onlineSetStatus(state.online.started
-            ? "観戦者として入室しました。両者の手札枚数を確認しながら観戦できます。"
+            ? "観戦者として入室しました。両者の手札を公開して観戦できます。"
             : "観戦者として入室しました。対戦開始を待っています。", "good");
         } else if (state.online.connected) {
           onlineSetStatus(state.online.matchMode === "random"
@@ -20913,7 +20950,13 @@
       state.online.localCardStyles = onlineSelectedCardStyles();
       state.online.startPending = true;
       onlineResetAnalyticsLogState();
-      initializeGame({ onlineHost: true, deferPreBattle: true });
+      initializeGame({
+        onlineHost: true,
+        deferPreBattle: true,
+        ruleId: state.online.roomRuleId,
+        playerDeckDescriptor: onlineLocalDeckDescriptor(),
+        opponentDeckDescriptor: remoteDescriptor
+      });
       const snapshot = onlineCreateSnapshot();
       onlineClearPendingMessagesByType("startGame");
       if (!onlineSend({ type: "startGame", snapshot }, { track: true })) {
@@ -21905,8 +21948,6 @@
 
     function onlineTransformSnapshotForSpectator(hostState) {
       const transformed = JSON.parse(JSON.stringify(hostState));
-      onlineRedactSnapshotHand(transformed, "player");
-      onlineRedactSnapshotHand(transformed, "opponent");
       transformed.pendingCopiedCard = null;
       transformed.pendingSpecialAttendanceQueue = null;
       transformed.pendingGigiResurrection = null;
@@ -22482,6 +22523,10 @@
       const onlineHost = options.onlineHost === true;
       const dungeonBattle = options.dungeon === true;
       const deferPreBattle = options.deferPreBattle === true;
+      const ruleId = dungeonBattle
+        ? "normal"
+        : normalizeOnlineRuleId(options.ruleId || (onlineHost ? state.online.roomRuleId : state.battleRuleId));
+      state.battleRuleId = ruleId;
       SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
@@ -22556,14 +22601,28 @@
         }
       }
       const opponentDeckCardIds = options.opponentDeckCardIds || ALL_DECK_IDS;
-      const playerDeckCounts = copyDeckCounts(state.deckBuilder.counts.player);
-      const opponentDeckCounts = copyDeckCounts(state.deckBuilder.counts.opponent, { cardIds: opponentDeckCardIds });
+      const playerDescriptor = normalizeOnlineDeckDescriptor(
+        options.playerDeckDescriptor || deckDescriptorForRule(ruleId)
+      );
+      const opponentDescriptor = normalizeOnlineDeckDescriptor(
+        options.opponentDeckDescriptor || deckDescriptorForRule(ruleId)
+      );
+      const playerDeckCounts = dungeonBattle
+        ? copyDeckCounts(state.deckBuilder.counts.player)
+        : copyOnlineDeckCounts(playerDescriptor, state.deckBuilder.counts.player);
+      const opponentDeckCounts = dungeonBattle
+        ? copyDeckCounts(state.deckBuilder.counts.opponent, { cardIds: opponentDeckCardIds })
+        : copyOnlineDeckCounts(opponentDescriptor, state.deckBuilder.counts.opponent);
       state.players.player.originalDeckCounts = playerDeckCounts;
       state.players.opponent.originalDeckCounts = opponentDeckCounts;
       state.players.player.deck = createDeckFromCounts("player", playerDeckCounts);
       state.players.opponent.deck = createDeckFromCounts("opponent", opponentDeckCounts, { cardIds: opponentDeckCardIds });
-      state.players.player.deckValid = validateDeckCounts(playerDeckCounts);
-      state.players.opponent.deckValid = validateDeckCounts(opponentDeckCounts, { cardIds: opponentDeckCardIds });
+      state.players.player.deckValid = dungeonBattle
+        ? validateDeckCounts(playerDeckCounts)
+        : validateOnlineDeckForRule(playerDescriptor, playerDeckCounts, ruleId);
+      state.players.opponent.deckValid = dungeonBattle
+        ? validateDeckCounts(opponentDeckCounts, { cardIds: opponentDeckCardIds })
+        : validateOnlineDeckForRule(opponentDescriptor, opponentDeckCounts, ruleId);
       if (dungeonBattle) prepareDungeonFloorBattleRules();
       analyticsStartGame();
       queueAnimation("shuffle", "player");
@@ -33275,7 +33334,8 @@
       const randomWaiting = randomMode && Boolean(state.online.role) && !state.online.connected;
       const showPrivatePanel = view === "private" || Boolean(state.online.role && (state.online.connected || state.online.matchMode === "private"));
       const showSpectatePanel = view === "spectate" && !showPrivatePanel;
-      const localDeckName = deckNameForOnline(state.online.localDeckName);
+      const localDeckDescriptor = onlineLocalDeckDescriptor();
+      const localDeckLabel = `${onlineDeckFormatLabel(localDeckDescriptor)}デッキ`;
       const localValidation = onlineLocalDeckValidation();
       const hasCurrentRemoteDeckCounts = onlineHasCurrentRemoteDeckCounts();
       const remoteValidation = hasCurrentRemoteDeckCounts
@@ -33319,13 +33379,15 @@
         : getOnlineServerUrl();
       elements.onlineServerUrlInput.disabled = Boolean(state.online.role);
       elements.onlineSaveServerUrlButton.disabled = Boolean(state.online.role);
-      elements.onlineDeckInfo.textContent = spectator ? "観戦専用" : `${localDeckName} / ${localSize}枚 / ${localDeckStatus}`;
+      elements.onlineDeckInfo.textContent = spectator ? "観戦専用" : `${localDeckLabel} / ${localSize}枚 / ${localDeckStatus}`;
       elements.onlineLocalPlayerName.textContent = spectator ? "プレイヤー1" : "あなた";
       elements.onlineRemotePlayerName.textContent = spectator ? "プレイヤー2" : "相手";
-      elements.onlineLocalDeckText.textContent = spectator ? "プレイヤー1（ホスト）" : `${localDeckName} / ${localSize}枚 / ${localDeckStatus}`;
+      elements.onlineLocalDeckText.textContent = spectator ? "プレイヤー1（ホスト）" : `${localDeckLabel} / ${localSize}枚 / ${localDeckStatus}`;
       elements.onlineRemoteDeckText.textContent = spectator
         ? "プレイヤー2（ゲスト）"
-        : (state.online.remoteDeckName ? `${deckNameForOnline(state.online.remoteDeckName)} / ${remoteDeckStatus}` : "待機中");
+        : (state.online.remoteDeckName
+          ? `${onlineDeckFormatLabel(parseOnlineDeckDescriptor(state.online.remoteDeckName))}デッキ / ${remoteDeckStatus}`
+          : "待機中");
       elements.onlineLocalReadyBadge.textContent = spectator ? "対戦者" : (state.online.localReady ? "準備OK" : "未準備");
       elements.onlineRemoteReadyBadge.textContent = spectator ? "対戦者" : (state.online.remoteReady ? "準備OK" : "未準備");
       elements.onlineLocalReadyBadge.classList.toggle("ready", spectator || state.online.localReady);
@@ -33367,15 +33429,7 @@
         || state.online.started
         || state.online.startPending;
       if (elements.onlineRuleDescription) {
-        const policy = rule.deck;
-        const lengthLabel = policy.minCards === policy.maxCards
-          ? `${policy.minCards}枚`
-          : `${policy.minCards}〜${policy.maxCards}枚`;
-        const copyLabel = policy.copyLimit === "standard" ? "同名枚数制限あり" : "同名枚数制限なし";
-        const aceLabel = policy.aceLimit === null
-          ? "エースぺ制限なし"
-          : policy.aceLimit === 0 ? "エースぺ使用不可" : "エースぺは1種類1枚";
-        elements.onlineRuleDescription.textContent = `${rule.description}（${lengthLabel} / ${copyLabel} / ${aceLabel}）`;
+        elements.onlineRuleDescription.textContent = ruleDescriptionText(rule.id);
       }
     }
 
@@ -36591,18 +36645,39 @@
     function renderSoloDeckSelection() {
       if (state.screen !== "soloDeck" || !elements.soloDeckGrid) return;
       const selection = state.soloSelection;
-      const names = Object.keys(state.deckBuilder.savedDecks).sort((a, b) => a.localeCompare(b, "ja"));
+      const ruleId = normalizeOnlineRuleId(selection.ruleId);
+      selection.ruleId = ruleId;
+      const rule = onlineRuleDefinition(ruleId);
+      const format = rule.deck.formats[0] || "normal";
+      const decks = state.deckBuilder[onlineDeckFormatDefinition(format).collectionKey] || {};
+      const names = Object.keys(decks).sort((a, b) => a.localeCompare(b, "ja"));
+      const ruleOptions = ONLINE_RULE_DEFINITIONS
+        .map((definition) => `<option value="${escapeHtml(definition.id)}">${escapeHtml(definition.name)}</option>`)
+        .join("");
+      if (elements.soloRuleSelect.innerHTML !== ruleOptions) elements.soloRuleSelect.innerHTML = ruleOptions;
+      elements.soloRuleSelect.value = ruleId;
+      elements.soloRuleDescription.textContent = ruleDescriptionText(ruleId);
       elements.soloPlayerSlot.classList.toggle("active", selection.activeSide === "player");
       elements.soloAiSlot.classList.toggle("active", selection.activeSide === "opponent");
       elements.soloPlayerDeckName.textContent = selection.playerDeckName || "未選択";
       elements.soloAiDeckName.textContent = selection.opponentDeckName || "未選択";
       elements.soloDeckGrid.innerHTML = "";
+      if (names.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "current-deck-empty";
+        empty.textContent = `${onlineDeckFormatDefinition(format).groupLabel}がありません。先にデッキ変更から作成・保存してください。`;
+        elements.soloDeckGrid.appendChild(empty);
+      }
       names.forEach((name) => {
+        const saved = decks[name];
+        const descriptor = deckDescriptorForRule(ruleId, name, saved);
+        const validation = validateOnlineDeckForRule(descriptor, saved?.counts || {}, ruleId);
         const selected = selection.playerDeckName === name || selection.opponentDeckName === name;
         const button = document.createElement("button");
         button.type = "button";
         button.className = `deck-library-card${selected ? " selected" : ""}`;
-        button.textContent = name;
+        button.textContent = `${name}${validation.valid ? "" : "（要調整）"}`;
+        button.disabled = !validation.valid;
         button.addEventListener("click", () => {
           const key = selection.activeSide === "player" ? "playerDeckName" : "opponentDeckName";
           selection[key] = name;
@@ -36612,7 +36687,7 @@
         });
         elements.soloDeckGrid.appendChild(button);
       });
-      const preview = state.deckBuilder.savedDecks[selection.previewName];
+      const preview = decks[selection.previewName];
       elements.soloDeckDetail.classList.toggle("hidden", !preview);
       elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded })}
         <div class="deck-library-detail-actions"><button class="button secondary" type="button" data-solo-view>${selection.previewExpanded ? "内容を閉じる" : "内容を見る"}</button></div>` : "";
@@ -36621,7 +36696,15 @@
         render();
       });
       attachLibraryCardDetails(elements.soloDeckDetail);
-      elements.soloBattleStartButton.disabled = !selection.playerDeckName || !selection.opponentDeckName;
+      const playerSaved = decks[selection.playerDeckName];
+      const opponentSaved = decks[selection.opponentDeckName];
+      const playerValid = playerSaved && validateOnlineDeckForRule(
+        deckDescriptorForRule(ruleId, selection.playerDeckName, playerSaved), playerSaved.counts || {}, ruleId
+      ).valid;
+      const opponentValid = opponentSaved && validateOnlineDeckForRule(
+        deckDescriptorForRule(ruleId, selection.opponentDeckName, opponentSaved), opponentSaved.counts || {}, ruleId
+      ).valid;
+      elements.soloBattleStartButton.disabled = !playerValid || !opponentValid;
     }
 
     function renderDungeonDeckSelection() {
@@ -37978,6 +38061,7 @@
     function startSoloBattleFromHome() {
       SIDES.opponent = SOLO_OPPONENT_LABEL;
       state.screen = "soloDeck";
+      state.soloSelection.ruleId = normalizeOnlineRuleId(state.soloSelection.ruleId);
       state.soloSelection.activeSide = "player";
       state.soloSelection.previewName = "";
       state.soloSelection.previewExpanded = false;
@@ -37985,30 +38069,42 @@
     }
 
     function startSoloBattleWithSelectedDecks() {
-      const playerSaved = state.deckBuilder.savedDecks[state.soloSelection.playerDeckName];
-      const opponentSaved = state.deckBuilder.savedDecks[state.soloSelection.opponentDeckName];
+      const ruleId = normalizeOnlineRuleId(state.soloSelection.ruleId);
+      const format = onlineRuleDefinition(ruleId).deck.formats[0] || "normal";
+      const decks = state.deckBuilder[onlineDeckFormatDefinition(format).collectionKey] || {};
+      const playerSaved = decks[state.soloSelection.playerDeckName];
+      const opponentSaved = decks[state.soloSelection.opponentDeckName];
       if (!playerSaved || !opponentSaved) {
         state.message = "自分とAIのデッキを選んでください。";
         render();
         return;
       }
-      state.deckBuilder.counts.player = copyDeckCounts(playerSaved.counts || {});
-      state.deckBuilder.counts.opponent = copyDeckCounts(opponentSaved.counts || {});
-      startNewGameWithDecks();
+      const playerDescriptor = deckDescriptorForRule(ruleId, state.soloSelection.playerDeckName, playerSaved);
+      const opponentDescriptor = deckDescriptorForRule(ruleId, state.soloSelection.opponentDeckName, opponentSaved);
+      state.deckBuilder.counts.player = copyOnlineDeckCounts(playerDescriptor, playerSaved.counts || {});
+      state.deckBuilder.counts.opponent = copyOnlineDeckCounts(opponentDescriptor, opponentSaved.counts || {});
+      startNewGameWithDecks({ ruleId, playerDeckDescriptor: playerDescriptor, opponentDeckDescriptor: opponentDescriptor });
     }
 
-    function startNewGameWithDecks() {
+    function startNewGameWithDecks(options = {}) {
       resetTutorialState();
-      const playerValidation = validateDeckCounts(state.deckBuilder.counts.player);
-      const opponentValidation = validateDeckCounts(state.deckBuilder.counts.opponent);
+      const ruleId = normalizeOnlineRuleId(options.ruleId || "normal");
+      const playerDescriptor = options.playerDeckDescriptor || deckDescriptorForRule(ruleId);
+      const opponentDescriptor = options.opponentDeckDescriptor || deckDescriptorForRule(ruleId);
+      const playerValidation = validateOnlineDeckForRule(playerDescriptor, state.deckBuilder.counts.player, ruleId);
+      const opponentValidation = validateOnlineDeckForRule(opponentDescriptor, state.deckBuilder.counts.opponent, ruleId);
       if (!playerValidation.valid || !opponentValidation.valid) {
-        state.message = "あなたとAIのデッキを40〜60枚、同名3枚以内にしてください。";
-        state.screen = "deck";
+        state.message = `あなたとAIのデッキが${onlineRuleDefinition(ruleId).name}ルールの条件を満たしていません。`;
+        state.screen = "soloDeck";
         render();
         return;
       }
       state.screen = "battle";
-      initializeGame();
+      initializeGame({
+        ruleId,
+        playerDeckDescriptor: playerDescriptor,
+        opponentDeckDescriptor: opponentDescriptor
+      });
     }
 
     function startTutorialBattle() {
@@ -39314,6 +39410,15 @@
       state.soloSelection.activeSide = "opponent";
       render();
     });
+    elements.soloRuleSelect.addEventListener("change", () => {
+      state.soloSelection.ruleId = normalizeOnlineRuleId(elements.soloRuleSelect.value);
+      state.soloSelection.activeSide = "player";
+      state.soloSelection.playerDeckName = "";
+      state.soloSelection.opponentDeckName = "";
+      state.soloSelection.previewName = "";
+      state.soloSelection.previewExpanded = false;
+      render();
+    });
     elements.soloBattleStartButton.addEventListener("click", startSoloBattleWithSelectedDecks);
     elements.homeTutorialButton.addEventListener("click", startTutorialBattle);
     elements.tutorialBackHomeButton.addEventListener("click", showHomeScreen);
@@ -39610,6 +39715,11 @@
       preserveOnlineCourseRegistrationConsent,
       restoreOnlineCourseRegistrationConsent,
       onlineBroadcastState,
+      onlineTransformSnapshotForSpectator,
+      initializeGame,
+      startSoloBattleFromHome,
+      startSoloBattleWithSelectedDecks,
+      render,
       startTurn,
       isActiveCardTestBattle,
       returnFromCardTestToDeck,

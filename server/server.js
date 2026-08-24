@@ -1196,9 +1196,8 @@ function sendLatestState(room, ws) {
 }
 
 // The host remains authoritative and therefore retains its complete state.
-// Other recipients only receive card backs for hands they are not allowed to
-// inspect. Keeping an array of opaque placeholders preserves hand counts for
-// the client UI without leaking a base ID, name, instance ID, or card state.
+// Guests receive card backs for the opponent's hand. Spectators are allowed to
+// inspect both players' hands, while still remaining unable to operate them.
 function hiddenHandPlaceholders(hand) {
   return Array.isArray(hand) ? hand.map(() => ({ hidden: true })) : [];
 }
@@ -1207,9 +1206,7 @@ function snapshotForRecipient(snapshot, recipient) {
   if (!snapshot || typeof snapshot !== "object") return snapshot;
   const hiddenSides = recipient?.role === "guest"
     ? ["player"]
-    : recipient?.role === "spectator"
-      ? ["player", "opponent"]
-      : [];
+    : [];
   if (hiddenSides.length === 0) return snapshot;
 
   const copy = JSON.parse(JSON.stringify(snapshot));

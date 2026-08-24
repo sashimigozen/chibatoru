@@ -629,7 +629,7 @@ test("host receives the current guest deck only through private deck updates", a
   assert.equal(guest.messages.slice(guestStart).some((message) => message.type === "privateDeckUpdate"), false);
 });
 
-test("snapshots redact hidden hands and one-eyed peek reveals only to its guest", async (t) => {
+test("snapshots hide the opponent hand from guests and reveal both hands to spectators", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
   const url = `ws://127.0.0.1:${port}`;
@@ -672,8 +672,8 @@ test("snapshots redact hidden hands and one-eyed peek reveals only to its guest"
   const spectator = await connectSpectatorClient(url, roomId, "spectator-hide");
   clients.push(spectator);
   const spectatorState = await waitFor(spectator, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
-  assert.deepEqual(spectatorState.message.snapshot.state.players.player.hand, [{ hidden: true }]);
-  assert.deepEqual(spectatorState.message.snapshot.state.players.opponent.hand, [{ hidden: true }]);
+  assert.equal(spectatorState.message.snapshot.state.players.player.hand[0].name, "ホスト秘密カード");
+  assert.equal(spectatorState.message.snapshot.state.players.opponent.hand[0].name, "ゲスト秘密カード");
 
   const guestRevealStart = guest.messages.length;
   const spectatorRevealStart = spectator.messages.length;
