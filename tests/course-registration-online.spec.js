@@ -99,6 +99,64 @@ async function prepareBattle(host, guest, sourceSide) {
   return itemId;
 }
 
+test("ホストがカオスルールでデッキを選び準備OKにしても通常ルールへ戻らない", async ({ browser }) => {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+  try {
+    await Promise.all([host.goto(gameUrl), guest.goto(gameUrl)]);
+    for (const page of [host, guest]) {
+      await page.locator("#homeBattleButton").click();
+      await page.locator("#onlinePrivateMatchButton").click();
+      await page.evaluate(() => {
+        window.__chibattle.state.deckBuilder.chaosDecks = {
+          "カオス動作確認": { counts: { general_student: 40 } }
+        };
+        window.__chibattle.render();
+      });
+    }
+    await host.locator("#onlineCreateRoomButton").click();
+    await expect.poll(() => host.evaluate(() => (
+      window.__chibattle.state.online.roomCode || ""
+    ))).not.toBe("");
+    const roomCode = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+    await guest.locator("#onlineRoomInput").fill(roomCode);
+    await guest.locator("#onlineJoinRoomButton").click();
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
+
+    await host.selectOption("#onlineRuleSelect", "chaos");
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("chaos");
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("chaos");
+    for (const page of [host, guest]) {
+      await page.selectOption("#onlineDeckSelect", { label: "カオス動作確認" });
+      await expect(page.locator("#onlineReadyButton")).toBeEnabled();
+    }
+
+    await host.locator("#onlineReadyButton").click();
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("chaos");
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("chaos");
+    await guest.locator("#onlineReadyButton").click();
+    await expect.poll(() => host.evaluate(() => (
+      window.__chibattle.state.online.localReady && window.__chibattle.state.online.remoteReady
+    ))).toBe(true);
+    await expect(host.locator("#onlineStartButton")).toBeEnabled();
+    await host.locator("#onlineStartButton").click();
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
+    expect(await host.evaluate(() => ({
+      roomRuleId: window.__chibattle.state.online.roomRuleId,
+      battleRuleId: window.__chibattle.state.battleRuleId,
+      copies: window.__chibattle.state.players.player.originalDeckCounts.general_student,
+      valid: window.__chibattle.state.players.player.deckValid.valid
+    }))).toEqual({ roomRuleId: "chaos", battleRuleId: "chaos", copies: 40, valid: true });
+  } finally {
+    await hostContext.close();
+    await guestContext.close();
+  }
+});
+
 test("ホストが履修登録結論パを使用するとゲストの了承・拒否画面が同期後も残る", async ({ browser }) => {
   const players = await connectPlayers(browser);
   try {

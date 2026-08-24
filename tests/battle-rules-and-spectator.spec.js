@@ -93,6 +93,18 @@ test("対戦開始処理が専攻ルールを通常ルールへ戻さない", as
   expect(result).toEqual({ ruleId: "specialty", aceCopies: 1, valid: true });
 });
 
+test("ルール情報のないデッキ更新では選択済みルールを通常へ戻さない", async ({ page }) => {
+  await page.goto(gameUrl);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.online.roomRuleId = "chaos";
+    const missingChanged = api.onlineApplyRoomRuleId(undefined);
+    const invalidChanged = api.onlineApplyRoomRuleId("unknown-rule");
+    return { ruleId: api.state.online.roomRuleId, missingChanged, invalidChanged };
+  });
+  expect(result).toEqual({ ruleId: "chaos", missingChanged: false, invalidChanged: false });
+});
+
 test("オンライン準備画面の対戦者欄に保存デッキ名を表示しない", async ({ page }) => {
   await page.goto(gameUrl);
   const texts = await page.evaluate(() => {

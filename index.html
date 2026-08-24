@@ -17060,7 +17060,8 @@
           { title: "オンライン観戦", before: "観戦者には両プレイヤーの手札が裏向きで表示され、手札の内容を確認できなかった。", after: "オンライン観戦中は、戦っている両プレイヤーの手札を表向きで表示。観戦者はカードの内容を確認できるが、対戦操作はできない。" },
           { title: "マッチ画面のデッキ表示", before: "オンラインの準備画面に保存デッキ名が表示され、対戦相手にデッキの内容を推測される場合があった。", after: "対戦者欄では保存デッキ名を表示せず、通常・専攻・カオスのデッキ形式と使用可否だけを表示。自分がデッキを選ぶ一覧では、判別に必要な保存名を引き続き確認できる。" },
           { title: "ソロバトルの対戦ルール", before: "VS AIでは通常ルールの保存デッキしか選べず、専攻ルールやカオスルールで対戦できなかった。", after: "VS AIのデッキ選択画面に通常・専攻・カオスのルール選択を追加。選んだルールに対応する保存デッキを自分とAIに設定して対戦できる。" },
-          { title: "対戦ルールの反映", before: "マッチ画面で専攻ルールやカオスルールを選んでも、対戦開始時に通常ルールのデッキ制限へ戻り、選択したルールで遊べなかった。", after: "選択した対戦ルールを対戦中の状態として保持し、専攻ルールでは専攻範囲とエースぺ制限、カオスルールでは同名枚数・エースぺ制限の解除を、実際のデッキ生成と対戦開始判定へ反映。オンライン対戦とVS AIの両方で選択したルールのまま遊べるようにした。" }
+          { title: "対戦ルールの反映", before: "マッチ画面で専攻ルールやカオスルールを選んでも、対戦開始時に通常ルールのデッキ制限へ戻り、選択したルールで遊べなかった。", after: "選択した対戦ルールを対戦中の状態として保持し、専攻ルールでは専攻範囲とエースぺ制限、カオスルールでは同名枚数・エースぺ制限の解除を、実際のデッキ生成と対戦開始判定へ反映。オンライン対戦とVS AIの両方で選択したルールのまま遊べるようにした。" },
+          { title: "マッチ準備中のルール保持", before: "ホストが通常以外のルールを選んだ後、デッキ選択や準備OKの通信にルール情報がない場合、画面と対戦設定が通常ルールへ戻ることがあった。", after: "デッキ選択・準備OKの通信にも現在のルールを含め、ルール情報のない旧形式の通信を受け取っても選択済みルールを上書きしないように変更。ホストが選んだルールをデッキ選択、準備OK、対戦開始まで保持する。" }
         ]
       },
       {
@@ -19655,9 +19656,12 @@
     }
 
     function onlineApplyRoomRuleId(ruleId) {
-      const normalized = normalizeOnlineRuleId(ruleId);
-      const changed = state.online.roomRuleId !== normalized;
-      state.online.roomRuleId = normalized;
+      const receivedRuleId = String(ruleId || "").trim();
+      // Deck/ready messages from an older server may omit ruleId. Such a
+      // message must not roll an already selected room rule back to normal.
+      if (!ONLINE_RULE_DEFINITION_BY_ID[receivedRuleId]) return false;
+      const changed = state.online.roomRuleId !== receivedRuleId;
+      state.online.roomRuleId = receivedRuleId;
       return changed;
     }
 
@@ -20880,6 +20884,7 @@
       const descriptor = onlineNormalizeLocalDeckName();
       return {
         type: "deckUpdate",
+        ruleId: state.online.roomRuleId,
         deckName: state.online.localDeckName,
         deckFormat: descriptor.format,
         specialtyId: descriptor.specialtyId,
@@ -39786,6 +39791,7 @@
       validateSpecialtyDeckCounts,
       validateChaosDeckCounts,
       validateOnlineDeckForRule,
+      onlineApplyRoomRuleId,
       ONLINE_RULE_DEFINITIONS,
       specialtyAllowedCardIds,
       SPECIALTY_DEFINITIONS,
