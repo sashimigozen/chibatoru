@@ -17021,13 +17021,14 @@
       {
         version: "ver.0.19.0",
         date: "2026年8月24日",
-        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの了承処理を追加。",
+        summary: "カードの配置可否を見分けやすくし、カードテキストの修正、新装備カード「イヤホン」、装備管理の仕組み、履修登録結論パの了承処理、更新通知を追加。",
         changes: [
           { title: "配置できないマスの表示", before: "カードを配置するとき、配置できるマスと配置できないマスを盤面上で見分けにくい場合があった。", after: "選んだカードの配置条件に合わせて、配置できるマスと配置できないマスを視覚的に区別して表示。カードを置けない場所を、操作する前に確認しやすくした。" },
           { title: "ワードインクリーサー", before: "「このカード自身を除く自分の手札をすべてデッキに戻す」と表記していた。", after: "出席後の処理に合わせて「自分の手札をすべてデッキに戻す」へ変更。効果の処理内容を読み取りやすい表記に整理した。" },
           { title: "新カード", after: "持ち物カード「イヤホン」を追加。自分の出席者1人に装備でき、装備者は講義の効果を受けなくなる。" },
           { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" },
-          { title: "履修登録結論パ", before: "了承された場合に、お互いが自身のデッキから好きなカードを5枚選んで校外エリアへ送る効果。拒否された場合の処理と、オンライン対戦で相手が了承・拒否を選ぶ専用画面がなかった。また、オンライン同期が入ると、使用者側の5枚選択が閉じる場合があった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送り、以降の5ターンはドローの代わりにその中から1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も使用者側の選択画面と選択中のカードを保持する。" }
+          { title: "履修登録結論パ", before: "了承された場合に、お互いが自身のデッキから好きなカードを5枚選んで校外エリアへ送る効果。拒否された場合の処理と、オンライン対戦で相手が了承・拒否を選ぶ専用画面がなかった。また、オンライン同期が入ると、使用された側の了承・拒否画面や使用者側の5枚選択が閉じる場合があった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送り、以降の5ターンはドローの代わりにその中から1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も、使用された側の了承・拒否画面と使用者側の選択画面、選択中のカードを保持する。" },
+          { title: "更新情報の通知", before: "同じバージョンの更新情報へ内容を追記しても、確認済みの場合は新しい更新に気づけなかった。", after: "更新情報の内容が変わるたび、ホーム画面の「更新情報」に赤い通知マークを表示。更新情報画面を一度開くと通知マークが消える。" }
         ]
       },
       {
@@ -17499,7 +17500,19 @@
       }
     ];
 
+    function updateReadId(entry) {
+      if (!entry) return "";
+      const content = JSON.stringify(entry);
+      let hash = 2166136261;
+      for (let index = 0; index < content.length; index += 1) {
+        hash ^= content.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+      return `${entry.version}:${(hash >>> 0).toString(36)}`;
+    }
+
     const LATEST_UPDATE_VERSION = UPDATE_HISTORY[0]?.version || "";
+    const LATEST_UPDATE_READ_ID = updateReadId(UPDATE_HISTORY[0]);
 
     const DECK_FILTER_TYPES = ["student", "teacher", "vampire", "item", "environment"];
     const DECK_FILTER_CATEGORIES = ["ドロー", "サーチ・生成", "回復", "除去", "バフ・デバフ", "妨害", "展開", "進化", "融合", "装備"];
@@ -21255,17 +21268,35 @@
     }
 
     function openCourseRegistrationConsent(options = {}) {
-      const preview = makePreviewCard("course_registration_party", "player");
       pendingCourseRegistrationConsent = { ...options };
+      renderCourseRegistrationConsent();
+      state.message = `${options.sourceName || CARD_BASES.course_registration_party.name}：効果を了承するか拒否するか選んでください。`;
+      render();
+      return true;
+    }
+
+    function renderCourseRegistrationConsent() {
+      if (!pendingCourseRegistrationConsent) return false;
+      const preview = makePreviewCard("course_registration_party", "player");
       elements.courseRegistrationConsentCard.innerHTML = cardShellTemplate(preview);
       elements.courseRegistrationConsentText.innerHTML = cardDetailTemplate(preview);
       const canAccept = state.players.player.deck.length >= 5;
       elements.courseRegistrationAcceptButton.disabled = !canAccept;
       elements.courseRegistrationAcceptButton.title = canAccept ? "" : "デッキが5枚未満のため了承できません";
       elements.courseRegistrationConsentModal.classList.remove("hidden");
-      state.message = `${options.sourceName || preview.name}：効果を了承するか拒否するか選んでください。`;
-      render();
       return true;
+    }
+
+    function preserveOnlineCourseRegistrationConsent() {
+      if (!isOnlineGuest() || pendingCourseRegistrationConsent?.mode !== "online_remote_target") return null;
+      return { ...pendingCourseRegistrationConsent };
+    }
+
+    function restoreOnlineCourseRegistrationConsent(consent) {
+      if (!consent || !isOnlineGuest() || state.phase !== "battle" || state.gameOver) return;
+      pendingCourseRegistrationConsent = { ...consent };
+      state.message = `${consent.sourceName || CARD_BASES.course_registration_party.name}：効果を了承するか拒否するか選んでください。`;
+      renderCourseRegistrationConsent();
     }
 
     function closeCourseRegistrationConsent() {
@@ -21565,6 +21596,7 @@
       const visualBefore = captureOnlineVisualState();
       const preservedThinItemChoice = preserveOnlineThinItemChoice();
       const preservedCourseRegistrationChoice = preserveOnlineCourseRegistrationChoice();
+      const preservedCourseRegistrationConsent = preserveOnlineCourseRegistrationConsent();
       const preservedMulliganSelection = isOnlineGuest()
         && state.phase === "mulligan"
         && !state.players.player.mulliganUsed
@@ -21585,6 +21617,7 @@
       restoreOnlineGuestMulliganState(preservedMulliganSelection, hadLocalMulliganPending);
       restoreOnlineThinItemChoice(preservedThinItemChoice);
       restoreOnlineCourseRegistrationChoice(preservedCourseRegistrationChoice);
+      restoreOnlineCourseRegistrationConsent(preservedCourseRegistrationConsent);
       nextCardInstanceId = snapshot.nextCardInstanceId || nextCardInstanceId;
       pendingAnimations.length = 0;
       closeItemConfirm();
@@ -36075,9 +36108,9 @@
       }
     }
 
-    function markUpdateVersionRead(version) {
+    function markUpdateRead(entry) {
       const read = loadReadUpdateVersions();
-      read.add(version);
+      read.add(updateReadId(entry));
       localStorage.setItem(UPDATE_READ_STORAGE_KEY, JSON.stringify([...read]));
       renderHomeUpdateStatus();
     }
@@ -36085,7 +36118,7 @@
     function renderHomeUpdateStatus() {
       if (!elements.homeUpdatesDot) return;
       const read = loadReadUpdateVersions();
-      elements.homeUpdatesDot.classList.toggle("hidden", !LATEST_UPDATE_VERSION || read.has(LATEST_UPDATE_VERSION));
+      elements.homeUpdatesDot.classList.toggle("hidden", !LATEST_UPDATE_READ_ID || read.has(LATEST_UPDATE_READ_ID));
     }
 
     function renderUpdateHistory() {
@@ -36094,7 +36127,7 @@
       elements.updateList.innerHTML = "";
       UPDATE_HISTORY.forEach((entry) => {
         const details = document.createElement("details");
-        const unread = entry.version === LATEST_UPDATE_VERSION && !read.has(entry.version);
+        const unread = entry.version === LATEST_UPDATE_VERSION && !read.has(updateReadId(entry));
         details.className = `update-entry${unread ? " unread" : ""}`;
         const changes = entry.changes.map((change) => {
           if (change.before) {
@@ -36109,7 +36142,7 @@
         details.addEventListener("toggle", () => {
           if (!details.open) return;
           details.classList.remove("unread");
-          markUpdateVersionRead(entry.version);
+          markUpdateRead(entry);
         });
         elements.updateList.appendChild(details);
       });
@@ -37675,6 +37708,7 @@
     function showUpdatesScreen() {
       state.preBattleToken += 1;
       state.screen = "updates";
+      if (UPDATE_HISTORY[0]) markUpdateRead(UPDATE_HISTORY[0]);
       hideCardTooltip();
       hideBattleCardPreview();
       render();
@@ -39412,6 +39446,8 @@
       confirmCardChoiceSelection,
       preserveOnlineCourseRegistrationChoice,
       restoreOnlineCourseRegistrationChoice,
+      preserveOnlineCourseRegistrationConsent,
+      restoreOnlineCourseRegistrationConsent,
       canPlaceCard,
       attendCard,
       ATTENDANCE_SOURCE,

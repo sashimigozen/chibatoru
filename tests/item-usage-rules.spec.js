@@ -249,3 +249,46 @@ test("履修登録結論パの使用者側5枚選択はオンライン同期後�
     expect(passed, name).toBe(true);
   });
 });
+
+test("履修登録結論パの了承・拒否画面はゲスト側のオンライン同期後も保持される", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("course_registration_party");
+    api.state.online.role = "guest";
+    api.state.online.started = true;
+    api.openCourseRegistrationConsent({
+      mode: "online_remote_target",
+      requestId: "course-registration-consent-test",
+      sourceName: "履修登録結論パ"
+    });
+
+    const preserved = api.preserveOnlineCourseRegistrationConsent();
+    document.getElementById("courseRegistrationConsentModal").classList.add("hidden");
+    api.restoreOnlineCourseRegistrationConsent(preserved);
+
+    return {
+      consentRestored: !document.getElementById("courseRegistrationConsentModal").classList.contains("hidden"),
+      cardRestored: document.getElementById("courseRegistrationConsentCard").textContent.includes("履修登録結論パ"),
+      acceptRestored: document.getElementById("courseRegistrationAcceptButton").textContent === "了承する",
+      rejectRestored: document.getElementById("courseRegistrationRejectButton").textContent === "拒否する"
+    };
+  });
+
+  Object.entries(result).forEach(([name, passed]) => {
+    expect(passed, name).toBe(true);
+  });
+});
+
+test("更新情報を追記すると赤い通知が表示され、一度見ると消える", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.evaluate(() => localStorage.setItem("chibattle-read-updates-v3", JSON.stringify(["ver.0.19.0"])));
+  await page.reload();
+
+  await expect(page.locator("#homeUpdatesDot")).not.toHaveClass(/hidden/);
+  await page.locator("#homeUpdatesButton").click();
+  await expect(page.locator("#homeUpdatesDot")).toHaveClass(/hidden/);
+  await page.reload();
+  await expect(page.locator("#homeUpdatesDot")).toHaveClass(/hidden/);
+});
