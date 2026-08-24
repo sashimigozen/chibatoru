@@ -162,7 +162,6 @@ test("バカでかい壁は盤面から1行目の学生2人を選んで効果を
     expect(passed, name).toBe(true);
   });
 });
-
 test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦意2を回復する", async ({ page }) => {
   await page.goto(gameUrl);
 
