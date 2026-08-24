@@ -210,3 +210,42 @@ test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦�
     expect(passed, name).toBe(true);
   });
 });
+
+test("履修登録結論パの使用者側5枚選択はオンライン同期後も保持される", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("course_registration_party");
+    api.state.online.role = "guest";
+    api.state.online.started = true;
+
+    const cards = api.state.players.player.deck;
+    api.state.pendingCardChoice = {
+      mode: "course_registration_online_source_response",
+      title: "履修登録結論パ",
+      message: "自分のデッキから、校外エリアへ送るカードを5枚選んでください。",
+      cards: [...cards],
+      selectedIds: cards.slice(0, 2).map((card) => card.instanceId),
+      min: 5,
+      max: 5,
+      confirmLabel: "選んだ5枚を校外へ送る",
+      requestId: "course-registration-source-test"
+    };
+
+    const preserved = api.preserveOnlineCourseRegistrationChoice();
+    api.state.pendingCardChoice = null;
+    api.restoreOnlineCourseRegistrationChoice(preserved);
+
+    return {
+      choiceRestored: api.state.pendingCardChoice?.mode === "course_registration_online_source_response",
+      deckCardsRestored: api.state.pendingCardChoice?.cards.length === cards.length,
+      selectedCardsRestored: api.state.pendingCardChoice?.selectedIds.length === 2,
+      requestRestored: api.state.pendingCardChoice?.requestId === "course-registration-source-test"
+    };
+  });
+
+  Object.entries(result).forEach(([name, passed]) => {
+    expect(passed, name).toBe(true);
+  });
+});
