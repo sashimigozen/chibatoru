@@ -3190,6 +3190,26 @@
       box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.24), 0 14px 24px rgba(15, 23, 42, 0.2);
     }
 
+    .choice-order-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 8;
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 2px solid #fff;
+      border-radius: 999px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 1000;
+      line-height: 1;
+      box-shadow: 0 3px 9px rgba(15, 23, 42, 0.35);
+      pointer-events: none;
+    }
+
     .mulligan-card .card-name {
       font-size: 15px;
     }
@@ -17034,7 +17054,7 @@
           { title: "ワードインクリーサー", before: "「このカード自身を除く自分の手札をすべてデッキに戻す」と表記していた。", after: "出席後の処理に合わせて「自分の手札をすべてデッキに戻す」へ変更。効果の処理内容を読み取りやすい表記に整理した。" },
           { title: "新カード", after: "持ち物カード「イヤホン」を追加。自分の出席者1人に装備でき、装備者は講義の効果を受けなくなる。" },
           { title: "装備カードの管理", before: "装備状態の処理がカードごとに分かれており、新しい装備カードを追加しにくかった。", after: "イヤホンの追加に合わせて装備状態を管理する処理を整備。装備中の効果を正しく参照し、今後の装備カード追加にも対応しやすくした。" },
-          { title: "履修登録結論パ", before: "オンライン同期が入ると各選択画面が閉じる場合があり、公開対戦サーバーでは了承要求が相手へ届かなかった。また、使用者側が校外へ送った5枚から手札に加えるカードを選べず、5ターンの残り回数を両者で共有していた。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが「賢者の遺産」と同じ選択画面で自身のデッキから5枚を選んで校外へ送る。以降は各プレイヤーが自分の5ターンそれぞれで、通常のドローの代わりに校外の対象カードから1枚を選んで手札に加える。拒否された場合は、使用者の戦意を2回復する。オンライン同期後も各選択画面と選択中のカードを保持し、公開対戦サーバーでも了承要求と選択結果を届ける。" },
+          { title: "履修登録結論パ", before: "了承後に選んだ5枚を校外エリアへ送り、その後の各ターンに5枚の中から手札へ加える1枚を選んでいた。また、オンライン同期によって了承・選択画面が閉じる場合があった。", after: "相手の画面にカードとカードテキスト、了承・拒否ボタンを表示。了承された場合は、お互いが自身のデッキから今後引きたいカードを5枚、引く順番で選ぶ。選択中のカード右上に1〜5の順番を表示し、以降の各自5ターンは通常のドローの代わりにその順番で1枚ずつ自動で手札に加える。選んだカードは校外エリアへ送らない。拒否された場合は使用者の戦意を2回復し、オンライン同期後も了承画面・選択順・選択中のカードを保持する。" },
           { title: "カードテストの終了操作", before: "カードテスト専用の「やめる」が、通常対戦でも状態によって表示・実行される余地があった。", after: "「やめる」はデッキ変更画面から開始したカードテスト中だけ表示。通常対戦、オンライン対戦、チュートリアル、魔の1号館では表示せず、処理も実行できない。" },
           { title: "更新情報の通知", before: "同じバージョンの更新情報へ内容を追記しても、確認済みの場合は新しい更新に気づけなかった。", after: "更新情報の内容が変わるたび、ホーム画面の「更新情報」に赤い通知マークを表示。更新情報画面を一度開くと通知マークが消える。" },
           { title: "オンライン観戦", before: "観戦者には両プレイヤーの手札が裏向きで表示され、手札の内容を確認できなかった。", after: "オンライン観戦中は、戦っている両プレイヤーの手札を表向きで表示。観戦者はカードの内容を確認できるが、対戦操作はできない。" },
@@ -21204,8 +21224,8 @@
     }
 
     // 履修登録結論パは、まず相手が了承または拒否を選ぶ。了承後に
-    // 各プレイヤーが自分のデッキだけを見て5枚ずつ選び、ホストが
-    // 双方の選択を受け取ってゲーム状態を確定する。
+    // 各プレイヤーが自分のデッキだけを見て、引きたい順番で5枚ずつ
+    // 選び、ホストが双方の選択順を受け取ってゲーム状態を確定する。
     function requestRemoteCourseRegistrationChoice(sourceSide, item, commandId = "") {
       if (!isOnlineHost() || !state.online.started || !state.online.connected) return false;
       const targetSide = oppositeSide(sourceSide);
@@ -21241,11 +21261,11 @@
         openCardChoice({
           mode: "course_registration_online_source_response",
           title: sourceName,
-          message: "自分のデッキから、校外エリアへ送るカードを5枚選んでください。",
+          message: "自分のデッキから、今後引きたい順番でカードを5枚選んでください。",
           cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
           min: 5,
           max: 5,
-          confirmLabel: "選んだ5枚を校外へ送る",
+          confirmLabel: "この順番で確定",
           requestId: message.requestId
         });
         return;
@@ -21288,11 +21308,11 @@
         mode: "course_registration_host_source",
         itemId: item?.instanceId,
         title: item?.name || CARD_BASES.course_registration_party.name,
-        message: "相手が了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+        message: "相手が了承しました。自分のデッキから、今後引きたい順番でカードを5枚選んでください。",
         cards: sortCardsByCostForChoice(state.players[pending.sourceSide].deck, "asc"),
         min: 5,
         max: 5,
-        confirmLabel: "選んだ5枚を校外へ送る",
+        confirmLabel: "この順番で確定",
         commandId: pending.commandId || "",
         context: {
           sourceSide: pending.sourceSide,
@@ -21325,7 +21345,7 @@
         targetSelectedIds: [...(targetSelectedIds || [])],
         commandId
       };
-      state.message = `${item.name}：使用者がデッキから5枚を選んでいます。`;
+      state.message = `${item.name}：使用者がデッキから引く5枚の順番を選んでいます。`;
       if (!onlineSend({
         type: "thinItemChoiceRequest",
         privateChoiceKind: COURSE_REGISTRATION_RELAY_KIND,
@@ -21385,11 +21405,11 @@
         openCardChoice({
           mode: "course_registration_online_response",
           title: pending.sourceName || CARD_BASES.course_registration_party.name,
-          message: "了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+          message: "了承しました。自分のデッキから、今後引きたい順番でカードを5枚選んでください。",
           cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
           min: 5,
           max: 5,
-          confirmLabel: "選んだ5枚を校外へ送る",
+          confirmLabel: "この順番で確定",
           requestId: pending.requestId
         });
         return;
@@ -21399,11 +21419,11 @@
         openCardChoice({
           mode: "course_registration_host_target",
           title: item?.name || CARD_BASES.course_registration_party.name,
-          message: "了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+          message: "了承しました。自分のデッキから、今後引きたい順番でカードを5枚選んでください。",
           cards: sortCardsByCostForChoice(state.players.player.deck, "asc"),
           min: 5,
           max: 5,
-          confirmLabel: "選んだ5枚を校外へ送る",
+          confirmLabel: "この順番で確定",
           commandId: pending.commandId || "",
           context: {
             sourceSide: pending.sourceSide,
@@ -21783,7 +21803,7 @@
         selectedIds: choice.selectedIds.filter((id) => cardsById.has(id)).slice(0, choice.max)
       };
       state.selectionOverlayPeek = Boolean(choice.selectionOverlayPeek);
-      state.message = choice.message || "自分のデッキから校外へ送るカードを5枚選んでください。";
+      state.message = choice.message || "自分のデッキから、今後引きたい順番でカードを5枚選んでください。";
     }
 
     function restoreOnlineGuestMulliganState(selectedIds, hadLocalMulliganPending) {
@@ -22872,6 +22892,10 @@
     function courseRegistrationAvailableCards(side) {
       const registration = state.courseRegistration;
       if (!registration || courseRegistrationRemainingTurns(side) <= 0) return [];
+      if (Array.isArray(registration.drawQueues?.[side])) {
+        return registration.drawQueues[side];
+      }
+      // Compatibility with battles saved before the ordered-draw change.
       const ids = new Set(registration.pools?.[side] || []);
       return state.players[side].trash.filter((card) => ids.has(card.instanceId));
     }
@@ -22901,20 +22925,28 @@
       if (!registration || courseRegistrationRemainingTurns(side) <= 0) return { handled: false, drawn: null };
       const candidates = courseRegistrationAvailableCards(side);
       registration.remainingTurns[side] = Math.max(0, courseRegistrationRemainingTurns(side) - 1);
-      const selected = candidates.find((card) => card.instanceId === selectedId) || candidates[0] || null;
+      const orderedQueue = registration.drawQueues?.[side];
+      const selected = Array.isArray(orderedQueue)
+        ? orderedQueue.shift() || null
+        : candidates.find((card) => card.instanceId === selectedId) || candidates[0] || null;
       if (!selected) {
         completeCourseRegistrationIfFinished();
         return { handled: true, drawn: null };
       }
-      const trash = state.players[side].trash;
-      const index = trash.findIndex((card) => card.instanceId === selected.instanceId);
-      let drawn = null;
-      if (index >= 0) {
-        [drawn] = trash.splice(index, 1);
+      let drawn = selected;
+      if (!Array.isArray(orderedQueue)) {
+        const trash = state.players[side].trash;
+        const index = trash.findIndex((card) => card.instanceId === selected.instanceId);
+        if (index < 0) drawn = null;
+        else [drawn] = trash.splice(index, 1);
+      }
+      if (drawn) {
         drawn.owner = side;
         drawn.handTurns = 0;
         state.players[side].hand.push(drawn);
-        registration.pools[side] = (registration.pools[side] || []).filter((id) => id !== drawn.instanceId);
+        if (registration.pools) {
+          registration.pools[side] = (registration.pools[side] || []).filter((id) => id !== drawn.instanceId);
+        }
         queueAnimation("draw", side, 1);
       }
       completeCourseRegistrationIfFinished();
@@ -22969,28 +23001,8 @@
     }
 
     function drawCourseRegistrationCard(side) {
-      const candidates = courseRegistrationAvailableCards(side);
       if (!state.courseRegistration || courseRegistrationRemainingTurns(side) <= 0) return { handled: false, drawn: null };
-      if (candidates.length === 0) return resolveCourseRegistrationDrawSelection(side, null);
-      if (side === "player") {
-        openCardChoice({
-          mode: "course_registration_draw",
-          title: CARD_BASES.course_registration_party.name,
-          message: "通常のドローの代わりに、校外へ送ったカードから手札に加える1枚を選んでください。",
-          cards: candidates,
-          min: 1,
-          max: 1,
-          confirmLabel: "このカードを手札に加える",
-          commandId: state.online.activeRemoteCommandId || "",
-          context: { side }
-        });
-        return { handled: true, drawn: null, pending: true };
-      }
-      if (isOnlineHost() && requestRemoteCourseRegistrationDrawChoice(side, candidates)) {
-        return { handled: true, drawn: null, pending: true };
-      }
-      const selected = [...candidates].sort((a, b) => effectiveCardCost(b) - effectiveCardCost(a))[0];
-      return resolveCourseRegistrationDrawSelection(side, selected.instanceId);
+      return resolveCourseRegistrationDrawSelection(side, null);
     }
 
     function toggleMulliganCard(instanceId) {
@@ -23214,7 +23226,7 @@
       if (!courseDraw.handled && !drawOne(side, true) && !drawWasBlocked) return;
       resolveChaosWorldAtTurnStart();
       const drawText = courseDraw.handled
-        ? (courseDraw.drawn ? `履修登録結論パで「${courseDraw.drawn.name}」を手札に加えました。` : "履修登録結論パで選べるカードがありませんでした。")
+        ? (courseDraw.drawn ? `履修登録結論パで選んだ順番どおり「${courseDraw.drawn.name}」を手札に加えました。` : "履修登録結論パで引くカードがありませんでした。")
         : drawWasBlocked
         ? "山梨最低賃金2円の効果によりドローできません。"
         : "1枚ドロー。";
@@ -26248,11 +26260,11 @@
         mode: "course_registration",
         itemId: item.instanceId,
         title: item.name,
-        message: "相手が了承しました。自分のデッキから校外エリアへ送るカードを5枚選んでください。",
+        message: "相手が了承しました。自分のデッキから、今後引きたい順番でカードを5枚選んでください。",
         cards: sortCardsByCostForChoice(candidates, "asc"),
         min: pickCount,
         max: pickCount,
-        confirmLabel: "選んだ5枚を校外へ送る"
+        confirmLabel: "この順番で確定"
       });
     }
 
@@ -26274,8 +26286,11 @@
       const opponentSide = oppositeSide(side);
       const other = state.players[opponentSide];
       const ownPickCount = 5;
-      const selected = new Set(selectedIds || []);
-      const ownCards = own.deck.filter((card) => selected.has(card.instanceId)).slice(0, ownPickCount);
+      const ownById = new Map(own.deck.map((card) => [card.instanceId, card]));
+      const ownCards = [...new Set(selectedIds || [])]
+        .map((instanceId) => ownById.get(instanceId))
+        .filter(Boolean)
+        .slice(0, ownPickCount);
       if (ownCards.length !== ownPickCount || ownPickCount <= 0 || other.deck.length < ownPickCount) return false;
       const accepted = options.accepted ?? true;
       if (!accepted) {
@@ -26284,9 +26299,12 @@
         if (options.renderAfter !== false) render();
         return false;
       }
-      const opponentSelected = new Set(options.opponentSelectedIds || []);
+      const opponentById = new Map(other.deck.map((card) => [card.instanceId, card]));
       const opponentCards = options.opponentSelectedIds
-        ? other.deck.filter((card) => opponentSelected.has(card.instanceId)).slice(0, ownPickCount)
+        ? [...new Set(options.opponentSelectedIds)]
+          .map((instanceId) => opponentById.get(instanceId))
+          .filter(Boolean)
+          .slice(0, ownPickCount)
         : [...other.deck]
           .sort((a, b) => effectiveCardCost(b) - effectiveCardCost(a))
           .slice(0, ownPickCount);
@@ -26296,20 +26314,18 @@
       const opponentIds = new Set(opponentCards.map((card) => card.instanceId));
       own.deck = own.deck.filter((card) => !ownIds.has(card.instanceId));
       other.deck = other.deck.filter((card) => !opponentIds.has(card.instanceId));
-      ownCards.forEach((card) => moveToTrash(side, card, { reason: item.name, sourceZone: "deck" }));
-      opponentCards.forEach((card) => moveToTrash(opponentSide, card, { reason: item.name, sourceZone: "deck" }));
       shuffleDeckAfterSearch(side);
       shuffleDeckAfterSearch(opponentSide);
       state.courseRegistration = {
         remainingTurns: { player: 5, opponent: 5 },
-        pools: {
-          [side]: ownCards.map((card) => card.instanceId),
-          [opponentSide]: opponentCards.map((card) => card.instanceId)
+        drawQueues: {
+          [side]: ownCards,
+          [opponentSide]: opponentCards
         }
       };
       showCardPlayAnimation(item, "trash");
       moveHandCardToTrash(side, item);
-      addLog(`${SIDES[side]}は${item.name}を使い、両者はデッキから${ownCards.length}枚・${opponentCards.length}枚を校外エリアへ送りました。以降5ターンは通常のドローの代わりにそれらから選びます。`);
+      addLog(`${SIDES[side]}は${item.name}を使い、両者はデッキから5枚を引く順番で選びました。以降5ターンは通常のドローの代わりに、その順番で1枚ずつ手札に加えます。`);
       clearSelections();
       if (options.renderAfter !== false) render();
       return true;
@@ -26368,6 +26384,27 @@
       }
       state.message = `${pending.title}：${pending.selectedIds.length}/${pending.max}枚を選択中。`;
       render();
+    }
+
+    function cardChoiceShowsSelectionOrder(choice) {
+      return Boolean(choice && [
+        "course_registration",
+        "course_registration_online_response",
+        "course_registration_online_source_response",
+        "course_registration_host_target",
+        "course_registration_host_source"
+      ].includes(choice.mode));
+    }
+
+    function appendCardChoiceOrderBadge(button, choice, instanceId) {
+      if (!cardChoiceShowsSelectionOrder(choice)) return;
+      const orderIndex = choice.selectedIds.indexOf(instanceId);
+      if (orderIndex < 0) return;
+      const badge = document.createElement("span");
+      badge.className = "choice-order-badge";
+      badge.textContent = String(orderIndex + 1);
+      badge.setAttribute("aria-label", `${orderIndex + 1}番目に引く`);
+      button.appendChild(badge);
     }
 
     function confirmCardChoiceSelection() {
@@ -34610,6 +34647,7 @@
           button.dataset.cardId = card.instanceId;
           button.innerHTML = cardTemplate(card, false);
           button.classList.toggle("selected", choice.selectedIds.includes(card.instanceId));
+          appendCardChoiceOrderBadge(button, choice, card.instanceId);
           const selectable = !choice.selectableIds || choice.selectableIds.includes(card.instanceId);
           button.disabled = !selectable;
           button.classList.toggle("disabled", !selectable);
@@ -39034,7 +39072,7 @@
         fire_touch: "自分の気力を4失い、自分のデッキを上から3枚引く。",
         thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
         one_eyed_peek: "相手の手札を見る。",
-        course_registration_party: "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚選び校外に送る。以降の5ターンはお互いドローの代わりに、校外に送った5枚の中から選んで1枚を手札に加える。拒否された場合、戦意を2回復する。",
+      course_registration_party: "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
         brother_capital: "自分のデッキから戦意2以下の出席者を好きなだけ選び、自分の講義室に特殊出席させる。（エースぺ）",
         padlock: "装備カード。自分の出席者1人に装備できる。装備者はすべての効果を失い、攻撃と講義と進化を行えず、ダメージを受けず、効果で破壊されない。注目・超注目は無視して攻撃対象を選べる。このカードを装備したとき、「鍵」1枚を手札に生成する。",
         crotch_febreze: "自分の「あえー」と名のつく出席者がいる場合に使用できる。好きな人数の体力を1にし、その人数まで相手教師を選ぶ。選んだ教師の出席時効果だけを相手に対して使用する。",

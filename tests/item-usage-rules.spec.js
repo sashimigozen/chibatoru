@@ -162,7 +162,7 @@ test("バカでかい壁は盤面から1行目の学生2人を選んで効果を
     expect(passed, name).toBe(true);
   });
 });
-test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦意2を回復する", async ({ page }) => {
+test("履修登録結論パは選んだ5枚を番号順に引き、拒否時は戦意2を回復する", async ({ page }) => {
   await page.goto(gameUrl);
 
   const result = await page.evaluate(() => {
@@ -174,7 +174,7 @@ test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦�
     const consentDisplay = {
       modalVisible: !document.getElementById("courseRegistrationConsentModal").classList.contains("hidden"),
       cardVisible: document.getElementById("courseRegistrationConsentCard").textContent.includes("履修登録結論パ"),
-      textVisible: document.getElementById("courseRegistrationConsentText").textContent.includes("拒否された場合、戦意を2回復する。"),
+      textVisible: document.getElementById("courseRegistrationConsentText").textContent.includes("選んだカードを選んだ順番で1枚ずつ手札に加える。"),
       acceptVisible: document.getElementById("courseRegistrationAcceptButton").textContent === "了承する",
       rejectVisible: document.getElementById("courseRegistrationRejectButton").textContent === "拒否する"
     };
@@ -188,22 +188,29 @@ test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦�
       && choice.min === 5
       && choice.max === 5
       && choice.cards.length === api.state.players.player.deck.length;
-    choice.selectedIds = choice.cards.slice(0, 5).map((card) => card.instanceId);
+    const orderedIds = [4, 1, 3, 0, 2].map((index) => choice.cards[index].instanceId);
+    orderedIds.forEach((instanceId) => {
+      document.querySelector(`#threeGesturesHand [data-card-id="${instanceId}"]`).click();
+    });
+    const displayedOrder = orderedIds.map((instanceId) => (
+      document.querySelector(`#threeGesturesHand [data-card-id="${instanceId}"] .choice-order-badge`)?.textContent
+    ));
     api.confirmCardChoiceSelection();
     const acceptedResolved = api.state.courseRegistration?.remainingTurns?.player === 5
       && api.state.courseRegistration?.remainingTurns?.opponent === 5
-      && api.state.courseRegistration.pools.player.length === 5
-      && api.state.courseRegistration.pools.opponent.length === 5;
+      && api.state.courseRegistration.drawQueues.player.map((card) => card.instanceId).join(",") === orderedIds.join(",")
+      && api.state.courseRegistration.drawQueues.opponent.length === 5
+      && displayedOrder.join(",") === "1,2,3,4,5"
+      && orderedIds.every((id) => !api.state.players.player.trash.some((card) => card.instanceId === id));
 
-    const selectedDrawId = api.state.courseRegistration.pools.player[2];
-    const drawChoiceOpened = api.drawCourseRegistrationCard("player").pending === true
-      && api.state.pendingCardChoice?.mode === "course_registration_draw";
-    api.state.pendingCardChoice.selectedIds = [selectedDrawId];
-    api.confirmCardChoiceSelection();
-    const selectedCardAdded = api.state.players.player.hand.some((card) => card.instanceId === selectedDrawId)
-      && !api.state.players.player.trash.some((card) => card.instanceId === selectedDrawId)
+    const firstDraw = api.drawCourseRegistrationCard("player");
+    const selectedCardAdded = firstDraw.drawn?.instanceId === orderedIds[0]
+      && api.state.pendingCardChoice === null
+      && api.state.players.player.hand.some((card) => card.instanceId === orderedIds[0])
       && api.state.courseRegistration.remainingTurns.player === 4
       && api.state.courseRegistration.remainingTurns.opponent === 5;
+    const laterDraws = Array.from({ length: 4 }, () => api.drawCourseRegistrationCard("player").drawn?.instanceId);
+    const selectedOrderPreserved = laterDraws.join(",") === orderedIds.slice(1).join(",");
 
     api.startCardTest("course_registration_party");
     const rejectedItem = api.state.players.player.hand.find((card) => card.baseId === "course_registration_party");
@@ -214,7 +221,7 @@ test("履修登録結論パは了承確認後に5枚を選び、拒否時は戦�
       && !api.state.players.player.hand.some((card) => card.instanceId === rejectedItem.instanceId)
       && api.state.players.player.trash.some((card) => card.instanceId === rejectedItem.instanceId);
 
-    return { ...consentDisplay, selectionUsesDeckChoice, acceptedResolved, drawChoiceOpened, selectedCardAdded, rejectionResolved };
+    return { ...consentDisplay, selectionUsesDeckChoice, acceptedResolved, selectedCardAdded, selectedOrderPreserved, rejectionResolved };
   });
 
   Object.entries(result).forEach(([name, passed]) => {
@@ -261,12 +268,12 @@ test("履修登録結論パの使用者側5枚選択はオンライン同期後�
     api.state.pendingCardChoice = {
       mode: "course_registration_online_source_response",
       title: "履修登録結論パ",
-      message: "自分のデッキから、校外エリアへ送るカードを5枚選んでください。",
+      message: "自分のデッキから、今後引きたい順番でカードを5枚選んでください。",
       cards: [...cards],
       selectedIds: cards.slice(0, 2).map((card) => card.instanceId),
       min: 5,
       max: 5,
-      confirmLabel: "選んだ5枚を校外へ送る",
+      confirmLabel: "この順番で確定",
       requestId: "course-registration-source-test"
     };
 

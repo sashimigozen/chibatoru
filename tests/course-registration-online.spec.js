@@ -150,7 +150,7 @@ test("ゲストが履修登録結論パを使用するとホストに了承・�
   }
 });
 
-test("ゲスト使用者は次のターン開始時に校外のカードを選んで手札に加えられる", async ({ browser }) => {
+test("ゲスト使用者は次のターン開始時に選択順の先頭カードを自動で引く", async ({ browser }) => {
   const players = await connectPlayers(browser);
   try {
     await prepareBattle(players.host, players.guest, "opponent");
@@ -175,28 +175,26 @@ test("ゲスト使用者は次のターン開始時に校外のカードを選�
 
     await expect.poll(() => players.guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
       .toBe("course_registration_online_source_response");
-    await players.guest.evaluate(() => {
+    const orderedGuestIds = await players.guest.evaluate(() => {
       const api = window.__chibattle;
-      api.state.pendingCardChoice.selectedIds = api.state.pendingCardChoice.cards.slice(0, 5).map((card) => card.instanceId);
+      const selectedIds = [3, 0, 4, 1, 2].map((index) => api.state.pendingCardChoice.cards[index].instanceId);
+      api.state.pendingCardChoice.selectedIds = selectedIds;
       api.confirmCardChoiceSelection();
+      return selectedIds;
     });
-    await expect.poll(() => players.host.evaluate(() => window.__chibattle.state.courseRegistration?.pools?.opponent?.length))
+    await expect.poll(() => players.host.evaluate(() => window.__chibattle.state.courseRegistration?.drawQueues?.opponent?.length))
       .toBe(5);
+    expect(await players.host.evaluate(() => (
+      window.__chibattle.state.courseRegistration.drawQueues.opponent.map((card) => card.instanceId)
+    ))).toEqual(orderedGuestIds);
 
     await players.host.evaluate(() => {
       const api = window.__chibattle;
       api.state.currentSide = "opponent";
       api.startTurn("opponent");
+      api.onlineBroadcastState(true);
     });
-    await expect.poll(() => players.guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
-      .toBe("course_registration_draw_online_response");
-    const selectedId = await players.guest.evaluate(() => {
-      const api = window.__chibattle;
-      const selected = api.state.pendingCardChoice.cards[1];
-      api.state.pendingCardChoice.selectedIds = [selected.instanceId];
-      api.confirmCardChoiceSelection();
-      return selected.instanceId;
-    });
+    const selectedId = orderedGuestIds[0];
 
     await expect.poll(() => players.host.evaluate((id) => (
       window.__chibattle.state.players.opponent.hand.some((card) => card.instanceId === id)
@@ -204,6 +202,7 @@ test("ゲスト使用者は次のターン開始時に校外のカードを選�
     await expect.poll(() => players.guest.evaluate((id) => (
       window.__chibattle.state.players.player.hand.some((card) => card.instanceId === id)
     ), selectedId)).toBe(true);
+    expect(await players.guest.evaluate(() => window.__chibattle.state.pendingCardChoice)).toBeNull();
     expect(await players.host.evaluate(() => ({
       guestTurns: window.__chibattle.state.courseRegistration.remainingTurns.opponent,
       hostTurns: window.__chibattle.state.courseRegistration.remainingTurns.player
