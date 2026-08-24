@@ -276,12 +276,21 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
   const normalInvalid = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", normalInvalidStart);
   assert.match(normalInvalid.message.message, /同名/);
 
-  const aceInvalidStart = guest.messages.length;
-  const tooManyAces = createNormalDeckCounts();
-  tooManyAces.think_so = 2;
-  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(tooManyAces), ready: true });
-  const aceInvalid = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", aceInvalidStart);
-  assert.match(aceInvalid.message.message, /エース/);
+  const oneAceInvalidStart = guest.messages.length;
+  const oneAce = createNormalDeckCounts();
+  oneAce.general_student -= 1;
+  oneAce.think_so = 1;
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(oneAce), ready: true });
+  const oneAceInvalid = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", oneAceInvalidStart);
+  assert.equal(oneAceInvalid.message.message, "エースぺは通常ルールでは使用できません。");
+
+  const multipleAcesInvalidStart = guest.messages.length;
+  const multipleAces = createNormalDeckCounts();
+  multipleAces.general_student -= 2;
+  multipleAces.think_so = 2;
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(multipleAces), ready: true });
+  const multipleAcesInvalid = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", multipleAcesInvalidStart);
+  assert.equal(multipleAcesInvalid.message.message, "エースぺは通常ルールでは使用できません。");
 
   const chaosUpdateStart = guest.messages.length;
   send(host, { type: "setRoomRule", ruleId: "chaos" });
@@ -302,6 +311,43 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
   });
   const tokenInvalid = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", tokenInvalidStart);
   assert.match(tokenInvalid.message.message, /直接編成/);
+
+  // Evolution cards are legal deck cards in every rule format.  They can only
+  // be placed through an evolution in game, but the server must not reject
+  // them merely because their base data has evolutionFrom.
+  for (const evolutionCardId of ["success_student", "gitch", "gigi_blood", "demon_a_plus", "oni_shima_ai", "dark_yuta"]) {
+    const evolutionUpdateStart = host.messages.length;
+    send(guest, {
+      type: "deckUpdate",
+      deckCounts: createChaosDeckCounts(evolutionCardId),
+      deckFormat: "chaos",
+      specialtyId: "",
+      ready: true
+    });
+    const evolutionUpdate = await waitFor(host, (message) =>
+      message.type === "deckUpdate"
+      && message.senderId === "guest-rule"
+      && message.deckFormat === "chaos"
+      && message.ready === true,
+    evolutionUpdateStart);
+    assert.equal(evolutionUpdate.message.deckValid, true, `${evolutionCardId} should be deck-buildable`);
+  }
+
+  const chaosAcesStart = host.messages.length;
+  send(guest, {
+    type: "deckUpdate",
+    deckCounts: { think_so: 20, tokyo_tech_bro: 20 },
+    deckFormat: "chaos",
+    specialtyId: "",
+    ready: true
+  });
+  const chaosAces = await waitFor(host, (message) =>
+    message.type === "deckUpdate"
+    && message.senderId === "guest-rule"
+    && message.deckFormat === "chaos"
+    && message.ready === true,
+  chaosAcesStart);
+  assert.equal(chaosAces.message.deckValid, true);
 
   const chaosDeck = createChaosDeckCounts();
   send(host, { type: "deckUpdate", deckCounts: chaosDeck, deckFormat: "chaos", specialtyId: "", ready: true });
@@ -328,10 +374,63 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
   const wrongSpecialty = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", wrongSpecialtyStart);
   assert.match(wrongSpecialty.message.message, /専攻/);
 
+  const otherSpecialtyAceCounts = createLateSpecialtyDeckCounts();
+  otherSpecialtyAceCounts.general_student -= 1;
+  otherSpecialtyAceCounts.think_so = 1;
+  const otherSpecialtyAceStart = host.messages.length;
+  send(host, {
+    type: "deckUpdate",
+    deckCounts: otherSpecialtyAceCounts,
+    deckFormat: "specialty",
+    specialtyId: "late",
+    ready: true
+  });
+  const otherSpecialtyAce = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", otherSpecialtyAceStart);
+  assert.match(otherSpecialtyAce.message.message, /専攻/);
+
+  const specialtyAceCounts = createLateSpecialtyDeckCounts();
+  specialtyAceCounts.general_student -= 1;
+  specialtyAceCounts.tokyo_tech_bro = 1;
+  const specialtyAceStart = host.messages.length;
+  send(guest, {
+    type: "deckUpdate",
+    deckCounts: specialtyAceCounts,
+    deckFormat: "specialty",
+    specialtyId: "late",
+    ready: true
+  });
+  const specialtyAce = await waitFor(host, (message) =>
+    message.type === "deckUpdate"
+    && message.senderId === "guest-rule"
+    && message.deckFormat === "specialty"
+    && message.ready === true,
+  specialtyAceStart);
+  assert.equal(specialtyAce.message.deckValid, true);
+
+  const specialtyTwoAcesCounts = createLateSpecialtyDeckCounts();
+  specialtyTwoAcesCounts.general_student -= 2;
+  specialtyTwoAcesCounts.tokyo_tech_bro = 2;
+  const specialtyTwoAcesStart = guest.messages.length;
+  send(guest, {
+    type: "deckUpdate",
+    deckCounts: specialtyTwoAcesCounts,
+    deckFormat: "specialty",
+    specialtyId: "late",
+    ready: true
+  });
+  const specialtyTwoAces = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", specialtyTwoAcesStart);
+  assert.equal(specialtyTwoAces.message.message, "エースぺは1デッキにつき1種類・1枚までです。");
+
   const specialtyDeck = createLateSpecialtyDeckCounts();
+  const finalSpecialtyDeckStart = host.messages.length;
   send(host, { type: "deckUpdate", deckCounts: specialtyDeck, deckFormat: "specialty", specialtyId: "late", ready: true });
   send(guest, { type: "deckUpdate", deckCounts: specialtyDeck, deckFormat: "specialty", specialtyId: "late", ready: true });
-  await waitFor(host, (message) => message.type === "deckUpdate" && message.deckFormat === "specialty" && message.ready === true);
+  await waitFor(host, (message) =>
+    message.type === "deckUpdate"
+    && message.senderId === "guest-rule"
+    && message.deckFormat === "specialty"
+    && message.ready === true,
+  finalSpecialtyDeckStart);
 
   const startIndex = guest.messages.length;
   send(host, {
