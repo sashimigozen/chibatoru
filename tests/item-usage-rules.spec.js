@@ -128,6 +128,117 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
   });
 });
 
+test("タイトルマッチは0枚選択、既存の対、各自の捨札数を正しく処理する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+
+    function resetBattle() {
+      state.phase = "battle";
+      state.currentSide = "player";
+      state.gameOver = false;
+      state.aiThinking = false;
+      state.actionTurn = 1;
+      state.pendingCardChoice = null;
+      state.pendingCardPlay = null;
+      state.pendingRemoteHandTrim = null;
+      state.selectedHandId = null;
+      state.selectedAttacker = null;
+      state.log = [];
+      ["player", "opponent"].forEach((side) => {
+        state.players[side].will = 10;
+        state.players[side].hand = [];
+        state.players[side].deck = [];
+        state.players[side].trash = [];
+        state.players[side].late = [];
+        state.players[side].board.seats = Array(9).fill(null);
+        state.players[side].board.teacher = null;
+      });
+    }
+
+    function card(baseId, owner = "player") {
+      return api.createCardFromBase(baseId, owner);
+    }
+
+    function attendee(baseId, owner = "player") {
+      return api.makeBoardCard(card(baseId, owner));
+    }
+
+    const checks = {};
+
+    resetBattle();
+    const onlyTitleMatch = card("aiben_vs_nyotei_title_match");
+    state.players.player.hand = [onlyTitleMatch];
+    api.beginItemUse(onlyTitleMatch);
+    const aibenChoice = state.pendingCardChoice?.cards.find((entry) => entry.baseId === "aiben");
+    checks.onlyTitleMatchOpened = state.pendingCardChoice?.mode === "title_match" && Boolean(aibenChoice);
+    state.pendingCardChoice.selectedIds = [aibenChoice.instanceId];
+    api.confirmCardChoiceSelection();
+    checks.onlyTitleMatchResolved = state.pendingCardChoice === null
+      && !state.players.player.hand.some((entry) => entry.instanceId === onlyTitleMatch.instanceId)
+      && state.players.player.trash.some((entry) => entry.instanceId === onlyTitleMatch.instanceId)
+      && state.players.player.board.seats.some((entry) => entry?.baseId === "aiben")
+      && state.players.opponent.board.seats.some((entry) => entry?.baseId === "nyotei")
+      && state.log.some((entry) => entry.includes(onlyTitleMatch.name));
+
+    resetBattle();
+    const repeatedTitleMatch = card("aiben_vs_nyotei_title_match");
+    state.players.player.board.seats[0] = attendee("aiben");
+    state.players.opponent.board.seats[0] = attendee("nyotei", "opponent");
+    state.players.player.hand = [repeatedTitleMatch];
+    checks.existingPairUsable = api.canUseHandCardNow(repeatedTitleMatch);
+    api.beginItemUse(repeatedTitleMatch);
+    const nyoteiChoice = state.pendingCardChoice?.cards.find((entry) => entry.baseId === "nyotei");
+    state.pendingCardChoice.selectedIds = [nyoteiChoice.instanceId];
+    api.confirmCardChoiceSelection();
+    checks.existingPairResolved = !state.players.player.hand.some((entry) => entry.instanceId === repeatedTitleMatch.instanceId)
+      && state.players.player.board.seats.filter((entry) => entry?.baseId === "aiben" || entry?.baseId === "nyotei").length === 2
+      && state.players.opponent.board.seats.filter((entry) => entry?.baseId === "aiben" || entry?.baseId === "nyotei").length === 2;
+
+    resetBattle();
+    const titleMatch = card("aiben_vs_nyotei_title_match");
+    const ownDiscardCards = [card("general_student"), card("general_teacher"), card("bento")];
+    const opponentDiscardCard = card("general_student", "opponent");
+    const ownAiben = attendee("aiben");
+    const opponentNyotei = attendee("nyotei", "opponent");
+    state.players.player.board.seats[0] = ownAiben;
+    state.players.opponent.board.seats[0] = opponentNyotei;
+    state.players.player.hand = [titleMatch, ...ownDiscardCards];
+    state.players.opponent.hand = [opponentDiscardCard];
+    const ownBefore = { attack: ownAiben.attack, maxHp: ownAiben.maxHp, currentHp: ownAiben.currentHp };
+    const opponentBefore = {
+      attack: opponentNyotei.attack,
+      maxHp: opponentNyotei.maxHp,
+      currentHp: opponentNyotei.currentHp
+    };
+    const resolved = api.resolveTitleMatch(
+      "player",
+      titleMatch,
+      "aiben",
+      ownDiscardCards.map((entry) => entry.instanceId),
+      false,
+      { opponentDiscardIds: [opponentDiscardCard.instanceId] }
+    );
+    checks.perSideDiscardBuffs = resolved
+      && ownAiben.attack === ownBefore.attack + 3
+      && ownAiben.maxHp === ownBefore.maxHp + 3
+      && ownAiben.currentHp === ownBefore.currentHp + 3
+      && opponentNyotei.attack === opponentBefore.attack + 1
+      && opponentNyotei.maxHp === opponentBefore.maxHp + 1
+      && opponentNyotei.currentHp === opponentBefore.currentHp + 1
+      && state.log[0]?.includes("+3/+3")
+      && state.log[0]?.includes("+1/+1");
+
+    return checks;
+  });
+
+  Object.entries(result).forEach(([name, passed]) => {
+    expect(passed, name).toBe(true);
+  });
+});
+
 test("バカでかい壁は盤面から1行目の学生2人を選んで効果を発動する", async ({ page }) => {
   await page.goto(gameUrl);
 

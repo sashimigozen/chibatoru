@@ -640,10 +640,10 @@
       combo: "立てー！！ / インファイト将棋部", notes: "この環境が講義室を離れると、最大気力は通常の20に戻る。"
     });
     upsertCard({
-      id: "aiben_vs_nyotei_title_match", name: "アイベンVSにょていタイトルマッチ", type: "environment", cost: 2, attack: null, hp: null,
-      availability: "deck", placement: "環境マス",
-      effect: "各プレイヤーは自分のターンに1回、自分のデッキから「アイベン」または「にょてい」1枚を選び、手札に加えてよい。そうした場合、相手は選ばなかったもう一方を自分のデッキから手札に加える。加えられない場合、相手はカードを2枚ドローする。",
-      combo: "アイベン / にょてい", notes: "選ぶ側のデッキに選んだカードがある場合にのみ使える。"
+      id: "aiben_vs_nyotei_title_match", name: "アイベンVSにょていタイトルマッチ", type: "item", cost: 2, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "自分の講義室の空いている席マスに「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室の空いている席マスに出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。各プレイヤーは、自分が送った枚数だけ、自分の講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
+      combo: "アイベン / にょてい", notes: "お互いの講義室に空いている席マスが1つずつ必要。0枚選択可。各プレイヤーの強化値は、自分が送った手札の枚数だけ。"
     });
     function normalizeLectureRoomText(value) {
       return String(value || "")

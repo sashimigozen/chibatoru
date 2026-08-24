@@ -24502,10 +24502,6 @@
         const enemyThreat = enemyCards.reduce((total, card) => total + scoreAiEnemyAttendeeThreat(card), 0);
         return disposableItems > 0 && enemyCards.length > 0 ? 3 + Math.min(disposableItems, 5) * 2 + Math.min(8, enemyThreat * 0.25) : 0;
       }
-      if (item.baseId === "aiben_vs_nyotei_title_match") {
-        const preferred = state.players.opponent.board.seats.some((card) => card?.baseId === "nyotei") ? "aiben" : "nyotei";
-        return resolveTitleMatch("opponent", item, preferred, [], false);
-      }
       if (item.baseId === "scared_me") {
         const students = enemyCards.filter((card) => card.type === "student");
         return students.length > 0 ? 8 + Math.max(...students.map((card) => scoreAiEnemyAttendeeThreat(card) + (card.currentHp || 0) * 0.5)) : 0;
@@ -26711,26 +26707,7 @@
         const item = getHandCard("player", itemId);
         const selectedBaseId = pending.context?.selectedBaseId;
         if (!item || !selectedBaseId) return;
-        if (onlineCanSendCommand()) {
-          onlineSendCommand("titleMatch", { instanceId: item.instanceId, selectedBaseId, discardIds: selectedIds });
-          state.message = "アイベンVSにょていタイトルマッチの選択を送信しました。";
-          clearSelections();
-          render();
-          return;
-        }
-        if (isOnlineHost()) {
-          if (requestRemoteTitleMatchChoice("player", item, selectedBaseId, selectedIds)) {
-            clearSelections();
-            render();
-            return;
-          }
-          state.message = "アイベンVSにょていタイトルマッチの相手選択を開始できませんでした。";
-          render();
-          return;
-        }
-        resolveTitleMatch("player", item, selectedBaseId, selectedIds, true, {
-          opponentDiscardIds: chooseAiTitleMatchDiscardIds("opponent")
-        });
+        resolvePlayerTitleMatchDiscardChoice(item, selectedBaseId, selectedIds);
         return;
       }
       if (mode === "title_match_opponent_discard") {
@@ -35509,6 +35486,7 @@
 
     function openTitleMatchDiscardChoice(item, selectedBaseId) {
       const cards = state.players.player.hand.filter((card) => card.instanceId !== item.instanceId);
+      if (cards.length === 0) return resolvePlayerTitleMatchDiscardChoice(item, selectedBaseId, []);
       return openCardChoice({
         mode: "title_match_discard",
         itemId: item.instanceId,
@@ -35519,6 +35497,30 @@
         max: cards.length,
         context: { selectedBaseId },
         confirmLabel: "出席させる"
+      });
+    }
+
+    function resolvePlayerTitleMatchDiscardChoice(item, selectedBaseId, discardIds = []) {
+      if (!item || !selectedBaseId) return false;
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("titleMatch", { instanceId: item.instanceId, selectedBaseId, discardIds });
+        state.message = "アイベンVSにょていタイトルマッチの選択を送信しました。";
+        clearSelections();
+        render();
+        return true;
+      }
+      if (isOnlineHost()) {
+        if (requestRemoteTitleMatchChoice("player", item, selectedBaseId, discardIds)) {
+          clearSelections();
+          render();
+          return true;
+        }
+        state.message = "アイベンVSにょていタイトルマッチの相手選択を開始できませんでした。";
+        render();
+        return false;
+      }
+      return resolveTitleMatch("player", item, selectedBaseId, discardIds, true, {
+        opponentDiscardIds: chooseAiTitleMatchDiscardIds("opponent")
       });
     }
 
@@ -35590,17 +35592,17 @@
         options.opponentExcludedItemId || ""
       );
       const totalDiscarded = discardedCards.length + opponentDiscardedCards.length;
-      if (totalDiscarded > 0) {
-        ["player", "opponent"].forEach((owner) => {
+      [[side, discardedCards.length], [opponent, opponentDiscardedCards.length]].forEach(([owner, discardedCount]) => {
+        if (discardedCount > 0) {
           listBoardRefs(owner).forEach((ref) => {
             const card = getBoardCardFromRef(ref);
             if (card && ["aiben", "nyotei"].includes(card.baseId)) {
-              applyPermanentStatBuff(card, totalDiscarded, totalDiscarded, 0, item.name);
+              applyPermanentStatBuff(card, discardedCount, discardedCount, 0, item.name);
             }
           });
-        });
-      }
-      addLog(`${SIDES[side]}は${item.name}を使い、「${own?.name || CARD_BASES[selectedBaseId].name}」を自分の講義室に陽気を持つ状態で出席させました。相手の講義室には「${enemy?.name || CARD_BASES[otherBaseId].name}」が出席しました。${totalDiscarded > 0 ? `${SIDES[side]}は${discardedCards.length}枚、${SIDES[opponent]}は${opponentDiscardedCards.length}枚を校外エリアへ送り、両者のアイベンとにょていを+${totalDiscarded}/+${totalDiscarded}しました。` : ""}`);
+        }
+      });
+      addLog(`${SIDES[side]}は${item.name}を使い、「${own?.name || CARD_BASES[selectedBaseId].name}」を自分の講義室に陽気を持つ状態で出席させました。相手の講義室には「${enemy?.name || CARD_BASES[otherBaseId].name}」が出席しました。${totalDiscarded > 0 ? `${SIDES[side]}は${discardedCards.length}枚、${SIDES[opponent]}は${opponentDiscardedCards.length}枚を校外エリアへ送り、${SIDES[side]}の講義室にいるアイベンとにょていを+${discardedCards.length}/+${discardedCards.length}、${SIDES[opponent]}の講義室にいるアイベンとにょていを+${opponentDiscardedCards.length}/+${opponentDiscardedCards.length}しました。` : ""}`);
       cleanupDestroyedCards();
       applyBoardAuras();
       clearSelections();
@@ -39185,7 +39187,7 @@
         cote_dazur: "お互いの場の「あえー」と名のつく出席者の攻撃力を+10、体力を+10する。",
         door_war: "各プレイヤーのターン終了時、そのターンに自分が講義室へ出席させた出席者の中から1人をランダムに選び、その出席者に1ダメージを与える。",
         shogi_duel_field: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
-        aiben_vs_nyotei_title_match: "自分の講義室に「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室に出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。送られた枚数の合計だけ、お互いの講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
+        aiben_vs_nyotei_title_match: "自分の講義室の空いている席マスに「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室の空いている席マスに出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。各プレイヤーは、自分が送った枚数だけ、自分の講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
         ta_killer: "これは講義のダメージを受けない。手札から出席させたとき、相手のランダムな教師に1ダメージを与える。",
         ta: "カードの効果によって出席される学生トークン。"
       };
