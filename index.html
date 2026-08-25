@@ -3524,14 +3524,14 @@
 
     .play-reveal-card.evolution-card {
       --donguri-evolution-duration: 2.2s;
-      width: min(88vw, 430px);
+      width: min(92vw, 520px);
       filter: drop-shadow(0 28px 42px rgba(15, 23, 42, 0.38));
     }
 
     .evolution-scene {
       position: relative;
-      width: min(88vw, 430px);
-      min-height: 360px;
+      width: min(92vw, 520px);
+      min-height: min(72vh, 430px);
       display: grid;
       place-items: center;
     }
@@ -3587,9 +3587,9 @@
     }
 
     .evolution-card .donguri-stack-card .card {
-      width: 210px;
-      min-height: 294px;
-      flex-basis: 210px;
+      width: 250px;
+      min-height: 350px;
+      flex-basis: 250px;
       border-width: 2px;
       border-radius: 10px;
     }
@@ -3624,8 +3624,8 @@
 
     .donguri-evolution-stack {
       position: relative;
-      width: 254px;
-      height: 332px;
+      width: 310px;
+      height: 400px;
       opacity: 0;
       animation: donguriStackStage var(--donguri-evolution-duration) ease-in-out forwards;
     }
@@ -3634,7 +3634,7 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 190px;
+      width: 250px;
       transform: translate(-50%, -50%);
     }
 
@@ -15307,33 +15307,6 @@
       }
     }
 
-    /* 進化演出の二枚は進化元の実寸と中心を共有し、重なりの基準を一つにする。 */
-    .play-reveal-card.evolution-card.source-aligned {
-      position: fixed;
-      left: var(--evolution-source-left);
-      top: var(--evolution-source-top);
-      width: var(--evolution-source-width);
-      height: var(--evolution-source-height);
-      transform: none;
-      transform-origin: center;
-    }
-
-    .play-reveal-card.evolution-card.source-aligned .evolution-scene,
-    .play-reveal-card.evolution-card.source-aligned .donguri-evolution-stack,
-    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card,
-    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card > .card,
-    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card > .card > .card-scale-stage,
-    .play-reveal-card.evolution-card.source-aligned .donguri-stack-card > .card > .card-scale-stage > .card-face {
-      width: 100%;
-      height: 100%;
-      min-width: 0;
-      min-height: 0;
-      box-sizing: border-box;
-    }
-
-    .play-reveal-card.evolution-card.source-aligned .evolution-scene {
-      min-height: 0;
-    }
   </style>
 </head>
 <body>
@@ -17045,6 +17018,14 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.19.1",
+        date: "2026年8月25日",
+        summary: "進化カードの演出を見やすく改善。",
+        changes: [
+          { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。進化後のカードが重なって現れる演出を、見やすい大きさで表示する。" }
+        ]
+      },
       {
         version: "ver.0.19.0",
         date: "2026年8月24日",
@@ -32503,16 +32484,8 @@
       const targetCard = payload.targetCard || revealCardFromBase(payload.evolutionFrom, payload.owner || "player");
       const evolutionCard = payload.evolutionCard || revealCardFromBase(payload.evolutionBaseId, payload.owner || "player");
       if (!targetCard || !evolutionCard) return;
-      const sourceRect = captureCardVisualRect(targetCard);
       elements.playRevealCard.className = "play-reveal-card evolution-card";
       elements.playRevealCard.removeAttribute("style");
-      if (sourceRect?.width > 0 && sourceRect?.height > 0) {
-        elements.playRevealCard.classList.add("source-aligned");
-        elements.playRevealCard.style.setProperty("--evolution-source-left", `${sourceRect.left}px`);
-        elements.playRevealCard.style.setProperty("--evolution-source-top", `${sourceRect.top}px`);
-        elements.playRevealCard.style.setProperty("--evolution-source-width", `${sourceRect.width}px`);
-        elements.playRevealCard.style.setProperty("--evolution-source-height", `${sourceRect.height}px`);
-      }
       elements.playRevealCard.innerHTML = `
         <div class="evolution-scene">
           <div class="donguri-evolution-stack">
@@ -39765,6 +39738,8 @@
       initializeGame,
       startSoloBattleFromHome,
       startSoloBattleWithSelectedDecks,
+      showEvolutionAnimation,
+      hidePlayReveal,
       render,
       startTurn,
       isActiveCardTestBattle,
