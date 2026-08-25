@@ -447,3 +447,67 @@ test("更新情報を追記すると赤い通知が表示され、一度見る�
   await page.reload();
   await expect(page.locator("#homeUpdatesDot")).toHaveClass(/hidden/);
 });
+
+test("すべての装備カードを状態欄の「装」アイコンで統一表示する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const makeAttendee = (baseId = "general_student") => api.makeBoardCard(api.createCardFromBase(baseId, "player"));
+    const equipmentCases = [
+      ...["accelerate", "chameleon", "yuta_umbrella", "red_happi"].map((baseId) => {
+        const card = makeAttendee("yuta");
+        card.yutaEquipments = [{ baseId }];
+        return { baseId, card };
+      }),
+      (() => {
+        const card = makeAttendee();
+        card.padlockEquipment = api.createCardFromBase("padlock", "player");
+        return { baseId: "padlock", card };
+      })(),
+      (() => {
+        const card = makeAttendee();
+        card.earphoneEquipment = api.createCardFromBase("earphones", "player");
+        return { baseId: "earphones", card };
+      })()
+    ];
+
+    const cases = equipmentCases.map(({ baseId, card }) => {
+      const parts = api.statusPartsForCard(card, true);
+      const markup = api.fieldCardTemplate(card);
+      return {
+        baseId,
+        detected: api.hasEquipmentCard(card),
+        iconCount: parts.filter((part) => part.tone === "equipment-status" && part.title === "装備カードあり").length,
+        inStatusArea: markup.includes("status-icon equipment-status") && !markup.includes("field-card-equipment-mark")
+      };
+    });
+
+    const multiple = makeAttendee("dark_yuta");
+    multiple.yutaEquipments = [{ baseId: "accelerate" }, { baseId: "red_happi" }];
+    const multipleIconCount = api.statusPartsForCard(multiple, true)
+      .filter((part) => part.tone === "equipment-status").length;
+
+    const plain = makeAttendee();
+    const plainHasNoIcon = !api.hasEquipmentCard(plain)
+      && api.statusPartsForCard(plain, true).every((part) => part.tone !== "equipment-status");
+
+    const preview = document.createElement("div");
+    preview.innerHTML = api.fieldCardTemplate(equipmentCases.at(-1).card);
+    document.body.appendChild(preview);
+    const icon = preview.querySelector(".equipment-status");
+    const renderedGlyph = getComputedStyle(icon, "::before").content.replaceAll('"', "");
+    preview.remove();
+
+    return { cases, multipleIconCount, plainHasNoIcon, renderedGlyph };
+  });
+
+  result.cases.forEach(({ baseId, detected, iconCount, inStatusArea }) => {
+    expect(detected, `${baseId}: 装備判定`).toBe(true);
+    expect(iconCount, `${baseId}: アイコン数`).toBe(1);
+    expect(inStatusArea, `${baseId}: 状態欄`).toBe(true);
+  });
+  expect(result.multipleIconCount).toBe(1);
+  expect(result.plainHasNoIcon).toBe(true);
+  expect(result.renderedGlyph).toBe("装");
+});

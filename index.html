@@ -10000,6 +10000,8 @@
     .status-icon[title="陽気"]::before { width: 10px; height: 10px; background: #f6c938; clip-path: polygon(50% 0,61% 35%,100% 23%,68% 50%,100% 77%,61% 65%,50% 100%,39% 65%,0 77%,32% 50%,0 23%,39% 35%); }
     .status-icon[title="超陽気"] { width: 19px; height: 19px; border-color: #b77a00; background: #fff3ad; box-shadow: 0 0 0 2px rgba(247,197,35,.35), 0 2px 3px rgba(12,35,58,.17); }
     .status-icon[title="超陽気"]::before { width: 13px; height: 13px; background: #e58a15; clip-path: polygon(50% 0,60% 31%,83% 8%,75% 39%,100% 42%,74% 56%,88% 86%,59% 70%,50% 100%,41% 70%,12% 86%,26% 56%,0 42%,25% 39%,17% 8%,40% 31%); }
+    .status-icon.equipment-status { border-color: #a16207; background: #fef3c7; }
+    .status-icon.equipment-status::before { content: "装"; width: auto; height: auto; color: #713f12; font-size: 8px; font-weight: 1000; line-height: 1; }
     .status-icon[title="注目"],
     .status-icon[title="超注目"] { background: #ffe1fb; }
     .status-icon[title="注目"]::before { width: 11px; height: 7px; border: 2px solid #bb368f; border-radius: 100% 0; transform: rotate(45deg); }
@@ -15266,27 +15268,6 @@
       background: rgba(255, 247, 237, .84);
     }
 
-    /* 装備枚数にかかわらず、盤面では右下の一つの印だけで存在を示す。 */
-    .field-card-equipment-mark {
-      position: absolute;
-      right: 4px;
-      bottom: 23px;
-      z-index: 12;
-      display: grid;
-      width: 16px;
-      height: 16px;
-      place-items: center;
-      border: 1px solid #a16207;
-      border-radius: 4px;
-      color: #713f12;
-      background: #fef3c7;
-      box-shadow: 0 1px 2px rgba(66, 32, 6, .28);
-      font-size: 9px;
-      font-weight: 1000;
-      line-height: 1;
-      pointer-events: none;
-    }
-
     /* 実際の配置可否を、置けるマスと置けないマスで明確に分ける。 */
     .battle-screen .slot.placement-valid {
       opacity: 1;
@@ -17038,9 +17019,10 @@
       {
         version: "ver.0.19.1",
         date: "2026年8月25日",
-        summary: "進化カードの演出を大きく見やすくし、演出途中も進化前後のカードが同じ大きさで正確に重なるよう改善。",
+        summary: "進化カードの演出を大きく見やすくし、演出途中も進化前後のカードが同じ大きさで正確に重なるよう改善。装備中の出席者を状態アイコンで確認できるようにした。",
         changes: [
-          { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" }
+          { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
+          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一した。" }
         ]
       },
       {
@@ -27450,6 +27432,11 @@
     function isEarphoneEquipped(card) {
       return Boolean(card?.earphoneEquipment?.baseId === "earphones");
     }
+    function hasEquipmentCard(card) {
+      return normalizeUtaEquipmentEntries(card).length > 0
+        || isPadlocked(card)
+        || isEarphoneEquipped(card);
+    }
     // Use this only for an effect whose source is the attendee itself.  The
     // 南京錠 equipment is deliberately represented outside the printed-card
     // effect system, so this gate cannot turn off the lock, its protections,
@@ -35917,7 +35904,7 @@
       ));
       button.classList.toggle("sleepy", hasKeyword(card, "眠気"));
       button.classList.toggle("attention-card", hasKeyword(card, "注目") || hasKeyword(card, "超注目"));
-      button.classList.toggle("equipped", normalizeUtaEquipmentEntries(card).length > 0 || isPadlocked(card));
+      button.classList.toggle("equipped", hasEquipmentCard(card));
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
       button.classList.toggle("attack-target-ready", canSelectedAttackerTargetCard(owner, zone, index));
       const selectedItem = getSelectedHandCard();
@@ -36100,6 +36087,7 @@
       if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isSameNameAttackLocked(card)) otherParts.push({ icon: "止", title: "同名ロック" });
       if (boardCard && isPadlocked(card)) otherParts.push({ icon: "錠", title: "南京錠：効果無効・攻撃／講義／進化不可・ダメージ／効果破壊無効" });
+      if (hasEquipmentCard(card)) otherParts.push({ icon: "", title: "装備カードあり", tone: "equipment-status" });
       if (hasKeyword(card, "眠気")) otherParts.push({ icon: "眠", title: "眠気" });
       if (boardCard && card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) otherParts.push({ icon: "予", title: "破壊予約" });
       if (card.late) otherParts.push({ icon: `遅${card.late}`, title: `遅刻${card.late}` });
@@ -36241,10 +36229,6 @@
       const stats = hasStats
         ? `<span class="field-card-stats"><span class="field-stat attack${attackChange}">${card.attack}${attackChange ? `<i>${attackChange.trim() === "up" ? "↑" : "↓"}</i>` : ""}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
-      const equipped = normalizeUtaEquipmentEntries(card).length > 0 || isPadlocked(card);
-      const equipmentMark = equipped
-        ? '<span class="field-card-equipment-mark" title="装備カードあり" aria-label="装備カードあり">装</span>'
-        : "";
       const typeLabel = isAceCard(card) ? `${labelForType(card.type)} / エースぺ` : labelForType(card.type);
       return `
         <span class="field-card-title">
@@ -36255,7 +36239,6 @@
         <span class="field-card-art-name" aria-label="イラスト枠">${escapeHtml(card.name)}</span>
         ${stats}
         ${status}
-        ${equipmentMark}
       `;
     }
 
@@ -39757,6 +39740,9 @@
       startSoloBattleWithSelectedDecks,
       showEvolutionAnimation,
       hidePlayReveal,
+      hasEquipmentCard,
+      statusPartsForCard,
+      fieldCardTemplate,
       render,
       startTurn,
       isActiveCardTestBattle,
