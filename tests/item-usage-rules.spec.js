@@ -340,25 +340,46 @@ test("履修登録結論パは選んだ5枚を番号順に引き、拒否時は�
   });
 });
 
-test("やめるはカードテスト中だけ表示され、通常対戦では使用できない", async ({ page }) => {
+test("一手戻るとやめるはカードテスト中だけ表示される", async ({ page }) => {
   await page.goto(gameUrl);
 
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
+    const displays = () => ({
+      undo: getComputedStyle(document.getElementById("battleTestUndoButton")).display,
+      exit: getComputedStyle(document.getElementById("battleTestExitButton")).display
+    });
+    const bothHidden = () => Object.values(displays()).every((display) => display === "none");
+
     api.startCardTest("general_student");
+    const cardTestDisplays = displays();
     const visibleInCardTest = api.isActiveCardTestBattle()
-      && !document.getElementById("battleTestExitButton").classList.contains("hidden");
+      && cardTestDisplays.undo !== "none"
+      && cardTestDisplays.exit !== "none";
     const returnedFromTest = api.returnFromCardTestToDeck() && api.state.screen === "deck";
 
     api.state.screen = "battle";
     api.state.phase = "battle";
     api.state.testMode = false;
     api.state.testCardBaseId = null;
+    api.render();
+    const hiddenInSolo = bothHidden();
+
+    api.state.testMode = true;
+    api.state.testCardBaseId = "general_student";
+    api.state.tutorial.active = true;
+    api.render();
+    const hiddenInTutorial = bothHidden();
+
+    api.state.tutorial.active = false;
+    api.state.online.role = "guest";
+    api.render();
+    const hiddenOnline = bothHidden();
     const blockedOutsideTest = !api.isActiveCardTestBattle()
       && api.returnFromCardTestToDeck() === false
       && api.state.screen === "battle";
 
-    return { visibleInCardTest, returnedFromTest, blockedOutsideTest };
+    return { visibleInCardTest, returnedFromTest, hiddenInSolo, hiddenInTutorial, hiddenOnline, blockedOutsideTest };
   });
 
   Object.entries(result).forEach(([name, passed]) => {
