@@ -105,6 +105,38 @@ test("ルール情報のないデッキ更新では選択済みルールを通�
   expect(result).toEqual({ ruleId: "chaos", missingChanged: false, invalidChanged: false });
 });
 
+test("デッキ形式を省略したルーム状態でもゲストのカオス・専攻デッキ形式を維持する", async ({ page }) => {
+  await page.goto(gameUrl);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const chaosName = api.onlineDeckDescriptorValue({ format: "chaos", kind: "saved", name: "カオス確認" });
+    const specialtyName = api.onlineDeckDescriptorValue({
+      format: "specialty",
+      kind: "saved",
+      name: "遅刻専攻確認",
+      specialtyId: "late"
+    });
+    const chaos = api.onlineDeckDescriptorFromMessage({
+      deckName: chaosName,
+      deckFormat: undefined,
+      specialtyId: undefined
+    });
+    const specialty = api.onlineDeckDescriptorFromMessage({
+      deckName: specialtyName,
+      deckFormat: undefined,
+      specialtyId: undefined
+    });
+    return { chaos, specialty };
+  });
+  expect(result.chaos).toEqual({ format: "chaos", kind: "saved", specialtyId: "", name: "カオス確認" });
+  expect(result.specialty).toEqual({
+    format: "specialty",
+    kind: "saved",
+    specialtyId: "late",
+    name: "遅刻専攻確認"
+  });
+});
+
 test("オンライン準備画面の対戦者欄に保存デッキ名を表示しない", async ({ page }) => {
   await page.goto(gameUrl);
   const texts = await page.evaluate(() => {

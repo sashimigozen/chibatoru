@@ -138,6 +138,9 @@ test("ホストがカオスルールでデッキを選び準備OKにしても通
     await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("chaos");
     await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("chaos");
     await guest.locator("#onlineReadyButton").click();
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.localReady)).toBe(true);
+    await expect(guest.locator("#onlineLocalReadyBadge")).toHaveText("準備OK");
+    await expect(guest.locator("#onlineReadyButton")).toHaveText("準備を解除");
     await expect.poll(() => host.evaluate(() => (
       window.__chibattle.state.online.localReady && window.__chibattle.state.online.remoteReady
     ))).toBe(true);
@@ -151,6 +154,59 @@ test("ホストがカオスルールでデッキを選び準備OKにしても通
       copies: window.__chibattle.state.players.player.originalDeckCounts.general_student,
       valid: window.__chibattle.state.players.player.deckValid.valid
     }))).toEqual({ roomRuleId: "chaos", battleRuleId: "chaos", copies: 40, valid: true });
+  } finally {
+    await hostContext.close();
+    await guestContext.close();
+  }
+});
+
+test("専攻ルールでゲストが準備OKにした状態をゲスト画面でも維持する", async ({ browser }) => {
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+  try {
+    await Promise.all([host.goto(gameUrl), guest.goto(gameUrl)]);
+    for (const page of [host, guest]) {
+      await page.locator("#homeBattleButton").click();
+      await page.locator("#onlinePrivateMatchButton").click();
+      await page.evaluate(() => {
+        const counts = {};
+        [
+          "general_student", "absolute_woman", "fridge_thief", "classroom", "environment_setup",
+          "go_away", "happy_experience", "hondara", "water_2l", "word_increaser"
+        ].forEach((baseId) => { counts[baseId] = 3; });
+        ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student"]
+          .forEach((baseId) => { counts[baseId] = 2; });
+        counts.general_student -= 1;
+        counts.tokyo_tech_bro = 1;
+        window.__chibattle.state.deckBuilder.specialtyDecks = {
+          "遅刻専攻動作確認": { counts, specialtyId: "late" }
+        };
+        window.__chibattle.render();
+      });
+    }
+    await host.locator("#onlineCreateRoomButton").click();
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.roomCode || "")).not.toBe("");
+    const roomCode = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+    await guest.locator("#onlineRoomInput").fill(roomCode);
+    await guest.locator("#onlineJoinRoomButton").click();
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
+
+    await host.selectOption("#onlineRuleSelect", "specialty");
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.roomRuleId)).toBe("specialty");
+    for (const page of [host, guest]) {
+      await page.selectOption("#onlineDeckSelect", { label: "遅刻専攻動作確認" });
+      await expect(page.locator("#onlineReadyButton")).toBeEnabled();
+    }
+
+    await host.locator("#onlineReadyButton").click();
+    await guest.locator("#onlineReadyButton").click();
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.localReady)).toBe(true);
+    await expect(guest.locator("#onlineLocalReadyBadge")).toHaveText("準備OK");
+    await expect(guest.locator("#onlineReadyButton")).toHaveText("準備を解除");
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.remoteReady)).toBe(true);
+    await expect(host.locator("#onlineStartButton")).toBeEnabled();
   } finally {
     await hostContext.close();
     await guestContext.close();
