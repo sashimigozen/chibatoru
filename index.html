@@ -305,6 +305,10 @@
       padding: 8px 0 16px;
     }
 
+    .online-subview-head {
+      margin-bottom: 2px;
+    }
+
     .online-layout {
       display: grid;
       grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
@@ -15616,14 +15620,14 @@
     </section>
 
     <section class="screen online-screen hidden" id="onlineScreen">
-      <div class="screen-head">
+      <div class="screen-head" id="onlineMenuHead">
         <div>
           <h1>オンラインバトル</h1>
           <p class="subtitle">ランダムに相手を探すか、部屋コードで友だちと対戦できます</p>
         </div>
         <button class="button secondary" id="onlineBackHomeButton" type="button">ホーム</button>
       </div>
-      <div class="online-match-actions" aria-label="オンライン対戦モード">
+      <div class="online-match-actions" id="onlineMatchActions" aria-label="オンライン対戦モード">
         <button class="online-match-button random" id="onlineRandomMatchButton" type="button">
           <span class="online-match-main"><span class="online-spinner hidden" id="onlineRandomSpinner"></span><span id="onlineRandomMainText">ランダムマッチ</span></span>
           <span class="online-match-sub" id="onlineRandomSubText">マッチング中の相手と自動で対戦部屋に入ります</span>
@@ -15637,10 +15641,17 @@
           <span class="online-match-sub">対戦中の部屋を選んで観戦します</span>
         </button>
       </div>
+      <div class="screen-head online-subview-head hidden" id="onlineSubviewHead">
+        <div>
+          <h1 id="onlineSubviewTitle">プライベートマッチ</h1>
+          <p class="subtitle" id="onlineSubviewSubtitle">部屋を作るか、部屋コードを入力して入室します</p>
+        </div>
+        <button class="button secondary" id="onlineBackMenuButton" type="button">オンラインメニュー</button>
+      </div>
       <div class="online-layout hidden" id="onlinePrivatePanel">
         <section class="online-panel online-room-card">
           <div class="panel-head">
-            <h2>プライベートマッチ</h2>
+            <h2 id="onlineRoomPanelTitle">プライベートマッチ</h2>
             <span class="small-info" id="onlineRoleText">未接続</span>
           </div>
           <div class="online-actions">
@@ -17106,13 +17117,14 @@
       {
         version: "ver.0.19.1",
         date: "2026年8月25日",
-        summary: "進化カードの演出、装備状態の表示、カード確認内の説明、出席者の強化・弱体化演出、オンライン対戦の準備状態を改善。",
+        summary: "進化カードの演出、装備状態の表示、カード確認内の説明、出席者の強化・弱体化演出、オンライン対戦の準備状態と画面構成を改善。",
         changes: [
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
           { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
           { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" },
           { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときは赤・橙・白、弱体化されたときは紺・水色・白の斜め縞を横方向に8列並べ、偶数列を左右反転して横につながるギザギザ模様を表示。その模様の面全体を、強化では上へ、弱体化では下へ1.3秒間動かす。発生後の待ち時間は設けず、すぐに開始する。体力が回復したときは複数の緑色の十字が浮かぶ。数値欄には増減を示す矢印を残さない。形容詞学生の出席時効果で攻撃力+3に成功した場合にも対応し、攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応する。" },
-          { title: "オンライン対戦の準備状態", before: "通常ルール以外の部屋でゲストが対象ルールのデッキを選んで準備OKにした際、一部の通信経路ではデッキ形式が通常として再解釈され、ゲスト画面だけ準備状態が外れる場合があった。", after: "ルーム状態にデッキ形式の項目が含まれない場合でも、デッキ情報内に記録されたカオス・専攻形式を維持するよう修正。ゲストの準備OKが画面上でも保持され、ホスト側の準備状態と一致するようにした。" }
+          { title: "オンライン対戦の準備状態", before: "通常ルール以外の部屋でゲストが対象ルールのデッキを選んで準備OKにした際、一部の通信経路ではデッキ形式が通常として再解釈され、ゲスト画面だけ準備状態が外れる場合があった。", after: "ルーム状態にデッキ形式の項目が含まれない場合でも、デッキ情報内に記録されたカオス・専攻形式を維持するよう修正。ゲストの準備OKが画面上でも保持され、ホスト側の準備状態と一致するようにした。" },
+          { title: "オンライン対戦画面", before: "オンラインバトルの選択肢、部屋の作成・入室、デッキとルールの準備、観戦一覧を同じ画面内に表示していたため、情報が詰まり、必要な操作を見つけにくかった。", after: "ホームからオンラインバトル専用メニューへ移動し、ランダムマッチ、プライベートマッチ、観戦を選ぶと、それぞれの専用画面へ切り替わる構成に変更。選択後はその操作に必要な情報だけを表示し、オンラインメニューへ戻れるようにした。" }
         ]
       },
       {
@@ -18118,7 +18130,13 @@
       tutorialBackHomeButton: document.getElementById("tutorialBackHomeButton"),
       tutorialStartButton: document.getElementById("tutorialStartButton"),
       tutorialCardPreview: document.getElementById("tutorialCardPreview"),
+      onlineMenuHead: document.getElementById("onlineMenuHead"),
       onlineBackHomeButton: document.getElementById("onlineBackHomeButton"),
+      onlineMatchActions: document.getElementById("onlineMatchActions"),
+      onlineSubviewHead: document.getElementById("onlineSubviewHead"),
+      onlineSubviewTitle: document.getElementById("onlineSubviewTitle"),
+      onlineSubviewSubtitle: document.getElementById("onlineSubviewSubtitle"),
+      onlineBackMenuButton: document.getElementById("onlineBackMenuButton"),
       onlineRandomMatchButton: document.getElementById("onlineRandomMatchButton"),
       onlineRandomSpinner: document.getElementById("onlineRandomSpinner"),
       onlineRandomMainText: document.getElementById("onlineRandomMainText"),
@@ -18126,6 +18144,7 @@
       onlinePrivateMatchButton: document.getElementById("onlinePrivateMatchButton"),
       onlineSpectateButton: document.getElementById("onlineSpectateButton"),
       onlinePrivatePanel: document.getElementById("onlinePrivatePanel"),
+      onlineRoomPanelTitle: document.getElementById("onlineRoomPanelTitle"),
       onlineSpectatePanel: document.getElementById("onlineSpectatePanel"),
       onlineSpectateCount: document.getElementById("onlineSpectateCount"),
       onlineSpectateRoomInput: document.getElementById("onlineSpectateRoomInput"),
@@ -20347,6 +20366,17 @@
       elements.onlineRoomInput?.focus();
     }
 
+    function onlineReturnToMenu() {
+      if (state.online.role) {
+        onlineCloseConnection(false);
+        return;
+      }
+      state.online.lobbyView = "menu";
+      state.online.matchMode = "private";
+      onlineSetStatus("部屋を作るか、部屋コードを入力してください。", "warn");
+      render();
+    }
+
     function onlineRandomMatch() {
       if (state.online.matchMode === "random" && state.online.role && !state.online.connected) {
         onlineCloseConnection(false);
@@ -20358,7 +20388,7 @@
         return;
       }
       onlineCloseConnection(false);
-      state.online.lobbyView = "menu";
+      state.online.lobbyView = "private";
       SIDES.opponent = ONLINE_OPPONENT_LABEL;
       state.online.matchMode = "random";
       state.online.role = null;
@@ -33433,10 +33463,11 @@
       const roleLabel = isOnlineHost() ? "ホスト" : isOnlineGuest() ? "ゲスト" : isOnlineSpectator() ? "観戦者" : "未接続";
       const spectator = isOnlineSpectator();
       const randomMode = state.online.matchMode === "random";
-      const view = state.online.lobbyView || "menu";
+      const view = spectator ? "spectate" : (state.online.lobbyView || "menu");
       const randomWaiting = randomMode && Boolean(state.online.role) && !state.online.connected;
-      const showPrivatePanel = view === "private" || Boolean(state.online.role && (state.online.connected || state.online.matchMode === "private"));
+      const showPrivatePanel = view === "private" || Boolean(state.online.role && !spectator);
       const showSpectatePanel = view === "spectate" && !showPrivatePanel;
+      const showMenu = view === "menu" && !showPrivatePanel && !showSpectatePanel;
       const localDeckDescriptor = onlineLocalDeckDescriptor();
       const localDeckLabel = `${onlineDeckFormatLabel(localDeckDescriptor)}デッキ`;
       const localValidation = onlineLocalDeckValidation();
@@ -33475,6 +33506,24 @@
         : randomMode && state.online.connected
           ? "デッキを選んで準備OKを押してください"
           : "マッチング中の相手と自動で対戦部屋に入ります";
+      elements.onlineMenuHead?.classList.toggle("hidden", !showMenu);
+      elements.onlineMatchActions?.classList.toggle("hidden", !showMenu);
+      elements.onlineSubviewHead?.classList.toggle("hidden", showMenu);
+      if (elements.onlineSubviewTitle) {
+        elements.onlineSubviewTitle.textContent = showSpectatePanel
+          ? "観戦"
+          : randomMode ? "ランダムマッチ" : "プライベートマッチ";
+      }
+      if (elements.onlineSubviewSubtitle) {
+        elements.onlineSubviewSubtitle.textContent = showSpectatePanel
+          ? "対戦中の部屋を選ぶか、部屋コードを入力して観戦します"
+          : randomMode
+            ? (randomWaiting ? "対戦相手を探しています" : "デッキを選び、対戦の準備をします")
+            : "部屋の作成・入室と対戦準備を行います";
+      }
+      if (elements.onlineRoomPanelTitle) {
+        elements.onlineRoomPanelTitle.textContent = randomMode ? "ランダムマッチ" : "プライベートマッチ";
+      }
       elements.onlinePrivatePanel?.classList.toggle("hidden", !showPrivatePanel);
       elements.onlineSpectatePanel?.classList.toggle("hidden", !showSpectatePanel);
       elements.onlineServerUrlInput.value = elements.onlineServerUrlInput === document.activeElement
@@ -39719,6 +39768,7 @@
     elements.tutorialNextButton.addEventListener("click", advanceTutorialTextStep);
     elements.tutorialExitButton.addEventListener("click", exitTutorialMode);
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.onlineBackMenuButton.addEventListener("click", onlineReturnToMenu);
     elements.onlineRandomMatchButton.addEventListener("click", onlineRandomMatch);
     elements.onlinePrivateMatchButton.addEventListener("click", onlineSelectPrivateMatch);
     elements.onlineSpectateButton.addEventListener("click", onlineSelectSpectate);
