@@ -52,6 +52,8 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(buffFeedback).toHaveAttribute("aria-label", /防御力強化 \+1/);
   await expect(buffFeedback.locator(".board-change-effect.buff .board-change-mist-particle")).toHaveCount(8);
   await expect(buffFeedback.locator(".board-change-heal-cross")).toHaveCount(5);
+  await expect(buffFeedback.locator(".board-change-effect.buff")).toHaveCSS("animation-name", "none");
+  expect(await buffFeedback.locator(".board-change-effect.buff").evaluate((effect) => getComputedStyle(effect, "::before").animationName)).toBe("board-buff-energy-rise");
   await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
@@ -71,6 +73,7 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(debuffFeedback).toHaveAttribute("aria-label", /攻撃力弱体化 -1/);
   await expect(debuffFeedback).toHaveAttribute("aria-label", /体力弱体化 -2/);
   await expect(debuffFeedback.locator(".board-change-effect.debuff .board-change-mist-particle")).toHaveCount(8);
+  expect(await debuffFeedback.locator(".board-change-effect.debuff").evaluate((effect) => getComputedStyle(effect, "::before").animationName)).toBe("board-debuff-energy-fall");
   await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 

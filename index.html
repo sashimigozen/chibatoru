@@ -15280,6 +15280,36 @@
       overflow: hidden;
     }
 
+    .board-change-effect.buff::before,
+    .board-change-effect.debuff::before {
+      content: "";
+      position: absolute;
+      inset: -22% -12%;
+      opacity: 0;
+      background-size: 11px 11px;
+      -webkit-mask-image: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 10px);
+      mask-image: repeating-linear-gradient(90deg, #000 0 5px, transparent 5px 10px);
+      -webkit-mask-size: 100% 100%;
+      mask-size: 100% 100%;
+      mix-blend-mode: screen;
+      filter: blur(.35px) drop-shadow(0 0 3px currentColor);
+      animation-duration: 1.35s;
+      animation-fill-mode: both;
+      animation-timing-function: ease-out;
+    }
+
+    .board-change-effect.buff::before {
+      color: rgba(255, 70, 36, .86);
+      background-image: repeating-linear-gradient(60deg, rgba(180, 16, 25, .9) 0 2px, rgba(255, 104, 38, .95) 2px 4px, rgba(255, 244, 199, .95) 4px 5px, rgba(255, 104, 38, .95) 5px 7px, rgba(180, 16, 25, .9) 7px 10px);
+      animation-name: board-buff-energy-rise;
+    }
+
+    .board-change-effect.debuff::before {
+      color: rgba(45, 139, 255, .88);
+      background-image: repeating-linear-gradient(60deg, rgba(22, 43, 145, .92) 0 2px, rgba(45, 173, 255, .96) 2px 4px, rgba(218, 249, 255, .96) 4px 5px, rgba(45, 173, 255, .96) 5px 7px, rgba(22, 43, 145, .92) 7px 10px);
+      animation-name: board-debuff-energy-fall;
+    }
+
     .board-change-mist-particle {
       position: absolute;
       left: var(--mist-left);
@@ -15342,11 +15372,25 @@
       100% { opacity: 0; transform: translate(-50%, -105px) scale(1.65); }
     }
 
+    @keyframes board-buff-energy-rise {
+      0% { opacity: 0; transform: translateY(72%); }
+      16% { opacity: .76; }
+      72% { opacity: .58; }
+      100% { opacity: 0; transform: translateY(-72%); }
+    }
+
     @keyframes board-debuff-mist-fall {
       0% { opacity: 0; transform: translate(-50%, -12px) scale(.55); }
       18% { opacity: .92; }
       72% { opacity: .64; }
       100% { opacity: 0; transform: translate(-50%, 105px) scale(1.65); }
+    }
+
+    @keyframes board-debuff-energy-fall {
+      0% { opacity: 0; transform: translateY(-72%); }
+      16% { opacity: .76; }
+      72% { opacity: .58; }
+      100% { opacity: 0; transform: translateY(72%); }
     }
 
     @keyframes board-heal-cross-rise {
@@ -15357,7 +15401,8 @@
 
     @media (prefers-reduced-motion: reduce) {
       .board-change-mist-particle,
-      .board-change-heal-cross {
+      .board-change-heal-cross,
+      .board-change-effect::before {
         animation-duration: .01ms !important;
       }
     }
@@ -17095,7 +17140,7 @@
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
           { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
           { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" },
-          { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときはカードの下から赤いモヤが上昇し、弱体化されたときはカードの上から青いモヤが下降する一時演出を表示。体力が回復したときは複数の緑色の十字が浮かぶ。数値欄には増減を示す矢印を残さず、演出は一定時間後に消える。形容詞学生の出席時効果で攻撃力+3に成功した場合も強化演出を表示する。攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応する。" }
+          { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときはカードの下から赤・橙・白のギザギザした光帯と赤いモヤが上昇し、弱体化されたときはカードの上から紺・水色・白の光帯と青いモヤが下降する一時演出を表示。体力が回復したときは複数の緑色の十字が浮かぶ。数値欄には増減を示す矢印を残さず、演出は一定時間後に消える。形容詞学生の出席時効果で攻撃力+3に成功した場合も強化演出を表示する。攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応する。" }
         ]
       },
       {
