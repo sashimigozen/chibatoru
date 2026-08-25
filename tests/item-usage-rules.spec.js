@@ -475,11 +475,16 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
     const cases = equipmentCases.map(({ baseId, card }) => {
       const parts = api.statusPartsForCard(card, true);
       const markup = api.fieldCardTemplate(card);
+      const currentEffects = api.battleCardCurrentEffectsTemplate(card);
+      const equipmentName = api.CARD_BASES[baseId].name;
       return {
         baseId,
         detected: api.hasEquipmentCard(card),
         iconCount: parts.filter((part) => part.tone === "equipment-status" && part.title === "装備カードあり").length,
-        inStatusArea: markup.includes("status-icon equipment-status") && !markup.includes("field-card-equipment-mark")
+        inStatusArea: markup.includes("status-icon equipment-status") && !markup.includes("field-card-equipment-mark"),
+        detailListsEquipment: api.equipmentDetailText(card).includes(equipmentName),
+        previewListsEquipment: currentEffects.markup.includes(`装備：${equipmentName}`)
+          && Object.values(currentEffects.details).some((detail) => detail.title === `装備：${equipmentName}`)
       };
     });
 
@@ -501,16 +506,39 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
     const legacyYellowDecorationRemoved = [...document.querySelectorAll("style")]
       .every((style) => !style.textContent.includes(".equipped"));
 
-    return { cases, multipleIconCount, plainHasNoIcon, renderedGlyph, legacyYellowDecorationRemoved };
+    const padlocked = equipmentCases.find((entry) => entry.baseId === "padlock").card;
+    const padlockParts = api.statusPartsForCard(padlocked, true);
+    const padlockRestriction = api.battleCardRestrictionEntries(padlocked);
+    const padlockShowsAttackUnavailable = padlockParts.some((part) => part.icon === "止" && part.title === "攻撃不可")
+      && padlockRestriction.some((entry) => entry.label === "攻撃不可：南京錠")
+      && api.cardStatusDetailText(padlocked).includes("攻撃不可");
+
+    api.state.screen = "battle";
+    api.showBattleCardPreview(equipmentCases.find((entry) => entry.baseId === "earphones").card);
+    const tappedPreviewShowsEarphones = document.getElementById("battleCardPreview").textContent.includes("装備：イヤホン");
+
+    return {
+      cases,
+      multipleIconCount,
+      plainHasNoIcon,
+      renderedGlyph,
+      legacyYellowDecorationRemoved,
+      padlockShowsAttackUnavailable,
+      tappedPreviewShowsEarphones
+    };
   });
 
-  result.cases.forEach(({ baseId, detected, iconCount, inStatusArea }) => {
+  result.cases.forEach(({ baseId, detected, iconCount, inStatusArea, detailListsEquipment, previewListsEquipment }) => {
     expect(detected, `${baseId}: 装備判定`).toBe(true);
     expect(iconCount, `${baseId}: アイコン数`).toBe(1);
     expect(inStatusArea, `${baseId}: 状態欄`).toBe(true);
+    expect(detailListsEquipment, `${baseId}: 装備名`).toBe(true);
+    expect(previewListsEquipment, `${baseId}: カード確認`).toBe(true);
   });
   expect(result.multipleIconCount).toBe(1);
   expect(result.plainHasNoIcon).toBe(true);
   expect(result.renderedGlyph).toBe("装");
   expect(result.legacyYellowDecorationRemoved).toBe(true);
+  expect(result.padlockShowsAttackUnavailable).toBe(true);
+  expect(result.tappedPreviewShowsEarphones).toBe(true);
 });

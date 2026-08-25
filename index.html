@@ -17001,7 +17001,7 @@
         summary: "進化カードの演出を大きく見やすくし、演出途中も進化前後のカードが同じ大きさで正確に重なるよう改善。装備中の出席者を状態アイコンで確認できるようにした。",
         changes: [
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
-          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示されていた。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しないようにした。" }
+          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示し、南京錠装備中は「攻撃不可」の状態アイコンと現在の効果にも攻撃不可を表示する。" }
         ]
       },
       {
@@ -27369,12 +27369,20 @@
       return isUtaEquipmentTarget(card) && utaEquipmentCount(card) < utaEquipmentLimit(card);
     }
 
-    function yutaEquipmentDetailText(card) {
-      if (!isUtaEquipmentTarget(card)) return "";
-      const names = normalizeUtaEquipmentEntries(card)
+    function equipmentEntriesForCard(card) {
+      if (!card) return [];
+      const entries = normalizeUtaEquipmentEntries(card).map((entry) => ({ ...entry }));
+      if (isPadlocked(card)) entries.push({ ...card.padlockEquipment, baseId: "padlock" });
+      if (isEarphoneEquipped(card)) entries.push({ ...card.earphoneEquipment, baseId: "earphones" });
+      return entries;
+    }
+
+    function equipmentDetailText(card) {
+      const names = equipmentEntriesForCard(card)
         .map((entry) => CARD_BASES[entry.baseId]?.name || entry.baseId)
         .filter(Boolean);
-      return names.length ? `装備：${names.join(" / ")}` : "装備：なし";
+      if (names.length > 0) return `装備：${names.join(" / ")}`;
+      return isUtaEquipmentTarget(card) ? "装備：なし" : "";
     }
 
     function attachUtaEquipment(card, baseId) {
@@ -27412,9 +27420,7 @@
       return Boolean(card?.earphoneEquipment?.baseId === "earphones");
     }
     function hasEquipmentCard(card) {
-      return normalizeUtaEquipmentEntries(card).length > 0
-        || isPadlocked(card)
-        || isEarphoneEquipped(card);
+      return equipmentEntriesForCard(card).length > 0;
     }
     // Use this only for an effect whose source is the attendee itself.  The
     // 南京錠 equipment is deliberately represented outside the printed-card
@@ -36064,6 +36070,7 @@
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isSameNameAttackLocked(card)) otherParts.push({ icon: "止", title: "同名ロック" });
+      if (boardCard && isPadlocked(card) && !otherParts.some((part) => part.icon === "止")) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isPadlocked(card)) otherParts.push({ icon: "錠", title: "南京錠：効果無効・攻撃／講義／進化不可・ダメージ／効果破壊無効" });
       if (hasEquipmentCard(card)) otherParts.push({ icon: "", title: "装備カードあり", tone: "equipment-status" });
       if (hasKeyword(card, "眠気")) otherParts.push({ icon: "眠", title: "眠気" });
@@ -38587,7 +38594,7 @@
         addDetailChip(entry.label, "buff", entry.label, entry.lines);
       });
 
-      normalizeUtaEquipmentEntries(card).forEach((equipment) => {
+      equipmentEntriesForCard(card).forEach((equipment) => {
         const equipmentCard = CARD_BASES[equipment.baseId];
         if (!equipmentCard) return;
         const lines = [];
@@ -38595,6 +38602,12 @@
         if (equipment.baseId === "red_happi") lines.push("攻撃力 +2");
         if (equipment.baseId === "yuta_umbrella") lines.push(equipment.shieldActive ? "次に受けるダメージを1回防ぐ" : "防御効果は終了している");
         if (equipment.baseId === "accelerate") lines.push("自分のターン終了時、1枚ドローする");
+        if (equipment.baseId === "earphones") lines.push("講義の効果を受けない");
+        if (equipment.baseId === "padlock") {
+          lines.push("すべての効果を失う");
+          lines.push("攻撃・講義・進化を行えない");
+          lines.push("ダメージを受けず、効果で破壊されない");
+        }
         addDetailChip(`装備：${equipmentCard.name}`, "equipment", `装備：${equipmentCard.name}`, lines.length ? lines : ["装備中"]);
       });
 
@@ -38774,7 +38787,8 @@
           lines: [`相手の${CARD_BASES[requiredTarget]?.name || requiredTarget}以外を攻撃対象に選べない。`]
         });
       }
-      if (card.attackLockedPermanently) entries.push({ label: "攻撃不可：永続", lines: [`${source}により、攻撃できない。`] });
+      if (isPadlocked(card)) entries.push({ label: "攻撃不可：南京錠", lines: ["南京錠を装備しているため、攻撃できない。"] });
+      else if (card.attackLockedPermanently) entries.push({ label: "攻撃不可：永続", lines: [`${source}により、攻撃できない。`] });
       else if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) entries.push({ label: "攻撃不可：次の自分のターンまで", lines: [`${source}により、攻撃できない。`] });
       else if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) {
         const remaining = Math.max(1, card.attackLockedUntilOwnerTurnsTaken - state.players[card.owner].turnsTaken + 1);
@@ -38818,7 +38832,7 @@
         detailLines.push(`体力：${displayedCardHp(card)}/${displayedCardMaxHp(card)}`);
       }
       detailLines.push(`配置：${placementText(card)}`);
-      const equipmentText = yutaEquipmentDetailText(card);
+      const equipmentText = equipmentDetailText(card);
       if (equipmentText) detailLines.push(equipmentText);
       const statusText = cardStatusDetailText(card);
       if (statusText) detailLines.push(`状態：${statusText}`);
@@ -38887,6 +38901,7 @@
       if (card.attackLockedPermanently) parts.push("攻撃不可");
       if (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) parts.push("攻撃不可");
       if (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) parts.push("攻撃不可");
+      if (isPadlocked(card) && !parts.includes("攻撃不可")) parts.push("攻撃不可");
       if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) parts.push("破壊予約");
       return parts.join(" / ");
     }
@@ -38899,7 +38914,7 @@
         if ((card.defense ?? 0) > 0) parts.push(`防御力：${card.defense}`);
       }
       parts.push(`配置：${placementText(card)}`);
-      const equipmentText = yutaEquipmentDetailText(card);
+      const equipmentText = equipmentDetailText(card);
       if (equipmentText) parts.push(equipmentText);
       parts.push(`効果：${cardRulesText(card)}`);
       return parts.join("\n");
@@ -39719,8 +39734,14 @@
       showEvolutionAnimation,
       hidePlayReveal,
       hasEquipmentCard,
+      equipmentEntriesForCard,
+      equipmentDetailText,
       statusPartsForCard,
       fieldCardTemplate,
+      battleCardCurrentEffectsTemplate,
+      battleCardRestrictionEntries,
+      cardStatusDetailText,
+      showBattleCardPreview,
       render,
       startTurn,
       isActiveCardTestBattle,
