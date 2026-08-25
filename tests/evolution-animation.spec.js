@@ -93,7 +93,20 @@ test("すべての進化カードで進化前後のカード面が同じ大き�
           evolutionCard: api.createCardFromBase(evolutionBaseId, "player")
         });
 
-        document.querySelectorAll("#playRevealCard .donguri-stack-card").forEach((element) => {
+        const stackCards = [...document.querySelectorAll("#playRevealCard .donguri-stack-card")];
+        stackCards.forEach((element) => {
+          element.getAnimations().forEach((animation) => {
+            animation.currentTime = 1300;
+          });
+        });
+        const midBaseRect = document.querySelector(".donguri-base-card .card").getBoundingClientRect();
+        const midEvolvedRect = document.querySelector(".donguri-evolved-card .card").getBoundingClientRect();
+        const midSizeDifference = {
+          width: Math.abs(midBaseRect.width - midEvolvedRect.width),
+          height: Math.abs(midBaseRect.height - midEvolvedRect.height)
+        };
+
+        stackCards.forEach((element) => {
           element.getAnimations().forEach((animation) => animation.finish());
         });
 
@@ -110,12 +123,14 @@ test("すべての進化カードで進化前後のカード面が同じ大き�
           };
         });
         api.hidePlayReveal();
-        return { evolutionBaseId, evolutionFrom: base.evolutionFrom, differences };
+        return { evolutionBaseId, evolutionFrom: base.evolutionFrom, midSizeDifference, differences };
       });
   });
 
   expect(results.length).toBeGreaterThan(0);
-  results.forEach(({ evolutionBaseId, evolutionFrom, differences }) => {
+  results.forEach(({ evolutionBaseId, evolutionFrom, midSizeDifference, differences }) => {
+    expect(midSizeDifference.width, `${evolutionFrom}→${evolutionBaseId} 演出途中 width`).toBeLessThanOrEqual(1);
+    expect(midSizeDifference.height, `${evolutionFrom}→${evolutionBaseId} 演出途中 height`).toBeLessThanOrEqual(1);
     differences.forEach((difference) => {
       expect(difference.left, `${evolutionFrom}→${evolutionBaseId} ${difference.selector} left`).toBeLessThanOrEqual(1);
       expect(difference.top, `${evolutionFrom}→${evolutionBaseId} ${difference.selector} top`).toBeLessThanOrEqual(1);
