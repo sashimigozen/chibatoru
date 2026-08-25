@@ -9281,21 +9281,6 @@
       transform: rotate(-11deg);
     }
 
-    .battle-screen .field-card.equipped::before {
-      position: absolute;
-      z-index: -1;
-      top: 9px;
-      left: 9px;
-      width: 100%;
-      height: 100%;
-      border: 3px solid #d79b16;
-      border-radius: 7px;
-      background: #ffe6a0;
-      content: "";
-      box-shadow: 0 3px 6px rgba(108, 72, 11, .22);
-      transform: rotate(3deg);
-    }
-
     .battle-screen .environment-card {
       width: calc(100% - 8px);
       height: calc(100% - 8px);
@@ -10048,11 +10033,6 @@
     .card.attack-locked .card-art-panel::after,
     .field-card.attack-locked .field-card-art-name::after { top: 60%; transform: rotate(43deg); }
 
-    .card.equipped,
-    .field-card.equipped {
-      box-shadow: 6px 6px 0 -2px #e4b63d, 10px 10px 0 -2px #806416, 0 7px 13px rgba(18,48,75,.24);
-    }
-
     .card .stat-attack.up::after,
     .field-card .field-stat.attack.up i { color: #f3e047; }
     .card .stat-attack.down::after { color: #ffd1d1; }
@@ -10234,7 +10214,6 @@
     .battle-screen .field-card.selection-candidate,
     .battle-screen .field-card.attack-target-ready { border-color: #2a69d6; box-shadow: 0 0 0 3px rgba(52,113,224,.35), 0 5px 11px rgba(18,48,75,.28); }
     .battle-screen .field-card.attention-card { box-shadow: 0 0 0 3px rgba(214, 63, 184, .58), 0 0 20px rgba(230,79,196,.62), 0 5px 10px rgba(18,48,75,.28); }
-    .battle-screen .field-card.equipped { box-shadow: 6px 6px 0 -2px #e4b63d, 10px 10px 0 -2px #806416, 0 5px 10px rgba(18,48,75,.28); }
     .battle-screen .field-card.reward-foil { border-color: #6a5716; background: linear-gradient(120deg, #c69f31, #ffec88 38%, #9e7a1f 62%, #f7d95b); box-shadow: 0 0 0 2px #e2c455, 0 5px 11px rgba(85,55,9,.34), 0 0 16px rgba(232,193,68,.48); }
     .battle-screen .field-card.reward-foil::after { position: absolute; z-index: 10; inset: 4px; border-radius: 5px; background: linear-gradient(118deg, transparent 43%, rgba(255,255,255,.55) 49%, transparent 55%); content: ""; pointer-events: none; transform: translateX(-145%); animation: reward-foil-shine 4.8s ease-in-out infinite; }
     .battle-screen .environment-card { width: calc(100% - 6px); height: calc(100% - 6px); margin: 3px; }
@@ -17022,7 +17001,7 @@
         summary: "進化カードの演出を大きく見やすくし、演出途中も進化前後のカードが同じ大きさで正確に重なるよう改善。装備中の出席者を状態アイコンで確認できるようにした。",
         changes: [
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
-          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一した。" }
+          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示されていた。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しないようにした。" }
         ]
       },
       {
@@ -35904,7 +35883,6 @@
       ));
       button.classList.toggle("sleepy", hasKeyword(card, "眠気"));
       button.classList.toggle("attention-card", hasKeyword(card, "注目") || hasKeyword(card, "超注目"));
-      button.classList.toggle("equipped", hasEquipmentCard(card));
       button.classList.toggle("attack-ready", canShowAttackReady(card, owner));
       button.classList.toggle("attack-target-ready", canSelectedAttackerTargetCard(owner, zone, index));
       const selectedItem = getSelectedHandCard();

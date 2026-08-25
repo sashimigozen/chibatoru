@@ -498,8 +498,10 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
     const icon = preview.querySelector(".equipment-status");
     const renderedGlyph = getComputedStyle(icon, "::before").content.replaceAll('"', "");
     preview.remove();
+    const legacyYellowDecorationRemoved = [...document.querySelectorAll("style")]
+      .every((style) => !style.textContent.includes(".equipped"));
 
-    return { cases, multipleIconCount, plainHasNoIcon, renderedGlyph };
+    return { cases, multipleIconCount, plainHasNoIcon, renderedGlyph, legacyYellowDecorationRemoved };
   });
 
   result.cases.forEach(({ baseId, detected, iconCount, inStatusArea }) => {
@@ -510,4 +512,5 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
   expect(result.multipleIconCount).toBe(1);
   expect(result.plainHasNoIcon).toBe(true);
   expect(result.renderedGlyph).toBe("装");
+  expect(result.legacyYellowDecorationRemoved).toBe(true);
 });
