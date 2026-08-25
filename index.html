@@ -15270,6 +15270,92 @@
       50% { box-shadow: 0 0 0 3px rgba(34, 197, 94, .52), 0 0 20px rgba(34, 197, 94, .58); }
     }
 
+    .board-change-feedback {
+      position: absolute;
+      inset: 3px;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      align-items: center;
+      justify-content: center;
+      overflow: visible;
+      border-radius: 7px;
+      pointer-events: none;
+      animation: board-change-glow 1.25s ease-out forwards;
+    }
+
+    .board-change-feedback.buff {
+      --change-glow: rgba(34, 197, 94, .78);
+      background: radial-gradient(circle, rgba(187, 247, 208, .62), transparent 72%);
+    }
+
+    .board-change-feedback.debuff {
+      --change-glow: rgba(239, 68, 68, .78);
+      background: radial-gradient(circle, rgba(254, 202, 202, .64), transparent 72%);
+    }
+
+    .board-change-feedback.mixed {
+      --change-glow: rgba(250, 204, 21, .78);
+      background: radial-gradient(circle, rgba(254, 240, 138, .62), transparent 72%);
+    }
+
+    .board-change-feedback-item {
+      display: block;
+      min-width: 54px;
+      padding: 3px 7px;
+      border: 2px solid currentColor;
+      border-radius: 999px;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 1000;
+      line-height: 1.1;
+      text-align: center;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, .42);
+      box-shadow: 0 3px 8px rgba(15, 23, 42, .3);
+      animation-duration: 1.25s;
+      animation-delay: calc(var(--feedback-index) * 70ms);
+      animation-fill-mode: forwards;
+      animation-timing-function: cubic-bezier(.2, .8, .25, 1);
+    }
+
+    .board-change-feedback-item.buff {
+      border-color: #bbf7d0;
+      background: #16a34a;
+      animation-name: board-buff-rise;
+    }
+
+    .board-change-feedback-item.debuff {
+      border-color: #fecaca;
+      background: #dc2626;
+      animation-name: board-debuff-fall;
+    }
+
+    @keyframes board-change-glow {
+      0% { box-shadow: inset 0 0 0 3px var(--change-glow), 0 0 22px var(--change-glow); opacity: 0; }
+      14%, 72% { box-shadow: inset 0 0 0 3px var(--change-glow), 0 0 22px var(--change-glow); opacity: 1; }
+      100% { box-shadow: inset 0 0 0 0 transparent, 0 0 0 transparent; opacity: 0; }
+    }
+
+    @keyframes board-buff-rise {
+      0% { opacity: 0; transform: translateY(15px) scale(.82); }
+      18%, 68% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-22px) scale(1.04); }
+    }
+
+    @keyframes board-debuff-fall {
+      0% { opacity: 0; transform: translateY(-15px) scale(.82); }
+      18%, 68% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(22px) scale(1.04); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .board-change-feedback,
+      .board-change-feedback-item {
+        animation-duration: .01ms !important;
+      }
+    }
+
     /* 使用可能判定を通った手札だけを、輪郭の外から呼吸するように光らせる。 */
     .battle-screen .player-hand .hand-card.affordable:not(.tutorial-muted-card) > .card-scale-stage {
       animation: chibattle-hand-ready-legal-breathe 1.8s ease-in-out infinite !important;
@@ -16998,11 +17084,12 @@
       {
         version: "ver.0.19.1",
         date: "2026年8月25日",
-        summary: "進化カードの演出、装備状態の表示、カード確認内の用語・カード・タイプ説明を改善。",
+        summary: "進化カードの演出、装備状態の表示、カード確認内の説明、出席者の強化・弱体化演出を改善。",
         changes: [
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
           { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
-          { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" }
+          { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" },
+          { title: "強化・弱体化演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときは緑色の上昇演出、弱体化されたときは赤色の下降演出をカード上に表示。攻撃力・体力・防御力の増減値、陽気・注目・余裕・眠気・攻撃不可などの付与と解除を表示し、環境や常在効果、オンライン同期による変化にも対応する。ダメージ・回復と初回出席では表示しない。" }
         ]
       },
       {
@@ -17621,6 +17708,7 @@
     let unlockedDungeonCardStyles = loadDungeonCardStyles();
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
+    const boardVisualSnapshots = new Map();
     let pendingCourseRegistrationConsent = null;
 
     const state = {
@@ -22506,6 +22594,7 @@
 
     function initializeGame(options = {}) {
       closeCourseRegistrationConsent();
+      boardVisualSnapshots.clear();
       const onlineHost = options.onlineHost === true;
       const dungeonBattle = options.dungeon === true;
       const deferPreBattle = options.deferPreBattle === true;
@@ -35134,12 +35223,97 @@
     }
 
     function renderBoards() {
+      pruneBoardVisualSnapshots();
       renderPlayerBoard("opponent", elements.opponentProfessorLane, elements.opponentSeatGrid);
       renderLateZone("opponent", elements.opponentLateZone);
       renderEnvironment();
       renderPlayerBoard("player", elements.playerProfessorLane, elements.playerSeatGrid);
       renderLateZone("player", elements.playerLateZone);
       renderLifeTargets();
+    }
+
+    function pruneBoardVisualSnapshots() {
+      const activeIds = new Set();
+      ["player", "opponent"].forEach((owner) => {
+        const board = state.players[owner]?.board;
+        if (board?.teacher?.instanceId) activeIds.add(board.teacher.instanceId);
+        (board?.seats || []).forEach((card) => {
+          if (card?.instanceId) activeIds.add(card.instanceId);
+        });
+      });
+      [...boardVisualSnapshots.keys()].forEach((instanceId) => {
+        if (!activeIds.has(instanceId)) boardVisualSnapshots.delete(instanceId);
+      });
+    }
+
+    function boardVisualSnapshot(card) {
+      const buffKeywords = ["陽気", "超陽気", "注目", "超注目", "余裕"];
+      const debuffKeywords = ["眠気"];
+      return {
+        attack: Number(card?.attack) || 0,
+        hp: Number(card?.maxHp) || 0,
+        defense: Number(card?.defense) || 0,
+        buffs: buffKeywords.filter((keyword) => hasKeyword(card, keyword)),
+        debuffs: debuffKeywords.filter((keyword) => hasKeyword(card, keyword)),
+        attackLocked: Boolean(card?.attackLockedPermanently
+          || (card?.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
+          || (card?.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
+          || isSameNameAttackLocked(card)
+          || isPadlocked(card))
+      };
+    }
+
+    function boardChangeFeedbackForCard(card) {
+      if (!card?.instanceId) return [];
+      const current = boardVisualSnapshot(card);
+      const previous = boardVisualSnapshots.get(card.instanceId);
+      boardVisualSnapshots.set(card.instanceId, current);
+      if (!previous) return [];
+      const changes = [];
+      [
+        { key: "attack", label: "攻撃力" },
+        { key: "hp", label: "体力" },
+        { key: "defense", label: "防御力" }
+      ].forEach(({ key, label }) => {
+        const difference = current[key] - previous[key];
+        if (!difference) return;
+        changes.push({
+          tone: difference > 0 ? "buff" : "debuff",
+          label: `${label}${difference > 0 ? "↑" : "↓"} ${difference > 0 ? "+" : ""}${difference}`
+        });
+      });
+      current.buffs.filter((keyword) => !previous.buffs.includes(keyword))
+        .forEach((keyword) => changes.push({ tone: "buff", label: `${keyword} 付与` }));
+      previous.buffs.filter((keyword) => !current.buffs.includes(keyword))
+        .forEach((keyword) => changes.push({ tone: "debuff", label: `${keyword} 解除` }));
+      current.debuffs.filter((keyword) => !previous.debuffs.includes(keyword))
+        .forEach((keyword) => changes.push({ tone: "debuff", label: `${keyword} 付与` }));
+      previous.debuffs.filter((keyword) => !current.debuffs.includes(keyword))
+        .forEach((keyword) => changes.push({ tone: "buff", label: `${keyword} 解除` }));
+      if (current.attackLocked !== previous.attackLocked) {
+        changes.push({
+          tone: current.attackLocked ? "debuff" : "buff",
+          label: current.attackLocked ? "攻撃不可" : "攻撃不可 解除"
+        });
+      }
+      return changes;
+    }
+
+    function appendBoardChangeFeedback(button, card) {
+      const changes = boardChangeFeedbackForCard(card);
+      if (changes.length === 0) return;
+      const layer = document.createElement("span");
+      const tones = new Set(changes.map((change) => change.tone));
+      layer.className = `board-change-feedback ${tones.size > 1 ? "mixed" : changes[0].tone}`;
+      layer.setAttribute("aria-label", changes.map((change) => change.label).join("、"));
+      changes.forEach((change, index) => {
+        const label = document.createElement("span");
+        label.className = `board-change-feedback-item ${change.tone}`;
+        label.style.setProperty("--feedback-index", index);
+        label.textContent = change.label;
+        layer.appendChild(label);
+      });
+      button.appendChild(layer);
     }
 
     function renderPlayerBoard(owner, teacherLane, seatGrid) {
@@ -35873,6 +36047,7 @@
       button.dataset.cardId = card.instanceId;
       button.dataset.baseId = card.baseId;
       button.innerHTML = fieldCardTemplate(card);
+      appendBoardChangeFeedback(button, card);
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
         isSelectedAttacker(owner, zone, index) || isSelectedMultiItemTarget(owner, zone, index) || isSelectedPanpanTarget(owner, zone, index));
