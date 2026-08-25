@@ -17001,7 +17001,7 @@
         summary: "進化カードの演出を大きく見やすくし、演出途中も進化前後のカードが同じ大きさで正確に重なるよう改善。装備中の出席者を状態アイコンで確認できるようにした。",
         changes: [
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
-          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示し、南京錠装備中は「攻撃不可」の状態アイコンと現在の効果にも攻撃不可を表示する。" }
+          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" }
         ]
       },
       {
@@ -35886,6 +35886,7 @@
         || (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
         || (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
         || isSameNameAttackLocked(card)
+        || isPadlocked(card)
       ));
       button.classList.toggle("sleepy", hasKeyword(card, "眠気"));
       button.classList.toggle("attention-card", hasKeyword(card, "注目") || hasKeyword(card, "超注目"));
@@ -36070,7 +36071,6 @@
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isSameNameAttackLocked(card)) otherParts.push({ icon: "止", title: "同名ロック" });
-      if (boardCard && isPadlocked(card) && !otherParts.some((part) => part.icon === "止")) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && isPadlocked(card)) otherParts.push({ icon: "錠", title: "南京錠：効果無効・攻撃／講義／進化不可・ダメージ／効果破壊無効" });
       if (hasEquipmentCard(card)) otherParts.push({ icon: "", title: "装備カードあり", tone: "equipment-status" });
       if (hasKeyword(card, "眠気")) otherParts.push({ icon: "眠", title: "眠気" });

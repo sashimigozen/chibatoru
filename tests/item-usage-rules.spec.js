@@ -509,11 +509,19 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
     const padlocked = equipmentCases.find((entry) => entry.baseId === "padlock").card;
     const padlockParts = api.statusPartsForCard(padlocked, true);
     const padlockRestriction = api.battleCardRestrictionEntries(padlocked);
-    const padlockShowsAttackUnavailable = padlockParts.some((part) => part.icon === "止" && part.title === "攻撃不可")
-      && padlockRestriction.some((entry) => entry.label === "攻撃不可：南京錠")
+    const padlockShowsAttackUnavailable = padlockRestriction.some((entry) => entry.label === "攻撃不可：南京錠")
       && api.cardStatusDetailText(padlocked).includes("攻撃不可");
+    const padlockHasNoStopIcon = !padlockParts.some((part) => part.icon === "止");
 
     api.state.screen = "battle";
+    api.state.phase = "battle";
+    api.state.players.player.board.seats = Array(9).fill(null);
+    api.state.players.player.board.teacher = null;
+    api.state.players.player.board.seats[0] = padlocked;
+    api.render();
+    const renderedPadlock = document.querySelector(`[data-card-id="${padlocked.instanceId}"]`);
+    const padlockUsesChainOverlay = renderedPadlock?.classList.contains("attack-locked") === true;
+
     api.showBattleCardPreview(equipmentCases.find((entry) => entry.baseId === "earphones").card);
     const tappedPreviewShowsEarphones = document.getElementById("battleCardPreview").textContent.includes("装備：イヤホン");
 
@@ -524,6 +532,8 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
       renderedGlyph,
       legacyYellowDecorationRemoved,
       padlockShowsAttackUnavailable,
+      padlockHasNoStopIcon,
+      padlockUsesChainOverlay,
       tappedPreviewShowsEarphones
     };
   });
@@ -540,5 +550,7 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
   expect(result.renderedGlyph).toBe("装");
   expect(result.legacyYellowDecorationRemoved).toBe(true);
   expect(result.padlockShowsAttackUnavailable).toBe(true);
+  expect(result.padlockHasNoStopIcon).toBe(true);
+  expect(result.padlockUsesChainOverlay).toBe(true);
   expect(result.tappedPreviewShowsEarphones).toBe(true);
 });
