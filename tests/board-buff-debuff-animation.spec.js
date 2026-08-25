@@ -50,9 +50,11 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(buffFeedback).toHaveAttribute("aria-label", /攻撃力強化 \+2/);
   await expect(buffFeedback).toHaveAttribute("aria-label", /体力強化 \+3/);
   await expect(buffFeedback).toHaveAttribute("aria-label", /防御力強化 \+1/);
-  await expect(buffFeedback.locator(".board-change-effect.buff .board-change-energy-stream")).toHaveCount(5);
+  await expect(buffFeedback.locator(".board-change-effect.buff .board-change-energy-image")).toHaveCount(1);
+  await expect(buffFeedback.locator(".board-change-effect.buff .board-change-energy-slice")).toHaveCount(8);
   await expect(buffFeedback.locator(".board-change-heal-cross")).toHaveCount(5);
-  await expect(buffFeedback.locator(".board-change-energy-stream").first()).toHaveCSS("animation-name", "board-buff-energy-rise");
+  await expect(buffFeedback.locator(".board-change-energy-image")).toHaveCSS("animation-name", "board-buff-energy-rise");
+  await expect(buffFeedback.locator(".board-change-energy-image")).toHaveCSS("animation-delay", "0s");
   await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
@@ -71,8 +73,10 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(debuffFeedback).toBeAttached();
   await expect(debuffFeedback).toHaveAttribute("aria-label", /攻撃力弱体化 -1/);
   await expect(debuffFeedback).toHaveAttribute("aria-label", /体力弱体化 -2/);
-  await expect(debuffFeedback.locator(".board-change-effect.debuff .board-change-energy-stream")).toHaveCount(5);
-  await expect(debuffFeedback.locator(".board-change-energy-stream").first()).toHaveCSS("animation-name", "board-debuff-energy-fall");
+  await expect(debuffFeedback.locator(".board-change-effect.debuff .board-change-energy-image")).toHaveCount(1);
+  await expect(debuffFeedback.locator(".board-change-effect.debuff .board-change-energy-slice")).toHaveCount(8);
+  await expect(debuffFeedback.locator(".board-change-energy-image")).toHaveCSS("animation-name", "board-debuff-energy-fall");
+  await expect(debuffFeedback.locator(".board-change-energy-image")).toHaveCSS("animation-delay", "0s");
   await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
@@ -139,8 +143,9 @@ test("形容詞学生の出席時効果で攻撃力+3に成功した初回表示
   const card = page.locator(`[data-card-id="${instanceId}"]`);
   const feedback = card.locator(".board-change-feedback");
   await expect(feedback).toHaveAttribute("aria-label", /攻撃力強化 \+3/);
-  await expect(feedback.locator(".board-change-effect.buff .board-change-energy-stream")).toHaveCount(5);
-  await expect(feedback.locator(".board-change-energy-stream").first()).toHaveCSS("animation-delay", "1.45s");
+  await expect(feedback.locator(".board-change-effect.buff .board-change-energy-image")).toHaveCount(1);
+  await expect(feedback.locator(".board-change-effect.buff .board-change-energy-slice")).toHaveCount(8);
+  await expect(feedback.locator(".board-change-energy-image")).toHaveCSS("animation-delay", "0s");
   await expect(card.locator(".field-stat.attack")).toHaveText("5");
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 });
