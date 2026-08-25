@@ -52,6 +52,8 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(buffFeedback).toHaveAttribute("aria-label", /防御力強化 \+1/);
   await expect(buffFeedback.locator(".board-change-effect.buff .board-change-mist-particle")).toHaveCount(8);
   await expect(buffFeedback.locator(".board-change-heal-cross")).toHaveCount(5);
+  await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
+  await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
   await page.evaluate(() => window.__chibattle.render());
   await expect(card.locator(".board-change-feedback")).toHaveCount(0);
@@ -69,6 +71,8 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(debuffFeedback).toHaveAttribute("aria-label", /攻撃力弱体化 -1/);
   await expect(debuffFeedback).toHaveAttribute("aria-label", /体力弱体化 -2/);
   await expect(debuffFeedback.locator(".board-change-effect.debuff .board-change-mist-particle")).toHaveCount(8);
+  await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
+  await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
   await page.evaluate(() => {
     const api = window.__chibattle;
@@ -105,4 +109,35 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
     return newcomer.instanceId;
   });
   await expect(page.locator(`[data-card-id="${newInstanceId}"] .board-change-feedback`)).toHaveCount(0);
+});
+
+test("形容詞学生の出席時効果で攻撃力+3に成功した初回表示にも強化演出を出す", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const instanceId = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.actionTurn = 3;
+    state.currentSide = "player";
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.player.board.teacher = null;
+    state.players.opponent.board.seats = Array(9).fill(null);
+    state.players.opponent.board.teacher = null;
+    const attendee = api.makeBoardCard(api.createCardFromBase("adjective_student", "player"));
+    attendee.attack += 3;
+    attendee.baseAttack += 3;
+    attendee.playedOnTurn = state.actionTurn;
+    state.players.player.board.seats[0] = attendee;
+    api.render();
+    return attendee.instanceId;
+  });
+
+  const card = page.locator(`[data-card-id="${instanceId}"]`);
+  const feedback = card.locator(".board-change-feedback");
+  await expect(feedback).toHaveAttribute("aria-label", /攻撃力強化 \+3/);
+  await expect(feedback.locator(".board-change-effect.buff .board-change-mist-particle")).toHaveCount(8);
+  await expect(card.locator(".field-stat.attack")).toHaveText("5");
+  await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 });

@@ -9215,8 +9215,6 @@
     .battle-screen .field-card .field-stat.attack { bottom: 5px; left: 5px; background: #c22d35; }
     .battle-screen .field-card .field-stat.hp { right: 5px; bottom: 5px; background: #147f78; }
     .battle-screen .field-card .field-stat.defense { right: 5px; bottom: 29px; background: #5c4ac7; }
-    .battle-screen .field-card .field-stat i { margin-left: 1px; color: #e8ff8b; font-style: normal; }
-    .battle-screen .field-card .field-stat.down i { color: #ffb7b7; }
 
     .battle-screen .field-card-status {
       top: -7px;
@@ -10034,7 +10032,6 @@
     .field-card.attack-locked .field-card-art-name::after { top: 60%; transform: rotate(43deg); }
 
     .card .stat-attack.up::after,
-    .field-card .field-stat.attack.up i { color: #f3e047; }
     .card .stat-attack.down::after { color: #ffd1d1; }
 
     /* Wide desktop battle table. The browser may scroll vertically on smaller screens; cards never shrink into unreadability. */
@@ -10205,9 +10202,6 @@
     .battle-screen .field-card .field-stat.attack { bottom: 7%; left: 7%; background: #c72b30; }
     .battle-screen .field-card .field-stat.hp { right: 7%; bottom: 7%; background: #087c75; }
     .battle-screen .field-card .field-stat.defense { right: 7%; bottom: 22%; background: #5b47bd; }
-    .battle-screen .field-card .field-stat i { margin-left: 2px; font-style: normal; }
-    .battle-screen .field-card .field-stat.attack.up i { color: #f2e74e; }
-    .battle-screen .field-card .field-stat.attack.down i { color: #ffd0d0; }
     .battle-screen .field-card-status { top: -9px; right: -10px; }
     .battle-screen .field-card.attack-ready { border-color: #159449; box-shadow: 0 0 0 2px rgba(27,175,84,.78), 0 0 13px rgba(46,191,98,.38), 0 5px 10px rgba(18,48,75,.28); }
     .battle-screen .field-card.selected,
@@ -17101,7 +17095,7 @@
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
           { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
           { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" },
-          { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときはカードの下から赤いモヤが上昇し、弱体化されたときはカードの上から青いモヤが下降する一時演出を表示。体力が回復したときは複数の緑色の十字が浮かぶ。攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応し、初回出席では表示しない。" }
+          { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときはカードの下から赤いモヤが上昇し、弱体化されたときはカードの上から青いモヤが下降する一時演出を表示。体力が回復したときは複数の緑色の十字が浮かぶ。数値欄には増減を示す矢印を残さず、演出は一定時間後に消える。形容詞学生の出席時効果で攻撃力+3に成功した場合も強化演出を表示する。攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応する。" }
         ]
       },
       {
@@ -35281,7 +35275,16 @@
       const current = boardVisualSnapshot(card);
       const previous = boardVisualSnapshots.get(card.instanceId);
       boardVisualSnapshots.set(card.instanceId, current);
-      if (!previous) return [];
+      if (!previous) {
+        const printedAttack = Number(CARD_BASES[card.baseId]?.attack);
+        if (card.baseId === "adjective_student"
+          && Number.isFinite(printedAttack)
+          && current.attack >= printedAttack + 3
+          && card.playedOnTurn === state.actionTurn) {
+          return [{ tone: "buff", label: `攻撃力強化 +${current.attack - printedAttack}` }];
+        }
+        return [];
+      }
       const changes = [];
       [
         { key: "attack", label: "攻撃力" },
@@ -36425,11 +36428,9 @@
       const statusParts = statusPartsForCard(card, true);
       const status = statusParts.length ? `<span class="field-card-status status-icons">${statusIconHtml(statusParts)}</span>` : "";
       const hasStats = card.type !== "environment" && card.type !== "item";
-      const baseAttack = CARD_BASES[card.baseId]?.attack ?? card.attack;
-      const attackChange = card.attack > baseAttack ? " up" : card.attack < baseAttack ? " down" : "";
       const cost = card.noCost ? "" : `<span class="field-stat cost">${effectiveCardCost(card)}</span>`;
       const stats = hasStats
-        ? `<span class="field-card-stats"><span class="field-stat attack${attackChange}">${card.attack}${attackChange ? `<i>${attackChange.trim() === "up" ? "↑" : "↓"}</i>` : ""}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
+        ? `<span class="field-card-stats"><span class="field-stat attack">${card.attack}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
       const typeLabel = isAceCard(card) ? `${labelForType(card.type)} / エースぺ` : labelForType(card.type);
       return `
