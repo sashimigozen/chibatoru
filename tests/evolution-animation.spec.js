@@ -73,3 +73,54 @@ for (const viewport of [
     await expect(overlay).toBeHidden();
   });
 }
+
+test("すべての進化カードで進化前後のカード面が同じ大きさに重なる", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(gameUrl);
+
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.screen = "battle";
+    api.state.phase = "battle";
+    api.render();
+
+    return Object.entries(api.CARD_BASES)
+      .filter(([, base]) => base.evolutionFrom)
+      .map(([evolutionBaseId, base]) => {
+        api.showEvolutionAnimation({
+          owner: "player",
+          targetCard: api.createCardFromBase(base.evolutionFrom, "player"),
+          evolutionCard: api.createCardFromBase(evolutionBaseId, "player")
+        });
+
+        document.querySelectorAll("#playRevealCard .donguri-stack-card").forEach((element) => {
+          element.getAnimations().forEach((animation) => animation.finish());
+        });
+
+        const selectors = [".card", ".card-scale-stage", ".card-face"];
+        const differences = selectors.map((selector) => {
+          const before = document.querySelector(`.donguri-base-card ${selector}`).getBoundingClientRect();
+          const after = document.querySelector(`.donguri-evolved-card ${selector}`).getBoundingClientRect();
+          return {
+            selector,
+            left: Math.abs(before.left - after.left),
+            top: Math.abs(before.top - after.top),
+            width: Math.abs(before.width - after.width),
+            height: Math.abs(before.height - after.height)
+          };
+        });
+        api.hidePlayReveal();
+        return { evolutionBaseId, evolutionFrom: base.evolutionFrom, differences };
+      });
+  });
+
+  expect(results.length).toBeGreaterThan(0);
+  results.forEach(({ evolutionBaseId, evolutionFrom, differences }) => {
+    differences.forEach((difference) => {
+      expect(difference.left, `${evolutionFrom}→${evolutionBaseId} ${difference.selector} left`).toBeLessThanOrEqual(1);
+      expect(difference.top, `${evolutionFrom}→${evolutionBaseId} ${difference.selector} top`).toBeLessThanOrEqual(1);
+      expect(difference.width, `${evolutionFrom}→${evolutionBaseId} ${difference.selector} width`).toBeLessThanOrEqual(1);
+      expect(difference.height, `${evolutionFrom}→${evolutionBaseId} ${difference.selector} height`).toBeLessThanOrEqual(1);
+    });
+  });
+});
