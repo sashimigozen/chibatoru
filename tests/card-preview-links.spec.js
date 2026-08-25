@@ -14,17 +14,35 @@ test("カード確認の効果文でカード名・能力・タイプを直接�
     const padlock = markup("padlock");
     const trpgMember = markup("trpg_member");
     const yuta = markup("yuta");
+    const removedTerms = [
+      "攻撃力", "防御力", "体力", "戦意", "気力",
+      "講義室", "教卓マス", "教師マス", "席マス", "環境マス", "校外エリア", "遅刻ゾーン",
+      "出席者", "デッキ", "手札", "出席", "装備", "進化"
+    ];
     return {
-      lectureRoomIsWholeTerm: wall.includes('data-preview-term="講義室"')
+      lectureRoomRemainsPlainText: wall.includes("講義室")
+        && !wall.includes('data-preview-term="講義室"')
         && !wall.includes('data-preview-term="講義"'),
       studentTypeLinked: trpgMember.includes('data-preview-type-term="student"'),
       relatedCardLinked: padlock.includes('data-related-card="key"'),
       lectureAbilityLinked: padlock.includes('data-preview-term="講義"'),
-      evolutionAbilityLinked: padlock.includes('data-preview-term="進化"'),
+      equipmentAndEvolutionRemainPlainText: padlock.includes("装備")
+        && padlock.includes("進化")
+        && !padlock.includes('data-preview-term="装備"')
+        && !padlock.includes('data-preview-term="進化"')
+        && !("装備" in api.BATTLE_CARD_TERM_DESCRIPTIONS)
+        && !("進化" in api.BATTLE_CARD_TERM_DESCRIPTIONS),
       keywordLinked: yuta.includes('data-preview-term="余裕"')
         && yuta.includes('data-preview-term="陽気"'),
-      compoundDescriptionsDiffer: api.BATTLE_CARD_TERM_DESCRIPTIONS.講義室
-        !== api.BATTLE_CARD_TERM_DESCRIPTIONS.講義
+      handAndAttendanceRemainPlainText: trpgMember.includes("手札")
+        && trpgMember.includes("出席")
+        && !trpgMember.includes('data-preview-term="手札"')
+        && !trpgMember.includes('data-preview-term="出席"')
+        && !("手札" in api.BATTLE_CARD_TERM_DESCRIPTIONS)
+        && !("出席" in api.BATTLE_CARD_TERM_DESCRIPTIONS),
+      removedTermsHaveNoDescriptions: removedTerms.every((term) => !(term in api.BATTLE_CARD_TERM_DESCRIPTIONS)
+        && api.BATTLE_CARD_PLAIN_TERMS.includes(term)),
+      lectureAbilityStillHasDescription: Boolean(api.BATTLE_CARD_TERM_DESCRIPTIONS.講義)
     };
   });
   Object.entries(markupChecks).forEach(([name, passed]) => expect(passed, name).toBe(true));
@@ -34,12 +52,10 @@ test("カード確認の効果文でカード名・能力・タイプを直接�
     api.state.screen = "battle";
     api.state.phase = "battle";
     api.render();
-    api.showBattleCardPreview(api.createCardFromBase("big_wall", "player"));
+    api.showBattleCardPreview(api.createCardFromBase("padlock", "player"));
   });
-  await page.locator('[data-preview-term="講義室"]').click();
-  const lectureRoomDescription = page.locator("[data-preview-term-description]");
-  await expect(lectureRoomDescription).toContainText("席マスと教卓マス");
-  await expect(lectureRoomDescription).not.toContainText("1ダメージ");
+  await page.locator('[data-preview-term="講義"]').click();
+  await expect(page.locator("[data-preview-term-description]")).toContainText("1ダメージ");
 
   await page.evaluate(() => {
     const api = window.__chibattle;

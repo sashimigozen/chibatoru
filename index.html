@@ -17002,7 +17002,7 @@
         changes: [
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
           { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
-          { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力語を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。長い語を優先して判定し、講義室と講義、環境マスと環境、出席者と出席など、包含関係にある別の用語を区別する。" }
+          { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" }
         ]
       },
       {
@@ -38536,13 +38536,6 @@
     }
 
     const BATTLE_CARD_TERM_DESCRIPTIONS = {
-      "講義室": "各プレイヤーの出席者がいる領域。席マスと教卓マスをまとめて講義室と呼ぶ。講義という効果とは別の用語。",
-      "教卓マス": "講義室にある教師用のマス。教師を置くことができ、ここにいる教師が講義を行う。",
-      "教師マス": "教卓マスの旧称。教師を置くことができ、ここにいる教師が講義を行う。",
-      "席マス": "講義室にある出席者用のマス。カードごとに出席できる行や位置が異なる場合がある。",
-      "環境マス": "両プレイヤーで共有する、環境カードを置くためのマス。",
-      "校外エリア": "使用・破壊などで場を離れたカードを置く領域。ほかのゲームにおける捨て札置き場にあたる。",
-      "遅刻ゾーン": "遅刻を持つカードが、指定回数の自分のターンを待つ領域。",
       "超陽気": "出席したターンでも、出席者と相手本体のどちらにも攻撃できる。",
       "陽気": "出席したターンでも出席者を攻撃できる。相手本体は攻撃できない。",
       "超注目": "相手は、この出席者以外を攻撃や効果の対象にできない。",
@@ -38551,18 +38544,7 @@
       "余裕": "自分のターン終了時、この出席者の体力を1回復する。",
       "遅刻": "手札から出した後、指定された回数の自分のターンを待ってから出席する。",
       "講義": "教卓マスの教師が自分のターンを終了すると、相手の対象となる出席者に1ダメージを与える。",
-      "装備": "装備カードは出席者に付けて、継続的に効果を与える。",
-      "防御力": "受けるダメージを、防御力の値だけ減らす。",
-      "攻撃力": "攻撃したときに相手へ与える基本ダメージの値。",
-      "体力": "出席者が場に残れる値。0以下になると原則として校外エリアへ送られる。",
-      "戦意": "手札のカードを使用するときに支払う値。自分のターン開始時に回復する。",
-      "気力": "プレイヤーの残り体力。0以下になると対戦に敗北する。",
-      "進化": "指定された進化元の上に進化カードを重ね、進化後の出席者へ変える。",
       "融合": "指定された複数のカードを組み合わせ、別のカードへ変える。",
-      "出席者": "講義室の席マスまたは教卓マスに出席している学生・教師・ヴァンパイア。",
-      "出席": "手札やカード効果などによって、カードを講義室へ置くこと。",
-      "手札": "プレイヤーが現在持っているカード。通常は自分だけが内容を確認できる。",
-      "デッキ": "対戦に使用するカードの山。通常のドローでは上からカードを手札へ加える。"
     };
 
     const BATTLE_CARD_TYPE_BY_LABEL = Object.freeze({
@@ -38572,6 +38554,12 @@
       "持ち物": "item",
       "環境": "environment"
     });
+
+    const BATTLE_CARD_PLAIN_TERMS = Object.freeze([
+      "攻撃力", "防御力", "体力", "戦意", "気力",
+      "講義室", "教卓マス", "教師マス", "席マス", "環境マス", "校外エリア", "遅刻ゾーン",
+      "出席者", "デッキ", "手札", "出席", "装備", "進化"
+    ]);
 
     function battleCardPreviewDetailTemplate(card) {
       const currentEffects = battleCardCurrentEffectsTemplate(card);
@@ -38593,6 +38581,7 @@
       const text = String(cardRulesText(card) || "");
       const references = [
         ...Object.entries(CARD_BASES).map(([baseId, base]) => ({ label: base.name, kind: "card", value: baseId, priority: 3 })),
+        ...BATTLE_CARD_PLAIN_TERMS.map((label) => ({ label, kind: "plain", value: label, priority: 4 })),
         ...Object.entries(BATTLE_CARD_TYPE_BY_LABEL).map(([label, type]) => ({ label, kind: "type", value: type, priority: 2 })),
         ...Object.keys(BATTLE_CARD_TERM_DESCRIPTIONS).map((label) => ({ label, kind: "term", value: label, priority: 1 }))
       ]
@@ -38607,7 +38596,9 @@
           index += 1;
           continue;
         }
-        if (reference.kind === "card") {
+        if (reference.kind === "plain") {
+          markup += escapeHtml(reference.label);
+        } else if (reference.kind === "card") {
           markup += `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(reference.value)}">［${escapeHtml(reference.label)}］</button>`;
         } else if (reference.kind === "type") {
           markup += `<button class="battle-card-preview-term-link type-link" type="button" data-preview-type-term="${escapeHtml(reference.value)}">［${escapeHtml(reference.label)}］</button>`;
@@ -39796,6 +39787,7 @@
       battleCardRulesMarkup,
       BATTLE_CARD_TERM_DESCRIPTIONS,
       BATTLE_CARD_TYPE_DESCRIPTIONS,
+      BATTLE_CARD_PLAIN_TERMS,
       battleCardRestrictionEntries,
       cardStatusDetailText,
       showBattleCardPreview,
