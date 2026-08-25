@@ -15272,86 +15272,98 @@
 
     .board-change-feedback {
       position: absolute;
-      inset: 3px;
+      inset: -4px;
       z-index: 30;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      align-items: center;
-      justify-content: center;
-      overflow: visible;
-      border-radius: 7px;
+      overflow: hidden;
+      border-radius: 10px;
       pointer-events: none;
-      animation: board-change-glow 1.25s ease-out forwards;
+      contain: paint;
     }
 
-    .board-change-feedback.buff {
-      --change-glow: rgba(34, 197, 94, .78);
-      background: radial-gradient(circle, rgba(187, 247, 208, .62), transparent 72%);
+    .board-change-effect {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
     }
 
-    .board-change-feedback.debuff {
-      --change-glow: rgba(239, 68, 68, .78);
-      background: radial-gradient(circle, rgba(254, 202, 202, .64), transparent 72%);
+    .board-change-mist-particle {
+      position: absolute;
+      left: var(--mist-left);
+      width: var(--mist-size);
+      height: calc(var(--mist-size) * .72);
+      border-radius: 50%;
+      opacity: 0;
+      filter: blur(5px);
+      mix-blend-mode: screen;
+      animation-duration: 1.35s;
+      animation-delay: var(--mist-delay);
+      animation-fill-mode: both;
+      animation-timing-function: ease-out;
     }
 
-    .board-change-feedback.mixed {
-      --change-glow: rgba(250, 204, 21, .78);
-      background: radial-gradient(circle, rgba(254, 240, 138, .62), transparent 72%);
+    .board-change-effect.buff .board-change-mist-particle {
+      bottom: -18%;
+      background: radial-gradient(ellipse, rgba(255, 238, 174, .95) 0 8%, rgba(255, 91, 45, .9) 34%, rgba(185, 20, 26, .54) 62%, transparent 76%);
+      box-shadow: 0 0 12px rgba(255, 66, 35, .82);
+      animation-name: board-buff-mist-rise;
     }
 
-    .board-change-feedback-item {
-      display: block;
-      min-width: 54px;
-      padding: 3px 7px;
-      border: 2px solid currentColor;
-      border-radius: 999px;
-      color: #fff;
-      font-size: 10px;
-      font-weight: 1000;
-      line-height: 1.1;
-      text-align: center;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, .42);
-      box-shadow: 0 3px 8px rgba(15, 23, 42, .3);
-      animation-duration: 1.25s;
-      animation-delay: calc(var(--feedback-index) * 70ms);
-      animation-fill-mode: forwards;
-      animation-timing-function: cubic-bezier(.2, .8, .25, 1);
+    .board-change-effect.debuff .board-change-mist-particle {
+      top: -18%;
+      background: radial-gradient(ellipse, rgba(207, 244, 255, .96) 0 8%, rgba(40, 154, 255, .88) 35%, rgba(34, 67, 190, .56) 62%, transparent 76%);
+      box-shadow: 0 0 12px rgba(46, 140, 255, .82);
+      animation-name: board-debuff-mist-fall;
     }
 
-    .board-change-feedback-item.buff {
-      border-color: #bbf7d0;
-      background: #16a34a;
-      animation-name: board-buff-rise;
+    .board-change-heal-cross {
+      position: absolute;
+      left: var(--heal-left);
+      bottom: var(--heal-bottom);
+      width: var(--heal-size);
+      height: var(--heal-size);
+      opacity: 0;
+      filter: drop-shadow(0 0 4px rgba(34, 255, 117, .92));
+      animation: board-heal-cross-rise 1.35s var(--heal-delay) ease-out both;
     }
 
-    .board-change-feedback-item.debuff {
-      border-color: #fecaca;
-      background: #dc2626;
-      animation-name: board-debuff-fall;
+    .board-change-heal-cross::before,
+    .board-change-heal-cross::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      border-radius: 2px;
+      background: linear-gradient(135deg, #d8ffe6, #20df69 55%, #079344);
+      transform: translate(-50%, -50%);
+      box-shadow: inset 0 0 0 1px rgba(232, 255, 239, .72);
     }
 
-    @keyframes board-change-glow {
-      0% { box-shadow: inset 0 0 0 3px var(--change-glow), 0 0 22px var(--change-glow); opacity: 0; }
-      14%, 72% { box-shadow: inset 0 0 0 3px var(--change-glow), 0 0 22px var(--change-glow); opacity: 1; }
-      100% { box-shadow: inset 0 0 0 0 transparent, 0 0 0 transparent; opacity: 0; }
+    .board-change-heal-cross::before { width: 38%; height: 100%; }
+    .board-change-heal-cross::after { width: 100%; height: 38%; }
+
+    @keyframes board-buff-mist-rise {
+      0% { opacity: 0; transform: translate(-50%, 12px) scale(.55); }
+      18% { opacity: .92; }
+      72% { opacity: .64; }
+      100% { opacity: 0; transform: translate(-50%, -105px) scale(1.65); }
     }
 
-    @keyframes board-buff-rise {
-      0% { opacity: 0; transform: translateY(15px) scale(.82); }
-      18%, 68% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(-22px) scale(1.04); }
+    @keyframes board-debuff-mist-fall {
+      0% { opacity: 0; transform: translate(-50%, -12px) scale(.55); }
+      18% { opacity: .92; }
+      72% { opacity: .64; }
+      100% { opacity: 0; transform: translate(-50%, 105px) scale(1.65); }
     }
 
-    @keyframes board-debuff-fall {
-      0% { opacity: 0; transform: translateY(-15px) scale(.82); }
-      18%, 68% { opacity: 1; transform: translateY(0) scale(1); }
-      100% { opacity: 0; transform: translateY(22px) scale(1.04); }
+    @keyframes board-heal-cross-rise {
+      0% { opacity: 0; transform: translateY(12px) scale(.45) rotate(-8deg); }
+      22%, 68% { opacity: 1; transform: translateY(-18px) scale(1) rotate(0); }
+      100% { opacity: 0; transform: translateY(-58px) scale(.75) rotate(8deg); }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .board-change-feedback,
-      .board-change-feedback-item {
+      .board-change-mist-particle,
+      .board-change-heal-cross {
         animation-duration: .01ms !important;
       }
     }
@@ -17089,7 +17101,7 @@
           { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
           { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
           { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" },
-          { title: "強化・弱体化演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときは緑色の上昇演出、弱体化されたときは赤色の下降演出をカード上に表示。攻撃力・体力・防御力の増減値、陽気・注目・余裕・眠気・攻撃不可などの付与と解除を表示し、環境や常在効果、オンライン同期による変化にも対応する。ダメージ・回復と初回出席では表示しない。" }
+          { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときはカードの下から赤いモヤが上昇し、弱体化されたときはカードの上から青いモヤが下降する一時演出を表示。体力が回復したときは複数の緑色の十字が浮かぶ。攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応し、初回出席では表示しない。" }
         ]
       },
       {
@@ -35252,6 +35264,7 @@
       return {
         attack: Number(card?.attack) || 0,
         hp: Number(card?.maxHp) || 0,
+        currentHp: Number(card?.currentHp) || 0,
         defense: Number(card?.defense) || 0,
         buffs: buffKeywords.filter((keyword) => hasKeyword(card, keyword)),
         debuffs: debuffKeywords.filter((keyword) => hasKeyword(card, keyword)),
@@ -35279,9 +35292,13 @@
         if (!difference) return;
         changes.push({
           tone: difference > 0 ? "buff" : "debuff",
-          label: `${label}${difference > 0 ? "↑" : "↓"} ${difference > 0 ? "+" : ""}${difference}`
+          label: `${label}${difference > 0 ? "強化" : "弱体化"} ${difference > 0 ? "+" : ""}${difference}`
         });
       });
+      const recoveredHp = current.currentHp - previous.currentHp;
+      if (recoveredHp > 0) {
+        changes.push({ tone: "heal", label: `体力回復 +${recoveredHp}` });
+      }
       current.buffs.filter((keyword) => !previous.buffs.includes(keyword))
         .forEach((keyword) => changes.push({ tone: "buff", label: `${keyword} 付与` }));
       previous.buffs.filter((keyword) => !current.buffs.includes(keyword))
@@ -35303,17 +35320,41 @@
       const changes = boardChangeFeedbackForCard(card);
       if (changes.length === 0) return;
       const layer = document.createElement("span");
-      const tones = new Set(changes.map((change) => change.tone));
-      layer.className = `board-change-feedback ${tones.size > 1 ? "mixed" : changes[0].tone}`;
+      layer.className = "board-change-feedback";
       layer.setAttribute("aria-label", changes.map((change) => change.label).join("、"));
-      changes.forEach((change, index) => {
-        const label = document.createElement("span");
-        label.className = `board-change-feedback-item ${change.tone}`;
-        label.style.setProperty("--feedback-index", index);
-        label.textContent = change.label;
-        layer.appendChild(label);
+
+      ["buff", "debuff"].forEach((tone) => {
+        if (!changes.some((change) => change.tone === tone)) return;
+        const effect = document.createElement("span");
+        effect.className = `board-change-effect ${tone}`;
+        [18, 31, 44, 57, 70, 82, 25, 63].forEach((left, index) => {
+          const mist = document.createElement("span");
+          mist.className = "board-change-mist-particle";
+          mist.style.setProperty("--mist-left", `${left}%`);
+          mist.style.setProperty("--mist-size", `${20 + (index % 3) * 7}px`);
+          mist.style.setProperty("--mist-delay", `${index * 55}ms`);
+          effect.appendChild(mist);
+        });
+        layer.appendChild(effect);
       });
+
+      if (changes.some((change) => change.tone === "heal")) {
+        const effect = document.createElement("span");
+        effect.className = "board-change-effect heal";
+        [20, 38, 58, 76, 47].forEach((left, index) => {
+          const cross = document.createElement("span");
+          cross.className = "board-change-heal-cross";
+          cross.style.setProperty("--heal-left", `${left}%`);
+          cross.style.setProperty("--heal-bottom", `${4 + (index % 2) * 15}%`);
+          cross.style.setProperty("--heal-size", `${12 + (index % 3) * 3}px`);
+          cross.style.setProperty("--heal-delay", `${index * 85}ms`);
+          effect.appendChild(cross);
+        });
+        layer.appendChild(effect);
+      }
+
       button.appendChild(layer);
+      window.setTimeout(() => layer.remove(), 1550);
     }
 
     function renderPlayerBoard(owner, teacherLane, seatGrid) {

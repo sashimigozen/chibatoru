@@ -4,7 +4,7 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
-test("出席者の強化と弱体化を盤面上で演出し、ダメージや初回表示では出さない", async ({ page }) => {
+test("出席者の強化・弱体化・回復を一時演出し、ダメージや初回表示では出さない", async ({ page }) => {
   await page.goto(gameUrl);
 
   const instanceId = await page.evaluate(() => {
@@ -45,11 +45,13 @@ test("出席者の強化と弱体化を盤面上で演出し、ダメージや�
     attendee.defense += 1;
     api.render();
   });
-  const buffFeedback = card.locator(".board-change-feedback.buff");
+  const buffFeedback = card.locator(".board-change-feedback");
   await expect(buffFeedback).toBeAttached();
-  await expect(buffFeedback).toContainText("攻撃力↑ +2");
-  await expect(buffFeedback).toContainText("体力↑ +3");
-  await expect(buffFeedback).toContainText("防御力↑ +1");
+  await expect(buffFeedback).toHaveAttribute("aria-label", /攻撃力強化 \+2/);
+  await expect(buffFeedback).toHaveAttribute("aria-label", /体力強化 \+3/);
+  await expect(buffFeedback).toHaveAttribute("aria-label", /防御力強化 \+1/);
+  await expect(buffFeedback.locator(".board-change-effect.buff .board-change-mist-particle")).toHaveCount(8);
+  await expect(buffFeedback.locator(".board-change-heal-cross")).toHaveCount(5);
 
   await page.evaluate(() => window.__chibattle.render());
   await expect(card.locator(".board-change-feedback")).toHaveCount(0);
@@ -62,10 +64,11 @@ test("出席者の強化と弱体化を盤面上で演出し、ダメージや�
     attendee.currentHp = Math.min(attendee.currentHp, attendee.maxHp);
     api.render();
   });
-  const debuffFeedback = card.locator(".board-change-feedback.debuff");
+  const debuffFeedback = card.locator(".board-change-feedback");
   await expect(debuffFeedback).toBeAttached();
-  await expect(debuffFeedback).toContainText("攻撃力↓ -1");
-  await expect(debuffFeedback).toContainText("体力↓ -2");
+  await expect(debuffFeedback).toHaveAttribute("aria-label", /攻撃力弱体化 -1/);
+  await expect(debuffFeedback).toHaveAttribute("aria-label", /体力弱体化 -2/);
+  await expect(debuffFeedback.locator(".board-change-effect.debuff .board-change-mist-particle")).toHaveCount(8);
 
   await page.evaluate(() => {
     const api = window.__chibattle;
@@ -73,7 +76,25 @@ test("出席者の強化と弱体化を盤面上で演出し、ダメージや�
     attendee.keywords = [...new Set([...(attendee.keywords || []), "眠気"])];
     api.render();
   });
-  await expect(card.locator(".board-change-feedback.debuff")).toContainText("眠気 付与");
+  await expect(card.locator(".board-change-feedback")).toHaveAttribute("aria-label", /眠気 付与/);
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    const attendee = api.state.players.player.board.seats[0];
+    attendee.currentHp -= 1;
+    api.render();
+  });
+  await expect(card.locator(".board-change-feedback")).toHaveCount(0);
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    const attendee = api.state.players.player.board.seats[0];
+    attendee.currentHp += 1;
+    api.render();
+  });
+  const healFeedback = card.locator(".board-change-feedback");
+  await expect(healFeedback).toHaveAttribute("aria-label", /体力回復 \+1/);
+  await expect(healFeedback.locator(".board-change-heal-cross")).toHaveCount(5);
 
   const newInstanceId = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -85,4 +106,3 @@ test("出席者の強化と弱体化を盤面上で演出し、ダメージや�
   });
   await expect(page.locator(`[data-card-id="${newInstanceId}"] .board-change-feedback`)).toHaveCount(0);
 });
-
