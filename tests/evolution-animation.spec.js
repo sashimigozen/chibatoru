@@ -53,6 +53,22 @@ for (const viewport of [
     expect(layout.cardWidth).toBeGreaterThanOrEqual(245);
     expect(layout.renderedCardWidth).toBeGreaterThanOrEqual(220);
 
+    await page.waitForTimeout(1850);
+    const overlap = await scene.evaluate((element) => {
+      const baseRect = element.querySelector(".donguri-base-card .card").getBoundingClientRect();
+      const evolvedRect = element.querySelector(".donguri-evolved-card .card").getBoundingClientRect();
+      return {
+        left: Math.abs(baseRect.left - evolvedRect.left),
+        top: Math.abs(baseRect.top - evolvedRect.top),
+        width: Math.abs(baseRect.width - evolvedRect.width),
+        height: Math.abs(baseRect.height - evolvedRect.height)
+      };
+    });
+    expect(overlap.left).toBeLessThanOrEqual(1);
+    expect(overlap.top).toBeLessThanOrEqual(1);
+    expect(overlap.width).toBeLessThanOrEqual(1);
+    expect(overlap.height).toBeLessThanOrEqual(1);
+
     await page.evaluate(() => window.__chibattle.hidePlayReveal());
     await expect(overlay).toBeHidden();
   });

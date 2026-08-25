@@ -3588,10 +3588,26 @@
 
     .evolution-card .donguri-stack-card .card {
       width: 250px;
-      min-height: 350px;
+      height: 350px;
+      min-height: 0;
       flex-basis: 250px;
       border-width: 2px;
       border-radius: 10px;
+    }
+
+    .evolution-card .donguri-stack-card {
+      width: 250px;
+      height: 350px;
+    }
+
+    .evolution-card .donguri-stack-card > .card,
+    .evolution-card .donguri-stack-card > .card > .card-scale-stage,
+    .evolution-card .donguri-stack-card > .card > .card-scale-stage > .card-face {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      box-sizing: border-box;
     }
 
     .evolution-card .donguri-stack-card .card-face {
@@ -4067,6 +4083,7 @@
 
     @keyframes evolutionBasePulse {
       0%,
+      78%,
       100% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
@@ -17021,9 +17038,9 @@
       {
         version: "ver.0.19.1",
         date: "2026年8月25日",
-        summary: "進化カードの演出を見やすく改善。",
+        summary: "進化カードの演出を大きく見やすくし、進化前後のカードが正確に重なるよう改善。",
         changes: [
-          { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。進化後のカードが重なって現れる演出を、見やすい大きさで表示する。" }
+          { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化前後でカードの高さが異なる場合、重なる位置がずれていた。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。演出中のカードサイズと中心位置を統一し、進化後のカードが進化前のカードへずれずに重なるようにした。" }
         ]
       },
       {
