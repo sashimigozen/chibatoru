@@ -23,6 +23,7 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
       state.players.opponent.life = 20;
       ["player", "opponent"].forEach((side) => {
         state.players[side].will = 10;
+        state.players[side].internTurnsRemaining = 0;
         state.players[side].hand = [];
         state.players[side].deck = [];
         state.players[side].trash = [];
@@ -167,6 +168,55 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
       && transformedEnemy.owner === "opponent"
       && state.players.opponent.board.seats[7] === transformedEnemy
       && state.suitStudentAttendanceCount === 1;
+
+    resetBattle();
+    state.players.player.board.seats[0] = attendee("general_student");
+    state.players.opponent.board.seats[0] = attendee("loud_student", "opponent");
+    const firstIntern = card("intern");
+    state.players.player.hand = [firstIntern];
+    checks.internImmediatelyUsable = api.canUseHandCardNow(firstIntern)
+      && api.castImmediateItem("player", firstIntern, false);
+    checks.internStartedTwoTurnsEach = state.players.player.internTurnsRemaining === 2
+      && state.players.opponent.internTurnsRemaining === 2;
+    const firstPlayerTransform = api.resolveInternEndTurnEffect("player");
+    const firstOpponentTransform = api.resolveInternEndTurnEffect("opponent");
+    checks.internTransformsEachPlayersOwnStudent = firstPlayerTransform?.baseId === "suit_student"
+      && firstPlayerTransform.owner === "player"
+      && firstOpponentTransform?.baseId === "suit_student"
+      && firstOpponentTransform.owner === "opponent"
+      && state.players.player.internTurnsRemaining === 1
+      && state.players.opponent.internTurnsRemaining === 1;
+
+    const secondIntern = card("intern");
+    state.players.player.hand = [secondIntern];
+    checks.internReuseResetsInsteadOfStacking = api.castImmediateItem("player", secondIntern, false)
+      && state.players.player.internTurnsRemaining === 2
+      && state.players.opponent.internTurnsRemaining === 2;
+    const noPlayerTarget = api.resolveInternEndTurnEffect("player");
+    checks.internConsumesTurnWithoutTarget = noPlayerTarget === null
+      && state.players.player.internTurnsRemaining === 1;
+
+    const equippedStudent = attendee("yocchan");
+    equippedStudent.hasAttacked = true;
+    equippedStudent.earphoneEquipment = {
+      ...card("earphones"),
+      attachedTo: equippedStudent.instanceId,
+      attachedAtTurn: state.actionTurn
+    };
+    state.players.player.board.seats[1] = equippedStudent;
+    const secondPlayerTransform = api.resolveInternEndTurnEffect("player");
+    checks.internSecondOwnTurnEndsEffectAndPreservesState = secondPlayerTransform?.baseId === "suit_student"
+      && secondPlayerTransform.hasAttacked === true
+      && secondPlayerTransform.earphoneEquipment?.baseId === "earphones"
+      && state.players.player.internTurnsRemaining === 0;
+
+    state.players.opponent.board.seats[1] = attendee("general_student", "opponent");
+    const secondOpponentTransform = api.resolveInternEndTurnEffect("opponent");
+    const noOpponentTarget = api.resolveInternEndTurnEffect("opponent");
+    checks.internRunsExactlyTwiceForOpponent = secondOpponentTransform?.baseId === "suit_student"
+      && noOpponentTarget === null
+      && state.players.opponent.internTurnsRemaining === 0
+      && state.suitStudentAttendanceCount === 4;
 
     resetBattle();
     checks.unusableCardsRemainBlocked = ["alpha", "beta", "suspicious_document"].every((baseId) => {
