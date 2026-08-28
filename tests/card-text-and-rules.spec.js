@@ -29,6 +29,8 @@ test("確定したカードテキストが表示データに反映されてい�
   ];
 
   expectedTexts.forEach((text) => expect(source).toContain(text));
+  expect(source).toContain('think_so: { name: "思ってまう"');
+  expect(source).not.toContain('think_so: { name: "って思ってまう"');
 });
 
 test("保留カード確認後の文章と処理が確定仕様に一致する", async ({ page }) => {
