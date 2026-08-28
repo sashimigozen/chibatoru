@@ -22,6 +22,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "scout_student",
       "ta_squad",
       "happy_blue_bird",
+      "suit_student",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -43,6 +44,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       const target = api.state.players.player.hand.find((card) => card.baseId === baseId);
       snapshots[baseId] = {
         usable: Boolean(target && api.canUseHandCardNow(target)),
+        effectiveCost: target ? api.effectiveCardCost(target) : null,
         hand: api.state.players.player.hand.map((card) => card.baseId),
         deck: api.state.players.player.deck.map((card) => card.baseId),
         opponentHand: api.state.players.opponent.hand.map((card) => card.baseId),
@@ -86,6 +88,10 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.happy_blue_bird.opponentBoard).toEqual([
     expect.objectContaining({ baseId: "general_student", hp: 1 })
   ]);
+  expect(result.suit_student.effectiveCost).toBe(6);
+  expect(result.suit_student.hand.filter((baseId) => baseId === "suit_student")).toHaveLength(2);
+  expect(result.suit_student.playerBoard.some((card) => card.baseId === "suit_student")).toBe(true);
+  expect(result.suit_student.opponentBoard.some((card) => card.baseId === "suit_student")).toBe(true);
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);
@@ -267,4 +273,81 @@ test("幸せの青い鳥は本体を攻撃せず、攻撃で倒した位置へ�
     hp: 4
   });
   expect(result.spentTarget).toBe("general_student");
+});
+
+test("スーツを着た学生は出席元と再出席を数えて戦意が下がり、教師のダメージを受けない", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.actionTurn = 2;
+    state.suitStudentAttendanceCount = 0;
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.player.board.teacher = null;
+    state.players.opponent.board.seats = Array(9).fill(null);
+    state.players.opponent.board.teacher = null;
+
+    const discounted = api.createCardFromBase("suit_student", "player");
+    const costs = [api.effectiveCardCost(discounted)];
+    const sameCard = api.makeBoardCard(api.createCardFromBase("suit_student", "player"));
+    api.attendCard("player", sameCard, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    costs.push(api.effectiveCardCost(discounted));
+
+    state.players.player.board.seats[0] = null;
+    api.attendCard("player", sameCard, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    costs.push(api.effectiveCardCost(discounted));
+
+    const fromDeck = api.makeBoardCard(api.createCardFromBase("suit_student", "opponent"));
+    api.attendCard("opponent", fromDeck, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.DECK });
+    costs.push(api.effectiveCardCost(discounted));
+
+    const fromLate = api.makeBoardCard(api.createCardFromBase("suit_student", "opponent"));
+    api.attendCard("opponent", fromLate, "seat", 1, { attendanceSource: api.ATTENDANCE_SOURCE.LATE });
+    costs.push(api.effectiveCardCost(discounted));
+
+    const trackedCount = state.suitStudentAttendanceCount;
+    state.suitStudentAttendanceCount = 20;
+    const minimumCost = api.effectiveCardCost(discounted);
+
+    const teacher = api.makeBoardCard(api.createCardFromBase("general_teacher", "opponent"));
+    const attackTarget = api.makeBoardCard(api.createCardFromBase("suit_student", "player"));
+    const attackDamage = api.dealDamageToCard(attackTarget, 9, teacher, { combat: true });
+    const attackHp = attackTarget.currentHp;
+
+    const lectureTarget = api.makeBoardCard(api.createCardFromBase("suit_student", "player"));
+    const lecturePreview = api.previewFinalDamageToCard(lectureTarget, 9, teacher, { damageKind: "lecture" });
+    const lectureDamage = api.dealDamageToCard(lectureTarget, 9, teacher, { damageKind: "lecture" });
+    const lectureHp = lectureTarget.currentHp;
+
+    const student = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+    const studentTarget = api.makeBoardCard(api.createCardFromBase("suit_student", "player"));
+    const studentDamage = api.dealDamageToCard(studentTarget, 1, student, { combat: true });
+
+    return {
+      costs,
+      count: trackedCount,
+      minimumCost,
+      attackDamage,
+      attackHp,
+      lecturePreview,
+      lectureDamage,
+      lectureHp,
+      studentDamage,
+      studentHp: studentTarget.currentHp
+    };
+  });
+
+  expect(result.costs).toEqual([8, 7, 6, 5, 4]);
+  expect(result.count).toBe(4);
+  expect(result.minimumCost).toBe(0);
+  expect(result.attackDamage).toBe(0);
+  expect(result.attackHp).toBe(1);
+  expect(result.lecturePreview).toBe(0);
+  expect(result.lectureDamage).toBe(0);
+  expect(result.lectureHp).toBe(1);
+  expect(result.studentDamage).toBe(1);
+  expect(result.studentHp).toBe(0);
 });
