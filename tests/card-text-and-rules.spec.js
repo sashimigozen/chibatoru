@@ -13,6 +13,7 @@ test("確定したカードテキストが表示データに反映されてい�
     "このカードが出席したとき、自分のデッキから「グリーンカレー」1枚を手札に加える。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
     "相手の手札を見る。",
     "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
+    "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -32,6 +33,32 @@ test("確定したカードテキストが表示データに反映されてい�
   expectedTexts.forEach((text) => expect(source).toContain(text));
   expect(source).toContain('think_so: { name: "思ってまう"');
   expect(source).not.toContain('think_so: { name: "って思ってまう"');
+});
+
+test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.player.board.teacher = null;
+    state.players.opponent.board.seats = Array(9).fill(null);
+    state.players.opponent.board.teacher = null;
+
+    const scout = api.makeBoardCard(api.createCardFromBase("scout_student", "player"));
+    state.players.player.board.seats[0] = scout;
+    const emptyClassroom = api.hasKeyword(scout, "超陽気") && api.hasKeyword(scout, "陽気");
+
+    state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+    const occupiedClassroom = !api.hasKeyword(scout, "超陽気");
+
+    state.players.opponent.board.seats[0] = null;
+    const emptyAgain = api.hasKeyword(scout, "超陽気");
+    return { emptyClassroom, occupiedClassroom, emptyAgain };
+  });
+
+  expect(result).toEqual({ emptyClassroom: true, occupiedClassroom: true, emptyAgain: true });
 });
 
 test("保留カード確認後の文章と処理が確定仕様に一致する", async ({ page }) => {

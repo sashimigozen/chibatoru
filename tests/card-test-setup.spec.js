@@ -19,6 +19,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "smoke_flare",
       "one_eyed_peek",
       "aggro_army",
+      "scout_student",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -57,7 +58,8 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
         life: api.state.players.player.life,
         maxWill: api.state.players.player.maxWill,
         playerDeckSize: api.state.players.player.deck.length,
-        opponentDeckSize: api.state.players.opponent.deck.length
+        opponentDeckSize: api.state.players.opponent.deck.length,
+        superCheerful: Boolean(target && api.hasKeyword(target, "超陽気"))
       };
     });
     return snapshots;
@@ -76,6 +78,8 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.crotch_febreze.opponentBoard.filter((card) => card.type === "teacher").length).toBeGreaterThanOrEqual(2);
   expect(result.smoke_flare.maxWill).toBe(8);
   expect(result.one_eyed_peek.opponentHand.length).toBeGreaterThan(0);
+  expect(result.scout_student.opponentBoard).toHaveLength(0);
+  expect(result.scout_student.superCheerful).toBe(true);
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);

@@ -16565,7 +16565,7 @@
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
       late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"],
-      expansion: ["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"],
+      expansion: ["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "scout_student", "seat_taking_group", "single_cell", "sock_block", "trpg_member"],
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
       big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"],
@@ -16893,6 +16893,7 @@
       deck_without: ["fire_touch"],
       aggro_eater: [],
       aggro_army: [],
+      scout_student: [],
       apprentice_vampire: ["cafeteria"],
       smart_me: ["lazy_student", "cancel_student"],
       greeting_3000: ["yuta", "dark_yuta"],
@@ -16935,7 +16936,7 @@
       gigi_blood: []
     };
     let ALL_DECK_IDS = [
-      "aggro_student", "aggro_king", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
+      "aggro_student", "aggro_king", "scout_student", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "tokyo_tech_bro", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
@@ -16981,6 +16982,7 @@
       absolute_woman: { name: "「絶対」女", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
+      scout_student: { name: "斥候学生", type: "student", cost: 2, attack: 2, hp: 1, allowedZones: ["seat"] },
       single_cell: { name: "単細胞生物", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       midge: { name: "ミジンコ", type: "student", cost: 0, attack: 2, hp: 2, token: true, allowedZones: ["seat"] },
       organism: { name: "生物", type: "student", cost: 0, attack: 6, hp: 6, keywords: ["陽気"], token: true, allowedZones: ["seat"] },
@@ -17202,6 +17204,7 @@
       big_omata: "big",
       course_registration_party: "common",
       aggro_army: "common",
+      scout_student: "expansion",
       lie_pekora: "big"
       ,suit_student: "expansion"
       ,intern: "expansion"
@@ -17267,11 +17270,11 @@
       {
         version: "ver.0.20.0",
         date: "2026年8月28日",
-        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」の追加を実施。",
+        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」の追加を実施。",
         changes: [
           { title: "下部ホームバー", before: "各機能へ移動するにはホーム画面へ戻り、画面中央のボタンから選ぶ必要があった。", after: "ホーム、カード、バトル、ソロプレイ、ガチャを並べた下部ホームバーを追加。対戦画面とデッキ編集中を除く画面で表示し、ホーム、デッキ一覧、オンラインバトル、ソロプレイへ直接移動できる。PowerPointの通常素材からアイコン図形だけを透明背景で高解像度出力し、通常時は素材本来の色で表示。カードとバトルの発光時は、それぞれPowerPointの専用発光素材へ切り替える。" },
           { title: "カード名", before: "持ち物カード名を「って思ってまう」と表記していた。", after: "持ち物カード名を「思ってまう」へ変更した。カードIDと効果処理は変更していない。" },
-          { title: "新カード", after: "共通の持ち物カード「アグロ軍」を追加。戦意2で使用でき、「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。" }
+          { title: "新カード", after: "共通の持ち物カード「アグロ軍」を追加。戦意2で使用でき、「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。「展開・敵増殖」の学生カード「斥候学生」を追加。戦意2、攻撃力2、体力1で、相手の講義室に出席者がいないなら超陽気を持つ。" }
         ]
       },
       {
@@ -17800,7 +17803,7 @@
       "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "scared_me", "front_door"],
       "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
-      "展開": ["pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
+      "展開": ["scout_student", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
       "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
       "融合": ["ruler", "double_diamond"],
       "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
@@ -32132,6 +32135,7 @@
       if (keyword === "注目" && card.keywords?.includes("超注目")) return true;
       if (keyword === "陽気" && hasKeyword(card, "超陽気")) return true;
       if (keyword === "超陽気" && card.baseId === "vampire" && isCafeteriaEnvironmentActive()) return true;
+      if (keyword === "超陽気" && card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) return true;
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
       if (keyword === "陽気" && card.baseId === "general_teacher") return isOnTeacherSlot(card);
@@ -38190,6 +38194,10 @@
       opponent.board.seats[4] = makeOpponentTestAttendee("vampire");
       opponent.board.seats[8] = makeOpponentTestAttendee("general_student");
       opponent.board.teacher = makeOpponentTestAttendee("general_teacher");
+      if (baseId === "scout_student") {
+        opponent.board.seats.fill(null);
+        opponent.board.teacher = null;
+      }
       if (baseId === "i_got_it") {
         [6, 7].forEach((index) => {
           const thirdRowStudent = makeBoardCard(createCardFromBase("general_student", "opponent"));
@@ -38353,7 +38361,9 @@
       applyBoardAuras();
       state.message = `${CARD_BASES[baseId].name}のテストプレイ。戦意10、初期手札は${testHandCardNames(baseId)}。`;
       addLog(`${CARD_BASES[baseId].name}のテストプレイを開始しました。`);
-      addLog("相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
+      addLog(baseId === "scout_student"
+        ? "斥候学生の超陽気を確認できるよう、相手の講義室を空にしています。"
+        : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
       render();
       showTurnOverlay("player");
     }
@@ -39286,6 +39296,7 @@
       Object.entries(directSources).forEach(([keyword, sources]) => add(keyword, (sources || []).join("・")));
       if (hasKeyword(card, "超陽気")) {
         if (card.baseId === "vampire" && isCafeteriaEnvironmentActive()) add("超陽気", "食堂");
+        if (card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) add("超陽気", "相手の講義室に出席者がいない");
         if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) add("超陽気", "相手の学生・教師");
         if (card.baseId === "loud_student" && isAdjacentToBestFriend(card)) add("超陽気", "ベストフレンド");
       } else if (hasKeyword(card, "陽気")) {
@@ -39485,6 +39496,7 @@
         earphones: "装備\n装備者は講義の効果を受けない。",
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
         aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
+        scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
         single_cell: "自分の場に「単細胞生物」が2人いる場合、それらを破壊し、先に出席していた「単細胞生物」の席マスに「ミジンコ」を出席させる。",
         midge: "このカードが出席したとき、相手の出席者1人をランダムに指名し、1ダメージを与える。自分の場に「ミジンコ」が2人いる場合、それらを破壊し、先に出席していた「ミジンコ」の席マスに「生物」を出席させる。",
         organism: "陽気を持つ。このカードが出席したとき、相手の出席者すべてに2ダメージを与える。自分の場に「生物」「ミジンコ」「単細胞生物」がいる場合、それらを破壊し、「生物」がいた席マスに「完全変異体」を出席させる。",
@@ -40314,6 +40326,7 @@
       canUseItemOnBoardTarget,
       canUseTitleMatch,
       canUsePrintedCardEffects,
+      hasKeyword,
       resolveTitleMatch,
       drawOne,
       resolveStudentEndTurnEffects,
