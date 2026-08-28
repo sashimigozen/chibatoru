@@ -33,6 +33,28 @@ test("確定したカードテキストが表示データに反映されてい�
   expectedTexts.forEach((text) => expect(source).toContain(text));
   expect(source).toContain('think_so: { name: "思ってまう"');
   expect(source).not.toContain('think_so: { name: "って思ってまう"');
+  expect(source).toContain('before: "「って思ってまう」\\n持ち物／学友会・持ち物／戦意1／エースぺ\\n');
+  expect(source).toContain('after: "「思ってまう」\\n持ち物／学友会・持ち物／戦意1／エースぺ\\n');
+  expect(source).toContain('after: "「アグロ軍」\\n持ち物／共通カード／戦意2\\n');
+  expect(source).toContain('after: "「斥候学生」\\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\\n');
+});
+
+test("更新情報のカード追加・修正をカード名、ステータス、テキストの順で表示する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+  const latestEntry = page.locator(".update-entry").first();
+  await latestEntry.locator("summary").click();
+
+  const aggroArmy = latestEntry.locator(".update-after", { hasText: "アグロ軍" });
+  await expect(aggroArmy).toHaveCSS("white-space", "pre-line");
+  await expect(aggroArmy).toContainText("「アグロ軍」\n持ち物／共通カード／戦意2\n「アグロ大学生」");
+
+  const scoutStudent = latestEntry.locator(".update-after", { hasText: "斥候学生" });
+  await expect(scoutStudent).toContainText("「斥候学生」\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室");
+
+  const cardChange = latestEntry.locator(".update-change", { hasText: "変更点：カード名から「って」を削除。" });
+  await expect(cardChange.locator(".update-before")).toContainText("「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");
+  await expect(cardChange.locator(".update-after")).toContainText("「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
