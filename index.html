@@ -3284,6 +3284,19 @@
       font-size: 36px;
     }
 
+    .turn-overlay.bingo-announcement {
+      min-width: min(82vw, 520px);
+      border: 4px solid #facc15;
+      background: linear-gradient(135deg, rgba(8, 47, 73, .98), rgba(3, 105, 161, .98));
+      box-shadow: 0 0 0 6px rgba(56, 189, 248, .38), 0 20px 54px rgba(2, 132, 199, .46);
+      color: #fef08a;
+      font-size: clamp(46px, 8vw, 88px);
+      font-style: italic;
+      letter-spacing: .08em;
+      text-align: center;
+      text-shadow: 0 4px 0 #0c4a6e, 0 0 18px rgba(254, 240, 138, .8);
+    }
+
     @keyframes turnFade {
       0% {
         opacity: 0;
@@ -17304,6 +17317,7 @@
           { title: "新カード", after: "「インターン」\n持ち物／展開・敵増殖／戦意2\nお互いのプレイヤーがそれぞれ2回ターンを終了するまで、お互いのプレイヤーは、自分のターン終了時、自分の講義室にいる「スーツを着た学生」ではない学生1人をランダムに指名し、「スーツを着た学生」にする。" }
           ,{ title: "新カード", after: "「キングギドラベッド」\n持ち物／共通カード／戦意4\n3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。" }
           ,{ title: "新カード", after: "「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。" }
+          ,{ title: "早押しクイズ大会の演出", before: "ビンゴによって出席者の攻撃力・体力が上がっても、強化された瞬間を示す演出が表示されず、8ビンゴ達成時にも専用表示がなかった。", after: "横・縦・8ビンゴによって出席者が強化されたとき、対象カードに赤いバフ演出を表示。8ビンゴ達成時は、画面中央に「BINGO!!」を大きく表示する。オンライン対戦では相手側と観戦者にも同じ演出を同期する。" }
         ]
       },
       {
@@ -22200,11 +22214,17 @@
       if (events.length === 0) return false;
       const firstOccurredAt = Math.min(...events.map((event) => Number(event.occurredAt) || Date.now()));
       events.forEach((event) => {
+        const occurredOffset = Math.max(0, (Number(event.occurredAt) || firstOccurredAt) - firstOccurredAt);
+        const delay = occurredOffset + Math.max(0, Number(event.delayMs) || 0);
+        if (event.target === "announcement") {
+          window.setTimeout(() => showCenterAnnouncement(event.text, event.variant || ""), delay);
+          return;
+        }
         let target = null;
         let rect = null;
         if (event.target === "life") {
           target = document.querySelector(`[data-life-target="${event.owner}"]`);
-        } else if (event.target === "card") {
+        } else if (event.target === "card" || event.target === "card-change") {
           target = document.querySelector(`[data-card-id="${event.instanceId}"]`);
           if (!target) {
             const previousEntry = ["player", "opponent"]
@@ -22218,8 +22238,12 @@
           rect = { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height };
         }
         if (!rect) return;
-        const occurredOffset = Math.max(0, (Number(event.occurredAt) || firstOccurredAt) - firstOccurredAt);
-        const delay = occurredOffset + Math.max(0, Number(event.delayMs) || 0);
+        if (event.target === "card-change" && target) {
+          window.setTimeout(() => {
+            appendBoardChangeFeedbackLayer(target, [{ tone: event.tone || "buff", label: event.text || "強化" }]);
+          }, delay);
+          return;
+        }
         showFloatingTextAtRect(rect, event.text, event.kind, { target, delay });
       });
       return true;
@@ -29100,9 +29124,17 @@
       const drawCount = diagonalCount + (eightBingo ? 3 : 0);
 
       if (attackBonus || hpBonus) {
+        const attackBefore = card.attack;
+        const hpBefore = card.maxHp;
         applyPermanentStatBuff(card, attackBonus, hpBonus, 0, state.environment.name);
+        const appliedAttack = Math.max(0, (card.attack || 0) - (attackBefore || 0));
+        const appliedHp = Math.max(0, (card.maxHp || 0) - (hpBefore || 0));
+        if (appliedAttack || appliedHp) {
+          showBoardChangeEffectForCard(card, "buff", `ビンゴ強化 攻撃力+${appliedAttack}・体力+${appliedHp}`);
+        }
       }
       const drawn = drawUpTo(side, drawCount);
+      if (eightBingo) showSharedCenterAnnouncement("BINGO!!", "bingo");
       const lineSummary = [
         horizontalCount ? `横${horizontalCount}列` : "",
         verticalCount ? `縦${verticalCount}列` : "",
@@ -36180,6 +36212,11 @@
     function appendBoardChangeFeedback(button, card) {
       const changes = boardChangeFeedbackForCard(card);
       if (changes.length === 0) return;
+      appendBoardChangeFeedbackLayer(button, changes);
+    }
+
+    function appendBoardChangeFeedbackLayer(button, changes) {
+      if (!button || !Array.isArray(changes) || changes.length === 0) return;
       const layer = document.createElement("span");
       layer.className = "board-change-feedback";
       layer.setAttribute("aria-label", changes.map((change) => change.label).join("、"));
@@ -36216,6 +36253,22 @@
 
       button.appendChild(layer);
       window.setTimeout(() => layer.remove(), 1550);
+    }
+
+    function showBoardChangeEffectForCard(card, tone = "buff", label = "強化") {
+      if (!card?.instanceId) return;
+      recordOnlineEffectFeedback({
+        target: "card-change",
+        instanceId: card.instanceId,
+        owner: card.owner || null,
+        tone,
+        text: label,
+        kind: tone
+      });
+      window.setTimeout(() => {
+        const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
+        if (target) appendBoardChangeFeedbackLayer(target, [{ tone, label }]);
+      }, 0);
     }
 
     function renderPlayerBoard(owner, teacherLane, seatGrid) {
@@ -39352,17 +39405,24 @@
       showCenterAnnouncement(`${turnLabel(side)} ${SIDES[side]}`);
     }
 
-    function showCenterAnnouncement(text) {
+    function showCenterAnnouncement(text, variant = "") {
       if (state.screen !== "battle" || !elements.turnOverlay) return;
       elements.turnOverlay.classList.remove("tutorial-title");
+      elements.turnOverlay.classList.toggle("bingo-announcement", variant === "bingo");
       elements.turnOverlay.textContent = text;
       elements.turnOverlay.classList.remove("show");
       void elements.turnOverlay.offsetWidth;
       elements.turnOverlay.classList.add("show");
     }
 
+    function showSharedCenterAnnouncement(text, variant = "") {
+      recordOnlineEffectFeedback({ target: "announcement", text, variant, kind: variant || "announcement" });
+      showCenterAnnouncement(text, variant);
+    }
+
     function showTutorialTitleAnnouncement() {
       if (state.screen !== "battle" || !elements.turnOverlay) return;
+      elements.turnOverlay.classList.remove("bingo-announcement");
       elements.turnOverlay.classList.add("tutorial-title");
       elements.turnOverlay.textContent = "チュートリアル VS AI";
       elements.turnOverlay.classList.remove("show");

@@ -78,6 +78,10 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   await expect(quickQuizTournament).toContainText("「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき");
   await expect(quickQuizTournament).toContainText("8ビンゴを達成したとき");
 
+  const quickQuizVisuals = latestEntry.locator(".update-change", { hasText: "早押しクイズ大会の演出" });
+  await expect(quickQuizVisuals.locator(".update-after")).toContainText("赤いバフ演出");
+  await expect(quickQuizVisuals.locator(".update-after")).toContainText("BINGO!!");
+
   const aggroArmy = latestEntry.locator(".update-after", { hasText: "アグロ軍" });
   await expect(aggroArmy).toHaveCSS("white-space", "pre-line");
   await expect(aggroArmy).toContainText("「アグロ軍」\n持ち物／共通カード／戦意2\n「アグロ大学生」");

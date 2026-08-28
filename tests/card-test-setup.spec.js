@@ -207,6 +207,40 @@ test("早押しクイズ大会は新たに成立した各ビンゴと8ビンゴ�
   expect(result.teacherExcluded).toEqual({ attack: 1, hp: 2, completeLines: 0, drawn: 0 });
 });
 
+test("早押しクイズ大会の強化演出と8ビンゴ表示を画面に出す", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const achieverId = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const card = (baseId) => api.createCardFromBase(baseId, "player");
+    state.screen = "battle";
+    state.phase = "battle";
+    state.gameOver = false;
+    state.actionTurn = 1;
+    state.environment = api.makeBoardCard(card("quick_quiz_tournament"));
+    state.players.player.hand = [];
+    state.players.player.deck = Array.from({ length: 8 }, () => card("general_student"));
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.player.board.teacher = null;
+    [0, 1, 2, 3, 5, 6, 7, 8].forEach((index) => {
+      state.players.player.board.seats[index] = api.makeBoardCard(card("general_student"));
+    });
+    api.render();
+    const achiever = api.makeBoardCard(card("general_student"));
+    api.attendCard("player", achiever, "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    api.render();
+    return achiever.instanceId;
+  });
+
+  const achiever = page.locator(`[data-card-id="${achieverId}"]`);
+  await expect(achiever.locator(".board-change-effect.buff")).toBeVisible();
+  await expect(achiever.locator(".board-change-feedback")).toHaveAttribute("aria-label", /ビンゴ強化/);
+  await expect(page.locator("#turnOverlay")).toHaveText("BINGO!!");
+  await expect(page.locator("#turnOverlay")).toHaveClass(/bingo-announcement/);
+  await expect(page.locator("#turnOverlay")).toHaveClass(/show/);
+});
+
 test("TA軍団は手札から2行目へ出席した場合だけ残りの空きマスへコピーを出席させる", async ({ page }) => {
   await page.goto(gameUrl);
 
