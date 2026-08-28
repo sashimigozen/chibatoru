@@ -38,6 +38,7 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
     const normalZero = normalDeck();
     const normalOne = replace(normalDeck(), 1, { think_so: 1 });
     const normalMany = replace(normalDeck(), 2, { think_so: 2 });
+    const normalAggroArmy = replace(normalDeck(), 1, { aggro_army: 1 });
     const specialtyZero = lateDeck();
     const specialtyOne = replace(lateDeck(), 1, { tokyo_tech_bro: 1 });
     const specialtySameTwo = replace(lateDeck(), 2, { tokyo_tech_bro: 2 });
@@ -52,6 +53,9 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
       normalZero: api.validateDeckCounts(normalZero),
       normalOne: api.validateDeckCounts(normalOne),
       normalMany: api.validateDeckCounts(normalMany),
+      normalAggroArmy: api.validateDeckCounts(normalAggroArmy),
+      aggroArmyCommonEverySpecialty: api.SPECIALTY_DEFINITIONS
+        .every((definition) => api.specialtyAllowedCardIds(definition.id).has("aggro_army")),
       specialtyOne: api.validateSpecialtyDeckCounts(specialtyOne, "late"),
       specialtySameTwo: api.validateSpecialtyDeckCounts(specialtySameTwo, "late"),
       specialtyDifferent: api.validateSpecialtyDeckCounts(specialtyDifferent, "late"),
@@ -72,6 +76,8 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
   expect(cases.normalZero.valid).toBe(true);
   expect(cases.normalOne.valid).toBe(false);
   expect(cases.normalMany.valid).toBe(false);
+  expect(cases.normalAggroArmy.valid).toBe(true);
+  expect(cases.aggroArmyCommonEverySpecialty).toBe(true);
   expect(cases.specialtyOne.valid).toBe(true);
   expect(cases.specialtySameTwo.valid).toBe(false);
   expect(cases.specialtyDifferent.valid).toBe(false);

@@ -104,6 +104,16 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
     checks.aggroEaterHealedLife = state.players.player.life === 20;
 
     resetBattle();
+    const aggroArmy = card("aggro_army");
+    state.players.player.hand = [aggroArmy];
+    checks.aggroArmyUsableWithoutTarget = api.canUseHandCardNow(aggroArmy);
+    checks.aggroArmyResolved = api.castImmediateItem("player", aggroArmy, false);
+    checks.aggroArmyGeneratedEachCard = ["aggro_student", "aggro_king", "aggro_queen"]
+      .every((baseId) => state.players.player.hand.filter((entry) => entry.baseId === baseId).length === 1);
+    checks.aggroArmyPaidTwoWill = state.players.player.will === 8;
+    checks.aggroArmyMovedToTrash = state.players.player.trash.some((entry) => entry.baseId === "aggro_army");
+
+    resetBattle();
     const bentoTarget = attendee("general_student");
     const bento = card("bento");
     state.players.player.board.seats[0] = bentoTarget;

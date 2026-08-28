@@ -18,6 +18,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "crotch_febreze",
       "smoke_flare",
       "one_eyed_peek",
+      "aggro_army",
       "big_laughter",
       "lie_pekora",
       "big_wall",
