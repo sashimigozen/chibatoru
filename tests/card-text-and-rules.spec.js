@@ -43,6 +43,7 @@ test("確定したカードテキストが表示データに反映されてい�
   expect(source).toContain('after: "「TA軍団」\\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\\n');
   expect(source).toContain('after: "「幸せの青い鳥」\\n学生／共通カード／戦意2／攻撃力5／体力5\\n');
   expect(source).toContain('after: "「スーツを着た学生」\\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\\n');
+  expect(source).toContain('このカードは教師からダメージを受けない。\\n出席数：X人"');
 });
 
 test("更新情報のカード追加・修正をカード名、ステータス、テキストの順で表示する", async ({ page }) => {
@@ -66,6 +67,7 @@ test("更新情報のカード追加・修正をカード名、ステータス�
 
   const suitStudent = latestEntry.locator(".update-after", { hasText: "スーツを着た学生" });
   await expect(suitStudent).toContainText("「スーツを着た学生」\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意");
+  await expect(suitStudent).toContainText("出席数：X人");
 
   const cardChange = latestEntry.locator(".update-change", { hasText: "変更点：カード名から「って」を削除。" });
   await expect(cardChange.locator(".update-before")).toContainText("「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");

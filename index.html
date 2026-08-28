@@ -7986,6 +7986,13 @@
 
     .card-effect-text { display: block; }
 
+    .card-effect-text,
+    .deck-row-effect,
+    .tooltip-effect,
+    .battle-card-preview-rules {
+      white-space: pre-line;
+    }
+
     .card-effect-compact {
       font-size: 10px;
       line-height: 1.36;
@@ -17284,7 +17291,7 @@
           { title: "新カード", after: "「斥候学生」\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは「超陽気」を持つ。" },
           { title: "新カード", after: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。" },
           { title: "新カード", after: "「幸せの青い鳥」\n学生／共通カード／戦意2／攻撃力5／体力5\nこのカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。" },
-          { title: "新カード", after: "「スーツを着た学生」\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。" }
+          { title: "新カード", after: "「スーツを着た学生」\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。\n出席数：X人" }
         ]
       },
       {
@@ -36794,6 +36801,7 @@
 
     function formatCardEffectText(text) {
       return escapeHtml(text)
+        .replaceAll("\n", "<br>")
         .replace(/(超陽気|陽気|超注目|注目|眠気|余裕|講義|遅刻\d+)/g, "[$1]")
         .replace(/\](?=[をがはにの])/g, "] ");
     }
@@ -39839,7 +39847,12 @@
         ta_killer: "これは講義のダメージを受けない。手札から出席させたとき、相手のランダムな教師に1ダメージを与える。",
         ta: "カードの効果によって出席される学生トークン。"
       };
-      return normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      const text = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      if (card.baseId !== "suit_student") return text;
+      const count = state.screen === "battle" && state.phase === "battle"
+        ? Math.max(0, Number(state.suitStudentAttendanceCount) || 0)
+        : 0;
+      return `${text}\n出席数：${count}人`;
     }
 
     function escapeHtml(value) {
@@ -40446,6 +40459,7 @@
       BATTLE_CARD_PLAIN_TERMS,
       battleCardRestrictionEntries,
       cardStatusDetailText,
+      cardRulesText,
       showBattleCardPreview,
       render,
       startTurn,
