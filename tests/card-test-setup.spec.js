@@ -23,6 +23,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "ta_squad",
       "happy_blue_bird",
       "suit_student",
+      "bust_suit",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -94,6 +95,8 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.suit_student.hand.filter((baseId) => baseId === "suit_student")).toHaveLength(2);
   expect(result.suit_student.playerBoard.some((card) => card.baseId === "suit_student")).toBe(true);
   expect(result.suit_student.opponentBoard.some((card) => card.baseId === "suit_student")).toBe(true);
+  expect(result.bust_suit.playerBoard.some((card) => card.baseId === "general_student")).toBe(true);
+  expect(result.bust_suit.opponentBoard.some((card) => card.type === "student")).toBe(true);
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);

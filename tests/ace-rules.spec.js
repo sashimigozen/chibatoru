@@ -43,6 +43,7 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
     const normalTaSquad = replace(normalDeck(), 1, { ta_squad: 1 });
     const normalHappyBlueBird = replace(normalDeck(), 1, { happy_blue_bird: 1 });
     const normalSuitStudent = replace(normalDeck(), 1, { suit_student: 1 });
+    const normalBustSuit = replace(normalDeck(), 1, { bust_suit: 1 });
     const specialtyZero = lateDeck();
     const specialtyOne = replace(lateDeck(), 1, { tokyo_tech_bro: 1 });
     const specialtySameTwo = replace(lateDeck(), 2, { tokyo_tech_bro: 2 });
@@ -62,6 +63,7 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
       normalTaSquad: api.validateDeckCounts(normalTaSquad),
       normalHappyBlueBird: api.validateDeckCounts(normalHappyBlueBird),
       normalSuitStudent: api.validateDeckCounts(normalSuitStudent),
+      normalBustSuit: api.validateDeckCounts(normalBustSuit),
       aggroArmyCommonEverySpecialty: api.SPECIALTY_DEFINITIONS
         .every((definition) => api.specialtyAllowedCardIds(definition.id).has("aggro_army")),
       scoutStudentExpansionOnly: api.specialtyAllowedCardIds("expansion").has("scout_student")
@@ -75,6 +77,9 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
       suitStudentExpansionOnly: api.specialtyAllowedCardIds("expansion").has("suit_student")
         && !api.specialtyAllowedCardIds("late").has("suit_student")
         && !api.SPECIALTY_CARD_IDS.common.includes("suit_student"),
+      bustSuitExpansionOnly: api.specialtyAllowedCardIds("expansion").has("bust_suit")
+        && !api.specialtyAllowedCardIds("late").has("bust_suit")
+        && !api.SPECIALTY_CARD_IDS.common.includes("bust_suit"),
       specialtyOne: api.validateSpecialtyDeckCounts(specialtyOne, "late"),
       specialtySameTwo: api.validateSpecialtyDeckCounts(specialtySameTwo, "late"),
       specialtyDifferent: api.validateSpecialtyDeckCounts(specialtyDifferent, "late"),
@@ -100,11 +105,13 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
   expect(cases.normalTaSquad.valid).toBe(true);
   expect(cases.normalHappyBlueBird.valid).toBe(true);
   expect(cases.normalSuitStudent.valid).toBe(true);
+  expect(cases.normalBustSuit.valid).toBe(true);
   expect(cases.aggroArmyCommonEverySpecialty).toBe(true);
   expect(cases.scoutStudentExpansionOnly).toBe(true);
   expect(cases.taSquadExpansionOnly).toBe(true);
   expect(cases.happyBlueBirdCommonEverySpecialty).toBe(true);
   expect(cases.suitStudentExpansionOnly).toBe(true);
+  expect(cases.bustSuitExpansionOnly).toBe(true);
   expect(cases.specialtyOne.valid).toBe(true);
   expect(cases.specialtySameTwo.valid).toBe(false);
   expect(cases.specialtyDifferent.valid).toBe(false);

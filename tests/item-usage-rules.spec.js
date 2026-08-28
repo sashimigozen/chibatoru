@@ -17,6 +17,7 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
       state.gameOver = false;
       state.aiThinking = false;
       state.actionTurn = 1;
+      state.suitStudentAttendanceCount = 0;
       state.pendingCardPlay = null;
       state.players.player.life = 20;
       state.players.opponent.life = 20;
@@ -122,6 +123,50 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
     bentoTarget.currentHp -= 1;
     checks.bentoUsableWhenWounded = api.canUseHandCardNow(bento)
       && api.canUseItemOnBoardTarget(bento, "player", "seat", 0);
+
+    resetBattle();
+    const suitedOwnTarget = attendee("yocchan");
+    suitedOwnTarget.hasAttacked = true;
+    suitedOwnTarget.earphoneEquipment = {
+      ...card("earphones"),
+      attachedTo: suitedOwnTarget.instanceId,
+      attachedAtTurn: state.actionTurn
+    };
+    const suitedOwnTargetId = suitedOwnTarget.instanceId;
+    state.players.player.board.seats[4] = suitedOwnTarget;
+    state.players.opponent.board.teacher = attendee("general_teacher", "opponent");
+    const ownBustSuit = card("bust_suit");
+    state.players.player.hand = [ownBustSuit];
+    checks.bustSuitUsableOnEitherClassroomStudent = api.canUseHandCardNow(ownBustSuit)
+      && api.canUseItemOnBoardTarget(ownBustSuit, "player", "seat", 4);
+    checks.bustSuitBlockedOnTeacher = !api.canUseItemOnBoardTarget(ownBustSuit, "opponent", "teacher", null);
+    checks.bustSuitOwnTargetResolved = api.castItemOnCard("player", ownBustSuit, "player", "seat", 4, false);
+    const transformedOwn = state.players.player.board.seats[4];
+    checks.bustSuitOwnTargetBecameBaseSuitStudent = transformedOwn?.baseId === "suit_student"
+      && transformedOwn.name === "スーツを着た学生"
+      && transformedOwn.type === "student"
+      && transformedOwn.attack === 1
+      && transformedOwn.currentHp === 1
+      && transformedOwn.instanceId === suitedOwnTargetId;
+    checks.bustSuitPreservedEquipmentAndAttackState = transformedOwn?.hasAttacked === true
+      && transformedOwn.earphoneEquipment?.baseId === "earphones"
+      && transformedOwn.earphoneEquipment?.attachedTo === suitedOwnTargetId;
+    checks.bustSuitCountedAndConsumed = state.suitStudentAttendanceCount === 1
+      && state.players.player.will === 9
+      && state.players.player.trash.some((entry) => entry.baseId === "bust_suit");
+
+    resetBattle();
+    const enemyStudent = attendee("loud_student", "opponent");
+    state.players.opponent.board.seats[7] = enemyStudent;
+    const enemyBustSuit = card("bust_suit");
+    state.players.player.hand = [enemyBustSuit];
+    checks.bustSuitEnemyTargetAllowed = api.canUseItemOnBoardTarget(enemyBustSuit, "opponent", "seat", 7)
+      && api.castItemOnCard("player", enemyBustSuit, "opponent", "seat", 7, false);
+    const transformedEnemy = state.players.opponent.board.seats[7];
+    checks.bustSuitEnemyOwnerAndPositionRemain = transformedEnemy?.baseId === "suit_student"
+      && transformedEnemy.owner === "opponent"
+      && state.players.opponent.board.seats[7] === transformedEnemy
+      && state.suitStudentAttendanceCount === 1;
 
     resetBattle();
     checks.unusableCardsRemainBlocked = ["alpha", "beta", "suspicious_document"].every((baseId) => {

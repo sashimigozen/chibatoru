@@ -16392,7 +16392,7 @@
     ]);
     const AI_TACTICAL_ITEM_IDS = new Set([
       "ruler", "double_diamond", "seriously_hit", "green_curry", "roar", "thin_item",
-      "handy_jet_engine", "i_got_it", "quiet_please", "vampirization", "panpan",
+      "handy_jet_engine", "i_got_it", "quiet_please", "vampirization", "bust_suit", "panpan",
       "favorite_number_s", "namen_tenno", "sock_block", "capture", "abyss", "donguri",
       "night_pool_water", "substitute_attendance", "greeting_3000", "dos_attack",
       "destroy_dos_attack", "dropped_cards", "set_log", "sage_legacy", "thanks_all_students", "yakiniku",
@@ -16573,7 +16573,7 @@
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
       late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"],
-      expansion: ["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "scout_student", "seat_taking_group", "single_cell", "sock_block", "suit_student", "ta_squad", "trpg_member"],
+      expansion: ["aggro_king", "aggro_queen", "brother_capital", "bust_suit", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "scout_student", "seat_taking_group", "single_cell", "sock_block", "suit_student", "ta_squad", "trpg_member"],
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
       big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"],
@@ -16905,6 +16905,7 @@
       ta_squad: [],
       happy_blue_bird: [],
       suit_student: ["suit_student"],
+      bust_suit: [],
       apprentice_vampire: ["cafeteria"],
       smart_me: ["lazy_student", "cancel_student"],
       greeting_3000: ["yuta", "dark_yuta"],
@@ -16947,7 +16948,7 @@
       gigi_blood: []
     };
     let ALL_DECK_IDS = [
-      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "suit_student", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
+      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "tokyo_tech_bro", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
@@ -17085,6 +17086,7 @@
       ruler: { name: "定規", type: "item", cost: 1, target: "enemy" },
       aggro_eater: { name: "アグロ喰い", type: "item", cost: 1, target: "friendlyAny" },
       aggro_army: { name: "アグロ軍", type: "item", cost: 2, target: "self" },
+      bust_suit: { name: "胸像スーツ", type: "item", cost: 1, target: "anyBoard" },
       ux_design_textbook: { name: "UXデザインの教科書", type: "item", cost: 1, target: "self" },
       bento: { name: "お弁当", type: "item", cost: 3, target: "friendly" },
       yakiniku: { name: "焼肉", type: "item", cost: 2, target: "global" },
@@ -17219,6 +17221,7 @@
       scout_student: "expansion",
       lie_pekora: "big"
       ,suit_student: "expansion"
+      ,bust_suit: "expansion"
       ,intern: "expansion"
       ,ta_squad: "expansion"
       ,happy_blue_bird: "common"
@@ -17283,7 +17286,7 @@
       {
         version: "ver.0.20.0",
         date: "2026年8月28日",
-        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」「幸せの青い鳥」「スーツを着た学生」の追加を実施。",
+        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」「幸せの青い鳥」「スーツを着た学生」「胸像スーツ」の追加を実施。",
         changes: [
           { title: "下部ホームバー", before: "各機能へ移動するにはホーム画面へ戻り、画面中央のボタンから選ぶ必要があった。", after: "ホーム、カード、バトル、ソロプレイ、ガチャを並べた下部ホームバーを追加。対戦画面とデッキ編集中を除く画面で表示し、ホーム、デッキ一覧、オンラインバトル、ソロプレイへ直接移動できる。PowerPointの通常素材からアイコン図形だけを透明背景で高解像度出力し、通常時は素材本来の色で表示。カードとバトルの発光時は、それぞれPowerPointの専用発光素材へ切り替える。" },
           { title: "カード修正", before: "「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。", after: "「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。\n\n変更点：カード名から「って」を削除。" },
@@ -17291,7 +17294,8 @@
           { title: "新カード", after: "「斥候学生」\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは「超陽気」を持つ。" },
           { title: "新カード", after: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。" },
           { title: "新カード", after: "「幸せの青い鳥」\n学生／共通カード／戦意2／攻撃力5／体力5\nこのカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。" },
-          { title: "新カード", after: "「スーツを着た学生」\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。\n出席数：X人" }
+          { title: "新カード", after: "「スーツを着た学生」\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。\n出席数：X人" },
+          { title: "新カード", after: "「胸像スーツ」\n持ち物／展開・敵増殖／戦意1\nお互いの講義室にいる学生1人を指名する。その出席者を「スーツを着た学生」にする。" }
         ]
       },
       {
@@ -17820,7 +17824,7 @@
       "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "scared_me", "front_door"],
       "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
-      "展開": ["scout_student", "ta_squad", "happy_blue_bird", "suit_student", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
+      "展開": ["scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
       "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
       "融合": ["ruler", "double_diamond"],
       "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
@@ -24757,6 +24761,11 @@
       if (item.baseId === "go_home") {
         return friendlyCards.some((card) => card.type === "student" && card.currentHp < card.maxHp) ? 4 : 0;
       }
+      if (item.baseId === "bust_suit") {
+        const targets = effectTargetEntries("opponent", "player", (card) => card.type === "student");
+        if (targets.length === 0) return 0;
+        return 5 + Math.max(...targets.map(({ card }) => scoreAiEnemyAttendeeThreat(card)));
+      }
       if (item.baseId === "onigiri_draw") return deck.length >= 2 ? 7 + (opponent.life < 20 ? 4 : 0) : 0;
       if (item.baseId === "hondara") return deck.length >= 1 ? 4 : 0;
       if (item.baseId === "aggro_army") return 9;
@@ -25019,6 +25028,11 @@
           .filter((entry) => entry.card?.type === "student" && entry.card.currentHp < entry.card.maxHp)
           .sort((a, b) => (b.card.maxHp - b.card.currentHp) - (a.card.maxHp - a.card.currentHp))[0];
         return damagedStudent ? castItemOnCard("opponent", item, damagedStudent.ref.owner, damagedStudent.ref.zone, damagedStudent.ref.index, false) : false;
+      }
+      if (item.baseId === "bust_suit") {
+        const target = effectTargetEntries("opponent", "player", (card) => card.type === "student")
+          .sort((a, b) => scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref))[0];
+        return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "i_got_it") {
         const targets = effectTargetEntries("opponent", "player", (target, ref) =>
@@ -28217,6 +28231,46 @@
       return boardCard;
     }
 
+    function recordSuitStudentAttendance(card) {
+      if (card?.baseId !== "suit_student") return false;
+      state.suitStudentAttendanceCount = Math.max(0, Number(state.suitStudentAttendanceCount) || 0) + 1;
+      addLog(`${card.name}の出席回数：この対戦で合計${state.suitStudentAttendanceCount}人。`);
+      return true;
+    }
+
+    function transformToSuitStudent(target) {
+      if (!target || target.type !== "student") return null;
+      const transformed = makeBoardCard(createCardFromBase("suit_student", target.owner));
+      transformed.instanceId = target.instanceId;
+      transformed.owner = target.owner;
+      transformed.hasAttacked = Boolean(target.hasAttacked);
+      transformed.playedOnTurn = target.playedOnTurn;
+      transformed.analyticsEnteredTurn = target.analyticsEnteredTurn;
+
+      const utaEquipments = normalizeUtaEquipmentEntries(target).map((entry) => ({ ...entry }));
+      if (utaEquipments.length > 0) {
+        transformed.yutaEquipments = utaEquipments;
+        utaEquipments.forEach((entry) => {
+          if (entry.baseId === "chameleon") applyPermanentStatBuff(transformed, 0, 2, 0, CARD_BASES.chameleon.name);
+          if (entry.baseId === "red_happi") applyPermanentStatBuff(transformed, 2, 0, 0, CARD_BASES.red_happi.name);
+        });
+        syncLegacyUtaEquipmentState(transformed);
+      }
+      if (isPadlocked(target)) {
+        transformed.padlockEquipment = {
+          ...target.padlockEquipment,
+          attachedTo: transformed.instanceId
+        };
+      }
+      if (isEarphoneEquipped(target)) {
+        transformed.earphoneEquipment = {
+          ...target.earphoneEquipment,
+          attachedTo: transformed.instanceId
+        };
+      }
+      return transformed;
+    }
+
     function applyChaosWorldToHandAndBoard() {
       let handAffected = 0;
       let boardAffected = 0;
@@ -28734,10 +28788,7 @@
         index: zone === "seat" ? index : null
       };
       delete card.pendingAttendanceSource;
-      if (card.baseId === "suit_student" && (zone === "seat" || zone === "teacher")) {
-        state.suitStudentAttendanceCount = Math.max(0, Number(state.suitStudentAttendanceCount) || 0) + 1;
-        addLog(`${card.name}の出席回数：この対戦で合計${state.suitStudentAttendanceCount}人。`);
-      }
+      if (zone === "seat" || zone === "teacher") recordSuitStudentAttendance(card);
 
       // These are shared attendance listeners.  They must still observe an
       // entry whose own printed "when attended" ability is deliberately off.
@@ -30594,7 +30645,12 @@
         if (renderAfter) render();
         return false;
       }
-      if ((item.target === "enemy" || item.baseId === "handmade_ctoc") && !isAllowedEffectTarget(side, target)) {
+      if (item.baseId === "bust_suit" && target.type !== "student") {
+        addLog("胸像スーツは、お互いの講義室にいる学生だけを指名できます。");
+        if (renderAfter) render();
+        return false;
+      }
+      if ((item.target === "enemy" || item.baseId === "handmade_ctoc" || (item.baseId === "bust_suit" && targetOwner !== side)) && !isAllowedEffectTarget(side, target)) {
         addLog("超注目を持つ出席者がいるため、その出席者以外を指名できません。");
         if (renderAfter) render();
         return false;
@@ -30631,6 +30687,11 @@
       }
       if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") {
         addLog(`${target.name}は今、攻撃や敵の持ち物の対象にできません。`);
+        if (renderAfter) render();
+        return false;
+      }
+      if (item.baseId === "bust_suit" && targetOwner !== side && target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn) {
+        addLog(`${target.name}は今、敵の持ち物の対象にできません。`);
         if (renderAfter) render();
         return false;
       }
@@ -30675,6 +30736,19 @@
         clearSelections();
         if (renderAfter) render();
         return Boolean(removed);
+      }
+      if (item.baseId === "bust_suit") {
+        const previousName = target.name;
+        const transformed = transformToSuitStudent(target);
+        if (!transformed) return false;
+        setBoardCard(targetOwner, targetZone, targetIndex, transformed);
+        recordSuitStudentAttendance(transformed);
+        moveHandCardToTrash(side, item);
+        addLog(`${SIDES[side]}は胸像スーツを使い、${previousName}を「スーツを着た学生」にしました。`);
+        applyBoardAuras();
+        clearSelections();
+        if (renderAfter) render();
+        return true;
       }
       if (item.baseId === "vampirization") {
         const movedCard = prepareVampirizedCard(target, side);
@@ -34792,6 +34866,11 @@
       if (item.baseId === "padlock") return owner === "player" && !isPadlocked(target);
       if (item.baseId === "key") return isPadlocked(target);
       if (item.baseId === "handmade_ctoc") return hasOpposingSameNameAttendee(target) && isAllowedEffectTarget("player", target);
+      if (item.baseId === "bust_suit") {
+        if (target.type !== "student") return false;
+        if (owner === "opponent" && !isAllowedEffectTarget("player", target)) return false;
+        if (owner === "opponent" && target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn) return false;
+      }
       if (item.target === "enemy" && owner === "player") return false;
       if ((item.target === "friendly" || item.target === "friendlyAny") && owner !== "player") return false;
       if (item.target === "friendly" && !(target.currentHp !== null && target.currentHp < target.maxHp)) return false;
@@ -38251,6 +38330,10 @@
       const friendlyTarget = makeBoardCard(createCardFromBase("general_student", "player"));
       friendlyTarget.currentHp = 1;
       friendlyTarget.playedOnTurn = 0;
+      if (baseId === "bust_suit") {
+        friendlyTarget.hasAttacked = true;
+        attachEarphones(friendlyTarget, createCardFromBase("earphones", "player"));
+      }
       player.board.seats[["seat_taking_group", "ta_squad"].includes(baseId) ? 0 : 4] = friendlyTarget;
       if (baseId === "green_curry") {
         state.environment = makeBoardCard(createCardFromBase("cafeteria", "player"));
@@ -38502,6 +38585,8 @@
           ? "幸せの青い鳥の自動攻撃と増殖を確認できるよう、攻撃可能な青い鳥と体力1の一般学生を配置しています。"
           : baseId === "suit_student"
             ? "スーツを着た学生の戦意減少を確認できるよう、両者の講義室に1人ずつ配置し、教師もテスト用に配置しています。"
+          : baseId === "bust_suit"
+            ? "胸像スーツの対象と状態維持を確認できるよう、攻撃済みでイヤホンを装備した一般学生と、相手の学生を配置しています。"
           : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
       render();
       showTurnOverlay("player");
@@ -39767,6 +39852,7 @@
         gigi_blood: "進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
         vampirization: "相手の出席者1人を指名し、それをタイプ「ヴァンパイア」にした後、自分の場に移す。",
+        bust_suit: "お互いの講義室にいる学生1人を指名する。その出席者を「スーツを着た学生」にする。",
         iv_pack: "自分のデッキからヴァンパイアをランダムに2枚まで手札に加える。",
         wet_meal_ticket: "自分のデッキからカードを1枚引く。このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「乾いた食券」にする。",
         dry_meal_ticket: "環境が「食堂」の場合にのみ使用できる。自分のデッキから「おにぎりドロー」と「流動性パスタ」をそれぞれ1枚まで引く。",

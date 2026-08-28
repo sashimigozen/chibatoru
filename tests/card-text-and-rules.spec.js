@@ -17,6 +17,7 @@ test("確定したカードテキストが表示データに反映されてい�
     "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
     "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
     "このカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。",
+    "お互いの講義室にいる学生1人を指名する。その出席者を「スーツを着た学生」にする。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -43,6 +44,7 @@ test("確定したカードテキストが表示データに反映されてい�
   expect(source).toContain('after: "「TA軍団」\\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\\n');
   expect(source).toContain('after: "「幸せの青い鳥」\\n学生／共通カード／戦意2／攻撃力5／体力5\\n');
   expect(source).toContain('after: "「スーツを着た学生」\\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\\n');
+  expect(source).toContain('after: "「胸像スーツ」\\n持ち物／展開・敵増殖／戦意1\\n');
   expect(source).toContain('このカードは教師からダメージを受けない。\\n出席数：X人"');
 });
 
@@ -51,6 +53,10 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   await page.locator("#homeUpdatesButton").click();
   const latestEntry = page.locator(".update-entry").first();
   await latestEntry.locator("summary").click();
+
+  const bustSuit = latestEntry.locator(".update-after", { hasText: "胸像スーツ" });
+  await expect(bustSuit).toHaveCSS("white-space", "pre-line");
+  await expect(bustSuit).toContainText("「胸像スーツ」\n持ち物／展開・敵増殖／戦意1\nお互いの講義室にいる学生1人");
 
   const aggroArmy = latestEntry.locator(".update-after", { hasText: "アグロ軍" });
   await expect(aggroArmy).toHaveCSS("white-space", "pre-line");
@@ -65,7 +71,7 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   const happyBlueBird = latestEntry.locator(".update-after", { hasText: "幸せの青い鳥" });
   await expect(happyBlueBird).toContainText("「幸せの青い鳥」\n学生／共通カード／戦意2／攻撃力5／体力5\nこのカードは相手本体");
 
-  const suitStudent = latestEntry.locator(".update-after", { hasText: "スーツを着た学生" });
+  const suitStudent = latestEntry.locator(".update-after", { hasText: "学生／展開・敵増殖／戦意8／攻撃力1／体力1" });
   await expect(suitStudent).toContainText("「スーツを着た学生」\n学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意");
   await expect(suitStudent).toContainText("出席数：X人");
 
