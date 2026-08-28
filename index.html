@@ -16561,7 +16561,7 @@
     ));
     const ONLINE_DECK_DESCRIPTOR_PREFIX = "chibattle-online-deck-v1";
     const SPECIALTY_CARD_IDS = Object.freeze({
-      common: ["aggro_army", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
+      common: ["aggro_army", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
       gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
@@ -16896,6 +16896,7 @@
       aggro_army: [],
       scout_student: [],
       ta_squad: [],
+      happy_blue_bird: [],
       apprentice_vampire: ["cafeteria"],
       smart_me: ["lazy_student", "cancel_student"],
       greeting_3000: ["yuta", "dark_yuta"],
@@ -16938,7 +16939,7 @@
       gigi_blood: []
     };
     let ALL_DECK_IDS = [
-      "aggro_student", "aggro_king", "scout_student", "ta_squad", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
+      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "tokyo_tech_bro", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
@@ -16981,6 +16982,7 @@
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
       suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
       ta_squad: { name: "TA軍団", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
+      happy_blue_bird: { name: "幸せの青い鳥", type: "student", cost: 2, attack: 5, hp: 5, allowedZones: ["seat", "teacher"] },
       absolute_woman: { name: "「絶対」女", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
@@ -17211,6 +17213,7 @@
       ,suit_student: "expansion"
       ,intern: "expansion"
       ,ta_squad: "expansion"
+      ,happy_blue_bird: "common"
       ,quick_quiz_tournament: "common"
       ,earphones: "common"
     });
@@ -17272,13 +17275,14 @@
       {
         version: "ver.0.20.0",
         date: "2026年8月28日",
-        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」の追加を実施。",
+        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」「幸せの青い鳥」の追加を実施。",
         changes: [
           { title: "下部ホームバー", before: "各機能へ移動するにはホーム画面へ戻り、画面中央のボタンから選ぶ必要があった。", after: "ホーム、カード、バトル、ソロプレイ、ガチャを並べた下部ホームバーを追加。対戦画面とデッキ編集中を除く画面で表示し、ホーム、デッキ一覧、オンラインバトル、ソロプレイへ直接移動できる。PowerPointの通常素材からアイコン図形だけを透明背景で高解像度出力し、通常時は素材本来の色で表示。カードとバトルの発光時は、それぞれPowerPointの専用発光素材へ切り替える。" },
           { title: "カード修正", before: "「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。", after: "「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。\n\n変更点：カード名から「って」を削除。" },
           { title: "新カード", after: "「アグロ軍」\n持ち物／共通カード／戦意2\n「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。" },
           { title: "新カード", after: "「斥候学生」\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは「超陽気」を持つ。" },
-          { title: "新カード", after: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。" }
+          { title: "新カード", after: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。" },
+          { title: "新カード", after: "「幸せの青い鳥」\n学生／共通カード／戦意2／攻撃力5／体力5\nこのカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。" }
         ]
       },
       {
@@ -17807,7 +17811,7 @@
       "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "scared_me", "front_door"],
       "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
-      "展開": ["scout_student", "ta_squad", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
+      "展開": ["scout_student", "ta_squad", "happy_blue_bird", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
       "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
       "融合": ["ruler", "double_diamond"],
       "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
@@ -23849,6 +23853,7 @@
     function canAiLethalAttackerHitLife(card, targetSide = "player") {
       return state.environment?.baseId !== "meguro_library"
         && !isAibenNyoteiAttackLifeBlocked(card, targetSide)
+        && card?.baseId !== "happy_blue_bird"
         && !(card.playedOnTurn === state.actionTurn && hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
     }
 
@@ -25098,14 +25103,13 @@
             addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
             showFloatingTextForCard(targetCard, "ミス", "miss");
           } else {
-            resolveCardAttack(resolvingAttacker, targetCard);
-            cleanupDestroyedCards();
-            applyBoardAuras();
+            resolveCardAttackWithBoardCleanup(resolvingAttacker, target);
           }
         } else {
           if (listAttentionCards("player").length > 0
             || state.environment?.baseId === "meguro_library"
             || isAibenNyoteiAttackLifeBlocked(attacker, "player")
+            || attacker.baseId === "happy_blue_bird"
             || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気"))) {
             continue;
           }
@@ -25160,6 +25164,7 @@
       const cannotAttackLife = (attentionIds.size > 0 && attacker.baseId !== "loud_student")
         || state.environment?.baseId === "meguro_library"
         || isAibenNyoteiAttackLifeBlocked(attacker, "player")
+        || attacker.baseId === "happy_blue_bird"
         || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
       const lethalForecast = getAiLethalForecast();
       if (!cannotAttackLife && lethalForecast.immediateLethal) return null;
@@ -25440,6 +25445,7 @@
       });
       resolveBestFriendEndTurnEffect(side);
       resolveAggroStudentEffects(side);
+      resolveHappyBlueBirdEndTurnAttacks(side);
     }
 
     function resolveEnvironmentEndTurnEffects(side, options = {}) {
@@ -25835,6 +25841,42 @@
             }
           }
         });
+      });
+    }
+
+    function happyBlueBirdAttackTargets(attacker) {
+      if (!attacker?.owner) return [];
+      const targetSide = oppositeSide(attacker.owner);
+      const priorityIds = new Set(listAttackPriorityCards(targetSide).map((card) => card.instanceId));
+      return listBoardRefs(targetSide)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card
+          && canAibenNyoteiAttackTarget(attacker, entry.card)
+          && !isDesignDomainAttackBlocked(attacker, entry.card)
+          && !(entry.card.untargetableUntilTurn && entry.card.untargetableUntilTurn >= state.actionTurn)
+          && (priorityIds.size === 0 || priorityIds.has(entry.card.instanceId)));
+    }
+
+    function resolveHappyBlueBirdEndTurnAttacks(side) {
+      const birdRefs = listBoardRefs(side).filter((ref) => getBoardCardFromRef(ref)?.baseId === "happy_blue_bird");
+      birdRefs.forEach((attackerRef) => {
+        const attacker = getBoardCardFromRef(attackerRef);
+        if (!attacker || !canUsePrintedCardEffects(attacker) || !canAttackSilently(attacker)) return;
+        const targets = happyBlueBirdAttackTargets(attacker);
+        const targetEntry = targets[Math.floor(Math.random() * targets.length)];
+        if (!targetEntry) {
+          addLog(`${attacker.name}の効果：攻撃できる相手の出席者がいないため不発。`);
+          return;
+        }
+        attacker.hasAttacked = true;
+        flashAttackFocus(attackerRef, targetEntry.ref);
+        if (attackMissesFromDrowsiness(attacker)) {
+          addLog(`${attacker.name}は眠気で自動攻撃を外しました。`);
+          showFloatingTextForCard(targetEntry.card, "ミス", "miss");
+          return;
+        }
+        addLog(`${attacker.name}の効果：${targetEntry.card.name}をランダムに指名して攻撃します。`);
+        resolveCardAttackWithBoardCleanup(attacker, targetEntry.ref);
       });
     }
 
@@ -30148,9 +30190,7 @@
         render();
         return;
       }
-      resolveCardAttack(resolvingAttacker, resolvingTarget);
-      cleanupDestroyedCards();
-      applyBoardAuras();
+      resolveCardAttackWithBoardCleanup(resolvingAttacker, targetRef);
       checkLifeVictory();
       completeTutorialAction("attackCard", { attacker: resolvingAttacker, target: resolvingTarget });
       clearSelections();
@@ -30223,6 +30263,12 @@
       }
       if (isAibenNyoteiAttackLifeBlocked(attacker, targetSide)) {
         addLog(aibenNyoteiAttackRestrictionText(attacker));
+        clearSelections();
+        render();
+        return;
+      }
+      if (attacker.baseId === "happy_blue_bird") {
+        addLog(`${attacker.name}は相手本体を攻撃できません。`);
         clearSelections();
         render();
         return;
@@ -30379,6 +30425,33 @@
         attacker.hasAttacked = false;
         addLog(`${attacker.name}の効果：攻撃した出席者が校外エリアへ送られるため、もう一度攻撃できます。`);
       }
+    }
+
+    function resolveCardAttackWithBoardCleanup(attacker, targetRef) {
+      const target = getBoardCardFromRef(targetRef);
+      if (!attacker || !target) return { targetDefeated: false, birdSummoned: false };
+      const canonicalTargetRef = listBoardRefs(target.owner)
+        .find((ref) => getBoardCardFromRef(ref)?.instanceId === target.instanceId) || { ...targetRef };
+      const defeatedName = target.name;
+      resolveCardAttack(attacker, target);
+      const targetDefeated = target.currentHp <= 0;
+      cleanupDestroyedCards();
+      let birdSummoned = false;
+      if (attacker.baseId === "happy_blue_bird"
+        && targetDefeated
+        && !getBoardCardFromRef(canonicalTargetRef)
+        && isBoardSlotOpen(canonicalTargetRef.owner, canonicalTargetRef.zone, canonicalTargetRef.index)) {
+        const bird = makeBoardCard(createCardFromBase("happy_blue_bird", canonicalTargetRef.owner));
+        birdSummoned = Boolean(attendCard(canonicalTargetRef.owner, bird, canonicalTargetRef.zone, canonicalTargetRef.index, {
+          attendanceSource: ATTENDANCE_SOURCE.EFFECT
+        }));
+        if (birdSummoned) {
+          showCardPlayAnimation(bird, "board");
+          addLog(`${attacker.name}の効果：校外へ送った${defeatedName}のいた位置に、${SIDES[canonicalTargetRef.owner]}の「幸せの青い鳥」を出席させました。`);
+        }
+      }
+      applyBoardAuras();
+      return { targetDefeated, birdSummoned };
     }
 
     function resolveBounceDayCardAttack(attackerRef, targetRef, attacker, target) {
@@ -32133,6 +32206,7 @@
       const attacker = getSelectedAttackCard();
       if (!attacker || targetSide === state.currentSide) return false;
       if (isAibenNyoteiAttackLifeBlocked(attacker, targetSide)) return false;
+      if (attacker.baseId === "happy_blue_bird") return false;
       if (state.environment?.baseId === "meguro_library") return false;
       if (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student") return false;
       return !(attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
@@ -38215,6 +38289,15 @@
         opponent.board.seats.fill(null);
         opponent.board.teacher = null;
       }
+      if (baseId === "happy_blue_bird") {
+        const readyBird = makePlayerTestAttendee("happy_blue_bird");
+        player.board.seats[0] = readyBird;
+        opponent.board.seats.fill(null);
+        opponent.board.teacher = null;
+        const weakTarget = makeOpponentTestAttendee("general_student");
+        weakTarget.currentHp = 1;
+        opponent.board.seats[4] = weakTarget;
+      }
       if (baseId === "i_got_it") {
         [6, 7].forEach((index) => {
           const thirdRowStudent = makeBoardCard(createCardFromBase("general_student", "opponent"));
@@ -38380,7 +38463,9 @@
       addLog(`${CARD_BASES[baseId].name}のテストプレイを開始しました。`);
       addLog(baseId === "scout_student"
         ? "斥候学生の超陽気を確認できるよう、相手の講義室を空にしています。"
-        : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
+        : baseId === "happy_blue_bird"
+          ? "幸せの青い鳥の自動攻撃と増殖を確認できるよう、攻撃可能な青い鳥と体力1の一般学生を配置しています。"
+          : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
       render();
       showTurnOverlay("player");
     }
@@ -39516,6 +39601,7 @@
         aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
         scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
         ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
+        happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
         single_cell: "自分の場に「単細胞生物」が2人いる場合、それらを破壊し、先に出席していた「単細胞生物」の席マスに「ミジンコ」を出席させる。",
         midge: "このカードが出席したとき、相手の出席者1人をランダムに指名し、1ダメージを与える。自分の場に「ミジンコ」が2人いる場合、それらを破壊し、先に出席していた「ミジンコ」の席マスに「生物」を出席させる。",
         organism: "陽気を持つ。このカードが出席したとき、相手の出席者すべてに2ダメージを与える。自分の場に「生物」「ミジンコ」「単細胞生物」がいる場合、それらを破壊し、「生物」がいた席マスに「完全変異体」を出席させる。",
@@ -40349,6 +40435,9 @@
       resolveTitleMatch,
       drawOne,
       resolveStudentEndTurnEffects,
+      resolveHappyBlueBirdEndTurnAttacks,
+      resolveCardAttackWithBoardCleanup,
+      canSelectedAttackerTargetLife,
       resolveChaosWorldAtTurnStart,
       resolveRaptorTempleExchange,
       applyBoardAuras,

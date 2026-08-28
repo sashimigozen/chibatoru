@@ -21,6 +21,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "aggro_army",
       "scout_student",
       "ta_squad",
+      "happy_blue_bird",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -81,6 +82,10 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.one_eyed_peek.opponentHand.length).toBeGreaterThan(0);
   expect(result.scout_student.opponentBoard).toHaveLength(0);
   expect(result.scout_student.superCheerful).toBe(true);
+  expect(result.happy_blue_bird.playerBoard.filter((card) => card.baseId === "happy_blue_bird")).toHaveLength(1);
+  expect(result.happy_blue_bird.opponentBoard).toEqual([
+    expect.objectContaining({ baseId: "general_student", hp: 1 })
+  ]);
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);
@@ -136,4 +141,130 @@ test("TA軍団は手札から2行目へ出席した場合だけ残りの空き�
   expect(result.handAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(3);
   expect(result.sources.slice(3, 6)).toEqual(["copy", "hand", "copy"]);
   expect(result.effectAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(1);
+});
+
+test("幸せの青い鳥は本体を攻撃せず、攻撃で倒した位置へ相手所有の基本5/5を出席させる", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const reset = () => {
+      state.phase = "battle";
+      state.currentSide = "player";
+      state.gameOver = false;
+      state.testMode = true;
+      state.actionTurn = 2;
+      state.noAttackUntilActionTurn = 0;
+      state.players.player.turnsTaken = 2;
+      state.players.opponent.turnsTaken = 1;
+      state.players.player.board.seats = Array(9).fill(null);
+      state.players.player.board.teacher = null;
+      state.players.player.trash = [];
+      state.players.opponent.board.seats = Array(9).fill(null);
+      state.players.opponent.board.teacher = null;
+      state.players.opponent.trash = [];
+    };
+    const bird = (owner = "player") => {
+      const card = api.makeBoardCard(api.createCardFromBase("happy_blue_bird", owner));
+      card.playedOnTurn = 0;
+      return card;
+    };
+    const weakStudent = () => {
+      const card = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+      card.playedOnTurn = 0;
+      card.currentHp = 1;
+      return card;
+    };
+
+    reset();
+    const automaticBird = bird();
+    state.players.player.board.seats[0] = automaticBird;
+    state.players.opponent.board.seats[4] = weakStudent();
+    state.selectedAttacker = { owner: "player", zone: "seat", index: 0 };
+    const canAttackLife = api.canSelectedAttackerTargetLife("opponent");
+    state.selectedAttacker = null;
+    api.resolveHappyBlueBirdEndTurnAttacks("player");
+    const automaticSpawn = state.players.opponent.board.seats[4];
+    const automaticTrash = state.players.opponent.trash.map((card) => card.baseId);
+
+    reset();
+    const manualBird = bird();
+    state.players.player.board.seats[0] = manualBird;
+    state.players.opponent.board.teacher = weakStudent();
+    const manualResult = api.resolveCardAttackWithBoardCleanup(manualBird, {
+      owner: "opponent",
+      zone: "teacher",
+      index: null
+    });
+    const manualSpawn = state.players.opponent.board.teacher;
+
+    reset();
+    const nonLethalBird = bird();
+    state.players.player.board.seats[0] = nonLethalBird;
+    const durableTarget = api.makeBoardCard(api.createCardFromBase("loud_student", "opponent"));
+    durableTarget.playedOnTurn = 0;
+    state.players.opponent.board.seats[4] = durableTarget;
+    const nonLethalResult = api.resolveCardAttackWithBoardCleanup(nonLethalBird, {
+      owner: "opponent",
+      zone: "seat",
+      index: 4
+    });
+    const nonLethalTarget = state.players.opponent.board.seats[4];
+
+    reset();
+    const spentBird = bird();
+    spentBird.hasAttacked = true;
+    state.players.player.board.seats[0] = spentBird;
+    state.players.opponent.board.seats[4] = weakStudent();
+    api.resolveHappyBlueBirdEndTurnAttacks("player");
+
+    return {
+      canAttackLife,
+      automatic: {
+        attackerHasAttacked: automaticBird.hasAttacked,
+        baseId: automaticSpawn?.baseId,
+        owner: automaticSpawn?.owner,
+        attack: automaticSpawn?.attack,
+        hp: automaticSpawn?.currentHp,
+        opponentTrash: automaticTrash
+      },
+      manual: {
+        result: manualResult,
+        baseId: manualSpawn?.baseId,
+        owner: manualSpawn?.owner,
+        attack: manualSpawn?.attack,
+        hp: manualSpawn?.currentHp
+      },
+      nonLethal: {
+        result: nonLethalResult,
+        baseId: nonLethalTarget?.baseId,
+        hp: nonLethalTarget?.currentHp
+      },
+      spentTarget: state.players.opponent.board.seats[4]?.baseId
+    };
+  });
+
+  expect(result.canAttackLife).toBe(false);
+  expect(result.automatic).toMatchObject({
+    attackerHasAttacked: true,
+    baseId: "happy_blue_bird",
+    owner: "opponent",
+    attack: 5,
+    hp: 5,
+    opponentTrash: ["general_student"]
+  });
+  expect(result.manual).toMatchObject({
+    result: { targetDefeated: true, birdSummoned: true },
+    baseId: "happy_blue_bird",
+    owner: "opponent",
+    attack: 5,
+    hp: 5
+  });
+  expect(result.nonLethal).toMatchObject({
+    result: { targetDefeated: false, birdSummoned: false },
+    baseId: "loud_student",
+    hp: 4
+  });
+  expect(result.spentTarget).toBe("general_student");
 });
