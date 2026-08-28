@@ -26,6 +26,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "bust_suit",
       "intern",
       "king_ghidorah_bed",
+      "quick_quiz_tournament",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -106,6 +107,9 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.king_ghidorah_bed.hand.filter((baseId) => baseId === "king_ghidorah_bed")).toHaveLength(2);
   expect(result.king_ghidorah_bed.hand).toContain("general_student");
   expect(result.king_ghidorah_bed.opponentBoard.length).toBeGreaterThan(0);
+  expect(result.quick_quiz_tournament.hand).toContain("general_student");
+  expect(result.quick_quiz_tournament.playerBoard).toHaveLength(8);
+  expect(result.quick_quiz_tournament.playerBoard.every((card) => card.type === "student")).toBe(true);
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);
@@ -118,6 +122,89 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.namen_tenno.opponentBoard.filter((card) => card.type === "vampire")).toHaveLength(3);
   expect(result.course_registration_party.playerDeckSize).toBeGreaterThanOrEqual(5);
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
+});
+
+test("早押しクイズ大会は新たに成立した各ビンゴと8ビンゴを両者に適用し、再成立でも発動する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const card = (baseId, owner = "player") => api.createCardFromBase(baseId, owner);
+    const attendee = (baseId = "general_student", owner = "player") => api.makeBoardCard(card(baseId, owner));
+    const fillDeck = (side, count = 12) => {
+      state.players[side].deck = Array.from({ length: count }, () => card("general_student", side));
+    };
+    const reset = () => {
+      state.screen = "battle";
+      state.phase = "battle";
+      state.gameOver = false;
+      state.actionTurn = 1;
+      state.environment = api.makeBoardCard(card("quick_quiz_tournament"));
+      ["player", "opponent"].forEach((side) => {
+        state.players[side].hand = [];
+        state.players[side].trash = [];
+        state.players[side].board.seats = Array(9).fill(null);
+        state.players[side].board.teacher = null;
+        fillDeck(side);
+      });
+    };
+
+    reset();
+    [0, 1, 2, 3, 5, 6, 7, 8].forEach((index) => {
+      state.players.player.board.seats[index] = attendee();
+    });
+    const firstCenter = attendee();
+    api.attendCard("player", firstCenter, "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    const firstEightBingo = {
+      attack: firstCenter.attack,
+      hp: firstCenter.maxHp,
+      currentHp: firstCenter.currentHp,
+      drawn: state.players.player.hand.length,
+      completeLines: api.completeQuickQuizBingoLines("player").length
+    };
+
+    state.players.player.board.seats[4] = null;
+    state.players.player.hand = [];
+    fillDeck("player");
+    const secondCenter = attendee();
+    api.attendCard("player", secondCenter, "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    const reformedEightBingo = {
+      attack: secondCenter.attack,
+      hp: secondCenter.maxHp,
+      drawn: state.players.player.hand.length
+    };
+
+    reset();
+    state.players.opponent.board.seats[0] = attendee("general_student", "opponent");
+    state.players.opponent.board.seats[1] = attendee("general_student", "opponent");
+    const opponentAchiever = attendee("general_student", "opponent");
+    api.attendCard("opponent", opponentAchiever, "seat", 2, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    const opponentHorizontal = {
+      attack: opponentAchiever.attack,
+      hp: opponentAchiever.maxHp,
+      drawn: state.players.opponent.hand.length
+    };
+
+    reset();
+    state.players.player.board.seats[0] = attendee();
+    state.players.player.board.seats[1] = attendee();
+    const teacher = attendee("general_teacher");
+    api.attendCard("player", teacher, "teacher", null, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    const teacherExcluded = {
+      attack: teacher.attack,
+      hp: teacher.maxHp,
+      completeLines: api.completeQuickQuizBingoLines("player").length,
+      drawn: state.players.player.hand.length
+    };
+
+    return { firstEightBingo, reformedEightBingo, opponentHorizontal, teacherExcluded };
+  });
+
+  expect(result.firstEightBingo).toEqual({ attack: 6, hp: 6, currentHp: 6, drawn: 5, completeLines: 8 });
+  expect(result.reformedEightBingo).toEqual({ attack: 6, hp: 6, drawn: 5 });
+  expect(result.opponentHorizontal).toEqual({ attack: 2, hp: 3, drawn: 0 });
+  expect(result.teacherExcluded).toEqual({ attack: 1, hp: 2, completeLines: 0, drawn: 0 });
 });
 
 test("TA軍団は手札から2行目へ出席した場合だけ残りの空きマスへコピーを出席させる", async ({ page }) => {
