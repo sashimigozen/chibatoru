@@ -40,6 +40,7 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
     const normalMany = replace(normalDeck(), 2, { think_so: 2 });
     const normalAggroArmy = replace(normalDeck(), 1, { aggro_army: 1 });
     const normalScoutStudent = replace(normalDeck(), 1, { scout_student: 1 });
+    const normalTaSquad = replace(normalDeck(), 1, { ta_squad: 1 });
     const specialtyZero = lateDeck();
     const specialtyOne = replace(lateDeck(), 1, { tokyo_tech_bro: 1 });
     const specialtySameTwo = replace(lateDeck(), 2, { tokyo_tech_bro: 2 });
@@ -56,11 +57,15 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
       normalMany: api.validateDeckCounts(normalMany),
       normalAggroArmy: api.validateDeckCounts(normalAggroArmy),
       normalScoutStudent: api.validateDeckCounts(normalScoutStudent),
+      normalTaSquad: api.validateDeckCounts(normalTaSquad),
       aggroArmyCommonEverySpecialty: api.SPECIALTY_DEFINITIONS
         .every((definition) => api.specialtyAllowedCardIds(definition.id).has("aggro_army")),
       scoutStudentExpansionOnly: api.specialtyAllowedCardIds("expansion").has("scout_student")
         && !api.specialtyAllowedCardIds("late").has("scout_student")
         && !api.SPECIALTY_CARD_IDS.common.includes("scout_student"),
+      taSquadExpansionOnly: api.specialtyAllowedCardIds("expansion").has("ta_squad")
+        && !api.specialtyAllowedCardIds("late").has("ta_squad")
+        && !api.SPECIALTY_CARD_IDS.common.includes("ta_squad"),
       specialtyOne: api.validateSpecialtyDeckCounts(specialtyOne, "late"),
       specialtySameTwo: api.validateSpecialtyDeckCounts(specialtySameTwo, "late"),
       specialtyDifferent: api.validateSpecialtyDeckCounts(specialtyDifferent, "late"),
@@ -83,8 +88,10 @@ test("エースぺの通常・専攻・カオス・オンライン判定が正�
   expect(cases.normalMany.valid).toBe(false);
   expect(cases.normalAggroArmy.valid).toBe(true);
   expect(cases.normalScoutStudent.valid).toBe(true);
+  expect(cases.normalTaSquad.valid).toBe(true);
   expect(cases.aggroArmyCommonEverySpecialty).toBe(true);
   expect(cases.scoutStudentExpansionOnly).toBe(true);
+  expect(cases.taSquadExpansionOnly).toBe(true);
   expect(cases.specialtyOne.valid).toBe(true);
   expect(cases.specialtySameTwo.valid).toBe(false);
   expect(cases.specialtyDifferent.valid).toBe(false);

@@ -14,6 +14,7 @@ test("確定したカードテキストが表示データに反映されてい�
     "相手の手札を見る。",
     "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
     "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
+    "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -37,6 +38,7 @@ test("確定したカードテキストが表示データに反映されてい�
   expect(source).toContain('after: "「思ってまう」\\n持ち物／学友会・持ち物／戦意1／エースぺ\\n');
   expect(source).toContain('after: "「アグロ軍」\\n持ち物／共通カード／戦意2\\n');
   expect(source).toContain('after: "「斥候学生」\\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\\n');
+  expect(source).toContain('after: "「TA軍団」\\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\\n');
 });
 
 test("更新情報のカード追加・修正をカード名、ステータス、テキストの順で表示する", async ({ page }) => {
@@ -51,6 +53,9 @@ test("更新情報のカード追加・修正をカード名、ステータス�
 
   const scoutStudent = latestEntry.locator(".update-after", { hasText: "斥候学生" });
   await expect(scoutStudent).toContainText("「斥候学生」\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室");
+
+  const taSquad = latestEntry.locator(".update-after", { hasText: "TA軍団" });
+  await expect(taSquad).toContainText("「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目");
 
   const cardChange = latestEntry.locator(".update-change", { hasText: "変更点：カード名から「って」を削除。" });
   await expect(cardChange.locator(".update-before")).toContainText("「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");

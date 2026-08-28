@@ -20,6 +20,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "one_eyed_peek",
       "aggro_army",
       "scout_student",
+      "ta_squad",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -92,4 +93,47 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.namen_tenno.opponentBoard.filter((card) => card.type === "vampire")).toHaveLength(3);
   expect(result.course_registration_party.playerDeckSize).toBeGreaterThanOrEqual(5);
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
+});
+
+test("TA軍団は手札から2行目へ出席した場合だけ残りの空きマスへコピーを出席させる", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const reset = () => {
+      state.phase = "battle";
+      state.gameOver = false;
+      state.actionTurn = 1;
+      state.players.player.board.seats = Array(9).fill(null);
+      state.players.player.board.teacher = null;
+      state.players.opponent.board.seats = Array(9).fill(null);
+      state.players.opponent.board.teacher = null;
+    };
+    const squad = () => api.makeBoardCard(api.createCardFromBase("ta_squad", "player"));
+
+    reset();
+    const placementCard = api.createCardFromBase("ta_squad", "player");
+    const placement = {
+      secondRow: api.canPlaceCard("player", placementCard, "seat", "player", 4),
+      firstRow: api.canPlaceCard("player", placementCard, "seat", "player", 1),
+      teacher: api.canPlaceCard("player", placementCard, "teacher", "player", null)
+    };
+
+    api.attendCard("player", squad(), "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    const handAttendance = state.players.player.board.seats.map((card) => card?.baseId || null);
+    const sources = state.players.player.board.seats.map((card) => card?.lastAttendanceSource || null);
+
+    reset();
+    api.attendCard("player", squad(), "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
+    const effectAttendance = state.players.player.board.seats.map((card) => card?.baseId || null);
+
+    return { placement, handAttendance, sources, effectAttendance };
+  });
+
+  expect(result.placement).toEqual({ secondRow: true, firstRow: false, teacher: false });
+  expect(result.handAttendance.slice(3, 6)).toEqual(["ta_squad", "ta_squad", "ta_squad"]);
+  expect(result.handAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(3);
+  expect(result.sources.slice(3, 6)).toEqual(["copy", "hand", "copy"]);
+  expect(result.effectAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(1);
 });
