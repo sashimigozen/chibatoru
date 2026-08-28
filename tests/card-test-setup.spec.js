@@ -25,6 +25,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "suit_student",
       "bust_suit",
       "intern",
+      "king_ghidorah_bed",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -100,6 +101,11 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.bust_suit.opponentBoard.some((card) => card.type === "student")).toBe(true);
   expect(result.intern.playerBoard.filter((card) => card.type === "student").length).toBeGreaterThanOrEqual(2);
   expect(result.intern.opponentBoard.filter((card) => card.type === "student").length).toBeGreaterThanOrEqual(2);
+  expect(result.king_ghidorah_bed.maxWill).toBe(15);
+  expect(result.king_ghidorah_bed.effectiveCost).toBe(8);
+  expect(result.king_ghidorah_bed.hand.filter((baseId) => baseId === "king_ghidorah_bed")).toHaveLength(2);
+  expect(result.king_ghidorah_bed.hand).toContain("general_student");
+  expect(result.king_ghidorah_bed.opponentBoard.length).toBeGreaterThan(0);
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);

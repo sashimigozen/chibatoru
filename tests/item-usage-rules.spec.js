@@ -219,6 +219,109 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
       && state.suitStudentAttendanceCount === 4;
 
     resetBattle();
+    state.screen = "battle";
+    state.players.player.will = 7;
+    const ghidorahEffect3 = card("king_ghidorah_bed");
+    state.players.player.hand = [ghidorahEffect3];
+    checks.kingGhidorahCostsFourBelowEight = api.effectiveCardCost(ghidorahEffect3) === 4;
+    checks.kingGhidorahSingleBodyDamage = api.resolveKingGhidorahBed("player", ghidorahEffect3, "3", null, null, false)
+      && state.players.player.will === 3
+      && state.players.opponent.life === 16
+      && state.players.player.trash.some((entry) => entry.baseId === "king_ghidorah_bed");
+
+    resetBattle();
+    state.screen = "battle";
+    state.players.player.will = 7;
+    const ghidorahEffect2 = card("king_ghidorah_bed");
+    const ghidorahDiscard = card("general_student");
+    const ghidorahDestroyTarget = attendee("loud_student", "opponent");
+    state.players.player.hand = [ghidorahEffect2, ghidorahDiscard];
+    state.players.opponent.board.seats[4] = ghidorahDestroyTarget;
+    checks.kingGhidorahSingleDestroy = api.resolveKingGhidorahBed(
+      "player",
+      ghidorahEffect2,
+      "2",
+      ghidorahDiscard.instanceId,
+      { owner: "opponent", zone: "seat", index: 4 },
+      false
+    )
+      && state.players.player.will === 3
+      && state.players.opponent.board.seats[4] === null
+      && state.players.player.trash.some((entry) => entry.instanceId === ghidorahDiscard.instanceId)
+      && state.players.opponent.trash.some((entry) => entry.instanceId === ghidorahDestroyTarget.instanceId);
+
+    resetBattle();
+    state.screen = "battle";
+    state.players.player.will = 8;
+    const forcedGhidorah = card("king_ghidorah_bed");
+    const protectedDiscard = card("general_student");
+    const diesToFirstEffect = attendee("general_student", "opponent");
+    state.players.player.hand = [forcedGhidorah, protectedDiscard];
+    state.players.opponent.board.seats[4] = diesToFirstEffect;
+    checks.kingGhidorahCostsEightAtThreshold = api.effectiveCardCost(forcedGhidorah) === 8;
+    checks.kingGhidorahForcedAllSkipsSecondWithoutDiscard = api.resolveKingGhidorahBed(
+      "player",
+      forcedGhidorah,
+      "3",
+      protectedDiscard.instanceId,
+      { owner: "opponent", zone: "seat", index: 4 },
+      false
+    )
+      && state.players.player.will === 0
+      && state.players.opponent.life === 16
+      && state.players.opponent.board.seats[4] === null
+      && state.players.player.hand.some((entry) => entry.instanceId === protectedDiscard.instanceId)
+      && !state.players.player.trash.some((entry) => entry.instanceId === protectedDiscard.instanceId);
+
+    resetBattle();
+    state.screen = "battle";
+    state.players.player.will = 10;
+    const allGhidorah = card("king_ghidorah_bed");
+    const allDiscard = card("bento");
+    const allTarget = attendee("loud_student", "opponent");
+    const allAoeVictim = attendee("general_student", "opponent");
+    state.players.player.hand = [allGhidorah, allDiscard];
+    state.players.opponent.board.seats[4] = allTarget;
+    state.players.opponent.board.seats[0] = allAoeVictim;
+    checks.kingGhidorahForcedAllResolvesInOrder = api.resolveKingGhidorahBed(
+      "player",
+      allGhidorah,
+      "1",
+      allDiscard.instanceId,
+      { owner: "opponent", zone: "seat", index: 4 },
+      false
+    )
+      && state.players.player.will === 2
+      && state.players.opponent.life === 16
+      && state.players.opponent.board.seats[0] === null
+      && state.players.opponent.board.seats[4] === null
+      && state.players.player.trash.some((entry) => entry.instanceId === allDiscard.instanceId)
+      && state.players.opponent.trash.some((entry) => entry.instanceId === allTarget.instanceId);
+
+    resetBattle();
+    state.screen = "battle";
+    state.players.player.will = 7;
+    const choiceGhidorah = card("king_ghidorah_bed");
+    const choiceDiscard = card("bento");
+    state.players.player.hand = [choiceGhidorah, choiceDiscard];
+    state.players.opponent.board.seats[2] = attendee("loud_student", "opponent");
+    api.beginItemUse(choiceGhidorah);
+    const openedEffectChoice = state.pendingCardChoice?.mode === "king_ghidorah_effect";
+    state.pendingCardChoice.selectedIds = ["king_ghidorah_effect_2"];
+    api.confirmCardChoiceSelection();
+    const openedDiscardChoice = state.pendingCardChoice?.mode === "king_ghidorah_discard";
+    state.pendingCardChoice.selectedIds = [choiceDiscard.instanceId];
+    api.confirmCardChoiceSelection();
+    const waitingForBoardTarget = state.pendingKingGhidorahBed?.discardId === choiceDiscard.instanceId;
+    api.handleBoardCardClick("opponent", "seat", 2);
+    checks.kingGhidorahUsesEffectChoiceThenDirectBoardTarget = openedEffectChoice
+      && openedDiscardChoice
+      && waitingForBoardTarget
+      && state.players.player.will === 3
+      && state.players.opponent.board.seats[2] === null
+      && state.players.player.trash.some((entry) => entry.instanceId === choiceDiscard.instanceId);
+
+    resetBattle();
     checks.unusableCardsRemainBlocked = ["alpha", "beta", "suspicious_document"].every((baseId) => {
       const unusable = card(baseId);
       state.players.player.hand = [unusable];
