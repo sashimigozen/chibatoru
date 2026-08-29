@@ -148,6 +148,8 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
   const fusionChoiceUpdate = latestEntry.locator(".update-change", { hasText: "融合先の選択" });
   await expect(fusionChoiceUpdate).toContainText("カード確認に「融合する」ボタン");
   await expect(fusionChoiceUpdate).toContainText("融合できるU太だけを表示");
+  await expect(fusionChoiceUpdate).toContainText("融合済み：○○");
+  await expect(fusionChoiceUpdate).toContainText("融合済み：なし");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

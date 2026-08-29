@@ -3218,6 +3218,32 @@
       font-size: 15px;
     }
 
+    #threeGesturesHand .uta-fusion-choice-option {
+      display: grid;
+      flex: 0 0 auto;
+      gap: 8px;
+      width: clamp(132px, 12vw, 188px);
+    }
+
+    #threeGesturesHand .uta-fusion-choice-option .mulligan-card {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .uta-fusion-choice-status {
+      min-height: 38px;
+      border: 1px solid #7aa2c8;
+      border-radius: 8px;
+      padding: 7px 8px;
+      background: #eef7ff;
+      color: #173b60;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.35;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+
     .player-combat-hud {
       position: fixed;
       left: calc(50% + 170px);
@@ -17474,7 +17500,7 @@
         summary: "戦意0の表示を分かりやすくし、融合カードをカード確認から対象選択して使えるようにしました。",
         changes: [
           { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" },
-          { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" }
+          { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があり、融合先ごとの融合済みカードも選択中に確認できなかった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。各U太には「融合済み：○○」を表示し、何も融合されていない場合は「融合済み：なし」と表示。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" }
         ]
       },
       {
@@ -28279,6 +28305,13 @@
       return (state.players[side]?.hand || []).filter((card) => canFuseUtaMaterial(side, item, card));
     }
 
+    function utaFusionChoiceStatusText(card) {
+      const fusedNames = utaFusionMaterialEntries(card)
+        .map((entry) => CARD_BASES[entry.baseId]?.name || entry.name)
+        .filter(Boolean);
+      return `融合済み：${fusedNames.length > 0 ? fusedNames.join("、") : "なし"}`;
+    }
+
     function openUtaFusionChoice(item) {
       const handItem = getHandCard("player", item?.instanceId);
       if (!handItem || !UTA_FUSION_MATERIAL_IDS.includes(handItem.baseId)) return false;
@@ -35999,7 +36032,17 @@
           button.setAttribute("aria-pressed", String(choice.selectedIds.includes(card.instanceId)));
           if (selectable) button.addEventListener("click", () => toggleCardChoiceCard(card.instanceId));
           attachCardDetailEvents(button, card, { previewOnClick: false });
-          elements.threeGesturesHand.appendChild(button);
+          if (choice.mode === "uta_fusion") {
+            const option = document.createElement("div");
+            option.className = "uta-fusion-choice-option";
+            const status = document.createElement("div");
+            status.className = "uta-fusion-choice-status";
+            status.textContent = utaFusionChoiceStatusText(card);
+            option.append(button, status);
+            elements.threeGesturesHand.appendChild(option);
+          } else {
+            elements.threeGesturesHand.appendChild(button);
+          }
         });
         return;
       }

@@ -137,13 +137,17 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
 test("融合カードの確認から融合可能なU太だけを選んで融合する", async ({ page }) => {
   await page.goto(gameUrl);
 
-  const targetId = await page.evaluate(() => {
+  const targetIds = await page.evaluate(() => {
     const api = window.__chibattle;
     api.startCardTest("tsurai_nara");
     const item = api.state.players.player.hand.find((card) => card.baseId === "tsurai_nara");
-    const target = api.fusionEligibleUtasInHand("player", item)[0];
+    const emptyTarget = api.fusionEligibleUtasInHand("player", item)[0];
+    const partialTarget = api.createCardFromBase("yuta", "player");
+    partialTarget.utaFusionMaterials = [{ baseId: "company_one_day", name: "会社１日" }];
+    api.state.players.player.hand.push(partialTarget);
+    api.render();
     api.showBattleCardPreview(item);
-    return target.instanceId;
+    return { emptyTargetId: emptyTarget.instanceId, partialTargetId: partialTarget.instanceId };
   });
 
   const preview = page.locator("#battleCardPreview");
@@ -158,15 +162,21 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
   await expect(page.locator("#threeGesturesTitle")).toContainText("辛いならの融合先");
   await expect(page.locator("#threeGesturesMessage")).toContainText("融合させる手札の「U太」");
   const candidates = page.locator("#threeGesturesHand .mulligan-card");
-  await expect(candidates).toHaveCount(1);
-  await expect(candidates.first()).toHaveAttribute("data-card-id", targetId);
-  await expect(candidates.first().locator(".card-name")).toHaveText("U太");
-  await expect(page.locator("#threeGesturesHand")).not.toContainText("会社１日");
+  await expect(candidates).toHaveCount(2);
+  const emptyTarget = page.locator(`#threeGesturesHand .uta-fusion-choice-option:has([data-card-id="${targetIds.emptyTargetId}"])`);
+  const partialTarget = page.locator(`#threeGesturesHand .uta-fusion-choice-option:has([data-card-id="${targetIds.partialTargetId}"])`);
+  await expect(emptyTarget.locator(".card-name")).toHaveText("U太");
+  await expect(emptyTarget.locator(".uta-fusion-choice-status")).toBeVisible();
+  await expect(emptyTarget.locator(".uta-fusion-choice-status")).toHaveText("融合済み：なし");
+  await expect(partialTarget.locator(".card-name")).toHaveText("U太");
+  await expect(partialTarget.locator(".uta-fusion-choice-status")).toBeVisible();
+  await expect(partialTarget.locator(".uta-fusion-choice-status")).toHaveText("融合済み：会社１日");
+  await expect(page.locator("#threeGesturesHand .mulligan-card .card-name")).toHaveText(["U太", "U太"]);
 
   const confirmButton = page.locator("#threeGesturesConfirmButton");
   await expect(confirmButton).toHaveText("このU太に融合する");
   await expect(confirmButton).toBeDisabled();
-  await candidates.first().click();
+  await partialTarget.locator(".mulligan-card").click();
   await expect(confirmButton).toBeEnabled();
   await confirmButton.click();
 
@@ -178,9 +188,9 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
       fusedMaterials: api.utaFusionMaterialEntries(target).map((entry) => entry.baseId),
       pendingChoice: api.state.pendingCardChoice
     };
-  }, { targetId });
+  }, { targetId: targetIds.partialTargetId });
   expect(result.materialStillInHand).toBe(false);
-  expect(result.fusedMaterials).toEqual(["tsurai_nara"]);
+  expect(result.fusedMaterials).toEqual(["company_one_day", "tsurai_nara"]);
   expect(result.pendingChoice).toBeNull();
   await expect(choiceStage).toBeHidden();
 });
