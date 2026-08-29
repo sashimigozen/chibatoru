@@ -124,7 +124,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
 });
 
-test("早押しクイズ大会は新たに成立した各ビンゴと8ビンゴを両者に適用し、再成立でも発動する", async ({ page }) => {
+test("早押しクイズ大会は通常ビンゴを再成立でも発動し、8ビンゴ追加効果は各1回にする", async ({ page }) => {
   await page.goto(gameUrl);
 
   const result = await page.evaluate(() => {
@@ -202,7 +202,7 @@ test("早押しクイズ大会は新たに成立した各ビンゴと8ビンゴ�
   });
 
   expect(result.firstEightBingo).toEqual({ attack: 6, hp: 6, currentHp: 6, drawn: 5, completeLines: 8 });
-  expect(result.reformedEightBingo).toEqual({ attack: 6, hp: 6, drawn: 5 });
+  expect(result.reformedEightBingo).toEqual({ attack: 3, hp: 3, drawn: 2 });
   expect(result.opponentHorizontal).toEqual({ attack: 2, hp: 3, drawn: 0 });
   expect(result.teacherExcluded).toEqual({ attack: 1, hp: 2, completeLines: 0, drawn: 0 });
 });

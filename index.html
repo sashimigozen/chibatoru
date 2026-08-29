@@ -17356,7 +17356,7 @@
           { title: "新カード", after: "「胸像スーツ」\n持ち物／展開・敵増殖／戦意1\nお互いの講義室にいる学生1人を指名する。その出席者を「スーツを着た学生」にする。" },
           { title: "新カード", after: "「インターン」\n持ち物／展開・敵増殖／戦意2\nお互いのプレイヤーがそれぞれ2回ターンを終了するまで、お互いのプレイヤーは、自分のターン終了時、自分の講義室にいる「スーツを着た学生」ではない学生1人をランダムに指名し、「スーツを着た学生」にする。" }
           ,{ title: "新カード", after: "「キングギドラベッド」\n持ち物／共通カード／戦意4\n3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。" }
-          ,{ title: "新カード", after: "「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。" }
+          ,{ title: "新カード", after: "「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。" }
           ,{ title: "早押しクイズ大会の演出", before: "ビンゴ成立や強化の瞬間を示す演出がなく、8ビンゴの専用表示を追加した後も、出席させたカードの大表示と重なっていた。", after: "出席させたカードの大表示が終了した後、成立した列のカードに枠が「カチッ」と固定される演出を表示し、対象カードの赤いバフ演出へつなげる。8ビンゴ達成時はその後に画面中央へ「BINGO!!」を大きく表示する。オンライン対戦でも相手側と観戦者に同じ順番で同期する。" }
         ]
       },
@@ -29166,9 +29166,14 @@
       const verticalCount = newLines.filter((line) => line.kind === "column").length;
       const diagonalCount = newLines.filter((line) => line.kind === "diagonal").length;
       const eightBingo = completeLines.length === QUICK_QUIZ_BINGO_LINES.length;
-      const attackBonus = verticalCount + (eightBingo ? 3 : 0);
-      const hpBonus = horizontalCount + (eightBingo ? 3 : 0);
-      const drawCount = diagonalCount + (eightBingo ? 3 : 0);
+      if (!state.environment.quickQuizEightBingoUsedBy) {
+        state.environment.quickQuizEightBingoUsedBy = { player: false, opponent: false };
+      }
+      const eightBingoBonus = eightBingo && !state.environment.quickQuizEightBingoUsedBy[side];
+      if (eightBingoBonus) state.environment.quickQuizEightBingoUsedBy[side] = true;
+      const attackBonus = verticalCount + (eightBingoBonus ? 3 : 0);
+      const hpBonus = horizontalCount + (eightBingoBonus ? 3 : 0);
+      const drawCount = diagonalCount + (eightBingoBonus ? 3 : 0);
       let appliedAttack = 0;
       let appliedHp = 0;
 
@@ -29192,19 +29197,20 @@
           QUICK_QUIZ_BUFF_DELAY_MS
         );
       }
-      if (eightBingo) showSharedCenterAnnouncement("BINGO!!", "bingo", QUICK_QUIZ_EIGHT_BINGO_DELAY_MS);
+      if (eightBingoBonus) showSharedCenterAnnouncement("BINGO!!", "bingo", QUICK_QUIZ_EIGHT_BINGO_DELAY_MS);
       const lineSummary = [
         horizontalCount ? `横${horizontalCount}列` : "",
         verticalCount ? `縦${verticalCount}列` : "",
         diagonalCount ? `斜め${diagonalCount}列` : ""
       ].filter(Boolean).join("・");
-      addLog(`${state.environment.name}の効果：${card.name}が${lineSummary}のビンゴを成立させ、攻撃力を+${attackBonus}、体力を+${hpBonus}し、カードを${drawn}枚引きました。${eightBingo ? "8ビンゴの追加効果も発動しました。" : ""}`);
+      addLog(`${state.environment.name}の効果：${card.name}が${lineSummary}のビンゴを成立させ、攻撃力を+${attackBonus}、体力を+${hpBonus}し、カードを${drawn}枚引きました。${eightBingoBonus ? "8ビンゴの追加効果も発動しました。" : eightBingo ? "8ビンゴの追加効果はすでに発動済みです。" : ""}`);
       return {
         newLines: newLines.map((line) => line.id),
         horizontalCount,
         verticalCount,
         diagonalCount,
         eightBingo,
+        eightBingoBonus,
         attackBonus,
         hpBonus,
         drawn
@@ -40372,7 +40378,7 @@
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
         king_ghidorah_bed: "3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。",
-        quick_quiz_tournament: "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
+        quick_quiz_tournament: "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
         ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
         bento: "自分の出席者1人を指名し、その体力をすべて回復する。その後、その出席者の攻撃力を-2する。",
         yakiniku: "お互いの出席者すべての攻撃力を+1し、体力を2回復する。",

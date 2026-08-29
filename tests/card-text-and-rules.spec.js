@@ -23,7 +23,7 @@ test("確定したカードテキストが表示データに反映されてい�
     "このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。",
     "相手本体に4ダメージを与える。",
     "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。",
-    "8ビンゴを達成したとき、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
+    "8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -77,6 +77,7 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   const quickQuizTournament = latestEntry.locator(".update-after", { hasText: "早押しクイズ大会" });
   await expect(quickQuizTournament).toContainText("「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき");
   await expect(quickQuizTournament).toContainText("8ビンゴを達成したとき");
+  await expect(quickQuizTournament).toContainText("（１回まで）");
 
   const quickQuizVisuals = latestEntry.locator(".update-change", { hasText: "早押しクイズ大会の演出" });
   await expect(quickQuizVisuals.locator(".update-after")).toContainText("赤いバフ演出");
