@@ -68,7 +68,7 @@ test("確定したカードテキストが表示データに反映されてい�
 test("更新情報のカード追加・修正をカード名、ステータス、テキストの順で表示する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const latestEntry = page.locator(".update-entry").first();
+  const latestEntry = page.locator(".update-entry", { hasText: "ver.0.20.0" }).first();
   await latestEntry.locator("summary").click();
 
   const bustSuit = latestEntry.locator(".update-after", { hasText: "胸像スーツ" });
@@ -125,6 +125,26 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   const cardChange = latestEntry.locator(".update-change", { hasText: "変更点：カード名から「って」を削除。" });
   await expect(cardChange.locator(".update-before")).toContainText("「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");
   await expect(cardChange.locator(".update-after")).toContainText("「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");
+});
+
+test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  await page.evaluate(() => {
+    window.__chibattle.startCardTest("tsurai_nara");
+  });
+
+  const zeroCostCard = page.locator('.player-hand .hand-card[data-base-id="tsurai_nara"]');
+  await expect(zeroCostCard).toBeVisible();
+  await expect(zeroCostCard.locator(".card-header .stat-cost")).toHaveText("戦意0");
+  await expect(zeroCostCard.locator(".card-header .stat-cost")).toHaveAttribute("aria-label", "戦意0");
+
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+  const latestEntry = page.locator(".update-entry").first();
+  await expect(latestEntry.locator("summary")).toContainText("ver.0.20.1");
+  await latestEntry.locator("summary").click();
+  await expect(latestEntry.locator(".update-change", { hasText: "戦意0の表示" })).toContainText("戦意を持たないカードだけは引き続き「戦意なし」");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

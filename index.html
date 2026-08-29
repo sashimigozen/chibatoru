@@ -15669,6 +15669,27 @@
       }
     }
 
+    /* A zero still consumes will.  Spell it out so it cannot be mistaken for
+       the separate "戦意なし" state used by generated cards. */
+    .card:not(.field-card) .card-stat.stat-cost.zero-cost {
+      font-size: clamp(7px, 1vw, 11px) !important;
+      letter-spacing: -.08em;
+      white-space: nowrap;
+    }
+
+    .battle-screen .field-card .field-stat.cost.zero-cost {
+      width: 36px !important;
+      min-width: 36px !important;
+      border-radius: 999px !important;
+      font-size: 7px !important;
+      letter-spacing: -.08em;
+      white-space: nowrap;
+    }
+
+    .battle-screen .field-card:has(.field-stat.cost.zero-cost) .field-card-title {
+      padding-left: 38px;
+    }
+
   </style>
 </head>
 <body>
@@ -17447,6 +17468,14 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.20.1",
+        date: "2026年8月29日",
+        summary: "戦意が0のカードと、戦意を持たないカードの表示を区別しやすくしました。",
+        changes: [
+          { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" }
+        ]
+      },
       {
         version: "ver.0.20.0",
         date: "2026年8月28日",
@@ -37651,7 +37680,10 @@
         : "";
       const hasStats = card.type !== "environment" && card.type !== "item";
       const hpValue = boardCard ? card.currentHp : displayedCardHp(card);
-      const costBadge = card.noCost ? "" : `<span class="card-stat stat-cost">${effectiveCardCost(card)}</span>`;
+      const effectiveCost = effectiveCardCost(card);
+      const costBadge = card.noCost
+        ? ""
+        : `<span class="card-stat stat-cost${effectiveCost === 0 ? " zero-cost" : ""}" aria-label="戦意${effectiveCost}">${effectiveCost === 0 ? "戦意0" : effectiveCost}</span>`;
       const attackValue = boardCard ? `攻${card.attack}` : displayedCardAttack(card);
       const hpDisplayValue = boardCard ? `体${hpValue}` : hpValue;
       const defenseValue = boardCard ? card.defense : (card.defense ?? 0);
@@ -37750,7 +37782,10 @@
       const statusParts = statusPartsForCard(card, true);
       const status = statusParts.length ? `<span class="field-card-status status-icons">${statusIconHtml(statusParts)}</span>` : "";
       const hasStats = card.type !== "environment" && card.type !== "item";
-      const cost = card.noCost ? "" : `<span class="field-stat cost">${effectiveCardCost(card)}</span>`;
+      const effectiveCost = effectiveCardCost(card);
+      const cost = card.noCost
+        ? ""
+        : `<span class="field-stat cost${effectiveCost === 0 ? " zero-cost" : ""}" aria-label="戦意${effectiveCost}">${effectiveCost === 0 ? "戦意0" : effectiveCost}</span>`;
       const stats = hasStats
         ? `<span class="field-card-stats"><span class="field-stat attack">${card.attack}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
@@ -38757,7 +38792,8 @@
     }
 
     function cardMiniMeta(card) {
-      const costText = card.noCost ? "戦意なし" : `C${effectiveCardCost(card)}`;
+      const effectiveCost = effectiveCardCost(card);
+      const costText = card.noCost ? "戦意なし" : effectiveCost === 0 ? "戦意0" : `C${effectiveCost}`;
       if (card.type === "item" || card.type === "environment") return `${labelForType(card.type)} ${costText}`;
       return `${labelForType(card.type)} ${costText} A${card.attack} H${card.hp}`;
     }
@@ -40479,9 +40515,10 @@
     }
 
     function cardDetailTemplate(card) {
+      const effectiveCost = effectiveCardCost(card);
       const detailLines = [
         `タイプ：${labelForType(card.type)}`,
-        card.noCost ? "戦意：なし" : `戦意：${effectiveCardCost(card)}`
+        card.noCost ? "戦意：なし" : effectiveCost === 0 ? "戦意0" : `戦意：${effectiveCost}`
       ];
       if (card.type !== "item" && card.type !== "environment") {
         detailLines.push(`攻撃力：${displayedCardAttack(card)}`);
@@ -40563,7 +40600,8 @@
     }
 
     function cardDetailPlainText(card) {
-      const parts = [`${card.name}`, `タイプ：${labelForType(card.type)}`, card.noCost ? "戦意：なし" : `戦意：${effectiveCardCost(card)}`];
+      const effectiveCost = effectiveCardCost(card);
+      const parts = [`${card.name}`, `タイプ：${labelForType(card.type)}`, card.noCost ? "戦意：なし" : effectiveCost === 0 ? "戦意0" : `戦意：${effectiveCost}`];
       if (card.type !== "item" && card.type !== "environment") {
         parts.push(`攻撃力：${displayedCardAttack(card)}`);
         parts.push(`体力：${displayedCardHp(card)}/${displayedCardMaxHp(card)}`);
