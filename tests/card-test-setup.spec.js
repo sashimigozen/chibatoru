@@ -226,8 +226,11 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   await expectAtScreenPosition(iiDaro, 0.5);
   await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/, { timeout: 1400 });
   await expect(page.locator("#ultimateYutaOverlay [data-ultimate-phrase]")).toHaveText([
-    "辛いなら", "会社１日", "飛ぶくらい", "いいだろって"
+    "いいだろって", "飛ぶくらい", "会社１日", "辛いなら"
   ]);
+  expect(await page.locator("#ultimateYutaOverlay [data-ultimate-phrase]").evaluateAll((phrases) => (
+    phrases.every((phrase) => getComputedStyle(phrase).whiteSpace === "nowrap")
+  ))).toBe(true);
   await expect(page.locator("#resultOverlay")).toHaveClass(/victory/, { timeout: 2000 });
   await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/);
   await expect(page.locator("#ultimateYutaOverlay")).not.toHaveClass(/hidden/);
