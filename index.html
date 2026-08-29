@@ -17500,7 +17500,8 @@
         summary: "戦意0の表示を分かりやすくし、融合カードをカード確認から対象選択して使えるようにしました。",
         changes: [
           { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" },
-          { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があり、融合先ごとの融合済みカードも選択中に確認できなかった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。各U太には「融合済み：○○」を表示し、何も融合されていない場合は「融合済み：なし」と表示。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" }
+          { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があり、融合先ごとの融合済みカードも選択中に確認できなかった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。各U太には「融合済み：○○」を表示し、何も融合されていない場合は「融合済み：なし」と表示。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" },
+          { title: "U太の融合表示順", before: "U太へ融合済みのカード名は、実際に融合した順番で表示されていた。", after: "実際に融合した順番にかかわらず、融合済みのカード名を「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順で表示・記録する。" }
         ]
       },
       {
@@ -28289,7 +28290,8 @@
       if (!card || !Array.isArray(card.utaFusionMaterials)) return [];
       return card.utaFusionMaterials
         .map((entry) => typeof entry === "string" ? { baseId: entry } : { ...entry })
-        .filter((entry) => UTA_FUSION_MATERIAL_IDS.includes(entry.baseId));
+        .filter((entry) => UTA_FUSION_MATERIAL_IDS.includes(entry.baseId))
+        .sort((a, b) => UTA_FUSION_MATERIAL_IDS.indexOf(a.baseId) - UTA_FUSION_MATERIAL_IDS.indexOf(b.baseId));
     }
 
     function canFuseUtaMaterial(side, item, target) {
@@ -28348,7 +28350,8 @@
       const player = state.players[side];
       const material = { baseId: item.baseId, name: item.name, instanceId: item.instanceId };
       player.hand = player.hand.filter((card) => card.instanceId !== item.instanceId);
-      target.utaFusionMaterials = [...utaFusionMaterialEntries(target), material];
+      target.utaFusionMaterials = [...utaFusionMaterialEntries(target), material]
+        .sort((a, b) => UTA_FUSION_MATERIAL_IDS.indexOf(a.baseId) - UTA_FUSION_MATERIAL_IDS.indexOf(b.baseId));
       const fusedNames = target.utaFusionMaterials.map((entry) => CARD_BASES[entry.baseId]?.name || entry.name).filter(Boolean);
       const complete = UTA_FUSION_MATERIAL_IDS.every((baseId) => target.utaFusionMaterials.some((entry) => entry.baseId === baseId));
       if (complete) {

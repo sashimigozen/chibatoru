@@ -190,7 +190,7 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
     };
   }, { targetId: targetIds.partialTargetId });
   expect(result.materialStillInHand).toBe(false);
-  expect(result.fusedMaterials).toEqual(["company_one_day", "tsurai_nara"]);
+  expect(result.fusedMaterials).toEqual(["tsurai_nara", "company_one_day"]);
   expect(result.pendingChoice).toBeNull();
   await expect(choiceStage).toBeHidden();
 });
@@ -213,7 +213,8 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
     state.players.player.board.seats = Array(9).fill(null);
     state.players.player.board.teacher = null;
     const yuta = api.createCardFromBase("yuta", "player");
-    const materials = api.UTA_FUSION_MATERIAL_IDS.map((baseId) => api.createCardFromBase(baseId, "player"));
+    const materials = [...api.UTA_FUSION_MATERIAL_IDS].reverse()
+      .map((baseId) => api.createCardFromBase(baseId, "player"));
     state.players.player.hand = [yuta, ...materials];
     const steps = materials.map((item) => {
       const target = state.players.player.hand.find((card) => card.instanceId === yuta.instanceId);
@@ -239,7 +240,8 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
         attack: ultimate.attack,
         hp: ultimate.hp,
         rules: api.cardRulesText(ultimate),
-        detailMarkup: detail.markup
+        detailMarkup: detail.markup,
+        fusionOrder: api.utaFusionMaterialEntries(ultimate).map((entry) => entry.baseId)
       },
       trash,
       phaseAfterAttendance: state.phase
@@ -256,6 +258,9 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
     attack: 13,
     hp: 13
   }));
+  expect(fusion.ultimate.fusionOrder).toEqual([
+    "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"
+  ]);
   ["辛いなら", "会社１日", "飛ぶくらい", "いいだろって"].forEach((name) => {
     expect(fusion.ultimate.rules).toContain(name);
     expect(fusion.ultimate.detailMarkup).toContain(name);

@@ -150,6 +150,8 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
   await expect(fusionChoiceUpdate).toContainText("融合できるU太だけを表示");
   await expect(fusionChoiceUpdate).toContainText("融合済み：○○");
   await expect(fusionChoiceUpdate).toContainText("融合済み：なし");
+  const fusionOrderUpdate = latestEntry.locator(".update-change", { hasText: "U太の融合表示順" });
+  await expect(fusionOrderUpdate).toContainText("「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
