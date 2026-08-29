@@ -203,12 +203,31 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   expect(fusion.trash).toEqual([]);
   expect(fusion.phaseAfterAttendance).toBe("ultimateVictory");
 
-  await expect(page.locator('[data-ultimate-phrase="tsurai_nara"]')).toHaveClass(/active/, { timeout: 2200 });
-  await expect(page.locator('[data-ultimate-phrase="company_one_day"]')).toHaveClass(/active/, { timeout: 1400 });
+  const expectAtScreenPosition = async (locator, horizontalRatio) => {
+    const box = await locator.boundingBox();
+    const viewport = page.viewportSize();
+    expect(box).not.toBeNull();
+    expect(Math.abs(box.x + box.width / 2 - viewport.width * horizontalRatio)).toBeLessThan(2);
+    expect(Math.abs(box.y + box.height / 2 - viewport.height / 2)).toBeLessThan(2);
+  };
+  const tsurai = page.locator('[data-ultimate-phrase="tsurai_nara"]');
+  const company = page.locator('[data-ultimate-phrase="company_one_day"]');
+  const fly = page.locator('[data-ultimate-phrase="enough_to_fly"]');
+  const iiDaro = page.locator('[data-ultimate-phrase="ii_daro_tte"]');
+
+  await expect(tsurai).toHaveClass(/active/, { timeout: 2200 });
+  await expectAtScreenPosition(tsurai, 0.5);
+  await expect(company).toHaveClass(/active/, { timeout: 1400 });
+  await expectAtScreenPosition(company, 0.25);
   await expect(page.locator('[data-ultimate-phrase="tsurai_nara"]')).not.toHaveClass(/active/);
-  await expect(page.locator('[data-ultimate-phrase="enough_to_fly"]')).toHaveClass(/active/, { timeout: 1400 });
-  await expect(page.locator('[data-ultimate-phrase="ii_daro_tte"]')).toHaveClass(/active/, { timeout: 1400 });
+  await expect(fly).toHaveClass(/active/, { timeout: 1400 });
+  await expectAtScreenPosition(fly, 0.75);
+  await expect(iiDaro).toHaveClass(/active/, { timeout: 1400 });
+  await expectAtScreenPosition(iiDaro, 0.5);
   await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/, { timeout: 1400 });
+  await expect(page.locator("#ultimateYutaOverlay [data-ultimate-phrase]")).toHaveText([
+    "辛いなら", "会社１日", "飛ぶくらい", "いいだろって"
+  ]);
   await expect(page.locator("#resultOverlay")).toHaveClass(/victory/, { timeout: 2000 });
   await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/);
   await expect(page.locator("#ultimateYutaOverlay")).not.toHaveClass(/hidden/);

@@ -99,6 +99,10 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   await expect(quickQuizVisuals.locator(".update-after")).toContainText("カチッ");
   await expect(quickQuizVisuals.locator(".update-after")).toContainText("BINGO!!");
 
+  const ultimateVisuals = latestEntry.locator(".update-change", { hasText: "U太の融合と勝利演出" });
+  await expect(ultimateVisuals.locator(".update-after")).toContainText("「辛いなら」を中央、「会社１日」を左、「飛ぶくらい」を右、「いいだろって」を中央");
+  await expect(ultimateVisuals.locator(".update-after")).toContainText("画面右から「いいだろって」「飛ぶくらい」「会社１日」「辛いなら」");
+
   const aggroArmy = latestEntry.locator(".update-after", { hasText: "アグロ軍" });
   await expect(aggroArmy).toHaveCSS("white-space", "pre-line");
   await expect(aggroArmy).toContainText("「アグロ軍」\n持ち物／共通カード／戦意2\n「アグロ大学生」");
