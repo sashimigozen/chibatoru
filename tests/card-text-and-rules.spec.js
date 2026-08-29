@@ -24,6 +24,8 @@ test("確定したカードテキストが表示データに反映されてい�
     "相手本体に4ダメージを与える。",
     "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。",
     "8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
+    "融合\\n「U太」に融合する。",
+    "このカードを手札から出席させたとき、このゲームに勝利する。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -54,6 +56,12 @@ test("確定したカードテキストが表示データに反映されてい�
   expect(source).toContain('after: "「インターン」\\n持ち物／展開・敵増殖／戦意2\\n');
   expect(source).toContain('after: "「キングギドラベッド」\\n持ち物／共通カード／戦意4\\n');
   expect(source).toContain('after: "「早押しクイズ大会」\\n環境／共通カード／戦意1\\n');
+  expect(source).toContain('after: "「辛いなら」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
+  expect(source).toContain('after: "「会社１日」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
+  expect(source).toContain('after: "「飛ぶくらい」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
+  expect(source).toContain('after: "「いいだろって」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
+  expect(source).toContain('after: "「Ultimate U太」\\n学生／学友会・持ち物／戦意なし／攻撃力13／体力13\\n');
+  expect(source).not.toContain('融合：「U太」「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」。');
   expect(source).toContain('このカードは教師からダメージを受けない。\\n出席数：X人"');
 });
 
@@ -78,6 +86,12 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   await expect(quickQuizTournament).toContainText("「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき");
   await expect(quickQuizTournament).toContainText("8ビンゴを達成したとき");
   await expect(quickQuizTournament).toContainText("（１回まで）");
+
+  const fusionMaterial = latestEntry.locator(".update-after", { hasText: "辛いなら" }).first();
+  await expect(fusionMaterial).toContainText("「辛いなら」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。");
+
+  const ultimateYuta = latestEntry.locator(".update-after", { hasText: "Ultimate U太" }).first();
+  await expect(ultimateYuta).toContainText("「Ultimate U太」\n学生／学友会・持ち物／戦意なし／攻撃力13／体力13\nこのカードを手札から出席させたとき、このゲームに勝利する。");
 
   const quickQuizVisuals = latestEntry.locator(".update-change", { hasText: "早押しクイズ大会の演出" });
   await expect(quickQuizVisuals.locator(".update-after")).toContainText("赤いバフ演出");

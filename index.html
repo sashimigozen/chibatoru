@@ -3330,6 +3330,73 @@
       pointer-events: auto;
     }
 
+    .ultimate-yuta-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 110;
+      display: grid;
+      place-items: center;
+      padding: clamp(18px, 4vw, 64px);
+      pointer-events: none;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.08), rgba(3, 7, 18, 0.72));
+    }
+
+    .ultimate-yuta-overlay.hidden {
+      display: none;
+    }
+
+    .ultimate-yuta-phrase-layout {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(44px, 1fr));
+      grid-template-rows: minmax(260px, 62vh) auto;
+      width: min(760px, 92vw);
+      gap: clamp(8px, 2vw, 24px);
+      align-items: center;
+    }
+
+    .ultimate-yuta-phrase {
+      justify-self: center;
+      writing-mode: vertical-rl;
+      color: #fff;
+      font-size: clamp(34px, 6vw, 78px);
+      font-weight: 1000;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      opacity: 0;
+      transform: scale(0.78);
+      filter: blur(8px);
+      text-shadow: 0 0 8px #0ea5e9, 0 0 24px #0369a1, 0 5px 1px rgba(0, 0, 0, 0.52);
+      transition: opacity 120ms ease, transform 180ms ease, filter 180ms ease;
+    }
+
+    .ultimate-yuta-phrase.active,
+    .ultimate-yuta-overlay.all-visible .ultimate-yuta-phrase {
+      opacity: 1;
+      transform: scale(1);
+      filter: blur(0);
+    }
+
+    .ultimate-yuta-footer {
+      grid-column: 1 / -1;
+      width: 100%;
+      color: #fff;
+      font-size: clamp(34px, 7vw, 86px);
+      font-weight: 1000;
+      line-height: 1;
+      letter-spacing: 0.16em;
+      text-align: center;
+      text-align-last: justify;
+      opacity: 0;
+      transform: scaleX(0.72);
+      text-shadow: 0 0 8px #f59e0b, 0 0 28px #d97706, 0 5px 1px rgba(0, 0, 0, 0.52);
+      transition: opacity 180ms ease, transform 220ms ease;
+    }
+
+    .ultimate-yuta-overlay.all-visible .ultimate-yuta-footer {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
     .result-label {
       display: block;
       margin-bottom: 14px;
@@ -16301,6 +16368,15 @@
       </section>
     </div>
     <div class="result-overlay hidden" id="resultOverlay" aria-live="assertive"></div>
+    <div class="ultimate-yuta-overlay hidden" id="ultimateYutaOverlay" aria-live="assertive">
+      <div class="ultimate-yuta-phrase-layout">
+        <span class="ultimate-yuta-phrase" data-ultimate-phrase="company_one_day">会社１日</span>
+        <span class="ultimate-yuta-phrase" data-ultimate-phrase="ii_daro_tte">いいだろって</span>
+        <span class="ultimate-yuta-phrase" data-ultimate-phrase="tsurai_nara">辛いなら</span>
+        <span class="ultimate-yuta-phrase" data-ultimate-phrase="enough_to_fly">飛ぶくらい</span>
+        <span class="ultimate-yuta-footer">思ってまう</span>
+      </div>
+    </div>
     <div class="dungeon-info-modal hidden" id="dungeonInfoModal" role="dialog" aria-modal="true" aria-label="階の特徴">
       <section class="dungeon-floor-card">
         <p class="dungeon-floor-number" id="dungeonInfoFloorNumber">1階</p>
@@ -16622,7 +16698,7 @@
     const ONLINE_DECK_DESCRIPTOR_PREFIX = "chibattle-online-deck-v1";
     const SPECIALTY_CARD_IDS = Object.freeze({
       common: ["aggro_army", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "quick_quiz_tournament", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
-      gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
+      gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "company_one_day", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "enough_to_fly", "failure_student", "front_door", "full_throttle", "greeting_3000", "ii_daro_tte", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "tsurai_nara", "ultimate_yuta", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
       late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"],
@@ -16934,6 +17010,10 @@
       hair_crab: ["circle_crab", "circle_crab", "homeless_crab"],
       homeless_crab: ["circle_crab", "circle_crab", "hair_crab"],
       yuta: ["accelerate", "chameleon", "yuta_umbrella", "red_happi"],
+      tsurai_nara: ["yuta", "company_one_day", "enough_to_fly", "ii_daro_tte"],
+      company_one_day: ["yuta", "tsurai_nara", "enough_to_fly", "ii_daro_tte"],
+      enough_to_fly: ["yuta", "tsurai_nara", "company_one_day", "ii_daro_tte"],
+      ii_daro_tte: ["yuta", "tsurai_nara", "company_one_day", "enough_to_fly"],
       single_cell: ["single_cell", "night_pool"],
       night_pool: ["single_cell"],
       suzaku: ["popular_c"],
@@ -17016,7 +17096,7 @@
       "wet_meal_ticket", "circle_crab", "hair_crab", "homeless_crab", "go_home", "smart_me", "quiet_please", "seriously_hit", "sock_block", "deck_without", "chigauyo", "yamanashi_minimum_wage",
       "favorite_number_s", "sexual_eye", "yoyu_announce", "vampirization", "green_curry", "panpan", "capture", "baka_mac", "ikemasu",
       "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
-      "full_throttle", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up", "aiben_vs_nyotei_title_match",
+      "full_throttle", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up", "aiben_vs_nyotei_title_match", "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte",
       "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
       "classroom", "quick_quiz_tournament", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur", "door_war", "shogi_duel_field"
     ];
@@ -17058,6 +17138,7 @@
       perfect_mutant: { name: "完全変異体", type: "student", cost: 0, attack: 13, hp: 13, keywords: ["超陽気"], token: true, allowedZones: ["seat"] },
       adjective_student: { name: "形容詞学生", type: "student", cost: 1, attack: 2, hp: 4, late: 4, allowedZones: ["seat"] },
       yuta: { name: "U太", type: "student", cost: 3, attack: 3, hp: 3, keywords: ["余裕"], allowedZones: ["seat", "teacher"] },
+      ultimate_yuta: { name: "Ultimate U太", type: "student", cost: 0, noCost: true, attack: 13, hp: 13, generated: true, allowedZones: ["seat", "teacher"] },
       aggro_queen: { name: "アグロクイーン", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"] },
       ae_student: { name: "あえー学生", type: "student", cost: 2, attack: 0, hp: 4, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
       super_ae_student: { name: "超あえー学生", type: "student", cost: 2, attack: 0, hp: 2, keywords: ["超注目"], allowedZones: ["seat", "teacher"] },
@@ -17142,6 +17223,10 @@
       ruler: { name: "定規", type: "item", cost: 1, target: "enemy" },
       aggro_eater: { name: "アグロ喰い", type: "item", cost: 1, target: "friendlyAny" },
       aggro_army: { name: "アグロ軍", type: "item", cost: 2, target: "self" },
+      tsurai_nara: { name: "辛いなら", type: "item", cost: 0, target: "ownHand" },
+      company_one_day: { name: "会社１日", type: "item", cost: 0, target: "ownHand" },
+      enough_to_fly: { name: "飛ぶくらい", type: "item", cost: 0, target: "ownHand" },
+      ii_daro_tte: { name: "いいだろって", type: "item", cost: 0, target: "ownHand" },
       king_ghidorah_bed: { name: "キングギドラベッド", type: "item", cost: 4, target: "self" },
       bust_suit: { name: "胸像スーツ", type: "item", cost: 1, target: "anyBoard" },
       ux_design_textbook: { name: "UXデザインの教科書", type: "item", cost: 1, target: "self" },
@@ -17285,6 +17370,11 @@
       ,happy_blue_bird: "common"
       ,quick_quiz_tournament: "common"
       ,earphones: "common"
+      ,tsurai_nara: "gakuyukai_item"
+      ,company_one_day: "gakuyukai_item"
+      ,enough_to_fly: "gakuyukai_item"
+      ,ii_daro_tte: "gakuyukai_item"
+      ,ultimate_yuta: "gakuyukai_item"
     });
     Object.entries(CATEGORY_BY_CARD_ID).forEach(([baseId, category]) => {
       if (CARD_BASES[baseId]) CARD_BASES[baseId].category = category;
@@ -17344,7 +17434,7 @@
       {
         version: "ver.0.20.0",
         date: "2026年8月28日",
-        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」「幸せの青い鳥」「スーツを着た学生」「胸像スーツ」「インターン」「キングギドラベッド」「早押しクイズ大会」の追加を実施。",
+        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」「幸せの青い鳥」「スーツを着た学生」「胸像スーツ」「インターン」「キングギドラベッド」「早押しクイズ大会」「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」「Ultimate U太」の追加を実施。",
         changes: [
           { title: "下部ホームバー", before: "各機能へ移動するにはホーム画面へ戻り、画面中央のボタンから選ぶ必要があった。", after: "ホーム、カード、バトル、ソロプレイ、ガチャを並べた下部ホームバーを追加。対戦画面とデッキ編集中を除く画面で表示し、ホーム、デッキ一覧、オンラインバトル、ソロプレイへ直接移動できる。PowerPointの通常素材からアイコン図形だけを透明背景で高解像度出力し、通常時は素材本来の色で表示。カードとバトルの発光時は、それぞれPowerPointの専用発光素材へ切り替える。" },
           { title: "カード修正", before: "「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。", after: "「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。\n\n変更点：カード名から「って」を削除。" },
@@ -17358,6 +17448,12 @@
           ,{ title: "新カード", after: "「キングギドラベッド」\n持ち物／共通カード／戦意4\n3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。" }
           ,{ title: "新カード", after: "「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。" }
           ,{ title: "早押しクイズ大会の演出", before: "ビンゴ成立や強化の瞬間を示す演出がなく、8ビンゴの専用表示を追加した後も、出席させたカードの大表示と重なっていた。", after: "出席させたカードの大表示が終了した後、成立した列のカードに枠が「カチッ」と固定される演出を表示し、対象カードの赤いバフ演出へつなげる。8ビンゴ達成時はその後に画面中央へ「BINGO!!」を大きく表示する。オンライン対戦でも相手側と観戦者に同じ順番で同期する。" }
+          ,{ title: "新カード", after: "「辛いなら」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+          ,{ title: "新カード", after: "「会社１日」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+          ,{ title: "新カード", after: "「飛ぶくらい」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+          ,{ title: "新カード", after: "「いいだろって」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+          ,{ title: "新カード", after: "「Ultimate U太」\n学生／学友会・持ち物／戦意なし／攻撃力13／体力13\nこのカードを手札から出席させたとき、このゲームに勝利する。" }
+          ,{ title: "U太の融合と勝利演出", before: "U太へ4種類の持ち物を1枚ずつ融合し、融合途中の内容を確認する仕組みと、完成後の専用勝利演出がなかった。", after: "手札のU太へ「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」を1枚ずつ融合でき、融合済みのカード名をカードテキストとカード確認に表示。4種類が揃うと同じU太が手札の「Ultimate U太」に変化する。手札から出席させると、4つの文言を1秒ずつ個別表示した後に「思ってまう」を含めて全表示し、1.5秒後も文言を残したまま勝利演出を表示する。オンライン対戦でも同じ演出を同期する。" }
         ]
       },
       {
@@ -17888,7 +17984,7 @@
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
       "展開": ["scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
       "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
-      "融合": ["ruler", "double_diamond"],
+      "融合": ["ruler", "double_diamond", "yuta", "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte", "ultimate_yuta"],
       "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
     });
 
@@ -17969,6 +18065,7 @@
     let deckPressTimer = null;
     let deckPressActive = false;
     let playRevealTimer = null;
+    let ultimateYutaVictoryToken = 0;
     let oneEyedPeekRevealTimer = null;
     let pendingOnlineOneEyedPeekReveal = false;
     let nextDeferredCardPlayId = 1;
@@ -18521,6 +18618,7 @@
       battleLogCloseButton: document.getElementById("battleLogCloseButton"),
       turnOverlay: document.getElementById("turnOverlay"),
       resultOverlay: document.getElementById("resultOverlay"),
+      ultimateYutaOverlay: document.getElementById("ultimateYutaOverlay"),
       tutorialLayer: document.getElementById("tutorialLayer"),
       tutorialSpotlight: document.getElementById("tutorialSpotlight"),
       tutorialCoach: document.getElementById("tutorialCoach"),
@@ -22264,6 +22362,10 @@
           window.setTimeout(() => appendQuickQuizClickEffect(event.instanceIds || []), delay);
           return;
         }
+        if (event.target === "ultimate-yuta") {
+          window.setTimeout(() => startUltimateYutaPhraseSequence(), delay);
+          return;
+        }
         let target = null;
         let rect = null;
         if (event.target === "life") {
@@ -22667,6 +22769,11 @@
           const item = getHandCard("opponent", payload.instanceId);
           const target = getHandCard("opponent", payload.targetInstanceId);
           if (item && target) castPairedExistence("opponent", item, target, true);
+        }
+        if (command.type === "utaFusion") {
+          const item = getHandCard("opponent", payload.instanceId);
+          const target = getHandCard("opponent", payload.targetInstanceId);
+          if (item && target) castUtaFusion("opponent", item, target, true);
         }
         if (command.type === "attackCard") {
           state.selectedAttacker = onlineMapRefForHost(payload.attacker);
@@ -24877,6 +24984,11 @@
       if (item.baseId === "onigiri_draw") return deck.length >= 2 ? 7 + (opponent.life < 20 ? 4 : 0) : 0;
       if (item.baseId === "hondara") return deck.length >= 1 ? 4 : 0;
       if (item.baseId === "aggro_army") return 9;
+      if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) {
+        const targets = fusionEligibleUtasInHand("opponent", item);
+        if (targets.length === 0) return 0;
+        return 18 + Math.max(...targets.map((card) => utaFusionMaterialEntries(card).length * 8));
+      }
       if (item.baseId === "ux_design_textbook") return countFriendlyDesignTeachers("opponent") > 0 ? 4 + countFriendlyDesignTeachers("opponent") : 0;
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)) {
         const target = aiUtaEquipmentTargets("opponent", item)[0];
@@ -25086,6 +25198,11 @@
         : null;
       if (isImmediateItemBaseId(item.baseId)) {
         return castImmediateItem("opponent", item, false);
+      }
+      if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) {
+        const target = fusionEligibleUtasInHand("opponent", item)
+          .sort((a, b) => utaFusionMaterialEntries(b).length - utaFusionMaterialEntries(a).length)[0];
+        return target ? castUtaFusion("opponent", item, target, false) : false;
       }
       if (item.baseId === "king_ghidorah_bed") {
         const discard = kingGhidorahBedDiscardCandidates("opponent", item)
@@ -26239,6 +26356,18 @@
         const item = getHandCard("player", state.pendingHandDiscardItem.itemId);
         const target = getHandCard("player", instanceId);
         if (item && target && item.instanceId !== target.instanceId) {
+          if (state.pendingHandDiscardItem.mode === "utaFusion") {
+            if (!canFuseUtaMaterial("player", item, target)) return;
+            if (onlineCanSendCommand()) {
+              onlineSendCommand("utaFusion", { instanceId: item.instanceId, targetInstanceId: target.instanceId });
+              state.message = `${item.name}の融合先を送信しました。`;
+              clearSelections();
+              render();
+              return;
+            }
+            castUtaFusion("player", item, target, true);
+            return;
+          }
           if (onlineCanSendCommand()) {
             onlineSendCommand("pairedExistence", { instanceId: item.instanceId, targetInstanceId: target.instanceId });
             state.message = "対の存在の対象を送信しました。";
@@ -27587,6 +27716,19 @@
         rejectTutorialAction("今は光っている持ち物だけ使えます。");
         return;
       }
+      if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) {
+        if (fusionEligibleUtasInHand("player", item).length === 0) {
+          state.message = `${item.name}を融合できる手札の「U太」がいません。`;
+          render();
+          return;
+        }
+        state.selectedAttacker = null;
+        state.selectedHandId = item.instanceId;
+        state.pendingHandDiscardItem = { mode: "utaFusion", itemId: item.instanceId };
+        state.message = `${item.name}：融合させる手札の「U太」を選んでください。`;
+        render();
+        return;
+      }
       if (item.baseId === "three_gestures") {
         openThreeGesturesSelection(item);
         return;
@@ -28059,6 +28201,57 @@
     }
 
     const UTA_EQUIPMENT_BASE_IDS = ["accelerate", "chameleon", "yuta_umbrella", "red_happi"];
+    const UTA_FUSION_MATERIAL_IDS = ["tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"];
+
+    function utaFusionMaterialEntries(card) {
+      if (!card || !Array.isArray(card.utaFusionMaterials)) return [];
+      return card.utaFusionMaterials
+        .map((entry) => typeof entry === "string" ? { baseId: entry } : { ...entry })
+        .filter((entry) => UTA_FUSION_MATERIAL_IDS.includes(entry.baseId));
+    }
+
+    function canFuseUtaMaterial(side, item, target) {
+      if (!item || !target || !UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) return false;
+      if (target.baseId !== "yuta" || item.instanceId === target.instanceId) return false;
+      const hand = state.players[side]?.hand || [];
+      if (!hand.some((card) => card.instanceId === item.instanceId)) return false;
+      if (!hand.some((card) => card.instanceId === target.instanceId)) return false;
+      return !utaFusionMaterialEntries(target).some((entry) => entry.baseId === item.baseId);
+    }
+
+    function fusionEligibleUtasInHand(side, item) {
+      return (state.players[side]?.hand || []).filter((card) => canFuseUtaMaterial(side, item, card));
+    }
+
+    function castUtaFusion(side, item, target, renderAfter = true) {
+      if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
+      if (!canFuseUtaMaterial(side, item, target) || !payForItem(side, item)) {
+        if (renderAfter) render();
+        return false;
+      }
+      showCardPlayAnimation(item, "board");
+      const player = state.players[side];
+      const material = { baseId: item.baseId, name: item.name, instanceId: item.instanceId };
+      player.hand = player.hand.filter((card) => card.instanceId !== item.instanceId);
+      target.utaFusionMaterials = [...utaFusionMaterialEntries(target), material];
+      const fusedNames = target.utaFusionMaterials.map((entry) => CARD_BASES[entry.baseId]?.name || entry.name).filter(Boolean);
+      const complete = UTA_FUSION_MATERIAL_IDS.every((baseId) => target.utaFusionMaterials.some((entry) => entry.baseId === baseId));
+      if (complete) {
+        const handIndex = player.hand.findIndex((card) => card.instanceId === target.instanceId);
+        const ultimate = createCardFromBase("ultimate_yuta", side);
+        ultimate.instanceId = target.instanceId;
+        ultimate.handTurns = target.handTurns || 0;
+        ultimate.utaFusionMaterials = target.utaFusionMaterials.map((entry) => ({ ...entry }));
+        if (handIndex >= 0) player.hand.splice(handIndex, 1, ultimate);
+        addLog(`${SIDES[side]}は「${fusedNames.join("」「")}」を融合し、「U太」を「Ultimate U太」に変化させました。`);
+      } else {
+        addLog(`${SIDES[side]}は「${item.name}」を手札の「U太」に融合しました（融合済み：${fusedNames.join("、")}）。`);
+      }
+      clearSelections();
+      state.message = complete ? "4枚の融合が完成し、Ultimate U太になりました。" : `${item.name}をU太に融合しました。`;
+      if (renderAfter) render();
+      return true;
+    }
 
     function isUtaEquipmentTarget(card) {
       return ["yuta", "dark_yuta"].includes(card?.baseId)
@@ -29298,6 +29491,10 @@
       card.lastAttendanceSource = attendanceSource;
       const triggerPolicy = card.attendanceTrigger || CARD_BASES[card.baseId]?.attendanceTrigger || ATTENDANCE_TRIGGER.HAND;
       if (triggerPolicy !== ATTENDANCE_TRIGGER.ANY && attendanceSource !== ATTENDANCE_SOURCE.HAND) return;
+      if (card.baseId === "ultimate_yuta") {
+        beginUltimateYutaVictory(side, card);
+        return;
+      }
       if (card.darkPresident) {
         state.cafeteriaEffectPermanentlyActive = true;
         applyBoardAuras();
@@ -33585,6 +33782,70 @@
       elements.playRevealCard.innerHTML = "";
     }
 
+    function hideUltimateYutaVictorySequence() {
+      ultimateYutaVictoryToken += 1;
+      const overlay = elements.ultimateYutaOverlay;
+      if (!overlay) return;
+      overlay.classList.add("hidden");
+      overlay.classList.remove("all-visible");
+      overlay.querySelectorAll("[data-ultimate-phrase]").forEach((phrase) => phrase.classList.remove("active"));
+    }
+
+    function startUltimateYutaPhraseSequence(options = {}) {
+      const overlay = elements.ultimateYutaOverlay;
+      if (!overlay) {
+        options.onComplete?.();
+        return null;
+      }
+      const token = ++ultimateYutaVictoryToken;
+      const phraseOrder = ["tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"];
+      const phrases = new Map(Array.from(overlay.querySelectorAll("[data-ultimate-phrase]"))
+        .map((element) => [element.dataset.ultimatePhrase, element]));
+      const showOnly = (baseId) => {
+        if (token !== ultimateYutaVictoryToken) return;
+        overlay.classList.remove("all-visible");
+        phrases.forEach((element, id) => element.classList.toggle("active", id === baseId));
+      };
+      overlay.classList.remove("hidden", "all-visible");
+      phrases.forEach((element) => element.classList.remove("active"));
+      phraseOrder.forEach((baseId, index) => {
+        window.setTimeout(() => showOnly(baseId), index * 1000);
+      });
+      window.setTimeout(() => {
+        if (token !== ultimateYutaVictoryToken) return;
+        phrases.forEach((element) => element.classList.remove("active"));
+        overlay.classList.add("all-visible");
+      }, phraseOrder.length * 1000);
+      window.setTimeout(() => {
+        if (token !== ultimateYutaVictoryToken) return;
+        options.onComplete?.();
+      }, phraseOrder.length * 1000 + 1500);
+      return token;
+    }
+
+    function beginUltimateYutaVictory(side, card) {
+      if (state.gameOver) return false;
+      state.phase = "ultimateVictory";
+      state.aiThinking = false;
+      clearSelections();
+      state.message = `${card.name}の効果が発動しました。`;
+      addLog(`${SIDES[side]}の${card.name}の効果：手札から出席したため、勝利演出を開始します。`);
+      const revealDelay = PLAY_REVEAL_MS + 80;
+      recordOnlineEffectFeedback({ target: "ultimate-yuta", owner: side, delayMs: revealDelay });
+      const victoryRequest = ++ultimateYutaVictoryToken;
+      window.setTimeout(() => {
+        if (state.gameOver || state.phase !== "ultimateVictory" || victoryRequest !== ultimateYutaVictoryToken) return;
+        startUltimateYutaPhraseSequence({
+          onComplete: () => {
+            if (state.gameOver || state.phase !== "ultimateVictory") return;
+            endGame(side, "Ultimate U太の効果が発動しました。", { ultimateYutaVictory: true });
+          }
+        });
+      }, revealDelay);
+      render();
+      return true;
+    }
+
     function showResultOverlay(winner, options = {}, displayOptions = {}) {
       if (!elements.resultOverlay) return;
       const key = resultOverlayKey(winner, options);
@@ -33635,6 +33896,7 @@
 
     function hideResultOverlay() {
       if (!elements.resultOverlay) return;
+      hideUltimateYutaVictorySequence();
       elements.resultOverlay.className = "result-overlay hidden";
       elements.resultOverlay.innerHTML = "";
       delete elements.resultOverlay.dataset.resultKey;
@@ -35221,6 +35483,7 @@
     }
 
     function canUseItemNow(item) {
+      if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) return fusionEligibleUtasInHand("player", item).length > 0;
       if (item.baseId === "aiben_vs_nyotei_title_match") return canUseTitleMatch("player", item);
       if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) return false;
       if (item.baseId === "dont_worry" && state.actionTurn < 5) return false;
@@ -35479,6 +35742,11 @@
         if (canDropHandCardOnLife(card, target.dataset.lifeTarget)) target.classList.add("drop-ready");
       });
       if (canDropHandCardOnPlaymat(card)) elements.playmat?.classList.add("drop-ready");
+      if (UTA_FUSION_MATERIAL_IDS.includes(card.baseId)) {
+        fusionEligibleUtasInHand("player", card).forEach((target) => {
+          document.querySelector(`.player-hand .hand-card[data-card-id="${target.instanceId}"]`)?.classList.add("drop-ready");
+        });
+      }
       elements.playerHand?.classList.add("drop-ready");
     }
 
@@ -36045,6 +36313,19 @@
 
       for (const element of stack) {
         if (element.closest?.(".drag-ghost-card")) continue;
+        const handCard = element.closest?.(".player-hand .hand-card[data-card-id]");
+        if (handCard && activeHandDrag?.instanceId && card?.instanceId !== handCard.dataset.cardId) {
+          const targetCard = getHandCard("player", handCard.dataset.cardId);
+          const candidate = {
+            type: "hand-card",
+            element: handCard,
+            targetInstanceId: handCard.dataset.cardId,
+            valid: canFuseUtaMaterial("player", card, targetCard)
+          };
+          if (candidate.valid) return candidate;
+          firstCandidate ||= candidate;
+          continue;
+        }
         const slot = element.closest?.(".slot");
         if (slot) {
           const index = slot.dataset.index === "" ? null : Number(slot.dataset.index);
@@ -36112,6 +36393,11 @@
         target.element.classList.add("drag-over");
         return;
       }
+      if (target.type === "hand-card") {
+        target.element.classList.toggle("drag-over", target.valid);
+        target.element.classList.toggle("invalid", !target.valid);
+        return;
+      }
       if (target.valid) target.element.classList.add("drag-over");
     }
 
@@ -36122,8 +36408,23 @@
       if (target.type === "slot") return performHandDropOnSlot(instanceId, target.zone, target.owner, target.index);
       if (target.type === "life") return performHandDropOnLife(instanceId, target.targetSide);
       if (target.type === "playmat") return performHandDropOnPlaymat(instanceId);
+      if (target.type === "hand-card") return performUtaFusionDrop(instanceId, target.targetInstanceId);
       if (target.type === "hand") return cancelHandDropToHand();
       return false;
+    }
+
+    function performUtaFusionDrop(instanceId, targetInstanceId) {
+      const item = getHandCard("player", instanceId);
+      const target = getHandCard("player", targetInstanceId);
+      if (!canFuseUtaMaterial("player", item, target)) return false;
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("utaFusion", { instanceId, targetInstanceId });
+        state.message = `${item.name}の融合先を送信しました。`;
+        clearSelections();
+        render();
+        return true;
+      }
+      return castUtaFusion("player", item, target, true);
     }
 
     function cancelHandDropToHand() {
@@ -39944,6 +40245,11 @@
         addDetailChip(`装備：${equipmentCard.name}`, "equipment", `装備：${equipmentCard.name}`, lines.length ? lines : ["装備中"]);
       });
 
+      utaFusionMaterialEntries(card).forEach((material) => {
+        const name = CARD_BASES[material.baseId]?.name || material.name || material.baseId;
+        addDetailChip(`融合済み：${name}`, "equipment", `融合済み：${name}`, ["このU太に融合されているカード"]);
+      });
+
       battleCardGrantedKeywordEntries(card).forEach((entry) => {
         addTermChip(entry.keyword, entry.source);
       });
@@ -40301,6 +40607,7 @@
         trendy_student: "このカードが攻撃した出席者の体力を0にした場合、反撃ダメージを受けない。その出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",
         rebirth_student: "このカードは一度だけ、体力が0以下になっても校外エリアへ送られず、体力を全回復する。",
         yuta: "余裕を持つ。このカードに装備カードがついたとき、陽気を持つ。",
+        ultimate_yuta: "このカードを手札から出席させたとき、このゲームに勝利する。",
         aggro_queen: "このカードが2行3列にいる状態で自分のターンを終了したとき、相手の学生1人をランダムに指名し、2ダメージを与える。",
         ae_student: "注目を持つ。",
         super_ae_student: "超注目を持つ。",
@@ -40377,6 +40684,10 @@
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
+        tsurai_nara: "融合\n「U太」に融合する。",
+        company_one_day: "融合\n「U太」に融合する。",
+        enough_to_fly: "融合\n「U太」に融合する。",
+        ii_daro_tte: "融合\n「U太」に融合する。",
         king_ghidorah_bed: "3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。",
         quick_quiz_tournament: "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
         ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
@@ -40502,7 +40813,11 @@
         ta_killer: "これは講義のダメージを受けない。手札から出席させたとき、相手のランダムな教師に1ダメージを与える。",
         ta: "カードの効果によって出席される学生トークン。"
       };
-      const text = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      let text = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      const fusedNames = utaFusionMaterialEntries(card)
+        .map((entry) => CARD_BASES[entry.baseId]?.name || entry.name)
+        .filter(Boolean);
+      if (fusedNames.length > 0) text += `\n融合済み：${fusedNames.join("、")}`;
       if (card.baseId !== "suit_student") return text;
       const count = state.screen === "battle" && state.phase === "battle"
         ? Math.max(0, Number(state.suitStudentAttendanceCount) || 0)
@@ -41104,10 +41419,18 @@
       startSoloBattleWithSelectedDecks,
       showCardPlayAnimation,
       showEvolutionAnimation,
+      startUltimateYutaPhraseSequence,
+      hideUltimateYutaVictorySequence,
+      beginUltimateYutaVictory,
       hidePlayReveal,
       hasEquipmentCard,
       equipmentEntriesForCard,
       equipmentDetailText,
+      UTA_FUSION_MATERIAL_IDS,
+      utaFusionMaterialEntries,
+      canFuseUtaMaterial,
+      fusionEligibleUtasInHand,
+      castUtaFusion,
       statusPartsForCard,
       fieldCardTemplate,
       battleCardCurrentEffectsTemplate,

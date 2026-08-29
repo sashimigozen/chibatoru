@@ -27,6 +27,10 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "intern",
       "king_ghidorah_bed",
       "quick_quiz_tournament",
+      "tsurai_nara",
+      "company_one_day",
+      "enough_to_fly",
+      "ii_daro_tte",
       "big_laughter",
       "lie_pekora",
       "big_wall",
@@ -110,6 +114,12 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.quick_quiz_tournament.hand).toContain("general_student");
   expect(result.quick_quiz_tournament.playerBoard).toHaveLength(8);
   expect(result.quick_quiz_tournament.playerBoard.every((card) => card.type === "student")).toBe(true);
+  ["tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"].forEach((baseId) => {
+    expect(result[baseId].hand).toEqual(expect.arrayContaining([
+      "yuta", "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"
+    ]));
+    expect(result[baseId].rulesText).toBe("融合\n「U太」に融合する。");
+  });
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
   expect(result.lie_pekora.playerBoard).toHaveLength(result.lie_pekora.opponentBoard.length);
@@ -122,6 +132,86 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.namen_tenno.opponentBoard.filter((card) => card.type === "vampire")).toHaveLength(3);
   expect(result.course_registration_party.playerDeckSize).toBeGreaterThanOrEqual(5);
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
+});
+
+test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残したまま勝利する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const fusion = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.currentSide = "player";
+    state.gameOver = false;
+    state.aiThinking = false;
+    state.actionTurn = 1;
+    state.players.player.will = 10;
+    state.players.player.maxWill = 10;
+    state.players.player.trash = [];
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.player.board.teacher = null;
+    const yuta = api.createCardFromBase("yuta", "player");
+    const materials = api.UTA_FUSION_MATERIAL_IDS.map((baseId) => api.createCardFromBase(baseId, "player"));
+    state.players.player.hand = [yuta, ...materials];
+    const steps = materials.map((item) => {
+      const target = state.players.player.hand.find((card) => card.instanceId === yuta.instanceId);
+      const used = api.castUtaFusion("player", item, target, false);
+      const current = state.players.player.hand.find((card) => card.instanceId === yuta.instanceId);
+      return {
+        used,
+        baseId: current?.baseId,
+        materials: api.utaFusionMaterialEntries(current).map((entry) => entry.baseId),
+        rules: api.cardRulesText(current)
+      };
+    });
+    const ultimate = state.players.player.hand.find((card) => card.instanceId === yuta.instanceId);
+    const detail = api.battleCardCurrentEffectsTemplate(ultimate);
+    const trash = state.players.player.trash.map((card) => card.baseId);
+    api.placeCardFromHand("player", ultimate.instanceId, "seat", "player", 0, true);
+    return {
+      steps,
+      ultimate: {
+        baseId: ultimate.baseId,
+        name: ultimate.name,
+        noCost: ultimate.noCost,
+        attack: ultimate.attack,
+        hp: ultimate.hp,
+        rules: api.cardRulesText(ultimate),
+        detailMarkup: detail.markup
+      },
+      trash,
+      phaseAfterAttendance: state.phase
+    };
+  });
+
+  expect(fusion.steps.map((step) => step.used)).toEqual([true, true, true, true]);
+  expect(fusion.steps.slice(0, 3).every((step) => step.baseId === "yuta")).toBe(true);
+  expect(fusion.steps[3].baseId).toBe("ultimate_yuta");
+  expect(fusion.ultimate).toEqual(expect.objectContaining({
+    baseId: "ultimate_yuta",
+    name: "Ultimate U太",
+    noCost: true,
+    attack: 13,
+    hp: 13
+  }));
+  ["辛いなら", "会社１日", "飛ぶくらい", "いいだろって"].forEach((name) => {
+    expect(fusion.ultimate.rules).toContain(name);
+    expect(fusion.ultimate.detailMarkup).toContain(name);
+  });
+  expect(fusion.ultimate.rules).not.toContain("融合：「U太」");
+  expect(fusion.trash).toEqual([]);
+  expect(fusion.phaseAfterAttendance).toBe("ultimateVictory");
+
+  await expect(page.locator('[data-ultimate-phrase="tsurai_nara"]')).toHaveClass(/active/, { timeout: 2200 });
+  await expect(page.locator('[data-ultimate-phrase="company_one_day"]')).toHaveClass(/active/, { timeout: 1400 });
+  await expect(page.locator('[data-ultimate-phrase="tsurai_nara"]')).not.toHaveClass(/active/);
+  await expect(page.locator('[data-ultimate-phrase="enough_to_fly"]')).toHaveClass(/active/, { timeout: 1400 });
+  await expect(page.locator('[data-ultimate-phrase="ii_daro_tte"]')).toHaveClass(/active/, { timeout: 1400 });
+  await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/, { timeout: 1400 });
+  await expect(page.locator("#resultOverlay")).toHaveClass(/victory/, { timeout: 2000 });
+  await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/);
+  await expect(page.locator("#ultimateYutaOverlay")).not.toHaveClass(/hidden/);
 });
 
 test("早押しクイズ大会は通常ビンゴを再成立でも発動し、8ビンゴ追加効果は各1回にする", async ({ page }) => {
