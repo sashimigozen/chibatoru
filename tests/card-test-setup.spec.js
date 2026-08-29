@@ -228,9 +228,22 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   await expect(page.locator("#ultimateYutaOverlay [data-ultimate-phrase]")).toHaveText([
     "いいだろって", "飛ぶくらい", "会社１日", "辛いなら"
   ]);
+  const finalFooter = page.locator("#ultimateYutaOverlay .ultimate-yuta-footer");
+  await expect(finalFooter).toHaveText("思ってまう");
+  await expect(finalFooter).toHaveCSS("writing-mode", "vertical-rl");
+  await expect(finalFooter).toHaveCSS("white-space", "nowrap");
   expect(await page.locator("#ultimateYutaOverlay [data-ultimate-phrase]").evaluateAll((phrases) => (
     phrases.every((phrase) => getComputedStyle(phrase).whiteSpace === "nowrap")
   ))).toBe(true);
+  const finalFlyBox = await fly.boundingBox();
+  expect(Math.abs(finalFlyBox.x + finalFlyBox.width / 2 - page.viewportSize().width / 2)).toBeLessThan(2);
+  const finalColumnCenters = await page.locator("#ultimateYutaOverlay .ultimate-yuta-footer, #ultimateYutaOverlay [data-ultimate-phrase]").evaluateAll((columns) => (
+    columns.map((column) => {
+      const rect = column.getBoundingClientRect();
+      return rect.left + rect.width / 2;
+    })
+  ));
+  expect(finalColumnCenters).toEqual([...finalColumnCenters].sort((a, b) => a - b));
   await expect(page.locator("#resultOverlay")).toHaveClass(/victory/, { timeout: 2000 });
   await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/);
   await expect(page.locator("#ultimateYutaOverlay")).not.toHaveClass(/hidden/);
