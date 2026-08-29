@@ -15299,6 +15299,45 @@
       contain: paint;
     }
 
+    .quick-quiz-click-effect {
+      position: absolute;
+      inset: -7px;
+      z-index: 29;
+      border: 3px solid #38bdf8;
+      border-radius: 10px;
+      box-shadow:
+        0 0 0 2px rgba(254, 240, 138, .9),
+        0 0 18px rgba(56, 189, 248, .9),
+        inset 0 0 14px rgba(125, 211, 252, .48);
+      opacity: 0;
+      pointer-events: none;
+      animation: quick-quiz-click-lock .62s cubic-bezier(.18, .88, .32, 1.24) both;
+    }
+
+    .quick-quiz-click-effect::before,
+    .quick-quiz-click-effect::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      width: 32%;
+      height: 5px;
+      border-radius: 999px;
+      background: #fef08a;
+      box-shadow: 0 0 8px rgba(254, 240, 138, .95);
+      transform: translateX(-50%);
+    }
+
+    .quick-quiz-click-effect::before { top: -4px; }
+    .quick-quiz-click-effect::after { bottom: -4px; }
+
+    @keyframes quick-quiz-click-lock {
+      0% { opacity: 0; transform: scale(1.28); filter: brightness(1.35); }
+      42% { opacity: 1; transform: scale(.94); filter: brightness(1.1); }
+      62% { opacity: 1; transform: scale(1.025); filter: brightness(1.35); }
+      82% { opacity: .92; transform: scale(1); filter: brightness(1); }
+      100% { opacity: 0; transform: scale(1); filter: brightness(1); }
+    }
+
     .board-change-effect {
       position: absolute;
       inset: 0;
@@ -15398,7 +15437,8 @@
 
     @media (prefers-reduced-motion: reduce) {
       .board-change-energy-image,
-      .board-change-heal-cross {
+      .board-change-heal-cross,
+      .quick-quiz-click-effect {
         animation-duration: .01ms !important;
       }
     }
@@ -17317,7 +17357,7 @@
           { title: "新カード", after: "「インターン」\n持ち物／展開・敵増殖／戦意2\nお互いのプレイヤーがそれぞれ2回ターンを終了するまで、お互いのプレイヤーは、自分のターン終了時、自分の講義室にいる「スーツを着た学生」ではない学生1人をランダムに指名し、「スーツを着た学生」にする。" }
           ,{ title: "新カード", after: "「キングギドラベッド」\n持ち物／共通カード／戦意4\n3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。" }
           ,{ title: "新カード", after: "「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。" }
-          ,{ title: "早押しクイズ大会の演出", before: "ビンゴによって出席者の攻撃力・体力が上がっても、強化された瞬間を示す演出が表示されず、8ビンゴ達成時にも専用表示がなかった。", after: "横・縦・8ビンゴによって出席者が強化されたとき、対象カードに赤いバフ演出を表示。8ビンゴ達成時は、画面中央に「BINGO!!」を大きく表示する。オンライン対戦では相手側と観戦者にも同じ演出を同期する。" }
+          ,{ title: "早押しクイズ大会の演出", before: "ビンゴ成立や強化の瞬間を示す演出がなく、8ビンゴの専用表示を追加した後も、出席させたカードの大表示と重なっていた。", after: "出席させたカードの大表示が終了した後、成立した列のカードに枠が「カチッ」と固定される演出を表示し、対象カードの赤いバフ演出へつなげる。8ビンゴ達成時はその後に画面中央へ「BINGO!!」を大きく表示する。オンライン対戦でも相手側と観戦者に同じ順番で同期する。" }
         ]
       },
       {
@@ -22218,6 +22258,10 @@
         const delay = occurredOffset + Math.max(0, Number(event.delayMs) || 0);
         if (event.target === "announcement") {
           window.setTimeout(() => showCenterAnnouncement(event.text, event.variant || ""), delay);
+          return;
+        }
+        if (event.target === "bingo-lines") {
+          window.setTimeout(() => appendQuickQuizClickEffect(event.instanceIds || []), delay);
           return;
         }
         let target = null;
@@ -29098,6 +29142,9 @@
       Object.freeze({ id: "diag_1", kind: "diagonal", seats: Object.freeze([0, 4, 8]) }),
       Object.freeze({ id: "diag_2", kind: "diagonal", seats: Object.freeze([2, 4, 6]) })
     ]);
+    const QUICK_QUIZ_VISUAL_DELAY_MS = PLAY_REVEAL_MS + 80;
+    const QUICK_QUIZ_BUFF_DELAY_MS = QUICK_QUIZ_VISUAL_DELAY_MS + 220;
+    const QUICK_QUIZ_EIGHT_BINGO_DELAY_MS = QUICK_QUIZ_VISUAL_DELAY_MS + 680;
 
     function completeQuickQuizBingoLines(side) {
       const seats = state.players[side]?.board?.seats || [];
@@ -29122,19 +29169,30 @@
       const attackBonus = verticalCount + (eightBingo ? 3 : 0);
       const hpBonus = horizontalCount + (eightBingo ? 3 : 0);
       const drawCount = diagonalCount + (eightBingo ? 3 : 0);
+      let appliedAttack = 0;
+      let appliedHp = 0;
 
       if (attackBonus || hpBonus) {
         const attackBefore = card.attack;
         const hpBefore = card.maxHp;
         applyPermanentStatBuff(card, attackBonus, hpBonus, 0, state.environment.name);
-        const appliedAttack = Math.max(0, (card.attack || 0) - (attackBefore || 0));
-        const appliedHp = Math.max(0, (card.maxHp || 0) - (hpBefore || 0));
-        if (appliedAttack || appliedHp) {
-          showBoardChangeEffectForCard(card, "buff", `ビンゴ強化 攻撃力+${appliedAttack}・体力+${appliedHp}`);
-        }
+        appliedAttack = Math.max(0, (card.attack || 0) - (attackBefore || 0));
+        appliedHp = Math.max(0, (card.maxHp || 0) - (hpBefore || 0));
       }
       const drawn = drawUpTo(side, drawCount);
-      if (eightBingo) showSharedCenterAnnouncement("BINGO!!", "bingo");
+      const bingoCardInstanceIds = [...new Set(newLines.flatMap((line) => (
+        line.seats.map((seatIndex) => state.players[side]?.board?.seats?.[seatIndex]?.instanceId).filter(Boolean)
+      )))];
+      showQuickQuizClickEffect(bingoCardInstanceIds, QUICK_QUIZ_VISUAL_DELAY_MS);
+      if (appliedAttack || appliedHp) {
+        showBoardChangeEffectForCard(
+          card,
+          "buff",
+          `ビンゴ強化 攻撃力+${appliedAttack}・体力+${appliedHp}`,
+          QUICK_QUIZ_BUFF_DELAY_MS
+        );
+      }
+      if (eightBingo) showSharedCenterAnnouncement("BINGO!!", "bingo", QUICK_QUIZ_EIGHT_BINGO_DELAY_MS);
       const lineSummary = [
         horizontalCount ? `横${horizontalCount}列` : "",
         verticalCount ? `縦${verticalCount}列` : "",
@@ -36255,20 +36313,48 @@
       window.setTimeout(() => layer.remove(), 1550);
     }
 
-    function showBoardChangeEffectForCard(card, tone = "buff", label = "強化") {
+    function appendQuickQuizClickEffect(instanceIds = []) {
+      [...new Set(instanceIds)].forEach((instanceId) => {
+        const target = document.querySelector(`[data-card-id="${instanceId}"]`);
+        if (!target) return;
+        target.querySelectorAll(":scope > .quick-quiz-click-effect").forEach((effect) => effect.remove());
+        const effect = document.createElement("span");
+        effect.className = "quick-quiz-click-effect";
+        effect.setAttribute("aria-label", "ビンゴ成立");
+        target.appendChild(effect);
+        window.setTimeout(() => effect.remove(), 700);
+      });
+    }
+
+    function showQuickQuizClickEffect(instanceIds = [], delayMs = 0) {
+      if (!Array.isArray(instanceIds) || instanceIds.length === 0) return;
+      const delay = Math.max(0, Number(delayMs) || 0);
+      recordOnlineEffectFeedback({
+        target: "bingo-lines",
+        instanceIds: [...new Set(instanceIds)],
+        text: "ビンゴ成立",
+        kind: "bingo",
+        delayMs: delay
+      });
+      window.setTimeout(() => appendQuickQuizClickEffect(instanceIds), delay);
+    }
+
+    function showBoardChangeEffectForCard(card, tone = "buff", label = "強化", delayMs = 0) {
       if (!card?.instanceId) return;
+      const delay = Math.max(0, Number(delayMs) || 0);
       recordOnlineEffectFeedback({
         target: "card-change",
         instanceId: card.instanceId,
         owner: card.owner || null,
         tone,
         text: label,
-        kind: tone
+        kind: tone,
+        delayMs: delay
       });
       window.setTimeout(() => {
         const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
         if (target) appendBoardChangeFeedbackLayer(target, [{ tone, label }]);
-      }, 0);
+      }, delay);
     }
 
     function renderPlayerBoard(owner, teacherLane, seatGrid) {
@@ -39415,9 +39501,10 @@
       elements.turnOverlay.classList.add("show");
     }
 
-    function showSharedCenterAnnouncement(text, variant = "") {
-      recordOnlineEffectFeedback({ target: "announcement", text, variant, kind: variant || "announcement" });
-      showCenterAnnouncement(text, variant);
+    function showSharedCenterAnnouncement(text, variant = "", delayMs = 0) {
+      const delay = Math.max(0, Number(delayMs) || 0);
+      recordOnlineEffectFeedback({ target: "announcement", text, variant, kind: variant || "announcement", delayMs: delay });
+      window.setTimeout(() => showCenterAnnouncement(text, variant), delay);
     }
 
     function showTutorialTitleAnnouncement() {
@@ -41009,6 +41096,7 @@
       initializeGame,
       startSoloBattleFromHome,
       startSoloBattleWithSelectedDecks,
+      showCardPlayAnimation,
       showEvolutionAnimation,
       hidePlayReveal,
       hasEquipmentCard,

@@ -80,6 +80,8 @@ test("更新情報のカード追加・修正をカード名、ステータス�
 
   const quickQuizVisuals = latestEntry.locator(".update-change", { hasText: "早押しクイズ大会の演出" });
   await expect(quickQuizVisuals.locator(".update-after")).toContainText("赤いバフ演出");
+  await expect(quickQuizVisuals.locator(".update-after")).toContainText("大表示が終了した後");
+  await expect(quickQuizVisuals.locator(".update-after")).toContainText("カチッ");
   await expect(quickQuizVisuals.locator(".update-after")).toContainText("BINGO!!");
 
   const aggroArmy = latestEntry.locator(".update-after", { hasText: "アグロ軍" });
