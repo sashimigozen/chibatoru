@@ -364,6 +364,20 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   await expect(finalFooter).toHaveText("思ってまう");
   await expect(finalFooter).toHaveCSS("writing-mode", "vertical-rl");
   await expect(finalFooter).toHaveCSS("white-space", "nowrap");
+  const victoryTypography = await page.locator("#ultimateYutaOverlay .ultimate-yuta-footer, #ultimateYutaOverlay [data-ultimate-phrase]").evaluateAll((columns) => (
+    columns.map((column) => {
+      const style = getComputedStyle(column);
+      return {
+        fontFamily: style.fontFamily,
+        fontWeight: style.fontWeight,
+        strokeWidth: style.webkitTextStrokeWidth
+      };
+    })
+  ));
+  expect(victoryTypography).toHaveLength(5);
+  expect(victoryTypography.every(({ fontFamily }) => fontFamily.includes("YuKyokasho"))).toBe(true);
+  expect(victoryTypography.every(({ fontWeight }) => Number(fontWeight) >= 900)).toBe(true);
+  expect(victoryTypography.every(({ strokeWidth }) => Number.parseFloat(strokeWidth) > 0)).toBe(true);
   expect(await page.locator("#ultimateYutaOverlay [data-ultimate-phrase]").evaluateAll((phrases) => (
     phrases.every((phrase) => getComputedStyle(phrase).whiteSpace === "nowrap")
   ))).toBe(true);

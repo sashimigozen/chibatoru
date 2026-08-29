@@ -141,7 +141,7 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
 
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const latestEntry = page.locator(".update-entry").first();
+  const latestEntry = page.locator(".update-entry", { hasText: "ver.0.20.1" }).first();
   await expect(latestEntry.locator("summary")).toContainText("ver.0.20.1");
   await latestEntry.locator("summary").click();
   await expect(latestEntry.locator(".update-change", { hasText: "戦意0の表示" })).toContainText("戦意を持たないカードだけは引き続き「戦意なし」");
@@ -156,6 +156,25 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
   const rulerFusionUpdate = latestEntry.locator(".update-change", { hasText: "定規の融合" });
   await expect(rulerFusionUpdate).toContainText("ほかの定規だけをマリガンと同じ形式で表示");
   await expect(rulerFusionUpdate).toContainText("今後追加する融合も、この対象選択方式へ統一");
+});
+
+test("Ultimate U太の筆文字風勝利演出を更新情報に記載する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+
+  const latestEntry = page.locator(".update-entry").first();
+  await expect(latestEntry.locator("summary")).toContainText("ver.0.20.2");
+  await expect(latestEntry.locator("summary")).toContainText("2026年8月30日");
+  await latestEntry.locator("summary").click();
+
+  const victoryUpdate = latestEntry.locator(".update-change", { hasText: "Ultimate U太の勝利演出" });
+  await expect(victoryUpdate).toContainText("筆文字風の書体");
+  await expect(victoryUpdate).toContainText("辛いなら");
+  await expect(victoryUpdate).toContainText("会社１日");
+  await expect(victoryUpdate).toContainText("飛ぶくらい");
+  await expect(victoryUpdate).toContainText("いいだろって");
+  await expect(victoryUpdate).toContainText("思ってまう");
+  await expect(victoryUpdate).toContainText("表示する文言・順番・位置・時間は変更しない");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
