@@ -199,6 +199,66 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
   await expect(choiceStage).toBeHidden();
 });
 
+test("定規の確認から融合するもう1枚を選んで融合する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const ids = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("ruler");
+    const rulers = api.state.players.player.hand.filter((card) => card.baseId === "ruler");
+    const extraRuler = api.createCardFromBase("ruler", "player");
+    api.state.players.player.hand.push(extraRuler, api.createCardFromBase("general_student", "player"));
+    api.render();
+    api.showBattleCardPreview(rulers[0]);
+    return {
+      sourceId: rulers[0].instanceId,
+      unchosenId: rulers[1].instanceId,
+      chosenId: extraRuler.instanceId
+    };
+  });
+
+  const fusionButton = page.locator('#battleCardPreview [data-preview-ruler-fuse="true"]');
+  await expect(fusionButton).toBeVisible();
+  await expect(fusionButton).toBeEnabled();
+  await expect(fusionButton).toHaveText("融合する");
+  await fusionButton.click();
+
+  const choiceStage = page.locator("#threeGesturesStage");
+  await expect(choiceStage).toBeVisible();
+  await expect(page.locator("#threeGesturesTitle")).toHaveText("定規の融合先");
+  await expect(page.locator("#threeGesturesMessage")).toContainText("融合するもう1枚の「定規」");
+  const candidates = page.locator("#threeGesturesHand .mulligan-card");
+  await expect(candidates).toHaveCount(2);
+  await expect(page.locator("#threeGesturesHand .mulligan-card .card-name")).toHaveText(["定規", "定規"]);
+  await expect(page.locator("#threeGesturesHand")).not.toContainText("一般学生");
+
+  const chosen = page.locator(`#threeGesturesHand .mulligan-card[data-card-id="${ids.chosenId}"]`);
+  const confirmButton = page.locator("#threeGesturesConfirmButton");
+  await expect(confirmButton).toHaveText("この定規と融合する");
+  await expect(confirmButton).toBeDisabled();
+  await chosen.click();
+  await expect(confirmButton).toBeEnabled();
+  await confirmButton.click();
+
+  const result = await page.evaluate(({ ids }) => {
+    const api = window.__chibattle;
+    return {
+      handIds: api.state.players.player.hand.map((card) => card.instanceId),
+      handBaseIds: api.state.players.player.hand.map((card) => card.baseId),
+      trashIds: api.state.players.player.trash.map((card) => card.instanceId),
+      pendingChoice: api.state.pendingCardChoice
+    };
+  }, { ids });
+  expect(result.handIds).toContain(ids.unchosenId);
+  expect(result.handIds).not.toContain(ids.sourceId);
+  expect(result.handIds).not.toContain(ids.chosenId);
+  expect(result.handBaseIds).toContain("double_diamond");
+  expect(result.trashIds).toEqual(expect.arrayContaining([ids.sourceId, ids.chosenId]));
+  expect(result.trashIds).not.toContain(ids.unchosenId);
+  expect(result.pendingChoice).toBeNull();
+  await expect(choiceStage).toBeHidden();
+});
+
 test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残したまま勝利する", async ({ page }) => {
   await page.goto(gameUrl);
 

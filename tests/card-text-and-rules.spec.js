@@ -153,6 +153,9 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
   const fusionOrderUpdate = latestEntry.locator(".update-change", { hasText: "U太の融合表示順" });
   await expect(fusionOrderUpdate).toContainText("カード名を1枚ずつ改行して表示・記録");
   await expect(fusionOrderUpdate).toContainText("番号と「、」は表示しない");
+  const rulerFusionUpdate = latestEntry.locator(".update-change", { hasText: "定規の融合" });
+  await expect(rulerFusionUpdate).toContainText("ほかの定規だけをマリガンと同じ形式で表示");
+  await expect(rulerFusionUpdate).toContainText("今後追加する融合も、この対象選択方式へ統一");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

@@ -17499,11 +17499,12 @@
       {
         version: "ver.0.20.1",
         date: "2026年8月29日",
-        summary: "戦意0の表示を分かりやすくし、融合カードをカード確認から対象選択して使えるようにしました。",
+        summary: "戦意0の表示を分かりやすくし、U太と定規の融合をカード確認から対象選択して使える共通操作へ統一しました。",
         changes: [
           { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" },
           { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があり、融合先ごとの融合済みカードも選択中に確認できなかった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。各U太には「融合済み：○○」を表示し、何も融合されていない場合は「融合済み：なし」と表示。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" },
-          { title: "U太の融合表示順", before: "U太へ融合済みのカード名は、実際に融合した順番で「、」を使って横並びに表示されていた。", after: "実際に融合した順番にかかわらず、「融合済み：」の下へ「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順で、カード名を1枚ずつ改行して表示・記録する。番号と「、」は表示しない。" }
+          { title: "U太の融合表示順", before: "U太へ融合済みのカード名は、実際に融合した順番で「、」を使って横並びに表示されていた。", after: "実際に融合した順番にかかわらず、「融合済み：」の下へ「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順で、カード名を1枚ずつ改行して表示・記録する。番号と「、」は表示しない。" },
+          { title: "定規の融合", before: "手札に定規が2枚以上ある場合、融合を実行すると先頭の定規2枚が自動的に選ばれていた。", after: "手札の定規をカード確認し、「融合する」を押すと、融合可能なほかの定規だけをマリガンと同じ形式で表示。融合する定規を選んで確定すると、選んだ2枚から「ダブルダイヤモンドクロス」を生成する。今後追加する融合も、この対象選択方式へ統一する。" }
         ]
       },
       {
@@ -22865,7 +22866,9 @@
           const target = onlineMapRefForHost(payload.target);
           if (target) placePendingCopiedCardForSide("opponent", target.zone, target.owner, target.index ?? null);
         }
-        if (command.type === "fuse") fuseRulersForSide("opponent", true);
+        if (command.type === "fuse") {
+          fuseRulersForSide("opponent", true, payload.sourceInstanceId || null, payload.targetInstanceId || null);
+        }
         if (command.type === "raptorTemple") {
           const source = onlineMapRefForHost(payload.source);
           if (source) resolveRaptorTempleExchange("opponent", source, payload.targetInstanceId, true);
@@ -27307,6 +27310,18 @@
       const itemId = pending.itemId;
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
+      if (mode === "ruler_fusion") {
+        const source = getHandCard("player", itemId);
+        const target = getHandCard("player", selectedIds[0]);
+        if (!source || !target || !rulerFusionEligibleTargets("player", source).some((card) => card.instanceId === target.instanceId)) {
+          state.message = "融合する定規を確認できなかったため、融合を取り消しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        fuseRulersForSide("player", true, source.instanceId, target.instanceId);
+        return;
+      }
       if (mode === "uta_fusion") {
         const item = getHandCard("player", itemId);
         const target = getHandCard("player", selectedIds[0]);
@@ -28316,6 +28331,24 @@
       return fusedNames.length > 0 ? `融合済み：\n${fusedNames.join("\n")}` : "融合済み：なし";
     }
 
+    function openFusionTargetChoice(sourceCard, options) {
+      const targets = (options.targets || []).filter(Boolean);
+      if (!sourceCard || targets.length === 0) return false;
+      hideBattleCardPreview();
+      state.selectedAttacker = null;
+      state.selectedHandId = sourceCard.instanceId;
+      return openCardChoice({
+        mode: options.mode,
+        itemId: sourceCard.instanceId,
+        title: options.title,
+        message: options.message,
+        cards: targets,
+        min: 1,
+        max: 1,
+        confirmLabel: options.confirmLabel
+      });
+    }
+
     function openUtaFusionChoice(item) {
       const handItem = getHandCard("player", item?.instanceId);
       if (!handItem || !UTA_FUSION_MATERIAL_IDS.includes(handItem.baseId)) return false;
@@ -28327,18 +28360,35 @@
         return false;
       }
       const targets = fusionEligibleUtasInHand("player", handItem);
-      hideBattleCardPreview();
-      state.selectedAttacker = null;
-      state.selectedHandId = handItem.instanceId;
-      return openCardChoice({
+      return openFusionTargetChoice(handItem, {
         mode: "uta_fusion",
-        itemId: handItem.instanceId,
         title: `${handItem.name}の融合先`,
         message: "融合させる手札の「U太」を選んでください。",
-        cards: targets,
-        min: 1,
-        max: 1,
+        targets,
         confirmLabel: "このU太に融合する"
+      });
+    }
+
+    function rulerFusionEligibleTargets(side, sourceCard) {
+      if (!sourceCard || sourceCard.baseId !== "ruler") return [];
+      return (state.players[side]?.hand || [])
+        .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId);
+    }
+
+    function openRulerFusionChoice(sourceCard) {
+      const handSource = getHandCard("player", sourceCard?.instanceId);
+      const targets = rulerFusionEligibleTargets("player", handSource);
+      if (!handSource || !canPlayerFuseRulers(handSource) || targets.length === 0) {
+        state.message = "融合できるもう1枚の「定規」が手札にありません。";
+        render();
+        return false;
+      }
+      return openFusionTargetChoice(handSource, {
+        mode: "ruler_fusion",
+        title: "定規の融合先",
+        message: "融合するもう1枚の「定規」を選んでください。",
+        targets,
+        confirmLabel: "この定規と融合する"
       });
     }
 
@@ -32887,20 +32937,31 @@
       moveToTrash(side, card, options);
     }
 
-    function fuseRulersForSide(side, renderAfter = true) {
+    function fuseRulersForSide(side, renderAfter = true, sourceInstanceId = null, targetInstanceId = null) {
       if (side === "player" && isOnlineSpectator()) return false;
+      const player = state.players[side];
+      const rulers = player.hand.filter((card) => card.baseId === "ruler");
+      const source = sourceInstanceId
+        ? rulers.find((card) => card.instanceId === sourceInstanceId)
+        : rulers[0];
+      const target = targetInstanceId
+        ? rulers.find((card) => card.instanceId === targetInstanceId)
+        : rulers.find((card) => card.instanceId !== source?.instanceId);
+      if (!source || !target || source.instanceId === target.instanceId || state.phase !== "battle") return false;
       if (side === "player" && onlineCanSendCommand()) {
-        onlineSendCommand("fuse");
+        onlineSendCommand("fuse", {
+          sourceInstanceId: source.instanceId,
+          targetInstanceId: target.instanceId
+        });
         state.message = "定規融合を送信しました。";
+        clearSelections();
         render();
         return true;
       }
-      const player = state.players[side];
-      const rulers = player.hand.filter((card) => card.baseId === "ruler");
-      if (rulers.length < 2 || state.phase !== "battle") return false;
-      player.hand = player.hand.filter((card) => card.instanceId !== rulers[0].instanceId && card.instanceId !== rulers[1].instanceId);
-      moveToTrash(side, rulers[0]);
-      moveToTrash(side, rulers[1]);
+      const materials = [source, target];
+      player.hand = player.hand.filter((card) => !materials.some((material) => material.instanceId === card.instanceId));
+      moveToTrash(side, source);
+      moveToTrash(side, target);
       player.hand.push(createCardFromBase("double_diamond", side));
       analyticsRecordAction({
         side,
@@ -32910,10 +32971,11 @@
         sourceZone: "hand",
         targetZone: "hand",
         details: {
-          materials: rulers.map(analyticsCardInfo)
+          materials: materials.map(analyticsCardInfo)
         }
       });
       addLog(`${SIDES[side]}は定規2枚を融合し、ダブルダイヤモンドクロスを生成しました。`);
+      clearSelections();
       if (renderAfter) render();
       return true;
     }
@@ -35573,13 +35635,16 @@
       updateTutorialSpotlight(tutorialFocusSelector(step));
     }
 
-    function canPlayerFuseRulers() {
-      return state.phase === "battle"
+    function canPlayerFuseRulers(sourceCard = null) {
+      const canAct = state.phase === "battle"
         && state.currentSide === "player"
         && !state.gameOver
         && !state.aiThinking
-        && !state.pendingCardPlay
-        && state.players.player.hand.filter((card) => card.baseId === "ruler").length >= 2;
+        && !state.pendingCardPlay;
+      if (!canAct) return false;
+      if (!sourceCard) return state.players.player.hand.filter((card) => card.baseId === "ruler").length >= 2;
+      return state.players.player.hand.some((card) => card.instanceId === sourceCard.instanceId)
+        && rulerFusionEligibleTargets("player", sourceCard).length > 0;
     }
 
     function playerHasAvailableAction() {
@@ -40126,8 +40191,10 @@
     function showBattleCardPreview(card) {
       if (!card || state.screen !== "battle" || !elements.battleCardPreview) return;
       clearOneEyedPeekRevealTimer();
-      const fuseMarkup = card.baseId === "ruler" && canPlayerFuseRulers()
-        ? `<button class="button secondary" type="button" data-preview-ruler-fuse="true">定規融合</button>`
+      const isOwnedRuler = card.baseId === "ruler"
+        && state.players.player.hand.some((handCard) => handCard.instanceId === card.instanceId);
+      const rulerFusionMarkup = isOwnedRuler
+        ? `<button class="button" type="button" data-preview-ruler-fuse="true"${canPlayerFuseRulers(card) ? "" : " disabled"}>融合する</button>`
         : "";
       const diamondDustRecoveryMarkup = card.baseId === "diamond_dust"
         && state.players.player.trash.some((trashCard) => trashCard.instanceId === card.instanceId)
@@ -40139,7 +40206,7 @@
       const utaFusionMarkup = isOwnedUtaFusionMaterial
         ? `<button class="button" type="button" data-preview-uta-fusion="true"${canStartHandDrag(card) ? "" : " disabled"}>融合する</button>`
         : "";
-      const previewActions = [fuseMarkup, diamondDustRecoveryMarkup, utaFusionMarkup].filter(Boolean);
+      const previewActions = [rulerFusionMarkup, diamondDustRecoveryMarkup, utaFusionMarkup].filter(Boolean);
       const actionMarkup = previewActions.length > 0
         ? `<div class="battle-card-preview-actions${previewActions.length === 1 ? " single" : ""}">${previewActions.join("")}</div>`
         : "";
@@ -41355,7 +41422,10 @@
       if (event.target === elements.trashDetailStage) closeTrashDetail();
     });
     elements.itemTargetConfirmButton.addEventListener("click", confirmSelectedItemTargets);
-    elements.fusionButton.addEventListener("click", () => fuseRulersForSide("player", true));
+    elements.fusionButton.addEventListener("click", () => {
+      const source = state.players.player.hand.find((card) => card.baseId === "ruler");
+      if (source) openRulerFusionChoice(source);
+    });
     elements.startButton.addEventListener("click", startBattle);
     elements.endTurnButton.addEventListener("click", () => endTurn());
     elements.analyticsJsonlButton.addEventListener("click", exportAnalyticsJsonl);
@@ -41476,8 +41546,8 @@
       }
       if (event.target.closest("[data-preview-ruler-fuse]")) {
         event.stopPropagation();
-        closeItemConfirm();
-        fuseRulersForSide("player", true);
+        const card = elements.battleCardPreview._previewCard;
+        if (card) openRulerFusionChoice(card);
         return;
       }
       if (event.target.closest("[data-preview-diamond-dust-recovery]")) {
@@ -41580,6 +41650,8 @@
       utaFusionMaterialEntries,
       canFuseUtaMaterial,
       fusionEligibleUtasInHand,
+      rulerFusionEligibleTargets,
+      openRulerFusionChoice,
       openUtaFusionChoice,
       castUtaFusion,
       statusPartsForCard,
