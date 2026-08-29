@@ -17471,9 +17471,10 @@
       {
         version: "ver.0.20.1",
         date: "2026年8月29日",
-        summary: "戦意が0のカードと、戦意を持たないカードの表示を区別しやすくしました。",
+        summary: "戦意0の表示を分かりやすくし、融合カードをカード確認から対象選択して使えるようにしました。",
         changes: [
-          { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" }
+          { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" },
+          { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" }
         ]
       },
       {
@@ -27277,6 +27278,25 @@
       const itemId = pending.itemId;
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
+      if (mode === "uta_fusion") {
+        const item = getHandCard("player", itemId);
+        const target = getHandCard("player", selectedIds[0]);
+        if (!item || !target || !canFuseUtaMaterial("player", item, target)) {
+          state.message = "融合先を確認できなかったため、融合を取り消しました。";
+          clearSelections();
+          render();
+          return;
+        }
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("utaFusion", { instanceId: item.instanceId, targetInstanceId: target.instanceId });
+          state.message = `${item.name}の融合先を送信しました。`;
+          clearSelections();
+          render();
+          return;
+        }
+        castUtaFusion("player", item, target, true);
+        return;
+      }
       if (mode === "king_ghidorah_effect") {
         const item = getHandCard("player", itemId);
         if (!item) return;
@@ -27762,16 +27782,7 @@
         return;
       }
       if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) {
-        if (fusionEligibleUtasInHand("player", item).length === 0) {
-          state.message = `${item.name}を融合できる手札の「U太」がいません。`;
-          render();
-          return;
-        }
-        state.selectedAttacker = null;
-        state.selectedHandId = item.instanceId;
-        state.pendingHandDiscardItem = { mode: "utaFusion", itemId: item.instanceId };
-        state.message = `${item.name}：融合させる手札の「U太」を選んでください。`;
-        render();
+        openUtaFusionChoice(item);
         return;
       }
       if (item.baseId === "three_gestures") {
@@ -28266,6 +28277,32 @@
 
     function fusionEligibleUtasInHand(side, item) {
       return (state.players[side]?.hand || []).filter((card) => canFuseUtaMaterial(side, item, card));
+    }
+
+    function openUtaFusionChoice(item) {
+      const handItem = getHandCard("player", item?.instanceId);
+      if (!handItem || !UTA_FUSION_MATERIAL_IDS.includes(handItem.baseId)) return false;
+      if (!canStartHandDrag(handItem)) {
+        state.message = fusionEligibleUtasInHand("player", handItem).length === 0
+          ? `${handItem.name}を融合できる手札の「U太」がいません。`
+          : "今はこのカードを融合できません。";
+        render();
+        return false;
+      }
+      const targets = fusionEligibleUtasInHand("player", handItem);
+      hideBattleCardPreview();
+      state.selectedAttacker = null;
+      state.selectedHandId = handItem.instanceId;
+      return openCardChoice({
+        mode: "uta_fusion",
+        itemId: handItem.instanceId,
+        title: `${handItem.name}の融合先`,
+        message: "融合させる手札の「U太」を選んでください。",
+        cards: targets,
+        min: 1,
+        max: 1,
+        confirmLabel: "このU太に融合する"
+      });
     }
 
     function castUtaFusion(side, item, target, renderAfter = true) {
@@ -40049,7 +40086,12 @@
         && state.players.player.hand.length >= 2
         ? `<button class="button secondary" type="button" data-preview-diamond-dust-recovery="true">手札2枚で回収</button>`
         : "";
-      const previewActions = [fuseMarkup, diamondDustRecoveryMarkup].filter(Boolean);
+      const isOwnedUtaFusionMaterial = UTA_FUSION_MATERIAL_IDS.includes(card.baseId)
+        && state.players.player.hand.some((handCard) => handCard.instanceId === card.instanceId);
+      const utaFusionMarkup = isOwnedUtaFusionMaterial
+        ? `<button class="button" type="button" data-preview-uta-fusion="true"${canStartHandDrag(card) ? "" : " disabled"}>融合する</button>`
+        : "";
+      const previewActions = [fuseMarkup, diamondDustRecoveryMarkup, utaFusionMarkup].filter(Boolean);
       const actionMarkup = previewActions.length > 0
         ? `<div class="battle-card-preview-actions${previewActions.length === 1 ? " single" : ""}">${previewActions.join("")}</div>`
         : "";
@@ -41396,6 +41438,12 @@
         if (card) openDiamondDustRecoveryChoice(card);
         return;
       }
+      if (event.target.closest("[data-preview-uta-fusion]")) {
+        event.stopPropagation();
+        const card = elements.battleCardPreview._previewCard;
+        if (card) openUtaFusionChoice(card);
+        return;
+      }
       hideBattleCardPreview();
     });
     elements.battleCardPreview.addEventListener("keydown", (event) => {
@@ -41484,6 +41532,7 @@
       utaFusionMaterialEntries,
       canFuseUtaMaterial,
       fusionEligibleUtasInHand,
+      openUtaFusionChoice,
       castUtaFusion,
       statusPartsForCard,
       fieldCardTemplate,

@@ -145,6 +145,9 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
   await expect(latestEntry.locator("summary")).toContainText("ver.0.20.1");
   await latestEntry.locator("summary").click();
   await expect(latestEntry.locator(".update-change", { hasText: "戦意0の表示" })).toContainText("戦意を持たないカードだけは引き続き「戦意なし」");
+  const fusionChoiceUpdate = latestEntry.locator(".update-change", { hasText: "融合先の選択" });
+  await expect(fusionChoiceUpdate).toContainText("カード確認に「融合する」ボタン");
+  await expect(fusionChoiceUpdate).toContainText("融合できるU太だけを表示");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

@@ -134,6 +134,57 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
 });
 
+test("融合カードの確認から融合可能なU太だけを選んで融合する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const targetId = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("tsurai_nara");
+    const item = api.state.players.player.hand.find((card) => card.baseId === "tsurai_nara");
+    const target = api.fusionEligibleUtasInHand("player", item)[0];
+    api.showBattleCardPreview(item);
+    return target.instanceId;
+  });
+
+  const preview = page.locator("#battleCardPreview");
+  const fusionButton = preview.locator('[data-preview-uta-fusion="true"]');
+  await expect(fusionButton).toBeVisible();
+  await expect(fusionButton).toBeEnabled();
+  await expect(fusionButton).toHaveText("融合する");
+  await fusionButton.click();
+
+  const choiceStage = page.locator("#threeGesturesStage");
+  await expect(choiceStage).toBeVisible();
+  await expect(page.locator("#threeGesturesTitle")).toContainText("辛いならの融合先");
+  await expect(page.locator("#threeGesturesMessage")).toContainText("融合させる手札の「U太」");
+  const candidates = page.locator("#threeGesturesHand .mulligan-card");
+  await expect(candidates).toHaveCount(1);
+  await expect(candidates.first()).toHaveAttribute("data-card-id", targetId);
+  await expect(candidates.first().locator(".card-name")).toHaveText("U太");
+  await expect(page.locator("#threeGesturesHand")).not.toContainText("会社１日");
+
+  const confirmButton = page.locator("#threeGesturesConfirmButton");
+  await expect(confirmButton).toHaveText("このU太に融合する");
+  await expect(confirmButton).toBeDisabled();
+  await candidates.first().click();
+  await expect(confirmButton).toBeEnabled();
+  await confirmButton.click();
+
+  const result = await page.evaluate(({ targetId }) => {
+    const api = window.__chibattle;
+    const target = api.state.players.player.hand.find((card) => card.instanceId === targetId);
+    return {
+      materialStillInHand: api.state.players.player.hand.some((card) => card.baseId === "tsurai_nara"),
+      fusedMaterials: api.utaFusionMaterialEntries(target).map((entry) => entry.baseId),
+      pendingChoice: api.state.pendingCardChoice
+    };
+  }, { targetId });
+  expect(result.materialStillInHand).toBe(false);
+  expect(result.fusedMaterials).toEqual(["tsurai_nara"]);
+  expect(result.pendingChoice).toBeNull();
+  await expect(choiceStage).toBeHidden();
+});
+
 test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残したまま勝利する", async ({ page }) => {
   await page.goto(gameUrl);
 
