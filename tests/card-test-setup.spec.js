@@ -143,7 +143,10 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
     const item = api.state.players.player.hand.find((card) => card.baseId === "tsurai_nara");
     const emptyTarget = api.fusionEligibleUtasInHand("player", item)[0];
     const partialTarget = api.createCardFromBase("yuta", "player");
-    partialTarget.utaFusionMaterials = [{ baseId: "company_one_day", name: "会社１日" }];
+    partialTarget.utaFusionMaterials = [
+      { baseId: "enough_to_fly", name: "飛ぶくらい" },
+      { baseId: "company_one_day", name: "会社１日" }
+    ];
     api.state.players.player.hand.push(partialTarget);
     api.render();
     api.showBattleCardPreview(item);
@@ -170,7 +173,8 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
   await expect(emptyTarget.locator(".uta-fusion-choice-status")).toHaveText("融合済み：なし");
   await expect(partialTarget.locator(".card-name")).toHaveText("U太");
   await expect(partialTarget.locator(".uta-fusion-choice-status")).toBeVisible();
-  await expect(partialTarget.locator(".uta-fusion-choice-status")).toHaveText("融合済み：会社１日");
+  await expect(partialTarget.locator(".uta-fusion-choice-status")).toHaveCSS("white-space", "pre-line");
+  expect(await partialTarget.locator(".uta-fusion-choice-status").textContent()).toBe("融合済み：\n会社１日\n飛ぶくらい");
   await expect(page.locator("#threeGesturesHand .mulligan-card .card-name")).toHaveText(["U太", "U太"]);
 
   const confirmButton = page.locator("#threeGesturesConfirmButton");
@@ -190,7 +194,7 @@ test("融合カードの確認から融合可能なU太だけを選んで融合�
     };
   }, { targetId: targetIds.partialTargetId });
   expect(result.materialStillInHand).toBe(false);
-  expect(result.fusedMaterials).toEqual(["tsurai_nara", "company_one_day"]);
+  expect(result.fusedMaterials).toEqual(["tsurai_nara", "company_one_day", "enough_to_fly"]);
   expect(result.pendingChoice).toBeNull();
   await expect(choiceStage).toBeHidden();
 });
@@ -261,6 +265,8 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   expect(fusion.ultimate.fusionOrder).toEqual([
     "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"
   ]);
+  expect(fusion.ultimate.rules).toContain("融合済み：\n辛いなら\n会社１日\n飛ぶくらい\nいいだろって");
+  expect(fusion.ultimate.rules).not.toContain("辛いなら、会社１日");
   ["辛いなら", "会社１日", "飛ぶくらい", "いいだろって"].forEach((name) => {
     expect(fusion.ultimate.rules).toContain(name);
     expect(fusion.ultimate.detailMarkup).toContain(name);

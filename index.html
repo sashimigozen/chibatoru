@@ -3241,6 +3241,7 @@
       font-weight: 900;
       line-height: 1.35;
       text-align: center;
+      white-space: pre-line;
       overflow-wrap: anywhere;
     }
 
@@ -5005,6 +5006,7 @@
       font-size: 14px;
       font-weight: 800;
       line-height: 1.65;
+      white-space: pre-line;
     }
 
     .battle-card-preview-term-link {
@@ -17501,7 +17503,7 @@
         changes: [
           { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" },
           { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があり、融合先ごとの融合済みカードも選択中に確認できなかった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。各U太には「融合済み：○○」を表示し、何も融合されていない場合は「融合済み：なし」と表示。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" },
-          { title: "U太の融合表示順", before: "U太へ融合済みのカード名は、実際に融合した順番で表示されていた。", after: "実際に融合した順番にかかわらず、融合済みのカード名を「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順で表示・記録する。" }
+          { title: "U太の融合表示順", before: "U太へ融合済みのカード名は、実際に融合した順番で「、」を使って横並びに表示されていた。", after: "実際に融合した順番にかかわらず、「融合済み：」の下へ「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順で、カード名を1枚ずつ改行して表示・記録する。番号と「、」は表示しない。" }
         ]
       },
       {
@@ -28311,7 +28313,7 @@
       const fusedNames = utaFusionMaterialEntries(card)
         .map((entry) => CARD_BASES[entry.baseId]?.name || entry.name)
         .filter(Boolean);
-      return `融合済み：${fusedNames.length > 0 ? fusedNames.join("、") : "なし"}`;
+      return fusedNames.length > 0 ? `融合済み：\n${fusedNames.join("\n")}` : "融合済み：なし";
     }
 
     function openUtaFusionChoice(item) {
@@ -28361,9 +28363,9 @@
         ultimate.handTurns = target.handTurns || 0;
         ultimate.utaFusionMaterials = target.utaFusionMaterials.map((entry) => ({ ...entry }));
         if (handIndex >= 0) player.hand.splice(handIndex, 1, ultimate);
-        addLog(`${SIDES[side]}は「${fusedNames.join("」「")}」を融合し、「U太」を「Ultimate U太」に変化させました。`);
+        addLog(`${SIDES[side]}は融合を完成させ、「U太」を「Ultimate U太」に変化させました。\n融合済み：\n${fusedNames.join("\n")}`);
       } else {
-        addLog(`${SIDES[side]}は「${item.name}」を手札の「U太」に融合しました（融合済み：${fusedNames.join("、")}）。`);
+        addLog(`${SIDES[side]}は「${item.name}」を手札の「U太」に融合しました。\n融合済み：\n${fusedNames.join("\n")}`);
       }
       clearSelections();
       state.message = complete ? "4枚の融合が完成し、Ultimate U太になりました。" : `${item.name}をU太に融合しました。`;
@@ -40959,7 +40961,7 @@
       const fusedNames = utaFusionMaterialEntries(card)
         .map((entry) => CARD_BASES[entry.baseId]?.name || entry.name)
         .filter(Boolean);
-      if (fusedNames.length > 0) text += `\n融合済み：${fusedNames.join("、")}`;
+      if (fusedNames.length > 0) text += `\n融合済み：\n${fusedNames.join("\n")}`;
       if (card.baseId !== "suit_student") return text;
       const count = state.screen === "battle" && state.phase === "battle"
         ? Math.max(0, Number(state.suitStudentAttendanceCount) || 0)
