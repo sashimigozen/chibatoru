@@ -162,7 +162,7 @@ test("Ultimate U太の筆文字風勝利演出を更新情報に記載する", a
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
 
-  const latestEntry = page.locator(".update-entry").first();
+  const latestEntry = page.locator(".update-entry", { hasText: "ver.0.20.2" }).first();
   await expect(latestEntry.locator("summary")).toContainText("ver.0.20.2");
   await expect(latestEntry.locator("summary")).toContainText("2026年8月30日");
   await latestEntry.locator("summary").click();
@@ -175,6 +175,22 @@ test("Ultimate U太の筆文字風勝利演出を更新情報に記載する", a
   await expect(victoryUpdate).toContainText("いいだろって");
   await expect(victoryUpdate).toContainText("思ってまう");
   await expect(victoryUpdate).toContainText("表示する文言・順番・位置・時間は変更しない");
+});
+
+test("指名破壊の確定操作をver.0.20.3の更新情報に記載する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+
+  const latestEntry = page.locator(".update-entry").first();
+  await expect(latestEntry.locator("summary")).toContainText("ver.0.20.3");
+  await expect(latestEntry.locator("summary")).toContainText("2026年8月31日");
+  await latestEntry.locator("summary").click();
+
+  const destroyUpdate = latestEntry.locator(".update-change", { hasText: "指名して破壊する操作" });
+  await expect(destroyUpdate.locator(".update-before")).toContainText("対象を指名した時点ですぐに破壊");
+  await expect(destroyUpdate.locator(".update-after")).toContainText("ターン終了ボタンの位置に「破壊する」ボタン");
+  await expect(destroyUpdate.locator(".update-after")).toContainText("押した時に初めて効果を実行");
+  await expect(destroyUpdate.locator(".update-after")).toContainText("オンライン対戦でも確定後に対象を送信");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

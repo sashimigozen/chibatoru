@@ -314,9 +314,13 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
     api.confirmCardChoiceSelection();
     const waitingForBoardTarget = state.pendingKingGhidorahBed?.discardId === choiceDiscard.instanceId;
     api.handleBoardCardClick("opponent", "seat", 2);
-    checks.kingGhidorahUsesEffectChoiceThenDirectBoardTarget = openedEffectChoice
+    const waitingForDestroyConfirmation = state.pendingKingGhidorahBed?.target?.index === 2
+      && state.players.opponent.board.seats[2]?.baseId === "loud_student";
+    api.confirmSelectedItemTargets();
+    checks.kingGhidorahUsesEffectChoiceThenDestroyConfirmation = openedEffectChoice
       && openedDiscardChoice
       && waitingForBoardTarget
+      && waitingForDestroyConfirmation
       && state.players.player.will === 3
       && state.players.opponent.board.seats[2] === null
       && state.players.player.trash.some((entry) => entry.instanceId === choiceDiscard.instanceId);
@@ -782,4 +786,100 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
   expect(result.padlockHasNoStopIcon).toBe(true);
   expect(result.padlockUsesChainOverlay).toBe(true);
   expect(result.tappedPreviewShowsEarphones).toBe(true);
+});
+
+test("指名破壊は対象を選んだ後に破壊するボタンで確定する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const prepareSingleDestroy = async (baseId, zone, index) => page.evaluate(({ baseId, zone, index }) => {
+    const api = window.__chibattle;
+    api.startCardTest(baseId);
+    const item = api.state.players.player.hand.find((card) => card.baseId === baseId);
+    const target = zone === "teacher"
+      ? api.state.players.opponent.board.teacher
+      : api.state.players.opponent.board.seats[index];
+    api.beginItemUse(item);
+    api.handleBoardCardClick("opponent", zone, index);
+    return { itemId: item.instanceId, targetId: target.instanceId };
+  }, { baseId, zone, index });
+
+  const destroyButton = page.locator("#itemTargetConfirmButton");
+  const endTurnButton = page.locator("#endTurnButton");
+
+  const seriouslyHit = await prepareSingleDestroy("seriously_hit", "seat", 4);
+  await expect(page.locator(`[data-card-id="${seriouslyHit.targetId}"]`)).toHaveClass(/selected/);
+  await expect(destroyButton).toBeVisible();
+  await expect(destroyButton).toHaveText("破壊する");
+  await expect(destroyButton).toHaveClass(/destroy-confirm/);
+  await expect(endTurnButton).toBeHidden();
+  expect(await page.evaluate(() => Boolean(window.__chibattle.state.players.opponent.board.seats[4]))).toBe(true);
+  await destroyButton.click();
+  expect(await page.evaluate(() => ({
+    target: window.__chibattle.state.players.opponent.board.seats[4],
+    itemInTrash: window.__chibattle.state.players.player.trash.some((card) => card.baseId === "seriously_hit")
+  }))).toEqual({ target: null, itemInTrash: true });
+
+  const favoriteNumber = await prepareSingleDestroy("favorite_number_s", "teacher", null);
+  await expect(page.locator(`[data-card-id="${favoriteNumber.targetId}"]`)).toHaveClass(/selected/);
+  await expect(destroyButton).toHaveText("破壊する");
+  expect(await page.evaluate(() => Boolean(window.__chibattle.state.players.opponent.board.teacher))).toBe(true);
+  await destroyButton.click();
+  expect(await page.evaluate(() => ({
+    target: window.__chibattle.state.players.opponent.board.teacher,
+    copiedTeacher: window.__chibattle.state.players.player.hand.some((card) => card.baseId === "general_teacher")
+  }))).toEqual({ target: null, copiedTeacher: true });
+
+  const panpanTargets = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("panpan");
+    const item = api.state.players.player.hand.find((card) => card.baseId === "panpan");
+    const friendly = api.state.players.player.board.seats[4];
+    const enemy = api.state.players.opponent.board.seats[4];
+    api.beginItemUse(item);
+    api.handleBoardCardClick("player", "seat", 4);
+    return { friendlyId: friendly.instanceId, enemyId: enemy.instanceId };
+  });
+  await expect(destroyButton).toHaveText("自分の出席者を確定");
+  await destroyButton.click();
+  await page.evaluate(() => window.__chibattle.handleBoardCardClick("opponent", "seat", 4));
+  await expect(page.locator(`[data-card-id="${panpanTargets.friendlyId}"]`)).toHaveClass(/selected/);
+  await expect(page.locator(`[data-card-id="${panpanTargets.enemyId}"]`)).toHaveClass(/selected/);
+  await expect(destroyButton).toHaveText("破壊する");
+  expect(await page.evaluate(() => [
+    Boolean(window.__chibattle.state.players.player.board.seats[4]),
+    Boolean(window.__chibattle.state.players.opponent.board.seats[4])
+  ])).toEqual([true, true]);
+  await destroyButton.click();
+  expect(await page.evaluate(() => [
+    window.__chibattle.state.players.player.board.seats[4],
+    window.__chibattle.state.players.opponent.board.seats[4]
+  ])).toEqual([null, null]);
+
+  const ghidorahTargetId = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("king_ghidorah_bed");
+    const item = api.state.players.player.hand.find((card) => card.baseId === "king_ghidorah_bed");
+    const discard = api.state.players.player.hand.find((card) => card.instanceId !== item.instanceId);
+    const target = api.state.players.opponent.board.seats[4];
+    api.state.players.player.will = 7;
+    api.state.selectedHandId = item.instanceId;
+    api.state.pendingKingGhidorahBed = {
+      itemId: item.instanceId,
+      effectMode: "2",
+      discardId: discard.instanceId,
+      target: null
+    };
+    api.render();
+    api.handleBoardCardClick("opponent", "seat", 4);
+    return target.instanceId;
+  });
+  await expect(page.locator(`[data-card-id="${ghidorahTargetId}"]`)).toHaveClass(/selected/);
+  await expect(destroyButton).toHaveText("破壊する");
+  expect(await page.evaluate(() => Boolean(window.__chibattle.state.players.opponent.board.seats[4]))).toBe(true);
+  await destroyButton.click();
+  expect(await page.evaluate(() => ({
+    target: window.__chibattle.state.players.opponent.board.seats[4],
+    ghidorahInTrash: window.__chibattle.state.players.player.trash.some((card) => card.baseId === "king_ghidorah_bed"),
+    discardedCount: window.__chibattle.state.players.player.trash.length
+  }))).toEqual({ target: null, ghidorahInTrash: true, discardedCount: 2 });
 });

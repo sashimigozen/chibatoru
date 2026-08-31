@@ -13045,6 +13045,7 @@
     .battle-screen .battle-v16-turn { position: absolute !important; z-index: 20; top: 334px !important; right: 34px !important; display:grid !important; width: 92px !important; min-height: 48px; place-items:center; border:1px solid #8ea6bc; border-radius:4px; background:#fff; color:#263e58; font-size:13px; font-weight:1000; text-align:center; }
     .battle-screen .battle-action-slot { position:absolute !important; z-index:20; top:390px !important; right:26px !important; width:108px !important; }
     .battle-screen .battle-end-button { width:108px !important; height:108px !important; border:4px solid #f3c852 !important; border-radius:50% !important; background:#be5908 !important; color:#fff !important; box-shadow:inset 0 0 0 3px #743304,0 5px 12px rgba(90,50,10,.24) !important; font-size:16px !important; font-weight:1000 !important; }
+    .battle-screen .battle-end-button.destroy-confirm { border-color:#ff8a8f !important; background:#a51d2b !important; box-shadow:inset 0 0 0 3px #5f1019,0 5px 12px rgba(95,16,25,.35),0 0 18px rgba(220,38,38,.38) !important; }
     .battle-screen .battle-v16-mana { position:absolute !important; z-index:20; display:grid !important; width:74px !important; height:30px !important; place-items:center; border-radius:15px; background:#fff1bd !important; color:#96521c !important; font-size:15px !important; font-weight:1000; box-shadow:0 2px 5px rgba(124,80,17,.16); }
     .battle-screen .battle-v16-opponent-mana { top:292px !important; right:42px !important; left:auto !important; bottom:auto !important; }
     .battle-screen .battle-v16-player-mana { top:516px !important; right:42px !important; bottom:auto !important; left:auto !important; }
@@ -17179,6 +17180,7 @@
       homeless_crab: 1
     };
     const CRAB_SET_IDS = ["circle_crab", "hair_crab", "homeless_crab"];
+    const TARGETED_DESTROY_ITEM_IDS = new Set(["seriously_hit", "favorite_number_s"]);
     const IMMEDIATE_ITEM_IDS = [
       "aggro_army", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "namen_tenno",
       "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
@@ -17504,6 +17506,14 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.20.3",
+        date: "2026年8月31日",
+        summary: "出席者を指名して破壊する効果を、対象選択後に「破壊する」ボタンで確定する操作へ統一しました。",
+        changes: [
+          { title: "指名して破壊する操作", before: "「ガチでしばくぞ」「好きな数字は『S』」などは、盤面で対象を指名した時点ですぐに破壊が実行された。「キングギドラベッド」の効果2も、対象を選んだ直後に処理されていた。", after: "破壊する出席者を盤面で選ぶと、右側のターン終了ボタンの位置に「破壊する」ボタンを表示。選んだ出席者は盤面に残ったまま強調表示され、「破壊する」を押した時に初めて効果を実行する。「パンパン」の最終確定ボタンも「破壊する」に統一し、オンライン対戦でも確定後に対象を送信する。" }
+        ]
+      },
       {
         version: "ver.0.20.2",
         date: "2026年8月30日",
@@ -18208,6 +18218,7 @@
       pendingItemConfirmId: null,
       pendingMultiItem: null,
       pendingPanpanItem: null,
+      pendingDestroyItem: null,
       pendingHandDiscardItem: null,
       pendingThreeGestures: null,
       pendingCardChoice: null,
@@ -22168,6 +22179,7 @@
         || state.pendingItemConfirmId
         || state.pendingMultiItem
         || state.pendingPanpanItem
+        || state.pendingDestroyItem
         || state.pendingHandDiscardItem
         || state.pendingThreeGestures
         || state.pendingCardChoice
@@ -22186,6 +22198,7 @@
         || state.pendingItemConfirmId
         || state.pendingMultiItem
         || state.pendingPanpanItem
+        || state.pendingDestroyItem
         || state.pendingHandDiscardItem
         || state.pendingThreeGestures
         || state.pendingCardChoice
@@ -22214,6 +22227,7 @@
       snapshotState.pendingItemConfirmId = null;
       snapshotState.pendingMultiItem = null;
       snapshotState.pendingPanpanItem = null;
+      snapshotState.pendingDestroyItem = null;
       snapshotState.pendingHandDiscardItem = null;
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
@@ -22573,6 +22587,7 @@
       transformed.selectedAttacker = onlineMapRefForGuest(hostState.selectedAttacker);
       transformed.pendingMultiItem = onlineSwapOwnersDeep(hostState.pendingMultiItem);
       transformed.pendingPanpanItem = onlineSwapOwnersDeep(hostState.pendingPanpanItem);
+      transformed.pendingDestroyItem = onlineSwapOwnersDeep(hostState.pendingDestroyItem);
       transformed.pendingAttendTarget = onlineSwapOwnersDeep(hostState.pendingAttendTarget);
       const pendingGuestPlacement = hostState.pendingCopiedCard?.pendingOnlineGuestPlacement === true
         && hostState.pendingCopiedCard.owner === "opponent"
@@ -23166,6 +23181,7 @@
       state.pendingItemConfirmId = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
+      state.pendingDestroyItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
@@ -26521,6 +26537,7 @@
     function clearPendingTargetItems() {
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
+      state.pendingDestroyItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingRaptorTemple = null;
@@ -26626,7 +26643,8 @@
       state.pendingKingGhidorahBed = {
         itemId: item.instanceId,
         effectMode,
-        discardId
+        discardId,
+        target: null
       };
       state.selectedAttacker = null;
       state.selectedHandId = item.instanceId;
@@ -26647,8 +26665,27 @@
         render();
         return false;
       }
-      state.pendingKingGhidorahBed = null;
-      return submitKingGhidorahBedUse("player", item, pending.effectMode, pending.discardId, targetRef, true);
+      pending.target = refsMatch(pending.target, targetRef) ? null : targetRef;
+      state.message = pending.target
+        ? `${item.name}：${getBoardCardFromRef(pending.target)?.name || "出席者"}を選択しました。「破壊する」を押してください。`
+        : `${item.name}：破壊する相手の出席者を盤面から指名してください。`;
+      render();
+      return true;
+    }
+
+    function confirmKingGhidorahBedTarget() {
+      const pending = state.pendingKingGhidorahBed;
+      const item = pending ? getHandCard("player", pending.itemId) : null;
+      if (!pending || !item || !pending.target) return false;
+      const isCandidate = kingGhidorahBedPreselectionTargets("player", item, pending.effectMode)
+        .some((entry) => refsMatch(entry.ref, pending.target));
+      if (!isCandidate) {
+        pending.target = null;
+        state.message = `${item.name}：対象がいなくなったため、破壊する相手の出席者を選び直してください。`;
+        render();
+        return false;
+      }
+      return submitKingGhidorahBedUse("player", item, pending.effectMode, pending.discardId, pending.target, true);
     }
 
     function openKingGhidorahBedDiscardChoice(item, effectMode) {
@@ -27918,6 +27955,14 @@
         state.selectedHandId = item.instanceId;
         state.pendingPanpanItem = { itemId: item.instanceId, friendly: null, enemy: null, stage: "friendly" };
         state.message = "パンパン：まず、自分の出席者1人を指名してください。";
+        render();
+        return;
+      }
+      if (TARGETED_DESTROY_ITEM_IDS.has(item.baseId)) {
+        state.selectedAttacker = null;
+        state.selectedHandId = item.instanceId;
+        state.pendingDestroyItem = { itemId: item.instanceId, target: null };
+        state.message = `${item.name}：破壊する相手の出席者を指名してください。`;
         render();
         return;
       }
@@ -30947,6 +30992,10 @@
         togglePanpanTarget(owner, zone, index);
         return;
       }
+      if (state.pendingDestroyItem && TARGETED_DESTROY_ITEM_IDS.has(selectedCard?.baseId)) {
+        toggleDestroyItemTarget(selectedCard, owner, zone, index);
+        return;
+      }
       if (selectedCard?.type === "item") {
         if (!canUseItemOnBoardTarget(selectedCard, owner, zone, index)) {
           state.message = `${selectedCard.name}はその出席者を対象にできません。`;
@@ -31768,7 +31817,56 @@
       }
       if (state.pendingPanpanItem) {
         confirmPanpanTargets();
+        return;
       }
+      if (state.pendingDestroyItem) {
+        confirmDestroyItemTarget();
+        return;
+      }
+      if (state.pendingKingGhidorahBed) {
+        confirmKingGhidorahBedTarget();
+      }
+    }
+
+    function toggleDestroyItemTarget(item, owner, zone, index) {
+      if (!item || !TARGETED_DESTROY_ITEM_IDS.has(item.baseId)) return false;
+      const target = getBoardCard(owner, zone, index);
+      if (!target || !canUseItemOnBoardTarget(item, owner, zone, index)) {
+        state.message = `${item.name}はその出席者を破壊対象にできません。`;
+        render();
+        return false;
+      }
+      if (!state.pendingDestroyItem || state.pendingDestroyItem.itemId !== item.instanceId) {
+        state.pendingDestroyItem = { itemId: item.instanceId, target: null };
+      }
+      const ref = { owner, zone, index };
+      state.pendingDestroyItem.target = refsMatch(state.pendingDestroyItem.target, ref) ? null : ref;
+      state.message = state.pendingDestroyItem.target
+        ? `${item.name}：${target.name}を選択しました。「破壊する」を押してください。`
+        : `${item.name}：破壊する相手の出席者を指名してください。`;
+      render();
+      return true;
+    }
+
+    function confirmDestroyItemTarget() {
+      const pending = state.pendingDestroyItem;
+      const item = pending ? getHandCard("player", pending.itemId) : null;
+      if (!pending || !item || !pending.target) return false;
+      const { owner, zone, index = null } = pending.target;
+      if (!canUseItemOnBoardTarget(item, owner, zone, index)) {
+        pending.target = null;
+        state.message = `${item.name}：対象がいなくなったため、破壊する相手の出席者を選び直してください。`;
+        render();
+        return false;
+      }
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("itemCard", { instanceId: item.instanceId, target: pending.target });
+        state.message = `${item.name}の破壊対象を送信しました。`;
+        clearSelections();
+        render();
+        return true;
+      }
+      return castItemOnCard("player", item, owner, zone, index, true);
     }
 
     function togglePanpanTarget(owner, zone, index) {
@@ -34609,6 +34707,7 @@
       state.selectedAttacker = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
+      state.pendingDestroyItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingRaptorTemple = null;
@@ -35118,16 +35217,24 @@
       elements.fusionButton.disabled = !canFuseRulers;
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
-      const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingThreeGestures || state.pendingKingGhidorahBed);
+      const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingDestroyItem || state.pendingThreeGestures || state.pendingKingGhidorahBed);
       const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingAttendTarget || state.pendingKingGhidorahBed || state.pendingRemoteHandTrim);
-      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem));
+      const destructiveConfirmation = Boolean(
+        state.pendingDestroyItem
+        || (state.pendingPanpanItem?.stage === "enemy")
+        || state.pendingKingGhidorahBed
+      );
+      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem && !state.pendingDestroyItem && !state.pendingKingGhidorahBed));
+      elements.itemTargetConfirmButton.classList.toggle("destroy-confirm", destructiveConfirmation);
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? state.pendingMultiItem.mode === "big_wall"
           ? `選んだ${state.pendingMultiItem.targets.length}/2人に効果を発動`
           : `対象${state.pendingMultiItem.targets.length}人で使用`
         : state.pendingPanpanItem
-          ? (state.pendingPanpanItem.stage === "friendly" ? "自分の出席者を確定" : "2人を破壊")
-          : "対象を確定";
+          ? (state.pendingPanpanItem.stage === "friendly" ? "自分の出席者を確定" : "破壊する")
+          : (state.pendingDestroyItem || state.pendingKingGhidorahBed)
+            ? "破壊する"
+            : "対象を確定";
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
         || (state.pendingMultiItem && (
           state.pendingMultiItem.mode === "big_wall"
@@ -35138,7 +35245,9 @@
           state.pendingPanpanItem.stage === "friendly"
             ? !state.pendingPanpanItem.friendly
             : (!state.pendingPanpanItem.friendly || !state.pendingPanpanItem.enemy)
-        ));
+        ))
+        || (state.pendingDestroyItem && !state.pendingDestroyItem.target)
+        || (state.pendingKingGhidorahBed && !state.pendingKingGhidorahBed.target);
       elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || choosingItemTargets || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
         || state.phase !== "battle"
@@ -35196,6 +35305,7 @@
         pendingItemConfirmId: state.pendingItemConfirmId,
         pendingMultiItem: cloneTutorialValue(state.pendingMultiItem),
         pendingPanpanItem: cloneTutorialValue(state.pendingPanpanItem),
+        pendingDestroyItem: cloneTutorialValue(state.pendingDestroyItem),
         pendingHandDiscardItem: cloneTutorialValue(state.pendingHandDiscardItem),
         pendingThreeGestures: cloneTutorialValue(state.pendingThreeGestures),
         pendingCardChoice: cloneTutorialValue(state.pendingCardChoice),
@@ -35253,6 +35363,7 @@
       state.pendingItemConfirmId = snapshot.pendingItemConfirmId;
       state.pendingMultiItem = cloneTutorialValue(snapshot.pendingMultiItem);
       state.pendingPanpanItem = cloneTutorialValue(snapshot.pendingPanpanItem);
+      state.pendingDestroyItem = cloneTutorialValue(snapshot.pendingDestroyItem);
       state.pendingHandDiscardItem = cloneTutorialValue(snapshot.pendingHandDiscardItem);
       state.pendingThreeGestures = cloneTutorialValue(snapshot.pendingThreeGestures);
       state.pendingCardChoice = cloneTutorialValue(snapshot.pendingCardChoice);
@@ -35323,6 +35434,7 @@
         pendingItemConfirmId: state.pendingItemConfirmId,
         pendingMultiItem: cloneTutorialValue(state.pendingMultiItem),
         pendingPanpanItem: cloneTutorialValue(state.pendingPanpanItem),
+        pendingDestroyItem: cloneTutorialValue(state.pendingDestroyItem),
         pendingHandDiscardItem: cloneTutorialValue(state.pendingHandDiscardItem),
         pendingThreeGestures: cloneTutorialValue(state.pendingThreeGestures),
         pendingCardChoice: cloneTutorialValue(state.pendingCardChoice),
@@ -35371,6 +35483,7 @@
       state.pendingItemConfirmId = snapshot.pendingItemConfirmId;
       state.pendingMultiItem = cloneTutorialValue(snapshot.pendingMultiItem);
       state.pendingPanpanItem = cloneTutorialValue(snapshot.pendingPanpanItem);
+      state.pendingDestroyItem = cloneTutorialValue(snapshot.pendingDestroyItem);
       state.pendingHandDiscardItem = cloneTutorialValue(snapshot.pendingHandDiscardItem);
       state.pendingThreeGestures = cloneTutorialValue(snapshot.pendingThreeGestures);
       state.pendingCardChoice = cloneTutorialValue(snapshot.pendingCardChoice);
@@ -35884,6 +35997,10 @@
           return true;
         }
         castDonguriEvolutionItem("player", card, owner, zone, index, true);
+        return true;
+      }
+      if (TARGETED_DESTROY_ITEM_IDS.has(card.baseId)) {
+        toggleDestroyItemTarget(card, owner, zone, index);
         return true;
       }
       if (onlineCanSendCommand()) {
@@ -37609,10 +37726,15 @@
       appendBoardChangeFeedback(button, card);
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
-        isSelectedAttacker(owner, zone, index) || isSelectedMultiItemTarget(owner, zone, index) || isSelectedPanpanTarget(owner, zone, index));
+        isSelectedAttacker(owner, zone, index)
+        || isSelectedMultiItemTarget(owner, zone, index)
+        || isSelectedPanpanTarget(owner, zone, index)
+        || isSelectedDestroyItemTarget(owner, zone, index)
+        || isSelectedKingGhidorahBedTarget(owner, zone, index));
       button.classList.toggle("selection-candidate",
         canSelectMultiItemTarget(owner, zone, index)
         || canSelectPanpanTarget(owner, zone, index)
+        || canSelectDestroyItemTarget(owner, zone, index)
         || isAttendTargetCandidate(owner, zone, index)
         || isKingGhidorahBedTargetCandidate(owner, zone, index));
       button.classList.toggle("exhausted", Boolean(card.hasAttacked));
@@ -37796,6 +37918,20 @@
       if (!pending || !target) return false;
       if (pending.stage === "friendly") return owner === "player";
       return pending.stage === "enemy" && owner === "opponent" && isAllowedEffectTarget("player", target);
+    }
+
+    function isSelectedDestroyItemTarget(owner, zone, index) {
+      return refsMatch(state.pendingDestroyItem?.target, { owner, zone, index });
+    }
+
+    function canSelectDestroyItemTarget(owner, zone, index) {
+      const pending = state.pendingDestroyItem;
+      const item = pending ? getHandCard("player", pending.itemId) : null;
+      return Boolean(item && canUseItemOnBoardTarget(item, owner, zone, index));
+    }
+
+    function isSelectedKingGhidorahBedTarget(owner, zone, index) {
+      return refsMatch(state.pendingKingGhidorahBed?.target, { owner, zone, index });
     }
 
     function statusPartsForCard(card, boardCard) {
@@ -39314,6 +39450,7 @@
       state.pendingItemConfirmId = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
+      state.pendingDestroyItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
@@ -39935,6 +40072,7 @@
       state.pendingItemConfirmId = null;
       state.pendingMultiItem = null;
       state.pendingPanpanItem = null;
+      state.pendingDestroyItem = null;
       state.pendingHandDiscardItem = null;
       state.pendingThreeGestures = null;
       state.pendingCardChoice = null;
