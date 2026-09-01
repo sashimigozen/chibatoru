@@ -181,7 +181,7 @@ test("指名破壊の確定操作をver.0.20.3の更新情報に記載する", a
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
 
-  const latestEntry = page.locator(".update-entry").first();
+  const latestEntry = page.locator(".update-entry", { hasText: "ver.0.20.3" }).first();
   await expect(latestEntry.locator("summary")).toContainText("ver.0.20.3");
   await expect(latestEntry.locator("summary")).toContainText("2026年8月31日");
   await latestEntry.locator("summary").click();
@@ -191,6 +191,138 @@ test("指名破壊の確定操作をver.0.20.3の更新情報に記載する", a
   await expect(destroyUpdate.locator(".update-after")).toContainText("ターン終了ボタンの位置に「破壊する」ボタン");
   await expect(destroyUpdate.locator(".update-after")).toContainText("押した時に初めて効果を実行");
   await expect(destroyUpdate.locator(".update-after")).toContainText("オンライン対戦でも確定後に対象を送信");
+});
+
+test("デザイン教師の出席時効果は手札から出席させたときだけ発動する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+
+    function resetBoard() {
+      ["player", "opponent"].forEach((side) => {
+        state.players[side].board.teacher = null;
+        state.players[side].board.seats = Array(9).fill(null);
+        state.players[side].hand = [];
+        state.players[side].deck = [];
+        state.players[side].trash = [];
+      });
+    }
+
+    function attendee(baseId, owner = "player") {
+      return api.makeBoardCard(api.createCardFromBase(baseId, owner));
+    }
+
+    const texts = Object.fromEntries(
+      ["lightning_n", "fairy_t", "popular_c", "bird_a"].map((baseId) => [
+        baseId,
+        api.cardRulesText(api.createCardFromBase(baseId, "player"))
+      ])
+    );
+
+    resetBoard();
+    api.attendCard("player", attendee("lightning_n"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.EFFECT
+    });
+    const lightningEffectSourceDidNotTrigger = state.players.player.hand.length === 0;
+
+    resetBoard();
+    state.players.player.deck = [api.createCardFromBase("ruler", "player")];
+    api.attendCard("player", attendee("lightning_n"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.HAND
+    });
+    const lightningHandSourceTriggered = state.players.player.hand.filter((card) => card.baseId === "ruler").length === 2;
+
+    resetBoard();
+    state.players.opponent.board.seats[6] = attendee("general_student", "opponent");
+    api.attendCard("player", attendee("fairy_t"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.EFFECT
+    });
+    const fairyEffectSourceDidNotTrigger = state.players.opponent.board.seats[6]?.baseId === "general_student";
+
+    resetBoard();
+    state.players.opponent.board.seats[6] = attendee("general_student", "opponent");
+    api.attendCard("player", attendee("fairy_t"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.HAND
+    });
+    const fairyHandSourceTriggered = state.players.opponent.board.seats[0]?.baseId === "general_student"
+      && state.players.opponent.board.seats[6] === null;
+
+    resetBoard();
+    api.attendCard("player", attendee("popular_c"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.EFFECT
+    });
+    const slenderEffectSourceDidNotTrigger = state.players.player.board.seats[0] === null;
+
+    resetBoard();
+    api.attendCard("player", attendee("popular_c"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.HAND
+    });
+    const slenderHandSourceTriggered = state.players.player.board.seats[0]?.baseId === "fairy_t";
+
+    resetBoard();
+    const effectTarget = attendee("general_student", "opponent");
+    state.players.opponent.board.seats[0] = effectTarget;
+    api.attendCard("player", attendee("bird_a"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.EFFECT
+    });
+    const falconEffectSourceDidNotTrigger = effectTarget.currentHp === 2;
+
+    resetBoard();
+    const handTarget = attendee("general_student", "opponent");
+    state.players.opponent.board.seats[0] = handTarget;
+    api.attendCard("player", attendee("bird_a"), "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.HAND
+    });
+    const falconHandSourceTriggered = handTarget.currentHp === 0;
+
+    return {
+      texts,
+      lightningEffectSourceDidNotTrigger,
+      lightningHandSourceTriggered,
+      fairyEffectSourceDidNotTrigger,
+      fairyHandSourceTriggered,
+      slenderEffectSourceDidNotTrigger,
+      slenderHandSourceTriggered,
+      falconEffectSourceDidNotTrigger,
+      falconHandSourceTriggered
+    };
+  });
+
+  expect(result.texts.lightning_n).toContain("このカードを手札から出席させたとき");
+  expect(result.texts.lightning_n).toContain("このカードを手札から教卓マスに出席させたとき");
+  expect(result.texts.fairy_t).toContain("このカードを手札から教卓マスに出席させたとき");
+  expect(result.texts.popular_c).toContain("このカードを手札から教卓マスに出席させたとき");
+  expect(result.texts.bird_a).toContain("このカードを手札から教卓マスに出席させたとき");
+  expect(result.texts.bird_a).toContain("このカードを手札から席マスに出席させたとき");
+  Object.entries(result)
+    .filter(([name]) => name !== "texts")
+    .forEach(([name, passed]) => expect(passed, name).toBe(true));
+});
+
+test("デザイン教師4枚の修正をver.0.20.4の更新情報に記載する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+
+  const latestEntry = page.locator(".update-entry").first();
+  await expect(latestEntry.locator("summary")).toContainText("ver.0.20.4");
+  await expect(latestEntry.locator("summary")).toContainText("2026年9月1日");
+  await latestEntry.locator("summary").click();
+
+  const names = [
+    "デザインデーモンスレイヤー",
+    "デザインフェアリー",
+    "デザインスレンダーウーマン",
+    "デザインファルコン"
+  ];
+  for (const [index, name] of names.entries()) {
+    const change = latestEntry.locator(".update-change").nth(index);
+    await expect(change.locator(".update-before")).toContainText(`「${name}」\n教師／デザイン／戦意`);
+    await expect(change.locator(".update-after")).toContainText(`「${name}」\n教師／デザイン／戦意`);
+    await expect(change.locator(".update-after")).toContainText("手札から");
+    await expect(change.locator(".update-after")).toContainText("変更点：出席時効果を、手札から出席させた場合にのみ発動するよう変更。");
+  }
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
