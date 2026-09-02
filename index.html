@@ -16260,7 +16260,7 @@
           <div class="deck-filter-content">
             <div class="deck-filter-row">
               <label class="deck-filter-label" for="deckSearchInput">カード検索</label>
-              <input class="control deck-editor-search" id="deckSearchInput" type="search" placeholder="カード名を検索">
+              <input class="control deck-editor-search" id="deckSearchInput" type="search" placeholder="カード名・テキストを検索">
               <button class="button secondary" id="deckFilterClearButton" type="button">クリア</button>
             </div>
             <div class="deck-filter-row" id="deckTypeFilters"><span class="deck-filter-label">タイプ</span></div>
@@ -17600,11 +17600,21 @@
       {
         version: "ver.0.21.0",
         date: "2026年9月2日",
-        summary: "新カード「パッドプレゼンクリエイター」を追加しました。",
+        summary: "新カード「パッドプレゼンクリエイター」の追加、カード効果とカード検索の修正を行いました。",
         changes: [
           {
             title: "新カード",
             after: "「パッドプレゼンクリエイター」\n学生／共通カード／戦意3／攻撃力1／体力1\nこのカードがある限り、自分の最大戦意は3になる。ターン開始時、自分の講義室に出席している全ての出席者の体力は相手の最大戦意の差だけ上がる。"
+          },
+          {
+            title: "カード修正",
+            before: "「キングギドラベッド」の効果3で相手本体の気力を0にしても、対戦が終了しなかった。",
+            after: "「キングギドラベッド」の効果3で相手本体の気力が0になった時点で、通常の本体ダメージと同じように勝敗を決定し、対戦を終了するよう修正。"
+          },
+          {
+            title: "カード検索",
+            before: "デッキ編成のカード検索では、カード名に含まれる言葉だけを検索できた。",
+            after: "カード名に加えて、カードテキストに含まれる言葉でもカードを検索できるよう変更。タイプ・戦意・分類の絞り込みとも同時に使用できる。"
           }
         ]
       },
@@ -26987,6 +26997,9 @@
 
       if (["3", "all"].includes(effectMode)) {
         damagePlayer(targetSide, 4);
+        if (state.players[targetSide].life <= 0 && state.analytics) {
+          state.analytics.lastLethalCard = analyticsCardInfo(item);
+        }
         resultParts.push("効果3で相手本体に4ダメージ");
       }
 
@@ -26994,6 +27007,7 @@
       cleanupDestroyedCards();
       applyBoardAuras();
       addLog(`${SIDES[side]}は${item.name}を使い、${resultParts.join("、")}を行いました。`);
+      checkLifeVictory();
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -38727,7 +38741,11 @@
       const card = CARD_BASES[baseId];
       const filters = state.deckBuilder.filters;
       const query = filters.query.trim().toLocaleLowerCase("ja");
-      if (query && !card.name.toLocaleLowerCase("ja").includes(query)) return false;
+      if (query) {
+        const previewCard = makePreviewCard(baseId, state.deckBuilder.activeSide || "player");
+        const searchableText = `${card.name}\n${cardRulesText(previewCard)}`.toLocaleLowerCase("ja");
+        if (!searchableText.includes(query)) return false;
+      }
       if (filters.types.length && !filters.types.includes(card.type)) return false;
       const costKey = card.noCost ? "なし" : String(card.cost ?? 0);
       if (filters.costs.length && !filters.costs.includes(costKey)) return false;

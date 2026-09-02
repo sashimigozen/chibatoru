@@ -15,6 +15,7 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
       state.phase = "battle";
       state.currentSide = "player";
       state.gameOver = false;
+      state.gameWinner = null;
       state.aiThinking = false;
       state.actionTurn = 1;
       state.suitStudentAttendanceCount = 0;
@@ -228,6 +229,24 @@ test("持ち物の使用可否と対象条件が効果処理と一致する", as
       && state.players.player.will === 3
       && state.players.opponent.life === 16
       && state.players.player.trash.some((entry) => entry.baseId === "king_ghidorah_bed");
+
+    resetBattle();
+    state.players.player.will = 7;
+    state.players.opponent.life = 4;
+    const lethalGhidorahEffect3 = card("king_ghidorah_bed");
+    state.players.player.hand = [lethalGhidorahEffect3];
+    checks.kingGhidorahEffect3EndsGameAtZero = api.resolveKingGhidorahBed(
+      "player",
+      lethalGhidorahEffect3,
+      "3",
+      null,
+      null,
+      false
+    )
+      && state.players.opponent.life === 0
+      && state.gameOver === true
+      && state.gameWinner === "player"
+      && state.phase === "gameover";
 
     resetBattle();
     state.screen = "battle";

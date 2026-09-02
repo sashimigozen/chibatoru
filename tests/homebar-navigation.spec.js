@@ -40,6 +40,15 @@ test("下部ホームバーだけを既存画面へ追加し、素材どおり�
   await expect(page.locator("#deckEditorView")).toBeVisible();
   await expect(navigation).toBeHidden();
 
+  await page.locator("#deckFilterPanel > summary").click();
+  const cardSearch = page.locator("#deckSearchInput");
+  await expect(cardSearch).toHaveAttribute("placeholder", "カード名・テキストを検索");
+  await cardSearch.fill("最大戦意は3");
+  await expect(page.locator("#deckEditorList .deck-row-name", { hasText: "パッドプレゼンクリエイター" })).toBeVisible();
+  await expect(page.locator("#deckEditorList .deck-row-name", { hasText: "一般学生" })).toHaveCount(0);
+  await cardSearch.fill("キングギドラベッド");
+  await expect(page.locator("#deckEditorList .deck-row-name", { hasText: "キングギドラベッド" })).toBeVisible();
+
   await page.locator("#deckEditorBackButton").click();
   await expect(navigation).toBeVisible();
 
