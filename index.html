@@ -16858,7 +16858,7 @@
     ));
     const ONLINE_DECK_DESCRIPTOR_PREFIX = "chibattle-online-deck-v1";
     const SPECIALTY_CARD_IDS = Object.freeze({
-      common: ["aggro_army", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "pad_present_creator", "quick_quiz_tournament", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
+      common: ["aggro_army", "aggro_kingdom", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "pad_present_creator", "quick_quiz_tournament", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
       gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "company_one_day", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "enough_to_fly", "failure_student", "front_door", "full_throttle", "greeting_3000", "ii_daro_tte", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "tsurai_nara", "ultimate_yuta", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
@@ -17195,6 +17195,7 @@
       deck_without: ["fire_touch"],
       aggro_eater: [],
       aggro_army: [],
+      aggro_kingdom: ["aggro_student", "aggro_king", "aggro_queen"],
       scout_student: [],
       ta_squad: [],
       happy_blue_bird: [],
@@ -17260,7 +17261,7 @@
       "paired_existence", "peaceful_mind", "set_log", "abyss", "dropped_cards", "sage_legacy", "reversal", "dont_worry", "namen_tenno", "greeting_3000",
       "full_throttle", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up", "aiben_vs_nyotei_title_match", "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte",
       "yutakun_yutakun", "three_gestures", "music_detergent", "donguri", "thanks_all_students", "alpha",
-      "classroom", "quick_quiz_tournament", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur", "door_war", "shogi_duel_field"
+      "classroom", "aggro_kingdom", "quick_quiz_tournament", "cafeteria", "night_pool", "building_12_classroom", "gangi_fortress", "seat_rules", "raptor_temple", "student_council", "full_lock", "design_domain", "chaos_world", "no_late_time", "meguro_library", "dorm_council", "on_demand_business", "cote_dazur", "door_war", "shogi_duel_field"
     ];
     const CARD_COPY_LIMITS = {
       circle_crab: 2,
@@ -17486,6 +17487,7 @@
       president_tea_room: { name: "学長の茶室", type: "item", cost: 1, target: "self", generated: true },
       suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
+      aggro_kingdom: { name: "アグロキングダム", type: "environment", cost: 2, allowedZones: ["environment"] },
       quick_quiz_tournament: { name: "早押しクイズ大会", type: "environment", cost: 1, allowedZones: ["environment"] },
       cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
       night_pool: { name: "ナイトプール", type: "environment", cost: 2, allowedZones: ["environment"] },
@@ -17525,6 +17527,7 @@
       big_omata: "big",
       course_registration_party: "common",
       aggro_army: "common",
+      aggro_kingdom: "common",
       king_ghidorah_bed: "common",
       scout_student: "expansion",
       lie_pekora: "big"
@@ -17597,6 +17600,17 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.22.0",
+        date: "2026年9月3日",
+        summary: "新カード「アグロキングダム」を追加しました。",
+        changes: [
+          {
+            title: "新カード",
+            after: "「アグロキングダム」\n環境／共通カード／戦意2\nこのカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。"
+          }
+        ]
+      },
       {
         version: "ver.0.21.0",
         date: "2026年9月2日",
@@ -18221,7 +18235,7 @@
       "サーチ・生成": ["aggro_army", "lightning_n", "pro_k", "trpg_member", "curry_treater", "environment_setup", "iv_pack", "music_detergent", "ikemasu", "ttb", "alpha", "beta", "gamma"],
       "回復": ["aggro_eater", "bento", "fluid_pasta", "peaceful_mind", "onigiri_draw", "circle_crab", "hair_crab", "homeless_crab", "laughing_front_student"],
       "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "king_ghidorah_bed", "scared_me", "front_door"],
-      "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "quick_quiz_tournament", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
+      "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "quick_quiz_tournament", "aggro_kingdom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
       "展開": ["scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
       "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
@@ -33498,6 +33512,10 @@
       if (keyword === "注目" && card.keywords?.includes("超注目")) return true;
       if (keyword === "陽気" && hasKeyword(card, "超陽気")) return true;
       if (keyword === "超陽気" && card.baseId === "vampire" && isCafeteriaEnvironmentActive()) return true;
+      if (keyword === "超陽気"
+        && state.environment?.baseId === "aggro_kingdom"
+        && ["student", "teacher", "vampire"].includes(card.type)
+        && String(card.name || "").includes("アグロ")) return true;
       if (keyword === "超陽気" && card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) return true;
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
@@ -39765,6 +39783,9 @@
           player.board.seats[seatIndex] = bingoStudent;
         }
       }
+      if (baseId === "aggro_kingdom") {
+        player.board.seats[4] = makeBoardCard(createCardFromBase("aggro_student", "player"));
+      }
       if (baseId === "green_curry") {
         state.environment = makeBoardCard(createCardFromBase("cafeteria", "player"));
         const vampireTarget = makeBoardCard(createCardFromBase("cafeteria_lady", "player"));
@@ -39831,6 +39852,9 @@
       if (baseId === "scout_student") {
         opponent.board.seats.fill(null);
         opponent.board.teacher = null;
+      }
+      if (baseId === "aggro_kingdom") {
+        opponent.board.seats[0] = makeOpponentTestAttendee("aggro_king");
       }
       if (baseId === "happy_blue_bird") {
         const readyBird = makePlayerTestAttendee("happy_blue_bird");
@@ -40023,6 +40047,8 @@
             ? "キングギドラベッドの全効果と1つ選ぶ効果を続けて確認できるよう、戦意15、同名カード2枚、校外へ送る手札、相手の出席者を用意しています。"
           : baseId === "quick_quiz_tournament"
             ? "早押しクイズ大会の通常ビンゴと8ビンゴを確認できるよう、自分の席マスを右下以外すべて埋め、最後に出席させる一般学生を手札に用意しています。"
+          : baseId === "aggro_kingdom"
+            ? "アグロキングダムの効果を両者で確認できるよう、お互いの講義室に「アグロ」と名のつく出席者を配置し、自分の手札にも対象カードを用意しています。"
           : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
       render();
       showTurnOverlay("player");
@@ -41379,6 +41405,7 @@
         president_tea_room: "次の相手のターン終了時まで、環境「食堂」の効果を得る。",
         suspicious_document: "このカードは使用できない。",
         classroom: "効果なし。",
+        aggro_kingdom: "このカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。",
         cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。",
         night_pool: "お互いのターン終了時、ターンを終了したプレイヤーの場の空いている席マスに「単細胞生物」1人をランダムに出席させる。",
         seat_rules: "お互いの場の2列目には出席できない。すでに2列目に出席者がいる場合、それらを破壊する。このカードは同名カードでも上書きできる。",

@@ -420,15 +420,101 @@ test("パッドプレゼンクリエイターをver.0.21.0の更新情報に新�
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
 
-  const latestEntry = page.locator(".update-entry").first();
-  await expect(latestEntry.locator("summary")).toContainText("ver.0.21.0");
-  await expect(latestEntry.locator("summary")).toContainText("2026年9月2日");
-  await latestEntry.locator("summary").click();
+  const versionEntry = page.locator(".update-entry", { hasText: "ver.0.21.0" }).first();
+  await expect(versionEntry.locator("summary")).toContainText("ver.0.21.0");
+  await expect(versionEntry.locator("summary")).toContainText("2026年9月2日");
+  await versionEntry.locator("summary").click();
 
-  const newCard = latestEntry.locator(".update-after", { hasText: "パッドプレゼンクリエイター" });
+  const newCard = versionEntry.locator(".update-after", { hasText: "パッドプレゼンクリエイター" });
   await expect(newCard).toContainText("「パッドプレゼンクリエイター」\n学生／共通カード／戦意3／攻撃力1／体力1");
   await expect(newCard).toContainText("このカードがある限り");
   await expect(newCard).toContainText("相手の最大戦意の差だけ上がる");
+});
+
+test("アグロキングダムは両者のアグロ出席者へ常在の超陽気を与える", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.currentSide = "player";
+    state.gameOver = false;
+    state.players.player.will = 10;
+    state.players.player.hand = [];
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.opponent.board.seats = Array(9).fill(null);
+
+    const ownAggro = api.makeBoardCard(api.createCardFromBase("aggro_student", "player"));
+    const enemyAggro = api.makeBoardCard(api.createCardFromBase("aggro_king", "opponent"));
+    const ordinaryStudent = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    state.players.player.board.seats[0] = ownAggro;
+    state.players.player.board.seats[1] = ordinaryStudent;
+    state.players.opponent.board.seats[0] = enemyAggro;
+
+    const beforePlacement = !api.hasKeyword(ownAggro, "超陽気")
+      && !api.hasKeyword(enemyAggro, "超陽気");
+    const environment = api.createCardFromBase("aggro_kingdom", "player");
+    state.players.player.hand = [environment];
+    const placed = api.placeCardFromHand("player", environment.instanceId, "environment", "player", null, false);
+    const bothPlayersBuffed = api.hasKeyword(ownAggro, "超陽気")
+      && api.hasKeyword(enemyAggro, "超陽気")
+      && api.hasKeyword(ownAggro, "陽気");
+    const nonAggroExcluded = !api.hasKeyword(ordinaryStudent, "超陽気")
+      && !api.hasKeyword(api.createCardFromBase("aggro_army", "player"), "超陽気");
+    const laterAggro = api.makeBoardCard(api.createCardFromBase("aggro_queen", "player"));
+    state.players.player.board.seats[2] = laterAggro;
+    const laterAttendanceBuffed = api.hasKeyword(laterAggro, "超陽気");
+    state.environment = api.makeBoardCard(api.createCardFromBase("classroom", "player"));
+    const removedWithEnvironment = !api.hasKeyword(ownAggro, "超陽気")
+      && !api.hasKeyword(enemyAggro, "超陽気")
+      && !api.hasKeyword(laterAggro, "超陽気");
+
+    return {
+      beforePlacement,
+      placed,
+      bothPlayersBuffed,
+      nonAggroExcluded,
+      laterAttendanceBuffed,
+      removedWithEnvironment,
+      name: api.CARD_BASES.aggro_kingdom.name,
+      type: api.CARD_BASES.aggro_kingdom.type,
+      cost: api.CARD_BASES.aggro_kingdom.cost,
+      category: api.CARD_BASES.aggro_kingdom.category,
+      common: api.SPECIALTY_CARD_IDS.common.includes("aggro_kingdom"),
+      rules: api.cardRulesText(api.createCardFromBase("aggro_kingdom", "player"))
+    };
+  });
+
+  expect(result).toEqual({
+    beforePlacement: true,
+    placed: true,
+    bothPlayersBuffed: true,
+    nonAggroExcluded: true,
+    laterAttendanceBuffed: true,
+    removedWithEnvironment: true,
+    name: "アグロキングダム",
+    type: "environment",
+    cost: 2,
+    category: "common",
+    common: true,
+    rules: "このカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。"
+  });
+});
+
+test("アグロキングダムをver.0.22.0の更新情報に新カード形式で記載する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+
+  const latestEntry = page.locator(".update-entry").first();
+  await expect(latestEntry.locator("summary")).toContainText("ver.0.22.0");
+  await expect(latestEntry.locator("summary")).toContainText("2026年9月3日");
+  await latestEntry.locator("summary").click();
+
+  const newCard = latestEntry.locator(".update-after", { hasText: "アグロキングダム" });
+  await expect(newCard).toContainText("「アグロキングダム」\n環境／共通カード／戦意2");
+  await expect(newCard).toContainText("お互いの「アグロ」と名のつく出席者は超陽気を持つ");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

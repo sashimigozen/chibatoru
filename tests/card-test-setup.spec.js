@@ -19,6 +19,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "smoke_flare",
       "one_eyed_peek",
       "aggro_army",
+      "aggro_kingdom",
       "scout_student",
       "ta_squad",
       "happy_blue_bird",
@@ -91,6 +92,11 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.crotch_febreze.opponentBoard.filter((card) => card.type === "teacher").length).toBeGreaterThanOrEqual(2);
   expect(result.smoke_flare.maxWill).toBe(8);
   expect(result.one_eyed_peek.opponentHand.length).toBeGreaterThan(0);
+  expect(result.aggro_kingdom.hand).toEqual(expect.arrayContaining([
+    "aggro_kingdom", "aggro_student", "aggro_king", "aggro_queen"
+  ]));
+  expect(result.aggro_kingdom.playerBoard.some((card) => card.baseId === "aggro_student")).toBe(true);
+  expect(result.aggro_kingdom.opponentBoard.some((card) => card.baseId === "aggro_king")).toBe(true);
   expect(result.scout_student.opponentBoard).toHaveLength(0);
   expect(result.scout_student.superCheerful).toBe(true);
   expect(result.happy_blue_bird.playerBoard.filter((card) => card.baseId === "happy_blue_bird")).toHaveLength(1);
