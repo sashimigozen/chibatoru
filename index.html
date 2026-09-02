@@ -5298,6 +5298,54 @@
       font-size: 15px;
     }
 
+    .teacher-action-copy {
+      display: grid;
+      gap: 10px;
+    }
+
+    .teacher-action-copy h2,
+    .lecture-experiment-dialog h2 {
+      margin: 0;
+    }
+
+    .teacher-action-copy p,
+    .lecture-experiment-dialog p {
+      margin: 0;
+      line-height: 1.7;
+    }
+
+    .teacher-action-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .teacher-action-buttons .teacher-action-cancel {
+      grid-column: 1 / -1;
+    }
+
+    .lecture-experiment-dialog {
+      width: min(460px, calc(100vw - 28px));
+      display: grid;
+      gap: 14px;
+      border: 2px solid #22aee8;
+      border-radius: 14px;
+      padding: 22px;
+      background: #ffffff;
+      box-shadow: 0 24px 54px rgba(15, 23, 42, .34);
+    }
+
+    .lecture-experiment-badge {
+      width: fit-content;
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #ffffff;
+      background: #ef4444;
+      font-size: 12px;
+      font-weight: 1000;
+      letter-spacing: .08em;
+    }
+
     .card-test-style-frame {
       position: relative;
       width: 136px;
@@ -16589,6 +16637,29 @@
       </div>
     </section>
   </div>
+  <div class="item-confirm-backdrop hidden" id="teacherActionModal" role="dialog" aria-modal="true" aria-labelledby="teacherActionTitle">
+    <section class="item-confirm-dialog">
+      <div class="item-confirm-card" id="teacherActionCard"></div>
+      <div class="teacher-action-copy">
+        <h2 id="teacherActionTitle">教師の行動を選ぶ</h2>
+        <p>この教師で攻撃するか、講義を行うかを選んでください。どちらかを行うと、この教師は行動済みになります。</p>
+        <div class="teacher-action-buttons">
+          <button class="button" id="teacherAttackChoiceButton" type="button">攻撃する</button>
+          <button class="button" id="teacherLectureChoiceButton" type="button">講義を行う</button>
+          <button class="button secondary teacher-action-cancel" id="teacherActionCancelButton" type="button">やめる</button>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div class="modal-backdrop hidden" id="lectureExperimentNoticeModal" role="dialog" aria-modal="true" aria-labelledby="lectureExperimentNoticeTitle">
+    <section class="lecture-experiment-dialog">
+      <span class="lecture-experiment-badge">テスト中</span>
+      <h2 id="lectureExperimentNoticeTitle">教師の「講義」操作を試験変更しました</h2>
+      <p>教師マスにいる攻撃可能な教師をタップすると、「攻撃する」か「講義を行う」かを選べます。選んだ行動を行うと、その教師は行動済みになります。</p>
+      <p><strong>これは一旦試しの仕様です。</strong>操作感を確認するためのテストとして実装しています。</p>
+      <button class="button" id="lectureExperimentNoticeCloseButton" type="button">確認しました</button>
+    </section>
+  </div>
   <div class="item-confirm-backdrop hidden" id="cardTestModal">
     <section class="item-confirm-dialog" aria-modal="true" role="dialog" aria-labelledby="cardTestTitle">
       <div class="item-confirm-card" id="cardTestCard"></div>
@@ -16858,11 +16929,11 @@
     ));
     const ONLINE_DECK_DESCRIPTOR_PREFIX = "chibattle-online-deck-v1";
     const SPECIALTY_CARD_IDS = Object.freeze({
-      common: ["aggro_army", "aggro_kingdom", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "pad_present_creator", "quick_quiz_tournament", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
+      common: ["aggro_army", "aggro_kingdom", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "pad_present_creator", "quick_quiz_tournament", "sage_legacy", "smart_me", "strict_lateness_teacher", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
       gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "company_one_day", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "enough_to_fly", "failure_student", "front_door", "full_throttle", "greeting_3000", "ii_daro_tte", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "tsurai_nara", "ultimate_yuta", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
-      late: ["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"],
+      late: ["absent_student", "adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"],
       expansion: ["aggro_king", "aggro_queen", "brother_capital", "bust_suit", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "intern", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "scout_student", "seat_taking_group", "single_cell", "sock_block", "suit_student", "ta_squad", "trpg_member"],
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
@@ -17196,6 +17267,8 @@
       aggro_eater: [],
       aggro_army: [],
       aggro_kingdom: ["aggro_student", "aggro_king", "aggro_queen"],
+      absent_student: [],
+      strict_lateness_teacher: ["absent_student"],
       scout_student: [],
       ta_squad: [],
       happy_blue_bird: [],
@@ -17247,11 +17320,11 @@
       gigi_blood: []
     };
     let ALL_DECK_IDS = [
-      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "single_cell", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
+      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "single_cell", "absent_student", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "tokyo_tech_bro", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
-      "absolute_woman", "pad_present_creator", "loud_members", "general_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter", "small_omata",
+      "absolute_woman", "pad_present_creator", "loud_members", "general_teacher", "strict_lateness_teacher", "fairy_t", "popular_c", "lightning_n", "kyushu_info_c", "pro_k", "signal_professor_m", "logic_hunter", "small_omata",
       "kyoto_sound_i", "kansai_voice_t", "bird_a", "thin_professor_h", "ninety_three_teacher", "president", "suzaku", "ai_chan", "oni_shima_ai", "france_asakura", "demon_a_plus",
       "zombie", "cafeteria_lady", "tissue_distributor", "apprentice_vampire", "curry_treater", "chen_san", "impossible_high_note", "vampire", "wood_gitch", "gitch", "gigi_blood",
       "ruler", "aggro_eater", "aggro_army", "king_ghidorah_bed", "ux_design_textbook", "bento", "yakiniku", "handmade_ctoc", "environment_setup", "fluid_pasta", "water_2l", "night_pool_water", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "diamond_dust", "happy_experience", "go_away", "course_registration_party", "lie_pekora", "big_wall", "think_so", "illegal_cafeteria",
@@ -17302,6 +17375,7 @@
       organism: { name: "生物", type: "student", cost: 0, attack: 6, hp: 6, keywords: ["陽気"], token: true, allowedZones: ["seat"] },
       perfect_mutant: { name: "完全変異体", type: "student", cost: 0, attack: 13, hp: 13, keywords: ["超陽気"], token: true, allowedZones: ["seat"] },
       adjective_student: { name: "形容詞学生", type: "student", cost: 1, attack: 2, hp: 4, late: 4, allowedZones: ["seat"] },
+      absent_student: { name: "来てなかった学生", type: "student", cost: 2, attack: 2, hp: 2, late: 3, allowedZones: ["seat", "teacher"] },
       yuta: { name: "U太", type: "student", cost: 3, attack: 3, hp: 3, keywords: ["余裕"], allowedZones: ["seat", "teacher"] },
       ultimate_yuta: { name: "Ultimate U太", type: "student", cost: 0, noCost: true, attack: 13, hp: 13, generated: true, allowedZones: ["seat", "teacher"] },
       aggro_queen: { name: "アグロクイーン", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"] },
@@ -17352,6 +17426,7 @@
       rebirth_student: { name: "再\"履\"生", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       lone_wolf: { name: "狼(いっぴきおおかみ)", type: "student", cost: 5, attack: 2, hp: 2, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
       general_teacher: { name: "一般教師", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
+      strict_lateness_teacher: { name: "遅刻に厳しい教師", type: "teacher", cost: 4, attack: 1, hp: 1, allowedZones: ["teacher"] },
       small_omata: { name: "スモール小俣", type: "teacher", cost: 4, attack: 1, hp: 1, allowedZones: ["teacher"] },
       big_omata: { name: "ビッグ小俣", type: "teacher", cost: 0, noCost: true, attack: 9, hp: 9, keywords: ["注目", "陽気"], token: true, allowedZones: ["seat"], occupiedSeatSize: { rows: 3, cols: 3 } },
       wood_gitch: { name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 1, noLecture: true, allowedZones: ["teacher", "seat"] },
@@ -17528,6 +17603,8 @@
       course_registration_party: "common",
       aggro_army: "common",
       aggro_kingdom: "common",
+      absent_student: "late",
+      strict_lateness_teacher: "common",
       king_ghidorah_bed: "common",
       scout_student: "expansion",
       lie_pekora: "big"
@@ -17599,15 +17676,29 @@
     ]);
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
+    const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
         version: "ver.0.22.0",
         date: "2026年9月3日",
-        summary: "新カード「アグロキングダム」を追加しました。",
+        summary: "新カード3枚の追加と、教師の講義操作の試験変更を行いました。",
         changes: [
           {
             title: "新カード",
             after: "「アグロキングダム」\n環境／共通カード／戦意2\nこのカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。"
+          },
+          {
+            title: "新カード",
+            after: "「来てなかった学生」\n学生／遅刻／戦意2／攻撃力2／体力2\n遅刻3。このカードが自分の講義室から校外エリアへ送られたとき、相手の講義室にいる教師1人をランダムに指名し、破壊する。"
+          },
+          {
+            title: "新カード",
+            after: "「遅刻に厳しい教師」\n教師／共通カード／戦意4／攻撃力1／体力1\nこのカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。"
+          },
+          {
+            title: "講義の操作（テスト）",
+            before: "教師マスにいる教師は、ターン終了時に攻撃とは別に自動で講義を行っていた。",
+            after: "一旦試しとして、教師マスにいる攻撃可能な教師をタップしたとき、「攻撃する」か「講義を行う」かを選ぶ方式へ変更。どちらかを行うと、その教師は行動済みになる。ホーム画面では、この試験変更を知らせるポップアップを初回の1回だけ表示する。"
           }
         ]
       },
@@ -18339,6 +18430,7 @@
     let dungeonRewardTimer = null;
     let dungeonClearDataModalMode = "";
     let pendingEncryptedDungeonClearImport = null;
+    let pendingTeacherActionRef = null;
     let unlockedDungeonCardStyles = loadDungeonCardStyles();
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
@@ -18623,8 +18715,8 @@
       },
       {
         id: "teacherLecture",
-        title: "教師編：教卓マス",
-        body: "教師には、教卓マスにいる時だけ発動する効果を持つカードがあります。\n教師カードは、席マスにも出席できる場合があります。",
+        title: "教師編：攻撃と講義",
+        body: "教師マスにいる攻撃可能な教師を押すと、「攻撃する」か「講義を行う」かを選べます。\nどちらかを行うと、その教師は行動済みになります。",
         focus: "#playerProfessorLane .board-card"
       },
       {
@@ -18997,6 +19089,13 @@
       itemConfirmText: document.getElementById("itemConfirmText"),
       itemConfirmUseButton: document.getElementById("itemConfirmUseButton"),
       itemConfirmCancelButton: document.getElementById("itemConfirmCancelButton"),
+      teacherActionModal: document.getElementById("teacherActionModal"),
+      teacherActionCard: document.getElementById("teacherActionCard"),
+      teacherAttackChoiceButton: document.getElementById("teacherAttackChoiceButton"),
+      teacherLectureChoiceButton: document.getElementById("teacherLectureChoiceButton"),
+      teacherActionCancelButton: document.getElementById("teacherActionCancelButton"),
+      lectureExperimentNoticeModal: document.getElementById("lectureExperimentNoticeModal"),
+      lectureExperimentNoticeCloseButton: document.getElementById("lectureExperimentNoticeCloseButton"),
       cardTestModal: document.getElementById("cardTestModal"),
       cardTestCard: document.getElementById("cardTestCard"),
       cardTestText: document.getElementById("cardTestText"),
@@ -21720,6 +21819,7 @@
 
     function onlineCommandNeedsHostResolution(type, commandCard) {
       return type === "endTurn"
+        || type === "lecture"
         || type === "placeCopy"
         || type === "donguri"
         || type === "raptorTemple"
@@ -23050,6 +23150,10 @@
           state.online.pendingAttackCommandId = command.id || "";
           await attackLifeForCurrentSide(onlineSwapSide(payload.targetSide));
         }
+        if (command.type === "lecture") {
+          const teacherRef = onlineMapRefForHost(payload.teacher);
+          if (teacherRef) performTeacherLecture("opponent", teacherRef, { renderAfter: true });
+        }
         if (command.type === "placeCopy") {
           const target = onlineMapRefForHost(payload.target);
           if (target) placePendingCopiedCardForSide("opponent", target.zone, target.owner, target.index ?? null);
@@ -23302,6 +23406,7 @@
     }
 
     function initializeGame(options = {}) {
+      closeTeacherActionChoice();
       closeCourseRegistrationConsent();
       boardVisualSnapshots.clear();
       const onlineHost = options.onlineHost === true;
@@ -25679,6 +25784,13 @@
         if (!isOpponentAiActive()) return;
         const attacker = getBoardCardFromRef(ref);
         if (!attacker || !canAttackSilently(attacker)) continue;
+        if (shouldAiUseLecture(ref, attacker)) {
+          performTeacherLecture("opponent", ref, { renderAfter: false });
+          render();
+          if (state.gameOver) return;
+          await sleep(AI_STEP_DELAY);
+          continue;
+        }
         const target = findAiAttackTarget(attacker);
         if (target) {
           if (!await waitForAttackResolution(ref, target)) return;
@@ -25767,29 +25879,24 @@
         .map((target) => {
           const canDefeat = (attacker.attack || 0) >= target.card.currentHp;
           const survivesCounter = (target.card.attack || 0) < attacker.currentHp;
-          const lectureWillDefeat = willAiLectureDefeatAtEndTurn(target.card);
           const score = (canDefeat ? 14 : 0)
             + (survivesCounter ? 4 : -8)
             + scoreAiEnemyAttendeeThreat(target.card, target)
-            - target.card.currentHp * 0.25
-            - (lectureWillDefeat ? 20 : 0);
-          return { ...target, score, canDefeat, survivesCounter, lectureWillDefeat };
+            - target.card.currentHp * 0.25;
+          return { ...target, score, canDefeat, survivesCounter };
         })
         .sort((a, b) => b.score - a.score);
       const forcedLethalTarget = state.aiLethalForcedTargetId
         ? targets.find((target) => target.card.instanceId === state.aiLethalForcedTargetId)
         : null;
       if (forcedLethalTarget) return forcedLethalTarget;
-      const bestWithoutLecture = targets.find((target) => !target.lectureWillDefeat);
-      const best = bestWithoutLecture || targets[0];
+      const best = targets[0];
       if (!best) return null;
-      if (!bestWithoutLecture && best.lectureWillDefeat) return null;
       const utaBoardClearer = isAiUtaStrategyActive()
         && isUtaEquipmentTarget(attacker)
         && utaEquipmentCount(attacker) > 0;
       if (utaBoardClearer) {
         const clearableTarget = targets.find((target) => target.canDefeat
-          && !target.lectureWillDefeat
           && (target.survivesCounter || scoreAiEnemyAttendeeThreat(target.card, target) >= 12));
         if (clearableTarget) return clearableTarget;
       }
@@ -25818,11 +25925,15 @@
       return best;
     }
 
-    function willAiLectureDefeatAtEndTurn(card) {
-      const teacher = state.players.opponent.board.teacher;
-      if (!teacher || teacher.type !== "teacher" || !card || card.currentHp > 1) return false;
-      if (state.environment?.baseId === "on_demand_business" && card.type === "student") return false;
-      return teacher.baseId === "lightning_n" ? card.type === "vampire" : card.type === "student";
+    function shouldAiUseLecture(ref, teacher) {
+      if (!canTeacherChooseLecture(ref) || teacher?.owner !== "opponent") return false;
+      const targets = lectureTargetEntries("opponent", teacher);
+      if (targets.length === 0) return false;
+      if (targets.some(({ card }) => previewFinalDamageToCard(card, 1, teacher, {
+        ignoreWeakness: teacher.baseId === "lightning_n",
+        damageKind: "lecture"
+      }) >= card.currentHp)) return true;
+      return targets.length >= 2;
     }
 
     function endTurn(options = {}) {
@@ -25918,8 +26029,6 @@
       runEffectFeedbackSequence(() => {
         runEffectFeedbackBatch(() => resolveItemEndTurnEffects(side));
         settleEndTurnStep();
-        runEffectFeedbackBatch(() => resolveLectureEndTurnEffect(side));
-        settleEndTurnStep();
         runEffectFeedbackBatch(() => resolveTeacherEndTurnEffects(side));
         settleEndTurnStep();
         resolveStudentEndTurnEffects(side);
@@ -25966,32 +26075,70 @@
       });
     }
 
-    function resolveLectureEndTurnEffect(side) {
+    function canTeacherChooseLecture(ref) {
+      if (!ref || ref.owner !== state.currentSide || ref.zone !== "teacher") return false;
+      const teacher = getBoardCardFromRef(ref);
+      return Boolean(teacher
+        && teacher.type === "teacher"
+        && !teacher.noLecture
+        && canUsePrintedCardEffects(teacher)
+        && canAttackSilently(teacher));
+    }
+
+    function lectureTargetEntries(side, teacher) {
       const opponent = oppositeSide(side);
-      const teacher = state.players[side].board.teacher;
-      if (!teacher || teacher.type !== "teacher" || teacher.noLecture || isPadlocked(teacher)) return;
       // デーモンスレイヤーがどちらかの教卓マスにいる間は、両者の講義対象が変わる。
       const lectureTargetsVampires = hasDemonSlayerLectureAura();
       const lectureTargetTypes = lectureTargetsVampires ? ["vampire"] : ["student"];
+      const onDemandProtectsStudents = state.environment?.baseId === "on_demand_business";
+      return listBoardRefs(opponent)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter(({ card }) => card
+          && lectureTargetTypes.includes(card.type)
+          && !isEarphoneEquipped(card)
+          && !(onDemandProtectsStudents && card.type === "student"));
+    }
+
+    function resolveTeacherLectureEffect(side, teacher) {
+      const lectureTargetsVampires = hasDemonSlayerLectureAura();
       const lectureTargetLabel = lectureTargetsVampires ? "ヴァンパイア" : "学生";
       const onDemandProtectsStudents = state.environment?.baseId === "on_demand_business";
+      const targets = lectureTargetEntries(side, teacher);
       let affected = 0;
-      listBoardRefs(opponent).forEach((ref) => {
-        const card = getBoardCardFromRef(ref);
-        if (isEarphoneEquipped(card)) return;
-        if (onDemandProtectsStudents && card?.type === "student") return;
-        if (card && lectureTargetTypes.includes(card.type)) {
-          dealDamageToCard(card, 1, teacher, {
-            ignoreWeakness: teacher.baseId === "lightning_n",
-            damageKind: "lecture"
-          });
-          affected += 1;
-        }
+      targets.forEach(({ card }) => {
+        dealDamageToCard(card, 1, teacher, {
+          ignoreWeakness: teacher.baseId === "lightning_n",
+          damageKind: "lecture"
+        });
+        affected += 1;
       });
-      const onDemandText = onDemandProtectsStudents && lectureTargetTypes.includes("student")
+      const onDemandText = onDemandProtectsStudents && !lectureTargetsVampires
         ? " オンデマンド授業により、学生は講義を受けません。"
         : "";
       addLog(`${teacher.name}の講義：相手の${lectureTargetLabel}${affected}人に1ダメージ。${onDemandText}`);
+      return affected;
+    }
+
+    function performTeacherLecture(side, ref, options = {}) {
+      if (!ref || ref.owner !== side || state.currentSide !== side || !canTeacherChooseLecture(ref)) return false;
+      const teacher = getBoardCardFromRef(ref);
+      teacher.hasAttacked = true;
+      const affected = resolveTeacherLectureEffect(side, teacher);
+      analyticsRecordAction({
+        side,
+        actionType: "lecture",
+        card: teacher,
+        sourceZone: "teacher",
+        targetZone: "opponent_board",
+        details: { affected }
+      });
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      checkLifeVictory();
+      clearSelections();
+      if (side === "player") completeTutorialAction("lecture", { teacher, affected });
+      if (options.renderAfter !== false) render();
+      return true;
     }
 
     function resolveTeacherEndTurnEffects(_side) {
@@ -26751,6 +26898,61 @@
       elements.itemConfirmModal.classList.add("hidden");
       elements.itemConfirmCard.innerHTML = "";
       hideBattleCardPreview();
+    }
+
+    function openTeacherActionChoice(owner, zone, index = null) {
+      const ref = { owner, zone, index };
+      const teacher = getBoardCardFromRef(ref);
+      if (!teacher || !canTeacherChooseLecture(ref)) return false;
+      pendingTeacherActionRef = ref;
+      elements.teacherActionCard.innerHTML = cardShellTemplate(teacher);
+      const tutorialStep = currentTutorialStep();
+      elements.teacherAttackChoiceButton.disabled = Boolean(
+        isTutorialActive() && tutorialStep?.action === "lecture"
+      );
+      elements.teacherLectureChoiceButton.disabled = Boolean(
+        isTutorialActive() && ["attackCard", "attackLife"].includes(tutorialStep?.action)
+      );
+      elements.teacherActionModal.classList.remove("hidden");
+      hideCardTooltip();
+      hideBattleCardPreview();
+      scheduleCardTemplateScaleSync();
+      return true;
+    }
+
+    function closeTeacherActionChoice() {
+      pendingTeacherActionRef = null;
+      elements.teacherActionModal?.classList.add("hidden");
+      if (elements.teacherActionCard) elements.teacherActionCard.innerHTML = "";
+    }
+
+    function confirmTeacherAttackChoice() {
+      const ref = pendingTeacherActionRef ? { ...pendingTeacherActionRef } : null;
+      closeTeacherActionChoice();
+      if (!ref || !canTeacherChooseLecture(ref)) {
+        render();
+        return false;
+      }
+      selectAttacker(ref.owner, ref.zone, ref.index);
+      state.message = "攻撃する対象を選んでください。";
+      render();
+      return true;
+    }
+
+    function confirmTeacherLectureChoice() {
+      const ref = pendingTeacherActionRef ? { ...pendingTeacherActionRef } : null;
+      closeTeacherActionChoice();
+      if (!ref || !canTeacherChooseLecture(ref)) {
+        render();
+        return false;
+      }
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("lecture", { teacher: ref });
+        state.message = "講義を行う操作を送信しました。";
+        render();
+        return true;
+      }
+      return performTeacherLecture("player", ref, { renderAfter: true });
     }
 
     function clearPendingTargetItems() {
@@ -29949,6 +30151,10 @@
         beginUltimateYutaVictory(side, card);
         return;
       }
+      if (card.baseId === "strict_lateness_teacher") {
+        resolveStrictLatenessTeacherAttendance(side, card);
+        return;
+      }
       if (card.darkPresident) {
         state.cafeteriaEffectPermanentlyActive = true;
         applyBoardAuras();
@@ -31279,6 +31485,10 @@
       if (owner === state.currentSide) {
         if (!tutorialAllowsAttacker(owner, zone, index)) {
           rejectTutorialAction("今は光っている自分の出席者だけ攻撃役にできます。");
+          return;
+        }
+        if (canTeacherChooseLecture({ owner, zone, index })) {
+          openTeacherActionChoice(owner, zone, index);
           return;
         }
         selectAttacker(owner, zone, index);
@@ -34575,6 +34785,60 @@
       return player.board.seats.filter(Boolean).length + (player.board.teacher ? 1 : 0);
     }
 
+    function resolveAbsentStudentTrashTrigger(owner, sourceCard) {
+      const opponent = oppositeSide(owner);
+      const targetEntry = randomEffectTargetEntry(owner, opponent, (target) => target.type === "teacher");
+      if (!targetEntry) {
+        addLog(`${sourceCard.name}の効果：相手の講義室に教師がいないため不発になりました。`);
+        return null;
+      }
+      const targetName = targetEntry.card.name;
+      const destroyed = destroyBoardCard(targetEntry.ref, { reason: sourceCard.name });
+      if (destroyed) addLog(`${sourceCard.name}の効果：相手の${targetName}をランダムに指名し、破壊しました。`);
+      return destroyed;
+    }
+
+    function resolveStrictLatenessTeacherAttendance(side, sourceCard) {
+      const sourceInstanceId = sourceCard.instanceId;
+      const tardyStudentRefs = ["player", "opponent"].flatMap((owner) => (
+        listBoardRefs(owner).filter((ref) => {
+          const target = getBoardCardFromRef(ref);
+          return target?.type === "student" && Number(target.late) > 0;
+        })
+      ));
+      const destroyed = destroyBoardRefsToTrash(tardyStudentRefs, {
+        reason: sourceCard.name,
+        suppressIndividual: true
+      });
+      addLog(`${sourceCard.name}の手札出席時効果：お互いの講義室にいる遅刻を持つ学生${destroyed.length}人を破壊しました。`);
+
+      if (!findBoardCardByInstanceId(sourceInstanceId)) {
+        addLog(`${sourceCard.name}が講義室からいなくなったため、「その後」の効果は発動しませんでした。`);
+        return { destroyed, movedLateStudents: [] };
+      }
+
+      const movedLateStudents = [];
+      ["player", "opponent"].forEach((owner) => {
+        const remainingEntries = [];
+        state.players[owner].late.forEach((entry) => {
+          if (entry.card?.type !== "student") {
+            remainingEntries.push(entry);
+            return;
+          }
+          movedLateStudents.push(entry.card);
+          moveToTrash(owner, entry.card, {
+            suppressLog: true,
+            suppressToast: true,
+            reason: sourceCard.name,
+            sourceZone: "late"
+          });
+        });
+        state.players[owner].late = remainingEntries;
+      });
+      addLog(`${sourceCard.name}の効果：その後、お互いの遅刻ゾーンにいる学生${movedLateStudents.length}人を校外エリアへ送りました。`);
+      return { destroyed, movedLateStudents };
+    }
+
     function destroyBoardCard(ref, trashOptions = {}) {
       const card = getBoardCardFromRef(ref);
       if (!card) return null;
@@ -34606,6 +34870,7 @@
         }
       }
       const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
+      const triggersAbsentStudent = card.baseId === "absent_student" && canUsePrintedCardEffects(card);
       if (showDestroyFeedback) showFloatingTextForCard(card, "破壊", "destroy");
       recordRecentBoardTrash(ref.owner, card, ref);
       const moveOptions = {
@@ -34616,6 +34881,7 @@
       delete moveOptions.showDestroyFeedback;
       moveToTrash(ref.owner, card, moveOptions);
       clearBoardCardFromField(ref.owner, ref.zone, ref.index, card);
+      if (triggersAbsentStudent) resolveAbsentStudentTrashTrigger(ref.owner, card);
       return card;
     }
 
@@ -34936,6 +35202,7 @@
     }
 
     function clearSelections() {
+      closeTeacherActionChoice();
       state.selectedHandId = null;
       state.selectedAttacker = null;
       state.pendingMultiItem = null;
@@ -35897,9 +36164,6 @@
       const player = state.players.player;
       player.maxWill = 10;
       player.will = 10;
-      if (step.id === "cheerfulAttack") {
-        applyTutorialLectureDemo(payload.attacker, payload.target);
-      }
       if (step.id === "vampirePlay") {
         const vampire = getBoardCard(payload.owner, payload.zone, payload.index);
         if (vampire) {
@@ -35908,14 +36172,6 @@
           addLog("説明用にCITヴァンパイアが5ダメージを受けた状態にしました。");
         }
       }
-    }
-
-    function applyTutorialLectureDemo(teacher, target) {
-      if (!teacher || teacher.baseId !== "general_teacher" || !target || target.currentHp <= 0) return;
-      dealDamageToCard(target, 1, teacher, { damageKind: "lecture" });
-      addLog("チュートリアル：一般教師の講義で、相手の学生に1ダメージ。");
-      cleanupDestroyedCards();
-      applyBoardAuras();
     }
 
     function advanceTutorialTextStep() {
@@ -38457,6 +38713,25 @@
       elements.homeUpdatesDot.classList.toggle("hidden", !LATEST_UPDATE_READ_ID || read.has(LATEST_UPDATE_READ_ID));
     }
 
+    function maybeShowLectureExperimentNotice() {
+      if (!elements.lectureExperimentNoticeModal || state.screen !== "home") return false;
+      if (navigator.webdriver && window.__forceLectureExperimentNotice !== true) return false;
+      try {
+        if (localStorage.getItem(LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY) === "shown") return false;
+        localStorage.setItem(LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY, "shown");
+      } catch {
+        // 保存できない環境でも、その起動中は一度だけ表示する。
+        if (elements.lectureExperimentNoticeModal.dataset.shown === "true") return false;
+      }
+      elements.lectureExperimentNoticeModal.dataset.shown = "true";
+      elements.lectureExperimentNoticeModal.classList.remove("hidden");
+      return true;
+    }
+
+    function closeLectureExperimentNotice() {
+      elements.lectureExperimentNoticeModal?.classList.add("hidden");
+    }
+
     function renderUpdateHistory() {
       if (state.screen !== "updates" || !elements.updateList) return;
       const read = loadReadUpdateVersions();
@@ -39670,6 +39945,7 @@
     }
 
     function startCardTest(baseId) {
+      closeTeacherActionChoice();
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
       resetTutorialState();
@@ -39849,6 +40125,27 @@
       opponent.board.seats[4] = makeOpponentTestAttendee("vampire");
       opponent.board.seats[8] = makeOpponentTestAttendee("general_student");
       opponent.board.teacher = makeOpponentTestAttendee("general_teacher");
+      if (baseId === "absent_student") {
+        player.board.seats[0] = makePlayerTestAttendee("absent_student");
+      }
+      if (baseId === "strict_lateness_teacher") {
+        player.board.seats[0] = makePlayerTestAttendee("lazy_student");
+        opponent.board.seats[0] = makeOpponentTestAttendee("lazy_student");
+        player.late.push({
+          card: createCardFromBase("cancel_student", "player"),
+          owner: "player",
+          zone: "seat",
+          index: 1,
+          remaining: 2
+        });
+        opponent.late.push({
+          card: createCardFromBase("eaten_student", "opponent"),
+          owner: "opponent",
+          zone: "seat",
+          index: 1,
+          remaining: 1
+        });
+      }
       if (baseId === "scout_student") {
         opponent.board.seats.fill(null);
         opponent.board.teacher = null;
@@ -40049,6 +40346,10 @@
             ? "早押しクイズ大会の通常ビンゴと8ビンゴを確認できるよう、自分の席マスを右下以外すべて埋め、最後に出席させる一般学生を手札に用意しています。"
           : baseId === "aggro_kingdom"
             ? "アグロキングダムの効果を両者で確認できるよう、お互いの講義室に「アグロ」と名のつく出席者を配置し、自分の手札にも対象カードを用意しています。"
+          : baseId === "absent_student"
+            ? "来てなかった学生が校外エリアへ送られたときの効果を確認できるよう、自分の講義室に同名カード、相手の講義室に一般教師を配置しています。"
+          : baseId === "strict_lateness_teacher"
+            ? "遅刻に厳しい教師の効果を確認できるよう、お互いの講義室と遅刻ゾーンに遅刻を持つ学生を配置しています。"
           : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
       render();
       showTurnOverlay("player");
@@ -40117,6 +40418,7 @@
     }
 
     function showHomeScreen() {
+      closeTeacherActionChoice();
       if (dungeonEntranceTimer) {
         window.clearTimeout(dungeonEntranceTimer);
         dungeonEntranceTimer = null;
@@ -40303,6 +40605,7 @@
     }
 
     function startTutorialBattle() {
+      closeTeacherActionChoice();
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
       state.preBattleToken += 1;
@@ -40750,7 +41053,7 @@
       "眠気": "攻撃するたび、50%の確率で攻撃に失敗する。",
       "余裕": "自分のターン終了時、この出席者の体力を1回復する。",
       "遅刻": "手札から出した後、指定された回数の自分のターンを待ってから出席する。",
-      "講義": "教卓マスの教師が自分のターンを終了すると、相手の対象となる出席者に1ダメージを与える。",
+      "講義": "教師マスにいる攻撃可能な教師が、攻撃の代わりに選んで行う。相手の対象となる出席者すべてに1ダメージを与える。",
       "融合": "指定された複数のカードを組み合わせ、別のカードへ変える。",
     };
 
@@ -41216,6 +41519,7 @@
         organism: "陽気を持つ。このカードが出席したとき、相手の出席者すべてに2ダメージを与える。自分の場に「生物」「ミジンコ」「単細胞生物」がいる場合、それらを破壊し、「生物」がいた席マスに「完全変異体」を出席させる。",
         perfect_mutant: "超陽気を持つ。このカードが出席したとき、相手の出席者すべてを破壊する。",
         adjective_student: "遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。",
+        absent_student: "遅刻3。このカードが自分の講義室から校外エリアへ送られたとき、相手の講義室にいる教師1人をランダムに指名し、破壊する。",
         yocchan: "超陽気を持つ。このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。",
         trendy_student: "このカードが攻撃した出席者の体力を0にした場合、反撃ダメージを受けない。その出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",
         rebirth_student: "このカードは一度だけ、体力が0以下になっても校外エリアへ送られず、体力を全回復する。",
@@ -41426,6 +41730,7 @@
         shogi_duel_field: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
         aiben_vs_nyotei_title_match: "自分の講義室の空いている席マスに「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室の空いている席マスに出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。各プレイヤーは、自分が送った枚数だけ、自分の講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
         ta_killer: "これは講義のダメージを受けない。手札から出席させたとき、相手のランダムな教師に1ダメージを与える。",
+        strict_lateness_teacher: "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
         ta: "カードの効果によって出席される学生トークン。"
       };
       let text = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
@@ -41879,6 +42184,13 @@
     elements.itemConfirmModal.addEventListener("click", (event) => {
       if (event.target === elements.itemConfirmModal) closeItemConfirm();
     });
+    elements.teacherAttackChoiceButton.addEventListener("click", confirmTeacherAttackChoice);
+    elements.teacherLectureChoiceButton.addEventListener("click", confirmTeacherLectureChoice);
+    elements.teacherActionCancelButton.addEventListener("click", closeTeacherActionChoice);
+    elements.teacherActionModal.addEventListener("click", (event) => {
+      if (event.target === elements.teacherActionModal) closeTeacherActionChoice();
+    });
+    elements.lectureExperimentNoticeCloseButton.addEventListener("click", closeLectureExperimentNotice);
     elements.cardTestStartButton.addEventListener("click", confirmCardTest);
     elements.cardTestCancelButton.addEventListener("click", closeCardTestConfirm);
     elements.courseRegistrationAcceptButton.addEventListener("click", acceptCourseRegistrationConsent);
@@ -42077,6 +42389,8 @@
       attendCard,
       ATTENDANCE_SOURCE,
       resolveAttendEffects,
+      resolveStrictLatenessTeacherAttendance,
+      destroyBoardCard,
       resolveQuickQuizBingoAttendance,
       completeQuickQuizBingoLines,
       castImmediateItem,
@@ -42092,6 +42406,10 @@
       effectiveCardCost,
       dealDamageToCard,
       previewFinalDamageToCard,
+      canTeacherChooseLecture,
+      performTeacherLecture,
+      resolveTeacherLectureEffect,
+      resolveEndTurnEffects,
       resolveStudentEndTurnEffects,
       resolveInternEndTurnEffect,
       resolveHappyBlueBirdEndTurnAttacks,
@@ -42120,6 +42438,7 @@
     };
 
     initializeGame();
+    window.setTimeout(maybeShowLectureExperimentNotice, 0);
 
   </script>
   <script src="four-mode.js"></script>

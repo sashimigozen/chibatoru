@@ -20,6 +20,8 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "one_eyed_peek",
       "aggro_army",
       "aggro_kingdom",
+      "absent_student",
+      "strict_lateness_teacher",
       "scout_student",
       "ta_squad",
       "happy_blue_bird",
@@ -69,6 +71,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
           hp: card.currentHp
         })),
         late: api.state.players.player.late.map((entry) => entry.card.baseId),
+        opponentLate: api.state.players.opponent.late.map((entry) => entry.card.baseId),
         life: api.state.players.player.life,
         maxWill: api.state.players.player.maxWill,
         playerDeckSize: api.state.players.player.deck.length,
@@ -97,6 +100,15 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   ]));
   expect(result.aggro_kingdom.playerBoard.some((card) => card.baseId === "aggro_student")).toBe(true);
   expect(result.aggro_kingdom.opponentBoard.some((card) => card.baseId === "aggro_king")).toBe(true);
+  expect(result.absent_student.playerBoard.some((card) => card.baseId === "absent_student")).toBe(true);
+  expect(result.absent_student.opponentBoard.some((card) => card.type === "teacher")).toBe(true);
+  expect(result.strict_lateness_teacher.hand).toEqual(expect.arrayContaining([
+    "strict_lateness_teacher", "absent_student"
+  ]));
+  expect(result.strict_lateness_teacher.playerBoard.some((card) => card.baseId === "lazy_student")).toBe(true);
+  expect(result.strict_lateness_teacher.opponentBoard.some((card) => card.baseId === "lazy_student")).toBe(true);
+  expect(result.strict_lateness_teacher.late).toContain("cancel_student");
+  expect(result.strict_lateness_teacher.opponentLate).toContain("eaten_student");
   expect(result.scout_student.opponentBoard).toHaveLength(0);
   expect(result.scout_student.superCheerful).toBe(true);
   expect(result.happy_blue_bird.playerBoard.filter((card) => card.baseId === "happy_blue_bird")).toHaveLength(1);

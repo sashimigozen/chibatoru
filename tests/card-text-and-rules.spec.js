@@ -27,6 +27,8 @@ test("確定したカードテキストが表示データに反映されてい�
     "融合\\n「U太」に融合する。",
     "このカードを手札から出席させたとき、このゲームに勝利する。",
     "このカードがある限り、自分の最大戦意は3になる。ターン開始時、自分の講義室に出席している全ての出席者の体力は相手の最大戦意の差だけ上がる。",
+    "遅刻3。このカードが自分の講義室から校外エリアへ送られたとき、相手の講義室にいる教師1人をランダムに指名し、破壊する。",
+    "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -57,6 +59,8 @@ test("確定したカードテキストが表示データに反映されてい�
   expect(source).toContain('after: "「インターン」\\n持ち物／展開・敵増殖／戦意2\\n');
   expect(source).toContain('after: "「キングギドラベッド」\\n持ち物／共通カード／戦意4\\n');
   expect(source).toContain('after: "「早押しクイズ大会」\\n環境／共通カード／戦意1\\n');
+  expect(source).toContain('after: "「来てなかった学生」\\n学生／遅刻／戦意2／攻撃力2／体力2\\n');
+  expect(source).toContain('after: "「遅刻に厳しい教師」\\n教師／共通カード／戦意4／攻撃力1／体力1\\n');
   expect(source).toContain('after: "「辛いなら」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
   expect(source).toContain('after: "「会社１日」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
   expect(source).toContain('after: "「飛ぶくらい」\\n持ち物／学友会・持ち物／戦意0\\n融合\\n「U太」に融合する。"');
@@ -503,7 +507,7 @@ test("アグロキングダムは両者のアグロ出席者へ常在の超陽�
   });
 });
 
-test("アグロキングダムをver.0.22.0の更新情報に新カード形式で記載する", async ({ page }) => {
+test("9月3日の新カードをver.0.22.0の更新情報に統合して記載する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
 
@@ -515,6 +519,14 @@ test("アグロキングダムをver.0.22.0の更新情報に新カード形式�
   const newCard = latestEntry.locator(".update-after", { hasText: "アグロキングダム" });
   await expect(newCard).toContainText("「アグロキングダム」\n環境／共通カード／戦意2");
   await expect(newCard).toContainText("お互いの「アグロ」と名のつく出席者は超陽気を持つ");
+
+  const absentStudent = latestEntry.locator(".update-after", { hasText: "来てなかった学生" });
+  await expect(absentStudent).toContainText("「来てなかった学生」\n学生／遅刻／戦意2／攻撃力2／体力2");
+  await expect(absentStudent).toContainText("自分の講義室から校外エリアへ送られたとき");
+
+  const strictTeacher = latestEntry.locator(".update-after", { hasText: "遅刻に厳しい教師" });
+  await expect(strictTeacher).toContainText("「遅刻に厳しい教師」\n教師／共通カード／戦意4／攻撃力1／体力1");
+  await expect(strictTeacher).toContainText("その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
