@@ -26,6 +26,7 @@ test("確定したカードテキストが表示データに反映されてい�
     "8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
     "融合\\n「U太」に融合する。",
     "このカードを手札から出席させたとき、このゲームに勝利する。",
+    "このカードがある限り、自分の最大戦意は3になる。ターン開始時、自分の講義室に出席している全ての出席者の体力は相手の最大戦意の差だけ上がる。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
     "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
@@ -305,7 +306,7 @@ test("デザイン教師4枚の修正をver.0.20.4の更新情報に記載する
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
 
-  const latestEntry = page.locator(".update-entry").first();
+  const latestEntry = page.locator(".update-entry", { hasText: "ver.0.20.4" }).first();
   await expect(latestEntry.locator("summary")).toContainText("ver.0.20.4");
   await expect(latestEntry.locator("summary")).toContainText("2026年9月1日");
   await latestEntry.locator("summary").click();
@@ -323,6 +324,111 @@ test("デザイン教師4枚の修正をver.0.20.4の更新情報に記載する
     await expect(change.locator(".update-after")).toContainText("手札から");
     await expect(change.locator(".update-after")).toContainText("変更点：出席時効果を、手札から出席させた場合にのみ発動するよう変更。");
   }
+});
+
+test("パッドプレゼンクリエイターは最大戦意を制限し、ダメージを引き継いで体力を上げる", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+
+    function resetBattle() {
+      state.phase = "battle";
+      state.currentSide = "player";
+      state.actionTurn = 8;
+      state.gameOver = false;
+      state.courseRegistration = null;
+      state.environment = null;
+      ["player", "opponent"].forEach((side) => {
+        const player = state.players[side];
+        player.board.teacher = null;
+        player.board.seats = Array(9).fill(null);
+        player.hand = [];
+        player.deck = [
+          api.createCardFromBase("general_student", side),
+          api.createCardFromBase("general_student", side),
+          api.createCardFromBase("general_student", side)
+        ];
+        player.trash = [];
+        player.late = [];
+        player.padPresentNaturalMaxWill = null;
+      });
+      state.players.player.maxWill = 7;
+      state.players.player.will = 7;
+      state.players.opponent.maxWill = 10;
+      state.players.opponent.will = 10;
+    }
+
+    resetBattle();
+    const creator = api.createCardFromBase("pad_present_creator", "player");
+    state.players.player.hand = [creator];
+    const damagedAttendee = api.makeBoardCard(api.createCardFromBase("loud_student", "player"));
+    damagedAttendee.currentHp = 6;
+    state.players.player.board.seats[1] = damagedAttendee;
+    const placed = api.placeCardFromHand("player", creator.instanceId, "seat", "player", 0, false);
+    const cappedOnAttendance = state.players.player.maxWill === 3
+      && state.players.player.will === 3
+      && state.players.player.padPresentNaturalMaxWill === 7;
+
+    api.startTurn("player");
+    const creatorOnBoard = state.players.player.board.seats[0];
+    const buffedByDifference = creatorOnBoard.maxHp === 8 && creatorOnBoard.currentHp === 8;
+    const damageCarriedOver = damagedAttendee.maxHp === 16
+      && damagedAttendee.currentHp === 13
+      && damagedAttendee.maxHp - damagedAttendee.currentHp === 3;
+    const stayedCappedAtTurnStart = state.players.player.maxWill === 3
+      && state.players.player.will === 3
+      && state.players.player.padPresentNaturalMaxWill === 8;
+
+    resetBattle();
+    const leavingCreator = api.createCardFromBase("pad_present_creator", "player");
+    state.players.player.hand = [leavingCreator];
+    api.placeCardFromHand("player", leavingCreator.instanceId, "seat", "player", 0, false);
+    state.players.player.board.seats[0] = null;
+    const remainedCappedUntilNextTurn = state.players.player.maxWill === 3;
+    api.startTurn("player");
+    const restoredNaturalProgression = state.players.player.maxWill === 8
+      && state.players.player.will === 8
+      && state.players.player.padPresentNaturalMaxWill === null;
+
+    return {
+      placed,
+      cappedOnAttendance,
+      buffedByDifference,
+      damageCarriedOver,
+      stayedCappedAtTurnStart,
+      remainedCappedUntilNextTurn,
+      restoredNaturalProgression,
+      category: api.CARD_BASES.pad_present_creator.category,
+      rules: api.cardRulesText(api.createCardFromBase("pad_present_creator", "player"))
+    };
+  });
+
+  expect(result.placed).toBe(true);
+  expect(result.cappedOnAttendance).toBe(true);
+  expect(result.buffedByDifference).toBe(true);
+  expect(result.damageCarriedOver).toBe(true);
+  expect(result.stayedCappedAtTurnStart).toBe(true);
+  expect(result.remainedCappedUntilNextTurn).toBe(true);
+  expect(result.restoredNaturalProgression).toBe(true);
+  expect(result.category).toBe("common");
+  expect(result.rules).toContain("相手の最大戦意の差だけ上がる");
+});
+
+test("パッドプレゼンクリエイターをver.0.21.0の更新情報に新カード形式で記載する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeUpdatesButton").click();
+
+  const latestEntry = page.locator(".update-entry").first();
+  await expect(latestEntry.locator("summary")).toContainText("ver.0.21.0");
+  await expect(latestEntry.locator("summary")).toContainText("2026年9月2日");
+  await latestEntry.locator("summary").click();
+
+  const newCard = latestEntry.locator(".update-after", { hasText: "パッドプレゼンクリエイター" });
+  await expect(newCard).toContainText("「パッドプレゼンクリエイター」\n学生／共通カード／戦意3／攻撃力1／体力1");
+  await expect(newCard).toContainText("このカードがある限り");
+  await expect(newCard).toContainText("相手の最大戦意の差だけ上がる");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
