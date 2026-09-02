@@ -69,6 +69,30 @@ function connectClient(url, roomId, clientId, create = false) {
   });
 }
 
+function connectFourClient(url, roomId, clientId, create = false) {
+  return new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    const client = { ws, messages: [] };
+    const timer = setTimeout(() => reject(new Error(`four join timeout: ${clientId}`)), 4000);
+    ws.on("open", () => {
+      ws.send(JSON.stringify({ type: "joinRoom", protocol: 1, mode: "four", roomId, clientId, create }));
+    });
+    ws.on("message", (raw) => {
+      const message = JSON.parse(String(raw));
+      client.messages.push(message);
+      if (message.type === "error") {
+        clearTimeout(timer);
+        reject(new Error(message.code || message.message || "four join error"));
+        return;
+      }
+      if (message.type !== "fourJoined" || message.you?.clientId !== clientId) return;
+      clearTimeout(timer);
+      resolve(client);
+    });
+    ws.once("error", reject);
+  });
+}
+
 function connectSpectatorClient(url, roomId, clientId) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
@@ -239,6 +263,52 @@ test("random match pairs waiting clients into one room", async (t) => {
     && message.roomId === firstJoin.roomId
     && message.players?.some((player) => player.clientId === "random-b" && player.role === "guest"));
   assert.equal(hostUpdate.message.matchType, "random");
+});
+
+test("チバトルふぉーは4席の部屋、手番操作、手札非公開を独立して同期する", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const roomId = "FOUR01";
+  const clients = [];
+  t.after(() => {
+    clients.forEach((client) => client.ws.close());
+    child.kill("SIGTERM");
+  });
+
+  const host = await connectFourClient(url, roomId, "four-host", true);
+  const guest = await connectFourClient(url, roomId, "four-guest");
+  clients.push(host, guest);
+  assert.equal(host.messages.find((message) => message.type === "fourJoined")?.you.slot, 0);
+  assert.equal(guest.messages.find((message) => message.type === "fourJoined")?.you.slot, 1);
+
+  const snapshot = {
+    mode: "four",
+    seq: 1,
+    activeIndex: 0,
+    players: Array.from({ length: 4 }, (_, index) => ({
+      index,
+      hand: [{ id: `card-${index}`, name: `secret-${index}` }]
+    }))
+  };
+  const guestStartIndex = guest.messages.length;
+  send(host, { type: "fourStart", snapshot });
+  const started = await waitFor(guest, (message) => message.type === "fourStart", guestStartIndex);
+  assert.equal(started.message.snapshot.players[1].hand[0].name, "secret-1");
+  assert.deepEqual(started.message.snapshot.players[0].hand[0], { hidden: true });
+
+  const hostDeniedIndex = guest.messages.length;
+  send(guest, { type: "fourCommand", action: { type: "endTurn" } });
+  const denied = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_turn", hostDeniedIndex);
+  assert.match(denied.message.message, /手番/);
+
+  snapshot.activeIndex = 1;
+  send(host, { type: "fourState", snapshot });
+  await waitFor(guest, (message) => message.type === "fourState" && message.snapshot.activeIndex === 1, started.index + 1);
+  const relayIndex = host.messages.length;
+  send(guest, { type: "fourCommand", action: { type: "endTurn" } });
+  const relayed = await waitFor(host, (message) => message.type === "fourCommand" && message.senderId === "four-guest", relayIndex);
+  assert.deepEqual(relayed.message.action, { type: "endTurn" });
 });
 
 test("host-owned room rules synchronize and enforce normal, chaos, and specialty decks", async (t) => {

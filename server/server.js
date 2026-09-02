@@ -1141,6 +1141,161 @@ function createRoom(roomId, sessionId = "", matchType = "private") {
   };
 }
 
+function fourPlayers(room) {
+  return [...room.players.values()]
+    .filter((player) => Number.isInteger(player.fourSlot))
+    .sort((a, b) => a.fourSlot - b.fourSlot);
+}
+
+function fourHostOf(room) {
+  return fourPlayers(room).find((player) => player.fourSlot === 0) || null;
+}
+
+function fourPublicPlayer(player) {
+  return { clientId: player.clientId, slot: player.fourSlot, isHost: player.fourSlot === 0 };
+}
+
+function fourSnapshotForRecipient(snapshot, recipient) {
+  if (!snapshot || snapshot.mode !== "four" || !Number.isInteger(recipient?.fourSlot)) return snapshot;
+  const copy = JSON.parse(JSON.stringify(snapshot));
+  if (!Array.isArray(copy.players)) return copy;
+  copy.players.forEach((player, index) => {
+    if (index === recipient.fourSlot || !Array.isArray(player.hand)) return;
+    player.hand = player.hand.map(() => ({ hidden: true }));
+  });
+  return copy;
+}
+
+function sendFourSnapshot(room, recipient, type) {
+  return send(recipient.ws, {
+    type,
+    senderId: SERVER_ID,
+    roomId: room.roomId,
+    snapshot: fourSnapshotForRecipient(room.state, recipient)
+  });
+}
+
+function fourLobbyMessage(room, recipient = null, type = "fourLobby") {
+  return {
+    type,
+    senderId: SERVER_ID,
+    roomId: room.roomId,
+    you: recipient ? fourPublicPlayer(recipient) : null,
+    players: fourPlayers(room).map(fourPublicPlayer),
+    started: Boolean(room.started)
+  };
+}
+
+function broadcastFourLobby(room, joined = null) {
+  fourPlayers(room).forEach((recipient) => {
+    send(recipient.ws, fourLobbyMessage(room, recipient, joined?.clientId === recipient.clientId ? "fourJoined" : "fourLobby"));
+  });
+}
+
+function joinFourRoom(ws, message) {
+  const roomId = normalizeRoomId(message.roomId);
+  const clientId = String(message.clientId || "").slice(0, 80);
+  if (!ROOM_CODE_PATTERN.test(roomId)) {
+    sendError(ws, "部屋コードは4〜12文字の英数字で指定してください。", "invalid_room");
+    return;
+  }
+  if (!clientId) {
+    sendError(ws, "clientId がありません。", "invalid_client");
+    return;
+  }
+  let room = rooms.get(roomId);
+  if (!room && !message.create) {
+    sendError(ws, "部屋が見つかりません。", "room_not_found");
+    return;
+  }
+  if (!room) {
+    room = createRoom(roomId, message.roomSessionId || createSessionId(), "four");
+    room.mode = "four";
+    rooms.set(roomId, room);
+  }
+  if (room.mode !== "four") {
+    sendError(ws, "この部屋はチバトルふぉーの部屋ではありません。", "wrong_room_mode");
+    return;
+  }
+  const existing = room.players.get(clientId);
+  let slot = existing?.fourSlot;
+  if (!Number.isInteger(slot)) {
+    const occupied = new Set(fourPlayers(room).map((player) => player.fourSlot));
+    slot = [0, 1, 2, 3].find((candidate) => !occupied.has(candidate));
+  }
+  if (!Number.isInteger(slot)) {
+    sendError(ws, "この部屋は4人です。", "room_full");
+    return;
+  }
+  if (room.started && !existing) {
+    sendError(ws, "すでに対戦が始まっています。", "game_started");
+    return;
+  }
+  if (existing?.ws && existing.ws !== ws) {
+    try { existing.ws.close(4001, "replaced"); } catch {}
+  }
+  const player = { clientId, role: "four", fourSlot: slot, ws, joinedAt: existing?.joinedAt || now(), lastSeenAt: now() };
+  room.players.set(clientId, player);
+  room.updatedAt = now();
+  ws.roomId = roomId;
+  ws.clientId = clientId;
+  broadcastFourLobby(room, player);
+  if (room.state) sendFourSnapshot(room, player, room.started ? "fourStart" : "fourState");
+}
+
+function handleFourStart(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player || room.mode !== "four") return;
+  if (player.fourSlot !== 0) {
+    sendError(ws, "ホストだけが対戦を開始できます。", "forbidden");
+    return;
+  }
+  if (!message.snapshot || message.snapshot.mode !== "four" || !Array.isArray(message.snapshot.players) || message.snapshot.players.length !== 4) {
+    sendError(ws, "開始時の4人戦状態が正しくありません。", "invalid_state");
+    return;
+  }
+  room.started = true;
+  room.state = message.snapshot;
+  room.updatedAt = now();
+  fourPlayers(room).forEach((recipient) => sendFourSnapshot(room, recipient, "fourStart"));
+}
+
+function handleFourState(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player || room.mode !== "four" || !room.started) return;
+  if (player.fourSlot !== 0) {
+    sendError(ws, "4人戦状態はホストが更新します。", "forbidden");
+    return;
+  }
+  if (!message.snapshot || message.snapshot.mode !== "four") return;
+  room.state = message.snapshot;
+  room.updatedAt = now();
+  fourPlayers(room).forEach((recipient) => {
+    if (recipient.clientId !== player.clientId) sendFourSnapshot(room, recipient, "fourState");
+  });
+}
+
+function handleFourCommand(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player || room.mode !== "four" || !room.started) return;
+  const activeIndex = Number(room.state?.activeIndex);
+  if (!Number.isInteger(activeIndex) || activeIndex !== player.fourSlot) {
+    sendError(ws, "現在はあなたの手番ではありません。", "invalid_turn");
+    return;
+  }
+  const host = fourHostOf(room);
+  if (!host) {
+    sendError(ws, "ホストがいません。", "host_missing");
+    return;
+  }
+  send(host.ws, {
+    type: "fourCommand",
+    senderId: player.clientId,
+    roomId: room.roomId,
+    action: message.action && typeof message.action === "object" ? message.action : {}
+  });
+}
+
 function removeRandomQueueRoom(roomId) {
   let index = randomMatchQueue.length;
   while (index > 0) {
@@ -1423,6 +1578,10 @@ function cleanupRooms() {
 }
 
 function joinRoom(ws, message) {
+  if (message.mode === "four") {
+    joinFourRoom(ws, message);
+    return;
+  }
   const roomId = normalizeRoomId(message.roomId);
   const clientId = String(message.clientId || "").slice(0, 80);
   const wantsSpectator = message.spectate === true || message.role === "spectator";
@@ -1893,6 +2052,15 @@ function routeMessage(ws, raw) {
     case "gameState":
       handleGameState(ws, message);
       break;
+    case "fourStart":
+      handleFourStart(ws, message);
+      break;
+    case "fourState":
+      handleFourState(ws, message);
+      break;
+    case "fourCommand":
+      handleFourCommand(ws, message);
+      break;
     case "analyticsLog":
       handleAnalyticsLog(ws, message);
       break;
@@ -1957,6 +2125,10 @@ wss.on("connection", (ws) => {
     if (!player || player.ws !== ws) return;
     room.players.delete(ws.clientId);
     room.updatedAt = now();
+    if (room.mode === "four") {
+      broadcastFourLobby(room);
+      return;
+    }
     if (room.matchType === "random" && !guestOf(room)) removeRandomQueueRoom(room.roomId);
     refreshWaitingRoomTimer(room);
     if (player.role === "guest") {

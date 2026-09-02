@@ -15728,6 +15728,7 @@
     }
 
   </style>
+  <link rel="stylesheet" href="four-mode.css" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -15985,6 +15986,10 @@
           <span class="online-match-main">プライベートマッチ</span>
           <span class="online-match-sub">部屋コードを作る、または入力して入室します</span>
         </button>
+        <button class="online-match-button four" id="onlineFourMatchButton" type="button">
+          <span class="online-match-main">チバトルふぉー</span>
+          <span class="online-match-sub">4人と共通敵で戦うPvPvEモード</span>
+        </button>
         <button class="online-match-button" id="onlineSpectateButton" type="button">
           <span class="online-match-main">観戦</span>
           <span class="online-match-sub">対戦中の部屋を選んで観戦します</span>
@@ -16079,6 +16084,88 @@
           <p class="online-empty">対戦中の部屋を読み込みます。</p>
         </div>
       </section>
+    </section>
+
+    <section class="screen four-setup-screen hidden" id="fourSetupScreen">
+      <div class="screen-head">
+        <div>
+          <h1>チバトルふぉー</h1>
+          <p class="subtitle">4つの講義室で、中央の共通敵とライバルに挑みます</p>
+        </div>
+        <button class="button secondary" id="fourBackOnlineButton" type="button">オンラインメニュー</button>
+      </div>
+      <div class="four-setup-grid">
+        <section class="panel four-setup-panel">
+          <div class="panel-head"><h2>この端末で開始</h2><span class="small-info">CPU自動補充</span></div>
+          <label class="four-field" for="fourLocalHumanCount">
+            <span>人間プレイヤー数</span>
+            <select class="control" id="fourLocalHumanCount">
+              <option value="1">1人＋CPU 3人</option>
+              <option value="2">2人＋CPU 2人</option>
+              <option value="3">3人＋CPU 1人</option>
+              <option value="4">4人</option>
+            </select>
+          </label>
+          <p class="four-setup-note">複数人を選んだ場合は、同じ端末で手番ごとに交代します。</p>
+          <button class="button four-primary" id="fourLocalStartButton" type="button">バトル開始</button>
+        </section>
+        <section class="panel four-setup-panel">
+          <div class="panel-head"><h2>オンライン部屋</h2><span class="small-info" id="fourOnlineRole">未接続</span></div>
+          <div class="four-code-row">
+            <input class="control" id="fourRoomInput" maxlength="12" placeholder="部屋コード" />
+            <button class="button secondary" id="fourJoinButton" type="button">入室</button>
+          </div>
+          <div class="four-online-actions">
+            <button class="button" id="fourCreateButton" type="button">部屋を作る</button>
+            <button class="button secondary" id="fourLeaveButton" type="button" disabled>退出</button>
+          </div>
+          <div class="four-room-code" id="fourRoomCode">------</div>
+          <p class="four-online-status" id="fourOnlineStatus">最大4人が入室でき、空いた席はCPUが担当します。</p>
+          <div class="four-lobby-seats" id="fourLobbySeats"></div>
+          <button class="button four-primary" id="fourOnlineStartButton" type="button" disabled>ホストが開始</button>
+        </section>
+      </div>
+      <section class="panel four-rules-summary">
+        <strong>ミニマム版</strong>
+        <span>一般学生・一般教師・一般教室だけを使います。デッキと校外は4人共有です。</span>
+      </section>
+    </section>
+
+    <section class="screen four-battle-screen hidden" id="fourBattleScreen" aria-label="チバトルふぉー対戦画面">
+      <div class="four-top-controls">
+        <button class="button secondary" id="fourBattleMenuButton" type="button">MENU</button>
+        <div class="four-turn-banner" id="fourTurnBanner">プレイヤー1のターン</div>
+        <button class="button secondary" id="fourLogButton" type="button">ログ</button>
+      </div>
+      <div class="four-action-reveal hidden" id="fourEnemyActionReveal" aria-live="assertive"></div>
+      <div class="four-board" id="fourBoard">
+        <div class="four-corner-status" id="fourStatusA"></div>
+        <div class="four-corner-status" id="fourStatusB"></div>
+        <div class="four-corner-status" id="fourStatusC"></div>
+        <div class="four-corner-status" id="fourStatusSelf"></div>
+        <div class="four-player-zone four-zone-top" data-four-zone="1"></div>
+        <div class="four-player-zone four-zone-left" data-four-zone="0"></div>
+        <div class="four-player-zone four-zone-right" data-four-zone="2"></div>
+        <div class="four-player-zone four-zone-bottom" data-four-zone="3"></div>
+        <div class="four-center-zone">
+          <button class="four-shared-pile four-trash" id="fourSharedTrash" type="button"><span>校外</span><strong>0</strong></button>
+          <button class="four-enemy" id="fourEnemy" type="button" aria-label="共通敵"><span>共通敵</span><strong>60 / 60</strong></button>
+          <button class="four-shared-pile four-deck" id="fourSharedDeck" type="button"><span>共有デッキ</span><strong>0</strong></button>
+          <div class="four-environment" id="fourEnvironment">環境マス<br><strong>なし</strong></div>
+        </div>
+        <div class="four-hand four-hand-top" data-four-hand="1"></div>
+        <div class="four-hand four-hand-left" data-four-hand="0"></div>
+        <div class="four-hand four-hand-right" data-four-hand="2"></div>
+        <div class="four-hand four-hand-bottom" data-four-hand="3"></div>
+        <div class="four-turn-controls">
+          <button class="button secondary" id="fourPassButton" type="button">パス</button>
+          <button class="button" id="fourEndTurnButton" type="button">ターン終了</button>
+          <span id="fourWillText">1 / 1</span>
+        </div>
+      </div>
+      <aside class="four-log-panel hidden" id="fourLogPanel"><div class="panel-head"><h2>対戦ログ</h2><button class="button secondary" id="fourLogCloseButton" type="button">閉じる</button></div><div id="fourLogList"></div></aside>
+      <div class="four-menu-panel hidden" id="fourMenuPanel"><button class="button warning" id="fourQuitButton" type="button">対戦を終了</button><button class="button secondary" id="fourMenuCloseButton" type="button">閉じる</button></div>
+      <div class="four-result-overlay hidden" id="fourResultOverlay"><div class="four-result-card"><h2>チバトルふぉー 結果</h2><div id="fourResultList"></div><button class="button" id="fourResultBackButton" type="button">開始画面へ</button></div></div>
     </section>
 
     <section class="screen tutorial-screen hidden" id="tutorialScreen">
@@ -18611,6 +18698,8 @@
       dungeonFloorScreen: document.getElementById("dungeonFloorScreen"),
       dungeonRewardScreen: document.getElementById("dungeonRewardScreen"),
       onlineScreen: document.getElementById("onlineScreen"),
+      fourSetupScreen: document.getElementById("fourSetupScreen"),
+      fourBattleScreen: document.getElementById("fourBattleScreen"),
       tutorialScreen: document.getElementById("tutorialScreen"),
       deckScreen: document.getElementById("deckScreen"),
       battleScreen: document.getElementById("battleScreen"),
@@ -18639,6 +18728,7 @@
       onlineRandomMainText: document.getElementById("onlineRandomMainText"),
       onlineRandomSubText: document.getElementById("onlineRandomSubText"),
       onlinePrivateMatchButton: document.getElementById("onlinePrivateMatchButton"),
+      onlineFourMatchButton: document.getElementById("onlineFourMatchButton"),
       onlineSpectateButton: document.getElementById("onlineSpectateButton"),
       onlinePrivatePanel: document.getElementById("onlinePrivatePanel"),
       onlineRoomPanelTitle: document.getElementById("onlineRoomPanelTitle"),
@@ -34896,6 +34986,7 @@
       renderLog();
       renderControls();
       renderTutorialCoach();
+      window.__chibattleFour?.render();
       setupPlaymatDropEvents();
       setupDocumentHandDropEvents();
       flushAnimationQueue();
@@ -34935,6 +35026,8 @@
       elements.dungeonFloorScreen.classList.toggle("hidden", state.screen !== "dungeonFloor");
       elements.dungeonRewardScreen.classList.toggle("hidden", state.screen !== "dungeonReward");
       elements.onlineScreen.classList.toggle("hidden", state.screen !== "online");
+      elements.fourSetupScreen?.classList.toggle("hidden", state.screen !== "fourSetup");
+      elements.fourBattleScreen?.classList.toggle("hidden", state.screen !== "fourBattle");
       elements.tutorialScreen.classList.toggle("hidden", state.screen !== "tutorial");
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
       elements.battleScreen.classList.toggle("hidden", state.screen !== "battle");
@@ -34957,7 +35050,7 @@
 
     function homeNavigationSection() {
       if (state.screen === "deck") return "card";
-      if (state.screen === "online") return "battle";
+      if (["online", "fourSetup", "fourBattle"].includes(state.screen)) return "battle";
       if (["soloMenu", "soloDeck", "dungeonEntrance", "dungeonDeck", "dungeonFloor", "dungeonReward"].includes(state.screen)) {
         return "solo";
       }
@@ -34966,7 +35059,7 @@
 
     function renderHomeNavigation() {
       if (!elements.homeNavigation) return;
-      const hidden = state.screen === "battle"
+      const hidden = ["battle", "fourBattle"].includes(state.screen)
         || (state.screen === "deck" && state.deckBuilder.view === "editor");
       elements.homeNavigation.classList.toggle("hidden", hidden);
       elements.appRoot?.classList.toggle("home-navigation-visible", !hidden);
@@ -41984,5 +42077,6 @@
     initializeGame();
 
   </script>
+  <script src="four-mode.js"></script>
 </body>
 </html>

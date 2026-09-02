@@ -1,0 +1,510 @@
+.online-match-button.four {
+  border-color: rgba(33, 196, 236, .72);
+  background: linear-gradient(135deg, rgba(9, 42, 59, .98), rgba(10, 94, 116, .9));
+}
+
+.online-match-button.four:hover,
+.online-match-button.four:focus-visible {
+  border-color: #7ee8ff;
+  box-shadow: 0 0 0 2px rgba(44, 204, 239, .2), 0 14px 34px rgba(2, 49, 66, .28);
+}
+
+.four-setup-screen {
+  padding: 18px 12px 96px;
+}
+
+.four-setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.four-setup-panel {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-height: 360px;
+  border: 1px solid rgba(48, 171, 207, .3);
+  box-shadow: 0 18px 50px rgba(25, 57, 81, .09);
+}
+
+.four-field {
+  display: grid;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.four-setup-note,
+.four-online-status {
+  margin: 0;
+  color: #526379;
+  line-height: 1.65;
+}
+
+.four-code-row,
+.four-online-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.four-room-code {
+  padding: 12px;
+  border: 1px dashed rgba(16, 120, 153, .5);
+  background: #edfaff;
+  color: #075e79;
+  font: 900 26px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .16em;
+  text-align: center;
+}
+
+.four-lobby-seats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.four-lobby-seat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 46px;
+  padding: 8px 10px;
+  border: 1px solid #d5e0e8;
+  background: #f8fbfd;
+  font-weight: 800;
+}
+
+.four-lobby-seat.connected {
+  border-color: #32b3d4;
+  background: #e9faff;
+  color: #06647d;
+}
+
+.four-primary {
+  background: linear-gradient(135deg, #087995, #22b6d4);
+  border-color: #087995;
+}
+
+.four-rules-summary {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-top: 18px;
+  border-left: 4px solid #28bddc;
+}
+
+.four-battle-screen {
+  --four-ink: #082839;
+  --four-line: rgba(10, 64, 88, .72);
+  --four-cyan: #28c2e5;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--four-ink);
+  background:
+    radial-gradient(circle at 50% 48%, rgba(45, 201, 230, .14), transparent 27%),
+    linear-gradient(145deg, #eaf7fb 0%, #f7fbfd 44%, #e4f2f7 100%);
+}
+
+.four-top-controls {
+  position: absolute;
+  z-index: 10;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.four-turn-banner {
+  justify-self: center;
+  min-width: min(400px, 50vw);
+  padding: 9px 22px;
+  border: 1px solid rgba(23, 168, 204, .5);
+  background: rgba(255, 255, 255, .86);
+  box-shadow: 0 8px 28px rgba(0, 52, 74, .1);
+  color: #08748e;
+  font-weight: 950;
+  letter-spacing: .08em;
+  text-align: center;
+}
+
+.four-board {
+  position: absolute;
+  inset: 66px 20px 16px;
+  border: 2px solid var(--four-line);
+  background:
+    linear-gradient(90deg, transparent calc(50% - 1px), rgba(20, 111, 142, .08) 50%, transparent calc(50% + 1px)),
+    linear-gradient(transparent calc(50% - 1px), rgba(20, 111, 142, .08) 50%, transparent calc(50% + 1px));
+  box-shadow: inset 0 0 80px rgba(51, 168, 196, .08);
+}
+
+.four-player-zone {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  gap: 5px;
+  padding: 7px;
+  border: 1px solid rgba(7, 69, 95, .45);
+  background: rgba(249, 253, 255, .84);
+  box-shadow: 0 9px 22px rgba(9, 65, 86, .12);
+}
+
+.four-player-zone.active {
+  border-color: var(--four-cyan);
+  box-shadow: 0 0 0 3px rgba(40, 194, 229, .2), 0 12px 30px rgba(9, 65, 86, .16);
+}
+
+.four-zone-top,
+.four-zone-bottom {
+  left: 50%;
+  width: min(470px, 34vw);
+  transform: translateX(-50%);
+}
+
+.four-zone-top { top: 74px; }
+.four-zone-bottom { bottom: 86px; }
+
+.four-zone-left,
+.four-zone-right {
+  top: 50%;
+  width: min(270px, 20vw);
+  transform: translateY(-50%);
+}
+
+.four-zone-left { left: 112px; }
+.four-zone-right { right: 112px; }
+
+.four-room-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.four-room-grid {
+  display: grid;
+  grid-template-columns: 68px repeat(3, minmax(56px, 1fr));
+  min-height: 82px;
+}
+
+.four-zone-left .four-room-grid,
+.four-zone-right .four-room-grid {
+  grid-template-columns: 54px repeat(3, minmax(48px, 1fr));
+}
+
+.four-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 78px;
+  padding: 2px;
+  border: 1px solid rgba(7, 69, 95, .5);
+  background: rgba(217, 238, 246, .45);
+  overflow: hidden;
+}
+
+.four-slot.teacher {
+  background: rgba(255, 226, 158, .32);
+}
+
+.four-slot.blocked::after {
+  content: "封鎖";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(35, 50, 65, .62);
+  color: white;
+  font-weight: 950;
+}
+
+.four-slot.available {
+  border-color: #1ac1df;
+  box-shadow: inset 0 0 0 2px rgba(36, 202, 232, .35);
+  cursor: pointer;
+}
+
+.four-mini-card {
+  position: relative;
+  width: 100%;
+  height: 74px;
+  border: 2px solid #155a73;
+  background: linear-gradient(#fff, #dff6fb);
+  color: #112a39;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.four-mini-card.teacher { background: linear-gradient(#fff9e8, #f8dc8d); }
+
+.four-mini-card.selected {
+  border-color: #f6a700;
+  box-shadow: 0 0 0 3px rgba(246, 167, 0, .24);
+}
+
+.four-mini-card.attackable {
+  border-color: #e84545;
+  box-shadow: 0 0 0 3px rgba(232, 69, 69, .18);
+}
+
+.four-mini-name {
+  display: block;
+  padding: 4px 2px;
+  font-size: 10px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.four-mini-stats {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  bottom: 2px;
+  display: flex;
+  justify-content: space-between;
+  font: 900 11px/1 system-ui;
+}
+
+.four-late-zone {
+  min-height: 22px;
+  padding: 3px 6px;
+  background: rgba(9, 55, 74, .08);
+  color: #526675;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.four-corner-status {
+  position: absolute;
+  z-index: 6;
+  min-width: 154px;
+  padding: 8px 10px;
+  border-left: 4px solid var(--four-cyan);
+  background: rgba(6, 35, 49, .94);
+  color: white;
+  box-shadow: 0 8px 18px rgba(0, 34, 49, .18);
+}
+
+#fourStatusA { left: 16px; top: 18px; }
+#fourStatusB { left: calc(50% - 390px); top: 18px; }
+#fourStatusC { right: 16px; top: 18px; }
+#fourStatusSelf { left: 16px; bottom: 16px; }
+
+.four-status-name { color: #4dd8f4; font-size: 11px; font-weight: 950; }
+.four-status-values { display: flex; gap: 9px; margin-top: 3px; font-size: 12px; font-weight: 800; }
+.four-status-values:disabled { cursor: default; opacity: 1; }
+.four-corner-status.eliminated { opacity: .55; filter: grayscale(1); }
+
+.four-center-zone {
+  position: absolute;
+  z-index: 4;
+  left: 50%;
+  top: 50%;
+  display: grid;
+  grid-template-columns: 92px 132px 92px;
+  grid-template-areas: "trash enemy deck" ". env .";
+  gap: 10px 14px;
+  align-items: center;
+  transform: translate(-50%, -50%);
+}
+
+.four-shared-pile,
+.four-enemy,
+.four-environment {
+  min-height: 88px;
+  border: 2px solid var(--four-line);
+  background: rgba(255, 255, 255, .9);
+  color: var(--four-ink);
+  box-shadow: 0 10px 30px rgba(13, 83, 106, .12);
+}
+
+.four-shared-pile { display: grid; place-items: center; gap: 4px; }
+.four-shared-pile strong { font-size: 24px; }
+.four-trash { grid-area: trash; }
+.four-deck { grid-area: deck; }
+
+.four-enemy {
+  grid-area: enemy;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, #fff, #bdeef7 60%, #61c8db);
+  font-weight: 950;
+}
+
+.four-enemy strong { color: #b4232f; font-size: 21px; }
+.four-enemy.attackable { box-shadow: 0 0 0 6px rgba(232, 69, 69, .2), 0 10px 30px rgba(13, 83, 106, .12); }
+.four-enemy.defeated { filter: grayscale(1); opacity: .6; }
+
+.four-environment {
+  grid-area: env;
+  min-height: 54px;
+  padding: 7px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.four-hand {
+  position: absolute;
+  z-index: 7;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.four-hand-bottom {
+  left: 50%;
+  bottom: -2px;
+  width: min(720px, 64vw);
+  height: 96px;
+  transform: translateX(-50%);
+}
+
+.four-hand-top { left: 50%; top: 4px; width: min(480px, 38vw); height: 62px; transform: translateX(-50%); }
+.four-hand-left { left: 18px; top: 50%; width: 82px; height: 270px; transform: translateY(-50%); flex-direction: column; justify-content: center; }
+.four-hand-right { right: 18px; top: 50%; width: 82px; height: 270px; transform: translateY(-50%); flex-direction: column; justify-content: center; }
+.four-hand:not(.four-hand-bottom) { opacity: .82; }
+
+.four-hand-card,
+.four-card-back {
+  pointer-events: auto;
+  flex: 0 0 64px;
+  width: 64px;
+  height: 92px;
+  margin-left: -17px;
+  padding: 4px;
+  border: 2px solid #0d526a;
+  border-radius: 4px;
+  background: linear-gradient(#fff, #dff7fd);
+  color: #133345;
+  box-shadow: 0 4px 12px rgba(0, 48, 66, .18);
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.four-hand-card:first-child,
+.four-card-back:first-child { margin-left: 0; }
+.four-hand-card.teacher { background: linear-gradient(#fff7db, #f5d574); }
+.four-hand-card.environment { background: linear-gradient(#e7ffe9, #9de7a7); }
+.four-hand-card.selected { transform: translateY(-12px); border-color: #f1a500; }
+.four-card-back { display: grid; place-items: center; background: #0b4056; color: #71ddf4; }
+.four-hand-left .four-card-back, .four-hand-right .four-card-back { margin: -12px 0 0; }
+.four-hand-left .four-hand-card, .four-hand-right .four-hand-card { margin: -12px 0 0; }
+.four-hand-left .four-hand-card:first-child, .four-hand-right .four-hand-card:first-child,
+.four-hand-left .four-card-back:first-child, .four-hand-right .four-card-back:first-child { margin-top: 0; }
+
+.four-turn-controls {
+  position: absolute;
+  z-index: 12;
+  right: 18px;
+  bottom: 16px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 7px;
+}
+
+.four-turn-controls span {
+  grid-column: 1 / -1;
+  padding: 4px;
+  color: #075e79;
+  font-weight: 950;
+  text-align: center;
+}
+
+.four-log-panel,
+.four-menu-panel {
+  position: fixed;
+  z-index: 80;
+  top: 70px;
+  right: 18px;
+  width: min(380px, calc(100vw - 36px));
+  max-height: calc(100vh - 92px);
+  padding: 14px;
+  border: 1px solid rgba(45, 198, 228, .55);
+  background: rgba(247, 253, 255, .97);
+  box-shadow: 0 18px 58px rgba(0, 42, 58, .28);
+  overflow: auto;
+}
+
+.four-menu-panel { display: grid; gap: 8px; width: 210px; left: 18px; right: auto; }
+#fourLogList { display: grid; gap: 7px; font-size: 12px; }
+.four-log-entry { padding: 7px 9px; border-left: 3px solid #31bad9; background: #ebf8fb; }
+
+.four-action-reveal {
+  position: fixed;
+  z-index: 100;
+  top: 50%;
+  left: 50%;
+  width: min(680px, calc(100vw - 40px));
+  padding: 28px 34px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #4fd8f2;
+  background: rgba(4, 30, 43, .96);
+  box-shadow: 0 0 0 100vmax rgba(3, 21, 31, .45), 0 22px 70px rgba(0, 0, 0, .35);
+  color: white;
+  font-size: clamp(17px, 2.3vw, 28px);
+  font-weight: 950;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.four-action-reveal small { display: block; margin-bottom: 8px; color: #59def5; font-size: 12px; letter-spacing: .16em; }
+
+.four-result-overlay {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(3, 24, 35, .72);
+}
+
+.four-result-card {
+  width: min(560px, calc(100vw - 32px));
+  padding: 24px;
+  border-top: 5px solid #32c7e5;
+  background: white;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .34);
+}
+
+.four-result-row {
+  display: grid;
+  grid-template-columns: 54px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 4px;
+  border-bottom: 1px solid #dce9ee;
+}
+
+.four-result-rank { color: #087892; font-size: 22px; font-weight: 950; }
+
+@media (max-width: 900px) {
+  .four-setup-grid { grid-template-columns: 1fr; }
+  .four-board { inset-inline: 4px; }
+  .four-zone-left, .four-zone-right { width: 23vw; }
+  .four-zone-left { left: 78px; }
+  .four-zone-right { right: 78px; }
+  .four-zone-top, .four-zone-bottom { width: 45vw; }
+  .four-room-grid { grid-template-columns: 44px repeat(3, minmax(36px, 1fr)); }
+  .four-slot { min-height: 64px; }
+  .four-mini-card { height: 60px; }
+  .four-center-zone { grid-template-columns: 65px 104px 65px; gap: 7px; }
+  .four-enemy { width: 104px; height: 104px; }
+  .four-corner-status { min-width: 118px; padding: 5px 7px; }
+  #fourStatusB { left: calc(50% - 280px); }
+  .four-hand-left { left: 4px; }
+  .four-hand-right { right: 4px; }
+}
