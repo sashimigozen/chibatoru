@@ -918,7 +918,6 @@
     if (life && four.selectedAttackerId) submitAction({ type: "attackPlayer", attackerId: four.selectedAttackerId, targetIndex: Number(life.dataset.fourLifeTarget) });
   }
 
-  els.onlineFourMatchButton?.addEventListener("click", showSetup);
   els.fourBackOnlineButton?.addEventListener("click", () => { api.state.screen = "online"; api.state.online.lobbyView = "menu"; api.render(); });
   els.fourLocalStartButton?.addEventListener("click", startLocal);
   els.fourCreateButton?.addEventListener("click", () => connectFour(true));

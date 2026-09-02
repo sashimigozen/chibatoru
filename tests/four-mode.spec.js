@@ -8,22 +8,33 @@ test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
 });
 
-test("オンラインメニューからチバトルふぉーを開始できる", async ({ page }) => {
+test("オンラインメニューのチバトルふぉーは他のボタンと同じ色で準備中表示にする", async ({ page }) => {
   await page.locator("#homeBattleButton").click();
   const buttons = page.locator("#onlineMatchActions .online-match-button");
   await expect(buttons.nth(1)).toHaveAttribute("id", "onlinePrivateMatchButton");
   await expect(buttons.nth(2)).toHaveAttribute("id", "onlineFourMatchButton");
-  await page.locator("#onlineFourMatchButton").click();
-  await expect(page.locator("#fourSetupScreen")).toBeVisible();
-  await expect(page.locator("#fourLocalHumanCount")).toHaveValue("1");
-
-  await page.locator("#fourLocalHumanCount").selectOption("4");
-  await page.locator("#fourLocalStartButton").click();
-  await expect(page.locator("#fourBattleScreen")).toBeVisible();
-  await expect(page.locator("#fourEnemy strong")).toHaveText("60 / 60");
-  await expect(page.locator(".four-player-zone")).toHaveCount(4);
-  await expect(page.locator("#fourSharedDeck strong")).toHaveText("19");
-  await expect(page.locator("#fourTurnBanner")).toContainText("1ターン目");
+  const privateButton = page.locator("#onlinePrivateMatchButton");
+  const fourButton = page.locator("#onlineFourMatchButton");
+  await expect(fourButton).toBeDisabled();
+  await expect(fourButton).toContainText("COMING SOON");
+  await expect(fourButton).toContainText("現在準備中です");
+  const colors = await page.evaluate(() => {
+    const privateStyle = getComputedStyle(document.getElementById("onlinePrivateMatchButton"));
+    const fourStyle = getComputedStyle(document.getElementById("onlineFourMatchButton"));
+    return {
+      privateBackground: privateStyle.backgroundColor,
+      fourBackground: fourStyle.backgroundColor,
+      privateBorder: privateStyle.borderColor,
+      fourBorder: fourStyle.borderColor,
+      privateColor: privateStyle.color,
+      fourColor: fourStyle.color
+    };
+  });
+  expect(colors.fourBackground).toBe(colors.privateBackground);
+  expect(colors.fourBorder).toBe(colors.privateBorder);
+  expect(colors.fourColor).toBe(colors.privateColor);
+  await fourButton.evaluate((button) => button.click());
+  await expect(page.locator("#fourSetupScreen")).toBeHidden();
 });
 
 test("ターン強度、隣接関係、共通敵得点を基準仕様どおり処理する", async ({ page }) => {
@@ -61,10 +72,12 @@ test("ターン強度、隣接関係、共通敵得点を基準仕様どおり�
 });
 
 test("4人の行動後に共通敵の行動内容を表示してから次ターンへ進む", async ({ page }) => {
-  await page.locator("#homeBattleButton").click();
-  await page.locator("#onlineFourMatchButton").click();
-  await page.locator("#fourLocalHumanCount").selectOption("4");
-  await page.locator("#fourLocalStartButton").click();
+  await page.evaluate(() => {
+    window.__chibattle.state.screen = "fourSetup";
+    window.__chibattle.render();
+    document.getElementById("fourLocalHumanCount").value = "4";
+    window.__chibattleFour.startLocal();
+  });
   for (let index = 0; index < 4; index += 1) await page.locator("#fourEndTurnButton").click();
   await expect(page.locator("#fourEnemyActionReveal")).toBeVisible();
   await expect(page.locator("#fourEnemyActionReveal")).toContainText("共通敵の行動");
