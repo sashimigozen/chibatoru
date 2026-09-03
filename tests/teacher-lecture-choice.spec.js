@@ -112,4 +112,5 @@ test("更新情報に講義操作の試験変更を表示する", async ({ page 
   await expect(change).toContainText("攻撃する");
   await expect(change).toContainText("講義を行う");
   await expect(change).not.toContainText("ポップアップ");
+  await expect(change).not.toContainText("ホーム画面では");
 });
