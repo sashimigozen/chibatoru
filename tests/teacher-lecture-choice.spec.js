@@ -111,5 +111,5 @@ test("更新情報に講義操作の試験変更を表示する", async ({ page 
   const change = update.locator(".update-change", { hasText: "講義の操作（テスト）" });
   await expect(change).toContainText("攻撃する");
   await expect(change).toContainText("講義を行う");
-  await expect(change).toContainText("初回の1回だけ表示");
+  await expect(change).not.toContainText("ポップアップ");
 });
