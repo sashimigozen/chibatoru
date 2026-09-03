@@ -15580,7 +15580,7 @@
     }
 
     .ordered-attendance-arrival {
-      animation: ordered-attendance-arrive 360ms cubic-bezier(.18,.78,.25,1) both;
+      animation: ordered-attendance-arrive 260ms cubic-bezier(.18,.78,.25,1) both;
       z-index: 7;
     }
 
@@ -17737,7 +17737,7 @@
           {
             title: "効果による複数出席の処理順",
             before: "カードの効果で複数の出席者を出す場合、全員が一度に盤面へ出席したように表示され、誰の出席でビンゴやほかの効果が発動したのか分かりにくかった。",
-            after: "効果で複数の出席者やコピーを出す場合、1行1列から1行3列、2行1列から2行3列、3行1列から3行3列の順で、1人ずつ間隔を空けて出席するよう変更。1人の出席・出席時効果・ビンゴ判定と演出を完了してから次の出席へ進む。ランダムな席マスを指定する効果は対象を従来どおりランダムに決め、選ばれた席の中で左上から右下の順に処理する。"
+            after: "効果で複数の出席者やコピーを出す場合、1行1列から1行3列、2行1列から2行3列、3行1列から3行3列の順で、短い間隔を空けて1人ずつ出席するよう変更。1人の出席・出席時効果・ビンゴ判定と演出を完了してから次の出席へ進む。ランダムな席マスを指定する効果は対象を従来どおりランダムに決め、選ばれた席の中で左上から右下の順に処理する。"
           }
         ]
       },
@@ -18462,9 +18462,9 @@
     const ATTACK_FOCUS_STEP_DELAY = 700;
     const EFFECT_FEEDBACK_GAP_MS = 280;
     const ORDERED_ATTENDANCE_INITIAL_DELAY_MS = PLAY_REVEAL_MS + 80;
-    const ORDERED_ATTENDANCE_STEP_MS = 380;
-    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 900;
-    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 1280;
+    const ORDERED_ATTENDANCE_STEP_MS = 280;
+    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 760;
+    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 1120;
     let activeEffectFeedbackSequence = null;
     let activeEffectFeedbackDelay = 0;
     let effectFeedbackEventSerial = 0;
