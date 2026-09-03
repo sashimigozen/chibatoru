@@ -339,6 +339,7 @@ test("パッドプレゼンクリエイターは最大戦意を制限し、ダ�
     const { state } = api;
 
     function resetBattle() {
+      state.screen = "battle";
       state.phase = "battle";
       state.currentSide = "player";
       state.actionTurn = 8;
@@ -512,7 +513,7 @@ test("9月3日の新カードをver.0.22.0の更新情報に統合して記載�
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
 
-  const latestEntry = page.locator(".update-entry").first();
+  const latestEntry = page.locator(".update-entry", { hasText: "ver.0.22.0" }).first();
   await expect(latestEntry.locator("summary")).toContainText("ver.0.22.0");
   await expect(latestEntry.locator("summary")).toContainText("2026年9月3日");
   await latestEntry.locator("summary").click();
@@ -528,6 +529,9 @@ test("9月3日の新カードをver.0.22.0の更新情報に統合して記載�
   const strictTeacher = latestEntry.locator(".update-after", { hasText: "遅刻に厳しい教師" });
   await expect(strictTeacher).toContainText("「遅刻に厳しい教師」\n教師／共通カード／戦意4／攻撃力1／体力1");
   await expect(strictTeacher).toContainText("その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る");
+  const orderedAttendance = latestEntry.locator(".update-change", { hasText: "効果による複数出席の処理順" });
+  await expect(orderedAttendance).toContainText("1行1列から1行3列");
+  await expect(orderedAttendance).toContainText("1人の出席・出席時効果・ビンゴ判定と演出を完了してから次の出席へ進む");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
@@ -559,11 +563,12 @@ test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", as
 test("保留カード確認後の文章と処理が確定仕様に一致する", async ({ page }) => {
   await page.goto(gameUrl);
 
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const { state } = api;
 
     function resetBattle() {
+      state.screen = "battle";
       state.phase = "battle";
       state.currentSide = "player";
       state.gameOver = false;
@@ -600,6 +605,7 @@ test("保留カード確認後の文章と処理が確定仕様に一致する",
     resetBattle();
     const handSeatGroup = attendee("seat_taking_group");
     api.attendCard("player", handSeatGroup, "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    await api.waitForOrderedAttendance();
     checks.seatGroupHandAttendanceCreatesCopies = [3, 4, 5]
       .every((index) => state.players.player.board.seats[index]?.baseId === "seat_taking_group");
 

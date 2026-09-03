@@ -564,6 +564,69 @@ test("早押しクイズ大会は通常ビンゴを再成立でも発動し、8�
   expect(result.teacherExcluded).toEqual({ attack: 1, hp: 2, completeLines: 0, drawn: 0 });
 });
 
+test("エキストラの皆さんは左上から1人ずつ出席し、その都度ビンゴを解決する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const card = (baseId) => api.createCardFromBase(baseId, "player");
+    state.screen = "battle";
+    state.phase = "battle";
+    state.gameOver = false;
+    state.actionTurn = 1;
+    state.environment = api.makeBoardCard(card("quick_quiz_tournament"));
+    state.players.player.hand = [];
+    state.players.player.deck = Array.from({ length: 12 }, () => card("general_student"));
+    state.players.player.board.seats = Array(9).fill(null);
+    state.players.player.board.teacher = null;
+
+    const progress = [];
+    let previousCount = -1;
+    const sample = () => {
+      const occupied = state.players.player.board.seats
+        .map((entry, index) => (entry ? index : null))
+        .filter((index) => index !== null);
+      if (occupied.length === previousCount) return;
+      previousCount = occupied.length;
+      progress.push(occupied);
+    };
+    sample();
+    const sampler = window.setInterval(sample, 25);
+    const extraPeople = api.makeBoardCard(card("extra_people"));
+    api.attendCard("player", extraPeople, "teacher", null, {
+      attendanceSource: api.ATTENDANCE_SOURCE.HAND
+    });
+    api.render();
+    await api.waitForOrderedAttendance();
+    sample();
+    window.clearInterval(sampler);
+
+    return {
+      progress,
+      resolving: state.resolvingOrderedAttendance,
+      stats: state.players.player.board.seats.map((entry) => ({
+        attack: entry.attack,
+        hp: entry.maxHp
+      })),
+      drawn: state.players.player.hand.length,
+      sourceStats: { attack: extraPeople.attack, hp: extraPeople.maxHp }
+    };
+  });
+
+  expect(result.progress).toEqual(Array.from({ length: 10 }, (_entry, count) => (
+    Array.from({ length: count }, (_seat, index) => index)
+  )));
+  expect(result.resolving).toBe(false);
+  expect(result.stats[2]).toEqual({ attack: 1, hp: 2 });
+  expect(result.stats[5]).toEqual({ attack: 1, hp: 2 });
+  expect(result.stats[6]).toEqual({ attack: 2, hp: 1 });
+  expect(result.stats[7]).toEqual({ attack: 2, hp: 1 });
+  expect(result.stats[8]).toEqual({ attack: 5, hp: 5 });
+  expect(result.drawn).toBe(5);
+  expect(result.sourceStats).toEqual({ attack: 2, hp: 2 });
+});
+
 test("早押しクイズ大会はカード演出後にカチッ演出、強化、8ビンゴを順に出す", async ({ page }) => {
   await page.goto(gameUrl);
 
@@ -642,10 +705,11 @@ test("早押しクイズ大会の通常ビンゴは成立した3枚だけにカ�
 test("TA隊長は手札から2行目へ出席した場合だけ残りの空きマスへTAを出席させる", async ({ page }) => {
   await page.goto(gameUrl);
 
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const { state } = api;
     const reset = () => {
+      state.screen = "battle";
       state.phase = "battle";
       state.gameOver = false;
       state.actionTurn = 1;
@@ -665,6 +729,7 @@ test("TA隊長は手札から2行目へ出席した場合だけ残りの空き�
     };
 
     api.attendCard("player", squad(), "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    await api.waitForOrderedAttendance();
     const handAttendance = state.players.player.board.seats.map((card) => card?.baseId || null);
     const sources = state.players.player.board.seats.map((card) => card?.lastAttendanceSource || null);
 

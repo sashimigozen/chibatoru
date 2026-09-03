@@ -15573,6 +15573,17 @@
       --effect-color-3: rgba(224, 251, 255, .96);
     }
 
+    @keyframes ordered-attendance-arrive {
+      0% { opacity: 0; transform: translateY(-18%) scale(.78); filter: brightness(1.8); }
+      65% { opacity: 1; transform: translateY(3%) scale(1.06); filter: brightness(1.3); }
+      100% { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
+    }
+
+    .ordered-attendance-arrival {
+      animation: ordered-attendance-arrive 360ms cubic-bezier(.18,.78,.25,1) both;
+      z-index: 7;
+    }
+
     .board-change-heal-cross {
       position: absolute;
       left: var(--heal-left);
@@ -17694,7 +17705,7 @@
       {
         version: "ver.0.22.0",
         date: "2026年9月3日",
-        summary: "新カード3枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作の追加を行いました。",
+        summary: "新カード3枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作、効果による複数出席の順次処理を追加しました。",
         changes: [
           {
             title: "新カード",
@@ -17722,6 +17733,11 @@
             title: "カード修正",
             before: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
             after: "「TA隊長」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。\n\n変更点：カード名を「TA隊長」に変更し、同名のコピーではなく「TA」を出席させるように変更。"
+          },
+          {
+            title: "効果による複数出席の処理順",
+            before: "カードの効果で複数の出席者を出す場合、全員が一度に盤面へ出席したように表示され、誰の出席でビンゴやほかの効果が発動したのか分かりにくかった。",
+            after: "効果で複数の出席者やコピーを出す場合、1行1列から1行3列、2行1列から2行3列、3行1列から3行3列の順で、1人ずつ間隔を空けて出席するよう変更。1人の出席・出席時効果・ビンゴ判定と演出を完了してから次の出席へ進む。ランダムな席マスを指定する効果は対象を従来どおりランダムに決め、選ばれた席の中で左上から右下の順に処理する。"
           }
         ]
       },
@@ -18445,6 +18461,10 @@
     const FAST_ATTACK_FOCUS_STEP_DELAY = 300;
     const ATTACK_FOCUS_STEP_DELAY = 700;
     const EFFECT_FEEDBACK_GAP_MS = 280;
+    const ORDERED_ATTENDANCE_INITIAL_DELAY_MS = PLAY_REVEAL_MS + 80;
+    const ORDERED_ATTENDANCE_STEP_MS = 380;
+    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 900;
+    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 1280;
     let activeEffectFeedbackSequence = null;
     let activeEffectFeedbackDelay = 0;
     let effectFeedbackEventSerial = 0;
@@ -18459,6 +18479,10 @@
     const pendingAnimations = [];
     const boardVisualSnapshots = new Map();
     let pendingCourseRegistrationConsent = null;
+    let orderedAttendanceTimer = null;
+    let activeOrderedAttendance = null;
+    const queuedOrderedAttendances = [];
+    const orderedAttendanceWaiters = [];
 
     const state = {
       screen: "home",
@@ -18494,6 +18518,7 @@
       pendingGitchSummon: null,
       pendingGigiResurrection: null,
       pendingSpecialAttendanceQueue: null,
+      resolvingOrderedAttendance: false,
       courseRegistration: null,
       pendingSmallOmataTransform: null,
       pendingRemoteHandTrim: null,
@@ -23457,6 +23482,7 @@
       state.mulliganDrawRemaining = 0;
       state.selectedHandId = null;
       state.selectedAttacker = null;
+      clearOrderedAttendance();
       clearDeferredCardPlay();
       state.rewardFoilRevealKeys = {};
       state.attackInProgress = false;
@@ -24256,6 +24282,7 @@
         return;
       }
       await tryUseAiItems({ timing: "beforeBoard" });
+      await waitForOrderedAttendance();
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
         render();
@@ -24263,12 +24290,14 @@
       }
       if (await resolveAiGuaranteedBoardLethal()) return;
       await playAiBoardMoves();
+      await waitForOrderedAttendance();
       if (await resolveAiGuaranteedBoardLethal()) return;
       if (tryUseAiRaptorTemple()) {
         render();
         await sleep(AI_STEP_DELAY);
       }
       await tryUseAiItems({ timing: "afterBoard" });
+      await waitForOrderedAttendance();
       if (state.pendingCardChoice || state.pendingRemoteHandTrim) {
         state.aiThinking = false;
         render();
@@ -24276,6 +24305,7 @@
       }
       if (await resolveAiGuaranteedBoardLethal()) return;
       await playAiBoardMoves();
+      await waitForOrderedAttendance();
       if (await resolveAiGuaranteedBoardLethal()) return;
       await aiAttackWithReadyCards();
       state.aiThinking = false;
@@ -24299,6 +24329,7 @@
         if (!move) break;
         placeCardFromHand("opponent", move.card.instanceId, move.zone, move.owner, move.index, false);
         render();
+        await waitForOrderedAttendance();
         await sleep(AI_STEP_DELAY);
       }
     }
@@ -25962,6 +25993,10 @@
     function endTurn(options = {}) {
       const fromAi = options.fromAi === true;
       if (isOnlineSpectator() && !fromAi) return;
+      if (state.resolvingOrderedAttendance) {
+        if (fromAi) waitForOrderedAttendance().then(() => endTurn(options));
+        return;
+      }
       if (state.pendingCardPlay) return;
       if (state.attackInProgress || state.attackQueue.length > 0) return;
       if (isOnlineGuest() && isOnlineBattle() && state.online.pendingTurnCommandId && !fromAi) return;
@@ -26404,6 +26439,159 @@
       return placed;
     }
 
+    function orderedAttendanceEntries(side, seatIndexes, createCard, options = {}) {
+      return [...new Set((seatIndexes || []).filter((index) => Number.isInteger(index)))]
+        .sort((a, b) => a - b)
+        .map((index) => ({
+          side,
+          owner: options.owner || side,
+          zone: "seat",
+          index,
+          createCard,
+          attendanceSource: options.attendanceSource || ATTENDANCE_SOURCE.GENERATED,
+          prepare: options.prepare || null,
+          afterAttend: options.afterAttend || null
+        }));
+    }
+
+    function orderedRandomOpenSeatIndexes(side, count) {
+      const reserved = new Set([
+        ...(activeOrderedAttendance?.entries || []),
+        ...queuedOrderedAttendances.flatMap((sequence) => sequence.entries || [])
+      ].filter((entry) => entry.owner === side && entry.zone === "seat").map((entry) => entry.index));
+      const openSeats = state.players[side].board.seats
+        .map((card, index) => (!card && !reserved.has(index) && isBoardSlotOpen(side, "seat", index) ? index : null))
+        .filter((index) => index !== null);
+      return shuffle(openSeats).slice(0, Math.max(0, Number(count) || 0)).sort((a, b) => a - b);
+    }
+
+    function animateOrderedAttendanceArrival(card) {
+      if (!card?.instanceId) return;
+      window.requestAnimationFrame(() => {
+        const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
+        if (!target) return;
+        target.classList.remove("ordered-attendance-arrival");
+        void target.offsetWidth;
+        target.classList.add("ordered-attendance-arrival");
+        window.setTimeout(() => target.classList.remove("ordered-attendance-arrival"), 420);
+      });
+    }
+
+    function orderedAttendanceStepDelay(result = {}) {
+      const bingo = result.quickQuiz || null;
+      if (bingo?.eightBingoBonus) return ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS;
+      if (bingo?.newLines?.length) return ORDERED_ATTENDANCE_BINGO_STEP_MS;
+      return ORDERED_ATTENDANCE_STEP_MS;
+    }
+
+    function resolveOrderedAttendanceWaiters() {
+      if (activeOrderedAttendance || queuedOrderedAttendances.length > 0) return;
+      state.resolvingOrderedAttendance = false;
+      orderedAttendanceWaiters.splice(0).forEach((resolve) => resolve());
+    }
+
+    function beginNextOrderedAttendance() {
+      if (activeOrderedAttendance || queuedOrderedAttendances.length === 0) {
+        resolveOrderedAttendanceWaiters();
+        return;
+      }
+      activeOrderedAttendance = queuedOrderedAttendances.shift();
+      state.resolvingOrderedAttendance = true;
+      const delay = Math.max(0, Number(activeOrderedAttendance.initialDelayMs) || 0);
+      window.clearTimeout(orderedAttendanceTimer);
+      orderedAttendanceTimer = window.setTimeout(runOrderedAttendanceStep, delay);
+    }
+
+    function finishOrderedAttendance() {
+      const completed = activeOrderedAttendance;
+      activeOrderedAttendance = null;
+      if (typeof completed?.onComplete === "function") completed.onComplete(completed.attendedCount);
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      if (queuedOrderedAttendances.length > 0) {
+        beginNextOrderedAttendance();
+      } else {
+        resolveOrderedAttendanceWaiters();
+        render();
+      }
+    }
+
+    function runOrderedAttendanceStep() {
+      const sequence = activeOrderedAttendance;
+      if (!sequence) return;
+      if (state.screen !== "battle") {
+        clearOrderedAttendance();
+        return;
+      }
+      if (state.phase !== "battle" || state.gameOver || sequence.entries.length === 0) {
+        finishOrderedAttendance();
+        return;
+      }
+      const entry = sequence.entries.shift();
+      let attended = null;
+      const result = {};
+      if (entry.zone === "seat" && isBoardSlotOpen(entry.owner, "seat", entry.index)) {
+        const created = typeof entry.createCard === "function" ? entry.createCard() : entry.card;
+        const boardCard = created ? makeBoardCard(created) : null;
+        if (boardCard) {
+          if (typeof entry.prepare === "function") entry.prepare(boardCard);
+          attended = attendCard(entry.side, boardCard, entry.zone, entry.index, {
+            owner: entry.owner,
+            attendanceSource: entry.attendanceSource,
+            orderedAttendance: true,
+            attendanceResult: result
+          });
+        }
+      }
+      if (attended) {
+        sequence.attendedCount += 1;
+        if (typeof entry.afterAttend === "function") entry.afterAttend(attended);
+      }
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      render();
+      if (attended) animateOrderedAttendanceArrival(attended);
+      if (sequence.entries.length === 0) {
+        orderedAttendanceTimer = window.setTimeout(finishOrderedAttendance, orderedAttendanceStepDelay(result));
+      } else {
+        orderedAttendanceTimer = window.setTimeout(runOrderedAttendanceStep, orderedAttendanceStepDelay(result));
+      }
+    }
+
+    function startOrderedAttendance(entries, options = {}) {
+      const normalizedEntries = (entries || []).filter(Boolean);
+      if (normalizedEntries.length === 0) {
+        options.onComplete?.(0);
+        return false;
+      }
+      queuedOrderedAttendances.push({
+        entries: normalizedEntries,
+        attendedCount: 0,
+        onComplete: options.onComplete || null,
+        initialDelayMs: options.initialDelayMs ?? (activeOrderedAttendance
+          ? ORDERED_ATTENDANCE_STEP_MS
+          : ORDERED_ATTENDANCE_INITIAL_DELAY_MS)
+      });
+      state.resolvingOrderedAttendance = true;
+      beginNextOrderedAttendance();
+      return true;
+    }
+
+    function waitForOrderedAttendance() {
+      if (!state.resolvingOrderedAttendance && !activeOrderedAttendance && queuedOrderedAttendances.length === 0) {
+        return Promise.resolve();
+      }
+      return new Promise((resolve) => orderedAttendanceWaiters.push(resolve));
+    }
+
+    function clearOrderedAttendance() {
+      window.clearTimeout(orderedAttendanceTimer);
+      orderedAttendanceTimer = null;
+      activeOrderedAttendance = null;
+      queuedOrderedAttendances.splice(0);
+      resolveOrderedAttendanceWaiters();
+    }
+
     function originalCardHp(card) {
       const baseHp = CARD_BASES[card?.baseId]?.hp;
       return Math.max(0, Number(baseHp ?? card?.hp ?? card?.baseMaxHp ?? card?.maxHp) || 0);
@@ -26479,11 +26667,21 @@
         .filter((card) => card?.baseId === "proliferating_enemy"
           && card.currentHp > 0
           && canUsePrintedCardEffects(card));
-      let summoned = 0;
-      sources.forEach((source) => {
-        if (summonToRandomOpenSeat(triggerSide, "enemy_student", source.name)) summoned += 1;
+      const seatIndexes = orderedRandomOpenSeatIndexes(triggerSide, sources.length);
+      const entries = seatIndexes.map((seatIndex, sourceIndex) => {
+        const source = sources[sourceIndex];
+        return {
+          side: triggerSide,
+          owner: triggerSide,
+          zone: "seat",
+          index: seatIndex,
+          createCard: () => createCardFromBase("enemy_student", triggerSide),
+          attendanceSource: ATTENDANCE_SOURCE.GENERATED,
+          afterAttend: (placed) => addLog(`${source.name}の効果：${placed.name}をランダムな席マスに出席させました。`)
+        };
       });
-      return summoned;
+      startOrderedAttendance(entries, { initialDelayMs: ORDERED_ATTENDANCE_STEP_MS });
+      return entries.length;
     }
 
     function resolveBestFriendEndTurnEffect(side) {
@@ -29278,6 +29476,7 @@
 
     function placeCardFromHand(side, instanceId, zone, owner, index = null, renderAfter = true, options = {}) {
       if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
+      if (state.resolvingOrderedAttendance) return false;
       if (state.pendingCardPlay && !options.revealAlreadyShown) return false;
       const player = state.players[side];
       const card = getHandCard(side, instanceId);
@@ -30039,7 +30238,7 @@
       return QUICK_QUIZ_BINGO_LINES.filter((line) => line.seats.every((seatIndex) => Boolean(seats[seatIndex])));
     }
 
-    function resolveQuickQuizBingoAttendance(side, card, zone, index = null) {
+    function resolveQuickQuizBingoAttendance(side, card, zone, index = null, options = {}) {
       if (state.environment?.baseId !== "quick_quiz_tournament" || zone !== "seat" || !card) return null;
       const occupiedIndexes = new Set(
         isMultiSeatCard(card)
@@ -30076,16 +30275,19 @@
       const bingoCardInstanceIds = [...new Set(newLines.flatMap((line) => (
         line.seats.map((seatIndex) => state.players[side]?.board?.seats?.[seatIndex]?.instanceId).filter(Boolean)
       )))];
-      showQuickQuizClickEffect(bingoCardInstanceIds, QUICK_QUIZ_VISUAL_DELAY_MS);
+      const visualDelay = options.orderedAttendance ? 80 : QUICK_QUIZ_VISUAL_DELAY_MS;
+      const buffDelay = options.orderedAttendance ? 300 : QUICK_QUIZ_BUFF_DELAY_MS;
+      const eightBingoDelay = options.orderedAttendance ? 700 : QUICK_QUIZ_EIGHT_BINGO_DELAY_MS;
+      showQuickQuizClickEffect(bingoCardInstanceIds, visualDelay);
       if (appliedAttack || appliedHp) {
         showBoardChangeEffectForCard(
           card,
           "buff",
           `ビンゴ強化 攻撃力+${appliedAttack}・体力+${appliedHp}`,
-          QUICK_QUIZ_BUFF_DELAY_MS
+          buffDelay
         );
       }
-      if (eightBingoBonus) showSharedCenterAnnouncement("BINGO!!", "bingo", QUICK_QUIZ_EIGHT_BINGO_DELAY_MS);
+      if (eightBingoBonus) showSharedCenterAnnouncement("BINGO!!", "bingo", eightBingoDelay);
       const lineSummary = [
         horizontalCount ? `横${horizontalCount}列` : "",
         verticalCount ? `縦${verticalCount}列` : "",
@@ -30143,7 +30345,12 @@
       };
       delete card.pendingAttendanceSource;
       if (zone === "seat" || zone === "teacher") recordSuitStudentAttendance(card);
-      resolveQuickQuizBingoAttendance(owner, card, zone, index);
+      const quickQuizResult = resolveQuickQuizBingoAttendance(owner, card, zone, index, {
+        orderedAttendance: options.orderedAttendance === true
+      });
+      if (options.attendanceResult && typeof options.attendanceResult === "object") {
+        options.attendanceResult.quickQuiz = quickQuizResult;
+      }
 
       // These are shared attendance listeners.  They must still observe an
       // entry whose own printed "when attended" ability is deliberately off.
@@ -30246,11 +30453,11 @@
           getBoardCardFromRef(ref)?.baseId === "enemy_student"
         )).length;
         if (enemyCount >= 2) {
-          let summoned = 0;
-          for (let count = 0; count < 2; count += 1) {
-            if (summonToRandomOpenSeat(side, "enemy_student", card.name)) summoned += 1;
-          }
-          addLog(`${card.name}の効果：「敵」を${summoned}人出席させました。`);
+          const seatIndexes = orderedRandomOpenSeatIndexes(side, 2);
+          startOrderedAttendance(
+            orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("enemy_student", side)),
+            { onComplete: (summoned) => addLog(`${card.name}の効果：「敵」を${summoned}人出席させました。`) }
+          );
         } else {
           addLog(`${card.name}の効果：自分の場の「敵」が2人未満のため、発動しませんでした。`);
         }
@@ -30301,15 +30508,13 @@
                 addLog(`${card.name}の選択効果：相手の学生${affected}人に3ダメージを与えました。`);
               }
               if (choice === "extra_people") {
-                let summoned = 0;
-                for (let index = 0; index < 3; index += 1) {
-                  const extra = summonToRandomOpenSeat(side, "extra_student", card.name, ATTENDANCE_SOURCE.GENERATED);
-                  if (extra) {
-                    applyPermanentStatBuff(extra, 1, 1, 0, card.name);
-                    summoned += 1;
-                  }
-                }
-                addLog(`${card.name}の選択効果：エキストラ学生を${summoned}人出席させ、+1/+1しました。`);
+                const seatIndexes = orderedRandomOpenSeatIndexes(side, 3);
+                startOrderedAttendance(
+                  orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("extra_student", side), {
+                    afterAttend: (extra) => applyPermanentStatBuff(extra, 1, 1, 0, card.name)
+                  }),
+                  { onComplete: (summoned) => addLog(`${card.name}の選択効果：エキストラ学生を${summoned}人出席させ、+1/+1しました。`) }
+                );
               }
             }
           });
@@ -30346,17 +30551,16 @@
         addLog(`${card.name}の効果：攻撃力3以上の相手の出席者${affected}人の攻撃力を-2しました。`);
       }
       if (card.baseId === "pachin_uni") {
-        let summoned = 0;
-        [6, 7, 8].forEach((seatIndex) => {
-          if (!isBoardSlotOpen(opponent, "seat", seatIndex)) return;
-          const student = makeBoardCard(createCardFromBase("general_student", opponent));
-          student.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 2;
-          student.attackLockSource = card.name;
-          if (attendCard(opponent, student, "seat", seatIndex, {
-            attendanceSource: ATTENDANCE_SOURCE.GENERATED
-          })) summoned += 1;
-        });
-        addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人出席させました。それらは相手が自分のターンを2回終了するまで攻撃できません。`);
+        const seatIndexes = [6, 7, 8].filter((seatIndex) => isBoardSlotOpen(opponent, "seat", seatIndex));
+        startOrderedAttendance(
+          orderedAttendanceEntries(opponent, seatIndexes, () => createCardFromBase("general_student", opponent), {
+            prepare: (student) => {
+              student.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 2;
+              student.attackLockSource = card.name;
+            }
+          }),
+          { onComplete: (summoned) => addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人出席させました。それらは相手が自分のターンを2回終了するまで攻撃できません。`) }
+        );
       }
       if (card.baseId === "loud_student") {
         let affected = 0;
@@ -30420,27 +30624,24 @@
         addLog(`${card.name}の効果：お互いのカウントダウン中の効果すべての残りカウントを2増やしました。`);
       }
       if (card.baseId === "seat_taking_group" && zone === "seat" && index === 4) {
-        [3, 5].forEach((seatIndex) => {
-          if (!isBoardSlotOpen(side, "seat", seatIndex)) return;
-          const summoned = makeBoardCard(createCardFromBase("seat_taking_group", side));
-          attendCard(side, summoned, "seat", seatIndex, {
+        const seatIndexes = [3, 5].filter((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex));
+        startOrderedAttendance(
+          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("seat_taking_group", side), {
             attendanceSource: ATTENDANCE_SOURCE.COPY
-          });
-        });
-        addLog(`${card.name}の効果：2行1列と2行3列に同名の出席者を出席させました。`);
+          }),
+          { onComplete: () => addLog(`${card.name}の効果：2行1列と2行3列に同名の出席者を出席させました。`) }
+        );
       }
       if (card.baseId === "ta_squad" && zone === "seat" && seatRow(index) === 2) {
-        let summoned = 0;
-        [3, 4, 5].forEach((seatIndex) => {
-          if (!isBoardSlotOpen(side, "seat", seatIndex)) return;
-          const ta = makeBoardCard(createCardFromBase("ta", side));
-          if (attendCard(side, ta, "seat", seatIndex, {
-            attendanceSource: ATTENDANCE_SOURCE.GENERATED
-          })) summoned += 1;
-        });
-        addLog(summoned > 0
-          ? `${card.name}の効果：2行目の空いている席マスにTAを${summoned}人出席させました。`
-          : `${card.name}の効果：2行目に空きがないためTAを出席できません。`);
+        const seatIndexes = [3, 4, 5].filter((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex));
+        startOrderedAttendance(
+          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("ta", side)),
+          {
+            onComplete: (summoned) => addLog(summoned > 0
+              ? `${card.name}の効果：2行目の空いている席マスにTAを${summoned}人出席させました。`
+              : `${card.name}の効果：2行目に空きがないためTAを出席できません。`)
+          }
+        );
       }
       if (card.baseId === "sniper") {
         const opponentHand = state.players[opponent].hand;
@@ -30470,17 +30671,19 @@
         }
       }
       if (card.baseId === "loud_group" && zone === "seat") {
-        let copied = 0;
-        [index + 1, index + 2].forEach((rightIndex) => {
-          if (seatRow(rightIndex) !== seatRow(index) || !isBoardSlotOpen(side, "seat", rightIndex)) return;
-          const copy = makeBoardCard(createCardFromBase("loud_group", side));
-          if (attendCard(side, copy, "seat", rightIndex, {
+        const seatIndexes = [index + 1, index + 2].filter((rightIndex) => (
+          seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen(side, "seat", rightIndex)
+        ));
+        startOrderedAttendance(
+          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("loud_group", side), {
             attendanceSource: ATTENDANCE_SOURCE.COPY
-          })) copied += 1;
-        });
-        addLog(copied > 0
-          ? `${card.name}の効果：右隣に同名のコピーを${copied}人出席させました。`
-          : `${card.name}の効果：右隣に空きがないためコピーを出席できません。`);
+          }),
+          {
+            onComplete: (copied) => addLog(copied > 0
+              ? `${card.name}の効果：右隣に同名のコピーを${copied}人出席させました。`
+              : `${card.name}の効果：右隣に空きがないためコピーを出席できません。`)
+          }
+        );
       }
       if (card.baseId === "fridge_thief") {
         const targetPlayer = state.players[opponent];
@@ -30523,16 +30726,13 @@
         }
       }
       if (card.baseId === "extra_people") {
-        let summoned = 0;
-        state.players[side].board.seats.forEach((seatCard, seatIndex) => {
-          if (seatCard || !isBoardSlotOpen(side, "seat", seatIndex)) return;
-          const student = createCardFromBase("extra_student", side);
-          const placedStudent = makeBoardCard(student);
-          if (attendCard(side, placedStudent, "seat", seatIndex, {
-            attendanceSource: ATTENDANCE_SOURCE.GENERATED
-          })) summoned += 1;
-        });
-        addLog(`${card.name}の効果：空いている席マスに、1/1で陽気を持つエキストラ学生を${summoned}人出席させました。`);
+        const seatIndexes = state.players[side].board.seats
+          .map((seatCard, seatIndex) => (!seatCard && isBoardSlotOpen(side, "seat", seatIndex) ? seatIndex : null))
+          .filter((seatIndex) => seatIndex !== null);
+        startOrderedAttendance(
+          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("extra_student", side)),
+          { onComplete: (summoned) => addLog(`${card.name}の効果：空いている席マスに、1/1で陽気を持つエキストラ学生を${summoned}人出席させました。`) }
+        );
       }
       if (card.baseId === "angry_maker") {
         const ownDraw = drawUpTo(side, 2);
@@ -30658,14 +30858,10 @@
         addLog(`${card.name}の効果：教師を合計${healed}回復し、相手学生${damaged}人に1ダメージ。`);
       }
       if (card.baseId === "pro_k" && zone === "teacher") {
-        [0, 2].forEach((seatIndex) => {
-          if (isBoardSlotOpen(side, "seat", seatIndex)) {
-            const ta = makeBoardCard(createCardFromBase("ta", side));
-            attendCard(side, ta, "seat", seatIndex, {
-              attendanceSource: ATTENDANCE_SOURCE.GENERATED
-            });
-          }
-        });
+        const seatIndexes = [0, 2].filter((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex));
+        startOrderedAttendance(
+          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("ta", side))
+        );
         state.players[side].hand.push(createCardFromBase("roar", side));
         addLog(`${card.name}の効果：TAを出席させ、咆哮を生成。教卓マスにいる間、自分のTAの体力+1。`);
       }
@@ -31432,6 +31628,7 @@
 
     function handleBoardCardClick(owner, zone, index = null) {
       if (isOnlineSpectator()) return;
+      if (state.resolvingOrderedAttendance) return;
       if (state.pendingCardPlay) return;
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (state.pendingKingGhidorahBed) {
@@ -31641,6 +31838,7 @@
 
     function attackLife(targetSide) {
       if (isOnlineSpectator()) return;
+      if (state.resolvingOrderedAttendance) return;
       if (state.pendingCardPlay) return;
       if (isOnlineCommandPending()) {
         rejectOnlinePendingAction();
@@ -32861,11 +33059,12 @@
         resultText = `校外エリアからカニ勝利に必要なカードを${recovered}枚回収しました。`;
       }
       if (item.baseId === "night_pool_water") {
-        let summoned = 0;
-        for (let i = 0; i < 2; i += 1) {
-          if (summonToRandomOpenSeat(side, "single_cell", item.name)) summoned += 1;
-        }
-        resultText = `単細胞生物をランダムな席マスに${summoned}人出席させました。`;
+        const seatIndexes = orderedRandomOpenSeatIndexes(side, 2);
+        startOrderedAttendance(
+          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("single_cell", side)),
+          { onComplete: (summoned) => addLog(`${item.name}の効果：単細胞生物をランダムな席マスに${summoned}人、席順に出席させました。`) }
+        );
+        resultText = `単細胞生物をランダムな席マスに${seatIndexes.length}人、席順に出席させます。`;
       }
       if (CRAB_SET_IDS.includes(item.baseId)) {
         healPlayer(side, 4);
@@ -35796,6 +35995,7 @@
         || state.gameOver
         || state.currentSide !== "player"
         || state.aiThinking
+        || state.resolvingOrderedAttendance
         || Boolean(state.pendingCardPlay)
         || (isTutorialActive() && !tutorialAllowsEndTurn())
         || Boolean(state.online.pendingTurnCommandId)
@@ -36308,7 +36508,7 @@
     }
 
     function playerHasAvailableAction() {
-      if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver || state.aiThinking || state.pendingCardPlay) return false;
+      if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver || state.aiThinking || state.pendingCardPlay || state.resolvingOrderedAttendance) return false;
       if (state.pendingCopiedCard || state.pendingMultiItem) return true;
       if (state.players.player.hand.filter((card) => card.baseId === "ruler").length >= 2) return true;
       if (listBoardRefs("player").some((ref) => canAttackSilently(getBoardCardFromRef(ref)))) return true;
@@ -36316,7 +36516,7 @@
     }
 
     function canUseHandCardNow(card) {
-      if (state.pendingCardPlay || !card || card.unusable || effectiveCardCost(card) > state.players.player.will) return false;
+      if (state.pendingCardPlay || state.resolvingOrderedAttendance || !card || card.unusable || effectiveCardCost(card) > state.players.player.will) return false;
       if (card.type === "item") return canUseItemNow(card);
       return canPlaceCardSomewhere(card);
     }
@@ -40462,6 +40662,7 @@
 
     function showHomeScreen() {
       closeTeacherActionChoice();
+      clearOrderedAttendance();
       if (dungeonEntranceTimer) {
         window.clearTimeout(dungeonEntranceTimer);
         dungeonEntranceTimer = null;
@@ -42433,6 +42634,8 @@
       returnFromCardTestToDeck,
       canPlaceCard,
       attendCard,
+      startOrderedAttendance,
+      waitForOrderedAttendance,
       ATTENDANCE_SOURCE,
       resolveAttendEffects,
       resolveStrictLatenessTeacherAttendance,
