@@ -95,7 +95,9 @@ test("講義の試験変更ポップアップはホームで一度だけ表示�
 
   const notice = page.locator("#lectureExperimentNoticeModal");
   await expect(notice).toBeVisible();
-  await expect(notice).toContainText("これは一旦試しの仕様です");
+  await expect(notice).toContainText("教師の「講義」操作を試験変更しました");
+  await expect(notice).not.toContainText("これは一旦試しの仕様です");
+  await expect(notice).not.toContainText("操作感を確認するためのテストとして実装しています");
   await page.locator("#lectureExperimentNoticeCloseButton").click();
   await expect(notice).toBeHidden();
 
