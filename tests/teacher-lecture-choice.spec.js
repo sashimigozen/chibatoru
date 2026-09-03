@@ -119,4 +119,10 @@ test("更新情報に講義操作の試験変更を表示する", async ({ page 
   const fusionChange = update.locator(".update-change", { hasText: "手札内の融合操作" });
   await expect(fusionChange).toContainText("手札の定規をもう1枚の定規へドラッグ");
   await expect(fusionChange).toContainText("従来の操作も引き続き使用できる");
+
+  const taChange = update.locator(".update-change", { hasText: "TA隊長" });
+  await expect(taChange.locator(".update-before")).toContainText("「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1");
+  await expect(taChange.locator(".update-after")).toContainText("「TA隊長」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1");
+  await expect(taChange.locator(".update-after")).toContainText("「TA」を1人ずつ出席させる");
+  await expect(taChange.locator(".update-after")).toContainText("変更点：カード名を「TA隊長」に変更");
 });

@@ -639,7 +639,7 @@ test("早押しクイズ大会の通常ビンゴは成立した3枚だけにカ�
   await expect(page.locator("#turnOverlay")).not.toHaveText("BINGO!!");
 });
 
-test("TA軍団は手札から2行目へ出席した場合だけ残りの空きマスへコピーを出席させる", async ({ page }) => {
+test("TA隊長は手札から2行目へ出席した場合だけ残りの空きマスへTAを出席させる", async ({ page }) => {
   await page.goto(gameUrl);
 
   const result = await page.evaluate(() => {
@@ -672,14 +672,25 @@ test("TA軍団は手札から2行目へ出席した場合だけ残りの空き�
     api.attendCard("player", squad(), "seat", 4, { attendanceSource: api.ATTENDANCE_SOURCE.EFFECT });
     const effectAttendance = state.players.player.board.seats.map((card) => card?.baseId || null);
 
-    return { placement, handAttendance, sources, effectAttendance };
+    return {
+      placement,
+      cardName: placementCard.name,
+      rules: api.cardRulesText(placementCard),
+      handAttendance,
+      sources,
+      effectAttendance
+    };
   });
 
   expect(result.placement).toEqual({ secondRow: true, firstRow: false, teacher: false });
-  expect(result.handAttendance.slice(3, 6)).toEqual(["ta_squad", "ta_squad", "ta_squad"]);
-  expect(result.handAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(3);
-  expect(result.sources.slice(3, 6)).toEqual(["copy", "hand", "copy"]);
+  expect(result.cardName).toBe("TA隊長");
+  expect(result.rules).toContain("「TA」を1人ずつ出席させる");
+  expect(result.handAttendance.slice(3, 6)).toEqual(["ta", "ta_squad", "ta"]);
+  expect(result.handAttendance.filter((baseId) => baseId === "ta")).toHaveLength(2);
+  expect(result.handAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(1);
+  expect(result.sources.slice(3, 6)).toEqual(["generated", "hand", "generated"]);
   expect(result.effectAttendance.filter((baseId) => baseId === "ta_squad")).toHaveLength(1);
+  expect(result.effectAttendance.filter((baseId) => baseId === "ta")).toHaveLength(0);
 });
 
 test("幸せの青い鳥は本体を攻撃せず、攻撃で倒した位置へ相手所有の基本5/5を出席させる", async ({ page }) => {

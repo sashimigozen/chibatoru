@@ -17376,7 +17376,7 @@
     const CARD_BASES = {
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
       suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
-      ta_squad: { name: "TA軍団", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
+      ta_squad: { name: "TA隊長", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
       happy_blue_bird: { name: "幸せの青い鳥", type: "student", cost: 2, attack: 5, hp: 5, allowedZones: ["seat", "teacher"] },
       absolute_woman: { name: "「絶対」女", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
       pad_present_creator: { name: "パッドプレゼンクリエイター", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
@@ -17694,7 +17694,7 @@
       {
         version: "ver.0.22.0",
         date: "2026年9月3日",
-        summary: "新カード3枚の追加、教師の講義操作の試験変更、手札内の融合操作の追加を行いました。",
+        summary: "新カード3枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作の追加を行いました。",
         changes: [
           {
             title: "新カード",
@@ -17717,6 +17717,11 @@
             title: "手札内の融合操作",
             before: "定規を融合するときは、カード確認の「融合する」から融合先を選ぶ必要があった。",
             after: "手札の定規をもう1枚の定規へドラッグしても融合できるように変更。U太の融合素材と同じく、ドラッグ中は融合できる手札を青く表示する。カード確認から融合先を選ぶ従来の操作も引き続き使用できる。"
+          },
+          {
+            title: "カード修正",
+            before: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
+            after: "「TA隊長」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。\n\n変更点：カード名を「TA隊長」に変更し、同名のコピーではなく「TA」を出席させるように変更。"
           }
         ]
       },
@@ -30425,17 +30430,17 @@
         addLog(`${card.name}の効果：2行1列と2行3列に同名の出席者を出席させました。`);
       }
       if (card.baseId === "ta_squad" && zone === "seat" && seatRow(index) === 2) {
-        let copied = 0;
+        let summoned = 0;
         [3, 4, 5].forEach((seatIndex) => {
           if (!isBoardSlotOpen(side, "seat", seatIndex)) return;
-          const copy = makeBoardCard(createCardFromBase("ta_squad", side));
-          if (attendCard(side, copy, "seat", seatIndex, {
-            attendanceSource: ATTENDANCE_SOURCE.COPY
-          })) copied += 1;
+          const ta = makeBoardCard(createCardFromBase("ta", side));
+          if (attendCard(side, ta, "seat", seatIndex, {
+            attendanceSource: ATTENDANCE_SOURCE.GENERATED
+          })) summoned += 1;
         });
-        addLog(copied > 0
-          ? `${card.name}の効果：2行目の空いている席マスに同名のコピーを${copied}人出席させました。`
-          : `${card.name}の効果：2行目に空きがないためコピーを出席できません。`);
+        addLog(summoned > 0
+          ? `${card.name}の効果：2行目の空いている席マスにTAを${summoned}人出席させました。`
+          : `${card.name}の効果：2行目に空きがないためTAを出席できません。`);
       }
       if (card.baseId === "sniper") {
         const opponentHand = state.players[opponent].hand;
@@ -41549,7 +41554,7 @@
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
         aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
         scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
-        ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
+        ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。",
         happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
         suit_student: "このカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。",
         single_cell: "自分の場に「単細胞生物」が2人いる場合、それらを破壊し、先に出席していた「単細胞生物」の席マスに「ミジンコ」を出席させる。",
