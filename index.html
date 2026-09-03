@@ -2175,6 +2175,20 @@
       outline-color: rgba(37, 99, 235, 0.24);
     }
 
+    .player-hand .hand-card.drop-ready {
+      z-index: 24;
+      outline: 3px solid rgba(37, 99, 235, 0.58);
+      outline-offset: 2px;
+      box-shadow: 0 0 18px rgba(37, 99, 235, 0.42);
+    }
+
+    .player-hand .hand-card.drag-over {
+      z-index: 25;
+      outline: 4px solid rgba(37, 99, 235, 0.9);
+      outline-offset: 3px;
+      box-shadow: 0 0 24px rgba(37, 99, 235, 0.68);
+    }
+
     .player-hand::-webkit-scrollbar {
       display: block;
       height: 12px;
@@ -17680,7 +17694,7 @@
       {
         version: "ver.0.22.0",
         date: "2026年9月3日",
-        summary: "新カード3枚の追加と、教師の講義操作の試験変更を行いました。",
+        summary: "新カード3枚の追加、教師の講義操作の試験変更、手札内の融合操作の追加を行いました。",
         changes: [
           {
             title: "新カード",
@@ -17698,6 +17712,11 @@
             title: "講義の操作（テスト）",
             before: "教師マスにいる教師は、ターン終了時に攻撃とは別に自動で講義を行っていた。",
             after: "一旦試しとして、教師マスにいる攻撃可能な教師をタップしたとき、「攻撃する」か「講義を行う」かを選ぶ方式へ変更。どちらかを行うと、その教師は行動済みになる。"
+          },
+          {
+            title: "手札内の融合操作",
+            before: "定規を融合するときは、カード確認の「融合する」から融合先を選ぶ必要があった。",
+            after: "手札の定規をもう1枚の定規へドラッグしても融合できるように変更。U太の融合素材と同じく、ドラッグ中は融合できる手札を青く表示する。カード確認から融合先を選ぶ従来の操作も引き続き使用できる。"
           }
         ]
       },
@@ -28860,6 +28879,22 @@
         .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId);
     }
 
+    function handFusionType(side, sourceCard, targetCard) {
+      if (canFuseUtaMaterial(side, sourceCard, targetCard)) return "uta";
+      if (sourceCard?.baseId === "ruler"
+        && targetCard?.baseId === "ruler"
+        && sourceCard.instanceId !== targetCard.instanceId
+        && rulerFusionEligibleTargets(side, sourceCard).some((card) => card.instanceId === targetCard.instanceId)) {
+        return "ruler";
+      }
+      return "";
+    }
+
+    function handFusionEligibleTargets(side, sourceCard) {
+      const hand = state.players[side]?.hand || [];
+      return hand.filter((targetCard) => handFusionType(side, sourceCard, targetCard));
+    }
+
     function openRulerFusionChoice(sourceCard) {
       const handSource = getHandCard("player", sourceCard?.instanceId);
       const targets = rulerFusionEligibleTargets("player", handSource);
@@ -36551,11 +36586,9 @@
         if (canDropHandCardOnLife(card, target.dataset.lifeTarget)) target.classList.add("drop-ready");
       });
       if (canDropHandCardOnPlaymat(card)) elements.playmat?.classList.add("drop-ready");
-      if (UTA_FUSION_MATERIAL_IDS.includes(card.baseId)) {
-        fusionEligibleUtasInHand("player", card).forEach((target) => {
-          document.querySelector(`.player-hand .hand-card[data-card-id="${target.instanceId}"]`)?.classList.add("drop-ready");
-        });
-      }
+      handFusionEligibleTargets("player", card).forEach((target) => {
+        document.querySelector(`.player-hand .hand-card[data-card-id="${target.instanceId}"]`)?.classList.add("drop-ready");
+      });
       elements.playerHand?.classList.add("drop-ready");
     }
 
@@ -37139,7 +37172,7 @@
             type: "hand-card",
             element: handCard,
             targetInstanceId: handCard.dataset.cardId,
-            valid: canFuseUtaMaterial("player", card, targetCard)
+            valid: Boolean(handFusionType("player", card, targetCard))
           };
           if (candidate.valid) return candidate;
           firstCandidate ||= candidate;
@@ -37227,23 +37260,29 @@
       if (target.type === "slot") return performHandDropOnSlot(instanceId, target.zone, target.owner, target.index);
       if (target.type === "life") return performHandDropOnLife(instanceId, target.targetSide);
       if (target.type === "playmat") return performHandDropOnPlaymat(instanceId);
-      if (target.type === "hand-card") return performUtaFusionDrop(instanceId, target.targetInstanceId);
+      if (target.type === "hand-card") return performHandFusionDrop(instanceId, target.targetInstanceId);
       if (target.type === "hand") return cancelHandDropToHand();
       return false;
     }
 
-    function performUtaFusionDrop(instanceId, targetInstanceId) {
-      const item = getHandCard("player", instanceId);
+    function performHandFusionDrop(instanceId, targetInstanceId) {
+      const source = getHandCard("player", instanceId);
       const target = getHandCard("player", targetInstanceId);
-      if (!canFuseUtaMaterial("player", item, target)) return false;
-      if (onlineCanSendCommand()) {
-        onlineSendCommand("utaFusion", { instanceId, targetInstanceId });
-        state.message = `${item.name}の融合先を送信しました。`;
-        clearSelections();
-        render();
-        return true;
+      const fusionType = handFusionType("player", source, target);
+      if (fusionType === "uta") {
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("utaFusion", { instanceId, targetInstanceId });
+          state.message = `${source.name}の融合先を送信しました。`;
+          clearSelections();
+          render();
+          return true;
+        }
+        return castUtaFusion("player", source, target, true);
       }
-      return castUtaFusion("player", item, target, true);
+      if (fusionType === "ruler") {
+        return fuseRulersForSide("player", true, source.instanceId, target.instanceId);
+      }
+      return false;
     }
 
     function cancelHandDropToHand() {
@@ -42366,6 +42405,9 @@
       canFuseUtaMaterial,
       fusionEligibleUtasInHand,
       rulerFusionEligibleTargets,
+      handFusionType,
+      handFusionEligibleTargets,
+      performHandFusionDrop,
       openRulerFusionChoice,
       openUtaFusionChoice,
       castUtaFusion,

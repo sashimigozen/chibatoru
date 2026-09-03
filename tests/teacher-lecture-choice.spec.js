@@ -115,4 +115,8 @@ test("更新情報に講義操作の試験変更を表示する", async ({ page 
   await expect(change).toContainText("講義を行う");
   await expect(change).not.toContainText("ポップアップ");
   await expect(change).not.toContainText("ホーム画面では");
+
+  const fusionChange = update.locator(".update-change", { hasText: "手札内の融合操作" });
+  await expect(fusionChange).toContainText("手札の定規をもう1枚の定規へドラッグ");
+  await expect(fusionChange).toContainText("従来の操作も引き続き使用できる");
 });

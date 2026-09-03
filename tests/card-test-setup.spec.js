@@ -277,6 +277,74 @@ test("定規の確認から融合するもう1枚を選んで融合する", asyn
   await expect(choiceStage).toBeHidden();
 });
 
+test("手札の定規をもう1枚の定規へドラッグして融合する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const ids = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("ruler");
+    const rulers = api.state.players.player.hand.filter((card) => card.baseId === "ruler");
+    api.render();
+    return {
+      sourceId: rulers[0].instanceId,
+      targetId: rulers[1].instanceId,
+      eligibleIds: api.handFusionEligibleTargets("player", rulers[0]).map((card) => card.instanceId),
+      fusionType: api.handFusionType("player", rulers[0], rulers[1])
+    };
+  });
+
+  expect(ids.eligibleIds).toEqual([ids.targetId]);
+  expect(ids.fusionType).toBe("ruler");
+
+  const source = page.locator(`.player-hand .hand-card[data-card-id="${ids.sourceId}"]`);
+  const target = page.locator(`.player-hand .hand-card[data-card-id="${ids.targetId}"]`);
+  const sourceBox = await source.boundingBox();
+  const targetBox = await target.boundingBox();
+  expect(sourceBox).not.toBeNull();
+  expect(targetBox).not.toBeNull();
+
+  await source.dispatchEvent("pointerdown", {
+    pointerId: 7,
+    pointerType: "touch",
+    button: 0,
+    buttons: 1,
+    clientX: sourceBox.x + 8,
+    clientY: sourceBox.y + sourceBox.height / 2
+  });
+  await source.dispatchEvent("pointermove", {
+    pointerId: 7,
+    pointerType: "touch",
+    buttons: 1,
+    clientX: sourceBox.x + 22,
+    clientY: sourceBox.y + sourceBox.height / 2
+  });
+  await expect(target).toHaveClass(/drop-ready/);
+  await source.dispatchEvent("pointercancel", {
+    pointerId: 7,
+    pointerType: "touch",
+    buttons: 0,
+  });
+
+  const fused = await page.evaluate(({ sourceId, targetId }) => (
+    window.__chibattle.performHandFusionDrop(sourceId, targetId)
+  ), ids);
+  expect(fused).toBe(true);
+
+  const result = await page.evaluate(({ sourceId, targetId }) => {
+    const api = window.__chibattle;
+    return {
+      handBaseIds: api.state.players.player.hand.map((card) => card.baseId),
+      handIds: api.state.players.player.hand.map((card) => card.instanceId),
+      trashIds: api.state.players.player.trash.map((card) => card.instanceId)
+    };
+  }, ids);
+
+  expect(result.handBaseIds).toContain("double_diamond");
+  expect(result.handIds).not.toContain(ids.sourceId);
+  expect(result.handIds).not.toContain(ids.targetId);
+  expect(result.trashIds).toEqual(expect.arrayContaining([ids.sourceId, ids.targetId]));
+});
+
 test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残したまま勝利する", async ({ page }) => {
   await page.goto(gameUrl);
 
