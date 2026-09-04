@@ -15580,7 +15580,7 @@
     }
 
     .ordered-attendance-arrival {
-      animation: ordered-attendance-arrive 260ms cubic-bezier(.18,.78,.25,1) both;
+      animation: ordered-attendance-arrive 180ms cubic-bezier(.18,.78,.25,1) both;
       z-index: 7;
     }
 
@@ -18462,9 +18462,9 @@
     const ATTACK_FOCUS_STEP_DELAY = 700;
     const EFFECT_FEEDBACK_GAP_MS = 280;
     const ORDERED_ATTENDANCE_INITIAL_DELAY_MS = PLAY_REVEAL_MS + 80;
-    const ORDERED_ATTENDANCE_STEP_MS = 280;
-    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 760;
-    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 1120;
+    const ORDERED_ATTENDANCE_STEP_MS = 180;
+    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 580;
+    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 860;
     let activeEffectFeedbackSequence = null;
     let activeEffectFeedbackDelay = 0;
     let effectFeedbackEventSerial = 0;
@@ -26473,7 +26473,7 @@
         target.classList.remove("ordered-attendance-arrival");
         void target.offsetWidth;
         target.classList.add("ordered-attendance-arrival");
-        window.setTimeout(() => target.classList.remove("ordered-attendance-arrival"), 420);
+        window.setTimeout(() => target.classList.remove("ordered-attendance-arrival"), 240);
       });
     }
 
