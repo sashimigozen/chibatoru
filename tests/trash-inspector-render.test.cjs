@@ -45,15 +45,32 @@ test("同名スタック・タイプの実枚数・戦意0を含む昇順見出�
   assert.match(panel.innerHTML, /×2/);
   assert.deepEqual([...panel.innerHTML.matchAll(/<h3[^>]*>(.*?)<\/h3>/g)].map(m => m[1]), ["戦意 0", "戦意 2", "戦意 3"]);
 });
-test("相手への切り替えとタイプ絞り込み、カード詳細の参照", () => {
-  const { context, panel, title, render, click } = setup(); render();
-  click("side", "opponent");
+test("相手の校外のタイプ絞り込み、カード詳細の参照", () => {
+  const { context, panel, title, render, click } = setup();
+  context.state.battleInspector.side = "opponent";
+  render();
   assert.equal(title.textContent, "相手の校外");
   assert.match(panel.innerHTML, /すべて 1枚/);
   click("filter", "student");
   assert.match(panel.innerHTML, /カードはありません/);
   click("filter", "item"); click("card", "e");
   assert.equal(context.preview.instanceId, "e");
+});
+test("各校外エリアから対応する一覧を開き、一覧内に自分・相手タブを表示しない", () => {
+  const { context, panel, title } = setup();
+  const handlers = {};
+  context.openBattleInspector = detail => { context.state.battleInspector = detail; context.renderBattleInspector(); };
+  vm.runInContext(html.match(/function openTrashOverview\(side\) \{[\s\S]*?\n    \}/)[0], context);
+  for (const side of ["player", "opponent"]) {
+    const name = `${side}TrashButton`;
+    context.elements[name] = { addEventListener: (_, fn) => { handlers[side] = fn; } };
+    vm.runInContext(html.split("\n").find(line => line.includes(`elements.${name}.addEventListener("click"`)), context);
+    handlers[side]();
+    assert.equal(context.state.battleInspector.side, side);
+    assert.equal(title.textContent, side === "player" ? "自分の校外" : "相手の校外");
+    assert.doesNotMatch(panel.innerHTML, /data-inspector-side|battle-inspector-side/);
+    assert.match(panel.innerHTML, side === "player" ? /すべて 4枚/ : /すべて 1枚/);
+  }
 });
 test("縮小カード描画でも校外の実カードを変更しない", () => {
   const { context, render } = setup(); const before = JSON.stringify(context.state.players);

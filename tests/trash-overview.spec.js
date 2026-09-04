@@ -26,6 +26,8 @@ for (const side of ["player", "opponent"]) {
     const before = await page.evaluate(() => JSON.stringify(window.__chibattle.state.players));
     await page.locator(`#${side}TrashButton`).click();
     const panel = page.locator("#battleDrawerInspector");
+    await expect(panel.locator("[data-inspector-side]")).toHaveCount(0);
+    await expect(page.locator("#battleDrawerTitle")).toHaveText(side === "player" ? "自分の校外" : "相手の校外");
     await expect(panel.locator(".battle-inspector-card")).toHaveCount(5);
     for (const [type, text] of Object.entries({ all: "すべて 8枚", student: "学生 3枚", teacher: "教師 1枚", vampire: "ヴァンパイア 1枚", item: "持ち物 2枚", environment: "環境 1枚" })) {
       await expect(panel.locator(`[data-inspector-filter="${type}"]`)).toHaveText(text);

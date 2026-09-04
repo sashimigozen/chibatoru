@@ -13153,9 +13153,6 @@
     .battle-screen .battle-inspector-tab.active { border-color:#5b9dee; background:#cfe6ff; color:#174e8d; }
     .battle-screen .battle-inspector-card { margin:8px 0; border:1px solid rgba(203,220,235,.4); border-radius:5px; padding:9px; background:rgba(255,255,255,.08); color:#f5f8fb; font-size:13px; font-weight:800; }
     .battle-screen .battle-inspector-card.self { border-color:#6caeff; } .battle-screen .battle-inspector-card.opponent { border-color:#ee7880; }
-    .battle-screen .battle-inspector-sides { display:flex; gap:6px; margin-bottom:12px; }
-    .battle-screen .battle-inspector-side { flex:1; padding:10px 6px; border:1px solid #71869b; border-radius:5px; background:#24364a; color:#eff5fb; font-weight:800; }
-    .battle-screen .battle-inspector-side.active { border-color:#6caeff; background:#234f78; }
     .battle-screen .battle-inspector-cost { margin:20px 0 9px; padding-top:12px; border-top:1px solid #64778a; color:#d6e7f8; text-align:center; font-size:15px; font-weight:800; }
     .battle-screen .battle-inspector-card.stacked { position:relative; display:flex; align-items:center; gap:10px; width:100%; min-height:72px; padding:7px 12px; overflow:hidden; border-radius:18px 4px 4px 18px; background:#24364a; text-align:left; }
     .battle-screen .battle-inspector-card.stacked:hover { background:#304b67; }
@@ -17812,7 +17809,7 @@
         date: "2026年9月4日",
         summary: "トークンカードの消滅、プロテインドリンカーの攻撃力調整、講義の実行表示を追加し、カオスルールを変更しました。カオスデッキの再編集時の枚数を修正し、分類の絞り込みを削除しました。AIのキングギドラベッドの効果選択も改善し、校外の同名カードをまとめてタイプ別の枚数を表示するようにしました。",
         changes: [
-          { title: "校外の確認表示", before: "校外の確認一覧では同じカードが1枚ずつ表示され、タイプごとの枚数が分からなかった。", after: "校外に現在ある同名カードをまとめ、カード名・カードの縮小表示・枚数を横長の行で表示。基本戦意の低い順に見出しで区切り、自分・相手の校外を一覧内で切り替えられるようにした。タイプの切り替え欄には、合計枚数と学生・教師・ヴァンパイア・持ち物・環境それぞれの枚数を表示。行を押すとカード詳細を確認できる。" },
+          { title: "校外の確認表示", before: "校外の確認一覧では同じカードが1枚ずつ表示され、タイプごとの枚数が分からなかった。", after: "校外に現在ある同名カードをまとめ、カード名・カードの縮小表示・枚数を横長の行で表示。基本戦意の低い順に見出しで区切る。自分・相手それぞれの講義室の隣にある校外エリアから確認し、一覧内には自分・相手の切り替えタブを表示しない。タイプの切り替え欄には、合計枚数と学生・教師・ヴァンパイア・持ち物・環境それぞれの枚数を表示。行を押すとカード詳細を確認できる。" },
           { title: "AIのキングギドラベッドの使い方", before: "手札と破壊対象があると効果2を優先し、全体ダメージで倒せる人数や、本体へのダメージで勝てるかを十分に比較していなかった。", after: "効果1で実際に倒せる人数と与えられるダメージ、効果2で除去する出席者の危険度と捨てる手札の価値を比較するよう変更。今ターン勝てる場合や、安全に次の自分のターンの勝利を狙える場合は効果3を優先し、先に倒される危険がある場合は盤面の除去を優先する。戦意8以上では従来どおり全効果を使用し、効果2の対象は効果1の後に残る出席者から選ぶ。" },
           { title: "カオスデッキの再編集", before: "同じカードを4枚以上入れて保存したカオスデッキを「変更する」で開くと、通常ルールの同名枚数制限が適用され、枚数が3枚などに減っていた。", after: "カオスデッキを再編集するときは同名枚数制限を適用せず、保存した枚数をそのまま読み込むよう修正。通常・専攻デッキの枚数制限は変更しない。" },
           { title: "デッキ編成の絞り込み", before: "カード検索・絞り込みに、タイプ・戦意に加えて分類の選択欄があった。", after: "分類の選択欄と分類による絞り込みを削除。カード名・カードテキストの検索、タイプ・戦意の絞り込みは引き続き使用できる。" },
@@ -42653,9 +42650,6 @@
       const filters = ["all", "student", "teacher", "vampire", "item", "environment"];
       const labels = { all:"すべて", student:"学生", teacher:"教師", vampire:"ヴァンパイア", item:"持ち物", environment:"環境" };
       const trash = state.players[detail.side].trash;
-      const sideTabs = detail.kind === "trash"
-        ? `<div class="battle-inspector-sides" aria-label="確認する校外">${["player", "opponent"].map((side) => `<button type="button" class="battle-inspector-side${detail.side === side ? " active" : ""}" data-inspector-side="${side}" aria-pressed="${detail.side === side}">${side === "player" ? "自分" : "相手"}の校外</button>`).join("")}</div>`
-        : "";
       const tabs = detail.kind === "trash"
         ? `<div class="battle-inspector-tabs">${filters.map((filter) => `<button class="battle-inspector-tab${detail.filter === filter ? " active" : ""}" data-inspector-filter="${filter}">${labels[filter]} ${trash.filter((card) => filter === "all" || card.type === filter).length}枚</button>`).join("")}</div>`
         : "";
@@ -42677,7 +42671,7 @@
       title.textContent = detail.kind === "trash" ? `${ownerName}の校外` : `${ownerName}の遅刻ゾーン`;
       elements.log?.classList.add("hidden");
       inspector.classList.remove("hidden");
-      inspector.innerHTML = `${sideTabs}${tabs}${entries.length ? entries.map((entry, index) => {
+      inspector.innerHTML = `${tabs}${entries.length ? entries.map((entry, index) => {
         if (detail.kind !== "trash") return `<button class="battle-inspector-card ${ownerClass}" data-inspector-card="${entry.card.instanceId}">${escapeHtml(entry.text)}</button>`;
         const heading = index === 0 || entries[index - 1].cost !== entry.cost
           ? `<h3 class="battle-inspector-cost">${Number.isFinite(entry.cost) ? `戦意 ${entry.cost}` : "戦意なし"}</h3>` : "";
@@ -42686,10 +42680,6 @@
         return `${heading}<button type="button" class="battle-inspector-card ${ownerClass} stacked" data-inspector-card="${entry.card.instanceId}"><span class="battle-inspector-name">${escapeHtml(entry.text)}</span><span class="battle-inspector-thumbnail" aria-hidden="true"><span class="card ${entry.card.type}${cardVisualClass(thumbnail)}">${cardTemplate(thumbnail, false)}</span></span><span class="battle-inspector-count">×${entry.count}</span></button>`;
       }).join("") : `<p class="battle-inspector-empty">カードはありません。</p>`}`;
       scheduleCardTemplateScaleSync();
-      inspector.querySelectorAll("[data-inspector-side]").forEach((button) => button.addEventListener("click", () => {
-        state.battleInspector.side = button.dataset.inspectorSide;
-        renderBattleInspector();
-      }));
       inspector.querySelectorAll("[data-inspector-filter]").forEach((button) => button.addEventListener("click", () => {
         state.battleInspector.filter = button.dataset.inspectorFilter;
         renderBattleInspector();
