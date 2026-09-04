@@ -84,7 +84,7 @@ const ROOM_RULE_DEFINITIONS = Object.freeze({
   chaos: Object.freeze({
     id: "chaos",
     name: "カオス",
-    description: "すべての直接編成可能カードを、同名・エースぺ制限なしで使用します。",
+    description: "すべてのカードの戦意は0。自分のターン開始時、手札が5枚になるまで引きます（5枚以上なら引きません）。同名・エースぺ制限なしで編成できます。",
     deck: Object.freeze({ formats: Object.freeze(["chaos"]), minCards: MIN_DECK_CARDS, maxCards: MAX_DECK_CARDS, copyLimit: "none", aceLimit: null, specialty: "none" })
   })
 });

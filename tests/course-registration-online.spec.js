@@ -217,6 +217,43 @@ test("ホストがカオスルールでデッキを選び準備OKにしても通
       copies: window.__chibattle.state.players.player.originalDeckCounts.general_student,
       valid: window.__chibattle.state.players.player.deckValid.valid
     }))).toEqual({ roomRuleId: "chaos", battleRuleId: "chaos", copies: 40, valid: true });
+    // 実際のホスト→ゲスト同期で、両者の手番に補充と無料使用が反映される。
+    for (const side of ["player", "opponent"]) {
+      const expected = await host.evaluate((owner) => {
+        const api = window.__chibattle;
+        const { state } = api;
+        state.phase = "battle";
+        state.currentSide = owner;
+        state.gameOver = false;
+        state.aiThinking = false;
+        state.courseRegistration = null;
+        state.environment = null;
+        state.actionTurn += 1;
+        for (const boardOwner of ["player", "opponent"]) {
+          state.players[boardOwner].board = { teacher: null, seats: Array(9).fill(null) };
+        }
+        const player = state.players[owner];
+        player.hand = [api.createCardFromBase("protein_drinker", owner)];
+        player.deck = Array.from({ length: 10 }, () => api.createCardFromBase("protein_drinker", owner));
+        api.startTurn(owner);
+        const filled = player.hand.length;
+        player.will = 0;
+        const card = player.hand[0];
+        const used = api.placeCardFromHand(owner, card.instanceId, "seat", owner, 0, true);
+        api.onlineBroadcastState(true);
+        return { filled, used, id: card.instanceId, seq: state.online.lastSnapshotSeq };
+      }, side);
+      expect(expected.filled).toBe(5);
+      expect(expected.used).toBe(true);
+      await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(expected.seq);
+      const guestSide = side === "player" ? "opponent" : "player";
+      expect(await guest.evaluate((owner) => {
+        const api = window.__chibattle;
+        const player = api.state.players[owner];
+        return { rule: api.state.battleRuleId, will: player.will, hand: player.hand.length,
+          id: player.board.seats[0]?.instanceId, cost: api.effectiveCardCost(player.board.seats[0]) };
+      }, guestSide)).toEqual({ rule: "chaos", will: 0, hand: 4, id: expected.id, cost: 0 });
+    }
   } finally {
     await hostContext.close();
     await guestContext.close();
