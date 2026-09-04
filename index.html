@@ -3228,6 +3228,14 @@
       pointer-events: none;
     }
 
+    .board-card .board-effect-order-badge {
+      top: 2px;
+      right: 2px;
+      width: 24px;
+      height: 24px;
+      font-size: 14px;
+    }
+
     .mulligan-card .card-name {
       font-size: 15px;
     }
@@ -17711,6 +17719,11 @@
         summary: "新カード4枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作、複数出席とダメージ演出の順次表示を追加しました。",
         changes: [
           {
+            title: "股間ファブリーズの対象選択・効果",
+            before: "自分の出席者と相手の教師を別画面の一覧から選んでいた。体力を1にする処理が盤面に反映されず、教師の出席時効果も相手側を使用者として処理していた。",
+            after: "自分の「あえー」と相手の教師を講義室で直接選び、ターン終了ボタンが変化した「指名する」でそれぞれ確定する操作に変更。選んだ「あえー」の体力を1にし、教師の出席時効果を自分が使用する向きで発動するよう修正。ロジックハンターなら相手の手札を確認し、選んだ1枚を校外エリアへ送る。複数の教師の効果は選んだ順に発動し、途中の選択を終えてから次へ進む。選択中の教師カードの右上に発動順の番号を表示し、選び直した場合も番号を振り直す。ほかの効果の処理順は変更しない。"
+          },
+          {
             title: "新カード",
             after: "「やべー！！」\n持ち物／バカでかい型／戦意2\n相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。"
           },
@@ -18542,6 +18555,7 @@
       pendingGitchSummon: null,
       pendingGigiResurrection: null,
       pendingSpecialAttendanceQueue: null,
+      pendingCrotchFebrezeEffects: null,
       resolvingOrderedAttendance: false,
       courseRegistration: null,
       pendingSmallOmataTransform: null,
@@ -21898,6 +21912,7 @@
         || type === "titleMatch"
         || type === "courseRegistration"
         || type === "philosophyCheating"
+        || type === "crotchFebreze"
         || (type === "playCard" && isRewardFoilCard(commandCard))
         || Boolean(commandCard?.evolutionFrom)
         || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
@@ -22573,6 +22588,7 @@
         : null;
       snapshotState.pendingCopiedCard = pendingGuestPlacement;
       snapshotState.pendingSpecialAttendanceQueue = null;
+      snapshotState.pendingCrotchFebrezeEffects = null;
       snapshotState.pendingGigiResurrection = null;
       if (pendingGuestPlacement) {
         snapshotState.message = `特殊出席：${pendingGuestPlacement.name}を出席させる場所を選んでください。`;
@@ -22594,6 +22610,10 @@
       const preservedThinItemChoice = preserveOnlineThinItemChoice();
       const preservedCourseRegistrationChoice = preserveOnlineCourseRegistrationChoice();
       const preservedCourseRegistrationConsent = preserveOnlineCourseRegistrationConsent();
+      const preservedCrotchTargets = isOnlineGuest() && state.pendingMultiItem?.mode?.startsWith("crotch_febreze_")
+        ? { selection: JSON.parse(JSON.stringify(state.pendingMultiItem)), message: state.message } : null;
+      const preservedLogicHunterChoice = isOnlineGuest() && state.pendingCardChoice?.mode === "logic_hunter_online_response"
+        ? state.pendingCardChoice : null;
       const preservedMulliganSelection = isOnlineGuest()
         && state.phase === "mulligan"
         && !state.players.player.mulliganUsed
@@ -22615,6 +22635,18 @@
       restoreOnlineThinItemChoice(preservedThinItemChoice);
       restoreOnlineCourseRegistrationChoice(preservedCourseRegistrationChoice);
       restoreOnlineCourseRegistrationConsent(preservedCourseRegistrationConsent);
+      if (isOnlineGuest() && state.phase === "battle" && state.currentSide === "player" && !state.gameOver) {
+        if (preservedCrotchTargets && getHandCard("player", preservedCrotchTargets.selection.itemId)) {
+          state.pendingMultiItem = preservedCrotchTargets.selection;
+          state.selectedHandId = preservedCrotchTargets.selection.itemId;
+          state.pendingMultiItem.targets = state.pendingMultiItem.targets.filter((ref) => canSelectMultiItemTarget(ref.owner, ref.zone, ref.index));
+          state.message = preservedCrotchTargets.message;
+        }
+        if (preservedLogicHunterChoice) {
+          state.pendingCardChoice = preservedLogicHunterChoice;
+          state.message = preservedLogicHunterChoice.message;
+        }
+      }
       nextCardInstanceId = snapshot.nextCardInstanceId || nextCardInstanceId;
       pendingAnimations.length = 0;
       closeItemConfirm();
@@ -22892,6 +22924,7 @@
       const transformed = JSON.parse(JSON.stringify(hostState));
       transformed.pendingCopiedCard = null;
       transformed.pendingSpecialAttendanceQueue = null;
+      transformed.pendingCrotchFebrezeEffects = null;
       transformed.pendingGigiResurrection = null;
       transformed.message = onlineDisplayTextForSpectator(transformed.message);
       transformed.log = (transformed.log || []).map(onlineDisplayTextForSpectator);
@@ -23525,6 +23558,7 @@
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.pendingSpecialAttendanceQueue = null;
+      state.pendingCrotchFebrezeEffects = null;
       state.courseRegistration = null;
       state.pendingRaptorTemple = null;
       state.pendingKingGhidorahBed = null;
@@ -24205,6 +24239,7 @@
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.pendingSpecialAttendanceQueue = null;
+      state.pendingCrotchFebrezeEffects = null;
       state.pendingRaptorTemple = null;
       state.pendingKingGhidorahBed = null;
       hideBattleCardPreview();
@@ -27788,59 +27823,94 @@
         render();
         return true;
       }
-      return openCardChoice({
+      clearSelections();
+      state.selectedHandId = item.instanceId;
+      state.pendingMultiItem = {
         mode: "crotch_febreze_ae",
         itemId: item.instanceId,
-        title: item.name,
-        message: "体力を1にする自分の「あえー」と名のつく出席者を好きな人数選んでください。",
-        cards: candidates,
-        min: 1,
-        max: candidates.length,
-        confirmLabel: "次へ"
-      });
+        targets: [],
+        maxTargets: candidates.length
+      };
+      state.message = "講義室にいる自分の「あえー」を選び、「指名する」で確定してください。";
+      render();
+      return true;
     }
 
     function openCrotchFebrezeTeacherChoice(item, aeIds) {
       const candidates = boardCardsForChoice("opponent", (card) => card.type === "teacher" && !isPadlocked(card));
-      return openCardChoice({
+      state.pendingMultiItem = {
         mode: "crotch_febreze_teacher",
         itemId: item.instanceId,
-        title: item.name,
-        message: "発動させる相手の教師の出席時効果を、選んだ「あえー」と同じ人数まで選んでください。",
-        cards: candidates,
-        min: 0,
-        max: Math.min(aeIds.length, candidates.length),
-        confirmLabel: "効果を発動"
-        ,context: { aeIds }
-      });
+        targets: [],
+        maxTargets: Math.min(aeIds.length, candidates.length),
+        aeIds
+      };
+      state.message = `相手の講義室の教師を${state.pendingMultiItem.maxTargets}人まで選び、「指名する」で確定してください。0人でも確定できます。`;
+      render();
+      return true;
     }
 
     function resolveCrotchFebreze(side, item, aeIds = [], teacherIds = [], renderAfter = true) {
       if (!item || item.baseId !== "crotch_febreze") return false;
       const aeTargets = boardCardsForChoice(side, (card) => isAeNamedAttendee(card))
-        .filter((card) => aeIds.includes(card.instanceId));
-      const teacherTargets = boardCardsForChoice(oppositeSide(side), (card) => card.type === "teacher" && !isPadlocked(card))
-        .filter((card) => teacherIds.includes(card.instanceId)).slice(0, aeTargets.length);
+        .filter((card) => aeIds.includes(card.instanceId))
+        .map((card) => getBoardCardFromRef(card.choiceRef));
+      const teachersById = new Map(boardCardsForChoice(oppositeSide(side), (card) => card.type === "teacher" && !isPadlocked(card))
+        .map((card) => [card.instanceId, card]));
+      // Only this effect follows the user's selection order, including remote
+      // commands. Validate and deduplicate IDs without re-sorting by board slot.
+      const teacherTargets = [...new Set(teacherIds)]
+        .map((id) => teachersById.get(id)).filter(Boolean).slice(0, aeTargets.length);
       if (aeTargets.length === 0 || !payForItem(side, item)) return false;
       aeTargets.forEach((target) => { target.currentHp = Math.min(1, target.currentHp ?? 1); });
-      teacherTargets.forEach((target) => {
-        const ref = target.choiceRef;
-        // This deliberately reuses only the printed attendance handler; the
-        // teacher is not moved/re-attended and shared attendance listeners do
-        // not fire a second time.
-        resolveAttendEffects(oppositeSide(side), target, ref.zone, ref.index, {
-          attendanceSource: ATTENDANCE_SOURCE.HAND,
-          forcedBy: item.baseId
-        });
-      });
       showCardPlayAnimation(item, "trash");
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}を使い、「あえー」${aeTargets.length}人の体力を1にし、相手教師${teacherTargets.length}人の出席時効果を発動しました。`);
       cleanupDestroyedCards();
       applyBoardAuras();
       clearSelections();
+      state.pendingCrotchFebrezeEffects = {
+        side,
+        commandId: state.online.activeRemoteCommandId || "",
+        cards: teacherTargets.map((target) => ({
+          ...JSON.parse(JSON.stringify(target)), owner: side, copiedAttendanceEffect: true
+        }))
+      };
+      continueCrotchFebrezeEffects();
       if (renderAfter) render();
       return true;
+    }
+
+    // Copy only the printed attendance effects, never move or re-attend the
+    // enemy teacher. Finish each choice/summon before starting the next effect.
+    function continueCrotchFebrezeEffects() {
+      const pending = state.pendingCrotchFebrezeEffects;
+      if (!pending || pending.resolving) return;
+      if (state.gameOver) {
+        state.pendingCrotchFebrezeEffects = null;
+        return;
+      }
+      const waiting = () => Boolean(state.pendingCardChoice || state.pendingAttendTarget
+        || state.pendingRemoteHandTrim || state.pendingCopiedCard
+        || state.resolvingOrderedAttendance || state.pendingCardPlay);
+      pending.resolving = true;
+      const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+      if (pending.side === "opponent" && isOnlineHost()) state.online.isHandlingRemoteCommand = true;
+      try {
+        while (pending.cards.length && !waiting() && !state.gameOver) {
+          const source = pending.cards.shift();
+          resolveAttendEffects(pending.side, source, "teacher", null, {
+            attendanceSource: ATTENDANCE_SOURCE.HAND,
+            forcedBy: "crotch_febreze", commandId: pending.commandId
+          });
+          cleanupDestroyedCards();
+          applyBoardAuras();
+        }
+        if (!pending.cards.length) state.pendingCrotchFebrezeEffects = null;
+      } finally {
+        pending.resolving = false;
+        state.online.isHandlingRemoteCommand = wasHandlingRemote;
+      }
     }
 
     function openPhilosophyCheatingChoice(item) {
@@ -28187,26 +28257,6 @@
         resolveBigWall("player", item, selectedIds, true);
         return;
       }
-      if (mode === "crotch_febreze_ae") {
-        const item = getHandCard("player", itemId);
-        if (!item) return;
-        openCrotchFebrezeTeacherChoice(item, selectedIds);
-        return;
-      }
-      if (mode === "crotch_febreze_teacher") {
-        const item = getHandCard("player", itemId);
-        const aeIds = pending.context?.aeIds || [];
-        if (!item) return;
-        if (onlineCanSendCommand()) {
-          onlineSendCommand("crotchFebreze", { instanceId: item.instanceId, aeIds, teacherIds: selectedIds });
-          state.message = "股間ファブリーズの選択を送信しました。";
-          clearSelections();
-          render();
-          return;
-        }
-        resolveCrotchFebreze("player", item, aeIds, selectedIds, true);
-        return;
-      }
       if (mode === "philosophy_cheating") {
         const item = getHandCard("player", itemId);
         if (!item) return;
@@ -28353,7 +28403,7 @@
         return;
       }
       if (mode === "logic_hunter") {
-        const source = state.players.player.board.teacher;
+        const source = pending.context?.sourceCard || state.players.player.board.teacher;
         discardOpponentHandCardById("player", selectedIds[0], source, true);
         return;
       }
@@ -30959,7 +31009,8 @@
             cards: opponentHand,
             min: 1,
             max: 1,
-            confirmLabel: "選んで送る"
+            confirmLabel: "選んで送る",
+            context: { sourceCard: card }
           });
         } else if (isOnlineHost() && state.online.isHandlingRemoteCommand && requestRemoteLogicHunterChoice(side, card, options.commandId || "")) {
           addLog(`${card.name}の効果：相手が校外エリアへ送る手札を選んでいます。`);
@@ -31179,6 +31230,7 @@
         targetOwner,
         sourceCardName: sourceCard.name,
         sourceCardInstanceId: sourceCard.instanceId,
+        copiedSourceCard: sourceCard.copiedAttendanceEffect ? sourceCard : null,
         awaitingRemote: false
       };
       state.selectedHandId = null;
@@ -31201,6 +31253,7 @@
         targetOwner,
         sourceCardName: sourceCard.name,
         sourceCardInstanceId: sourceCard.instanceId,
+        copiedSourceCard: sourceCard.copiedAttendanceEffect ? sourceCard : null,
         effect: "small_omata",
         awaitingRemote: false
       };
@@ -31314,7 +31367,7 @@
         return false;
       }
 
-      const sourceCard = listBoardRefs(pending.sourceSide || side)
+      const sourceCard = pending.copiedSourceCard || listBoardRefs(pending.sourceSide || side)
         .map((ref) => getBoardCardFromRef(ref))
         .find((card) => card?.instanceId === pending.sourceCardInstanceId)
         || null;
@@ -31714,7 +31767,7 @@
         return;
       }
       const selectedCard = getSelectedHandCard();
-      if (state.pendingMultiItem && ["i_got_it", "big_wall"].includes(selectedCard?.baseId)) {
+      if (state.pendingMultiItem && ["i_got_it", "big_wall", "crotch_febreze"].includes(selectedCard?.baseId)) {
         toggleMultiItemTarget(owner, zone, index);
         return;
       }
@@ -32488,6 +32541,15 @@
       if (!pending || !item || !target) return;
       const isBigWall = pending.mode === "big_wall" && item.baseId === "big_wall";
       const isIGotIt = item.baseId === "i_got_it";
+      if (item.baseId === "crotch_febreze") {
+        if (!canSelectMultiItemTarget(owner, zone, index)) return;
+        const selected = pending.targets.findIndex((ref) => refsMatch(ref, { owner, zone, index }));
+        if (selected >= 0) pending.targets.splice(selected, 1);
+        else if (pending.targets.length < pending.maxTargets) pending.targets.push({ owner, zone, index });
+        state.message = `${pending.mode === "crotch_febreze_ae" ? "自分の「あえー」" : "相手の教師"}を${pending.targets.length}人選択中。「指名する」で確定してください。`;
+        render();
+        return;
+      }
       if (!isBigWall && !isIGotIt) return;
       const validTarget = isBigWall
         ? owner === "player" && zone === "seat" && seatRow(index) === 1 && target.type === "student"
@@ -32521,6 +32583,27 @@
       const pending = state.pendingMultiItem;
       const item = pending ? getHandCard("player", pending.itemId) : null;
       if (!pending || !item) return;
+      if (item.baseId === "crotch_febreze") {
+        const selectedIds = pending.targets
+          .filter((ref) => canSelectMultiItemTarget(ref.owner, ref.zone, ref.index))
+          .map((ref) => getBoardCardFromRef(ref).instanceId);
+        if (pending.mode === "crotch_febreze_ae") {
+          if (!selectedIds.length) return;
+          openCrotchFebrezeTeacherChoice(item, selectedIds);
+        } else if (pending.mode === "crotch_febreze_teacher") {
+          if (selectedIds.length > pending.maxTargets) return;
+          if (onlineCanSendCommand()) {
+            if (onlineSendCommand("crotchFebreze", { instanceId: item.instanceId, aeIds: pending.aeIds, teacherIds: selectedIds })) {
+              clearSelections();
+              state.message = "股間ファブリーズの指名を送信しました。";
+              render();
+            }
+          } else {
+            resolveCrotchFebreze("player", item, pending.aeIds, selectedIds, true);
+          }
+        }
+        return;
+      }
       if (pending.mode === "big_wall" && item.baseId === "big_wall") {
         if (pending.targets.length !== 2) return;
         const selectedIds = pending.targets
@@ -35640,6 +35723,7 @@
     }
 
     function render() {
+      continueCrotchFebrezeEffects();
       renderScreen();
       renderHomeNavigation();
       renderTutorial();
@@ -36100,13 +36184,14 @@
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
       const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingDestroyItem || state.pendingThreeGestures || state.pendingKingGhidorahBed);
+      const choosingCrotchFebreze = state.pendingMultiItem?.mode?.startsWith("crotch_febreze_");
       const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingAttendTarget || state.pendingKingGhidorahBed || state.pendingRemoteHandTrim);
       const destructiveConfirmation = Boolean(
         state.pendingDestroyItem
         || (state.pendingPanpanItem?.stage === "enemy")
         || state.pendingKingGhidorahBed
       );
-      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || (!state.pendingMultiItem && !state.pendingPanpanItem && !state.pendingDestroyItem && !state.pendingKingGhidorahBed));
+      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || choosingCrotchFebreze || (!state.pendingMultiItem && !state.pendingPanpanItem && !state.pendingDestroyItem && !state.pendingKingGhidorahBed));
       elements.itemTargetConfirmButton.classList.toggle("destroy-confirm", destructiveConfirmation);
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? state.pendingMultiItem.mode === "big_wall"
@@ -36130,7 +36215,7 @@
         ))
         || (state.pendingDestroyItem && !state.pendingDestroyItem.target)
         || (state.pendingKingGhidorahBed && !state.pendingKingGhidorahBed.target);
-      elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || choosingItemTargets || waitingForCardChoice);
+      elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || (choosingItemTargets && !choosingCrotchFebreze) || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
         || state.phase !== "battle"
         || state.gameOver
@@ -36142,12 +36227,13 @@
         || Boolean(state.online.pendingTurnCommandId)
         || Boolean(state.pendingCopiedCard)
         || Boolean(state.pendingThreeGestures)
-        || waitingForCardChoice;
+        || waitingForCardChoice
+        || (choosingCrotchFebreze && state.pendingMultiItem.mode === "crotch_febreze_ae" && !state.pendingMultiItem.targets.length);
       const recommendEndTurn = !elements.endTurnButton.disabled
         && !choosingItemTargets
         && !playerHasAvailableAction();
       elements.endTurnButton.classList.toggle("recommended", recommendEndTurn);
-      elements.endTurnButton.textContent = recommendEndTurn ? "ターン終了" : "ターン終了";
+      elements.endTurnButton.textContent = choosingCrotchFebreze ? "指名する" : "ターン終了";
       elements.battleBackHomeButton.textContent = spectator ? "観戦を終了" : "勝てない";
       elements.resetButton.classList.toggle("hidden", spectator || !cardTestBattle);
       const playerDeckValid = validateDeckCounts(state.deckBuilder.counts.player).valid;
@@ -38623,6 +38709,16 @@
       button.dataset.baseId = card.baseId;
       button.innerHTML = fieldCardTemplate(card);
       appendBoardChangeFeedback(button, card);
+      if (state.pendingMultiItem?.mode === "crotch_febreze_teacher") {
+        const order = state.pendingMultiItem.targets.findIndex((ref) => refsMatch(ref, { owner, zone, index }));
+        if (order >= 0) {
+          const badge = document.createElement("span");
+          badge.className = "choice-order-badge board-effect-order-badge";
+          badge.textContent = String(order + 1);
+          badge.setAttribute("aria-label", `${order + 1}番目に効果を発動`);
+          button.appendChild(badge);
+        }
+      }
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
         isSelectedAttacker(owner, zone, index)
@@ -38794,6 +38890,8 @@
       const pending = state.pendingMultiItem;
       const target = getBoardCard(owner, zone, index);
       if (!pending || !target) return false;
+      if (pending.mode === "crotch_febreze_ae") return owner === "player" && isAeNamedAttendee(target);
+      if (pending.mode === "crotch_febreze_teacher") return owner === "opponent" && target.type === "teacher" && !isPadlocked(target);
       if (pending.mode === "big_wall") {
         return owner === "player" && zone === "seat" && seatRow(index) === 1 && target.type === "student";
       }
@@ -40702,6 +40800,8 @@
         player.board.seats[8] = makePlayerTestAttendee("super_ae_student");
         opponent.board.seats[1] = makeOpponentTestAttendee("bird_a");
         opponent.board.seats[7] = makeOpponentTestAttendee("popular_c");
+        opponent.board.teacher = makeOpponentTestAttendee("logic_hunter");
+        opponent.hand = ["general_student", "water_2l", "general_teacher"].map((id) => createCardFromBase(id, "opponent"));
       }
       if (baseId === "big_laughter") {
         [0, 1, 2].forEach((index) => {
@@ -41046,6 +41146,7 @@
       state.selectionOverlayPeek = false;
       state.pendingCopiedCard = null;
       state.pendingSpecialAttendanceQueue = null;
+      state.pendingCrotchFebrezeEffects = null;
       state.courseRegistration = null;
       state.environment = null;
       state.cafeteriaEffectUntilActionTurn = -1;
@@ -42552,7 +42653,10 @@
       if (source) openRulerFusionChoice(source);
     });
     elements.startButton.addEventListener("click", startBattle);
-    elements.endTurnButton.addEventListener("click", () => endTurn());
+    elements.endTurnButton.addEventListener("click", () => {
+      if (state.pendingMultiItem?.mode?.startsWith("crotch_febreze_")) confirmMultiItemTargets();
+      else endTurn();
+    });
     elements.analyticsJsonlButton.addEventListener("click", exportAnalyticsJsonl);
     elements.analyticsCsvButton.addEventListener("click", exportAnalyticsCsv);
     elements.resetButton.addEventListener("click", () => {
@@ -42749,6 +42853,11 @@
       placeCardFromHand,
       startCardTest,
       beginItemUse,
+      resolveCrotchFebreze,
+      onlineResolveLogicHunterChoiceResponse,
+      resolveAttendTargetChoice,
+      onlineHandleMessage,
+      onlineCreateSnapshot,
       handleBoardCardClick,
       confirmSelectedItemTargets,
       openCourseRegistrationChoice,
