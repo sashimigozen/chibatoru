@@ -17805,6 +17805,14 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.22.2",
+        date: "2026年9月5日",
+        summary: "ログ・メニューが次の試合にも開いたままになる不具合を修正しました。",
+        changes: [
+          { title: "対戦中のログ・メニュー", before: "ログやメニューを開いたまま対戦が終了すると、次の試合でも開いた状態が残っていた。", after: "結果表示時と新しい試合の開始時に、ログ・メニューを閉じるよう修正。校外・遅刻ゾーンの確認一覧も閉じ、次の試合には開いた状態を引き継がない。オンラインのゲスト・観戦側にも適用し、試合中の通常の同期では閉じない。" }
+        ]
+      },
+      {
         version: "ver.0.22.1",
         date: "2026年9月4日",
         summary: "トークンカードの消滅、プロテインドリンカーの攻撃力調整、講義の実行表示を追加し、カオスルールを変更しました。カオスデッキの再編集時の枚数を修正し、分類の絞り込みを削除しました。AIのキングギドラベッドの効果選択も改善し、校外の同名カードをまとめてタイプ別の枚数を表示するようにしました。",
@@ -22777,6 +22785,9 @@
 
     function onlineApplySnapshot(snapshot) {
       if (!snapshot || snapshot.seq <= state.online.lastSnapshotSeq) return;
+      const isNewBattle = state.screen !== "battle" || !state.online.started
+        || state.preBattleToken !== snapshot.state.preBattleToken
+        || (state.gameOver && !snapshot.state.gameOver);
       state.online.lastSnapshotSeq = snapshot.seq;
       const visualBefore = captureOnlineVisualState();
       const preservedThinItemChoice = preserveOnlineThinItemChoice();
@@ -22803,6 +22814,7 @@
       });
       state.deckBuilder = preservedDeckBuilder;
       state.online = preservedOnline;
+      if (isNewBattle) resetBattleDrawers();
       restoreOnlineGuestMulliganState(preservedMulliganSelection, hadLocalMulliganPending);
       restoreOnlineThinItemChoice(preservedThinItemChoice);
       restoreOnlineCourseRegistrationChoice(preservedCourseRegistrationChoice);
@@ -23514,6 +23526,7 @@
 
     function onlineReturnToRoom(sendRemote = true) {
       if (!state.online.role) return;
+      resetBattleDrawers();
       state.online.pendingTurnCommandId = "";
       clearDeferredCardPlay();
       onlineSubmitAnalyticsLog("return_room");
@@ -23688,6 +23701,7 @@
     }
 
     function initializeGame(options = {}) {
+      resetBattleDrawers();
       closeTeacherActionChoice();
       closeCourseRegistrationConsent();
       boardVisualSnapshots.clear();
@@ -35330,6 +35344,7 @@
         && !elements.resultOverlay.classList.contains("hidden")) {
         return;
       }
+      resetBattleDrawers();
       const isLo = Boolean(options.libraryOut) && winner !== "draw";
       const label = isOnlineSpectator()
         ? (winner === "player" ? "プレイヤー1の勝利" : winner === "opponent" ? "プレイヤー2の勝利" : "引き分け")
@@ -40762,6 +40777,7 @@
     }
 
     function startCardTest(baseId) {
+      resetBattleDrawers();
       closeTeacherActionChoice();
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
@@ -41431,6 +41447,7 @@
     }
 
     function startTutorialBattle() {
+      resetBattleDrawers();
       closeTeacherActionChoice();
       nextCardInstanceId = 1;
       pendingAnimations.length = 0;
@@ -42688,6 +42705,12 @@
         const card = entries.find((entry) => entry.card.instanceId === button.dataset.inspectorCard)?.card;
         if (card) showBattleCardPreview(card);
       }));
+    }
+
+    function resetBattleDrawers() {
+      closeBattleInspector();
+      setBattleDrawer(elements.battleMenuDrawer, false);
+      setBattleDrawer(elements.battleLogDrawer, false);
     }
 
     function setBattleDrawer(drawer, open) {
