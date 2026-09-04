@@ -14152,8 +14152,8 @@
     .battle-screen .player-hand .hand-card .card-effect-panel .stat-defense { right: 10px !important; bottom: 76px !important; }
     .battle-screen .player-hand .hand-card .hand-card-stats { display: none !important; }
 
-    /* The special card surface uses the type's deep colour.  It deliberately
-       has no repeating shine: the normal card geometry remains the priority. */
+    /* Keep the gold shell still; the separate prism surface animates without
+       changing the normal card geometry or the playable-card highlight. */
     .battle-screen .player-hand .hand-card.reward-foil > .card-scale-stage {
       padding: 0 !important;
       box-shadow: 0 6px 13px rgba(41, 25, 4, .42) !important;
@@ -14463,6 +14463,72 @@
     .battle-screen .field-card.board-card.reward-foil .field-card-art-name {
       border-color: rgba(255, 255, 255, .42) !important;
       background: rgba(7, 17, 30, .2) !important;
+    }
+
+    /* Shared foil film, below names/stats/status icons and clipped to the face.
+       A separate layer leaves attack-lock chains and selection effects intact. */
+    .reward-prism-surface {
+      position: absolute;
+      z-index: 0;
+      inset: 0;
+      overflow: hidden;
+      border-radius: inherit;
+      pointer-events: none;
+      --prism-cell: 12px;
+      background: linear-gradient(125deg, transparent 12%, rgba(90, 235, 255, .09) 30%, rgba(255, 132, 216, .1) 49%, rgba(255, 223, 106, .08) 69%, transparent 88%);
+    }
+
+    .reward-prism-surface::before {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background: repeating-linear-gradient(125deg, #ffe76b 0%, #44ffc5 12%, #32d5ff 24%, #ae63ff 36%, #ff63c9 48%, #ffb64b 60%, #ffe76b 72%);
+      background-size: 180% 180%;
+      mask-image:
+        repeating-linear-gradient(0deg, #0003 0 .5px, transparent .5px var(--prism-cell)),
+        repeating-linear-gradient(90deg, #0003 0 .5px, transparent .5px var(--prism-cell)),
+        radial-gradient(ellipse 5px 1.2px at 50% 50%, #000 0%, #000b 35%, transparent 100%),
+        radial-gradient(ellipse 1.2px 5px at 50% 50%, #000 0%, #000b 35%, transparent 100%);
+      mask-size: auto, auto, var(--prism-cell) var(--prism-cell), var(--prism-cell) var(--prism-cell);
+      opacity: .8;
+      animation: reward-prism-colors 6s ease-in-out infinite;
+    }
+
+    .reward-prism-surface::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background: linear-gradient(115deg, transparent 30%, rgba(173, 241, 255, .08) 40%, rgba(255, 255, 240, .3) 48%, rgba(255, 191, 232, .12) 54%, transparent 65%);
+      background-size: 300% 100%;
+      animation: reward-prism-reflection 6s ease-in-out infinite;
+    }
+
+    .card.reward-foil .card-face > .card-header,
+    .card.reward-foil .card-face > .card-art-panel,
+    .card.reward-foil .card-face > .card-effect-panel {
+      z-index: 1;
+    }
+
+    .battle-screen .field-card.reward-foil > .reward-prism-surface {
+      --prism-cell: 6px;
+    }
+
+    @keyframes reward-prism-colors {
+      0%, 100% { background-position: 0% 20%; opacity: .7; }
+      50% { background-position: 100% 80%; opacity: 1; }
+    }
+
+    @keyframes reward-prism-reflection {
+      0%, 100% { background-position: 100% 50%; opacity: .3; }
+      50% { background-position: 0% 50%; opacity: .85; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reward-prism-surface::before,
+      .reward-prism-surface::after {
+        animation: none;
+        background-position: 45% 50%;
+      }
     }
 
     /* Playable cards breathe with a cool external glow. Applying it to the
@@ -20301,6 +20367,12 @@
 
     function cardVisualClass(card) {
       return `${isAceCard(card) ? " ace-card" : ""}${card?.darkPresident ? " dark-president-foil" : ""}${cardRewardStyleClass(card)}`;
+    }
+
+    function rewardPrismSurfaceHtml(card) {
+      return cardRewardStyleClass(card)
+        ? '<span class="reward-prism-surface" aria-hidden="true"></span>'
+        : "";
     }
 
     function aceDeckMark(card) {
@@ -39047,6 +39119,7 @@
         return `
           <div class="card-scale-stage">
             <div class="card-face">
+              ${rewardPrismSurfaceHtml(card)}
               <div class="card-header">
                 ${costBadge}
                 <div class="card-name">${escapeHtml(card.name)}</div>
@@ -39132,6 +39205,7 @@
         : "";
       const typeLabel = isAceCard(card) ? `${labelForType(card.type)} / エースぺ` : labelForType(card.type);
       return `
+        ${rewardPrismSurfaceHtml(card)}
         <span class="field-card-title">
           ${cost}
           <span class="field-card-name">${escapeHtml(card.name)}</span>
