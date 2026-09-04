@@ -26,6 +26,7 @@ test("攻撃可能な教師を押すと攻撃か講義かを選べる", async ({
 
   await page.locator("#teacherAttackChoiceButton").click();
   await expect(page.locator("#teacherActionModal")).toBeHidden();
+  await expect(page.locator("#turnOverlay")).not.toHaveText("講義");
   const selected = await page.evaluate(() => window.__chibattle.state.selectedAttacker);
   expect(selected).toMatchObject({ owner: "player", zone: "teacher" });
 });
@@ -44,6 +45,8 @@ test("講義を選ぶと対象の学生だけに1ダメージを与えて教師�
 
   await page.locator("#playerProfessorLane .board-card").click();
   await page.locator("#teacherLectureChoiceButton").click();
+  await expect(page.locator("#turnOverlay")).toHaveText("講義");
+  await expect(page.locator("#turnOverlay")).toHaveClass(/show/);
 
   const after = await page.evaluate(() => {
     const { state } = window.__chibattle;

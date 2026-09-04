@@ -99,6 +99,69 @@ async function prepareBattle(host, guest, sourceSide) {
   return itemId;
 }
 
+for (const sourceSide of ["player", "opponent"]) {
+  test(`${sourceSide === "player" ? "ホスト" : "ゲスト"}が講義を選ぶと双方に講義と表示し、再同期では重複表示しない`, async ({ browser }) => {
+    const { hostContext, guestContext, host, guest } = await connectPlayers(browser);
+    try {
+      await host.evaluate((side) => {
+        const api = window.__chibattle;
+        const { state } = api;
+        state.screen = "battle";
+        state.phase = "battle";
+        state.currentSide = side;
+        state.actionTurn = 3;
+        state.gameOver = false;
+        state.aiThinking = false;
+        state.environment = null;
+        state.effectFeedbackEvents = [];
+        for (const owner of ["player", "opponent"]) {
+          state.players[owner].board.seats = Array(9).fill(null);
+          state.players[owner].board.teacher = null;
+        }
+        const teacher = api.makeBoardCard(api.createCardFromBase("general_teacher", side));
+        teacher.playedOnTurn = 0;
+        state.players[side].board.teacher = teacher;
+        const targetSide = side === "player" ? "opponent" : "player";
+        state.players[targetSide].board.seats[0] = api.makeBoardCard(api.createCardFromBase("protein_drinker", targetSide));
+        api.render();
+        api.onlineBroadcastState(true);
+      }, sourceSide);
+      const localSide = sourceSide === "player" ? "opponent" : "player";
+      await expect.poll(() => guest.evaluate((side) => Boolean(window.__chibattle.state.players[side].board.teacher), localSide)).toBe(true);
+      for (const page of [host, guest]) {
+        await page.evaluate(() => {
+          window.lectureAnnouncementCount = 0;
+          document.getElementById("turnOverlay").addEventListener("animationstart", () => {
+            if (document.getElementById("turnOverlay").textContent === "講義") window.lectureAnnouncementCount += 1;
+          });
+        });
+      }
+      const actor = sourceSide === "player" ? host : guest;
+      await actor.locator("#playerProfessorLane .board-card").click();
+      await actor.locator("#teacherLectureChoiceButton").click();
+      for (const page of [host, guest]) {
+        await expect(page.locator("#turnOverlay")).toHaveText("講義");
+        await expect.poll(() => page.evaluate(() => window.lectureAnnouncementCount)).toBe(1);
+      }
+      const events = await host.evaluate(() => window.__chibattle.state.effectFeedbackEvents.filter(event => event.target === "announcement" && event.text === "講義"));
+      expect(events).toHaveLength(1);
+      const targetSide = sourceSide === "player" ? "opponent" : "player";
+      expect(await host.evaluate((side) => window.__chibattle.state.players[side].board.seats[0].currentHp, targetSide)).toBe(6);
+      const seq = await host.evaluate(() => {
+        window.__chibattle.onlineBroadcastState(true);
+        return window.__chibattle.state.online.lastSnapshotSeq;
+      });
+      await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(seq);
+      // 受信後に予約された演出も含め、再同期で再生しないことを確認する。
+      await guest.waitForTimeout(150);
+      expect(await guest.evaluate(() => window.lectureAnnouncementCount)).toBe(1);
+    } finally {
+      await hostContext.close();
+      await guestContext.close();
+    }
+  });
+}
+
 test("ホストがカオスルールでデッキを選び準備OKにしても通常ルールへ戻らない", async ({ browser }) => {
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
