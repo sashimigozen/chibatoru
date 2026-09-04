@@ -175,3 +175,34 @@ test("旧全解放ファイルの対象外プリズムを除去し、既存金�
   await expect(page.locator("#battleCardPreview .reward-foil")).toHaveCount(1);
   await expect(page.locator("#battleCardPreview .reward-prism-surface")).toHaveCount(0);
 });
+
+test("起動時に他カードのキラキラ解放を保存データから削除し、通常金枠や設定は残す", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.evaluate((key) => {
+    localStorage.setItem(key, JSON.stringify({
+      unlocked: { design: true, gakuyukai_item: true },
+      prismUnlocked: { yuta: true, bird_a: true, vampire: true, king_ghidorah_bed: true },
+      selected: { yuta: "prism", bird_a: "normal", vampire: "prism", king_ghidorah_bed: "prism" }
+    }));
+    localStorage.setItem("unrelated-prism-migration-test", "keep");
+  }, storageKey);
+  await page.reload();
+  const expected = {
+    unlocked: { design: true, gakuyukai_item: true },
+    prismUnlocked: { king_ghidorah_bed: true },
+    selected: { yuta: "reward", bird_a: "normal", king_ghidorah_bed: "prism" }
+  };
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual(expected);
+  expect(await page.evaluate(() => localStorage.getItem("unrelated-prism-migration-test"))).toBe("keep");
+  await page.reload();
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual(expected);
+  expect(await page.evaluate(() => ["yuta", "bird_a", "vampire", "king_ghidorah_bed"].map((id) => window.__chibattle.createCardFromBase(id, "player").rewardFoilStyle)))
+    .toEqual(["gakuyukai", "", "", "king-ghidorah-prism"]);
+});
+
+test("キングギドラベッド未解放の場合は新たに解放せず、不要なキラキラ情報だけ消す", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ unlocked: {}, prismUnlocked: { yuta: true }, selected: { yuta: "prism" } })), storageKey);
+  await page.reload();
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({ unlocked: {}, selected: {} });
+});

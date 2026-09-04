@@ -20043,6 +20043,35 @@
       return Object.fromEntries(ids.filter((id) => source?.prismUnlocked?.[id] === true).map((id) => [id, true]));
     }
 
+    function removeRetiredPrismUnlocks() {
+      const saved = readDungeonCardStyleStorage();
+      let changed = false;
+      if (saved.prismUnlocked && typeof saved.prismUnlocked === "object") {
+        for (const baseId of Object.keys(saved.prismUnlocked)) {
+          if (isPrismCard(baseId)) continue;
+          delete saved.prismUnlocked[baseId];
+          changed = true;
+        }
+        if (changed && Object.keys(saved.prismUnlocked).length === 0) delete saved.prismUnlocked;
+      }
+      if (saved.selected && typeof saved.selected === "object") {
+        for (const [baseId, mode] of Object.entries(saved.selected)) {
+          if (mode !== "prism" || isPrismCard(baseId)) continue;
+          // Restore an already-owned gold style; never grant a new gold unlock.
+          if (hasUnlockedCardRewardStyle(baseId)) saved.selected[baseId] = "reward";
+          else delete saved.selected[baseId];
+          changed = true;
+        }
+      }
+      if (!changed) return;
+      selectedDungeonCardStyles = normalizeDungeonCardStyleSelections(saved);
+      try {
+        localStorage.setItem(DUNGEON_CARD_STYLE_STORAGE_KEY, JSON.stringify(saved));
+      } catch {
+        // Rendering still uses the filtered in-memory data if storage is blocked.
+      }
+    }
+
     function dungeonCardStyleSaveData() {
       return {
         unlocked: unlockedDungeonCardStyles,
@@ -43137,6 +43166,7 @@
       createAutoDeckCounts
     };
 
+    removeRetiredPrismUnlocks();
     initializeGame();
     window.setTimeout(maybeShowLectureExperimentNotice, 0);
 
