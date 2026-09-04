@@ -15580,7 +15580,7 @@
     }
 
     .ordered-attendance-arrival {
-      animation: ordered-attendance-arrive 180ms cubic-bezier(.18,.78,.25,1) both;
+      animation: ordered-attendance-arrive 100ms cubic-bezier(.18,.78,.25,1) both;
       z-index: 7;
     }
 
@@ -17737,7 +17737,7 @@
           {
             title: "効果による複数出席の処理順",
             before: "カードの効果で複数の出席者を出す場合、全員が一度に盤面へ出席したように表示され、誰の出席でビンゴやほかの効果が発動したのか分かりにくかった。",
-            after: "効果で複数の出席者やコピーを出す場合、1行1列から1行3列、2行1列から2行3列、3行1列から3行3列の順で、短い間隔を空けて1人ずつ出席するよう変更。1人の出席・出席時効果・ビンゴ判定と演出を完了してから次の出席へ進む。ランダムな席マスを指定する効果は対象を従来どおりランダムに決め、選ばれた席の中で左上から右下の順に処理する。"
+            after: "効果で複数の出席者やコピーを出す場合、1行1列から1行3列、2行1列から2行3列、3行1列から3行3列の順で、短い間隔を空けて1人ずつ出席するよう変更。出席時効果・ビンゴの成立と強化対象は1人ごとに判定し、バフの適用と演出は全員の出席が終わってからまとめて行う。「声が大きい集団」などの条件付き強化も全員の出席後に反映し、盤面の再表示で強化演出が途中で消えないよう修正。ランダムな席マスを指定する効果は対象を従来どおりランダムに決め、選ばれた席の中で左上から右下の順に処理する。出席間隔と演出の待ち時間をさらに短縮し、連続出席のテンポを改善。"
           }
         ]
       },
@@ -18462,9 +18462,9 @@
     const ATTACK_FOCUS_STEP_DELAY = 700;
     const EFFECT_FEEDBACK_GAP_MS = 280;
     const ORDERED_ATTENDANCE_INITIAL_DELAY_MS = PLAY_REVEAL_MS + 80;
-    const ORDERED_ATTENDANCE_STEP_MS = 180;
-    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 580;
-    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 860;
+    const ORDERED_ATTENDANCE_STEP_MS = 100;
+    const ORDERED_ATTENDANCE_BINGO_STEP_MS = 360;
+    const ORDERED_ATTENDANCE_EIGHT_BINGO_STEP_MS = 620;
     let activeEffectFeedbackSequence = null;
     let activeEffectFeedbackDelay = 0;
     let effectFeedbackEventSerial = 0;
@@ -18483,6 +18483,10 @@
     let activeOrderedAttendance = null;
     const queuedOrderedAttendances = [];
     const orderedAttendanceWaiters = [];
+    const orderedAttendanceStatCaps = new Map();
+    const orderedAttendanceBuffs = [];
+    let boardWasResolvingOrderedAttendance = false;
+    let renderingOrderedAttendanceCompletion = false;
 
     const state = {
       screen: "home",
@@ -26473,7 +26477,7 @@
         target.classList.remove("ordered-attendance-arrival");
         void target.offsetWidth;
         target.classList.add("ordered-attendance-arrival");
-        window.setTimeout(() => target.classList.remove("ordered-attendance-arrival"), 240);
+        window.setTimeout(() => target.classList.remove("ordered-attendance-arrival"), 160);
       });
     }
 
@@ -26506,6 +26510,18 @@
       const completed = activeOrderedAttendance;
       activeOrderedAttendance = null;
       if (typeof completed?.onComplete === "function") completed.onComplete(completed.attendedCount);
+      if (!hasPendingOrderedAttendance()) {
+        // Targets are captured when their attendance effect triggers. Apply the
+        // buffs only after every queued attendance has finished, not per card.
+        const presentCards = new Set(["player", "opponent"].flatMap((side) => (
+          listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).filter(Boolean)
+        )));
+        orderedAttendanceStatCaps.clear();
+        orderedAttendanceBuffs.splice(0).forEach((buff) => {
+          if (state.gameOver || !presentCards.has(buff.card) || buff.card.currentHp <= 0) return;
+          applyPermanentStatBuff(buff.card, buff.attack, buff.hp, buff.defense, buff.source);
+        });
+      }
       cleanupDestroyedCards();
       applyBoardAuras();
       if (queuedOrderedAttendances.length > 0) {
@@ -26584,11 +26600,31 @@
       return new Promise((resolve) => orderedAttendanceWaiters.push(resolve));
     }
 
+    function hasPendingOrderedAttendance() {
+      return Boolean(activeOrderedAttendance || queuedOrderedAttendances.length > 0);
+    }
+
+    function orderedAttendanceStatCap(card) {
+      if (!hasPendingOrderedAttendance()) return null;
+      if (!orderedAttendanceStatCaps.has(card.instanceId)) {
+        orderedAttendanceStatCaps.set(card.instanceId, {
+          attack: card.attack ?? 0,
+          hp: card.maxHp ?? 0,
+          defense: card.defense ?? 0
+        });
+      }
+      return orderedAttendanceStatCaps.get(card.instanceId);
+    }
+
     function clearOrderedAttendance() {
       window.clearTimeout(orderedAttendanceTimer);
       orderedAttendanceTimer = null;
       activeOrderedAttendance = null;
       queuedOrderedAttendances.splice(0);
+      orderedAttendanceStatCaps.clear();
+      orderedAttendanceBuffs.splice(0);
+      boardWasResolvingOrderedAttendance = false;
+      document.querySelectorAll(".board-change-feedback[data-attendance-completion]").forEach((layer) => layer.remove());
       resolveOrderedAttendanceWaiters();
     }
 
@@ -30275,9 +30311,9 @@
       const bingoCardInstanceIds = [...new Set(newLines.flatMap((line) => (
         line.seats.map((seatIndex) => state.players[side]?.board?.seats?.[seatIndex]?.instanceId).filter(Boolean)
       )))];
-      const visualDelay = options.orderedAttendance ? 80 : QUICK_QUIZ_VISUAL_DELAY_MS;
-      const buffDelay = options.orderedAttendance ? 300 : QUICK_QUIZ_BUFF_DELAY_MS;
-      const eightBingoDelay = options.orderedAttendance ? 700 : QUICK_QUIZ_EIGHT_BINGO_DELAY_MS;
+      const visualDelay = options.orderedAttendance ? 40 : QUICK_QUIZ_VISUAL_DELAY_MS;
+      const buffDelay = options.orderedAttendance ? 160 : QUICK_QUIZ_BUFF_DELAY_MS;
+      const eightBingoDelay = options.orderedAttendance ? 420 : QUICK_QUIZ_EIGHT_BINGO_DELAY_MS;
       showQuickQuizClickEffect(bingoCardInstanceIds, visualDelay);
       if (appliedAttack || appliedHp) {
         showBoardChangeEffectForCard(
@@ -34143,6 +34179,13 @@
 
     function applyDerivedStats(card, newAttack, newMaxHp) {
       if (!card || card.currentHp === null) return;
+      const cap = orderedAttendanceStatCap(card);
+      if (cap) {
+        // Keep existing bonuses and resolve losses normally; postpone new aura
+        // gains until the final board has been assembled.
+        newAttack = Math.min(newAttack, cap.attack);
+        newMaxHp = Math.min(newMaxHp, cap.hp);
+      }
       const previousMaxHp = card.maxHp ?? newMaxHp;
       const currentDamage = Math.max(0, previousMaxHp - (card.currentHp ?? previousMaxHp));
       card.attack = Math.max(0, newAttack);
@@ -34212,6 +34255,20 @@
       const normalizedAttack = Number(attackBonus) || 0;
       const normalizedHp = Number(hpBonus) || 0;
       const normalizedDefense = Number(defenseBonus) || 0;
+      if (hasPendingOrderedAttendance() && (normalizedAttack > 0 || normalizedHp > 0 || normalizedDefense > 0)) {
+        orderedAttendanceBuffs.push({
+          card,
+          attack: Math.max(0, normalizedAttack),
+          hp: Math.max(0, normalizedHp),
+          defense: Math.max(0, normalizedDefense),
+          source
+        });
+        // Mixed modifiers still apply their negative components immediately.
+        if (normalizedAttack < 0 || normalizedHp < 0 || normalizedDefense < 0) {
+          applyPermanentStatBuff(card, Math.min(0, normalizedAttack), Math.min(0, normalizedHp), Math.min(0, normalizedDefense), source);
+        }
+        return;
+      }
       if (normalizedAttack || normalizedHp || normalizedDefense) {
         card.statModifiers = [
           ...(Array.isArray(card.statModifiers) ? card.statModifiers : []),
@@ -34240,6 +34297,8 @@
 
     function applyDerivedDefense(card, newDefense) {
       if (!card) return;
+      const cap = orderedAttendanceStatCap(card);
+      if (cap) newDefense = Math.min(newDefense, cap.defense);
       card.defense = Math.max(0, Number(newDefense) || 0);
     }
 
@@ -37547,6 +37606,16 @@
     }
 
     function renderBoards() {
+      const retainedFeedback = [...document.querySelectorAll(".board-change-feedback[data-attendance-completion]")]
+        .map((layer) => ({
+          layer,
+          instanceId: layer.parentElement?.dataset.cardId,
+          animations: layer.getAnimations({ subtree: true }).map((animation) => ({
+            target: animation.effect?.target,
+            time: animation.currentTime
+          }))
+        }));
+      renderingOrderedAttendanceCompletion = boardWasResolvingOrderedAttendance && !state.resolvingOrderedAttendance;
       pruneBoardVisualSnapshots();
       renderPlayerBoard("opponent", elements.opponentProfessorLane, elements.opponentSeatGrid);
       renderLateZone("opponent", elements.opponentLateZone);
@@ -37554,6 +37623,17 @@
       renderPlayerBoard("player", elements.playerProfessorLane, elements.playerSeatGrid);
       renderLateZone("player", elements.playerLateZone);
       renderLifeTargets();
+      retainedFeedback.forEach(({ layer, instanceId, animations }) => {
+        const target = document.querySelector(`[data-card-id="${instanceId}"]`);
+        if (!target) return;
+        target.appendChild(layer);
+        animations.forEach(({ target: animatedTarget, time }) => {
+          const animation = animatedTarget?.getAnimations()[0];
+          if (animation && time !== null) animation.currentTime = time;
+        });
+      });
+      boardWasResolvingOrderedAttendance = Boolean(state.resolvingOrderedAttendance);
+      renderingOrderedAttendanceCompletion = false;
     }
 
     function pruneBoardVisualSnapshots() {
@@ -37647,6 +37727,7 @@
       if (!button || !Array.isArray(changes) || changes.length === 0) return;
       const layer = document.createElement("span");
       layer.className = "board-change-feedback";
+      if (renderingOrderedAttendanceCompletion) layer.dataset.attendanceCompletion = "true";
       layer.setAttribute("aria-label", changes.map((change) => change.label).join("、"));
 
       ["buff", "debuff"].forEach((tone) => {

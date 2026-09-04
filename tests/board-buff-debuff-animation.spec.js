@@ -4,6 +4,67 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
+test("声が大きい集団は両側のコピー出席が全て完了してから強化し、演出を再表示で切らない", async ({ page }) => {
+  await page.goto(gameUrl);
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.gameOver = false;
+    state.actionTurn = 2;
+    state.environment = null;
+    ["player", "opponent"].forEach((side) => {
+      state.players[side].board.seats = Array(9).fill(null);
+      state.players[side].board.teacher = null;
+    });
+    ["player", "opponent"].forEach((side) => {
+      const card = api.makeBoardCard(api.createCardFromBase("loud_group", side));
+      card.currentHp -= 1;
+      api.attendCard(side, card, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    });
+    api.applyBoardAuras();
+    api.render();
+    const samples = [];
+    const sample = () => {
+      if (!state.resolvingOrderedAttendance) return;
+      const cards = ["player", "opponent"].flatMap((side) => state.players[side].board.seats.filter(Boolean));
+      samples.push({ count: cards.length, hp: cards.map((card) => card.maxHp), buffs: document.querySelectorAll(".board-change-effect.buff").length });
+    };
+    sample();
+    const timer = setInterval(sample, 20);
+    await api.waitForOrderedAttendance();
+    clearInterval(timer);
+    return {
+      samples,
+      stats: ["player", "opponent"].map((side) => state.players[side].board.seats.slice(0, 3).map((card) => ({
+        hp: card.maxHp, currentHp: card.currentHp
+      })))
+    };
+  });
+  expect(result.samples.some((sample) => sample.count === 4)).toBe(true);
+  expect(result.samples.some((sample) => sample.count === 6)).toBe(true);
+  expect(result.samples.every((sample) => sample.hp.every((hp) => hp === 3) && sample.buffs === 0)).toBe(true);
+  expect(result.stats).toEqual(Array.from({ length: 2 }, () => [
+    { hp: 4, currentHp: 3 }, { hp: 4, currentHp: 4 }, { hp: 4, currentHp: 4 }
+  ]));
+  const feedback = page.locator(".board-change-feedback[data-attendance-completion]");
+  await expect(feedback).toHaveCount(6);
+  const animationBefore = await feedback.first().evaluate((layer) => {
+    layer.dataset.testOriginal = "yes";
+    return layer.querySelector(".board-change-energy-image").getAnimations()[0].currentTime;
+  });
+  await page.evaluate(() => window.__chibattle.render());
+  await expect(feedback).toHaveCount(6);
+  const animationAfter = await feedback.first().evaluate((layer) => ({
+    original: layer.dataset.testOriginal,
+    time: layer.querySelector(".board-change-energy-image").getAnimations()[0].currentTime
+  }));
+  expect(animationAfter.original).toBe("yes");
+  expect(animationAfter.time).toBeGreaterThanOrEqual(animationBefore);
+  await expect(feedback).toHaveCount(0, { timeout: 2500 });
+});
+
 test("出席者の強化・弱体化・回復を一時演出し、ダメージや初回表示では出さない", async ({ page }) => {
   await page.goto(gameUrl);
 

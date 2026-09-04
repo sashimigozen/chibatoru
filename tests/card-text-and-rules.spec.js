@@ -531,7 +531,8 @@ test("9月3日の新カードをver.0.22.0の更新情報に統合して記載�
   await expect(strictTeacher).toContainText("その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る");
   const orderedAttendance = latestEntry.locator(".update-change", { hasText: "効果による複数出席の処理順" });
   await expect(orderedAttendance).toContainText("1行1列から1行3列");
-  await expect(orderedAttendance).toContainText("1人の出席・出席時効果・ビンゴ判定と演出を完了してから次の出席へ進む");
+  await expect(orderedAttendance).toContainText("出席時効果・ビンゴの成立と強化対象は1人ごとに判定");
+  await expect(orderedAttendance).toContainText("バフの適用と演出は全員の出席が終わってからまとめて行う");
 });
 
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {

@@ -582,6 +582,7 @@ test("エキストラの皆さんは左上から1人ずつ出席し、その都�
     state.players.player.board.teacher = null;
 
     const progress = [];
+    const statsDuringAttendance = [];
     let previousCount = -1;
     const sample = () => {
       const occupied = state.players.player.board.seats
@@ -590,6 +591,9 @@ test("エキストラの皆さんは左上から1人ずつ出席し、その都�
       if (occupied.length === previousCount) return;
       previousCount = occupied.length;
       progress.push(occupied);
+      statsDuringAttendance.push(state.players.player.board.seats.filter(Boolean).map((entry) => ({
+        attack: entry.attack, hp: entry.maxHp
+      })));
     };
     sample();
     const sampler = window.setInterval(sample, 25);
@@ -604,6 +608,7 @@ test("エキストラの皆さんは左上から1人ずつ出席し、その都�
 
     return {
       progress,
+      statsDuringAttendance,
       resolving: state.resolvingOrderedAttendance,
       stats: state.players.player.board.seats.map((entry) => ({
         attack: entry.attack,
@@ -618,6 +623,7 @@ test("エキストラの皆さんは左上から1人ずつ出席し、その都�
     Array.from({ length: count }, (_seat, index) => index)
   )));
   expect(result.resolving).toBe(false);
+  expect(result.statsDuringAttendance.flat().every((entry) => entry.attack === 1 && entry.hp === 1)).toBe(true);
   expect(result.stats[2]).toEqual({ attack: 1, hp: 2 });
   expect(result.stats[5]).toEqual({ attack: 1, hp: 2 });
   expect(result.stats[6]).toEqual({ attack: 2, hp: 1 });
