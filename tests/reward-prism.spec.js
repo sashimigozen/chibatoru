@@ -5,9 +5,9 @@ const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 const rewards = ["yuta", "dark_yuta", "vampire", "bird_a", "demon_a_plus", "lazy_student", "extra_people", "extra_student", "dos_attack", "infight_shogi", "loud_student", "king_ghidorah_bed"];
 
 async function openGoldGame(page) {
-  await page.addInitScript(() => localStorage.setItem("chibattle-dungeon-card-styles-v1", JSON.stringify({
-    unlocked: Object.fromEntries(["gakuyukai_item", "cafeteria", "design", "late", "expansion", "interference", "shogi", "big", "king_ghidorah_bed"].map((id) => [id, true])), selected: {}
-  })));
+  await page.addInitScript((ids) => localStorage.setItem("chibattle-dungeon-card-styles-v1", JSON.stringify({
+    unlocked: {}, prismUnlocked: Object.fromEntries(ids.map((id) => [id, true])), selected: Object.fromEntries(ids.map((id) => [id, "prism"]))
+  })), rewards);
   await page.goto(gameUrl);
 }
 
@@ -59,8 +59,8 @@ test("盤面の金枠も同じ加工になり、クリックを妨げず、動�
     return document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2).closest(".field-card") === el.parentElement;
   })).toBe(true);
   await page.emulateMedia({ reducedMotion: "reduce" });
-  const animations = await surface.evaluate((el) => ["::before", "::after"].map((pseudo) => getComputedStyle(el, pseudo).animationName));
-  expect(animations).toEqual(["none", "none"]);
+  const animations = await surface.evaluate((el) => [null, "::before", "::after"].map((pseudo) => getComputedStyle(el, pseudo).animationName));
+  expect(animations).toEqual(["none", "none", "none"]);
 });
 
 test("出席・使用演出の拡大カードにも加工が表示される", async ({ page }) => {

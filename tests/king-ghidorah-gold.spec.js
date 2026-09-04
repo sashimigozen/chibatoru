@@ -42,6 +42,7 @@ test("金枠の追加解放は既存の解放と通常表示設定を保持し�
   await expect(page.locator('#playerHand [data-base-id="king_ghidorah_bed"]').first()).toHaveClass(/reward-foil-king-ghidorah/);
   const card = page.locator("#battleCardPreview .card.reward-foil-king-ghidorah");
   await expect(card).toBeVisible();
+  await expect(card.locator(".reward-prism-surface")).toHaveCount(0);
   const visuals = await card.evaluate((el) => ({ face: getComputedStyle(el).getPropertyValue("--reward-foil-face"), animation: getComputedStyle(el).animationName }));
   expect(visuals.face).toContain("gradient");
   expect(visuals.animation).toContain("reward-foil-template-band");
@@ -72,4 +73,83 @@ test("オンラインの金枠表示は所持者の選択だけに従う", async
       api.createCardFromBase("king_ghidorah_bed", "opponent").rewardFoilStyle];
   });
   expect(styles).toEqual(["king-ghidorah", "", "", "king-ghidorah"]);
+});
+
+test("キラキラ金枠を別解放して通常・金枠と切り替え、保存後も区別する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await importFile(page, { unlocked: { king_ghidorah_bed: true, design: true }, selected: { bird_a: "normal" } });
+  await importFile(page, { prismUnlocked: { king_ghidorah_bed: true }, selected: { king_ghidorah_bed: "prism" }, mergeUnlocks: true });
+  await page.reload();
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({
+    unlocked: { king_ghidorah_bed: true, design: true }, selected: { bird_a: "normal", king_ghidorah_bed: "prism" }, prismUnlocked: { king_ghidorah_bed: true }
+  });
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.screen = "deck";
+    api.state.deckBuilder.view = "editor";
+    api.state.deckBuilder.activeSide = "player";
+    api.state.deckBuilder.counts.player = { king_ghidorah_bed: 1 };
+    api.render();
+  });
+  await page.locator('[data-current-detail="king_ghidorah_bed"]').click();
+  const modal = page.locator("#cardTestCard");
+  await expect(modal.locator(".card-rarity-label")).toHaveText("キラキラ金枠");
+  await expect(modal.locator(".reward-prism-surface")).toHaveCount(1);
+  await modal.locator("[data-card-style-cycle]").click();
+  await expect(modal.locator(".card-rarity-label")).toHaveText("通常");
+  await expect(modal.locator(".reward-foil")).toHaveCount(0);
+  await modal.locator("[data-card-style-cycle]").click();
+  await expect(modal.locator(".card-rarity-label")).toHaveText("金枠");
+  await expect(modal.locator(".reward-foil")).toHaveCount(1);
+  await expect(modal.locator(".reward-prism-surface")).toHaveCount(0);
+  await modal.locator("[data-card-style-cycle]").click();
+  await expect(modal.locator(".card-rarity-label")).toHaveText("キラキラ金枠");
+  await expect(modal.locator(".reward-prism-surface")).toHaveCount(1);
+});
+
+test("通常金枠の解放だけではキラキラ金枠にならず、キラキラ単独解放も可能", async ({ page }) => {
+  await page.goto(gameUrl);
+  await importFile(page, { unlocked: { king_ghidorah_bed: true }, selected: { king_ghidorah_bed: "prism" } });
+  expect(await page.evaluate(() => window.__chibattle.createCardFromBase("king_ghidorah_bed", "player").rewardFoilStyle)).toBe("king-ghidorah");
+  await importFile(page, { prismUnlocked: { king_ghidorah_bed: true }, selected: { king_ghidorah_bed: "prism" } });
+  expect(await page.evaluate(() => window.__chibattle.createCardFromBase("king_ghidorah_bed", "player").rewardFoilStyle)).toBe("king-ghidorah-prism");
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).unlocked, storageKey)).toEqual({});
+  await importFile(page, { unlocked: { design: true }, selected: {} });
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)).prismUnlocked, storageKey)).toBeUndefined();
+});
+
+test("キラキラ金枠のオンライン表示は対戦相手・観戦者にも所持者ごとに分離する", async ({ page }) => {
+  await page.goto(gameUrl);
+  const styles = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.online.started = true;
+    api.state.online.role = "guest";
+    api.state.online.localCardStyles = { king_ghidorah_bed: "prism" };
+    api.state.online.remoteCardStyles = { king_ghidorah_bed: "reward" };
+    const read = () => ["player", "opponent"].map((side) => api.createCardFromBase("king_ghidorah_bed", side).rewardFoilStyle);
+    const player = read();
+    api.state.online.role = "spectator";
+    api.state.online.hostCardStyles = { king_ghidorah_bed: "reward" };
+    api.state.online.guestCardStyles = { king_ghidorah_bed: "prism" };
+    return [player, read()];
+  });
+  expect(styles).toEqual([["king-ghidorah-prism", "king-ghidorah"], ["king-ghidorah", "king-ghidorah-prism"]]);
+});
+
+test("クリアデータの再保存・復元でもキラキラ金枠の解放と選択を保持する", async ({ page }) => {
+  await page.goto(gameUrl);
+  const data = { unlocked: { design: true }, prismUnlocked: { king_ghidorah_bed: true }, selected: { bird_a: "normal", king_ghidorah_bed: "prism" } };
+  await importFile(page, data);
+  await page.locator("#dungeonClearDataSaveButton").evaluate((button) => button.click());
+  await page.locator("#dungeonClearDataPassword").fill("test-password");
+  await page.locator("#dungeonClearDataPasswordConfirm").fill("test-password");
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#dungeonClearDataConfirmButton").click();
+  const download = await downloadPromise;
+  await importFile(page, { unlocked: { late: true }, selected: {} });
+  await page.locator("#dungeonClearDataImportInput").setInputFiles(await download.path());
+  await page.locator("#dungeonClearDataPassword").fill("test-password");
+  await page.locator("#dungeonClearDataConfirmButton").click();
+  await expect(page.locator("#dungeonClearDataModal")).toBeHidden();
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual(data);
 });

@@ -5401,6 +5401,8 @@
 
     .card-style-cycle-button:active { transform: rotate(120deg) scale(0.94); }
 
+    .card-rarity-label { margin-top: 8px; text-align: center; font-size: 13px; font-weight: 800; color: #79520c; }
+
     .card-style-cycle-button svg {
       width: 18px;
       height: 18px;
@@ -14474,8 +14476,12 @@
       overflow: hidden;
       border-radius: inherit;
       pointer-events: none;
-      --prism-cell: 12px;
-      background: linear-gradient(125deg, transparent 12%, rgba(90, 235, 255, .09) 30%, rgba(255, 132, 216, .1) 49%, rgba(255, 223, 106, .08) 69%, transparent 88%);
+      /* Large enough to survive scaling to a hand/inspector card. */
+      --prism-cell: 18px;
+      --prism-glint-cell: 54px;
+      background: repeating-linear-gradient(125deg, rgba(255, 214, 75, .2) 0%, rgba(47, 255, 190, .3) 16%, rgba(35, 205, 255, .35) 32%, rgba(173, 91, 255, .3) 48%, rgba(255, 70, 177, .35) 64%, rgba(255, 214, 75, .2) 80%);
+      background-size: 180% 180%;
+      animation: reward-prism-tint 4.8s ease-in-out infinite;
     }
 
     .reward-prism-surface::before {
@@ -14485,22 +14491,25 @@
       background: repeating-linear-gradient(125deg, #ffe76b 0%, #44ffc5 12%, #32d5ff 24%, #ae63ff 36%, #ff63c9 48%, #ffb64b 60%, #ffe76b 72%);
       background-size: 180% 180%;
       mask-image:
-        repeating-linear-gradient(0deg, #0003 0 .5px, transparent .5px var(--prism-cell)),
-        repeating-linear-gradient(90deg, #0003 0 .5px, transparent .5px var(--prism-cell)),
-        radial-gradient(ellipse 5px 1.2px at 50% 50%, #000 0%, #000b 35%, transparent 100%),
-        radial-gradient(ellipse 1.2px 5px at 50% 50%, #000 0%, #000b 35%, transparent 100%);
+        repeating-linear-gradient(0deg, #0006 0 1px, transparent 1px var(--prism-cell)),
+        repeating-linear-gradient(90deg, #0006 0 1px, transparent 1px var(--prism-cell)),
+        radial-gradient(ellipse calc(var(--prism-cell) * .45) calc(var(--prism-cell) * .12) at 50% 50%, #000 0% 25%, #000c 45%, transparent 100%),
+        radial-gradient(ellipse calc(var(--prism-cell) * .12) calc(var(--prism-cell) * .45) at 50% 50%, #000 0% 25%, #000c 45%, transparent 100%);
       mask-size: auto, auto, var(--prism-cell) var(--prism-cell), var(--prism-cell) var(--prism-cell);
       opacity: .8;
-      animation: reward-prism-colors 6s ease-in-out infinite;
+      animation: reward-prism-colors 4.8s ease-in-out infinite;
     }
 
     .reward-prism-surface::after {
       position: absolute;
       inset: 0;
       content: "";
-      background: linear-gradient(115deg, transparent 30%, rgba(173, 241, 255, .08) 40%, rgba(255, 255, 240, .3) 48%, rgba(255, 191, 232, .12) 54%, transparent 65%);
-      background-size: 300% 100%;
-      animation: reward-prism-reflection 6s ease-in-out infinite;
+      background:
+        radial-gradient(ellipse calc(var(--prism-cell) * .45) calc(var(--prism-cell) * .1) at 50% 50%, #fffff5 0% 20%, rgba(255,255,255,.7) 40%, transparent 100%),
+        radial-gradient(ellipse calc(var(--prism-cell) * .1) calc(var(--prism-cell) * .45) at 50% 50%, #fffff5 0% 20%, rgba(255,255,255,.7) 40%, transparent 100%),
+        linear-gradient(115deg, transparent 30%, rgba(173, 241, 255, .2) 40%, rgba(255, 255, 240, .55) 48%, rgba(255, 191, 232, .25) 54%, transparent 65%);
+      background-size: var(--prism-glint-cell) var(--prism-glint-cell), var(--prism-glint-cell) var(--prism-glint-cell), 250% 100%;
+      animation: reward-prism-reflection 4.8s ease-in-out infinite;
     }
 
     .card.reward-foil .card-face > .card-header,
@@ -14511,19 +14520,26 @@
 
     .battle-screen .field-card.reward-foil > .reward-prism-surface {
       --prism-cell: 6px;
+      --prism-glint-cell: 18px;
+    }
+
+    @keyframes reward-prism-tint {
+      0%, 100% { background-position: 0% 20%; }
+      50% { background-position: 100% 80%; }
     }
 
     @keyframes reward-prism-colors {
-      0%, 100% { background-position: 0% 20%; opacity: .7; }
+      0%, 100% { background-position: 0% 20%; opacity: .85; }
       50% { background-position: 100% 80%; opacity: 1; }
     }
 
     @keyframes reward-prism-reflection {
-      0%, 100% { background-position: 100% 50%; opacity: .3; }
-      50% { background-position: 0% 50%; opacity: .85; }
+      0%, 100% { background-position: 0 0, 0 0, 100% 50%; opacity: .45; }
+      50% { background-position: 0 0, 0 0, 0% 50%; opacity: .95; }
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .reward-prism-surface,
       .reward-prism-surface::before,
       .reward-prism-surface::after {
         animation: none;
@@ -18576,6 +18592,7 @@
     let pendingEncryptedDungeonClearImport = null;
     let pendingTeacherActionRef = null;
     let unlockedDungeonCardStyles = loadDungeonCardStyles();
+    let unlockedPrismCardStyles = normalizePrismCardStyleUnlocks(readDungeonCardStyleStorage());
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
     const boardVisualSnapshots = new Map();
@@ -20013,7 +20030,20 @@
       if (!selected || typeof selected !== "object" || Array.isArray(selected)) return {};
       const rewardCardIds = new Set(Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds));
       return Object.fromEntries(Object.entries(selected)
-        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["normal", "reward"].includes(mode)));
+        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["normal", "reward", "prism"].includes(mode)));
+    }
+
+    function normalizePrismCardStyleUnlocks(source) {
+      const ids = Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds);
+      return Object.fromEntries(ids.filter((id) => source?.prismUnlocked?.[id] === true).map((id) => [id, true]));
+    }
+
+    function dungeonCardStyleSaveData() {
+      return {
+        unlocked: unlockedDungeonCardStyles,
+        selected: selectedDungeonCardStyles,
+        ...(Object.keys(unlockedPrismCardStyles).length ? { prismUnlocked: unlockedPrismCardStyles } : {})
+      };
     }
 
     function loadDungeonCardStyles() {
@@ -20026,10 +20056,7 @@
 
     function persistDungeonCardStyles() {
       try {
-        localStorage.setItem(DUNGEON_CARD_STYLE_STORAGE_KEY, JSON.stringify({
-          unlocked: unlockedDungeonCardStyles,
-          selected: selectedDungeonCardStyles
-        }));
+        localStorage.setItem(DUNGEON_CARD_STYLE_STORAGE_KEY, JSON.stringify(dungeonCardStyleSaveData()));
         return true;
       } catch {
         state.message = "ブラウザへカードスタイルを保存できませんでした。";
@@ -20050,7 +20077,9 @@
 
     function localRewardFoilStyle(baseId) {
       const reward = rewardForCardBaseId(baseId);
-      if (!reward || !hasUnlockedCardRewardStyle(baseId)) return "";
+      if (!reward) return "";
+      if (selectedDungeonCardStyles[baseId] === "prism" && unlockedPrismCardStyles[baseId]) return `${reward.style}-prism`;
+      if (!hasUnlockedCardRewardStyle(baseId)) return "";
       return selectedDungeonCardStyles[baseId] === "normal" ? "" : reward.style;
     }
 
@@ -20058,19 +20087,21 @@
       return Object.fromEntries(Object.values(DUNGEON_CARD_STYLE_REWARDS)
         .flatMap((reward) => reward.cardIds)
         .filter((baseId) => localRewardFoilStyle(baseId))
-        .map((baseId) => [baseId, "reward"]));
+        .map((baseId) => [baseId, localRewardFoilStyle(baseId).endsWith("-prism") ? "prism" : "reward"]));
     }
 
     function normalizeOnlineCardStyles(source) {
       if (!source || typeof source !== "object" || Array.isArray(source)) return {};
       const rewardCardIds = new Set(Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds));
       return Object.fromEntries(Object.entries(source)
-        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && mode === "reward"));
+        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["reward", "prism"].includes(mode)));
     }
 
     function rewardFoilStyleForSelection(baseId, selections) {
       const reward = rewardForCardBaseId(baseId);
-      return reward && selections?.[baseId] === "reward" ? reward.style : "";
+      if (!reward) return "";
+      if (selections?.[baseId] === "prism") return `${reward.style}-prism`;
+      return selections?.[baseId] === "reward" ? reward.style : "";
     }
 
     function onlineCardStylesForOwner(owner) {
@@ -20088,10 +20119,25 @@
     }
 
     function toggleDungeonCardStyle(baseId) {
-      if (!hasUnlockedCardRewardStyle(baseId)) return false;
-      selectedDungeonCardStyles[baseId] = selectedDungeonCardStyles[baseId] === "normal" ? "reward" : "normal";
+      const modes = availableCardStyleModes(baseId);
+      if (modes.length < 2) return false;
+      const current = localCardStyleMode(baseId);
+      selectedDungeonCardStyles[baseId] = modes[(modes.indexOf(current) + 1) % modes.length];
       persistDungeonCardStyles();
-      return selectedDungeonCardStyles[baseId] === "reward";
+      return selectedDungeonCardStyles[baseId] !== "normal";
+    }
+
+    function availableCardStyleModes(baseId) {
+      return ["normal", ...(hasUnlockedCardRewardStyle(baseId) ? ["reward"] : []), ...(unlockedPrismCardStyles[baseId] ? ["prism"] : [])];
+    }
+
+    function localCardStyleMode(baseId) {
+      const style = localRewardFoilStyle(baseId);
+      return style.endsWith("-prism") ? "prism" : style ? "reward" : "normal";
+    }
+
+    function cardStyleModeLabel(mode) {
+      return { normal: "通常", reward: "金枠", prism: "キラキラ金枠" }[mode] || "通常";
     }
 
     function unlockDungeonCardStyle(specialtyId) {
@@ -20239,10 +20285,7 @@
       const salt = window.crypto.getRandomValues(new Uint8Array(16));
       const iv = window.crypto.getRandomValues(new Uint8Array(12));
       const key = await deriveDungeonClearBackupKey(password, salt);
-      const clearData = {
-        unlocked: unlockedDungeonCardStyles,
-        selected: selectedDungeonCardStyles
-      };
+      const clearData = dungeonCardStyleSaveData();
       const plaintext = new TextEncoder().encode(JSON.stringify({ clearData }));
       const encrypted = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plaintext);
       const payload = {
@@ -20278,9 +20321,11 @@
       const parsed = JSON.parse(new TextDecoder().decode(decrypted));
       const source = parsed?.clearData;
       const unlocks = normalizeDungeonCardStyleUnlocks(source);
-      if (Object.keys(unlocks).length === 0) throw new Error("invalid backup");
+      const prismUnlocks = normalizePrismCardStyleUnlocks(source);
+      if (Object.keys(unlocks).length === 0 && Object.keys(prismUnlocks).length === 0) throw new Error("invalid backup");
       return {
         unlocks,
+        prismUnlocks,
         mergeUnlocks: source?.mergeUnlocks === true,
         selected: normalizeDungeonCardStyleSelections(source)
       };
@@ -20305,6 +20350,8 @@
           const imported = await decryptDungeonClearData(pendingEncryptedDungeonClearImport, password);
           unlockedDungeonCardStyles = imported.mergeUnlocks
             ? { ...unlockedDungeonCardStyles, ...imported.unlocks } : imported.unlocks;
+          unlockedPrismCardStyles = imported.mergeUnlocks
+            ? { ...unlockedPrismCardStyles, ...imported.prismUnlocks } : imported.prismUnlocks;
           selectedDungeonCardStyles = imported.mergeUnlocks
             ? { ...selectedDungeonCardStyles, ...imported.selected } : imported.selected;
           persistDungeonCardStyles();
@@ -20344,6 +20391,8 @@
     function cardRewardStyleClass(card) {
       const reward = rewardForCardBaseId(card?.baseId);
       if (!reward) return "";
+      const classes = (style) => style
+        ? ` reward-foil reward-foil-${reward.style}${style.endsWith("-prism") ? " reward-prism" : ""}` : "";
 
       // Online snapshots can carry an old visual flag. The owner's published
       // selection is the only authority so one player's style never leaks.
@@ -20351,14 +20400,14 @@
         const ownerStyle = card?.owner
           ? rewardFoilStyleForSelection(card.baseId, onlineCardStylesForOwner(card.owner))
           : "";
-        return ownerStyle ? ` reward-foil reward-foil-${ownerStyle}` : "";
+        return classes(ownerStyle);
       }
 
-      const syncedStyle = card?.rewardFoilStyle === reward.style ? reward.style : "";
-      if (syncedStyle) return ` reward-foil reward-foil-${syncedStyle}`;
+      const syncedStyle = [reward.style, `${reward.style}-prism`].includes(card?.rewardFoilStyle) ? card.rewardFoilStyle : "";
+      if (syncedStyle) return classes(syncedStyle);
       if (isOnlineSpectator()) return "";
       const localStyle = card?.owner === "player" || !card?.owner ? localRewardFoilStyle(card?.baseId) : "";
-      return localStyle ? ` reward-foil reward-foil-${localStyle}` : "";
+      return classes(localStyle);
     }
 
     function isAceCard(card) {
@@ -20370,7 +20419,7 @@
     }
 
     function rewardPrismSurfaceHtml(card) {
-      return cardRewardStyleClass(card)
+      return cardRewardStyleClass(card).split(" ").includes("reward-prism")
         ? '<span class="reward-prism-surface" aria-hidden="true"></span>'
         : "";
     }
@@ -40534,14 +40583,16 @@
     function renderCardTestConfirm(baseId) {
       if (!CARD_BASES[baseId]) return;
       const card = makePreviewCard(baseId, "player");
-      const unlocked = hasUnlockedCardRewardStyle(baseId);
-      const usingReward = selectedDungeonCardStyles[baseId] !== "normal";
+      const modes = availableCardStyleModes(baseId);
+      const unlocked = modes.length > 1;
+      const mode = localCardStyleMode(baseId);
+      const nextLabel = cardStyleModeLabel(modes[(modes.indexOf(mode) + 1) % modes.length]);
       const control = unlocked ? `
-        <button class="card-style-cycle-button" type="button" data-card-style-cycle="${escapeHtml(baseId)}" title="${usingReward ? "通常スタイルに戻す" : "金枠スタイルに切り替える"}" aria-label="${usingReward ? "通常スタイルに戻す" : "金枠スタイルに切り替える"}">
+        <button class="card-style-cycle-button" type="button" data-card-style-cycle="${escapeHtml(baseId)}" title="${nextLabel}スタイルに切り替える" aria-label="${nextLabel}スタイルに切り替える">
           ${cardStyleCycleIconTemplate()}
         </button>
       ` : "";
-      elements.cardTestCard.innerHTML = `<div class="card-test-style-frame">${cardShellTemplate(card)}${control}</div>`;
+      elements.cardTestCard.innerHTML = `<div class="card-test-style-frame">${cardShellTemplate(card)}${control}</div>${unlocked ? `<div class="card-rarity-label">${cardStyleModeLabel(mode)}</div>` : ""}`;
       elements.cardTestText.innerHTML = cardDetailTemplate(card);
     }
 
@@ -42836,11 +42887,8 @@
       if (styleCycle) {
         event.stopPropagation();
         const baseId = styleCycle.dataset.cardStyleCycle;
-        if (toggleDungeonCardStyle(baseId)) {
-          state.message = "金枠カードスタイルに切り替えました。";
-        } else {
-          state.message = "通常のカードスタイルに戻しました。";
-        }
+        toggleDungeonCardStyle(baseId);
+        state.message = `${cardStyleModeLabel(localCardStyleMode(baseId))}カードスタイルに切り替えました。`;
         renderCardTestConfirm(baseId);
         render();
         return;

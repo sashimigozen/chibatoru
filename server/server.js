@@ -997,7 +997,7 @@ function sendError(ws, message, code = "bad_request") {
 function normalizeCardStyles(cardStyles) {
   if (!cardStyles || typeof cardStyles !== "object" || Array.isArray(cardStyles)) return {};
   return Object.fromEntries(Object.entries(cardStyles)
-    .filter(([baseId, mode]) => /^[a-z0-9_]{1,80}$/i.test(baseId) && mode === "reward")
+    .filter(([baseId, mode]) => /^[a-z0-9_]{1,80}$/i.test(baseId) && ["reward", "prism"].includes(mode))
     .slice(0, 64));
 }
 

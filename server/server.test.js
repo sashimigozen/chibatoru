@@ -597,7 +597,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
     type: "deckUpdate",
     ...normalDeckDescriptor(deckCounts),
     ready: true,
-    cardStyles: { bird_a: "reward" }
+    cardStyles: { bird_a: "reward", king_ghidorah_bed: "prism" }
   });
   await waitFor(guest, (message) =>
     message.type === "playerJoined"
@@ -615,6 +615,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   const hostState = spectatorJoin.players.find((player) => player.clientId === "host-style");
   const spectatorGuestState = spectatorJoin.players.find((player) => player.clientId === "guest-style");
   assert.equal(hostState.cardStyles.bird_a, "reward");
+  assert.equal(hostState.cardStyles.king_ghidorah_bed, "prism");
   assert.equal(spectatorGuestState.cardStyles.vampire, "reward");
 });
 
