@@ -153,3 +153,25 @@ test("クリアデータの再保存・復元でもキラキラ金枠の解放�
   await expect(page.locator("#dungeonClearDataModal")).toBeHidden();
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual(data);
 });
+
+test("旧全解放ファイルの対象外プリズムを除去し、既存金枠とキングギドラベッドだけ保持する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await importFile(page, {
+    unlocked: { design: true },
+    prismUnlocked: { bird_a: true, king_ghidorah_bed: true },
+    selected: { bird_a: "prism", king_ghidorah_bed: "prism" }, mergeUnlocks: true
+  });
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({
+    unlocked: { design: true }, prismUnlocked: { king_ghidorah_bed: true }, selected: { bird_a: "reward", king_ghidorah_bed: "prism" }
+  });
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("bird_a");
+    api.state.online.started = true;
+    api.state.online.role = "spectator";
+    api.state.online.hostCardStyles = { bird_a: "prism" };
+    api.showBattleCardPreview(api.createCardFromBase("bird_a", "player"));
+  });
+  await expect(page.locator("#battleCardPreview .reward-foil")).toHaveCount(1);
+  await expect(page.locator("#battleCardPreview .reward-prism-surface")).toHaveCount(0);
+});

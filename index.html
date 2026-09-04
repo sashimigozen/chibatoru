@@ -20030,11 +20030,16 @@
       if (!selected || typeof selected !== "object" || Array.isArray(selected)) return {};
       const rewardCardIds = new Set(Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds));
       return Object.fromEntries(Object.entries(selected)
-        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["normal", "reward", "prism"].includes(mode)));
+        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["normal", "reward", "prism"].includes(mode))
+        .map(([baseId, mode]) => [baseId, mode === "prism" && !isPrismCard(baseId) ? "reward" : mode]));
+    }
+
+    function isPrismCard(baseId) {
+      return baseId === "king_ghidorah_bed";
     }
 
     function normalizePrismCardStyleUnlocks(source) {
-      const ids = Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds);
+      const ids = Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds).filter(isPrismCard);
       return Object.fromEntries(ids.filter((id) => source?.prismUnlocked?.[id] === true).map((id) => [id, true]));
     }
 
@@ -20078,7 +20083,7 @@
     function localRewardFoilStyle(baseId) {
       const reward = rewardForCardBaseId(baseId);
       if (!reward) return "";
-      if (selectedDungeonCardStyles[baseId] === "prism" && unlockedPrismCardStyles[baseId]) return `${reward.style}-prism`;
+      if (isPrismCard(baseId) && selectedDungeonCardStyles[baseId] === "prism" && unlockedPrismCardStyles[baseId]) return `${reward.style}-prism`;
       if (!hasUnlockedCardRewardStyle(baseId)) return "";
       return selectedDungeonCardStyles[baseId] === "normal" ? "" : reward.style;
     }
@@ -20094,13 +20099,14 @@
       if (!source || typeof source !== "object" || Array.isArray(source)) return {};
       const rewardCardIds = new Set(Object.values(DUNGEON_CARD_STYLE_REWARDS).flatMap((reward) => reward.cardIds));
       return Object.fromEntries(Object.entries(source)
-        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["reward", "prism"].includes(mode)));
+        .filter(([baseId, mode]) => rewardCardIds.has(baseId) && ["reward", "prism"].includes(mode))
+        .map(([baseId, mode]) => [baseId, mode === "prism" && !isPrismCard(baseId) ? "reward" : mode]));
     }
 
     function rewardFoilStyleForSelection(baseId, selections) {
       const reward = rewardForCardBaseId(baseId);
       if (!reward) return "";
-      if (selections?.[baseId] === "prism") return `${reward.style}-prism`;
+      if (selections?.[baseId] === "prism") return isPrismCard(baseId) ? `${reward.style}-prism` : reward.style;
       return selections?.[baseId] === "reward" ? reward.style : "";
     }
 
@@ -20128,7 +20134,7 @@
     }
 
     function availableCardStyleModes(baseId) {
-      return ["normal", ...(hasUnlockedCardRewardStyle(baseId) ? ["reward"] : []), ...(unlockedPrismCardStyles[baseId] ? ["prism"] : [])];
+      return ["normal", ...(hasUnlockedCardRewardStyle(baseId) ? ["reward"] : []), ...(isPrismCard(baseId) && unlockedPrismCardStyles[baseId] ? ["prism"] : [])];
     }
 
     function localCardStyleMode(baseId) {
@@ -20392,7 +20398,7 @@
       const reward = rewardForCardBaseId(card?.baseId);
       if (!reward) return "";
       const classes = (style) => style
-        ? ` reward-foil reward-foil-${reward.style}${style.endsWith("-prism") ? " reward-prism" : ""}` : "";
+        ? ` reward-foil reward-foil-${reward.style}${isPrismCard(card.baseId) && style.endsWith("-prism") ? " reward-prism" : ""}` : "";
 
       // Online snapshots can carry an old visual flag. The owner's published
       // selection is the only authority so one player's style never leaks.

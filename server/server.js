@@ -998,6 +998,7 @@ function normalizeCardStyles(cardStyles) {
   if (!cardStyles || typeof cardStyles !== "object" || Array.isArray(cardStyles)) return {};
   return Object.fromEntries(Object.entries(cardStyles)
     .filter(([baseId, mode]) => /^[a-z0-9_]{1,80}$/i.test(baseId) && ["reward", "prism"].includes(mode))
+    .map(([baseId, mode]) => [baseId, mode === "prism" && baseId !== "king_ghidorah_bed" ? "reward" : mode])
     .slice(0, 64));
 }
 

@@ -597,7 +597,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
     type: "deckUpdate",
     ...normalDeckDescriptor(deckCounts),
     ready: true,
-    cardStyles: { bird_a: "reward", king_ghidorah_bed: "prism" }
+    cardStyles: { bird_a: "prism", king_ghidorah_bed: "prism" }
   });
   await waitFor(guest, (message) =>
     message.type === "playerJoined"
