@@ -17799,8 +17799,9 @@
       {
         version: "ver.0.22.1",
         date: "2026年9月4日",
-        summary: "トークンカードの消滅、プロテインドリンカーの攻撃力調整、講義の実行表示を追加し、カオスルールを変更しました。カオスデッキの再編集時の枚数を修正し、分類の絞り込みを削除しました。",
+        summary: "トークンカードの消滅、プロテインドリンカーの攻撃力調整、講義の実行表示を追加し、カオスルールを変更しました。カオスデッキの再編集時の枚数を修正し、分類の絞り込みを削除しました。AIのキングギドラベッドの効果選択も改善しました。",
         changes: [
+          { title: "AIのキングギドラベッドの使い方", before: "手札と破壊対象があると効果2を優先し、全体ダメージで倒せる人数や、本体へのダメージで勝てるかを十分に比較していなかった。", after: "効果1で実際に倒せる人数と与えられるダメージ、効果2で除去する出席者の危険度と捨てる手札の価値を比較するよう変更。今ターン勝てる場合や、安全に次の自分のターンの勝利を狙える場合は効果3を優先し、先に倒される危険がある場合は盤面の除去を優先する。戦意8以上では従来どおり全効果を使用し、効果2の対象は効果1の後に残る出席者から選ぶ。" },
           { title: "カオスデッキの再編集", before: "同じカードを4枚以上入れて保存したカオスデッキを「変更する」で開くと、通常ルールの同名枚数制限が適用され、枚数が3枚などに減っていた。", after: "カオスデッキを再編集するときは同名枚数制限を適用せず、保存した枚数をそのまま読み込むよう修正。通常・専攻デッキの枚数制限は変更しない。" },
           { title: "デッキ編成の絞り込み", before: "カード検索・絞り込みに、タイプ・戦意に加えて分類の選択欄があった。", after: "分類の選択欄と分類による絞り込みを削除。カード名・カードテキストの検索、タイプ・戦意の絞り込みは引き続き使用できる。" },
           { title: "カオスルール", before: "カードの戦意は通常どおり必要で、自分のターン開始時に1枚引いていた。", after: "すべてのカードの戦意を0に変更。自分のターン開始時、手札が5枚になるまで引く。手札が5枚以上ある場合は引かず、手札を減らすこともない。カード効果によるドロー禁止・ドロー置き換え、デッキ切れの敗北、戦意の増加、既存のデッキ編成制限は維持する。ソロVS AIとオンライン対戦の両方に適用し、通常・専攻ルールは変更しない。" },
@@ -25696,14 +25697,7 @@
         const friendlyValue = friendlyStudents.reduce((total, card) => total + scoreAiEnemyAttendeeThreat(card), 0);
         return Math.max(0, 4 + enemyValue * 0.45 - friendlyValue * 0.25);
       }
-      if (item.baseId === "king_ghidorah_bed") {
-        const discardable = opponent.hand.some((card) => card.instanceId !== item.instanceId);
-        const destroyable = kingGhidorahBedTargetEntries("opponent").length > 0;
-        const aoeValue = enemyCards.reduce((total, card) => total + Math.min(2, Math.max(0, card.currentHp || 0)), 0);
-        const bodyValue = state.players.player.life <= 4 ? 18 : 6;
-        return Math.max(bodyValue, aoeValue * 2, discardable && destroyable ? 12 : 0)
-          + (opponent.will >= 8 ? 12 : 0);
-      }
+      if (item.baseId === "king_ghidorah_bed") return planAiKingGhidorahBed(item).score;
       if (item.baseId === "onigiri_draw") return deck.length >= 2 ? 7 + (opponent.life < 20 ? 4 : 0) : 0;
       if (item.baseId === "hondara") return deck.length >= 1 ? 4 : 0;
       if (item.baseId === "aggro_army") return 9;
@@ -25923,6 +25917,82 @@
       return 0;
     }
 
+    function planAiKingGhidorahBed(item) {
+      const ai = state.players.opponent;
+      const enemy = state.players.player;
+      const forcedAll = ai.will >= 8;
+      const forecast = getAiLethalForecast();
+      const discardValue = (card) => 1 + effectiveCardCost(card) * 0.5
+        + Math.max(0, card.attack || 0) * 0.3
+        + Math.max(0, card.hp || 0) * 0.15
+        + (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) ? 8 : 0)
+        + (card.baseId === "ultimate_yuta" ? 100 : 0);
+      const discard = kingGhidorahBedDiscardCandidates("opponent", item)
+        .sort((a, b) => discardValue(a) - discardValue(b))[0] || null;
+      const damageKills = (card) => previewFinalDamageToCard(card, 2, item) >= card.currentHp
+        && !(card.baseId === "rebirth_student" && !card.rebirthUsed && canUsePrintedCardEffects(card));
+      const threatValue = (card, ref) => Math.max(0, scoreAiEnemyAttendeeThreat(card, ref))
+        + (card.baseId === "protein_drinker" && canUsePrintedCardEffects(card) ? 6 : 0);
+      const enemyEntries = listBoardRefs("player").map(ref => ({ ref, card: getBoardCardFromRef(ref) })).filter(entry => entry.card);
+      const destroyTargets = kingGhidorahBedTargetEntries("opponent")
+        .filter(({ card }) => !isPadlocked(card))
+        .filter(({ card }) => !forcedAll || !damageKills(card));
+      // 本体へ攻撃できないカードや攻撃不可は、次手番の打点に数えない。
+      const futureFaceDamage = (card, side, turn) => {
+        if (card.baseId === "happy_blue_bird" || !aiCanCardTargetLife(card, side)
+          || isAttackLocked(card, turn) || isFriendlyTeacherAttackBlocked(card)
+          || (state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= turn)) return 0;
+        return Math.max(0, card.attack || 0) * aiAttackHitFactor(card);
+      };
+      const incomingDamage = enemyEntries.reduce((total, { card }) => total + futureFaceDamage(card, "player", state.actionTurn + 1), 0);
+      const removesCounterLethal = (removedDamage) => incomingDamage >= ai.life
+        && incomingDamage - removedDamage < ai.life;
+      const targetChoices = discard ? destroyTargets.map(({ ref, card }) => ({
+        ref, card,
+        score: 4 + threatValue(card, ref) - discardValue(discard)
+          + (removesCounterLethal(futureFaceDamage(card, "player", state.actionTurn + 1)) ? 60 : 0)
+      })).sort((a, b) => b.score - a.score) : [];
+      const target = targetChoices[0] || null;
+      let removedAttack = 0;
+      let aoeScore = enemyEntries.reduce((total, { ref, card }) => {
+        const damage = Math.min(Math.max(0, card.currentHp), previewFinalDamageToCard(card, 2, item));
+        if (damage <= 0) return total;
+        const killed = damageKills(card);
+        if (killed) removedAttack += futureFaceDamage(card, "player", state.actionTurn + 1);
+        return total + damage * 0.65 + (killed ? 4 + threatValue(card, ref) : 0);
+      }, 0);
+      if (removesCounterLethal(removedAttack)) aoeScore += 60;
+      if (forcedAll) return { effectMode: "all", discard, targetRef: target?.ref || null, score: 18 + aoeScore + Math.max(0, target?.score || 0) };
+
+      const readyFaceDamage = aiReadyAttackersForLethal()
+        .filter(({ card }) => aiCanCardTargetLife(card, "opponent") && canAiLethalAttackerHitLife(card))
+        .reduce((total, { card }) => total + Math.max(0, card.attack || 0), 0);
+      const remainingHand = ai.hand.filter(card => card.instanceId !== item.instanceId);
+      const remainingWill = Math.max(0, ai.will - effectiveCardCost(item));
+      const otherDirectDamage = aiMaximizeHandValue(remainingHand, remainingWill, card => aiDirectLifeDamageValue(card, "opponent"));
+      const immediateLethal = 4 + readyFaceDamage + otherDirectDamage >= enemy.life;
+      const nextBoardDamage = listBoardRefs("opponent")
+        .map(ref => getBoardCardFromRef(ref)).filter(Boolean)
+        .reduce((total, card) => total + futureFaceDamage(card, "opponent", state.actionTurn + 2), 0)
+        * aiBoardSurvivalFactor("opponent");
+      // 手札の直接ダメージは現在・次ターンで二重計上せず、未確定のトップドローにも頼らない。
+      const nextDirectDamage = aiMaximizeHandValue(remainingHand, Math.min(10, ai.maxWill + 1), card => aiDirectLifeDamageValue(card, "opponent"));
+      const nextDrawCount = isChaosBattle() ? Math.max(0, 5 - remainingHand.length) : 1;
+      const canReachNextTurn = ai.deck.length >= nextDrawCount || courseRegistrationRemainingTurns("opponent") > 0;
+      const nextTurnLethal = canReachNextTurn && !forecast.opponentCounterLethal
+        && 4 + readyFaceDamage + nextBoardDamage + nextDirectDamage >= enemy.life + forecast.opponentHealingRisk;
+      if (immediateLethal || nextTurnLethal) return {
+        effectMode: "3", discard: null, targetRef: null,
+        score: immediateLethal ? 1000 : 60
+      };
+      const choices = [
+        { effectMode: "1", score: aoeScore, targetRef: null, discard: null },
+        ...(target ? [{ effectMode: "2", score: target.score, targetRef: target.ref, discard }] : []),
+        { effectMode: "3", score: enemyEntries.length > 0 ? 0.5 : 6, targetRef: null, discard: null }
+      ];
+      return choices.sort((a, b) => b.score - a.score)[0];
+    }
+
     function useAiItem(item) {
       const lethalPlan = getAiLethalEnablingItemPlan(item);
       const lethalTarget = lethalPlan?.targetRef
@@ -25937,15 +26007,8 @@
         return target ? castUtaFusion("opponent", item, target, false) : false;
       }
       if (item.baseId === "king_ghidorah_bed") {
-        const discard = kingGhidorahBedDiscardCandidates("opponent", item)
-          .sort((a, b) => effectiveCardCost(a) - effectiveCardCost(b))[0] || null;
-        const target = kingGhidorahBedTargetEntries("opponent")
-          .sort((a, b) => scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref))[0]?.ref || null;
-        let effectMode = "3";
-        if (state.players.opponent.will >= 8) effectMode = "all";
-        else if (state.players.player.life > 4 && discard && target) effectMode = "2";
-        else if (listBoardRefs("player").length > 0) effectMode = "1";
-        return resolveKingGhidorahBed("opponent", item, effectMode, discard?.instanceId || null, target, false);
+        const plan = planAiKingGhidorahBed(item);
+        return resolveKingGhidorahBed("opponent", item, plan.effectMode, plan.discard?.instanceId || null, plan.targetRef, false);
       }
       if (item.baseId === "full_throttle") {
         const discardable = state.players.opponent.hand
@@ -43110,6 +43173,8 @@
       resolveCourseRegistrationDrawSelection,
       openKingGhidorahBedChoice,
       resolveKingGhidorahBed,
+      planAiKingGhidorahBed,
+      useAiItem,
       confirmCardChoiceSelection,
       preserveOnlineCourseRegistrationChoice,
       restoreOnlineCourseRegistrationChoice,
