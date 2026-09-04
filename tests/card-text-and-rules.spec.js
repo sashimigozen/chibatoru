@@ -567,7 +567,7 @@ test("声が大きい集団は自分の3行目の席マスにのみ出席でき�
     expect(result.rules).not.toContain("3行目にも");
   }
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").first();
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.22.0" }) });
   await entry.locator("summary").click();
   const change = entry.locator(".update-change").filter({ has: page.locator(".update-before", { hasText: "「声が大きい集団」" }) });
   await expect(change.locator(".update-before")).toContainText("3行目にも");

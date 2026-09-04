@@ -17798,6 +17798,14 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.22.1",
+        date: "2026年9月4日",
+        summary: "トークンカードが校外へ送られる代わりに消滅するよう変更しました。",
+        changes: [
+          { title: "トークンカードの消滅", before: "破壊されたトークンカードが校外エリアに残り、回収効果で手札やデッキに戻ることがあった。", after: "トークンカードは、破壊や手札から捨てる効果などで校外へ送られる場合、校外には置かず消滅する。校外の枚数・回収対象には含まれず、校外へ送られたことを条件とする効果も発動しない。装備していたカードは従来どおり校外へ送る。通常カードのコピーや、トークンではない生成専用カードの扱いは変更しない。" }
+        ]
+      },
+      {
         version: "ver.0.22.0",
         date: "2026年9月3日",
         summary: "新カード4枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作、複数出席とダメージ演出の順次表示を追加しました。",
@@ -19823,6 +19831,21 @@
         keywordSources: {},
         instanceId: `${owner}-${baseId}-${nextCardInstanceId++}`
       };
+    }
+
+    function isTokenCard(card) {
+      return Boolean(card && (card.token === true || CARD_BASES[card.baseId]?.token === true));
+    }
+
+    function canRecoverTrashCard(card) {
+      return Boolean(card && !isTokenCard(card) && !card.tokenVanished);
+    }
+
+    function removeLegacyTrashTokens() {
+      ["player", "opponent"].forEach((side) => {
+        state.players[side].trash = state.players[side].trash.filter(canRecoverTrashCard);
+      });
+      state.recentBoardTrash = (state.recentBoardTrash || []).filter((entry) => canRecoverTrashCard(entry.card));
     }
 
     function deckCardIds(cardIds = ALL_DECK_IDS) {
@@ -24042,7 +24065,7 @@
       }
       // Compatibility with battles saved before the ordered-draw change.
       const ids = new Set(registration.pools?.[side] || []);
-      return state.players[side].trash.filter((card) => ids.has(card.instanceId));
+      return state.players[side].trash.filter((card) => canRecoverTrashCard(card) && ids.has(card.instanceId));
     }
 
     function courseRegistrationRemainingTurns(side) {
@@ -24123,7 +24146,7 @@
     function onlineOpenCourseRegistrationDrawRequest(message) {
       if (!isOnlineGuest() || !state.online.started) return;
       const ids = new Set(message.candidateIds || []);
-      const cards = state.players.player.trash.filter((card) => ids.has(card.instanceId));
+      const cards = state.players.player.trash.filter((card) => canRecoverTrashCard(card) && ids.has(card.instanceId));
       openCardChoice({
         mode: "course_registration_draw_online_response",
         title: CARD_BASES.course_registration_party.name,
@@ -27838,7 +27861,7 @@
         render();
         return true;
       }
-      const candidates = state.players.player.trash.filter((card) => ["student", "teacher", "vampire"].includes(card.type));
+      const candidates = state.players.player.trash.filter((card) => canRecoverTrashCard(card) && ["student", "teacher", "vampire"].includes(card.type));
       if (candidates.length < 5) {
         addLog(`${item.name}は校外エリアに学生・教師・ヴァンパイアが5枚以上ないため使えません。`);
         render();
@@ -27859,7 +27882,7 @@
     function resolveGoAwayChoice(side, item, selectedIds, renderAfter = true) {
       const selected = new Set(selectedIds || []);
       const cards = state.players[side].trash.filter((card) => (
-        selected.has(card.instanceId) && ["student", "teacher", "vampire"].includes(card.type)
+        canRecoverTrashCard(card) && selected.has(card.instanceId) && ["student", "teacher", "vampire"].includes(card.type)
       ));
       if (cards.length !== 5 || !payForItem(side, item)) return false;
       state.players[side].trash = state.players[side].trash.filter((card) => !selected.has(card.instanceId));
@@ -30903,7 +30926,7 @@
       if (card.baseId === "perfect_mutant") {
         const targets = listBoardRefs(opponent);
         const moved = destroyBoardRefsToTrash(targets);
-        const movedText = trashDetailCountText(opponent, moved, `${card.name}で破壊された出席者`, "人");
+        const movedText = trashDetailCountText(opponent, moved, `${card.name}で破壊された出席者`, "人", true);
         addLog(`${card.name}の出席時効果：相手の出席者${movedText}をすべて破壊しました。`);
       }
       if (card.baseId === "adjective_student" && Math.random() < 0.5) {
@@ -31223,8 +31246,8 @@
           .filter((ref) => ref.zone === "seat" && seatCol(ref.index) === 1);
         const enemyMoved = destroyBoardRefsToTrash(enemyTargets);
         const friendlyMoved = destroyBoardRefsToTrash(friendlyTargets);
-        const enemyText = trashDetailCountText(opponent, enemyMoved, `${card.name}で破壊された相手の出席者`, "人");
-        const friendlyText = trashDetailCountText(side, friendlyMoved, `${card.name}で破壊された自分の出席者`, "人");
+        const enemyText = trashDetailCountText(opponent, enemyMoved, `${card.name}で破壊された相手の出席者`, "人", true);
+        const friendlyText = trashDetailCountText(side, friendlyMoved, `${card.name}で破壊された自分の出席者`, "人", true);
         addLog(`${card.name}の効果：相手の1列目・3列目から${enemyText}、自分の2列目から${friendlyText}を破壊しました。`);
       }
       if (card.baseId === "ninety_three_teacher" && zone === "teacher") {
@@ -32368,6 +32391,7 @@
       });
       addLog(`${attacker.name}が${target.name}に${dealtDamage}ダメージ。${vampireLog}${target.name}の反撃で${attacker.name}に${counterDealtDamage}ダメージ。`);
       if (attacker.baseId === "trendy_student"
+        && !isTokenCard(target)
         && target.currentHp <= 0
         && attacker.currentHp > 0
         && !(target.baseId === "rebirth_student" && !target.rebirthUsed)
@@ -32388,6 +32412,7 @@
       cleanupDestroyedCards();
       let birdSummoned = false;
       if (attacker.baseId === "happy_blue_bird"
+        && !isTokenCard(target)
         && targetDefeated
         && !getBoardCardFromRef(canonicalTargetRef)
         && isBoardSlotOpen(canonicalTargetRef.owner, canonicalTargetRef.zone, canonicalTargetRef.index)) {
@@ -33015,7 +33040,7 @@
         const opponent = oppositeSide(side);
         const targets = listBoardRefs(opponent);
         const moved = destroyBoardRefsToTrash(targets);
-        const movedText = trashDetailCountText(opponent, moved, "グリーンカレーで破壊された出席者", "人");
+        const movedText = trashDetailCountText(opponent, moved, "グリーンカレーで破壊された出席者", "人", true);
         addLog(`${SIDES[side]}はグリーンカレーを使い、相手の出席者${movedText}を破壊しました。`);
       } else if (item.baseId === "yakiniku") {
         let affected = 0;
@@ -33099,7 +33124,7 @@
       }
       if (item.baseId === "go_away") {
         const selectedIds = options.selectedIds || state.players[side].trash
-          .filter((card) => ["student", "teacher", "vampire"].includes(card.type))
+          .filter((card) => canRecoverTrashCard(card) && ["student", "teacher", "vampire"].includes(card.type))
           .slice(0, 5)
           .map((card) => card.instanceId);
         return resolveGoAwayChoice(side, item, selectedIds, renderAfter);
@@ -33654,6 +33679,7 @@
         .map((entry, index) => ({ entry, index }))
         .filter(({ entry }) =>
           entry.owner === side
+          && canRecoverTrashCard(entry.card)
           && entry.actionTurn === previousOpponentTurn
           && entry.card?.lastDamageSource
           && isBoardSlotOpen(side, entry.zone, entry.index)
@@ -33783,7 +33809,9 @@
       const candidates = [
         ...player.deck.map((card, index) => ({ zone: "deck", index, card })),
         ...player.trash.map((card, index) => ({ zone: "trash", index, card }))
-      ].filter((entry) => !entry.card.unusable && (entry.zone !== "deck" || !isDeckToHandLocked()));
+      ].filter((entry) => !entry.card.unusable
+        && (entry.zone !== "trash" || canRecoverTrashCard(entry.card))
+        && (entry.zone !== "deck" || !isDeckToHandLocked()));
       if (candidates.length === 0) return 0;
       let selectedEntries = [];
       if (side === "player" && typeof window !== "undefined") {
@@ -35527,8 +35555,8 @@
         }
       }
       const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
-      const triggersAbsentStudent = card.baseId === "absent_student" && canUsePrintedCardEffects(card);
-      if (showDestroyFeedback) showFloatingTextForCard(card, "破壊", "destroy");
+      const triggersAbsentStudent = !isTokenCard(card) && card.baseId === "absent_student" && canUsePrintedCardEffects(card);
+      if (showDestroyFeedback) showFloatingTextForCard(card, isTokenCard(card) ? "消滅" : "破壊", "destroy");
       recordRecentBoardTrash(ref.owner, card, ref);
       const moveOptions = {
         ...trashOptions,
@@ -35584,7 +35612,7 @@
     }
 
     function recordRecentBoardTrash(owner, card, ref) {
-      if (!card || !["student", "teacher", "vampire"].includes(card.type)) return;
+      if (!canRecoverTrashCard(card) || !["student", "teacher", "vampire"].includes(card.type)) return;
       state.recentBoardTrash.unshift({
         owner,
         zone: ref.zone,
@@ -35624,6 +35652,7 @@
     }
 
     function moveToTrash(owner, card, options = {}) {
+      const vanishes = isTokenCard(card);
       // 残存効果は環境の「上書き」という移動理由からのみ明示的に起動する。
       // 破壊、除去、通常の校外送りで無法の食堂が残らないよう、既定では開始しない。
       if (card?.baseId === "illegal_cafeteria" && options.startIllegalCafeteriaResidual === true) {
@@ -35637,21 +35666,26 @@
       const detachedPadlock = options.detachPadlock === false
         ? null
         : detachPadlock(card);
-      resetCardEffectsForTrash(card, owner);
+      const detachedTokenEarphones = vanishes && isEarphoneEquipped(card) ? { ...card.earphoneEquipment } : null;
+      if (detachedTokenEarphones) delete card.earphoneEquipment;
+      if (vanishes) card.tokenVanished = true;
+      else resetCardEffectsForTrash(card, owner);
       card.directlyDestroyed = options.directDestruction === true || pendingDirectDestruction;
       delete card.pendingDirectDestruction;
       card.suppressTrashToast = options.suppressToast === true;
       card.trashReason = options.reason || "";
-      state.players[owner].trash.push(card);
-      analyticsAddResidence(owner, card);
+      if (!vanishes) {
+        state.players[owner].trash.push(card);
+        analyticsAddResidence(owner, card);
+      }
       if (options.reason === "体力0" && lastDamageSource) analyticsAddRemovalContribution(lastDamageSource);
       analyticsRecordAction({
         side: owner,
-        actionType: "trash",
+        actionType: vanishes ? "token_disappear" : "trash",
         card,
         cost: null,
         sourceZone: options.sourceZone || "unknown",
-        targetZone: "trash",
+        targetZone: vanishes ? "removed" : "trash",
         details: {
           reason: options.reason || "",
           suppressLog: options.suppressLog === true,
@@ -35661,7 +35695,7 @@
         }
       });
       if (!options.suppressLog) addTrashLog(owner, card, options.reason || "");
-      if (!options.suppressToast) announceTrashMove(owner, card);
+      if (!vanishes && !options.suppressToast) announceTrashMove(owner, card);
       detachedUtaEquipments.forEach((entry) => {
         moveToTrash(owner, createCardFromBase(entry.baseId, owner), {
           suppressLog: options.suppressLog === true,
@@ -35684,6 +35718,15 @@
           detachPadlock: false
         });
       }
+      if (detachedTokenEarphones) {
+        delete detachedTokenEarphones.attachedTo;
+        delete detachedTokenEarphones.attachedAtTurn;
+        moveToTrash(detachedTokenEarphones.owner || owner, detachedTokenEarphones, {
+          suppressLog: options.suppressLog === true,
+          suppressToast: options.suppressToast === true,
+          reason: "装備解除", sourceZone: "equipment"
+        });
+      }
       return card;
     }
 
@@ -35697,6 +35740,10 @@
 
     function addTrashLog(owner, card, reason = "") {
       if (!card || state.screen !== "battle") return;
+      if (isTokenCard(card)) {
+        addLog(`${localTrashOwnerLabel(owner)}の${card.name}はトークンのため消滅しました${reason ? `（${reason}）` : ""}。`);
+        return;
+      }
       addLog(`${localTrashOwnerLabel(owner)}の校外へ：${card.name || "カード"}${reason ? `（${reason}）` : ""}`);
     }
 
@@ -35711,8 +35758,8 @@
       return moved;
     }
 
-    function createTrashDetailEvent(owner, cards, title = "校外エリアへ送られたカード", unit = "枚") {
-      const detailCards = cards.filter(Boolean).map((card) => ({ ...card }));
+    function createTrashDetailEvent(owner, cards, title = "校外エリアへ送られたカード", unit = "枚", includeVanished = false) {
+      const detailCards = cards.filter(includeVanished ? Boolean : canRecoverTrashCard).map((card) => ({ ...card }));
       if (detailCards.length === 0) return null;
       const id = `trash-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
       if (!Array.isArray(state.trashDetailEvents)) state.trashDetailEvents = [];
@@ -35728,15 +35775,16 @@
       return id;
     }
 
-    function trashDetailCountText(owner, cards, title, unit = "枚") {
-      const moved = cards.filter(Boolean);
+    function trashDetailCountText(owner, cards, title, unit = "枚", includeVanished = false) {
+      // 破壊人数には消滅したトークンも含めるが、校外へ送った枚数には含めない。
+      const moved = cards.filter(includeVanished ? Boolean : canRecoverTrashCard);
       if (moved.length === 0) return `0${unit}`;
-      const eventId = createTrashDetailEvent(owner, moved, title, unit);
+      const eventId = createTrashDetailEvent(owner, moved, title, unit, includeVanished);
       return eventId ? `[[trash-detail:${eventId}]]${moved.length}${unit}` : `${moved.length}${unit}`;
     }
 
     function announceTrashMove(owner, card) {
-      if (!card || state.screen !== "battle") return;
+      if (!canRecoverTrashCard(card) || state.screen !== "battle") return;
       if (typeof document === "undefined") return;
       let stack = document.querySelector(".trash-move-stack");
       if (!stack) {
@@ -35918,6 +35966,7 @@
     }
 
     function render() {
+      removeLegacyTrashTokens();
       continueCrotchFebrezeEffects();
       renderScreen();
       renderHomeNavigation();
@@ -43048,6 +43097,11 @@
       state,
       CARD_BASES,
       createCardFromBase,
+      moveToTrash,
+      moveHandCardToTrash,
+      resolveGoAwayChoice,
+      pickCardsFromDeckAndTrash,
+      restoreRecentBoardCard,
       makeBoardCard,
       placeCardFromHand,
       startCardTest,

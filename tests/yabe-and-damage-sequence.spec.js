@@ -154,7 +154,7 @@ test("やべー！！をデッキ・専攻・カードテスト・更新情報�
   expect(result.targets).toBeGreaterThanOrEqual(2);
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").first();
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.22.0" }) });
   await entry.locator("summary").click();
   await expect(entry).toContainText("「やべー！！」\n持ち物／バカでかい型／戦意2");
   await expect(entry).toContainText("ダメージ演出の表示順");
