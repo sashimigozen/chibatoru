@@ -95,7 +95,7 @@ test("教師0人でも確定でき、選べる教師はあえーの人数まで"
 
 test("複数教師の手札選択は選んだ順に行い、席にいる教師の効果も使える", async ({ page }) => {
   await setup(page);
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const { state } = api;
     state.players.opponent.board.seats[1] = api.makeBoardCard(api.createCardFromBase("logic_hunter", "opponent"));
@@ -110,11 +110,13 @@ test("複数教師の手札選択は選んだ順に行い、席にいる教師�
     const before = state.players.opponent.hand.length;
     const choices = [];
     for (let i = 0; i < 2; i++) {
+      while (!state.pendingCardChoice) await new Promise((resolve) => setTimeout(resolve, 20));
       choices.push(state.pendingCardChoice?.cards.length);
       actualOrder.push(state.pendingCardChoice.context.sourceCard.instanceId);
       state.pendingCardChoice.selectedIds = [state.pendingCardChoice.cards[0].instanceId];
       api.confirmCardChoiceSelection();
     }
+    while (state.pendingCrotchFebrezeEffects) await new Promise((resolve) => setTimeout(resolve, 20));
     return { choices, expectedOrder, actualOrder, before, after: state.players.opponent.hand.length, queue: state.pendingCrotchFebrezeEffects, pending: state.pendingCardChoice };
   });
   expect(result.choices).toEqual([result.before, result.before - 1]);
@@ -216,6 +218,68 @@ test("ゲスト使用時はホストの手札をゲストに提示し、応答�
   expect(result.teacherOwner).toBe("player");
 });
 
+for (const falconZone of ["teacher", "seat"]) {
+  for (const logicFirst of [true, false]) {
+    test(`教師の効果と演出を完了してから次へ：${logicFirst ? "ロジック→ファルコン" : "ファルコン→ロジック"}（${falconZone === "teacher" ? "ダメージ" : "破壊"}）`, async ({ page }) => {
+      await setup(page);
+      await page.evaluate(({ falconZone, logicFirst }) => {
+        const api = window.__chibattle;
+        const { state } = api;
+        state.players.opponent.board.seats = Array(9).fill(null);
+        const falcon = api.makeBoardCard(api.createCardFromBase("bird_a", "opponent"));
+        const logic = api.makeBoardCard(api.createCardFromBase("logic_hunter", "opponent"));
+        state.players.opponent.board.teacher = falconZone === "teacher" ? falcon : logic;
+        state.players.opponent.board.seats[7] = falconZone === "teacher" ? logic : falcon;
+        [0, 1, 2].forEach((index) => {
+          const target = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+          target.currentHp = target.maxHp = target.baseMaxHp = 5;
+          state.players.opponent.board.seats[index] = target;
+        });
+        Math.random = () => 0.3;
+        api.render();
+        const item = state.players.player.hand.find((card) => card.baseId === "crotch_febreze");
+        window.sequenceTestStarted = Date.now();
+        api.resolveCrotchFebreze("player", item, [state.players.player.board.seats[0].instanceId, state.players.player.board.seats[8].instanceId],
+          (logicFirst ? [logic, falcon] : [falcon, logic]).map((card) => card.instanceId));
+      }, { falconZone, logicFirst });
+      const victims = () => page.evaluate(() => window.__chibattle.state.players.opponent.board.seats.slice(0, 3).map((card) => card?.currentHp ?? null));
+      const expected = falconZone === "teacher" ? [3, 3, 3] : [null, 5, 5];
+      if (!logicFirst) {
+        expect(await victims()).toEqual(expected);
+        expect(await page.evaluate(() => window.__chibattle.state.pendingCardChoice)).toBeNull();
+        await expect(page.locator("#endTurnButton")).toBeDisabled();
+        await page.waitForFunction(() => window.__chibattle.state.pendingCardChoice?.mode === "logic_hunter");
+        expect(await page.evaluate(() => Date.now() - window.sequenceTestStarted)).toBeGreaterThanOrEqual(1550);
+        await expect(page.locator(".floating-pop")).toHaveCount(0);
+      } else {
+        expect(await victims()).toEqual([5, 5, 5]);
+      }
+      const discardId = await page.evaluate(() => {
+        const api = window.__chibattle;
+        const choice = api.state.pendingCardChoice;
+        const id = choice.cards[0].instanceId;
+        choice.selectedIds = [id];
+        window.sequenceTestDiscarded = Date.now();
+        api.confirmCardChoiceSelection();
+        return id;
+      });
+      await expect(page.locator("#playRevealOverlay")).toBeVisible();
+      await expect(page.locator("#endTurnButton")).toBeDisabled();
+      if (logicFirst) {
+        expect(await victims()).toEqual([5, 5, 5]);
+        await expect.poll(victims).toEqual(expected);
+        expect(await page.evaluate(() => Date.now() - window.sequenceTestDiscarded)).toBeGreaterThanOrEqual(1400);
+      }
+      await page.waitForFunction(() => !window.__chibattle.state.pendingCrotchFebrezeEffects);
+      expect(await victims()).toEqual(expected);
+      expect(await page.evaluate((id) => window.__chibattle.state.players.opponent.trash.some((card) => card.instanceId === id), discardId)).toBe(true);
+      await expect(page.locator("#playRevealOverlay")).toBeHidden();
+      await expect(page.locator(".floating-pop")).toHaveCount(0);
+      await expect(page.locator("#endTurnButton")).toBeEnabled();
+    });
+  }
+}
+
 for (const sourceSide of ["player", "opponent"]) {
   test(`オンライン2画面：${sourceSide === "player" ? "ホスト" : "ゲスト"}の盤面指名から手札選択・同期まで`, async ({ page: host, context }) => {
     const guest = await context.newPage();
@@ -292,6 +356,11 @@ for (const sourceSide of ["player", "opponent"]) {
     await actor.locator("#endTurnButton").click();
     await pump();
     expect(await host.evaluate((side) => window.__chibattle.state.players[side === "player" ? "opponent" : "player"].life, sourceSide)).toBe(17);
+    expect(await actor.evaluate(() => window.__chibattle.state.pendingCardChoice)).toBeNull();
+    await expect.poll(async () => {
+      await pump();
+      return actor.evaluate(() => Boolean(window.__chibattle.state.pendingCardChoice));
+    }).toBe(true);
     const selectionState = await actor.evaluate(() => ({ mode: window.__chibattle.state.pendingCardChoice?.mode, message: window.__chibattle.state.message, log: window.__chibattle.state.log.slice(0, 3) }));
     const hostState = await host.evaluate(() => ({ pending: window.__chibattle.state.pendingRemoteHandTrim, message: window.__chibattle.state.message, hand: window.__chibattle.state.players.opponent.hand.map((card) => card.baseId), log: window.__chibattle.state.log.slice(0, 5) }));
     expect(selectionState, JSON.stringify({ selectionState, hostState })).toMatchObject({ mode: sourceSide === "player" ? "logic_hunter" : "logic_hunter_online_response" });
@@ -306,6 +375,11 @@ for (const sourceSide of ["player", "opponent"]) {
       api.confirmCardChoiceSelection();
       return card.instanceId;
     });
+    await pump();
+    await expect.poll(async () => {
+      await pump();
+      return host.evaluate(() => Boolean(window.__chibattle.state.pendingCrotchFebrezeEffects));
+    }).toBe(false);
     await pump();
     const result = await host.evaluate(({ sourceSide, chosen }) => {
       const { state } = window.__chibattle;

@@ -17721,7 +17721,7 @@
           {
             title: "股間ファブリーズの対象選択・効果",
             before: "自分の出席者と相手の教師を別画面の一覧から選んでいた。体力を1にする処理が盤面に反映されず、教師の出席時効果も相手側を使用者として処理していた。",
-            after: "自分の「あえー」と相手の教師を講義室で直接選び、ターン終了ボタンが変化した「指名する」でそれぞれ確定する操作に変更。選んだ「あえー」の体力を1にし、教師の出席時効果を自分が使用する向きで発動するよう修正。ロジックハンターなら相手の手札を確認し、選んだ1枚を校外エリアへ送る。複数の教師の効果は選んだ順に発動し、途中の選択を終えてから次へ進む。選択中の教師カードの右上に発動順の番号を表示し、選び直した場合も番号を振り直す。ほかの効果の処理順は変更しない。"
+            after: "自分の「あえー」と相手の教師を講義室で直接選び、ターン終了ボタンが変化した「指名する」でそれぞれ確定する操作に変更。選んだ「あえー」の体力を1にし、教師の出席時効果を自分が使用する向きで発動するよう修正。ロジックハンターなら相手の手札を確認し、選んだ1枚を校外エリアへ送る。複数の教師の効果は選んだ順に発動し、途中の選択・校外へ送る演出・破壊やダメージの演出がすべて終わってから次へ進む。デザインファルコンは選んだカードの位置に応じて、教卓マスなら1行目への2ダメージ、席マスならランダム破壊を発動する。選択中の教師カードの右上に発動順の番号を表示し、選び直した場合も番号を振り直す。ほかの効果の処理順は変更しない。"
           },
           {
             title: "新カード",
@@ -22136,7 +22136,7 @@
       if (pending.commandId) state.online.isHandlingRemoteCommand = true;
       render();
       state.online.isHandlingRemoteCommand = wasHandlingRemote;
-      onlineBroadcastState(true, pending.commandId || "");
+      onlineBroadcastState(true, onlineIsCommandAwaitingResolution(pending.commandId) ? "" : pending.commandId || "");
     }
 
     // 履修登録結論パは、まず相手が了承または拒否を選ぶ。了承後に
@@ -23086,6 +23086,7 @@
     function onlineIsCommandAwaitingResolution(commandId) {
       if (!commandId) return false;
       return state.pendingRemoteHandTrim?.commandId === commandId
+        || state.pendingCrotchFebrezeEffects?.commandId === commandId
         || state.pendingCardChoice?.commandId === commandId
         || pendingCourseRegistrationConsent?.commandId === commandId
         || state.online.pendingAttackCommandId === commandId
@@ -23295,6 +23296,10 @@
         // retaining the command as unresolved until the guest picks a slot.
         if (!awaitingResolution || isRemoteGuestPlacementAwaiting(command.id)) {
           onlineBroadcastState(true, command.id || "");
+        } else if (state.pendingCrotchFebrezeEffects?.commandId === command.id) {
+          // Show this effect now, but keep the item unresolved until every
+          // chosen teacher and its presentation have finished.
+          onlineBroadcastState(true);
         }
         state.online.activeRemoteCommandId = previousActiveRemoteCommandId;
       }
@@ -26060,6 +26065,7 @@
 
     function endTurn(options = {}) {
       const fromAi = options.fromAi === true;
+      if (state.pendingCrotchFebrezeEffects) return;
       if (isOnlineSpectator() && !fromAi) return;
       if (state.resolvingOrderedAttendance) {
         if (fromAi) waitForOrderedAttendance().then(() => endTurn(options));
@@ -27138,6 +27144,7 @@
 
     function handleHandCardClick(instanceId) {
       if (isOnlineSpectator()) return;
+      if (state.pendingCrotchFebrezeEffects && !state.pendingHandDiscardItem) return;
       if (state.pendingCardPlay) return;
       if (state.phase === "mulligan") {
         toggleMulliganCard(instanceId);
@@ -27881,6 +27888,21 @@
       return true;
     }
 
+    function holdCrotchFebrezeForVisual(durationMs) {
+      const pending = state.pendingCrotchFebrezeEffects;
+      if (!pending || !(durationMs > 0)) return;
+      pending.visualUntil = Math.max(pending.visualUntil || 0, Date.now() + durationMs);
+    }
+
+    function scheduleCrotchFebrezeResume(pending) {
+      window.clearTimeout(pending.resumeTimer);
+      const battleToken = state.preBattleToken;
+      pending.resumeTimer = window.setTimeout(() => {
+        if (state.pendingCrotchFebrezeEffects !== pending || state.preBattleToken !== battleToken) return;
+        render();
+      }, Math.max(0, (pending.visualUntil || 0) - Date.now()) + 20);
+    }
+
     // Copy only the printed attendance effects, never move or re-attend the
     // enemy teacher. Finish each choice/summon before starting the next effect.
     function continueCrotchFebrezeEffects() {
@@ -27892,21 +27914,29 @@
       }
       const waiting = () => Boolean(state.pendingCardChoice || state.pendingAttendTarget
         || state.pendingRemoteHandTrim || state.pendingCopiedCard
-        || state.resolvingOrderedAttendance || state.pendingCardPlay);
+        || state.resolvingOrderedAttendance || state.pendingCardPlay
+        || Date.now() < (pending.visualUntil || 0));
       pending.resolving = true;
       const wasHandlingRemote = state.online.isHandlingRemoteCommand;
       if (pending.side === "opponent" && isOnlineHost()) state.online.isHandlingRemoteCommand = true;
       try {
         while (pending.cards.length && !waiting() && !state.gameOver) {
           const source = pending.cards.shift();
-          resolveAttendEffects(pending.side, source, "teacher", null, {
+          // Falcon has different printed effects for a seat and the lectern.
+          const zone = source.baseId === "bird_a" ? source.choiceRef.zone : "teacher";
+          resolveAttendEffects(pending.side, source, zone, source.choiceRef?.index ?? null, {
             attendanceSource: ATTENDANCE_SOURCE.HAND,
             forcedBy: "crotch_febreze", commandId: pending.commandId
           });
           cleanupDestroyedCards();
           applyBoardAuras();
         }
-        if (!pending.cards.length) state.pendingCrotchFebrezeEffects = null;
+        if (!pending.cards.length && !waiting()) {
+          state.pendingCrotchFebrezeEffects = null;
+          if (pending.commandId) onlineBroadcastState(true, pending.commandId);
+        } else if (Date.now() < (pending.visualUntil || 0)) {
+          scheduleCrotchFebrezeResume(pending);
+        }
       } finally {
         pending.resolving = false;
         state.online.isHandlingRemoteCommand = wasHandlingRemote;
@@ -28634,6 +28664,7 @@
     }
 
     function beginItemUse(item) {
+      if (state.pendingCrotchFebrezeEffects) return;
       if (!item || state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (!tutorialAllowsHandCard(item)) {
         rejectTutorialAction("今は光っている持ち物だけ使えます。");
@@ -31757,6 +31788,7 @@
         resolveAttendTargetChoice("player", { owner, zone, index });
         return;
       }
+      if (state.pendingCrotchFebrezeEffects && !state.pendingCopiedCard) return;
       if (isOnlineCommandPending()) {
         rejectOnlinePendingAction();
         return;
@@ -34758,6 +34790,7 @@
     function showFloatingTextAtRect(rect, text, kind, options = {}) {
       if (!rect) return;
       const delay = Number.isFinite(options.delay) ? Math.max(0, options.delay) : activeEffectFeedbackDelay;
+      holdCrotchFebrezeForVisual(delay + 1600);
       const target = options.target || null;
       const instanceId = target?.dataset.cardId;
       const lifeSide = target?.dataset.lifeTarget;
@@ -34933,6 +34966,7 @@
           ? "to-board"
           : "to-trash";
       const rewardFoilReveal = shouldUseRewardFoilReveal(card, options);
+      holdCrotchFebrezeForVisual(rewardFoilReveal ? REWARD_FOIL_PLAY_REVEAL_MS : PLAY_REVEAL_MS);
       elements.playRevealCard.className = `play-reveal-card${rewardFoilReveal ? " reward-foil-reveal" : ""}`;
       elements.playRevealCard.innerHTML = cardShellTemplate(card);
       elements.playRevealOverlay.classList.toggle("reward-foil-reveal-active", rewardFoilReveal);
@@ -36217,6 +36251,7 @@
         || (state.pendingKingGhidorahBed && !state.pendingKingGhidorahBed.target);
       elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || (choosingItemTargets && !choosingCrotchFebreze) || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
+        || Boolean(state.pendingCrotchFebrezeEffects)
         || state.phase !== "battle"
         || state.gameOver
         || state.currentSide !== "player"
@@ -37687,6 +37722,7 @@
     }
 
     function handleHandDropAtPoint(instanceId, x, y) {
+      if (state.pendingCrotchFebrezeEffects) return false;
       const card = getHandCard("player", instanceId);
       const target = findHandDropTargetAtPoint(x, y, card);
       if (!target?.valid) return false;
@@ -37734,6 +37770,7 @@
     }
 
     function queueAnimation(type, side, count = 1) {
+      holdCrotchFebrezeForVisual(800);
       pendingAnimations.push({ type, side, count });
     }
 
