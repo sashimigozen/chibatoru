@@ -5,6 +5,43 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
+test("プロテインドリンカーは攻撃力0で出席し自分のターン終了時に1ずつ上がる", async ({ page }) => {
+  await page.goto(gameUrl);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.phase = "battle";
+    state.currentSide = "player";
+    state.actionTurn = 2;
+    state.environment = null;
+    for (const side of ["player", "opponent"]) {
+      state.players[side].board.seats = Array(9).fill(null);
+      state.players[side].board.teacher = null;
+    }
+    const hand = api.createCardFromBase("protein_drinker", "player");
+    const card = api.makeBoardCard(hand);
+    state.players.player.board.seats[0] = card;
+    api.applyBoardAuras();
+    const attacks = [hand.attack, card.attack];
+    api.resolveStudentEndTurnEffects("opponent");
+    api.applyBoardAuras();
+    attacks.push(card.attack);
+    for (let i = 0; i < 2; i++) {
+      api.resolveStudentEndTurnEffects("player");
+      api.applyBoardAuras();
+      attacks.push(card.attack);
+    }
+    return { attacks, cost: hand.cost, hp: hand.hp, rules: api.cardRulesText(hand) };
+  });
+  expect(result).toEqual({ attacks: [0, 0, 0, 1, 2], cost: 4, hp: 7, rules: "自分のターン終了時、このカードの攻撃力を+1する。" });
+  await page.locator("#homeUpdatesButton").click();
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.22.1" }) });
+  await entry.locator("summary").click();
+  const change = entry.locator(".update-change").filter({ hasText: "プロテインドリンカーの攻撃力変更" });
+  await expect(change.locator(".update-before")).toContainText("戦意4／攻撃力1／体力7");
+  await expect(change.locator(".update-after")).toContainText("戦意4／攻撃力0／体力7");
+});
+
 test("確定したカードテキストが表示データに反映されている", () => {
   const source = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const expectedTexts = [

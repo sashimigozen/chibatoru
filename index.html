@@ -17525,7 +17525,7 @@
       live_person: { name: "ライブ人", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       dobby: { name: "ドービィ", type: "student", cost: 6, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       pachin_uni: { name: "パチンウニー", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
-      protein_drinker: { name: "プロテインドリンカー", type: "student", cost: 4, attack: 1, hp: 7, allowedZones: ["seat", "teacher"] },
+      protein_drinker: { name: "プロテインドリンカー", type: "student", cost: 4, attack: 0, hp: 7, allowedZones: ["seat", "teacher"] },
       proliferating_enemy: { name: "増殖する敵", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
       delayed_student: { name: "遅延する学生", type: "student", cost: 4, attack: 1, hp: 2, rowOnly: 3, allowedZones: ["seat"] },
       infight_shogi: { name: "インファイト将棋部", type: "student", cost: 10, attack: 9, hp: 5, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
@@ -17800,8 +17800,9 @@
       {
         version: "ver.0.22.1",
         date: "2026年9月4日",
-        summary: "トークンカードが校外へ送られる代わりに消滅するよう変更しました。",
+        summary: "トークンカードが校外へ送られる代わりに消滅するよう変更し、プロテインドリンカーの攻撃力を調整しました。",
         changes: [
+          { title: "プロテインドリンカーの攻撃力変更（1→0）", before: "「プロテインドリンカー」\n学生／バカでかい型／戦意4／攻撃力1／体力7\n自分のターン終了時、このカードの攻撃力を+1する。", after: "「プロテインドリンカー」\n学生／バカでかい型／戦意4／攻撃力0／体力7\n自分のターン終了時、このカードの攻撃力を+1する。\n変更点：基本攻撃力を1から0に変更。戦意・体力・効果は変更しない。" },
           { title: "トークンカードの消滅", before: "破壊されたトークンカードが校外エリアに残り、回収効果で手札やデッキに戻ることがあった。", after: "トークンカードは、破壊や手札から捨てる効果などで校外へ送られる場合、校外には置かず消滅する。校外の枚数・回収対象には含まれず、校外へ送られたことを条件とする効果も発動しない。装備していたカードは従来どおり校外へ送る。通常カードのコピーや、トークンではない生成専用カードの扱いは変更しない。" }
         ]
       },
