@@ -17607,7 +17607,7 @@
       door_war: { name: "ドア前戦争", type: "environment", cost: 2, allowedZones: ["environment"] },
       shogi_duel_field: { name: "将棋部の決闘フィールド", type: "environment", cost: 5, allowedZones: ["environment"] },
       aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "item", cost: 2, target: "self" },
-      loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
+      loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], rowOnly: 3, allowedZones: ["seat"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
       ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
     };
@@ -17733,6 +17733,11 @@
             title: "カード修正",
             before: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。",
             after: "「TA隊長」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。\n\n変更点：カード名を「TA隊長」に変更し、同名のコピーではなく「TA」を出席させるように変更。"
+          },
+          {
+            title: "カード修正",
+            before: "「声が大きい集団」\n学生／展開・敵増殖／戦意8／攻撃力2／体力3\n注目を持つ。このカードは3行目にも出席できる。このカードを手札から席マスに出席させたとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
+            after: "「声が大きい集団」\n学生／展開・敵増殖／戦意8／攻撃力2／体力3\n注目を持つ。このカードは自分の3行目の席マスにのみ出席できる。このカードを手札から席マスに出席させたとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。\n\n変更点：「3行目にも」を「自分の3行目の席マスにのみ」に修正。出席制限とカード確認の配置表示も合わせ、1・2行目や教卓マスには出席できないよう修正。"
           },
           {
             title: "効果による複数出席の処理順",
@@ -29839,7 +29844,7 @@
         if (["single_cell", "midge", "organism", "perfect_mutant"].includes(card.baseId)) return false;
         if (card.baseId === "aggro_student") return false;
         if (card.baseId === "delayed_student") return false;
-        if (["seat_taking_group", "ta_squad"].includes(card.baseId)) return false;
+        if (["seat_taking_group", "ta_squad", "loud_group"].includes(card.baseId)) return false;
         if (["angry_maker", "elite_open_chatter"].includes(card.baseId)) return false;
         if (card.baseId === "predator") return Boolean(state.players[owner].board.teacher);
         return ["student", "teacher", "vampire"].includes(card.type) && state.players[owner].board.teacher === null;
@@ -41805,6 +41810,7 @@
       if (card.evolutionFrom) return `${CARD_BASES[card.evolutionFrom]?.name || "進化元"}の上に進化`;
       if (card.baseId === "seat_taking_group") return "2行2列のみ";
       if (card.baseId === "ta_squad") return "自分の2行目の席マスのみ";
+      if (card.baseId === "loud_group") return "自分の3行目の席マスのみ";
       if (card.baseId === "predator") return "自分の出席者がいる席マス / 教卓マス";
       if (["student", "teacher", "vampire"].includes(card.type)) return "席マス / 教卓マス";
       if (card.type === "environment") return "環境マス";
@@ -41865,7 +41871,7 @@
         predator: "陽気を持つ。このカードを出席させるには、自分の場の出席者1人を破壊する。その場所に、このカードを出席させる。このカードが出席したとき、隣接する空いている席マスに「ベストフレンド」を1人出席させる。",
         trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
-        loud_group: "注目を持つ。このカードは3行目にも出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
+        loud_group: "注目を持つ。このカードは自分の3行目の席マスにのみ出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
         enemy_student: "相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
         enemy_boss: "このカードが出席したとき、自分の場に「敵」が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。",
         live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を2にする。",

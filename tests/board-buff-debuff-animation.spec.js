@@ -21,7 +21,7 @@ test("声が大きい集団は両側のコピー出席が全て完了してか�
     ["player", "opponent"].forEach((side) => {
       const card = api.makeBoardCard(api.createCardFromBase("loud_group", side));
       card.currentHp -= 1;
-      api.attendCard(side, card, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+      api.attendCard(side, card, "seat", 6, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     });
     api.applyBoardAuras();
     api.render();
@@ -37,7 +37,7 @@ test("声が大きい集団は両側のコピー出席が全て完了してか�
     clearInterval(timer);
     return {
       samples,
-      stats: ["player", "opponent"].map((side) => state.players[side].board.seats.slice(0, 3).map((card) => ({
+      stats: ["player", "opponent"].map((side) => state.players[side].board.seats.slice(6, 9).map((card) => ({
         hp: card.maxHp, currentHp: card.currentHp
       })))
     };

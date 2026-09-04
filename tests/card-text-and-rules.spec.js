@@ -535,6 +535,45 @@ test("9月3日の新カードをver.0.22.0の更新情報に統合して記載�
   await expect(orderedAttendance).toContainText("バフの適用と演出は全員の出席が終わってからまとめて行う");
 });
 
+test("声が大きい集団は自分の3行目の席マスにのみ出席できる", async ({ page }) => {
+  await page.goto(gameUrl);
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.phase = "battle";
+    state.gameOver = false;
+    state.environment = null;
+    state.temporarySeatBlocks = [];
+    ["player", "opponent"].forEach((side) => {
+      state.players[side].board.seats = Array(9).fill(null);
+      state.players[side].board.teacher = null;
+      state.players[side].late = [];
+    });
+    return ["player", "opponent"].map((side) => {
+      const card = api.createCardFromBase("loud_group", side);
+      return {
+        seats: Array.from({ length: 9 }, (_, index) => api.canPlaceCard(side, card, "seat", side, index)),
+        teacher: api.canPlaceCard(side, card, "teacher", side, null),
+        otherSide: api.canPlaceCard(side, card, "seat", side === "player" ? "opponent" : "player", 6),
+        rules: api.cardRulesText(card)
+      };
+    });
+  });
+  for (const result of results) {
+    expect(result.seats).toEqual([false, false, false, false, false, false, true, true, true]);
+    expect(result.teacher).toBe(false);
+    expect(result.otherSide).toBe(false);
+    expect(result.rules).toContain("このカードは自分の3行目の席マスにのみ出席できる。");
+    expect(result.rules).not.toContain("3行目にも");
+  }
+  await page.locator("#homeUpdatesButton").click();
+  const entry = page.locator(".update-entry").first();
+  await entry.locator("summary").click();
+  const change = entry.locator(".update-change").filter({ has: page.locator(".update-before", { hasText: "「声が大きい集団」" }) });
+  await expect(change.locator(".update-before")).toContainText("3行目にも");
+  await expect(change.locator(".update-after")).toContainText("自分の3行目の席マスにのみ");
+});
+
 test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
   await page.goto(gameUrl);
 
