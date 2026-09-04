@@ -5928,7 +5928,8 @@
       --reward-foil-glow: rgba(125, 211, 252, 0.52);
     }
 
-    .reward-foil-interference {
+    .reward-foil-interference,
+    .reward-foil-king-ghidorah {
       --reward-foil-face: linear-gradient(145deg, #5c3a12 0%, #251706 48%, #6b3e0c 100%);
       --reward-foil-glow: rgba(251, 191, 36, 0.48);
     }
@@ -16980,7 +16981,8 @@
       expansion: { label: "展開・敵増殖", cardIds: ["extra_people", "extra_student"], style: "expansion" },
       interference: { label: "妨害・LO", cardIds: ["dos_attack"], style: "interference" },
       shogi: { label: "将棋部", cardIds: ["infight_shogi"], style: "shogi" },
-      big: { label: "バカでかい型", cardIds: ["loud_student"], style: "big" }
+      big: { label: "バカでかい型", cardIds: ["loud_student"], style: "big" },
+      king_ghidorah_bed: { label: "キングギドラベッド", cardIds: ["king_ghidorah_bed"], style: "king-ghidorah" }
     });
     const DUNGEON_FLOORS = Object.freeze({
       1: {
@@ -20213,6 +20215,7 @@
       if (Object.keys(unlocks).length === 0) throw new Error("invalid backup");
       return {
         unlocks,
+        mergeUnlocks: source?.mergeUnlocks === true,
         selected: normalizeDungeonCardStyleSelections(source)
       };
     }
@@ -20234,8 +20237,10 @@
           await exportDungeonClearData(password);
         } else if (dungeonClearDataModalMode === "import" && pendingEncryptedDungeonClearImport) {
           const imported = await decryptDungeonClearData(pendingEncryptedDungeonClearImport, password);
-          unlockedDungeonCardStyles = imported.unlocks;
-          selectedDungeonCardStyles = imported.selected;
+          unlockedDungeonCardStyles = imported.mergeUnlocks
+            ? { ...unlockedDungeonCardStyles, ...imported.unlocks } : imported.unlocks;
+          selectedDungeonCardStyles = imported.mergeUnlocks
+            ? { ...selectedDungeonCardStyles, ...imported.selected } : imported.selected;
           persistDungeonCardStyles();
           state.message = "魔の1号館のクリアデータを読み込みました。";
         } else {
