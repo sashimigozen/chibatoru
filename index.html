@@ -16429,7 +16429,6 @@
             </div>
             <div class="deck-filter-row" id="deckTypeFilters"><span class="deck-filter-label">タイプ</span></div>
             <div class="deck-filter-row" id="deckCostFilters"><span class="deck-filter-label">戦意</span></div>
-            <div class="deck-filter-row" id="deckCategoryFilters"><span class="deck-filter-label">分類</span></div>
           </div>
         </details>
         <div class="deck-workspace">
@@ -17800,8 +17799,10 @@
       {
         version: "ver.0.22.1",
         date: "2026年9月4日",
-        summary: "トークンカードの消滅、プロテインドリンカーの攻撃力調整、講義の実行表示を追加し、カオスルールの戦意とターン開始時のドローを変更しました。",
+        summary: "トークンカードの消滅、プロテインドリンカーの攻撃力調整、講義の実行表示を追加し、カオスルールを変更しました。カオスデッキの再編集時の枚数を修正し、分類の絞り込みを削除しました。",
         changes: [
+          { title: "カオスデッキの再編集", before: "同じカードを4枚以上入れて保存したカオスデッキを「変更する」で開くと、通常ルールの同名枚数制限が適用され、枚数が3枚などに減っていた。", after: "カオスデッキを再編集するときは同名枚数制限を適用せず、保存した枚数をそのまま読み込むよう修正。通常・専攻デッキの枚数制限は変更しない。" },
+          { title: "デッキ編成の絞り込み", before: "カード検索・絞り込みに、タイプ・戦意に加えて分類の選択欄があった。", after: "分類の選択欄と分類による絞り込みを削除。カード名・カードテキストの検索、タイプ・戦意の絞り込みは引き続き使用できる。" },
           { title: "カオスルール", before: "カードの戦意は通常どおり必要で、自分のターン開始時に1枚引いていた。", after: "すべてのカードの戦意を0に変更。自分のターン開始時、手札が5枚になるまで引く。手札が5枚以上ある場合は引かず、手札を減らすこともない。カード効果によるドロー禁止・ドロー置き換え、デッキ切れの敗北、戦意の増加、既存のデッキ編成制限は維持する。ソロVS AIとオンライン対戦の両方に適用し、通常・専攻ルールは変更しない。" },
           { title: "講義の実行表示", before: "教師の行動選択で講義を選んでも、画面中央に講義を実行したことを示す表示がなかった。", after: "講義を実行したとき、画面中央に「講義」を一時的に表示する。オンライン対戦ではホスト・ゲストのどちらが実行しても、双方と観戦者に表示する。講義の効果や攻撃を選んだ場合の操作は変更しない。" },
           { title: "プロテインドリンカーの攻撃力変更（1→0）", before: "「プロテインドリンカー」\n学生／バカでかい型／戦意4／攻撃力1／体力7\n自分のターン終了時、このカードの攻撃力を+1する。", after: "「プロテインドリンカー」\n学生／バカでかい型／戦意4／攻撃力0／体力7\n自分のターン終了時、このカードの攻撃力を+1する。\n変更点：基本攻撃力を1から0に変更。戦意・体力・効果は変更しない。" },
@@ -18484,30 +18485,6 @@
     const LATEST_UPDATE_READ_ID = updateReadId(UPDATE_HISTORY[0]);
 
     const DECK_FILTER_TYPES = ["student", "teacher", "vampire", "item", "environment"];
-    const DECK_FILTER_CATEGORIES = ["ドロー", "サーチ・生成", "回復", "除去", "バフ・デバフ", "妨害", "展開", "進化", "融合", "装備"];
-    const CARD_CATEGORY_GROUPS = Object.freeze({
-      "ドロー": ["onigiri_draw", "hondara", "fire_touch", "wet_meal_ticket", "dry_meal_ticket", "deck_without", "three_gestures", "sage_legacy", "quick_quiz_tournament", "ttb"],
-      "サーチ・生成": ["aggro_army", "lightning_n", "pro_k", "trpg_member", "curry_treater", "environment_setup", "iv_pack", "music_detergent", "ikemasu", "ttb", "alpha", "beta", "gamma"],
-      "回復": ["aggro_eater", "bento", "fluid_pasta", "peaceful_mind", "onigiri_draw", "circle_crab", "hair_crab", "homeless_crab", "laughing_front_student"],
-      "除去": ["yabe", "ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "king_ghidorah_bed", "scared_me", "front_door"],
-      "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "quick_quiz_tournament", "aggro_kingdom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
-      "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
-      "展開": ["scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
-      "進化": ["failure_student", "success_student", "bird_a", "demon_a_plus", "ai_chan", "oni_shima_ai", "yuta", "dark_yuta", "donguri"],
-      "融合": ["ruler", "double_diamond", "yuta", "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte", "ultimate_yuta"],
-      "装備": ["yuta", "dark_yuta", "accelerate", "chameleon", "yuta_umbrella", "red_happi"]
-    });
-
-    const CARD_CATEGORIES = (() => {
-      const result = {};
-      Object.entries(CARD_CATEGORY_GROUPS).forEach(([category, ids]) => {
-        ids.forEach((baseId) => {
-          if (!result[baseId]) result[baseId] = [];
-          if (!result[baseId].includes(category)) result[baseId].push(category);
-        });
-      });
-      return Object.freeze(result);
-    })();
 
     const STARTER_DECK_RECIPES = {
       "スターター：出席ビギナーズ": {
@@ -18711,8 +18688,7 @@
         filters: {
           query: "",
           types: [],
-          costs: [],
-          categories: []
+          costs: []
         }
       },
       soloSelection: {
@@ -19259,7 +19235,6 @@
       deckFilterClearButton: document.getElementById("deckFilterClearButton"),
       deckTypeFilters: document.getElementById("deckTypeFilters"),
       deckCostFilters: document.getElementById("deckCostFilters"),
-      deckCategoryFilters: document.getElementById("deckCategoryFilters"),
       usedDeckInfo: document.getElementById("usedDeckInfo"),
       usedDeckList: document.getElementById("usedDeckList"),
       cardTooltip: document.getElementById("cardTooltip"),
@@ -39728,7 +39703,7 @@
     }
 
     function resetDeckFilters() {
-      state.deckBuilder.filters = { query: "", types: [], costs: [], categories: [] };
+      state.deckBuilder.filters = { query: "", types: [], costs: [] };
       if (elements.deckSearchInput) elements.deckSearchInput.value = "";
     }
 
@@ -39754,7 +39729,7 @@
       if (!saved) return;
       if (isSpecialtyDeckFormat()) state.deckBuilder.specialtyId = saved.specialtyId || "";
       state.deckBuilder.activeSide = "player";
-      state.deckBuilder.counts.player = copyDeckCounts(saved.counts || {});
+      state.deckBuilder.counts.player = copyDeckCounts(saved.counts || {}, { unlimited: isChaosDeckFormat() });
       state.deckBuilder.editingName = name;
       state.deckBuilder.originalFingerprint = deckCountsFingerprint(state.deckBuilder.counts.player);
       state.deckBuilder.view = "editor";
@@ -39798,7 +39773,6 @@
       };
       renderChips(elements.deckTypeFilters, DECK_FILTER_TYPES, "types", labelForType);
       renderChips(elements.deckCostFilters, ["なし", ...Array.from({ length: 11 }, (_, index) => String(index))], "costs", (value) => value);
-      renderChips(elements.deckCategoryFilters, DECK_FILTER_CATEGORIES, "categories", (value) => value);
     }
 
     function deckCardMatchesFilters(baseId) {
@@ -39813,8 +39787,6 @@
       if (filters.types.length && !filters.types.includes(card.type)) return false;
       const costKey = card.noCost ? "なし" : String(card.cost ?? 0);
       if (filters.costs.length && !filters.costs.includes(costKey)) return false;
-      const categories = CARD_CATEGORIES[baseId] || [];
-      if (filters.categories.length && !filters.categories.some((category) => categories.includes(category))) return false;
       return true;
     }
 
