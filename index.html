@@ -16961,7 +16961,7 @@
       expansion: ["aggro_king", "aggro_queen", "brother_capital", "bust_suit", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "intern", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "scout_student", "seat_taking_group", "single_cell", "sock_block", "suit_student", "ta_squad", "trpg_member"],
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
-      big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"],
+      big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer", "yabe"],
       vampire: []
     });
     const DUNGEON_CARD_STYLE_REWARDS = Object.freeze({
@@ -17368,7 +17368,7 @@
     const CRAB_SET_IDS = ["circle_crab", "hair_crab", "homeless_crab"];
     const TARGETED_DESTROY_ITEM_IDS = new Set(["seriously_hit", "favorite_number_s"]);
     const IMMEDIATE_ITEM_IDS = [
-      "aggro_army", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "namen_tenno",
+      "yabe", "aggro_army", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "namen_tenno",
       "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
       "dropped_cards", "sage_legacy", "reversal", "dont_worry", "yutakun_yutakun", "scared_me", "front_door", "door_front", "back_door", "furious_comeback", "stand_up",
@@ -17487,6 +17487,7 @@
       ruler: { name: "定規", type: "item", cost: 1, target: "enemy" },
       aggro_eater: { name: "アグロ喰い", type: "item", cost: 1, target: "friendlyAny" },
       aggro_army: { name: "アグロ軍", type: "item", cost: 2, target: "self" },
+      yabe: { name: "やべー！！", type: "item", cost: 2, target: "self" },
       tsurai_nara: { name: "辛いなら", type: "item", cost: 0, target: "ownHand" },
       company_one_day: { name: "会社１日", type: "item", cost: 0, target: "ownHand" },
       enough_to_fly: { name: "飛ぶくらい", type: "item", cost: 0, target: "ownHand" },
@@ -17626,6 +17627,7 @@
       big_omata: "big",
       course_registration_party: "common",
       aggro_army: "common",
+      yabe: "big",
       aggro_kingdom: "common",
       absent_student: "late",
       strict_lateness_teacher: "common",
@@ -17669,6 +17671,7 @@
     );
     const DIRECT_DECK_CARD_IDS = new Set();
     ALL_DECK_IDS.push(
+      "yabe",
       "summer_teacher", "namen_tenno", "brother_capital", "padlock", "crotch_febreze",
       "smoke_flare", "one_eyed_peek", "big_laughter", "forbidden_book", "philosophy_cheating"
     );
@@ -17705,8 +17708,17 @@
       {
         version: "ver.0.22.0",
         date: "2026年9月3日",
-        summary: "新カード3枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作、効果による複数出席の順次処理を追加しました。",
+        summary: "新カード4枚の追加、カード修正、教師の講義操作の試験変更、手札内の融合操作、複数出席とダメージ演出の順次表示を追加しました。",
         changes: [
+          {
+            title: "新カード",
+            after: "「やべー！！」\n持ち物／バカでかい型／戦意2\n相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。"
+          },
+          {
+            title: "ダメージ演出の表示順",
+            before: "複数の出席者にダメージを与える効果では、ダメージ演出が同時に表示されていた。",
+            after: "ダメージ演出を短い間隔で1人ずつ連続表示するよう変更。講義室内は従来どおり教卓マスから、続いて1行1列から3行3列の席順に処理する。ランダムに複数人を選ぶ効果も、対象を抽選してからこの順に並べる。防御・無効化の表示にも間隔を設け、オンライン対戦でも同じ間隔で表示する。"
+          },
           {
             title: "新カード",
             after: "「アグロキングダム」\n環境／共通カード／戦意2\nこのカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。"
@@ -18369,7 +18381,7 @@
       "ドロー": ["onigiri_draw", "hondara", "fire_touch", "wet_meal_ticket", "dry_meal_ticket", "deck_without", "three_gestures", "sage_legacy", "quick_quiz_tournament", "ttb"],
       "サーチ・生成": ["aggro_army", "lightning_n", "pro_k", "trpg_member", "curry_treater", "environment_setup", "iv_pack", "music_detergent", "ikemasu", "ttb", "alpha", "beta", "gamma"],
       "回復": ["aggro_eater", "bento", "fluid_pasta", "peaceful_mind", "onigiri_draw", "circle_crab", "hair_crab", "homeless_crab", "laughing_front_student"],
-      "除去": ["ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "king_ghidorah_bed", "scared_me", "front_door"],
+      "除去": ["yabe", "ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization", "panpan", "capture", "favorite_number_s", "thin_professor_h", "bird_a", "demon_a_plus", "bounce_day", "back_question_student", "full_throttle", "king_ghidorah_bed", "scared_me", "front_door"],
       "バフ・デバフ": ["ux_design_textbook", "chameleon", "red_happi", "set_log", "student_comedy", "best_friend", "kyoto_sound_i", "gangi_fortress", "student_council", "dark_student_council", "building_12_classroom", "quick_quiz_tournament", "aggro_kingdom", "protein_drinker", "dobby", "live_person", "chaos_world", "door_front", "furious_comeback"],
       "妨害": ["thin_item", "handy_jet_engine", "dos_attack", "destroy_dos_attack", "quiet_please", "i_got_it", "sock_block", "chigauyo", "logic_hunter", "sniper", "cynical_student", "baka_mac", "pachin_uni", "meguro_library", "full_lock"],
       "展開": ["scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "pro_k", "kyushu_info_c", "seat_taking_group", "extra_people", "apprentice_vampire", "proliferating_enemy", "enemy_boss", "pachin_uni", "ikemasu", "aiben", "nyotei"],
@@ -18466,6 +18478,9 @@
     const FAST_ATTACK_FOCUS_STEP_DELAY = 300;
     const ATTACK_FOCUS_STEP_DELAY = 700;
     const EFFECT_FEEDBACK_GAP_MS = 280;
+    const DAMAGE_FEEDBACK_GAP_MS = 100;
+    let nextDamageFeedbackAt = 0;
+    let damageFeedbackBattleToken = null;
     const ORDERED_ATTENDANCE_INITIAL_DELAY_MS = PLAY_REVEAL_MS + 80;
     const ORDERED_ATTENDANCE_STEP_MS = 100;
     const ORDERED_ATTENDANCE_BINGO_STEP_MS = 360;
@@ -25508,6 +25523,15 @@
         return getAiLethalForecast().immediateLethal ? 40 + utaCount * 2 : 3 + utaCount * 2;
       }
       if (item.baseId === "fire_touch") return deck.length >= 3 && opponent.life > 4 ? 6 : 0;
+      if (item.baseId === "yabe") {
+        const targets = effectTargetEntries("opponent", "player");
+        if (!targets.length) return 0;
+        const value = targets.reduce((sum, { card }) => {
+          const damage = previewFinalDamageToCard(card, 1, item);
+          return sum + Math.min(card.currentHp, damage) * 2 + (damage >= card.currentHp ? 4 : 0);
+        }, 0);
+        return Math.min(2, targets.length) * value / targets.length;
+      }
       if (item.baseId === "sexual_eye") return deck.some((card) => card.baseId === "yuta") ? 5 : 0;
       if (item.baseId === "yoyu_announce") return deck.length >= 1 ? 5 : 0;
       if (item.baseId === "environment_setup") return deck.some((card) => card.type === "environment") ? 5 : 0;
@@ -31005,7 +31029,7 @@
       }
       if (card.baseId === "suzaku" && zone === "seat") {
         const targets = shuffle(effectTargetEntries(side, opponent, (targetCard) => targetCard.type === "vampire"))
-          .slice(0, 2);
+          .slice(0, 2).sort((a, b) => compareDamageTargetRefs(a.ref, b.ref));
         targets.forEach(({ card: target }) => {
           if (target) dealDamageToCard(target, 3, card);
         });
@@ -32434,13 +32458,15 @@
         addLog(`${SIDES[side]}はお手製C to Cを使い、${target.name}は相手の場に同名の出席者がいるかぎり攻撃できなくなりました。`);
       }
       if (item.baseId === "double_diamond") {
-        dealDamageToCard(target, 4, item);
         const adjacent = adjacentBoardTargets(targetOwner, targetZone, targetIndex)
           .find((ref) => {
             const adjacentTarget = getBoardCardFromRef(ref);
             return adjacentTarget && isAllowedEffectTarget(side, adjacentTarget);
           });
-        if (adjacent) dealDamageToCard(getBoardCardFromRef(adjacent), 2, item);
+        const hits = [{ ref: { owner: targetOwner, zone: targetZone, index: targetIndex }, card: target, amount: 4 }];
+        if (adjacent) hits.push({ ref: adjacent, card: getBoardCardFromRef(adjacent), amount: 2 });
+        hits.sort((a, b) => compareDamageTargetRefs(a.ref, b.ref))
+          .forEach((hit) => dealDamageToCard(hit.card, hit.amount, item));
       }
       if (attachedUtaEquipment) {
         state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
@@ -32762,6 +32788,10 @@
     }
 
     function castImmediateItem(side, item, renderAfter, options = {}) {
+      if (item.baseId === "yabe" && effectTargetEntries(side, oppositeSide(side)).length === 0) {
+        if (renderAfter) render();
+        return false;
+      }
       if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) {
         addLog("乾いた食券は環境が食堂の時にしか使えません。");
         if (renderAfter) render();
@@ -32892,6 +32922,12 @@
       if (item.baseId !== "donguri") showCardPlayAnimation(item, "trash");
       let resultText = "";
       let itemAlreadyMovedToTrash = false;
+      if (item.baseId === "yabe") {
+        const targets = shuffle(effectTargetEntries(side, oppositeSide(side))).slice(0, 2)
+          .sort((a, b) => compareDamageTargetRefs(a.ref, b.ref));
+        targets.forEach(({ card }) => dealDamageToCard(card, 1, item));
+        resultText = `相手の出席者${targets.length}人をランダムに指名し、それぞれに1ダメージを与えました。`;
+      }
       if (item.baseId === "one_eyed_peek") {
         const revealedHand = state.players[oppositeSide(side)].hand;
         if (side === "player") {
@@ -34313,6 +34349,11 @@
 
     function dealDamageToCard(card, amount, source = null, options = {}) {
       if (!card || card.currentHp === null || amount <= 0) return 0;
+      return withSequentialDamageFeedback(() => applyCardDamage(card, amount, source, options));
+    }
+
+    function applyCardDamage(card, amount, source = null, options = {}) {
+      if (!card || card.currentHp === null || amount <= 0) return 0;
       if (isAibenNyoteiEffectImmune(card) && options.combat !== true) {
         showFloatingTextForCard(card, "無効", "heal");
         return 0;
@@ -34430,7 +34471,7 @@
       let attendees = 0;
       let attendeeDamage = 0;
       let affectedCards = 0;
-      cardHits.forEach(({ ref, hits }) => {
+      [...cardHits.values()].sort((a, b) => compareDamageTargetRefs(a.ref, b.ref)).forEach(({ ref, hits }) => {
         const card = getBoardCardFromRef(ref);
         if (!card || card.currentHp === null) return;
         attendees += hits;
@@ -34492,6 +34533,11 @@
 
     function damagePlayer(side, amount) {
       if (amount <= 0) return;
+      return withSequentialDamageFeedback(() => applyPlayerDamage(side, amount));
+    }
+
+    function applyPlayerDamage(side, amount) {
+      if (amount <= 0) return;
       const player = state.players[side];
       if (player.lifeShieldUntilTurn && player.lifeShieldUntilTurn >= state.actionTurn && player.lifeShieldUntilSide === state.currentSide) {
         showFloatingTextForLife(side, "無効", "heal");
@@ -34547,6 +34593,22 @@
         return callback();
       } finally {
         activeEffectFeedbackSequence = null;
+        activeEffectFeedbackDelay = previousDelay;
+      }
+    }
+
+    function withSequentialDamageFeedback(callback) {
+      const previousDelay = activeEffectFeedbackDelay;
+      if (damageFeedbackBattleToken !== state.preBattleToken) {
+        damageFeedbackBattleToken = state.preBattleToken;
+        nextDamageFeedbackAt = 0;
+      }
+      const now = performance.now();
+      activeEffectFeedbackDelay = Math.max(previousDelay, nextDamageFeedbackAt - now, 0);
+      nextDamageFeedbackAt = now + activeEffectFeedbackDelay + DAMAGE_FEEDBACK_GAP_MS;
+      try {
+        return callback();
+      } finally {
         activeEffectFeedbackDelay = previousDelay;
       }
     }
@@ -34614,18 +34676,25 @@
       if (!rect) return;
       const delay = Number.isFinite(options.delay) ? Math.max(0, options.delay) : activeEffectFeedbackDelay;
       const target = options.target || null;
+      const instanceId = target?.dataset.cardId;
+      const lifeSide = target?.dataset.lifeTarget;
+      const battleToken = state.preBattleToken;
       effectFeedbackEventSerial += 1;
       const display = () => {
-        if (target?.isConnected) {
-          playTargetImpact(target, kind, rect);
+        if (battleToken !== state.preBattleToken) return;
+        const currentTarget = instanceId ? document.querySelector(`[data-card-id="${instanceId}"]`)
+          : lifeSide ? document.querySelector(`[data-life-target="${lifeSide}"]`) : target;
+        const currentRect = currentTarget?.isConnected ? currentTarget.getBoundingClientRect() : rect;
+        if (currentTarget?.isConnected) {
+          playTargetImpact(currentTarget, kind, currentRect);
         } else if (kind === "damage" || kind === "destroy") {
-          createDamageSparks(rect);
+          createDamageSparks(currentRect);
         }
         const pop = document.createElement("div");
         pop.className = `floating-pop ${kind}`;
         pop.textContent = text;
-        pop.style.left = `${rect.left + rect.width / 2}px`;
-        pop.style.top = `${rect.top + rect.height / 2}px`;
+        pop.style.left = `${currentRect.left + currentRect.width / 2}px`;
+        pop.style.top = `${currentRect.top + currentRect.height / 2}px`;
         document.body.appendChild(pop);
         window.setTimeout(() => pop.remove(), 1600);
       };
@@ -35079,6 +35148,14 @@
         refs.push({ owner, zone: "seat", index: card.seatAnchorIndex ?? index });
       });
       return refs;
+    }
+
+    function compareDamageTargetRefs(a, b) {
+      // Preserve the classroom order used by existing effects: teacher first,
+      // then seats in row-major order, independent of screen rotation.
+      const sideOrder = (owner) => owner === "player" ? 0 : 1;
+      const slotOrder = (ref) => ref.zone === "teacher" ? -1 : ref.index;
+      return sideOrder(a.owner) - sideOrder(b.owner) || slotOrder(a) - slotOrder(b);
     }
 
     function countOccupiedClassroomSlots(owner) {
@@ -36592,6 +36669,7 @@
     }
 
     function canUseItemNow(item) {
+      if (item.baseId === "yabe") return effectTargetEntries("player", "opponent").length > 0;
       if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) return fusionEligibleUtasInHand("player", item).length > 0;
       if (item.baseId === "aiben_vs_nyotei_title_match") return canUseTitleMatch("player", item);
       if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) return false;
@@ -40454,6 +40532,12 @@
       opponent.board.seats[4] = makeOpponentTestAttendee("vampire");
       opponent.board.seats[8] = makeOpponentTestAttendee("general_student");
       opponent.board.teacher = makeOpponentTestAttendee("general_teacher");
+      if (baseId === "yabe") {
+        opponent.board.seats.fill(null);
+        opponent.board.seats[0] = makeOpponentTestAttendee("general_student");
+        opponent.board.seats[8] = makeOpponentTestAttendee("general_student");
+        opponent.board.seats[8].currentHp = 1;
+      }
       if (baseId === "absent_student") {
         player.board.seats[0] = makePlayerTestAttendee("absent_student");
       }
@@ -41932,6 +42016,7 @@
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
+        yabe: "相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。",
         tsurai_nara: "融合\n「U太」に融合する。",
         company_one_day: "融合\n「U太」に融合する。",
         enough_to_fly: "融合\n「U太」に融合する。",
