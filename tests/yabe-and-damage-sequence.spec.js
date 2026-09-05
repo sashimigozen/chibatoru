@@ -11,6 +11,7 @@ async function setup(page, side = "player", actionTurn = 3) {
     state.screen = "battle";
     state.phase = "battle";
     state.currentSide = side;
+    state.firstSide = "player";
     state.gameOver = false;
     state.actionTurn = actionTurn;
     state.environment = null;
@@ -68,12 +69,13 @@ for (const side of ["player", "opponent"]) {
   });
 }
 
-for (const [side, actionTurn] of [["player", 13], ["opponent", 14]]) {
-  test(`やべー！！は7ターン目以降、${side}側から異なる2人に2ダメージを席順で与える`, async ({ page }) => {
+for (const [side, actionTurn] of [["opponent", 14], ["player", 15]]) {
+  test(`やべー！！は後攻7ターン目以降、${side}側から異なる2人に2ダメージを席順で与える`, async ({ page }) => {
     await setup(page, side, actionTurn);
     const result = await page.evaluate((side) => {
       const api = window.__chibattle;
       const { state } = api;
+      state.players.opponent.turnsTaken = 7;
       const other = side === "player" ? "opponent" : "player";
       const teacher = api.makeBoardCard(api.createCardFromBase("bird_a", other));
       const student = api.makeBoardCard(api.createCardFromBase("protein_drinker", other));
@@ -97,11 +99,13 @@ for (const [side, actionTurn] of [["player", 13], ["opponent", 14]]) {
   });
 }
 
-test("やべー！！の強化は大きな6ターン目の後攻手番ではまだ始まらない", async ({ page }) => {
-  await setup(page, "player", 12);
+test("やべー！！の強化は先攻7ターン目ではまだ始まらない", async ({ page }) => {
+  await setup(page, "player", 13);
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
+    state.players.player.turnsTaken = 7;
+    state.players.opponent.turnsTaken = 6;
     const target = api.makeBoardCard(api.createCardFromBase("protein_drinker", "opponent"));
     state.players.opponent.board.seats[0] = target;
     api.render();
@@ -198,12 +202,12 @@ test("やべー！！をデッキ・専攻・カードテスト・更新情報�
     };
   });
   expect(result).toMatchObject({ name: "やべー！！", cost: 2, type: "item", category: "big", specialty: true, inTestHand: true });
-  expect(result.text).toBe("相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。7ターン目以降、1ダメージではなく2ダメージを与える。");
+  expect(result.text).toBe("相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。後攻7ターン目以降、1ダメージではなく2ダメージを与える。");
   expect(result.targets).toBeGreaterThanOrEqual(2);
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
   const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.22.2" }) });
   await entry.locator("summary").click();
   await expect(entry).toContainText("「やべー！！」\n持ち物／バカでかい型／戦意2");
-  await expect(entry).toContainText("7ターン目以降、1ダメージではなく2ダメージを与える。");
+  await expect(entry).toContainText("後攻7ターン目以降、1ダメージではなく2ダメージを与える。");
 });
