@@ -17930,7 +17930,7 @@
           {
             title: "カード修正",
             before: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n手札の「ミーハー学生」「エキストラの皆さん」「ネガティブトーカー」から1枚を選んで出席させる。選んだ効果の戦意は順に4／9／6となる。このカードは講義を持たない。",
-            after: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1枚を選び、そのカードを生成して出席させる。\n「ミーハー学生」［戦意4］：陽気を持ち、攻撃による反撃を受けない。\n「ネガティブトーカー」［戦意6］：相手の講義室にいる学生すべてに3ダメージを与える。\n「エキストラの皆さん」［戦意9］：自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。\nこのカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。\n\n変更点：対象カードが手札になくても選べるようにし、選んだカードを生成して出席させる処理へ変更。各選択肢の効果と戦意をカードテキストに明記。"
+            after: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1つを選び、その効果を発動する。\n「ミーハー学生」［戦意4］：このカードは陽気を持ち、攻撃による反撃を受けない。\n「ネガティブトーカー」［戦意6］：相手の講義室にいる学生すべてに3ダメージを与える。\n「エキストラの皆さん」［戦意9］：自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。\nこのカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。\n\n変更点：対象カードが手札になくても効果を選べるようにし、夏井先生が選んだ効果を発動する処理へ変更。各選択肢の効果と戦意をカードテキストに明記。"
           },
           { title: "対戦中のログ・メニュー", before: "ログやメニューを開いたまま対戦が終了すると、次の試合でも開いた状態が残っていた。", after: "結果表示時と新しい試合の開始時に、ログ・メニューを閉じるよう修正。校外・遅刻ゾーンの確認一覧も閉じ、次の試合には開いた状態を引き継がない。オンラインのゲスト・観戦側にも適用し、試合中の通常の同期では閉じない。" }
         ]
@@ -29941,7 +29941,7 @@
     }
 
     const SUMMER_TEACHER_CHOICES = Object.freeze({
-      trendy_student: { cost: 4, label: "ミーハー学生", effect: "陽気を持ち、攻撃による反撃を受けない。" },
+      trendy_student: { cost: 4, label: "ミーハー学生", effect: "このカードは陽気を持ち、攻撃による反撃を受けない。" },
       kyoto_sound_i: { cost: 6, label: "ネガティブトーカー", effect: "相手の講義室にいる学生すべてに3ダメージを与える。" },
       extra_people: { cost: 9, label: "エキストラの皆さん", effect: "自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。" }
     });
@@ -29958,7 +29958,7 @@
       const choices = Object.values(SUMMER_TEACHER_CHOICES)
         .map((choice) => `「${choice.label}」［戦意${choice.cost}］：${choice.effect}`)
         .join("");
-      return `「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1枚を選び、そのカードを生成して出席させる。${choices}このカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。`;
+      return `「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1つを選び、その効果を発動する。${choices}このカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。`;
     }
 
     function summerTeacherChoicePlayCost(card, baseId) {
@@ -29984,7 +29984,7 @@
         mode: "summer_teacher",
         itemId: card.instanceId,
         title: card.name,
-        message: "出席させるカードを選んでください。対象のカードが手札になくても選べます。夏井先生の戦意は選んだ効果の戦意になります。",
+        message: "発動する効果を選んでください。選択肢のカードが手札になくても選べます。夏井先生の戦意は選んだ効果の戦意になります。",
         cards: candidates,
         min: 1,
         max: 1,
@@ -31048,43 +31048,33 @@
       if (card.baseId === "summer_teacher") {
         const choice = card.summerTeacherChoiceBaseId;
         if (!["trendy_student", "kyoto_sound_i", "extra_people"].includes(choice)) {
-          addLog(`${card.name}の効果：選んだカードを確認できないため不発になりました。`);
+          addLog(`${card.name}の効果：選んだ効果を確認できないため不発になりました。`);
         } else {
-          const selected = createCardFromBase(choice, side);
-          startSpecialAttendanceQueue(side, [selected], {
-            attendanceSource: ATTENDANCE_SOURCE.EFFECT,
-            label: card.name,
-            transform: (summoned) => {
-              summoned.summerTeacherChoice = choice;
-              if (choice === "trendy_student") {
-                addKeyword(summoned, "陽気", card.name);
-                summoned.noCounterAttack = true;
+          if (choice === "trendy_student") {
+            addKeyword(card, "陽気", card.name);
+            card.noCounterAttack = true;
+            addLog(`${card.name}の「ミーハー学生」効果：このカードは陽気を持ち、攻撃による反撃を受けなくなりました。`);
+          }
+          if (choice === "kyoto_sound_i") {
+            let affected = 0;
+            listBoardRefs(opponent).forEach((ref) => {
+              const target = getBoardCardFromRef(ref);
+              if (target?.type === "student") {
+                dealDamageToCard(target, 3, card);
+                affected += 1;
               }
-            },
-            onComplete: () => {
-              if (choice === "kyoto_sound_i") {
-                let affected = 0;
-                listBoardRefs(opponent).forEach((ref) => {
-                  const target = getBoardCardFromRef(ref);
-                  if (target?.type === "student") {
-                    dealDamageToCard(target, 3, card);
-                    affected += 1;
-                  }
-                });
-                addLog(`${card.name}の選択効果：相手の学生${affected}人に3ダメージを与えました。`);
-              }
-              if (choice === "extra_people") {
-                const seatIndexes = orderedRandomOpenSeatIndexes(side, 3);
-                startOrderedAttendance(
-                  orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("extra_student", side), {
-                    afterAttend: (extra) => applyPermanentStatBuff(extra, 1, 1, 0, card.name)
-                  }),
-                  { onComplete: (summoned) => addLog(`${card.name}の選択効果：エキストラ学生を${summoned}人出席させ、+1/+1しました。`) }
-                );
-              }
-            }
-          });
-          addLog(`${card.name}の効果：${selected.name}を生成して出席させます。`);
+            });
+            addLog(`${card.name}の「ネガティブトーカー」効果：相手の学生${affected}人に3ダメージを与えました。`);
+          }
+          if (choice === "extra_people") {
+            const seatIndexes = orderedRandomOpenSeatIndexes(side, 3);
+            startOrderedAttendance(
+              orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("extra_student", side), {
+                afterAttend: (extra) => applyPermanentStatBuff(extra, 1, 1, 0, card.name)
+              }),
+              { onComplete: (summoned) => addLog(`${card.name}の「エキストラの皆さん」効果：エキストラ学生を${summoned}人出席させ、+1/+1しました。`) }
+            );
+          }
         }
       }
       if (card.baseId === "tokyo_tech_bro") {
@@ -31291,7 +31281,7 @@
           addLog(`${card.name}の効果：隣接する空席がないためベストフレンドを出席させられません。`);
         }
       }
-      if (card.baseId === "extra_people" && !card.summerTeacherChoice) {
+      if (card.baseId === "extra_people") {
         const seatIndexes = state.players[side].board.seats
           .map((seatCard, seatIndex) => (!seatCard && isBoardSlotOpen(side, "seat", seatIndex) ? seatIndex : null))
           .filter((seatIndex) => seatIndex !== null);
@@ -31494,7 +31484,7 @@
       if (card.baseId === "kansai_voice_t" && zone === "teacher") {
         beginKansaiVoiceTargetChoice(side, card);
       }
-      if (card.baseId === "kyoto_sound_i" && zone === "teacher" && !card.summerTeacherChoice) {
+      if (card.baseId === "kyoto_sound_i" && zone === "teacher") {
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const target = getBoardCardFromRef(ref);

@@ -35,6 +35,8 @@ test("対象カードが手札になくても夏井先生の3種類の選択肢�
       text: api.cardRulesText(summer),
       pendingGeneratedCard: api.state.pendingCopiedCard?.baseId || null,
       summerAttended: api.state.players.player.board.seats[0]?.baseId === "summer_teacher",
+      summerCheerful: api.hasKeyword(api.state.players.player.board.seats[0], "陽気"),
+      summerNoCounterAttack: Boolean(api.state.players.player.board.seats[0]?.noCounterAttack),
       handAfter: api.state.players.player.hand.map((card) => card.baseId)
     };
   });
@@ -47,9 +49,11 @@ test("対象カードが手札になくても夏井先生の3種類の選択肢�
     expect.objectContaining({ baseId: "extra_people", cost: 9, text: expect.stringContaining("3人まで") })
   ]);
   expect(result.text).not.toContain("手札の「ミーハー学生」");
-  expect(result.text).toContain("そのカードを生成して出席させる");
-  expect(result.pendingGeneratedCard).toBe("trendy_student");
+  expect(result.text).toContain("その効果を発動する");
+  expect(result.pendingGeneratedCard).toBeNull();
   expect(result.summerAttended).toBe(true);
+  expect(result.summerCheerful).toBe(true);
+  expect(result.summerNoCounterAttack).toBe(true);
   expect(result.handAfter).toEqual([]);
 });
 
@@ -97,34 +101,35 @@ async function playSummerTeacherChoice(page, choiceBaseId, will) {
   }, { choiceBaseId, will });
 }
 
-test("ミーハー学生を手札から消費せず生成して出席させる", async ({ page }) => {
+test("ミーハー学生を選ぶと夏井先生自身に陽気と反撃無効を付与する", async ({ page }) => {
   const result = await playSummerTeacherChoice(page, "trendy_student", 10);
-  const trendy = result.ownBoard.find((card) => card.baseId === "trendy_student");
+  const summer = result.ownBoard.find((card) => card.baseId === "summer_teacher");
 
   expect(result.played).toBe(true);
   expect(result.hand).toEqual([]);
   expect(result.will).toBe(6);
-  expect(trendy).toMatchObject({ cheerful: true, noCounterAttack: true });
+  expect(result.ownBoard.some((card) => card.baseId === "trendy_student")).toBe(false);
+  expect(summer).toMatchObject({ cheerful: true, noCounterAttack: true });
 });
 
-test("ネガティブトーカーは固有効果を重ねず夏井先生の3ダメージだけを処理する", async ({ page }) => {
+test("ネガティブトーカーを選ぶと夏井先生が相手の学生へ3ダメージを与える", async ({ page }) => {
   const result = await playSummerTeacherChoice(page, "kyoto_sound_i", 10);
 
   expect(result.played).toBe(true);
   expect(result.hand).toEqual([]);
   expect(result.will).toBe(4);
-  expect(result.ownBoard.some((card) => card.baseId === "kyoto_sound_i")).toBe(true);
+  expect(result.ownBoard.some((card) => card.baseId === "kyoto_sound_i")).toBe(false);
   expect(result.enemy).toEqual({ attack: 0, hp: 4 });
 });
 
-test("エキストラの皆さんは夏井先生の効果で強化済みトークンを3人だけ出席させる", async ({ page }) => {
+test("エキストラの皆さんを選ぶと夏井先生が強化済みトークンを3人出席させる", async ({ page }) => {
   const result = await playSummerTeacherChoice(page, "extra_people", 10);
   const extras = result.ownBoard.filter((card) => card.baseId === "extra_student");
 
   expect(result.played).toBe(true);
   expect(result.hand).toEqual([]);
   expect(result.will).toBe(1);
-  expect(result.ownBoard.some((card) => card.baseId === "extra_people")).toBe(true);
+  expect(result.ownBoard.some((card) => card.baseId === "extra_people")).toBe(false);
   expect(extras).toHaveLength(3);
   expect(extras.every((card) => card.attack === 2 && card.hp === 2)).toBe(true);
 });
