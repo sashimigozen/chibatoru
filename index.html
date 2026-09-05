@@ -17920,8 +17920,13 @@
       {
         version: "ver.0.22.2",
         date: "2026年9月5日",
-        summary: "ログ・メニューが次の試合にも開いたままになる不具合を修正しました。",
+        summary: "ログ・メニューが次の試合にも開いたままになる不具合を修正し、「やべー！！」の7ターン目以降のダメージを強化しました。",
         changes: [
+          {
+            title: "カード修正",
+            before: "「やべー！！」\n持ち物／バカでかい型／戦意2\n相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。",
+            after: "「やべー！！」\n持ち物／バカでかい型／戦意2\n相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。7ターン目以降、1ダメージではなく2ダメージを与える。\n\n変更点：7ターン目以降に与えるダメージを1から2に変更。"
+          },
           { title: "対戦中のログ・メニュー", before: "ログやメニューを開いたまま対戦が終了すると、次の試合でも開いた状態が残っていた。", after: "結果表示時と新しい試合の開始時に、ログ・メニューを閉じるよう修正。校外・遅刻ゾーンの確認一覧も閉じ、次の試合には開いた状態を引き継がない。オンラインのゲスト・観戦側にも適用し、試合中の通常の同期では閉じない。" }
         ]
       },
@@ -25879,8 +25884,9 @@
       if (item.baseId === "yabe") {
         const targets = effectTargetEntries("opponent", "player");
         if (!targets.length) return 0;
+        const yabeDamage = yabeDamageAmount();
         const value = targets.reduce((sum, { card }) => {
-          const damage = previewFinalDamageToCard(card, 1, item);
+          const damage = previewFinalDamageToCard(card, yabeDamage, item);
           return sum + Math.min(card.currentHp, damage) * 2 + (damage >= card.currentHp ? 4 : 0);
         }, 0);
         return Math.min(2, targets.length) * value / targets.length;
@@ -33287,6 +33293,10 @@
       return true;
     }
 
+    function yabeDamageAmount() {
+      return state.actionTurn >= 7 ? 2 : 1;
+    }
+
     function castImmediateItem(side, item, renderAfter, options = {}) {
       if (item.baseId === "yabe" && effectTargetEntries(side, oppositeSide(side)).length === 0) {
         if (renderAfter) render();
@@ -33423,10 +33433,11 @@
       let resultText = "";
       let itemAlreadyMovedToTrash = false;
       if (item.baseId === "yabe") {
+        const damage = yabeDamageAmount();
         const targets = shuffle(effectTargetEntries(side, oppositeSide(side))).slice(0, 2)
           .sort((a, b) => compareDamageTargetRefs(a.ref, b.ref));
-        targets.forEach(({ card }) => dealDamageToCard(card, 1, item));
-        resultText = `相手の出席者${targets.length}人をランダムに指名し、それぞれに1ダメージを与えました。`;
+        targets.forEach(({ card }) => dealDamageToCard(card, damage, item));
+        resultText = `相手の出席者${targets.length}人をランダムに指名し、それぞれに${damage}ダメージを与えました。`;
       }
       if (item.baseId === "one_eyed_peek") {
         const revealedHand = state.players[oppositeSide(side)].hand;
@@ -42571,7 +42582,7 @@
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
-        yabe: "相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。",
+        yabe: "相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。7ターン目以降、1ダメージではなく2ダメージを与える。",
         tsurai_nara: "融合\n「U太」に融合する。",
         company_one_day: "融合\n「U太」に融合する。",
         enough_to_fly: "融合\n「U太」に融合する。",

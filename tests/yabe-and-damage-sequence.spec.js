@@ -3,16 +3,16 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
-async function setup(page, side = "player") {
+async function setup(page, side = "player", actionTurn = 3) {
   await page.goto(gameUrl);
-  await page.evaluate((side) => {
+  await page.evaluate(({ side, actionTurn }) => {
     const api = window.__chibattle;
     const { state } = api;
     state.screen = "battle";
     state.phase = "battle";
     state.currentSide = side;
     state.gameOver = false;
-    state.actionTurn = 3;
+    state.actionTurn = actionTurn;
     state.environment = null;
     state.effectFeedbackEvents = [];
     state.online.role = "host";
@@ -30,7 +30,7 @@ async function setup(page, side = "player") {
     });
     state.players[side].hand = [api.createCardFromBase("yabe", side)];
     api.render();
-  }, side);
+  }, { side, actionTurn });
 }
 
 for (const side of ["player", "opponent"]) {
@@ -65,6 +65,35 @@ for (const side of ["player", "opponent"]) {
     expect(result.will).toBe(0);
     expect(result.trash).toContain("yabe");
     expect(result.hand).toBe(0);
+  });
+}
+
+for (const side of ["player", "opponent"]) {
+  test(`やべー！！は7ターン目以降、${side}側から異なる2人に2ダメージを席順で与える`, async ({ page }) => {
+    await setup(page, side, 7);
+    const result = await page.evaluate((side) => {
+      const api = window.__chibattle;
+      const { state } = api;
+      const other = side === "player" ? "opponent" : "player";
+      const teacher = api.makeBoardCard(api.createCardFromBase("bird_a", other));
+      const student = api.makeBoardCard(api.createCardFromBase("protein_drinker", other));
+      state.players[other].board.teacher = teacher;
+      state.players[other].board.seats[8] = student;
+      api.render();
+      const before = [teacher.currentHp, student.currentHp];
+      const used = api.castImmediateItem(side, state.players[side].hand[0], true);
+      return {
+        used,
+        loss: [before[0] - teacher.currentHp, before[1] - student.currentHp],
+        ids: [teacher.instanceId, student.instanceId],
+        events: state.effectFeedbackEvents.filter((event) => event.target === "card")
+      };
+    }, side);
+    expect(result.used).toBe(true);
+    expect(result.loss).toEqual([2, 2]);
+    expect(result.events.map((event) => event.instanceId)).toEqual(result.ids);
+    expect(result.events.every((event) => event.text === "-2")).toBe(true);
+    expect(result.events[1].occurredAt + result.events[1].delayMs - result.events[0].occurredAt - result.events[0].delayMs).toBeGreaterThanOrEqual(90);
   });
 }
 
@@ -150,12 +179,12 @@ test("やべー！！をデッキ・専攻・カードテスト・更新情報�
     };
   });
   expect(result).toMatchObject({ name: "やべー！！", cost: 2, type: "item", category: "big", specialty: true, inTestHand: true });
-  expect(result.text).toBe("相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。");
+  expect(result.text).toBe("相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。7ターン目以降、1ダメージではなく2ダメージを与える。");
   expect(result.targets).toBeGreaterThanOrEqual(2);
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.22.0" }) });
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.22.2" }) });
   await entry.locator("summary").click();
   await expect(entry).toContainText("「やべー！！」\n持ち物／バカでかい型／戦意2");
-  await expect(entry).toContainText("ダメージ演出の表示順");
+  await expect(entry).toContainText("7ターン目以降、1ダメージではなく2ダメージを与える。");
 });
