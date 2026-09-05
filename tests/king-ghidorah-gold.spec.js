@@ -93,17 +93,17 @@ test("キラキラ金枠を別解放して通常・金枠と切り替え、保�
   });
   await page.locator('[data-current-detail="king_ghidorah_bed"]').click();
   const modal = page.locator("#cardTestCard");
-  await expect(modal.locator(".card-rarity-label")).toHaveText("キラキラ金枠");
+  await expect(modal.locator(".card-rarity-label")).toHaveText("プリズマレア");
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(1);
   await modal.locator("[data-card-style-cycle]").click();
-  await expect(modal.locator(".card-rarity-label")).toHaveText("通常");
+  await expect(modal.locator(".card-rarity-label")).toHaveText("レギュラー");
   await expect(modal.locator(".reward-foil")).toHaveCount(0);
   await modal.locator("[data-card-style-cycle]").click();
-  await expect(modal.locator(".card-rarity-label")).toHaveText("金枠");
+  await expect(modal.locator(".card-rarity-label")).toHaveText("ウルトラレア");
   await expect(modal.locator(".reward-foil")).toHaveCount(1);
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(0);
   await modal.locator("[data-card-style-cycle]").click();
-  await expect(modal.locator(".card-rarity-label")).toHaveText("キラキラ金枠");
+  await expect(modal.locator(".card-rarity-label")).toHaveText("プリズマレア");
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(1);
 });
 
