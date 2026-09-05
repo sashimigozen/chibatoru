@@ -14535,6 +14535,18 @@
       --reward-foil-glow: rgba(188, 224, 255, .76);
     }
 
+    /* Keep the item identity visible beneath the pearl-white Prisma film. */
+    .card.item.reward-foil.reward-prism,
+    .field-card.item.reward-foil.reward-prism {
+      --reward-prisma-line: #c9a94f;
+      --reward-prisma-pearl: #fff4c4;
+      --reward-prisma-shadow: rgba(142, 113, 41, .3);
+      --reward-foil-face:
+        linear-gradient(132deg, rgba(255,255,255,.96) 0 24%, rgba(255,235,158,.88) 25% 47%, rgba(255,255,255,.96) 48% 69%, rgba(255,224,121,.78) 70% 100%),
+        linear-gradient(#fff4c4, #fff4c4);
+      --reward-foil-glow: rgba(255, 226, 126, .74);
+    }
+
     .card.reward-prism:has(> .card-scale-stage) > .card-scale-stage {
       border-color: transparent !important;
       background:
@@ -14548,6 +14560,16 @@
       animation: reward-prisma-frame 5.6s ease-in-out infinite !important;
     }
 
+    .card.item.reward-prism:has(> .card-scale-stage) > .card-scale-stage {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.98), rgba(255,228,145,.94)) padding-box,
+        conic-gradient(from 24deg, #ffffff, #fff0a9, #cdefff, #eee1ff, #fff0d9, #d9fff5, #fff1ae, #ffffff) border-box !important;
+      box-shadow:
+        0 0 0 1px #a78c45,
+        0 7px 16px var(--reward-prisma-shadow),
+        0 0 22px rgba(255, 232, 153, .78) !important;
+    }
+
     .card.reward-prism:has(> .card-scale-stage) > .card-scale-stage .card-face,
     .battle-screen .player-hand .hand-card.reward-prism > .card-scale-stage .card-face {
       background: var(--reward-foil-face) !important;
@@ -14559,6 +14581,14 @@
       border-color: rgba(135, 158, 184, .9) !important;
       background:
         linear-gradient(135deg, rgba(255,255,255,.9), rgba(226,239,253,.67) 48%, rgba(255,255,255,.92)) !important;
+    }
+
+    .card.item.reward-prism:has(> .card-scale-stage) .card-header,
+    .card.item.reward-prism:has(> .card-scale-stage) .card-art-panel,
+    .card.item.reward-prism:has(> .card-scale-stage) .card-effect-panel {
+      border-color: rgba(183, 148, 58, .82) !important;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.9), rgba(255,232,153,.72) 48%, rgba(255,252,237,.92)) !important;
     }
 
     .card.reward-prism:has(> .card-scale-stage) .card-header .card-name,

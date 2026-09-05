@@ -44,8 +44,9 @@ test("旧全解放データでもキラキラ金枠はキングギドラベッ�
     expect(style).toMatchObject({ pointer: "none", animation: "reward-prism-colors", textZ: "1" });
     expect(style.mask).toContain("radial-gradient");
     expect(style.faceBackground).toContain("linear-gradient");
-    expect(style.faceBackground).toContain("rgb(248, 251, 255)");
+    expect(style.faceBackground).toContain("rgb(255, 244, 196)");
     expect(style.panelBackground).toContain("linear-gradient");
+    expect(style.panelBackground).toContain("rgba(255, 232, 153");
     expect(style.textColor).toBe("rgb(23, 53, 86)");
     expect(style.frameBackground).toContain("conic-gradient");
     await expect(page.locator('#playerHand [data-base-id="general_student"] .reward-prism-surface')).toHaveCount(0);
