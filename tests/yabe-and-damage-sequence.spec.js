@@ -68,9 +68,9 @@ for (const side of ["player", "opponent"]) {
   });
 }
 
-for (const side of ["player", "opponent"]) {
+for (const [side, actionTurn] of [["player", 13], ["opponent", 14]]) {
   test(`やべー！！は7ターン目以降、${side}側から異なる2人に2ダメージを席順で与える`, async ({ page }) => {
-    await setup(page, side, 7);
+    await setup(page, side, actionTurn);
     const result = await page.evaluate((side) => {
       const api = window.__chibattle;
       const { state } = api;
@@ -96,6 +96,25 @@ for (const side of ["player", "opponent"]) {
     expect(result.events[1].occurredAt + result.events[1].delayMs - result.events[0].occurredAt - result.events[0].delayMs).toBeGreaterThanOrEqual(90);
   });
 }
+
+test("やべー！！の強化は大きな6ターン目の後攻手番ではまだ始まらない", async ({ page }) => {
+  await setup(page, "player", 12);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const target = api.makeBoardCard(api.createCardFromBase("protein_drinker", "opponent"));
+    state.players.opponent.board.seats[0] = target;
+    api.render();
+    const before = target.currentHp;
+    const used = api.castImmediateItem("player", state.players.player.hand[0], true);
+    return {
+      used,
+      damage: before - target.currentHp,
+      feedback: state.effectFeedbackEvents.filter((event) => event.target === "card").map((event) => event.text)
+    };
+  });
+  expect(result).toEqual({ used: true, damage: 1, feedback: ["-1"] });
+});
 
 test("やべー！！は1人なら1回だけ、0人なら戦意を消費せず使用不可", async ({ page }) => {
   await setup(page);
