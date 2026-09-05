@@ -14520,6 +14520,95 @@
       animation: reward-prism-reflection 4.8s ease-in-out infinite;
     }
 
+    /* Prisma Rare keeps Chibattle's card geometry and replaces only its
+       material: pearl-white diamond facets with restrained rainbow refraction. */
+    .card.reward-foil.reward-prism,
+    .field-card.reward-foil.reward-prism {
+      --reward-prisma-ink: #173556;
+      --reward-prisma-line: #aebed0;
+      --reward-prisma-pearl: #f8fbff;
+      --reward-prisma-shadow: rgba(91, 126, 164, .32);
+      --reward-foil-text: var(--reward-prisma-ink);
+      --reward-foil-face:
+        linear-gradient(132deg, rgba(255,255,255,.97) 0 28%, rgba(222,239,255,.86) 29% 48%, rgba(255,255,255,.98) 49% 70%, rgba(235,226,255,.72) 71% 100%),
+        linear-gradient(#f8fbff, #f8fbff);
+      --reward-foil-glow: rgba(188, 224, 255, .76);
+    }
+
+    .card.reward-prism:has(> .card-scale-stage) > .card-scale-stage {
+      border-color: transparent !important;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,.98), rgba(220,234,249,.92)) padding-box,
+        conic-gradient(from 24deg, #ffffff, #cdefff, #eee1ff, #fff0d9, #d9fff5, #ffffff, #dce9ff, #ffffff) border-box !important;
+      background-size: 100% 100%, 180% 180% !important;
+      box-shadow:
+        0 0 0 1px #8399af,
+        0 7px 16px var(--reward-prisma-shadow),
+        0 0 22px rgba(207, 238, 255, .82) !important;
+      animation: reward-prisma-frame 5.6s ease-in-out infinite !important;
+    }
+
+    .card.reward-prism:has(> .card-scale-stage) > .card-scale-stage .card-face,
+    .battle-screen .player-hand .hand-card.reward-prism > .card-scale-stage .card-face {
+      background: var(--reward-foil-face) !important;
+    }
+
+    .card.reward-prism:has(> .card-scale-stage) .card-header,
+    .card.reward-prism:has(> .card-scale-stage) .card-art-panel,
+    .card.reward-prism:has(> .card-scale-stage) .card-effect-panel {
+      border-color: rgba(135, 158, 184, .9) !important;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.9), rgba(226,239,253,.67) 48%, rgba(255,255,255,.92)) !important;
+    }
+
+    .card.reward-prism:has(> .card-scale-stage) .card-header .card-name,
+    .card.reward-prism:has(> .card-scale-stage) .card-art-name,
+    .card.reward-prism:has(> .card-scale-stage) .card-effect,
+    .card.reward-prism:has(> .card-scale-stage) .card-effect-label,
+    .card.reward-prism:has(> .card-scale-stage) .card-type {
+      color: var(--reward-prisma-ink) !important;
+      text-shadow: 0 1px 0 rgba(255,255,255,.9) !important;
+    }
+
+    .battle-screen .field-card.reward-prism {
+      border-color: #aebed0 !important;
+      background: var(--reward-foil-face) !important;
+      box-shadow: 0 3px 0 rgba(57, 82, 109, .32), 0 0 11px rgba(201, 235, 255, .7) !important;
+    }
+
+    .battle-screen .field-card.reward-prism::before {
+      background: linear-gradient(145deg, rgba(255,255,255,.72), rgba(219,237,255,.12)) !important;
+    }
+
+    .battle-screen .field-card.reward-prism .field-card-title,
+    .battle-screen .field-card.reward-prism .field-card-art-name {
+      border-color: rgba(132, 158, 185, .78) !important;
+      background: rgba(248, 252, 255, .78) !important;
+    }
+
+    .battle-screen .field-card.reward-prism .field-card-art-name,
+    .battle-screen .field-card.reward-prism .field-card-name,
+    .battle-screen .field-card.reward-prism .field-card-stat {
+      color: var(--reward-prisma-ink) !important;
+      text-shadow: 0 1px 0 rgba(255,255,255,.92) !important;
+    }
+
+    .reward-prism .reward-prism-surface {
+      background:
+        linear-gradient(132deg, rgba(255,255,255,.58) 0 27%, rgba(190,230,255,.18) 28% 47%, rgba(255,255,255,.56) 48% 69%, rgba(224,205,255,.17) 70% 100%),
+        repeating-linear-gradient(125deg, rgba(255, 222, 125, .12) 0%, rgba(111, 255, 220, .17) 16%, rgba(111, 218, 255, .2) 32%, rgba(191, 151, 255, .17) 48%, rgba(255, 152, 213, .17) 64%, rgba(255, 222, 125, .12) 80%);
+      background-size: 100% 100%, 180% 180%;
+    }
+
+    .reward-prism .reward-prism-surface::before {
+      opacity: .58;
+    }
+
+    @keyframes reward-prisma-frame {
+      0%, 100% { background-position: 0 0, 0% 50%; filter: saturate(.86) brightness(1); }
+      50% { background-position: 0 0, 100% 50%; filter: saturate(1.08) brightness(1.04); }
+    }
+
     .card.reward-foil .card-face > .card-header,
     .card.reward-foil .card-face > .card-art-panel,
     .card.reward-foil .card-face > .card-effect-panel {
@@ -14547,6 +14636,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .card.reward-prism:has(> .card-scale-stage) > .card-scale-stage,
       .reward-prism-surface,
       .reward-prism-surface::before,
       .reward-prism-surface::after {

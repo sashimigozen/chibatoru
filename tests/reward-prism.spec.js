@@ -35,10 +35,19 @@ test("旧全解放データでもキラキラ金枠はキングギドラベッ�
       pointer: getComputedStyle(el).pointerEvents,
       animation: getComputedStyle(el, "::before").animationName,
       mask: getComputedStyle(el, "::before").maskImage,
-      textZ: getComputedStyle(el.parentElement.querySelector(".card-art-panel")).zIndex
+      textZ: getComputedStyle(el.parentElement.querySelector(".card-art-panel")).zIndex,
+      faceBackground: getComputedStyle(el.parentElement).backgroundImage,
+      panelBackground: getComputedStyle(el.parentElement.querySelector(".card-art-panel")).backgroundImage,
+      textColor: getComputedStyle(el.parentElement.querySelector(".card-art-name")).color,
+      frameBackground: getComputedStyle(el.parentElement.parentElement).backgroundImage
     }));
     expect(style).toMatchObject({ pointer: "none", animation: "reward-prism-colors", textZ: "1" });
     expect(style.mask).toContain("radial-gradient");
+    expect(style.faceBackground).toContain("linear-gradient");
+    expect(style.faceBackground).toContain("rgb(248, 251, 255)");
+    expect(style.panelBackground).toContain("linear-gradient");
+    expect(style.textColor).toBe("rgb(23, 53, 86)");
+    expect(style.frameBackground).toContain("conic-gradient");
     await expect(page.locator('#playerHand [data-base-id="general_student"] .reward-prism-surface')).toHaveCount(0);
     const dimensions = (el) => { const rect = el.getBoundingClientRect(); return [Math.round(rect.width), Math.round(rect.height)]; };
     expect(await hand.evaluate(dimensions)).toEqual(await page.locator('#playerHand [data-base-id="general_student"]').first().evaluate(dimensions));
