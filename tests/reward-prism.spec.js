@@ -38,6 +38,7 @@ test("旧全解放データでもキラキラ金枠はキングギドラベッ�
       textZ: getComputedStyle(el.parentElement.querySelector(".card-art-panel")).zIndex,
       faceBackground: getComputedStyle(el.parentElement).backgroundImage,
       panelBackground: getComputedStyle(el.parentElement.querySelector(".card-art-panel")).backgroundImage,
+      effectBackground: getComputedStyle(el.parentElement.querySelector(".card-effect-panel")).backgroundImage,
       textColor: getComputedStyle(el.parentElement.querySelector(".card-art-name")).color,
       frameBackground: getComputedStyle(el.parentElement.parentElement).backgroundImage
     }));
@@ -46,7 +47,8 @@ test("旧全解放データでもキラキラ金枠はキングギドラベッ�
     expect(style.faceBackground).toContain("linear-gradient");
     expect(style.faceBackground).toContain("rgb(255, 244, 196)");
     expect(style.panelBackground).toContain("linear-gradient");
-    expect(style.panelBackground).toContain("rgba(255, 232, 153");
+    expect(style.panelBackground).toContain("rgba(255, 255, 255, 0.98)");
+    expect(style.effectBackground).toContain("rgba(255, 226, 126");
     expect(style.textColor).toBe("rgb(23, 53, 86)");
     expect(style.frameBackground).toContain("conic-gradient");
     await expect(page.locator('#playerHand [data-base-id="general_student"] .reward-prism-surface')).toHaveCount(0);
