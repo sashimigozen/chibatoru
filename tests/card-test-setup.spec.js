@@ -87,7 +87,8 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   });
 
   expect(result.tokyo_tech_bro.late).toEqual(expect.arrayContaining(["lazy_student", "cancel_student"]));
-  expect(result.summer_teacher.hand).toEqual(expect.arrayContaining(["trendy_student", "extra_people", "kyoto_sound_i"]));
+  expect(result.summer_teacher.hand).not.toEqual(expect.arrayContaining(["trendy_student", "extra_people", "kyoto_sound_i"]));
+  expect(result.summer_teacher.hand).toEqual(["summer_teacher"]);
   expect(result.brother_capital.deck.slice(0, 4)).toEqual(expect.arrayContaining([
     "aggro_student", "single_cell", "ae_student", "general_student"
   ]));

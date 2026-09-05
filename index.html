@@ -17528,7 +17528,7 @@
       delayed_student: ["abyss", "lazy_student", "student_council"],
       proliferating_enemy: [],
       yamanashi_minimum_wage: ["onigiri_draw", "environment_setup"]
-      ,summer_teacher: ["trendy_student", "extra_people", "kyoto_sound_i"]
+      ,summer_teacher: []
       ,illegal_cafeteria: ["classroom"]
       ,raptor_temple: ["bird_a", "demon_a_plus", "popular_c"]
       ,enemy_boss: ["enemy_student", "enemy_student"]
@@ -17920,12 +17920,17 @@
       {
         version: "ver.0.22.2",
         date: "2026年9月5日",
-        summary: "ログ・メニューが次の試合にも開いたままになる不具合を修正し、「やべー！！」の後攻7ターン目以降のダメージを強化しました。",
+        summary: "ログ・メニューが次の試合にも開いたままになる不具合を修正し、「やべー！！」と「夏井先生」の効果を調整しました。",
         changes: [
           {
             title: "カード修正",
             before: "「やべー！！」\n持ち物／バカでかい型／戦意2\n相手の講義室にいる出席者を最大2人ランダムに指名し、それぞれに1ダメージを与える。",
             after: "「やべー！！」\n持ち物／バカでかい型／戦意2\n相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。後攻7ターン目以降、1ダメージではなく2ダメージを与える。\n\n変更点：後攻7ターン目以降に与えるダメージを1から2に変更。"
+          },
+          {
+            title: "カード修正",
+            before: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n手札の「ミーハー学生」「エキストラの皆さん」「ネガティブトーカー」から1枚を選んで出席させる。選んだ効果の戦意は順に4／9／6となる。このカードは講義を持たない。",
+            after: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1枚を選び、そのカードを生成して出席させる。\n「ミーハー学生」［戦意4］：陽気を持ち、攻撃による反撃を受けない。\n「ネガティブトーカー」［戦意6］：相手の講義室にいる学生すべてに3ダメージを与える。\n「エキストラの皆さん」［戦意9］：自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。\nこのカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。\n\n変更点：対象カードが手札になくても選べるようにし、選んだカードを生成して出席させる処理へ変更。各選択肢の効果と戦意をカードテキストに明記。"
           },
           { title: "対戦中のログ・メニュー", before: "ログやメニューを開いたまま対戦が終了すると、次の試合でも開いた状態が残っていた。", after: "結果表示時と新しい試合の開始時に、ログ・メニューを閉じるよう修正。校外・遅刻ゾーンの確認一覧も閉じ、次の試合には開いた状態を引き継がない。オンラインのゲスト・観戦側にも適用し、試合中の通常の同期では閉じない。" }
         ]
@@ -23437,7 +23442,8 @@
           placeCardFromHand("opponent", payload.instanceId, target.zone, target.owner, target.index ?? null, true, {
             commandId: command.id || "",
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
-            summerTeacherChoiceId: payload.summerTeacherChoiceId || null
+            summerTeacherChoiceId: payload.summerTeacherChoiceId || null,
+            summerTeacherChoiceBaseId: payload.summerTeacherChoiceBaseId || null
           });
         }
         if (command.type === "attendTarget") {
@@ -25381,7 +25387,9 @@
 
     function findAiPlayMove() {
       const opponent = state.players.opponent;
-      const affordable = opponent.hand.filter((card) => card.type !== "item" && effectiveCardCost(card) <= opponent.will);
+      const affordable = opponent.hand.filter((card) => card.type !== "item"
+        && effectiveCardCost(card) <= opponent.will
+        && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi("opponent", card))));
       const moves = [];
       affordable.forEach((card) => {
         if (card.evolutionFrom) {
@@ -28914,15 +28922,15 @@
       if (mode === "summer_teacher") {
         const summer = getHandCard("player", itemId);
         const target = pending.context?.target || {};
-        const selectedId = selectedIds[0];
-        if (!summer || !target.zone || !selectedId) return;
+        const selectedBaseId = selectedCards[0]?.baseId || null;
+        if (!summer || !target.zone || !selectedBaseId) return;
         if (onlineCanSendCommand()) {
           onlineSendCommand("playCard", {
             instanceId: summer.instanceId,
             zone: target.zone,
             owner: target.owner,
             index: target.index ?? null,
-            summerTeacherChoiceId: selectedId
+            summerTeacherChoiceBaseId: selectedBaseId
           });
           state.message = "夏井先生の選択を送信しました。";
           clearSelections();
@@ -28930,7 +28938,7 @@
           return;
         }
         placeCardFromHand("player", summer.instanceId, target.zone, target.owner, target.index ?? null, true, {
-          summerTeacherChoiceId: selectedId
+          summerTeacherChoiceBaseId: selectedBaseId
         });
         return;
       }
@@ -29933,27 +29941,50 @@
     }
 
     const SUMMER_TEACHER_CHOICES = Object.freeze({
-      trendy_student: { cost: 4, label: "ミーハー学生" },
-      kyoto_sound_i: { cost: 6, label: "ネガティブトーカー" },
-      extra_people: { cost: 9, label: "エキストラの皆さん" }
+      trendy_student: { cost: 4, label: "ミーハー学生", effect: "陽気を持ち、攻撃による反撃を受けない。" },
+      kyoto_sound_i: { cost: 6, label: "ネガティブトーカー", effect: "相手の講義室にいる学生すべてに3ダメージを与える。" },
+      extra_people: { cost: 9, label: "エキストラの皆さん", effect: "自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。" }
     });
 
     function summerTeacherChoiceCards(side) {
-      return state.players[side].hand.filter((card) => Boolean(SUMMER_TEACHER_CHOICES[card.baseId]));
+      return Object.entries(SUMMER_TEACHER_CHOICES).map(([baseId, choice]) => ({
+        ...createCardFromBase(baseId, side),
+        cost: choice.cost,
+        summerTeacherChoicePreview: true
+      }));
+    }
+
+    function summerTeacherRulesText() {
+      const choices = Object.values(SUMMER_TEACHER_CHOICES)
+        .map((choice) => `「${choice.label}」［戦意${choice.cost}］：${choice.effect}`)
+        .join("");
+      return `「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1枚を選び、そのカードを生成して出席させる。${choices}このカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。`;
+    }
+
+    function summerTeacherChoicePlayCost(card, baseId) {
+      const choice = SUMMER_TEACHER_CHOICES[baseId];
+      if (!card || !choice) return Infinity;
+      return effectiveCardCost({ ...card, summerTeacherChoiceCost: choice.cost });
+    }
+
+    function chooseSummerTeacherEffectForAi(side, card) {
+      const enemyStudents = listBoardRefs(oppositeSide(side))
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((target) => target?.type === "student").length;
+      const priority = enemyStudents >= 2
+        ? ["kyoto_sound_i", "extra_people", "trendy_student"]
+        : ["extra_people", "trendy_student", "kyoto_sound_i"];
+      return priority.find((baseId) => summerTeacherChoicePlayCost(card, baseId) <= state.players[side].will) || null;
     }
 
     function openSummerTeacherChoice(card, target) {
       const candidates = summerTeacherChoiceCards("player");
-      if (!card || candidates.length === 0) {
-        addLog("夏井先生は手札にミーハー学生、ネガティブトーカー、エキストラの皆さんのいずれかがある場合にのみ出席できます。");
-        render();
-        return false;
-      }
+      if (!card) return false;
       return openCardChoice({
         mode: "summer_teacher",
         itemId: card.instanceId,
         title: card.name,
-        message: "手札から出席させるカードを選んでください。夏井先生の戦意は選んだ効果の戦意になります。",
+        message: "出席させるカードを選んでください。対象のカードが手札になくても選べます。夏井先生の戦意は選んだ効果の戦意になります。",
         cards: candidates,
         min: 1,
         max: 1,
@@ -30018,24 +30049,26 @@
       if (!card) return false;
       if (card.type === "item") return false;
       if (card.baseId === "summer_teacher") {
-        let choiceId = options.summerTeacherChoiceId || card.summerTeacherChoiceInstanceId || null;
-        let chosen = state.players[side].hand.find((entry) => entry.instanceId === choiceId) || null;
-        if (!chosen || !SUMMER_TEACHER_CHOICES[chosen.baseId]) {
+        const legacyChoice = state.players[side].hand.find((entry) => entry.instanceId === options.summerTeacherChoiceId) || null;
+        let choiceBaseId = options.summerTeacherChoiceBaseId
+          || legacyChoice?.baseId
+          || card.summerTeacherChoiceBaseId
+          || null;
+        if (!SUMMER_TEACHER_CHOICES[choiceBaseId]) {
           if (side === "player" && !onlineCanSendCommand()) {
             openSummerTeacherChoice(card, { zone, owner, index });
             return true;
           }
-          chosen = summerTeacherChoiceCards(side)[0] || null;
-          choiceId = chosen?.instanceId || null;
+          choiceBaseId = chooseSummerTeacherEffectForAi(side, card);
         }
-        if (!chosen) {
-          addLog(`${card.name}は選べる手札がないため出席できません。`);
+        if (!SUMMER_TEACHER_CHOICES[choiceBaseId]) {
+          addLog(`${card.name}は選べる効果の戦意が足りないため出席できません。`);
           if (renderAfter) render();
           return false;
         }
-        card.summerTeacherChoiceInstanceId = choiceId;
-        card.summerTeacherChoiceBaseId = chosen.baseId;
-        card.summerTeacherChoiceCost = SUMMER_TEACHER_CHOICES[chosen.baseId].cost;
+        delete card.summerTeacherChoiceInstanceId;
+        card.summerTeacherChoiceBaseId = choiceBaseId;
+        card.summerTeacherChoiceCost = SUMMER_TEACHER_CHOICES[choiceBaseId].cost;
       }
       if (side === "player" && !tutorialAllowsPlacement(card, zone, owner, index)) {
         addLog("チュートリアル中は、光っているマスにだけ出席できます。");
@@ -31013,13 +31046,11 @@
         summonAibenNyoteiOpponent(side, "aiben", card);
       }
       if (card.baseId === "summer_teacher") {
-        const selectedId = card.summerTeacherChoiceInstanceId;
-        const selected = state.players[side].hand.find((entry) => entry.instanceId === selectedId);
         const choice = card.summerTeacherChoiceBaseId;
-        if (!selected || !["trendy_student", "kyoto_sound_i", "extra_people"].includes(choice)) {
-          addLog(`${card.name}の効果：選んだ手札が見つからないため不発になりました。`);
+        if (!["trendy_student", "kyoto_sound_i", "extra_people"].includes(choice)) {
+          addLog(`${card.name}の効果：選んだカードを確認できないため不発になりました。`);
         } else {
-          state.players[side].hand = state.players[side].hand.filter((entry) => entry.instanceId !== selected.instanceId);
+          const selected = createCardFromBase(choice, side);
           startSpecialAttendanceQueue(side, [selected], {
             attendanceSource: ATTENDANCE_SOURCE.EFFECT,
             label: card.name,
@@ -31053,7 +31084,7 @@
               }
             }
           });
-          addLog(`${card.name}の効果：${selected.name}を手札から特殊出席させます。`);
+          addLog(`${card.name}の効果：${selected.name}を生成して出席させます。`);
         }
       }
       if (card.baseId === "tokyo_tech_bro") {
@@ -31260,7 +31291,7 @@
           addLog(`${card.name}の効果：隣接する空席がないためベストフレンドを出席させられません。`);
         }
       }
-      if (card.baseId === "extra_people") {
+      if (card.baseId === "extra_people" && !card.summerTeacherChoice) {
         const seatIndexes = state.players[side].board.seats
           .map((seatCard, seatIndex) => (!seatCard && isBoardSlotOpen(side, "seat", seatIndex) ? seatIndex : null))
           .filter((seatIndex) => seatIndex !== null);
@@ -31463,7 +31494,7 @@
       if (card.baseId === "kansai_voice_t" && zone === "teacher") {
         beginKansaiVoiceTargetChoice(side, card);
       }
-      if (card.baseId === "kyoto_sound_i" && zone === "teacher") {
+      if (card.baseId === "kyoto_sound_i" && zone === "teacher" && !card.summerTeacherChoice) {
         let affected = 0;
         listBoardRefs(opponent).forEach((ref) => {
           const target = getBoardCardFromRef(ref);
@@ -42492,6 +42523,9 @@
       if (card.darkPresident) {
         return "このカードが出席したとき、この対戦中、環境「食堂」の効果を得る。このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。";
       }
+      if (card.summerTeacherChoicePreview) {
+        return SUMMER_TEACHER_CHOICES[card.baseId]?.effect || "効果なし。";
+      }
       const rules = {
         general_student: "効果なし。",
         earphones: "装備\n装備者は講義の効果を受けない。",
@@ -42553,7 +42587,7 @@
         angry_maker: "席マスにのみ出席できる。このカードが出席したとき、お互いのプレイヤーはデッキを2枚引く。",
         elite_open_chatter: "席マスにのみ出席できる。このカードが出席したとき、相手は手札を3枚引く。",
         word_increaser: "このカードを手札から出席させたとき、自分の手札をすべてデッキに戻してシャッフルする。その後、デッキを上から7枚まで引く。",
-        summer_teacher: "手札の「ミーハー学生」「エキストラの皆さん」「ネガティブトーカー」から1枚を選んで出席させる。選んだ効果の戦意は順に4／9／6となる。このカードは講義を持たない。",
+        summer_teacher: summerTeacherRulesText(),
         impossible_pink_fat: "このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。",
         general_teacher: "講義。教卓マスにいるかぎり、陽気を持つ。",
         pro_k: "このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ出席させ、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。",

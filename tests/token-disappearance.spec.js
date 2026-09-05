@@ -134,7 +134,7 @@ test("今回の更新情報を表示し、一度読んだら未読表示が消�
   await page.goto(gameUrl);
   await expect(page.locator("#homeUpdatesDot")).toBeVisible();
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").first();
+  const entry = page.locator(".update-entry").filter({ hasText: "ver.0.22.1" });
   await expect(entry).toContainText("ver.0.22.1");
   await entry.locator("summary").click();
   await expect(entry).toContainText("校外には置かず消滅する");
