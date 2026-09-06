@@ -26185,7 +26185,20 @@
         return collectLateEntries().length > 0 ? 2 : 0;
       }
       if (item.baseId === "thanks_all_students") return friendlyCards.some((card) => card.type === "student" && card.currentHp < card.maxHp) ? 7 : 3;
-      if (item.baseId === "dont_worry") return state.actionTurn >= 5 && state.players.player.life <= 8 ? 4 : 0;
+      if (item.baseId === "dont_worry") {
+        if (state.actionTurn < 5) return 0;
+        if (opponent.lifeShieldUntilTurn >= state.actionTurn + 1
+          && opponent.lifeShieldUntilSide === "player") return 0;
+        const forecast = getAiLethalForecast();
+        const incomingDamage = Math.max(0, forecast.opponentNextTurnDamage || 0);
+        if (incomingDamage <= 0) return 0;
+        if (incomingDamage >= opponent.life) return 45 + incomingDamage;
+        const remainingLife = opponent.life - incomingDamage;
+        if (remainingLife <= 4) return 18 + incomingDamage;
+        if (incomingDamage >= opponent.life * 0.5) return 12 + incomingDamage;
+        if (opponent.life <= 8) return 8 + incomingDamage;
+        return 2 + Math.min(5, incomingDamage);
+      }
       if (item.baseId === "abyss") return enemyCards.length >= 2 ? 8 + enemyCards.length : 0;
       if (item.baseId === "yamanashi_minimum_wage") {
         if (isDeckToHandLocked()) return 0;
