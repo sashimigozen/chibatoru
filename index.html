@@ -378,7 +378,7 @@
 
     .solo-mode-actions {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(280px, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 12px;
     }
 
@@ -405,6 +405,28 @@
       border-color: #2563eb;
       box-shadow: 0 18px 32px rgba(15, 23, 42, 0.18);
       outline: none;
+    }
+
+    .solo-mode-button.coming-soon:disabled {
+      cursor: default;
+      opacity: 0.72;
+      transform: none;
+      border-color: #64748b;
+      background: #f1f5f9;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+    }
+
+    .solo-mode-coming-soon {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #64748b;
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #475569;
+      background: #ffffff;
+      font-size: 11px;
+      font-weight: 1000;
+      letter-spacing: 0.08em;
     }
 
     .solo-mode-button.dungeon {
@@ -16044,7 +16066,7 @@
         </button>
         <button class="home-button under-online under-online-start" id="homeSoloButton" type="button">
           <span class="home-button-main">ソロ</span>
-          <span class="home-button-sub">AIバトル・魔の1号館</span>
+          <span class="home-button-sub">AIバトル・魔の1号館・トレーニング</span>
         </button>
         <button class="home-button under-online under-online-end" id="homeTutorialButton" type="button">
           <span class="home-button-main">チュートリアル</span>
@@ -16075,18 +16097,23 @@
       <div class="screen-head">
         <div>
           <h1>ソロ</h1>
-          <p class="subtitle">AIとの対戦か、魔の1号館へ挑戦できます</p>
+          <p class="subtitle">AIバトル、魔の1号館、トレーニングから選べます</p>
         </div>
         <button class="button secondary" id="soloMenuBackHomeButton" type="button">ホーム</button>
       </div>
       <div class="solo-mode-actions" aria-label="ソロモード">
-        <button class="solo-mode-button" id="soloAiBattleButton" type="button">
+        <button class="solo-mode-button coming-soon" id="soloAiBattleButton" type="button" disabled aria-disabled="true">
           <span class="solo-mode-main">AIバトル</span>
-          <span class="solo-mode-sub">自分とAIのデッキを選び、通常のVS AIを始める</span>
+          <span class="solo-mode-sub">自分のデッキを選び、ランダムなAIデッキと対戦するモード</span>
+          <span class="solo-mode-coming-soon">COMING SOON</span>
         </button>
         <button class="solo-mode-button dungeon" id="soloDungeonButton" type="button">
           <span class="solo-mode-main">魔の1号館</span>
           <span class="solo-mode-sub">専攻デッキを選び、1階から奥へ進む連戦モード</span>
+        </button>
+        <button class="solo-mode-button" id="soloTrainingButton" type="button">
+          <span class="solo-mode-main">トレーニング</span>
+          <span class="solo-mode-sub">自分とAIのデッキを選び、対戦を練習する</span>
         </button>
       </div>
     </section>
@@ -16225,7 +16252,7 @@
     <section class="screen solo-deck-screen hidden" id="soloDeckScreen">
       <div class="screen-head">
         <div>
-          <h1>ソロバトル</h1>
+          <h1>トレーニング</h1>
           <p class="subtitle">自分とAIが使う保存デッキを選んでください</p>
         </div>
         <button class="button secondary" id="soloDeckBackHomeButton" type="button">ホーム</button>
@@ -17918,6 +17945,18 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.22.3",
+        date: "2026年9月6日",
+        summary: "ソロモードの構成を変更し、従来のAIバトルを「トレーニング」へ改名しました。",
+        changes: [
+          {
+            title: "ソロモード",
+            before: "「AIバトル」「魔の1号館」の順に表示し、AIバトルでは自分とAIの両方のデッキを選択していた。",
+            after: "「AIバトル」「魔の1号館」「トレーニング」の順に変更。従来のAIバトルは「トレーニング」へ改名し、これまでどおり自分とAIのデッキを選んで対戦できる。新しい「AIバトル」は、自分だけがデッキを選び、AIがランダムなデッキを使うモードとして追加予定。AI用デッキの準備が完了するまではCOMING SOONとして選択できない。"
+          }
+        ]
+      },
+      {
         version: "ver.0.22.2",
         date: "2026年9月5日",
         summary: "ログ・メニューが次の試合にも開いたままになる不具合を修正し、「やべー！！」と「夏井先生」の効果を調整しました。",
@@ -19180,6 +19219,7 @@
       soloMenuBackHomeButton: document.getElementById("soloMenuBackHomeButton"),
       soloAiBattleButton: document.getElementById("soloAiBattleButton"),
       soloDungeonButton: document.getElementById("soloDungeonButton"),
+      soloTrainingButton: document.getElementById("soloTrainingButton"),
       soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
       soloRuleSelect: document.getElementById("soloRuleSelect"),
       soloRuleDescription: document.getElementById("soloRuleDescription"),
@@ -43016,7 +43056,7 @@
     elements.homeSoloButton.addEventListener("click", showSoloMenu);
     elements.homeNavSoloButton.addEventListener("click", showSoloMenu);
     elements.soloMenuBackHomeButton.addEventListener("click", showHomeScreen);
-    elements.soloAiBattleButton.addEventListener("click", startSoloBattleFromHome);
+    elements.soloTrainingButton.addEventListener("click", startSoloBattleFromHome);
     elements.soloDungeonButton.addEventListener("click", showDungeonEntrance);
     elements.soloDeckBackHomeButton.addEventListener("click", showHomeScreen);
     elements.dungeonDeckBackSoloButton.addEventListener("click", showSoloMenu);
