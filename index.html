@@ -24462,6 +24462,18 @@
     }
 
     function scoreAiMulliganKeep(card, hand) {
+      if (isAiYocchanHyperCarryStrategyActive()) {
+        const firstTrpg = hand.find((entry) => entry.baseId === "trpg_member");
+        const hasYocchan = hand.some((entry) => entry.baseId === "yocchan");
+        if (card.baseId === "yocchan") return 120;
+        if (card.baseId === "trpg_member") {
+          return !hasYocchan && card.instanceId === firstTrpg?.instanceId ? 110 : -10;
+        }
+        if (card.baseId === "sage_legacy") return state.firstSide === "player" ? 90 : 22;
+        if (["alpha", "onigiri_draw", "fire_touch"].includes(card.baseId)) return 40;
+        if (["yabe", "ikemasu"].includes(card.baseId)) return 16;
+        return -Math.max(1, effectiveCardCost(card));
+      }
       const cost = effectiveCardCost(card);
       const attendees = hand.filter((entry) => ["student", "teacher", "vampire"].includes(entry.type));
       const hasEarlyAttendee = attendees.some((entry) => effectiveCardCost(entry) <= 3);
@@ -24792,6 +24804,62 @@
       const equipmentCount = UTA_EQUIPMENT_BASE_IDS
         .reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
       return utaCount >= 2 && equipmentCount >= 2;
+    }
+
+    function isAiYocchanHyperCarryStrategyActive(side = "opponent") {
+      if (side !== "opponent") return false;
+      const counts = state.players.opponent?.originalDeckCounts || {};
+      const drawCount = ["alpha", "onigiri_draw", "fire_touch", "sage_legacy"]
+        .reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
+      return (Number(counts.yocchan) || 0) >= 2
+        && (Number(counts.trpg_member) || 0) >= 2
+        && (Number(counts.king_ghidorah_bed) || 0) >= 2
+        && drawCount >= 6;
+    }
+
+    function aiYocchanCardsInHand() {
+      return state.players.opponent.hand
+        .filter((card) => card.baseId === "yocchan")
+        .sort((a, b) => (b.attack || 0) - (a.attack || 0));
+    }
+
+    function aiHasUsedTrpgMember() {
+      const ai = state.players.opponent;
+      return listBoardRefs("opponent").some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member")
+        || ai.trash.some((card) => card.baseId === "trpg_member")
+        || ai.late.some((entry) => entry.card?.baseId === "trpg_member");
+    }
+
+    function getAiYocchanHyperCarryPlan() {
+      const ai = state.players.opponent;
+      const enemy = state.players.player;
+      const handYocchans = aiYocchanCardsInHand();
+      const yocchansPlayedThisTurn = listBoardRefs("opponent")
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((card) => card?.baseId === "yocchan" && card.playedOnTurn === state.actionTurn);
+      const readyBoardDamage = aiBoardFaceDamage("opponent", { readyOnly: true }).max;
+      const desiredHandCount = Math.max(0, Math.min(2 - yocchansPlayedThisTurn.length, handYocchans.length));
+      const selectedYocchans = handYocchans.slice(0, desiredHandCount);
+      const selectedDamage = selectedYocchans.reduce((total, card) => total + Math.max(0, card.attack || 0), 0);
+      const requiredWill = selectedYocchans.reduce((total, card) => total + effectiveCardCost(card), 0);
+      const hasAttention = listAttentionCards("player").length > 0;
+      const turn = Number(ai.turnsTaken) || 0;
+      const canAfford = selectedYocchans.length > 0 && requiredWill <= ai.will;
+      const lethal = !hasAttention && readyBoardDamage + selectedDamage >= enemy.life;
+      const shouldDeploy = canAfford && !hasAttention
+        && (lethal && turn >= 8 || turn >= 10);
+      return {
+        handYocchans,
+        yocchansPlayedThisTurn,
+        selectedYocchans,
+        requiredWill,
+        readyBoardDamage,
+        selectedDamage,
+        hasAttention,
+        turn,
+        lethal,
+        shouldDeploy
+      };
     }
 
     function isCafeteriaEnvironmentActive() {
@@ -25352,8 +25420,22 @@
     }
 
     function shouldAiUseItemAtTiming(item, score, timing) {
-      if (timing !== "beforeBoard") return true;
       if (score <= 0) return false;
+      if (getAiLethalEnablingItemPlan(item)) return true;
+      if (isAiYocchanHyperCarryStrategyActive()) {
+        const ai = state.players.opponent;
+        const willAfterItem = ai.will - effectiveCardCost(item);
+        const yocchanPlan = getAiYocchanHyperCarryPlan();
+        if (yocchanPlan.shouldDeploy && willAfterItem < yocchanPlan.requiredWill) return false;
+        const trpg = ai.hand.find((card) => card.baseId === "trpg_member");
+        const needsTurnThreeTrpg = ai.turnsTaken >= 3
+          && !aiHasUsedTrpgMember()
+          && aiYocchanCardsInHand().length === 0
+          && trpg
+          && effectiveCardCost(trpg) <= ai.will;
+        if (needsTurnThreeTrpg && willAfterItem < effectiveCardCost(trpg)) return false;
+      }
+      if (timing !== "beforeBoard") return true;
       if (item.baseId === "yamanashi_minimum_wage") return false;
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)
         && isAiUtaStrategyActive()
@@ -25374,7 +25456,7 @@
     }
 
     function adjustAiItemScoreForContext(item, score, timing) {
-      if (score <= 0) return 0;
+      if (score <= 0 && !isAiYocchanHyperCarryStrategyActive()) return 0;
       const context = getAiDecisionContext();
       const lethalForecast = getAiLethalForecast();
       const boardNeed = aiBoardNeedScore(context);
@@ -25421,6 +25503,32 @@
             adjusted += 16;
           }
         }
+      }
+      if (isAiYocchanHyperCarryStrategyActive()) {
+        const yocchans = aiYocchanCardsInHand();
+        const turn = Number(state.players.opponent.turnsTaken) || 0;
+        const enemyCards = context.enemyCards;
+        if (item.baseId === "king_ghidorah_bed") {
+          const dangerousBoard = enemyCards.length >= 4
+            || context.enemyAttackTotal >= Math.max(6, context.ownLife * 0.6)
+            || enemyCards.some((card) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3)
+            || lethalForecast.opponentCounterLethal;
+          if (turn < 8 && !dangerousBoard) return 0;
+          if (turn >= 8) adjusted += 18;
+        }
+        if (yocchans.length === 0) {
+          if (isAiDrawItem(item)) adjusted += timing === "beforeBoard" ? 24 : 16;
+          return Math.max(0, adjusted);
+        }
+        if (item.baseId === "alpha" || item.unusable) return 0;
+        if (adjusted <= 0) {
+          if (item.baseId === "fluid_pasta" && context.ownLife < 20) adjusted = 3;
+          else if (item.baseId === "peaceful_mind" && context.ownLife <= 15) adjusted = 3;
+          else return 0;
+        }
+        adjusted += yocchans.length * 6;
+        if (isAiDrawItem(item)) adjusted += 8;
+        if (effectiveCardCost(item) <= 2) adjusted += 3;
       }
       return adjusted;
     }
@@ -25517,6 +25625,18 @@
       const preferredPlacementScore = scoreAiPreferredPlacement(card, zone, index, context);
       score += isEarlyDungeonAi() ? preferredPlacementScore * 0.55 : preferredPlacementScore;
       if (isEarlyDungeonAi() && card.baseId === "college_student_vibe") score -= 22;
+
+      if (isAiYocchanHyperCarryStrategyActive()) {
+        if (card.baseId === "trpg_member") {
+          const needsYocchanSearch = aiYocchanCardsInHand().length === 0 && !aiHasUsedTrpgMember();
+          score += needsYocchanSearch && state.players.opponent.turnsTaken >= 3 ? 180 : -120;
+        }
+        if (card.baseId === "yocchan") {
+          const plan = getAiYocchanHyperCarryPlan();
+          const selectedForFinish = plan.selectedYocchans.some((entry) => entry.instanceId === card.instanceId);
+          score += plan.shouldDeploy && selectedForFinish ? 260 : -260;
+        }
+      }
 
       if (zone === "seat" && card.baseId === "aggro_king") score += index === 6 ? 40 : -12;
       if (zone === "seat" && card.baseId === "aggro_queen") score += index === 5 ? 40 : -12;
@@ -26128,7 +26248,9 @@
         + Math.max(0, card.attack || 0) * 0.3
         + Math.max(0, card.hp || 0) * 0.15
         + (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) ? 8 : 0)
-        + (card.baseId === "ultimate_yuta" ? 100 : 0);
+        + (card.baseId === "ultimate_yuta" ? 100 : 0)
+        + (isAiYocchanHyperCarryStrategyActive() && card.baseId === "yocchan" ? 100 : 0)
+        + (isAiYocchanHyperCarryStrategyActive() && aiHasUsedTrpgMember() && card.baseId === "trpg_member" ? -30 : 0);
       const discard = kingGhidorahBedDiscardCandidates("opponent", item)
         .sort((a, b) => discardValue(a) - discardValue(b))[0] || null;
       const damageKills = (card) => previewFinalDamageToCard(card, 2, item) >= card.currentHp
@@ -26375,7 +26497,9 @@
             || state.environment?.baseId === "meguro_library"
             || isAibenNyoteiAttackLifeBlocked(attacker, "player")
             || attacker.baseId === "happy_blue_bird"
-            || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気"))) {
+            || (attacker.playedOnTurn === state.actionTurn
+              && hasKeyword(attacker, "陽気")
+              && !hasKeyword(attacker, "超陽気"))) {
             continue;
           }
           if (!await waitForAttackResolution(ref, { owner: "player", zone: "life", index: null })) return;
@@ -43434,6 +43558,14 @@
       openKingGhidorahBedChoice,
       resolveKingGhidorahBed,
       planAiKingGhidorahBed,
+      isAiYocchanHyperCarryStrategyActive,
+      getAiYocchanHyperCarryPlan,
+      chooseAiMulliganReturnIds,
+      scoreAiPlacement,
+      scoreAiItem,
+      shouldAiUseItemAtTiming,
+      findAiPlayMove,
+      runOpponentAI,
       useAiItem,
       confirmCardChoiceSelection,
       preserveOnlineCourseRegistrationChoice,
