@@ -25990,6 +25990,13 @@
       return score;
     }
 
+    function scaredMeHighestCurrentHpTargets(side) {
+      const candidates = effectTargetEntries(side, oppositeSide(side), (target) => target.type === "student");
+      if (candidates.length === 0) return [];
+      const highestCurrentHp = Math.max(...candidates.map(({ card }) => Math.max(0, card.currentHp || 0)));
+      return candidates.filter(({ card }) => Math.max(0, card.currentHp || 0) === highestCurrentHp);
+    }
+
     function baseScoreAiItem(item) {
       const opponent = state.players.opponent;
       const enemyCards = listBoardRefs("player").map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
@@ -26082,8 +26089,13 @@
         return disposableItems > 0 && enemyCards.length > 0 ? 3 + Math.min(disposableItems, 5) * 2 + Math.min(8, enemyThreat * 0.25) : 0;
       }
       if (item.baseId === "scared_me") {
-        const students = enemyCards.filter((card) => card.type === "student");
-        return students.length > 0 ? 8 + Math.max(...students.map((card) => scoreAiEnemyAttendeeThreat(card) + (card.currentHp || 0) * 0.5)) : 0;
+        const targets = scaredMeHighestCurrentHpTargets("opponent");
+        if (targets.length === 0) return 0;
+        const highestCurrentHp = Math.max(0, targets[0].card.currentHp || 0);
+        const averageThreat = targets.reduce((total, { card, ref }) => (
+          total + Math.max(0, scoreAiEnemyAttendeeThreat(card, ref))
+        ), 0) / targets.length;
+        return 5 + highestCurrentHp * 1.8 + averageThreat * 0.55;
       }
       if (item.baseId === "front_door") {
         const targets = enemyCards.filter((card) => card.type === "student");
@@ -34022,14 +34034,13 @@
         resultText = "次の相手のターン終了時まで、環境「食堂」の効果を得ました。";
       }
       if (item.baseId === "scared_me") {
-        const candidates = effectTargetEntries(side, oppositeSide(side), (target) => target.type === "student");
+        const candidates = scaredMeHighestCurrentHpTargets(side);
         if (candidates.length === 0) {
           addLog("ケっ！びびらせやがっては、相手の学生がいないため使えませんでした。");
           if (renderAfter) render();
           return false;
         }
-        const highestHp = Math.max(...candidates.map((entry) => entry.card.currentHp));
-        const target = candidates.filter((entry) => entry.card.currentHp === highestHp)[Math.floor(Math.random() * candidates.filter((entry) => entry.card.currentHp === highestHp).length)];
+        const target = candidates[Math.floor(Math.random() * candidates.length)];
         if (target) {
           destroyBoardCard(target.ref);
           resultText = `相手の学生のうち体力が最も高い${target.card.name}をランダムに指名し、破壊しました。`;
