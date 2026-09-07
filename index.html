@@ -24814,8 +24814,8 @@
       opponent.mulliganUsed = true;
     }
 
-    function scoreAiMulliganKeep(card, hand) {
-      if (isAiYocchanHyperCarryStrategyActive()) {
+    function scoreAiMulliganKeep(card, hand, side = "opponent") {
+      if (isAiYocchanHyperCarryStrategyActive(side)) {
         const firstTrpg = hand.find((entry) => entry.baseId === "trpg_member");
         const hasYocchan = hand.some((entry) => entry.baseId === "yocchan");
         if (card.baseId === "yocchan") return 120;
@@ -24846,9 +24846,9 @@
       return score;
     }
 
-    function chooseAiMulliganReturnIds(hand) {
+    function chooseAiMulliganReturnIds(hand, side = "opponent") {
       return hand
-        .map((card) => ({ card, score: scoreAiMulliganKeep(card, hand) }))
+        .map((card) => ({ card, score: scoreAiMulliganKeep(card, hand, side) }))
         .filter((entry) => entry.score <= 0)
         .sort((a, b) => a.score - b.score || effectiveCardCost(b.card) - effectiveCardCost(a.card))
         .slice(0, 5)
@@ -25162,8 +25162,7 @@
     }
 
     function isAiYocchanHyperCarryStrategyActive(side = "opponent") {
-      if (side !== "opponent") return false;
-      const counts = state.players.opponent?.originalDeckCounts || {};
+      const counts = state.players[side]?.originalDeckCounts || {};
       const drawCount = ["alpha", "onigiri_draw", "fire_touch", "sage_legacy"]
         .reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
       return (Number(counts.yocchan) || 0) >= 2
@@ -25172,32 +25171,33 @@
         && drawCount >= 6;
     }
 
-    function aiYocchanCardsInHand() {
-      return state.players.opponent.hand
+    function aiYocchanCardsInHand(side = "opponent") {
+      return state.players[side].hand
         .filter((card) => card.baseId === "yocchan")
         .sort((a, b) => (b.attack || 0) - (a.attack || 0));
     }
 
-    function aiHasUsedTrpgMember() {
-      const ai = state.players.opponent;
-      return listBoardRefs("opponent").some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member")
+    function aiHasUsedTrpgMember(side = "opponent") {
+      const ai = state.players[side];
+      return listBoardRefs(side).some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member")
         || ai.trash.some((card) => card.baseId === "trpg_member")
         || ai.late.some((entry) => entry.card?.baseId === "trpg_member");
     }
 
-    function getAiYocchanHyperCarryPlan() {
-      const ai = state.players.opponent;
-      const enemy = state.players.player;
-      const handYocchans = aiYocchanCardsInHand();
-      const yocchansPlayedThisTurn = listBoardRefs("opponent")
+    function getAiYocchanHyperCarryPlan(side = "opponent") {
+      const targetSide = oppositeSide(side);
+      const ai = state.players[side];
+      const enemy = state.players[targetSide];
+      const handYocchans = aiYocchanCardsInHand(side);
+      const yocchansPlayedThisTurn = listBoardRefs(side)
         .map((ref) => getBoardCardFromRef(ref))
         .filter((card) => card?.baseId === "yocchan" && card.playedOnTurn === state.actionTurn);
-      const readyBoardDamage = aiBoardFaceDamage("opponent", { readyOnly: true }).max;
+      const readyBoardDamage = aiBoardFaceDamage(side, { readyOnly: true }).max;
       const desiredHandCount = Math.max(0, Math.min(2 - yocchansPlayedThisTurn.length, handYocchans.length));
       const selectedYocchans = handYocchans.slice(0, desiredHandCount);
       const selectedDamage = selectedYocchans.reduce((total, card) => total + Math.max(0, card.attack || 0), 0);
       const requiredWill = selectedYocchans.reduce((total, card) => total + effectiveCardCost(card), 0);
-      const hasAttention = listAttentionCards("player").length > 0;
+      const hasAttention = listAttentionCards(targetSide).length > 0;
       const turn = Number(ai.turnsTaken) || 0;
       const canAfford = selectedYocchans.length > 0 && requiredWill <= ai.will;
       const lethal = !hasAttention && readyBoardDamage + selectedDamage >= enemy.life;
@@ -25336,11 +25336,34 @@
       return isTrainingAiVsAi() && state.phase === "battle" && state.currentSide === "player" && !state.gameOver;
     }
 
+    function trainingYocchanPlayPriority(side, card) {
+      if (!isAiYocchanHyperCarryStrategyActive(side)) return 0;
+      const ai = state.players[side];
+      if (card.baseId === "trpg_member") {
+        const needsSearch = aiYocchanCardsInHand(side).length === 0 && !aiHasUsedTrpgMember(side);
+        return needsSearch && ai.turnsTaken >= 3 ? 900 : -900;
+      }
+      if (card.baseId === "yocchan") {
+        const plan = getAiYocchanHyperCarryPlan(side);
+        return plan.shouldDeploy && plan.selectedYocchans.some((entry) => entry.instanceId === card.instanceId)
+          ? 1000
+          : -1000;
+      }
+      return 0;
+    }
+
     function findTrainingAiPlayMove(side) {
       const player = state.players[side];
       const candidates = player.hand
-        .filter((card) => card.type !== "item" && effectiveCardCost(card) <= player.will)
-        .sort((a, b) => effectiveCardCost(b) - effectiveCardCost(a) || (b.attack || 0) - (a.attack || 0));
+        .filter((card) => card.type !== "item"
+          && effectiveCardCost(card) <= player.will
+          && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi(side, card))))
+        .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) }))
+        .filter((entry) => entry.priority > -900)
+        .sort((a, b) => b.priority - a.priority
+          || effectiveCardCost(b.card) - effectiveCardCost(a.card)
+          || (b.card.attack || 0) - (a.card.attack || 0))
+        .map((entry) => entry.card);
       for (const card of candidates) {
         if (card.type === "environment" && canPlaceCard(side, card, "environment", null, null)) {
           return { card, zone: "environment", owner: null, index: null };
@@ -25353,6 +25376,99 @@
         if (canPlaceCard(side, card, "teacher", side, null)) return { card, zone: "teacher", owner: side, index: null };
       }
       return null;
+    }
+
+    function scoreTrainingYocchanItem(side, item) {
+      if (!isAiYocchanHyperCarryStrategyActive(side) || item?.type !== "item" || item.unusable) return -Infinity;
+      const ai = state.players[side];
+      const targetSide = oppositeSide(side);
+      const cost = effectiveCardCost(item);
+      if (cost > ai.will) return -Infinity;
+      const plan = getAiYocchanHyperCarryPlan(side);
+      if (plan.shouldDeploy && ai.will - cost < plan.requiredWill) return -Infinity;
+      const trpg = ai.hand.find((card) => card.baseId === "trpg_member");
+      const needsTurnThreeSearch = ai.turnsTaken >= 3
+        && aiYocchanCardsInHand(side).length === 0
+        && !aiHasUsedTrpgMember(side)
+        && trpg;
+      if (needsTurnThreeSearch && ai.will - cost < effectiveCardCost(trpg)) return -Infinity;
+      const hasYocchan = aiYocchanCardsInHand(side).length > 0;
+      const targets = effectTargetEntries(side, targetSide);
+      if (item.baseId === "scared_me") return scaredMeHighestCurrentHpTargets(side).length ? 70 : -Infinity;
+      if (item.baseId === "green_curry") {
+        const attention = listAttentionCards(targetSide).length;
+        return targets.length >= 2 || attention > 0 ? 55 + attention * 12 : -Infinity;
+      }
+      if (item.baseId === "king_ghidorah_bed") {
+        const dangerous = targets.length >= 4
+          || targets.some(({ card }) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3);
+        return ai.turnsTaken >= 8 || dangerous ? 50 : -Infinity;
+      }
+      if (item.baseId === "yabe") return targets.length ? 38 : -Infinity;
+      if (item.baseId === "onigiri_draw") return ai.deck.length >= 2 ? 44 : -Infinity;
+      if (item.baseId === "fire_touch") return ai.deck.length >= 3 && ai.life > 4 ? 42 : -Infinity;
+      if (item.baseId === "sage_legacy") return ai.deck.length >= 2 ? 48 : -Infinity;
+      if (item.baseId === "fluid_pasta") return ai.life < currentLifeCap(side) ? 30 : (hasYocchan ? 12 : -Infinity);
+      if (item.baseId === "peaceful_mind") return ai.life <= 15 ? 28 : (hasYocchan ? 10 : -Infinity);
+      if (item.baseId === "dont_worry") return state.actionTurn >= 5 ? (hasYocchan ? 24 : 14) : -Infinity;
+      if (["aggro_army", "ikemasu"].includes(item.baseId)) return hasYocchan ? 22 : 8;
+      return isImmediateItemBaseId(item.baseId) && hasYocchan ? 6 : -Infinity;
+    }
+
+    function useTrainingYocchanKingGhidorah(side, item) {
+      const ai = state.players[side];
+      const targetSide = oppositeSide(side);
+      const forcedAll = ai.will >= 8;
+      const targetEntries = kingGhidorahBedPreselectionTargets(side, item, forcedAll ? "all" : "2")
+        .sort((a, b) => ((b.card.attack || 0) * 2 + (b.card.currentHp || 0))
+          - ((a.card.attack || 0) * 2 + (a.card.currentHp || 0)));
+      const target = targetEntries[0] || null;
+      const discard = kingGhidorahBedDiscardCandidates(side, item)
+        .filter((card) => card.baseId !== "yocchan")
+        .sort((a, b) => {
+          const aUsedTrpg = a.baseId === "trpg_member" && aiHasUsedTrpgMember(side) ? -100 : 0;
+          const bUsedTrpg = b.baseId === "trpg_member" && aiHasUsedTrpgMember(side) ? -100 : 0;
+          const aUnusable = a.unusable ? -50 : 0;
+          const bUnusable = b.unusable ? -50 : 0;
+          return aUsedTrpg + aUnusable + effectiveCardCost(a)
+            - (bUsedTrpg + bUnusable + effectiveCardCost(b));
+        })[0] || null;
+      let mode = forcedAll ? "all" : "3";
+      if (!forcedAll) {
+        const lowHpTargets = kingGhidorahBedTargetEntries(side)
+          .filter(({ card }) => previewFinalDamageToCard(card, 2, item) >= card.currentHp).length;
+        if (state.players[targetSide].life <= 4) mode = "3";
+        else if (lowHpTargets >= 2) mode = "1";
+        else if (target && discard) mode = "2";
+      }
+      return resolveKingGhidorahBed(side, item, mode, discard?.instanceId || null, target?.ref || null, false);
+    }
+
+    function useTrainingYocchanItem(side, item) {
+      if (item.baseId === "king_ghidorah_bed") return useTrainingYocchanKingGhidorah(side, item);
+      if (item.baseId === "green_curry") return castItemGlobal(side, item, false);
+      if (isImmediateItemBaseId(item.baseId)) return castImmediateItem(side, item, false);
+      return false;
+    }
+
+    async function tryUseTrainingYocchanItems(side) {
+      if (!isAiYocchanHyperCarryStrategyActive(side)) return false;
+      let usedAny = false;
+      let safety = 0;
+      while (isTrainingLeftAiActive() && safety < 8) {
+        safety += 1;
+        const choice = state.players[side].hand
+          .filter((card) => card.type === "item")
+          .map((item) => ({ item, score: scoreTrainingYocchanItem(side, item) }))
+          .filter((entry) => Number.isFinite(entry.score) && entry.score > 0)
+          .sort((a, b) => b.score - a.score || effectiveCardCost(a.item) - effectiveCardCost(b.item))[0];
+        if (!choice || !useTrainingYocchanItem(side, choice.item)) break;
+        usedAny = true;
+        render();
+        await waitForOrderedAttendance();
+        await sleep(AI_STEP_DELAY);
+      }
+      return usedAny;
     }
 
     function findTrainingAiAttackTarget(side, attacker) {
@@ -25376,6 +25492,7 @@
       state.message = "左側CPUが行動を考えています。";
       render();
       await sleep(AI_START_DELAY);
+      await tryUseTrainingYocchanItems("player");
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
         safety += 1;
@@ -25386,6 +25503,7 @@
         await waitForOrderedAttendance();
         await sleep(AI_STEP_DELAY);
       }
+      await tryUseTrainingYocchanItems("player");
       const attackers = listBoardRefs("player");
       for (const ref of attackers) {
         if (!isTrainingLeftAiActive()) return;
@@ -34021,7 +34139,13 @@
         return resolveDroppedCardsChoice(side, item, selectedIds, renderAfter);
       }
       if (item.baseId === "sage_legacy") {
+        const yocchanSearchTarget = isAiYocchanHyperCarryStrategyActive(side)
+          && aiYocchanCardsInHand(side).length === 0
+          && !aiHasUsedTrpgMember(side)
+          ? state.players[side].deck.find((card) => card.baseId === "trpg_member")
+          : null;
         const selectedId = options.selectedId
+          || yocchanSearchTarget?.instanceId
           || sortCardsByCostForChoice(state.players[side].deck.slice(1), "desc")[0]?.instanceId
           || null;
         return resolveSageLegacyChoice(side, item, selectedId, renderAfter);
@@ -42500,8 +42624,8 @@
 
     function autoTrainingMulligan() {
       if (!isTrainingAiVsAi() || state.phase !== "mulligan") return false;
-      const playerIds = chooseAiMulliganReturnIds(state.players.player.hand);
-      const opponentIds = chooseAiMulliganReturnIds(state.players.opponent.hand);
+      const playerIds = chooseAiMulliganReturnIds(state.players.player.hand, "player");
+      const opponentIds = chooseAiMulliganReturnIds(state.players.opponent.hand, "opponent");
       const returnedNames = (side, ids) => {
         const selected = new Set(ids);
         return state.players[side].hand.filter((card) => selected.has(card.instanceId)).map((card) => card.name);
@@ -44542,7 +44666,10 @@
       scoreAiItem,
       shouldAiUseItemAtTiming,
       findAiPlayMove,
+      findTrainingAiPlayMove,
       runOpponentAI,
+      runTrainingLeftAI,
+      scoreTrainingYocchanItem,
       useAiItem,
       confirmCardChoiceSelection,
       preserveOnlineCourseRegistrationChoice,

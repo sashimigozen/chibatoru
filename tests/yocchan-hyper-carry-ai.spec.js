@@ -152,6 +152,170 @@ test("実際のAI行動で2人のよっちゃんを出席させ、そのター�
   });
 });
 
+test("AI同士対戦の左側CPUでも専用デッキ判定とマリガン方針を使う", async ({ page }) => {
+  await setup(page, { turn: 3, actionTurn: 5 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const player = api.state.players.player;
+    player.originalDeckCounts = { ...api.state.players.opponent.originalDeckCounts };
+    const ids = ["trpg_member", "trpg_member", "sage_legacy", "general_teacher", "king_ghidorah_bed"];
+    const hand = ids.map((id) => api.createCardFromBase(id, "player"));
+    const returned = new Set(api.chooseAiMulliganReturnIds(hand, "player"));
+    return {
+      active: api.isAiYocchanHyperCarryStrategyActive("player"),
+      kept: hand.filter((card) => !returned.has(card.instanceId)).map((card) => card.baseId),
+      returned: hand.filter((card) => returned.has(card.instanceId)).map((card) => card.baseId)
+    };
+  });
+  expect(result.active).toBe(true);
+  expect(result.kept).toEqual(["trpg_member", "sage_legacy"]);
+  expect(result.returned).toEqual(["trpg_member", "general_teacher", "king_ghidorah_bed"]);
+});
+
+test("AI同士対戦の左側CPUも3ターン目はTRPGサークルメンバーを優先する", async ({ page }) => {
+  await setup(page, { turn: 3, actionTurn: 5 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const state = api.state;
+    const left = state.players.player;
+    left.originalDeckCounts = { ...state.players.opponent.originalDeckCounts };
+    left.turnsTaken = 3;
+    left.will = left.maxWill = 4;
+    left.hand = [
+      api.createCardFromBase("general_student", "player"),
+      api.createCardFromBase("trpg_member", "player")
+    ];
+    return api.findTrainingAiPlayMove("player")?.card.baseId || null;
+  });
+  expect(result).toBe("trpg_member");
+});
+
+test("後攻の左側CPUも賢者の遺産でTRPGサークルメンバーを探す", async ({ page }) => {
+  test.setTimeout(30000);
+  await setup(page, { firstSide: "opponent", turn: 1, actionTurn: 2 });
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const state = api.state;
+    const left = state.players.player;
+    left.originalDeckCounts = { ...state.players.opponent.originalDeckCounts };
+    state.training = {
+      ...state.training,
+      active: true,
+      leftController: "ai",
+      speed: 4,
+      paused: false,
+      skipAnimations: true
+    };
+    state.currentSide = "player";
+    left.turnsTaken = 1;
+    left.will = left.maxWill = 1;
+    left.hand = [api.createCardFromBase("sage_legacy", "player")];
+    left.deck = [
+      api.createCardFromBase("general_student", "player"),
+      api.createCardFromBase("trpg_member", "player"),
+      api.createCardFromBase("general_teacher", "player")
+    ];
+    await api.runTrainingLeftAI();
+    return {
+      hand: left.hand.map((card) => card.baseId),
+      trash: left.trash.map((card) => card.baseId),
+      deck: left.deck.map((card) => card.baseId)
+    };
+  });
+  expect(result.hand).toContain("trpg_member");
+  expect(result.trash).toContain("sage_legacy");
+  expect(result.deck).not.toContain("trpg_member");
+});
+
+test("AI同士対戦の左側CPUも持ち物を使って手札のよっちゃんを強化する", async ({ page }) => {
+  test.setTimeout(30000);
+  await setup(page, { turn: 4, actionTurn: 7 });
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const state = api.state;
+    const left = state.players.player;
+    left.originalDeckCounts = { ...state.players.opponent.originalDeckCounts };
+    state.training = {
+      ...state.training,
+      active: true,
+      leftController: "ai",
+      speed: 4,
+      paused: false,
+      skipAnimations: true
+    };
+    state.currentSide = "player";
+    left.turnsTaken = 4;
+    left.will = left.maxWill = 4;
+    const yocchan = api.createCardFromBase("yocchan", "player");
+    left.hand = [yocchan, api.createCardFromBase("ikemasu", "player")];
+    await api.runTrainingLeftAI();
+    return {
+      yocchanAttack: yocchan.attack,
+      yocchanHp: yocchan.maxHp,
+      usedItem: left.trash.some((card) => card.baseId === "ikemasu"),
+      keptYocchan: left.hand.some((card) => card.instanceId === yocchan.instanceId)
+    };
+  });
+  expect(result).toEqual({
+    yocchanAttack: 1,
+    yocchanHp: 2,
+    usedItem: true,
+    keptYocchan: true
+  });
+});
+
+test("AI同士対戦の左側CPUも8ターン目のよっちゃん2人リーサルを優先する", async ({ page }) => {
+  test.setTimeout(30000);
+  await setup(page, { turn: 8 });
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const state = api.state;
+    const left = state.players.player;
+    left.originalDeckCounts = { ...state.players.opponent.originalDeckCounts };
+    state.training = {
+      ...state.training,
+      active: true,
+      leftController: "ai",
+      speed: 4,
+      paused: false,
+      skipAnimations: true
+    };
+    state.currentSide = "player";
+    left.turnsTaken = 8;
+    left.will = left.maxWill = 8;
+    const first = api.createCardFromBase("yocchan", "player");
+    const second = api.createCardFromBase("yocchan", "player");
+    for (const card of [first, second]) {
+      card.attack = 10;
+      card.hp = card.maxHp = card.currentHp = 11;
+    }
+    left.hand = [first, second, api.createCardFromBase("ikemasu", "player")];
+    const planBefore = api.getAiYocchanHyperCarryPlan("player");
+    const moveBefore = api.findTrainingAiPlayMove("player");
+    await api.runTrainingLeftAI();
+    return {
+      strategyActive: api.isAiYocchanHyperCarryStrategyActive("player"),
+      shouldDeploy: planBefore.shouldDeploy,
+      firstMove: moveBefore?.card.baseId || null,
+      life: state.players.opponent.life,
+      gameOver: state.gameOver,
+      winner: state.gameWinner,
+      attendedYocchans: left.board.seats.filter((card) => card?.baseId === "yocchan").length,
+      itemStillInHand: left.hand.some((card) => card.baseId === "ikemasu")
+    };
+  });
+  expect(result).toEqual({
+    strategyActive: true,
+    shouldDeploy: true,
+    firstMove: "yocchan",
+    life: 0,
+    gameOver: true,
+    winner: "player",
+    attendedYocchans: 2,
+    itemStillInHand: true
+  });
+});
+
 test("役目を終えたTRPGサークルメンバーをキングギドラベッドで優先して校外へ送る", async ({ page }) => {
   await setup(page, { turn: 8 });
   const result = await page.evaluate(() => {
