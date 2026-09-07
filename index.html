@@ -17952,7 +17952,7 @@
           {
             title: "カード効果テキストの表示",
             before: "能力名と通常の効果文章が同じ書式で続き、複数の独立した効果も一続きに表示されるカードがあった。",
-            after: "カード自身が持つ能力を[能力]の形式で効果文章より前へまとめ、条件付きで得る能力は条件文章の中に残す。能力部分と本文、独立した効果ごとに改行し、通常の効果文章の句点は維持する。カード詳細、デッキ編成、カード選択など、共通のカードテキスト表示へ同じ形式を適用する。カードの効果内容・発動条件・数値・ゲーム処理は変更しない。"
+            after: "カード自身が持つ能力を[能力]の形式で効果文章より前へまとめ、条件付きで得る能力は条件文章の中に残す。能力部分と本文、独立した効果ごとに改行し、通常の効果文章の句点は維持する。進化見出しは[進化]：「進化前のカード名」と表示し、カード名の直後に句点を付けない。ただし「〜から進化する。」のように文章が続く場合は句点を維持する。カード詳細、デッキ編成、カード選択など、共通のカードテキスト表示へ同じ形式を適用する。カードの効果内容・発動条件・数値・ゲーム処理は変更しない。"
           }
         ]
       },
@@ -42310,6 +42310,16 @@
       let markup = "";
       let index = 0;
       while (index < text.length) {
+        const evolutionHeading = text.slice(index).match(/^\[進化\]：「([^」]+)」/);
+        if (evolutionHeading) {
+          const evolutionSource = references.find((entry) => entry.kind === "card" && entry.label === evolutionHeading[1]);
+          const sourceMarkup = evolutionSource
+            ? `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(evolutionSource.value)}">${escapeHtml(evolutionSource.label)}</button>`
+            : escapeHtml(evolutionHeading[1]);
+          markup += `[進化]：「${sourceMarkup}」`;
+          index += evolutionHeading[0].length;
+          continue;
+        }
         const bracketedAbility = text.slice(index).match(/^\[((?:超)?(?:陽気|注目)|眠気|余裕|講義|遅刻\d*|進化|装備|融合)([^\]]*)\]/);
         if (bracketedAbility) {
           const displayLabel = bracketedAbility[0];
@@ -42730,7 +42740,7 @@
     ]);
     const CARD_TEXT_REFERENCE_TERMS = Object.freeze(
       CARD_TEXT_ABILITY_TERMS
-        .filter((term) => !["装備", "融合"].includes(term))
+        .filter((term) => !["進化", "装備", "融合"].includes(term))
         .sort((a, b) => b.length - a.length)
     );
 
@@ -42774,11 +42784,11 @@
       const rest = text.slice(index);
       const lateMatch = rest.match(/^遅刻\d+/);
       if (lateMatch) return lateMatch[0];
+      if (rest.startsWith("進化：")) return "進化";
       const term = CARD_TEXT_REFERENCE_TERMS.find((candidate) => rest.startsWith(candidate));
       if (!term) return "";
       if (term === "講義" && rest.startsWith("講義室")) return "";
       if (term === "遅刻" && rest.startsWith("遅刻ゾーン")) return "";
-      if (term === "進化" && /^(進化前|進化後|進化元|進化先)/.test(rest)) return "";
       if (term === "融合" && rest.startsWith("融合済み")) return "";
       return term;
     }
@@ -42829,7 +42839,7 @@
         if (label && !abilities.includes(label)) abilities.push(label);
       };
       const evolutionMatch = base.evolutionFrom
-        ? String(rawText || "").match(/^進化：「([^」]+)」(?:から進化する)?。/)
+        ? String(rawText || "").match(/^進化：「([^」]+)」。/)
         : null;
       const fusionMatch = String(rawText || "").match(/^融合(?:：「([^」]+)」([^。]*))?(?:。|\n)/);
       const hasEquipmentDeclaration = /^(?:装備カード。|装備(?:。|\n))/.test(String(rawText || ""));
@@ -42856,7 +42866,7 @@
           changed = true;
           return true;
         };
-        if (base.evolutionFrom && removeMatch(text.match(/^進化：「[^」]+」(?:から進化する)?。/))) continue;
+        if (base.evolutionFrom && removeMatch(text.match(/^進化：「[^」]+」。/))) continue;
         if (abilities.some((ability) => ability.startsWith("融合")) && removeMatch(text.match(/^融合(?:：「[^」]+」[^。]*)?(?:。|\n)/))) continue;
         if (abilities.includes("装備") && removeMatch(text.match(/^(?:装備カード。|装備(?:。|\n))/))) continue;
         if (abilities.includes("講義") && removeMatch(text.match(/^講義。/))) continue;
@@ -42878,8 +42888,13 @@
       const paragraphBody = splitCardRuleParagraphs(effectBody)
         .replace(/(^|\n)出席した(?:時|とき)、/g, "$1このカードが出席したとき、");
       const formattedBody = bracketCardAbilityReferences(paragraphBody);
-      const abilityLine = abilities.map((ability) => `[${ability}]`).join(" ");
-      return [abilityLine, formattedBody, flavorMatch?.[0]].filter(Boolean).join("\n");
+      const evolutionAbility = abilities.find((ability) => ability.startsWith("進化：「"));
+      const abilityLine = abilities
+        .filter((ability) => ability !== evolutionAbility)
+        .map((ability) => `[${ability}]`)
+        .join(" ");
+      const evolutionLine = evolutionAbility ? `[進化]${evolutionAbility.slice("進化".length)}` : "";
+      return [abilityLine, evolutionLine, formattedBody, flavorMatch?.[0]].filter(Boolean).join("\n");
     }
 
     function cardRulesText(card) {

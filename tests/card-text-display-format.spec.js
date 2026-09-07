@@ -36,10 +36,11 @@ test("カード自身の能力を冒頭へまとめ、条件付き能力は本�
   expect(texts.conditional).toBe("相手の講義室に出席者がいないなら、これは[超陽気]を持つ。");
   expect(texts.reference).toBe("これは[講義]のダメージを受けない。\n手札から出席させたとき、相手のランダムな教師に1ダメージを与える。");
   expect(texts.late).toBe("[遅刻4]\nこのカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。");
-  expect(texts.evolution).toBe("[進化：「愛ちゃん」] [陽気]\n[進化]したとき、相手の学生すべてに1ダメージを与える。");
-  expect(texts.evolutionWithLegacyWording.startsWith("[進化：「木っち（ぎっち）」]\n")).toBe(true);
-  expect(texts.evolutionWithLegacyWording).not.toContain("から[進化]する");
+  expect(texts.evolution).toBe("[陽気]\n[進化]：「愛ちゃん」\n進化したとき、相手の学生すべてに1ダメージを与える。");
+  expect(texts.evolutionWithLegacyWording.startsWith("[進化]：「木っち（ぎっち）」から進化する。\n")).toBe(true);
   expect(texts.evolutionWithFlavor).toContain("\n-我が光に仇なす者よ。今この翼を以って頽落せしめん。羽ばたけ-");
+  expect(texts.evolutionWithFlavor.startsWith("[進化]：「デザインファルコン」\n")).toBe(true);
+  expect(texts.evolutionWithFlavor).toContain("\n進化したとき、「相手の講義室の出席者1人をランダムに指名し、1ダメージを与える。」を10回行う。\n");
   expect(texts.equipment).toBe("[装備]\n装備者は[講義]の効果を受けない。");
   expect(texts.fusion).toBe("[融合：「定規」2枚]\n相手の出席者1人または相手本体を指名し、4ダメージを与える。\n出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。");
   expect(texts.drowsy).toBe("[眠気]\n自分のターン終了時、このカードの体力を1回復する。");
@@ -92,6 +93,17 @@ test("カード詳細は改行を表示し、能力リンクも一重の角括�
   await expect(rules).toContainText("[講義]\n教卓マスにいるかぎり、[陽気]を持つ。");
   await expect(rules.locator('[data-preview-term="講義"]')).toHaveText("[講義]");
   await expect(rules.locator('[data-preview-term="陽気"]')).toHaveText("[陽気]");
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.showBattleCardPreview(api.createCardFromBase("oni_shima_ai", "player"));
+  });
+  const ruleLines = await rules.evaluate((element) => element.textContent.split("\n"));
+  expect(ruleLines[0]).toBe("[陽気]");
+  expect(ruleLines[1]).toBe("[進化]：「愛ちゃん」");
+  expect(ruleLines.at(-1)).toContain("進化したとき");
+  expect(ruleLines.at(-1).endsWith("。")).toBe(true);
+  await expect(rules).not.toContainText("[進化]：「愛ちゃん」。");
 
   const box = await preview.boundingBox();
   expect(box).not.toBeNull();
