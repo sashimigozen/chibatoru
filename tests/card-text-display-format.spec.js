@@ -77,6 +77,42 @@ test("全カードで括弧を二重化せず、カード名と場所の一部�
   expect(result.longText).toContain("このカードは[講義]を持たない。");
 });
 
+test("カード効果に残る講義室を意味する場を共通表示処理で講義室へ統一する", async ({ page }) => {
+  await page.goto(gameUrl);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const text = (baseId) => api.cardRulesText(api.createCardFromBase(baseId, "player"));
+    const rows = Object.keys(api.CARD_BASES).map((baseId) => ({
+      baseId,
+      name: api.CARD_BASES[baseId].name,
+      text: text(baseId)
+    }));
+    const lectureRoomFieldPattern = /自分の場|相手の場|お互いの場|場(?:全体|の|に|を|へ|から|が|は|で)/;
+    return {
+      remaining: rows.filter((row) => lectureRoomFieldPattern.test(row.text)),
+      directFormatter: api.formatCardRulesDisplayText(
+        { baseId: "format_test_lecture_room", keywords: [] },
+        "自分の場に出席者がいる場合、相手の場の出席者に1ダメージを与える。"
+      ),
+      midge: text("midge"),
+      organism: text("organism"),
+      eatenStudent: text("eaten_student"),
+      loudStudent: text("loud_student"),
+      ttb: text("ttb"),
+      predator: text("predator")
+    };
+  });
+
+  expect(result.remaining).toEqual([]);
+  expect(result.directFormatter).toBe("自分の講義室に出席者がいる場合、相手の講義室の出席者に1ダメージを与える。");
+  expect(result.midge).toContain("自分の講義室に「ミジンコ」が2人いる場合");
+  expect(result.organism).toContain("自分の講義室に「生物」「ミジンコ」「単細胞生物」がいる場合");
+  expect(result.eatenStudent).toContain("相手の講義室に学生と教師がいるなら");
+  expect(result.loudStudent).toContain("お互いの講義室の他の出席者すべてに1ダメージ");
+  expect(result.ttb).toContain("このカードが自分の講義室にいるなら");
+  expect(result.predator).toContain("自分の講義室の出席者1人を破壊する");
+});
+
 test("カード詳細は改行を表示し、能力リンクも一重の角括弧で表示する", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(gameUrl);

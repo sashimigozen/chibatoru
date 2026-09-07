@@ -17947,12 +17947,12 @@
       {
         version: "ver.0.22.4",
         date: "2026年9月7日",
-        summary: "カード効果テキストの表示形式を整理し、能力と効果の区別や複数効果のまとまりを読み取りやすくしました。",
+        summary: "カード効果テキストの表示形式を整理し、能力と効果の区別や複数効果のまとまりを読み取りやすくしました。講義室を意味する「場」の表記も「講義室」に統一しました。",
         changes: [
           {
             title: "カード効果テキストの表示",
             before: "能力名と通常の効果文章が同じ書式で続き、複数の独立した効果も一続きに表示されるカードがあった。",
-            after: "カード自身が持つ能力を[能力]の形式で効果文章より前へまとめ、条件付きで得る能力は条件文章の中に残す。能力部分と本文、独立した効果ごとに改行し、通常の効果文章の句点は維持する。進化見出しは[進化]：「進化前のカード名」と表示し、カード名の直後に句点を付けない。ただし「〜から進化する。」のように文章が続く場合は句点を維持する。カード詳細、デッキ編成、カード選択など、共通のカードテキスト表示へ同じ形式を適用する。カードの効果内容・発動条件・数値・ゲーム処理は変更しない。"
+            after: "カード自身が持つ能力を[能力]の形式で効果文章より前へまとめ、条件付きで得る能力は条件文章の中に残す。能力部分と本文、独立した効果ごとに改行し、通常の効果文章の句点は維持する。進化見出しは[進化]：「進化前のカード名」と表示し、カード名の直後に句点を付けない。ただし「〜から進化する。」のように文章が続く場合は句点を維持する。講義室を意味する「自分の場」「相手の場」「お互いの場」などは、プレイヤー向け表示で「講義室」に統一する。カード詳細、デッキ編成、カード選択など、共通のカードテキスト表示へ同じ形式を適用する。カードの効果内容・発動条件・数値・ゲーム処理は変更しない。"
           }
         ]
       },
@@ -42881,8 +42881,9 @@
     }
 
     function formatCardRulesDisplayText(card, rawText) {
-      const abilities = cardPrintedAbilityDisplay(card, rawText);
-      const body = removePrintedAbilityDeclarations(card, rawText, abilities);
+      const normalizedText = normalizeLectureRoomText(rawText);
+      const abilities = cardPrintedAbilityDisplay(card, normalizedText);
+      const body = removePrintedAbilityDeclarations(card, normalizedText, abilities);
       const flavorMatch = card?.baseId === "demon_a_plus" ? body.match(/(-我が.+-)$/) : null;
       const effectBody = flavorMatch ? body.slice(0, -flavorMatch[0].length).trimEnd() : body;
       const paragraphBody = splitCardRuleParagraphs(effectBody)

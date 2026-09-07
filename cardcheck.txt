@@ -1,0 +1,549 @@
+16440-      <section class="panel four-rules-summary">
+16441-        <strong>ミニマム版</strong>
+16442:        <span>一般学生・一般教師・一般教室だけを使います。デッキと校外は4人共有です。</span>
+16443-      </section>
+16444-    </section>
+--
+17260-      7: {
+17261-        number: 7,
+17262:        title: "U太と装備のデッキ",
+17263:        text: "U太と裏U太を、装備カードで強化するデッキ。",
+17264-        featuredCards: ["yuta", "dark_yuta", "chameleon", "yuta_umbrella", "greeting_3000"],
+17265-        floorRule: "相手は自分のターン開始時に、ランダムな装備カード1枚を手札に生成する。",
+--
+17269-        number: 8,
+17270-        title: "バカでかい声の学生のデッキ",
+17271:        text: "バカでかい声の学生とベストフレンドを中心にしたデッキ。",
+17272-        featuredCards: ["loud_student", "best_friend", "ae_student", "cote_dazur", "predator"],
+17273:        floorRule: "あなたのターン開始時、相手の講義室のランダムな席マスに、以後攻撃できないベストフレンド1人を出席させる。",
+17274-        floorRuleAudience: "相手のみ"
+17275-      },
+--
+17625-
+17626-    const CARD_BASES = {
+17627:      general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
+17628-      suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
+17629-      ta_squad: { name: "TA隊長", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
+--
+17632-      pad_present_creator: { name: "パッドプレゼンクリエイター", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+17633-      aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
+17634:      aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
+17635-      scout_student: { name: "斥候学生", type: "student", cost: 2, attack: 2, hp: 1, allowedZones: ["seat"] },
+17636:      single_cell: { name: "単細胞生物", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
+17637:      midge: { name: "ミジンコ", type: "student", cost: 0, attack: 2, hp: 2, token: true, allowedZones: ["seat"] },
+17638:      organism: { name: "生物", type: "student", cost: 0, attack: 6, hp: 6, keywords: ["陽気"], token: true, allowedZones: ["seat"] },
+17639:      perfect_mutant: { name: "完全変異体", type: "student", cost: 0, attack: 13, hp: 13, keywords: ["超陽気"], token: true, allowedZones: ["seat"] },
+17640:      adjective_student: { name: "形容詞学生", type: "student", cost: 1, attack: 2, hp: 4, late: 4, allowedZones: ["seat"] },
+17641-      absent_student: { name: "来てなかった学生", type: "student", cost: 2, attack: 2, hp: 2, late: 3, allowedZones: ["seat", "teacher"] },
+17642:      yuta: { name: "U太", type: "student", cost: 3, attack: 3, hp: 3, keywords: ["余裕"], allowedZones: ["seat", "teacher"] },
+17643:      ultimate_yuta: { name: "Ultimate U太", type: "student", cost: 0, noCost: true, attack: 13, hp: 13, generated: true, allowedZones: ["seat", "teacher"] },
+17644:      aggro_queen: { name: "アグロクイーン", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"] },
+17645-      ae_student: { name: "あえー学生", type: "student", cost: 2, attack: 0, hp: 4, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
+17646-      super_ae_student: { name: "超あえー学生", type: "student", cost: 2, attack: 0, hp: 2, keywords: ["超注目"], allowedZones: ["seat", "teacher"] },
+17647:      hurried_student: { name: "急いできた学生", type: "student", cost: 2, attack: 2, hp: 2, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
+17648-      lazy_student: { name: "不真面目な学生", type: "student", cost: 2, attack: 4, hp: 4, late: 1, allowedZones: ["seat"] },
+17649:      cancel_student: { name: "ドタキャン学生", type: "student", cost: 3, attack: 3, hp: 3, late: 2, allowedZones: ["seat", "teacher"] },
+17650-      tokyo_tech_bro: { name: "東工ニキ", type: "student", cost: 3, attack: 1, hp: 1, ace: true, allowedZones: ["seat", "teacher"] },
+17651-      laughing_front_student: { name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 2, hp: 2, rowOnly: 1, allowedZones: ["seat"] },
+17652:      eaten_student: { name: "飯を食ってきた学生", type: "student", cost: 4, attack: 3, hp: 1, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
+17653-      loud_student: { name: "バカでかい声の学生", type: "student", cost: 8, attack: 7, hp: 9, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
+17654-      loud_members: { name: "バカでかい班員たち", type: "student", cost: 6, attack: 8, hp: 4, allowedZones: ["seat"], occupiedSeatSize: { rows: 2, cols: 2 } },
+17655:      best_friend: { name: "ベストフレンド", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"] },
+17656-      ttb: { name: "TTB", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
+17657-      predator: { name: "捕食者", type: "student", cost: 5, attack: 5, hp: 5, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
+17658:      student_comedy: { name: "学生お笑い", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
+17659:      seat_taking_group: { name: "席取り軍団", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat"] },
+17660-      sniper: { name: "スナイパー", type: "student", cost: 4, attack: 2, hp: 1, allowedZones: ["seat", "teacher"] },
+17661-      cynical_student: { name: "冷笑学生", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
+17662:      extra_people: { name: "エキストラの皆さん", type: "student", cost: 9, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+17663-      extra_student: { name: "エキストラ学生", type: "student", cost: 0, noCost: true, attack: 1, hp: 1, keywords: ["陽気"], token: true, allowedZones: ["seat"] },
+17664-      angry_maker: { name: "アングリーメイカー", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"] },
+--
+17681-      ta_killer: { name: "TAキラー", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+17682-      summer_teacher: { name: "夏井先生", type: "teacher", cost: 0, variableCost: true, attack: 2, hp: 2, noLecture: true, allowedZones: ["seat", "teacher"] },
+17683:      fridge_thief: { name: "冷蔵庫泥棒", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+17684:      failure_student: { name: "何をやってもダメな学生", type: "student", cost: 3, attack: 0, hp: 3, allowedZones: ["seat", "teacher"] },
+17685:      success_student: { name: "何をやっても成功する学生", type: "student", cost: 0, attack: 2, hp: 4, evolutionFrom: "failure_student", allowedZones: ["evolution"] },
+17686:      bounce_day: { name: "バウンスディ", type: "student", cost: 3, attack: 1, hp: 3, allowedZones: ["seat", "teacher"] },
+17687-      yocchan: { name: "よっちゃん", type: "student", cost: 4, attack: 0, hp: 1, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
+17688-      trendy_student: { name: "ミーハー学生", type: "student", cost: 4, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+17689-      rebirth_student: { name: "再\"履\"生", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
+17690:      lone_wolf: { name: "狼(いっぴきおおかみ)", type: "student", cost: 5, attack: 2, hp: 2, keywords: ["注目"], allowedZones: ["seat", "teacher"] },
+17691-      general_teacher: { name: "一般教師", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
+17692-      strict_lateness_teacher: { name: "遅刻に厳しい教師", type: "teacher", cost: 4, attack: 1, hp: 1, allowedZones: ["teacher"] },
+--
+17723-      impossible_high_note: { name: "ありえない高音", type: "vampire", cost: 8, attack: 3, hp: 3, allowedZones: ["teacher", "seat"] },
+17724-      back_question_student: { name: "後ろから質問する学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+17725:      acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
+17726-      ruler: { name: "定規", type: "item", cost: 1, target: "enemy" },
+17727-      aggro_eater: { name: "アグロ喰い", type: "item", cost: 1, target: "friendlyAny" },
+--
+17778-      accelerate: { name: "アクセラレート", type: "item", cost: 1, target: "friendlyAny" },
+17779-      chameleon: { name: "カメレオン", type: "item", cost: 1, target: "friendlyAny" },
+17780:      yuta_umbrella: { name: "U太の傘", type: "item", cost: 1, target: "friendlyAny" },
+17781-      red_happi: { name: "赤はっぴ", type: "item", cost: 1, target: "friendlyAny" },
+17782-      illegal_cafeteria: { name: "無法の食堂", type: "environment", cost: 3, allowedZones: ["environment"], ace: true },
+--
+17801-      panpan: { name: "パンパン", type: "item", cost: 2, target: "enemyPair" },
+17802-      capture: { name: "キャプチャー", type: "item", cost: 3, target: "enemySlot" },
+17803:      yutakun_yutakun: { name: "U太くんU太くん", type: "item", cost: 3, target: "self" },
+17804-      three_gestures: { name: "３つジェスチャー", type: "item", cost: 4, target: "self" },
+17805-      substitute_attendance: { name: "代返", type: "item", cost: 3, target: "self" },
+--
+17827-      suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
+17828-      classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
+17829:      aggro_kingdom: { name: "アグロキングダム", type: "environment", cost: 2, allowedZones: ["environment"] },
+17830-      quick_quiz_tournament: { name: "早押しクイズ大会", type: "environment", cost: 1, allowedZones: ["environment"] },
+17831-      cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
+--
+17849-      aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "item", cost: 2, target: "self" },
+17850-      loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], rowOnly: 3, allowedZones: ["seat"] },
+17851:      dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
+17852-      ta: { name: "TA", type: "student", cost: 0, attack: 2, hp: 1, token: true, allowedZones: ["seat"] }
+17853-    };
+--
+17986-          {
+17987-            title: "カード修正",
+17988:            before: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n手札の「ミーハー学生」「エキストラの皆さん」「ネガティブトーカー」から1枚を選んで出席させる。選んだ効果の戦意は順に4／9／6となる。このカードは講義を持たない。",
+17989:            after: "「夏井先生」\n教師／共通カード／戦意：選んだ効果により4・6・9／攻撃力2／体力2\n「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1つを選び、その効果を発動する。\n「ミーハー学生」［戦意4］：このカードは陽気を持ち、攻撃による反撃を受けない。\n「ネガティブトーカー」［戦意6］：相手の講義室にいる学生すべてに3ダメージを与える。\n「エキストラの皆さん」［戦意9］：自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。\nこのカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。\n\n変更点：対象カードが手札になくても効果を選べるようにし、夏井先生が選んだ効果を発動する処理へ変更。各選択肢の効果と戦意をカードテキストに明記。"
+17990-          },
+17991-          { title: "対戦中のログ・メニュー", before: "ログやメニューを開いたまま対戦が終了すると、次の試合でも開いた状態が残っていた。", after: "結果表示時と新しい試合の開始時に、ログ・メニューを閉じるよう修正。校外・遅刻ゾーンの確認一覧も閉じ、次の試合には開いた状態を引き継がない。オンラインのゲスト・観戦側にも適用し、試合中の通常の同期では閉じない。" }
+--
+18028-          {
+18029-            title: "新カード",
+18030:            after: "「アグロキングダム」\n環境／共通カード／戦意2\nこのカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。"
+18031-          },
+18032-          {
+--
+18046-            title: "手札内の融合操作",
+18047-            before: "定規を融合するときは、カード確認の「融合する」から融合先を選ぶ必要があった。",
+18048:            after: "手札の定規をもう1枚の定規へドラッグしても融合できるように変更。U太の融合素材と同じく、ドラッグ中は融合できる手札を青く表示する。カード確認から融合先を選ぶ従来の操作も引き続き使用できる。"
+18049-          },
+18050-          {
+--
+18124-        version: "ver.0.20.2",
+18125-        date: "2026年8月30日",
+18126:        summary: "Ultimate U太の勝利演出に表示する5つの文言を、勢いのある筆文字風の書体へ変更しました。",
+18127-        changes: [
+18128:          { title: "Ultimate U太の勝利演出", before: "勝利演出の「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」「思ってまう」は、ゲーム内の通常書体で表示されていた。", after: "5つの文言だけに、太く勢いのある筆文字風の書体を適用。白い文字の輪郭も強め、画像のような力強い見た目に近づけた。表示する文言・順番・位置・時間は変更しない。" }
+18129-        ]
+18130-      },
+--
+18132-        version: "ver.0.20.1",
+18133-        date: "2026年8月29日",
+18134:        summary: "戦意0の表示を分かりやすくし、U太と定規の融合をカード確認から対象選択して使える共通操作へ統一しました。",
+18135-        changes: [
+18136:          { title: "戦意0の表示", before: "戦意が0のカードは、カード上では数値の「0」、デッキ一覧では「C0」と表示され、戦意を持たないカードとの違いが分かりにくかった。", after: "戦意が0のカードは、カード上・カード確認・デッキ一覧で「戦意0」と明記。Ultimate U太など、戦意を持たないカードだけは引き続き「戦意なし」と表示する。" },
+18137:          { title: "融合先の選択", before: "融合カードは手札のU太へ直接ドラッグするか、使用後に通常の手札から融合先を探して選ぶ必要があり、融合先ごとの融合済みカードも選択中に確認できなかった。", after: "融合カードのカード確認に「融合する」ボタンを追加。押すとマリガンと同じ形式の選択画面へ移り、手札のうち、そのカードを融合できるU太だけを表示する。各U太には「融合済み：○○」を表示し、何も融合されていない場合は「融合済み：なし」と表示。U太を選んで確定すると融合する。オンライン対戦でも同じ選択手順で処理する。" },
+18138:          { title: "U太の融合表示順", before: "U太へ融合済みのカード名は、実際に融合した順番で「、」を使って横並びに表示されていた。", after: "実際に融合した順番にかかわらず、「融合済み：」の下へ「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の順で、カード名を1枚ずつ改行して表示・記録する。番号と「、」は表示しない。" },
+18139-          { title: "定規の融合", before: "手札に定規が2枚以上ある場合、融合を実行すると先頭の定規2枚が自動的に選ばれていた。", after: "手札の定規をカード確認し、「融合する」を押すと、融合可能なほかの定規だけをマリガンと同じ形式で表示。融合する定規を選んで確定すると、選んだ2枚から「ダブルダイヤモンドクロス」を生成する。今後追加する融合も、この対象選択方式へ統一する。" }
+18140-        ]
+--
+18143-        version: "ver.0.20.0",
+18144-        date: "2026年8月28日",
+18145:        summary: "PowerPointのUI素材を使用した下部ホームバーを追加し、カード名の変更と新カード「アグロ軍」「斥候学生」「TA軍団」「幸せの青い鳥」「スーツを着た学生」「胸像スーツ」「インターン」「キングギドラベッド」「早押しクイズ大会」「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」「Ultimate U太」の追加を実施。",
+18146-        changes: [
+18147-          { title: "下部ホームバー", before: "各機能へ移動するにはホーム画面へ戻り、画面中央のボタンから選ぶ必要があった。", after: "ホーム、カード、バトル、ソロプレイ、ガチャを並べた下部ホームバーを追加。対戦画面とデッキ編集中を除く画面で表示し、ホーム、デッキ一覧、オンラインバトル、ソロプレイへ直接移動できる。PowerPointの通常素材からアイコン図形だけを透明背景で高解像度出力し、通常時は素材本来の色で表示。カードとバトルの発光時は、それぞれPowerPointの専用発光素材へ切り替える。" },
+18148:          { title: "カード修正", before: "「って思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。", after: "「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ\n「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。\n\n変更点：カード名から「って」を削除。" },
+18149:          { title: "新カード", after: "「アグロ軍」\n持ち物／共通カード／戦意2\n「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。" },
+18150-          { title: "新カード", after: "「斥候学生」\n学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは「超陽気」を持つ。" },
+18151-          { title: "新カード", after: "「TA軍団」\n学生／展開・敵増殖／戦意4／攻撃力2／体力1\nこのカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、このカードのコピーを1人ずつ出席させる。" },
+--
+18157-          ,{ title: "新カード", after: "「早押しクイズ大会」\n環境／共通カード／戦意1\nお互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。" }
+18158-          ,{ title: "早押しクイズ大会の演出", before: "ビンゴ成立や強化の瞬間を示す演出がなく、8ビンゴの専用表示を追加した後も、出席させたカードの大表示と重なっていた。", after: "出席させたカードの大表示が終了した後、成立した列のカードに枠が「カチッ」と固定される演出を表示し、対象カードの赤いバフ演出へつなげる。8ビンゴ達成時はその後に画面中央へ「BINGO!!」を大きく表示する。オンライン対戦でも相手側と観戦者に同じ順番で同期する。" }
+18159:          ,{ title: "新カード", after: "「辛いなら」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+18160:          ,{ title: "新カード", after: "「会社１日」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+18161:          ,{ title: "新カード", after: "「飛ぶくらい」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+18162:          ,{ title: "新カード", after: "「いいだろって」\n持ち物／学友会・持ち物／戦意0\n融合\n「U太」に融合する。" }
+18163:          ,{ title: "新カード", after: "「Ultimate U太」\n学生／学友会・持ち物／戦意なし／攻撃力13／体力13\nこのカードを手札から出席させたとき、このゲームに勝利する。" }
+18164:          ,{ title: "U太の融合と勝利演出", before: "U太へ4種類の持ち物を1枚ずつ融合し、融合途中の内容を確認する仕組みと、完成後の専用勝利演出がなかった。", after: "手札のU太へ「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」を1枚ずつ融合でき、融合済みのカード名をカードテキストとカード確認に表示。4種類が揃うと同じU太が手札の「Ultimate U太」に変化する。手札から出席させると、「辛いなら」を中央、「会社１日」を左、「飛ぶくらい」を右、「いいだろって」を中央へ、この順に1秒ずつ改行せず縦表示する。最後は画面左から「思ってまう」「いいだろって」「飛ぶくらい」「会社１日」「辛いなら」の5列を改行せず縦表示し、「飛ぶくらい」を画面中央に配置する。1.5秒後も文言を残したまま勝利演出を表示し、オンライン対戦でも同じ演出を同期する。" }
+18165-        ]
+18166-      },
+--
+18171-        changes: [
+18172-          { title: "進化演出", before: "進化時のカード演出が盤面上の進化元と同じ大きさ・位置に揃えられ、進化後のカードを確認しにくかった。また、進化後のカードが落下して重なる途中に拡大縮小と回転が入り、進化前のカードと大きさが一致していなかった。", after: "進化時に進化元と進化後のカードを画面中央へ大きく表示。カード本体と内部表示の寸法を統一し、落下中も表示倍率を変えず、進化後のカードが進化前のカードと同じ大きさで重なるようにした。" },
+18173:          { title: "装備状態の表示", before: "装備カードの種類によって盤面上の表示方法が揃っておらず、イヤホンなど一部の装備はカードを見ただけでは装備中か分かりにくかった。また、装備中のカードの背面に黄色い影が表示され、カード確認には一部の装備しか表示されていなかった。", after: "装備カードが1枚以上付いている出席者には、陽気などと同じ状態アイコン欄へ「装」アイコンを表示。南京錠、イヤホン、U太用装備を含むすべての装備カードで表示を統一し、黄色い背面装飾は表示しない。カード確認には装備カード名と現在の装備効果を表示。南京錠装備中は「静かにしましょうね？」などと同じ鎖の攻撃不可表示をカードに重ね、カード確認にも攻撃不可を表示する。" },
+18174-          { title: "カード確認の用語説明", before: "カード確認の効果文では一部の能力語だけを押して説明でき、文中のカード名や学生・教師などのタイプはその場から確認できなかった。また、「講義室」の中の「講義」を能力として扱う場合があった。", after: "効果文内のカード名を押すと該当カード、陽気などの能力・状態を押すと用語説明、学生・教師・ヴァンパイア・持ち物・環境を押すとタイプ説明を表示。説明リンクは能力・状態に絞り、数値、場所・領域、手札、出席、出席者、装備、進化、デッキは通常の文章として表示する。講義室の中の講義はリンクにせず、単独の講義だけを能力説明の対象にする。" },
+18175:          { title: "強化・弱体化・回復演出", before: "出席者の攻撃力・体力・防御力や能力・状態が変化しても、盤面を見ただけでは変化した瞬間と内容を把握しにくかった。", after: "出席者が強化されたときは赤・橙・白、弱体化されたときは紺・水色・白の斜め縞を横方向に8列並べ、偶数列を左右反転して横につながるギザギザ模様を表示。その模様の面全体を、強化では上へ、弱体化では下へ1.3秒間動かす。発生後の待ち時間は設けず、すぐに開始する。体力が回復したときは複数の緑色の十字が浮かぶ。数値欄には増減を示す矢印を残さない。形容詞学生の出席時効果で攻撃力+3に成功した場合にも対応し、攻撃力・最大体力・防御力の増減、能力・状態の付与と解除、環境や常在効果、オンライン同期による変化にも対応する。" },
+18176-          { title: "オンライン対戦の準備状態", before: "通常ルール以外の部屋でゲストが対象ルールのデッキを選んで準備OKにした際、一部の通信経路ではデッキ形式が通常として再解釈され、ゲスト画面だけ準備状態が外れる場合があった。", after: "ルーム状態にデッキ形式の項目が含まれない場合でも、デッキ情報内に記録されたカオス・専攻形式を維持するよう修正。ゲストの準備OKが画面上でも保持され、ホスト側の準備状態と一致するようにした。" },
+18177-          { title: "オンライン対戦画面", before: "オンラインバトルの選択肢、部屋の作成・入室、デッキとルールの準備、観戦一覧を同じ画面内に表示していたため、情報が詰まり、必要な操作を見つけにくかった。", after: "ホームからオンラインバトル専用メニューへ移動し、ランダムマッチ、プライベートマッチ、観戦を選ぶと、それぞれの専用画面へ切り替わる構成に変更。選択後はその操作に必要な情報だけを表示し、オンラインメニューへ戻れるようにした。" },
+--
+18321-        version: "ver.0.15.1",
+18322-        date: "2026年7月29日",
+18323:        summary: "AIの終盤判断とU太軸の連携を改善し、バトル中のカード確認を読みやすく整理。",
+18324-        changes: [
+18325:          { title: "U太軸AI", before: "U太・裏U太に装備カードを使う判断や、装備後の攻撃先がほかのデッキと同じ基準だった。", after: "U太系のデッキを使うAIは、U太・裏U太への装備を優先し、陽気を得たU太で倒せる相手出席者を優先して攻撃する。本体を倒せる場合は本体攻撃を優先する。" },
+18326-          { title: "AIのリーサル判断", before: "勝てる攻撃があっても、先に使える手札や盤面操作を続けることがあった。", after: "相手本体を0にできる攻撃を優先する。注目や眠気など、リーサルを妨げる出席者を処理すれば勝てる場合も判断する。" },
+18327-          { title: "バトル中のカード確認", before: "カード本体のほかに、名前・タイプ・戦意・攻撃力・体力・配置・状態を文章で重ねて表示していた。", after: "カード本体と効果だけを表示する。効果文中の能力語は［余裕］のように押せる表記にし、説明をその場で確認できる。" },
+--
+18338-          { title: "魔の1号館の入口", before: "魔の1号館へ挑戦する入口演出がない。", after: "赤黒い空と赤い月の下、灰色の大学ビルを最上階から地上まで降り、扉のない黒い入口へ入る演出を追加。" },
+18339-          { title: "魔の1号館の画面", before: "魔の1号館専用のデッキ選択・階の説明・バトル背景がない。", after: "挑戦用のデッキ選択、各階の特徴を確認する画面、薄暗い館内を背景にしたバトル画面を追加。階の説明では主なカードとフロア規則を分けて表示し、カードを押すと詳細を確認できる。バトル中にも階の特徴を確認できる。" },
+18340:          { title: "第1〜10階", before: "階ごとの相手デッキとフロア規則がない。", after: "第1〜5階は学生・遅刻・アグロ・教師などの段階的なデッキ、第6〜9階は追加ドロー・装備生成・ベストフレンド出席・進化支援のフロア規則を持つ対戦を追加。第10階には特別なフロア規則を設定。" },
+18341-          { title: "階の気力とAI", before: "通常のVS AIと同じ判断で、前の階の気力を引き継ぐ。", after: "各階を気力20で開始。第1〜4階の相手は最大気力10、第5階以降は20。第1〜5階のAIはドローを優先する初期階用の判断で行動する。" },
+18342-          { title: "進行と再開", before: "階を進む・中断して再開する仕組みがない。", after: "勝利後に次の階の特徴を確認して進む。中断後は勝利した階の次の階から再開でき、敗北時は第1階からやり直す。" },
+--
+18378-          { title: "ライブ人", before: "戦意4／攻撃力1／体力2。相手の出席者の攻撃力を3にする。", after: "戦意3／攻撃力1／体力1。相手の出席者の攻撃力を2にする。" },
+18379-          { title: "ドービィ", before: "攻撃力3以上の相手の学生を対象にする。", after: "攻撃力3以上の相手の出席者を対象にする。" },
+18380:          { title: "いけます", before: "一般学生を手札に生成する。", after: "陽気を持つ一般学生を手札に生成する。" },
+18381-          { title: "インファイト将棋部", before: "戦意10／攻撃力0／体力0。", after: "戦意10／攻撃力5／体力5。" },
+18382-          { title: "パンパン", after: "自分の出席者を指名・確定してから、相手の出席者を指名・確定する二段階の操作に変更。選べる出席者は青く表示される。" }
+--
+18391-          { title: "猛禽寺", after: "自分の場にいる出席者を直接選んでから、進化先を選べるように変更。" },
+18392-          { title: "静かにしましょうね？", before: "対象の攻撃を一時的に止める。", after: "攻撃力4以上の相手出席者1人を指名し、その出席者が以後攻撃できなくなる効果に変更。" },
+18393:          { title: "U太・裏U太", after: "効果欄で装備中の持ち物を確認できるように改善。" },
+18394-          { title: "気力", after: "深淵、気にするな、カニカウント、バカMacなど、現在有効な効果を長押しで確認可能。" },
+18395-          { title: "操作表示", after: "どんぐり・猛禽寺で選べる出席者を青く光らせ、選択対象を分かりやすく表示。" }
+--
+18444-        changes: [
+18445-          { title: "定規", before: "ヴァンパイアへの共通弱点の対象外。", after: "ヴァンパイアに与えるダメージも2倍。" },
+18446:          { title: "裏U太", after: "進化元の装備を引き継ぎ、装備上限を2枚に変更。進化時にU太を1枚生成。" }
+18447-        ]
+18448-      },
+--
+18552-        changes: [
+18553-          { title: "どんぐり進化", after: "進化元を出席させたターンでも進化可能。" },
+18554:          { title: "超陽気", after: "完全変異体などが場に出た直後から、超陽気として正しく攻撃可能。" }
+18555-        ]
+18556-      },
+--
+19048-        id: "studentPlay",
+19049-        title: "学生編：出席",
+19050:        body: "「一般学生」だけを使えます。\n光っている自分の2行2列の席マスへ出席させてください。",
+19051-        action: "playCard",
+19052-        allowedBaseId: "general_student",
+--
+22371-        commandId
+22372-      };
+22373:      state.message = `${sourceCard?.name || "何をやってもダメな学生"}の効果：相手が校外エリアへ送る手札を選んでいます。`;
+22374-      onlineSend({
+22375-        type: "badStudentDiscardRequest",
+22376-        requestId,
+22377-        discardCount,
+22378:        sourceName: sourceCard?.name || "何をやってもダメな学生"
+22379-      }, { track: true });
+22380-      return true;
+--
+22428-      openCardChoice({
+22429-        mode: "bad_student_online_response",
+22430:        title: message.sourceName || "何をやってもダメな学生",
+22431-        message: `手札から校外エリアへ送るカードを${discardCount}枚選んでください。`,
+22432-        cards: state.players.player.hand,
+--
+24708-          if (student && seatIndex !== undefined) {
+24709-            placeCardFromHand("opponent", student.instanceId, "seat", "opponent", seatIndex, false);
+24710:            state.message = "テスト用AIが一般学生を出席させました。";
+24711-          }
+24712-        } else {
+--
+24940-          bestFriend.attackLockedPermanently = true;
+24941-          bestFriend.attackLockSource = "8階のフロア規則";
+24942:          addLog("8階のフロア規則：出席したベストフレンドは、以後攻撃できません。");
+24943-        }
+24944-      }
+--
+26793-          const card = getBoardCardFromRef(ref);
+26794-          if (expireUtaUmbrellaShields(card, side)) {
+26795:            addLog(`${card.name}のU太の傘効果が終了しました。`);
+26796-          }
+26797-        });
+--
+27086-      if (!organism || !midge || !singleCell) return false;
+27087-      if ([organism, midge, singleCell].some((entry) => isPadlocked(entry.card))) {
+27088:        addLog("完全変異体への合成：南京錠を装備した素材がいるため合成できません。");
+27089-        return false;
+27090-      }
+--
+27097-      })) return false;
+27098-      showCardPlayAnimation(placed, "board");
+27099:      addLog(`生物、ミジンコ、単細胞生物は合体し、${placed.name}になりました。`);
+27100-      return true;
+27101-    }
+--
+29811-      if (!canStartHandDrag(handItem)) {
+29812-        state.message = fusionEligibleUtasInHand("player", handItem).length === 0
+29813:          ? `${handItem.name}を融合できる手札の「U太」がいません。`
+29814-          : "今はこのカードを融合できません。";
+29815-        render();
+--
+29820-        mode: "uta_fusion",
+29821-        title: `${handItem.name}の融合先`,
+29822:        message: "融合させる手札の「U太」を選んでください。",
+29823-        targets,
+29824:        confirmLabel: "このU太に融合する"
+29825-      });
+29826-    }
+--
+29886-        ultimate.utaFusionMaterials = target.utaFusionMaterials.map((entry) => ({ ...entry }));
+29887-        if (handIndex >= 0) player.hand.splice(handIndex, 1, ultimate);
+29888:        addLog(`${SIDES[side]}は融合を完成させ、「U太」を「Ultimate U太」に変化させました。\n融合済み：\n${fusedNames.join("\n")}`);
+29889-      } else {
+29890:        addLog(`${SIDES[side]}は「${item.name}」を手札の「U太」に融合しました。\n融合済み：\n${fusedNames.join("\n")}`);
+29891-      }
+29892-      clearSelections();
+29893:      state.message = complete ? "4枚の融合が完成し、Ultimate U太になりました。" : `${item.name}をU太に融合しました。`;
+29894-      if (renderAfter) render();
+29895-      return true;
+--
+30150-      trendy_student: { cost: 4, label: "ミーハー学生", effect: "このカードは陽気を持ち、攻撃による反撃を受けない。" },
+30151-      kyoto_sound_i: { cost: 6, label: "ネガティブトーカー", effect: "相手の講義室にいる学生すべてに3ダメージを与える。" },
+30152:      extra_people: { cost: 9, label: "エキストラの皆さん", effect: "自分の講義室の空いている席マスに、「エキストラ学生」を3人までランダムに出席させる。それらの攻撃力と体力を+1する。" }
+30153-    });
+30154-
+--
+30165-        .map((choice) => `「${choice.label}」［戦意${choice.cost}］：${choice.effect}`)
+30166-        .join("");
+30167:      return `「ミーハー学生」「ネガティブトーカー」「エキストラの皆さん」の中から1つを選び、その効果を発動する。${choices}このカードの戦意は、選んだ効果の戦意になる。このカードは講義を持たない。`;
+30168-    }
+30169-
+--
+30728-      if (evolved.baseId === "dark_yuta") {
+30729-        state.players[side].hand.push(createCardFromBase("yuta", side));
+30730:        addLog(`${evolved.name}の効果：「U太」を1枚手札に生成しました。`);
+30731-      } else if (evolved.baseId === "success_student") {
+30732-        resolveSuccessStudentEvolutionEffect(side, evolved);
+--
+31279-                afterAttend: (extra) => applyPermanentStatBuff(extra, 1, 1, 0, card.name)
+31280-              }),
+31281:              { onComplete: (summoned) => addLog(`${card.name}の「エキストラの皆さん」効果：エキストラ学生を${summoned}人出席させ、+1/+1しました。`) }
+31282-            );
+31283-          }
+--
+31322-            }
+31323-          }),
+31324:          { onComplete: (summoned) => addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人出席させました。それらは相手が自分のターンを2回終了するまで攻撃できません。`) }
+31325-        );
+31326-      }
+--
+31483-          if (attendCard(side, friend, "seat", openNeighbor, {
+31484-            attendanceSource: ATTENDANCE_SOURCE.GENERATED
+31485:          })) addLog(`${card.name}の効果：隣接する席にベストフレンドを1人出席させました。`);
+31486-        } else {
+31487:          addLog(`${card.name}の効果：隣接する空席がないためベストフレンドを出席させられません。`);
+31488-        }
+31489-      }
+--
+32197-      return openCardChoice({
+32198-        mode: "bad_student_discard",
+32199:        title: sourceCard?.name || "何をやってもダメな学生",
+32200-        message: `手札から校外エリアへ送るカードを${discardCount}枚選んでください。`,
+32201-        cards: hand,
+--
+32207-
+32208-    function resolveBadStudentDiscardChoice(side, discardIds, sourceCard, options = {}) {
+32209:      const sourceName = sourceCard?.name || "何をやってもダメな学生";
+32210-      const moved = discardSelectedHandCards(side, discardIds, 2, options.title || `${sourceName}で校外へ送られたカード`);
+32211-      const movedText = trashDetailCountText(side, moved, `${sourceName}で校外へ送られたカード`);
+--
+32744-    function resolveCardAttack(attacker, target) {
+32745-      if (consumeActiveUtaUmbrella(target)) {
+32746:        addLog(`${target.name}のU太の傘：攻撃を一度だけ防ぎ、傘を校外エリアへ送りました。`);
+32747-        showFloatingTextForCard(target, "防御", "heal");
+32748-        return;
+--
+32868-      returned.handTurns = 0;
+32869-      state.players[targetRef.owner].hand.push(returned);
+32870:      destroyBoardCard(attackerRef, { reason: "バウンスディ", showDestroyFeedback: false });
+32871-      analyticsRecordAction({
+32872-        side: attacker.owner,
+--
+32892-      const dealtDamage = beforeLife - state.players[targetSide].life;
+32893-      if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(attacker);
+32894:      destroyBoardCard(attackerRef, { reason: "バウンスディ", showDestroyFeedback: false });
+32895-      analyticsRecordAction({
+32896-        side: attacker.owner,
+--
+33018-      }
+33019-      if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId) && !isUtaEquipmentTarget(target)) {
+33020:        addLog(`${item.name}は「U太」または「裏U太」にだけ使えます。`);
+33021-        if (renderAfter) render();
+33022-        return false;
+--
+33547-      }
+33548-      if (item.baseId === "yutakun_yutakun" && !state.players[side].trash.some((card) => card.baseId === "yuta")) {
+33549:        addLog("U太くんU太くんは校外エリアに「U太」がないため使えません。");
+33550-        if (renderAfter) render();
+33551-        return false;
+--
+33690-          state.players[side].hand.push(createCardFromBase(baseId, side));
+33691-        });
+33692:        resultText = "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成しました。";
+33693-      }
+33694-      if (item.baseId === "intern") {
+--
+33738-          discounted += 1;
+33739-        });
+33740:        resultText = `デッキからU太を${searched}枚手札に加え、さらに1枚生成しました。手札のU太${discounted}枚の戦意を-1しました。`;
+33741-      }
+33742-      if (item.baseId === "lie_pekora") {
+--
+33884-        startOrderedAttendance(
+33885-          orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("single_cell", side)),
+33886:          { onComplete: (summoned) => addLog(`${item.name}の効果：単細胞生物をランダムな席マスに${summoned}人、席順に出席させました。`) }
+33887-        );
+33888:        resultText = `単細胞生物をランダムな席マスに${seatIndexes.length}人、席順に出席させます。`;
+33889-      }
+33890-      if (CRAB_SET_IDS.includes(item.baseId)) {
+--
+33894-      if (item.baseId === "sexual_eye") {
+33895-        const pulled = pullCardsFromDeck(side, "yuta", 1);
+33896:        resultText = `U太を${pulled}枚引きました。`;
+33897-      }
+33898-      if (item.baseId === "yoyu_announce") {
+33899-        state.players[side].hand.push(createCardFromBase("yuta", side));
+33900-        const drawn = drawOne(side, false) ? 1 : 0;
+33901:        resultText = `U太を1枚生成し、カードを${drawn}枚ドローしました。`;
+33902-      }
+33903-      if (item.baseId === "peaceful_mind") {
+--
+33920-        yutaCard.handTurns = 0;
+33921-        state.players[side].hand.push(yutaCard);
+33922:        resultText = "校外エリアから「U太」を1枚手札に加えました。";
+33923-      }
+33924-      if (item.baseId === "smart_me") {
+--
+33939-        const utaCount = state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
+33940-        damagePlayer(oppositeSide(side), utaCount);
+33941:        resultText = `自分の校外エリアにあるU太と裏U太の合計${utaCount}人分、相手本体に${utaCount}ダメージを与えました。`;
+33942-      }
+33943-      if (item.baseId === "three_gestures") {
+--
+34042-        addKeyword(generated, "陽気", item.name);
+34043-        state.players[side].hand.push(generated);
+34044:        resultText = "陽気を持つ「一般学生」を1枚手札に生成しました。";
+34045-      }
+34046-      if (item.baseId === "president_tea_room") {
+--
+35697-          onComplete: () => {
+35698-            if (state.gameOver || state.phase !== "ultimateVictory") return;
+35699:            endGame(side, "Ultimate U太の効果が発動しました。", { ultimateYutaVictory: true });
+35700-          }
+35701-        });
+--
+41541-        ? "斥候学生の超陽気を確認できるよう、相手の講義室を空にしています。"
+41542-        : baseId === "happy_blue_bird"
+41543:          ? "幸せの青い鳥の自動攻撃と増殖を確認できるよう、攻撃可能な青い鳥と体力1の一般学生を配置しています。"
+41544-          : baseId === "suit_student"
+41545-            ? "スーツを着た学生の戦意減少を確認できるよう、両者の講義室に1人ずつ配置し、教師もテスト用に配置しています。"
+41546-          : baseId === "bust_suit"
+41547:            ? "胸像スーツの対象と状態維持を確認できるよう、攻撃済みでイヤホンを装備した一般学生と、相手の学生を配置しています。"
+41548-          : baseId === "intern"
+41549-            ? "インターンの4回の変化を確認できるよう、お互いの講義室に複数の学生を配置しています。"
+--
+41551-            ? "キングギドラベッドの全効果と1つ選ぶ効果を続けて確認できるよう、戦意15、同名カード2枚、校外へ送る手札、相手の出席者を用意しています。"
+41552-          : baseId === "quick_quiz_tournament"
+41553:            ? "早押しクイズ大会の通常ビンゴと8ビンゴを確認できるよう、自分の席マスを右下以外すべて埋め、最後に出席させる一般学生を手札に用意しています。"
+41554-          : baseId === "aggro_kingdom"
+41555:            ? "アグロキングダムの効果を両者で確認できるよう、お互いの講義室に「アグロ」と名のつく出席者を配置し、自分の手札にも対象カードを用意しています。"
+41556-          : baseId === "absent_student"
+41557-            ? "来てなかった学生が校外エリアへ送られたときの効果を確認できるよう、自分の講義室に同名カード、相手の講義室に一般教師を配置しています。"
+41558-          : baseId === "strict_lateness_teacher"
+41559-            ? "遅刻に厳しい教師の効果を確認できるよう、お互いの講義室と遅刻ゾーンに遅刻を持つ学生を配置しています。"
+41560:          : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
+41561-      render();
+41562-      showTurnOverlay("player");
+--
+42393-      utaFusionMaterialEntries(card).forEach((material) => {
+42394-        const name = CARD_BASES[material.baseId]?.name || material.name || material.baseId;
+42395:        addDetailChip(`融合済み：${name}`, "equipment", `融合済み：${name}`, ["このU太に融合されているカード"]);
+42396-      });
+42397-
+--
+42541-        if (card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) add("超陽気", "相手の講義室に出席者がいない");
+42542-        if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) add("超陽気", "相手の学生・教師");
+42543:        if (card.baseId === "loud_student" && isAdjacentToBestFriend(card)) add("超陽気", "ベストフレンド");
+42544-      } else if (hasKeyword(card, "陽気")) {
+42545-        if (card.baseId === "general_teacher" && isOnTeacherSlot(card)) add("陽気", "教卓マス");
+--
+42916-        happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
+42917-        suit_student: "このカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。",
+42918:        single_cell: "自分の場に「単細胞生物」が2人いる場合、それらを破壊し、先に出席していた「単細胞生物」の席マスに「ミジンコ」を出席させる。",
+42919:        midge: "このカードが出席したとき、相手の出席者1人をランダムに指名し、1ダメージを与える。自分の場に「ミジンコ」が2人いる場合、それらを破壊し、先に出席していた「ミジンコ」の席マスに「生物」を出席させる。",
+42920:        organism: "陽気を持つ。このカードが出席したとき、相手の出席者すべてに2ダメージを与える。自分の場に「生物」「ミジンコ」「単細胞生物」がいる場合、それらを破壊し、「生物」がいた席マスに「完全変異体」を出席させる。",
+42921-        perfect_mutant: "超陽気を持つ。このカードが出席したとき、相手の出席者すべてを破壊する。",
+42922-        adjective_student: "遅刻4。このカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。",
+--
+42936-        laughing_front_student: "このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
+42937-        eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
+42938:        loud_student: "陽気を持つ。このカードが出席したとき、お互いの場の他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。このカードは注目と超注目を無視して攻撃できる。「ベストフレンド」と隣接しているかぎり、超陽気を持つ。",
+42939-        best_friend: "このカードは「バカでかい声の学生」の効果によるダメージを受けない。このカードが「バカでかい声の学生」と隣接しているかぎり、攻撃力を+2、体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。",
+42940-        ttb: "このカードが出席したとき、お互いのデッキのランダムな位置に「怪しげな文書」を2枚ずつ生成する。自分のターン終了時、このカードが自分の場にいるなら、相手のデッキのランダムな位置に「怪しげな文書」を1枚生成する。",
+42941:        predator: "陽気を持つ。このカードを出席させるには、自分の場の出席者1人を破壊する。その場所に、このカードを出席させる。このカードが出席したとき、隣接する空いている席マスに「ベストフレンド」を1人出席させる。",
+42942-        trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
+42943-        college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
+--
+42947-        live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を2にする。",
+42948-        dobby: "このカードが出席したとき、攻撃力3以上の相手の出席者すべての攻撃力を-2する。",
+42949:        pachin_uni: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
+42950-        protein_drinker: "自分のターン終了時、このカードの攻撃力を+1する。",
+42951-        proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
+--
+42956-        fridge_thief: "このカードが出席したとき、相手のデッキに「水2L」がある場合、それを1枚校外エリアへ送る。ない場合でも出席できる。",
+42957-        failure_student: "このカードが出席したとき、自分の手札を2枚選び、校外エリアへ送る。",
+42958:        success_student: "進化：「何をやってもダメな学生」。進化したとき、自分の校外エリアにある学生の人数分、相手本体と相手の場の出席者に1ダメージずつランダムに割り振る。",
+42959-        bounce_day: "このカードが攻撃したとき、このカードを校外エリアへ送る。出席者を攻撃していたなら、その出席者を持ち主の手札に戻す。相手本体を攻撃していたなら、このカードの攻撃力分のダメージを与える。",
+42960-        lone_wolf: "注目を持つ。このカードの周囲1マスに出席者がいないかぎり、このカードの攻撃力を+3、体力を+3する。",
+42961-        student_comedy: "このカードが席マスに出席したとき、周囲1マスにいる自分の学生すべての攻撃力と体力を+1する。",
+42962:        seat_taking_group: "このカードは2行2列にのみ出席できる。このカードを手札から出席させたとき、自分の2行1列と2行3列の空いている席マスに、「席取り軍団」を1人ずつ出席させる。",
+42963-        sniper: "このカードが出席したとき、相手の手札からカード1枚をランダムに選び、そのカードを校外エリアへ送る。",
+42964-        cynical_student: "自分のターン終了時、このカードが自分の場にいる場合、相手は手札をすべてデッキに戻してシャッフルする。その後、戻した枚数と同じ枚数のカードを引く。",
+--
+42997-        zombie: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を「ゾンビ」にする。ヴァンパイアにはこの効果は使用しない。",
+42998-        impossible_high_note: "このカードが出席したとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
+42999:        dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを2枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
+43000-        back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
+43001-        acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
+43002-        ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
+43003-        aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
+43004:        aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
+43005-        yabe: "相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。後攻7ターン目以降、1ダメージではなく2ダメージを与える。",
+43006:        tsurai_nara: "融合\n「U太」に融合する。",
+43007:        company_one_day: "融合\n「U太」に融合する。",
+43008:        enough_to_fly: "融合\n「U太」に融合する。",
+43009:        ii_daro_tte: "融合\n「U太」に融合する。",
+43010-        king_ghidorah_bed: "3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。",
+43011-        quick_quiz_tournament: "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
+--
+43029-        forbidden_book: "自分の気力が10以下の時のみ使用できる。自分の気力に3ダメージ、相手の気力に5ダメージを与える。",
+43030-        philosophy_cheating: "相手の手札を見て、その中の「持ち物」を2枚まで選んで校外に送る。",
+43031:        think_so: "「U太」をデッキからを1枚手札に加え、1枚手札に生成する。その後、手札にある「U太」の戦意を-1する。",
+43032-        key: "お互いの講義室から「南京錠」を装備している出席者1人を指名し、その「南京錠」を校外へ送る。",
+43033-        illegal_cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の講義室にいるヴァンパイアすべての体力を1回復する。ヴァンパイアの効果を処理する際、環境を「食堂」としても扱う。このカードが他の環境に上書きされた後も、2ターンの間、この効果は継続する。",
+--
+43059-        fluid_pasta: "自分の気力を3回復する。",
+43060-        water_2l: "自分の校外エリアから、カニ勝利に必要なカードを2枚まで手札に回収する。",
+43061:        night_pool_water: "自分の空いている席マスに「単細胞生物」をランダムに2人出席させる。",
+43062-        i_got_it: "相手の3行目にいる学生を2人まで指名する。それらは次の相手のターン終了時まで攻撃できない。",
+43063:        accelerate: "装備カード。「U太」または「裏U太」1人に装備できる。自分のターン終了時、このカードを装備している出席者が自分の講義室にいるなら、カードを1枚引く。装備カードは通常、1人につき1枚まで。",
+43064:        chameleon: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の体力を+2する。装備カードは通常、1人につき1枚まで。",
+43065:        yuta_umbrella: "装備カード。「U太」または「裏U太」1人に装備できる。次の相手ターン終了時まで、このカードを装備している出席者は一度だけ攻撃を受けない。攻撃を受けた場合、このカードを校外エリアへ送る。装備カードは通常、1人につき1枚まで。",
+43066:        red_happi: "装備カード。「U太」または「裏U太」1人に装備できる。このカードを装備している出席者の攻撃力を+2する。装備カードは通常、1人につき1枚まで。",
+43067-        circle_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
+43068-        hair_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
+--
+43072-        chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
+43073-        favorite_number_s: "相手の教卓マスにいる教師1人を指名し、破壊する。その後、その教師と同名のカード1枚を自分の手札に加える。",
+43074:        sexual_eye: "自分のデッキから「U太」を1枚まで引く。",
+43075:        yoyu_announce: "「U太」を1枚手札に生成し、カードを1枚ドローする。",
+43076-        paired_existence: "自分の手札1枚を選んで校外エリアへ送る。相手の手札に同名カードがある場合、それも1枚校外エリアへ送る。",
+43077-        peaceful_mind: "お互いの気力を5回復する。",
+--
+43085-        panpan: "自分の出席者1人を指名する。その後、相手の出席者1人を指名する。それらを破壊する。",
+43086-        capture: "相手の空いている席マス1つを3ターン出席不可にする。",
+43087:        yutakun_yutakun: "校外エリアから「U太」を1枚手札に加える。校外エリアに「U太」がない場合は使えない。",
+43088-        three_gestures: "デッキを上から6枚見る。そのうち3枚を選び、手札に加える。他のカードは校外エリアへ送る。デッキが6枚未満の場合は使えない。",
+43089-        substitute_attendance: "遅刻ゾーンにいるカード1枚をランダムに選び、そのカードの遅刻カウントを0にする。",
+--
+43092-        donguri: "このカードは、自分の手札に「どんぐり」が2枚あり、さらに「デザインデストロイファルコン」がある場合にのみ使える。自分の手札から「デザインデストロイファルコン」1枚を選び、自分の場の「デザインファルコン」1人を進化させる。この効果で進化する場合、進化のための戦意は消費せず、進化元を出席させたターンでも進化できる。",
+43093-        smart_me: "相手の遅刻ゾーンにいる学生1人をランダムに指名し、そのカードを校外エリアへ送る。",
+43094:        greeting_3000: "自分の校外エリアにある「U太」と「裏U太」の合計人数分、相手本体にダメージを与える。",
+43095-        yamanashi_minimum_wage: "次の自分のターン開始時まで、お互いはデッキからカードを手札に加えられない。",
+43096-        baka_mac: "次の自分のターン開始時まで、相手の手札にあるカードすべての戦意を+1する。",
+43097:        ikemasu: "陽気を持つ「一般学生」1枚を手札に生成する。",
+43098-        full_throttle: "自分の手札にある持ち物を好きな枚数だけ選び、校外エリアへ送る。選んだ枚数と同じダメージを、相手の出席者にランダムに割り振る。",
+43099-        scared_me: "相手の学生のうち、体力が最も高い学生1人をランダムに指名し、破壊する。",
+--
+43114-        aggro_kingdom: "このカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は超陽気を持つ。",
+43115-        cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の気力を1回復する。",
+43116:        night_pool: "お互いのターン終了時、ターンを終了したプレイヤーの場の空いている席マスに「単細胞生物」1人をランダムに出席させる。",
+43117-        seat_rules: "お互いの場の2列目には出席できない。すでに2列目に出席者がいる場合、それらを破壊する。このカードは同名カードでも上書きできる。",
+43118-        gangi_fortress: "お互いの2行1列、2行2列、3行1列、3行2列にいる出席者すべての体力を+2する。",
