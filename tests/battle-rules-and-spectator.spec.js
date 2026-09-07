@@ -52,9 +52,10 @@ test("ソロVS AIでカオスルールを選び、同名40枚のまま対戦を�
   });
 
   await page.selectOption("#soloRuleSelect", "chaos");
-  const deckButton = page.locator("#soloDeckGrid .deck-library-card", { hasText: "カオス確認用" });
-  await deckButton.click();
-  await deckButton.click();
+  await page.locator("#soloPlayerSlot").click();
+  await page.locator("#soloDeckGrid .deck-library-card", { hasText: "カオス確認用" }).click();
+  await page.locator("#soloAiSlot").click();
+  await page.locator("#soloDeckGrid .deck-library-card", { hasText: "カオス確認用" }).click();
   await expect(page.locator("#soloBattleStartButton")).toBeEnabled();
   await page.locator("#soloBattleStartButton").click();
 
@@ -65,6 +66,35 @@ test("ソロVS AIでカオスルールを選び、同名40枚のまま対戦を�
     valid: window.__chibattle.state.players.player.deckValid.valid
   }));
   expect(result).toEqual({ ruleId: "chaos", deckLength: 40, originalCopies: 40, valid: true });
+});
+
+test("トレーニングでCPU同士を開始し、両方の初期手札を公開する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.deckBuilder.chaosDecks = {
+      "CPU観戦確認用": { counts: { general_student: 40 } }
+    };
+    api.startSoloBattleFromHome();
+  });
+
+  await page.selectOption("#soloRuleSelect", "chaos");
+  await page.locator("#soloLeftControllerButton").click();
+  await page.locator("#soloPlayerSlot").click();
+  await page.locator("#soloDeckGrid .deck-library-card", { hasText: "CPU観戦確認用" }).click();
+  await page.locator("#soloAiSlot").click();
+  await page.locator("#soloDeckGrid .deck-library-card", { hasText: "CPU観戦確認用" }).click();
+  await page.locator("#soloBattleStartButton").click();
+
+  await page.waitForFunction(() => {
+    const api = window.__chibattle;
+    return api.state.phase === "dealing"
+      && api.state.players.player.hand.length > 0
+      && api.state.players.opponent.hand.length > 0;
+  });
+  await expect(page.locator("#initialDealHand .training-initial-hand-group")).toHaveCount(2);
+  await expect(page.locator("#initialDealHand")).toContainText("左側CPU");
+  await expect(page.locator("#initialDealHand")).toContainText("右側CPU");
 });
 
 test("対戦開始処理が専攻ルールを通常ルールへ戻さない", async ({ page }) => {

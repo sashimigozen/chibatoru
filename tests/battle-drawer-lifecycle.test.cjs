@@ -27,11 +27,13 @@ function setup(role = "guest") {
   const state = {
     screen: "battle", phase: "battle", preBattleToken: 1, gameOver: false, currentSide: "player",
     gameWinner: null, gameResultOptions: {}, dungeon: { active: false, run: null },
+    training: { active: false, leftController: "player" },
     online: { started: true, lastSnapshotSeq: 1, localMulliganPending: false }, deckBuilder: {},
     players: { player: { mulliganUsed: true }, opponent: {} }, battleInspector: null
   };
   const c = { state, elements, document: { getElementById: id => id === "battleDrawerInspector" ? inspector : title },
     isOnlineGuest: () => role === "guest", isOnlineSpectator: () => role === "spectator", isOnlineBattle: () => true,
+    isTrainingAiVsAi: () => false,
     resultOverlayKey: () => "result", escapeHtml: String, DUNGEON_FLOORS: {},
     nextCardInstanceId: 1, pendingAnimations: [],
     onlineTransformSnapshotForGuest: structuredClone, onlineTransformSnapshotForSpectator: structuredClone

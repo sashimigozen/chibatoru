@@ -23,9 +23,19 @@ test("従来のAIバトルをトレーニングとして開く", async ({ page }
   await page.locator("#soloTrainingButton").click();
 
   await expect(page.locator("#soloDeckScreen")).toBeVisible();
-  await expect(page.locator("#soloDeckScreen h1")).toHaveText("トレーニング");
+  await expect(page.locator("#soloDeckScreen h1")).toHaveText("TRAINING");
   await expect(page.locator("#soloPlayerSlot")).toBeVisible();
   await expect(page.locator("#soloAiSlot")).toBeVisible();
+  await expect(page.locator("#soloBattleStartButton")).toBeDisabled();
+});
+
+test("左側をCPUへ切り替えてCPU同士の観戦設定にできる", async ({ page }) => {
+  await page.locator("#soloTrainingButton").click();
+  await page.locator("#soloLeftControllerButton").click();
+
+  await expect(page.locator("#soloLeftControllerLabel")).toHaveText("CPU");
+  await expect(page.locator("#soloLeftRoleTitle")).toHaveText("CPU");
+  await expect(page.locator("#soloObserverNote")).toContainText("両方の手札を公開");
 });
 
 test("魔の1号館は2番目のボタンから開く", async ({ page }) => {

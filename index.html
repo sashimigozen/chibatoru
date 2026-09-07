@@ -3100,6 +3100,41 @@
       scrollbar-gutter: stable;
     }
 
+    .initial-deal-hand.training-both-hands {
+      align-items: stretch;
+      gap: 22px;
+    }
+
+    .training-initial-hand-group {
+      display: flex;
+      flex: 1 1 0;
+      min-width: 0;
+      flex-wrap: wrap;
+      align-content: flex-end;
+      justify-content: center;
+      gap: 8px;
+      border: 1px solid rgba(100, 116, 139, .45);
+      border-radius: 8px;
+      padding: 28px 8px 10px;
+      position: relative;
+      background: rgba(255,255,255,.88);
+    }
+
+    .training-initial-hand-label {
+      position: absolute;
+      top: 6px;
+      left: 10px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 1000;
+    }
+
+    .training-initial-hand-group .initial-deal-card {
+      width: 96px;
+      min-width: 96px;
+      min-height: 134px;
+    }
+
     .initial-deal-card {
       width: 132px;
       min-width: 132px;
@@ -7591,27 +7626,176 @@
 
     .deck-editor-search { min-width: min(100%, 320px); }
 
-    .solo-selection-status {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
+    .training-setup-screen {
+      position: relative;
+      min-height: calc(100dvh - var(--home-navigation-height, 72px));
+      padding: 20px 24px 28px;
+      overflow: auto;
+      color: #14202d;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.96), rgba(235,243,249,.98)),
+        repeating-linear-gradient(90deg, transparent 0 47px, rgba(61,92,112,.035) 48px 49px);
     }
 
-    .solo-slot {
-      border: 2px solid #b8c5d8;
-      border-radius: 6px;
-      padding: 12px;
-      background: #ffffff;
+    .training-setup-head {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      width: min(1180px, 100%);
+      margin: 0 auto 16px;
+    }
+
+    .training-setup-head h1 { margin: 0; color: #13374c; font-size: clamp(24px, 2.5vw, 38px); letter-spacing: .05em; }
+    .training-setup-head p { margin: 1px 0 0; color: #607485; font-size: 12px; font-weight: 800; }
+    .training-back-button {
+      min-width: 126px;
+      border: 2px solid #17384b;
+      border-radius: 4px;
+      padding: 9px 15px;
+      color: #172536;
+      background: #fff;
+      font-size: 18px;
+      font-weight: 1000;
+      text-align: left;
       cursor: pointer;
     }
 
-    .solo-slot.active {
-      border-color: #2563eb;
-      background: #eff6ff;
+    .training-back-button:hover,
+    .training-back-button:focus-visible { border-color: #20a9dc; box-shadow: 0 0 0 3px rgba(32,169,220,.15); }
+
+    .training-setup-layout {
+      display: grid;
+      grid-template-columns: minmax(270px, 1fr) minmax(310px, .9fr) minmax(270px, 1fr);
+      gap: clamp(12px, 1.7vw, 24px);
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      align-items: stretch;
     }
 
-    .solo-slot strong { display: block; margin-bottom: 4px; }
+    .training-player-panel,
+    .training-center-panel {
+      position: relative;
+      min-height: 474px;
+      border: 2px solid #27404e;
+      border-radius: 7px;
+      padding: 24px clamp(18px, 2.2vw, 30px);
+      background: rgba(255,255,255,.94);
+      box-shadow: 0 7px 18px rgba(42,62,76,.09);
+    }
+
+    .training-center-panel { border-color: #7590a0; background: rgba(246,250,253,.96); text-align: center; }
+    .training-center-panel h2 { margin: 0 0 24px; color: #18364a; font-size: 16px; letter-spacing: .09em; }
+    .training-player-heading { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: #1b3b50; font-weight: 1000; }
+    .training-player-heading > span { font-size: 22px; }
+    .training-player-heading.right > strong { border: 1px solid #77909f; border-radius: 4px; padding: 7px 16px; font-size: 15px; }
+
+    .training-cycle-button,
+    .training-deck-select {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      min-height: 46px;
+      border: 2px solid #23526c;
+      border-radius: 5px;
+      padding: 8px 16px;
+      color: #14293a;
+      background: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+    }
+
+    .training-cycle-button:hover,
+    .training-cycle-button:focus-visible,
+    .training-deck-select:hover,
+    .training-deck-select:focus-visible { border-color: #16a6da; background: #f3fbff; box-shadow: 0 0 0 3px rgba(34,183,231,.15); }
+    .training-cycle-button span { color: #118bb8; font-size: 22px; }
+    .training-cycle-button.compact { width: 178px; min-height: 39px; padding: 5px 12px; font-size: 14px; }
+
+    .training-avatar {
+      position: relative;
+      width: 116px;
+      height: 116px;
+      margin: 18px auto 5px;
+      border: 3px solid #5f7d8c;
+      border-radius: 50%;
+      background: #e9f0f4;
+      overflow: hidden;
+    }
+
+    .training-avatar.user span::before { content: ""; position: absolute; top: 20px; left: 39px; width: 38px; height: 38px; border-radius: 50%; background: #526d7d; }
+    .training-avatar.user span::after { content: ""; position: absolute; left: 24px; bottom: 13px; width: 68px; height: 45px; border-radius: 50% 50% 18% 18%; background: #526d7d; }
+    .training-avatar.cpu span { position: absolute; left: 25px; top: 34px; width: 65px; height: 52px; border: 4px solid #526d7d; border-radius: 12px; background: #fff; }
+    .training-avatar.cpu span::before { content: "•   •"; display: block; padding-top: 3px; color: #526d7d; font-size: 26px; font-weight: 1000; letter-spacing: 7px; text-align: center; }
+    .training-avatar.cpu span::after { content: ""; position: absolute; left: 18px; bottom: 10px; width: 28px; height: 4px; background: #526d7d; }
+    .training-avatar-note { margin: 0 0 18px; color: #738795; font-size: 10px; text-align: center; }
+    .training-deck-readout { display: grid; grid-template-columns: 1fr auto; margin-top: 12px; border: 1px solid #8196a4; border-radius: 4px; overflow: hidden; background: #fff; }
+    .training-deck-readout > span { grid-column: 1 / -1; padding: 4px 8px; color: #496578; background: #edf3f6; font-size: 11px; font-weight: 1000; }
+    .training-deck-readout strong { min-width: 0; padding: 12px 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .training-deck-readout button { border: 0; border-left: 1px solid #8196a4; padding: 0 14px; color: #17384b; background: #fff; font-weight: 1000; cursor: pointer; }
+    .training-deck-readout button:disabled { color: #a6b2b9; cursor: default; }
+    .training-deck-select { width: min(220px, 100%); margin: 16px auto 0; font-size: 18px; font-weight: 1000; }
+
+    .training-setting-label { display: block; margin: 14px 0 5px; color: #4e6878; font-size: 11px; font-weight: 1000; text-align: left; }
+    .training-native-select { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+    .training-rule-description { min-height: 30px; margin: 7px 0 0; color: #637986; font-size: 10px; }
+    .training-versus { margin: 19px 0 10px; color: #142637; font-size: 48px; font-weight: 1000; letter-spacing: .08em; }
+    .training-battle-button {
+      display: grid;
+      place-items: center;
+      width: 142px;
+      height: 110px;
+      margin: 0 auto;
+      border: 3px solid #7e929e;
+      border-radius: 50%;
+      color: #7e929e;
+      background: #eef3f5;
+      cursor: default;
+    }
+
+    .training-battle-button:not(:disabled) { border-color: #17a5d8; color: #fff; background: #153d54; box-shadow: 0 0 19px rgba(24,181,232,.55); cursor: pointer; }
+    .training-battle-button strong { font-size: 21px; font-style: italic; }
+    .training-battle-button span { font-size: 10px; }
+    .training-data-button { margin-top: 12px; border: 1px solid #738995; border-radius: 4px; padding: 6px 18px; color: #17384b; background: #fff; font-weight: 1000; cursor: pointer; }
+    .training-data-button:disabled { color: #a0adb5; background: #edf1f3; cursor: default; }
+    .training-observer-note { width: min(620px, calc(100% - 40px)); margin: 12px auto 0; color: #647886; font-size: 11px; text-align: center; }
+
+    .training-picker,
+    .training-data-overlay,
+    .training-replay-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 22px; background: rgba(8,20,29,.62); }
+    .training-picker.hidden,
+    .training-data-overlay.hidden,
+    .training-replay-overlay.hidden { display: none; }
+    .training-picker-dialog,
+    .training-data-dialog,
+    .training-replay-dialog { width: min(980px, 100%); max-height: min(86dvh, 760px); overflow: auto; border: 2px solid #2d5369; border-radius: 8px; padding: 20px; background: #f8fbfd; box-shadow: 0 20px 60px rgba(0,0,0,.28); }
+    .training-picker-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
+    .training-picker-head h2 { margin: 0; }
+    .training-picker-head p { margin: 5px 0 0; color: #607585; }
+    .training-data-content { display: grid; gap: 12px; }
+    .training-data-match { border: 1px solid #a8b9c4; border-radius: 6px; padding: 13px; background: #fff; }
+    .training-data-match h3 { margin: 0 0 9px; }
+    .training-data-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .training-data-grid div { border-radius: 4px; padding: 8px; background: #edf3f6; font-size: 12px; }
+    .training-replay-dialog { width: min(420px, 100%); }
+    .training-replay-dialog h2 { margin-top: 0; }
+    .training-replay-dialog label { display: grid; gap: 7px; margin: 14px 0; font-weight: 900; }
+    .training-replay-dialog input[type="number"] { min-height: 42px; border: 1px solid #7c929e; border-radius: 4px; padding: 7px 10px; font-size: 17px; }
+    .training-replay-dialog .training-replay-check { display: flex; align-items: center; }
+    .training-replay-dialog > div { display: flex; justify-content: flex-end; gap: 8px; }
+
+    .training-watch-controls { position: fixed; z-index: 34; left: 50%; bottom: 18px; display: flex; gap: 6px; transform: translateX(-50%); border: 1px solid #8196a3; border-radius: 7px; padding: 6px; background: rgba(255,255,255,.96); box-shadow: 0 4px 15px rgba(0,0,0,.18); }
+    .training-watch-controls button { border: 1px solid #879ba7; border-radius: 4px; padding: 6px 10px; background: #fff; cursor: pointer; }
+    .training-watch-controls button.active { border-color: #168fc0; color: #fff; background: #168fc0; }
+
+    @media (max-width: 900px) {
+      .training-setup-layout { grid-template-columns: 1fr; }
+      .training-player-panel, .training-center-panel { min-height: auto; }
+      .training-center-panel { grid-row: 1; }
+      .training-data-grid { grid-template-columns: 1fr 1fr; }
+    }
 
     .environment-action-button {
       position: absolute;
@@ -16249,35 +16433,68 @@
       </section>
     </section>
 
-    <section class="screen solo-deck-screen hidden" id="soloDeckScreen">
-      <div class="screen-head">
+    <section class="screen solo-deck-screen training-setup-screen hidden" id="soloDeckScreen">
+      <div class="training-setup-head">
+        <button class="training-back-button" id="soloDeckBackHomeButton" type="button">‹ <span>ソロ</span></button>
         <div>
-          <h1>トレーニング</h1>
-          <p class="subtitle">自分とAIが使う保存デッキを選んでください</p>
+          <h1>TRAINING</h1>
+          <p>対戦設定</p>
         </div>
-        <button class="button secondary" id="soloDeckBackHomeButton" type="button">ホーム</button>
       </div>
-      <section class="panel">
-        <div class="online-rule-control">
-          <label for="soloRuleSelect">対戦ルール</label>
-          <select class="control" id="soloRuleSelect" aria-label="ソロバトルの対戦ルール"></select>
-          <p class="online-rule-description" id="soloRuleDescription"></p>
+      <section class="training-setup-layout" aria-label="トレーニング対戦設定">
+        <article class="training-player-panel" data-side="player">
+          <div class="training-player-heading">
+            <span id="soloLeftRoleTitle">USER</span>
+            <button class="training-cycle-button compact" id="soloLeftControllerButton" type="button" aria-label="左側の操作を切り替える"><span aria-hidden="true">⟲</span><strong id="soloLeftControllerLabel">ユーザー</strong></button>
+          </div>
+          <div class="training-avatar user" id="soloLeftAvatar" aria-label="ユーザーの代表カード仮表示"><span></span></div>
+          <p class="training-avatar-note">代表カードは後日実装</p>
+          <div class="training-deck-readout"><span>使用デッキ</span><strong id="soloPlayerDeckName">未選択</strong><button id="soloPlayerDeckConfirmButton" type="button" disabled>確認</button></div>
+          <button class="training-deck-select" id="soloPlayerSlot" type="button">デッキ選択</button>
+        </article>
+
+        <article class="training-center-panel">
+          <h2>MATCH SETTING</h2>
+          <label class="training-setting-label">ルール</label>
+          <button class="training-cycle-button" id="soloRuleCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloRuleCycleLabel">通常ルール</strong></button>
+          <select class="control training-native-select" id="soloRuleSelect" aria-label="ソロバトルの対戦ルール"></select>
+          <p class="training-rule-description" id="soloRuleDescription"></p>
+          <label class="training-setting-label">手番</label>
+          <button class="training-cycle-button" id="soloInitiativeCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloInitiativeLabel">ランダム</strong></button>
+          <div class="training-versus">VS</div>
+          <button class="training-battle-button" id="soloBattleStartButton" type="button" disabled><strong>BATTLE!</strong><span id="soloBattleReadyLabel">未準備</span></button>
+          <button class="training-data-button" id="soloTrainingDataButton" type="button" disabled>データ</button>
+        </article>
+
+        <article class="training-player-panel" data-side="opponent">
+          <div class="training-player-heading right"><span>CPU</span><strong>CPU</strong></div>
+          <div class="training-avatar cpu" aria-label="CPUの代表カード仮表示"><span></span></div>
+          <p class="training-avatar-note">代表カードは後日実装</p>
+          <div class="training-deck-readout"><span>使用デッキ</span><strong id="soloAiDeckName">未選択</strong><button id="soloAiDeckConfirmButton" type="button" disabled>確認</button></div>
+          <button class="training-deck-select" id="soloAiSlot" type="button">デッキ選択</button>
+        </article>
+      </section>
+      <p class="training-observer-note" id="soloObserverNote">CPU同士の対戦では両方の手札を公開します</p>
+      <section class="training-picker hidden" id="soloDeckPicker" aria-label="デッキ選択">
+        <div class="training-picker-dialog">
+          <div class="training-picker-head"><div><h2 id="soloDeckPickerTitle">デッキ選択</h2><p id="soloDeckPickerSubtitle">使用するデッキを選んでください</p></div><button class="button secondary" id="soloDeckPickerCloseButton" type="button">閉じる</button></div>
+          <div class="deck-library-grid" id="soloDeckGrid"></div>
+          <div class="deck-library-detail hidden" id="soloDeckDetail"></div>
         </div>
-        <div class="solo-selection-status">
-          <button class="solo-slot active" id="soloPlayerSlot" type="button">
-            <strong>自分のデッキ</strong>
-            <span id="soloPlayerDeckName">未選択</span>
-          </button>
-          <button class="solo-slot" id="soloAiSlot" type="button">
-            <strong>AIのデッキ</strong>
-            <span id="soloAiDeckName">未選択</span>
-          </button>
+      </section>
+      <section class="training-data-overlay hidden" id="soloTrainingDataOverlay" aria-label="対戦データ">
+        <div class="training-data-dialog">
+          <div class="training-picker-head"><div><h2>対戦データ</h2><p id="soloTrainingDataSummary"></p></div><button class="button secondary" id="soloTrainingDataCloseButton" type="button">閉じる</button></div>
+          <div class="training-data-content" id="soloTrainingDataContent"></div>
         </div>
-        <div class="deck-library-grid" id="soloDeckGrid"></div>
-        <div class="deck-library-detail hidden" id="soloDeckDetail"></div>
-        <div class="solo-deck-actions">
-          <button class="button" id="soloBattleStartButton" type="button" disabled>このデッキで開始</button>
-        </div>
+      </section>
+      <section class="training-replay-overlay hidden" id="soloTrainingReplayOverlay" aria-label="再戦設定">
+        <form class="training-replay-dialog" id="soloTrainingReplayForm">
+          <h2>再戦</h2>
+          <label>繰り返し回数<input id="soloTrainingReplayCount" type="number" min="1" max="100" value="1" inputmode="numeric"></label>
+          <label class="training-replay-check"><input id="soloTrainingReplaySkip" type="checkbox"> 残りの演出をスキップ</label>
+          <div><button class="button secondary" id="soloTrainingReplayCancelButton" type="button">キャンセル</button><button class="button" type="submit">開始</button></div>
+        </form>
       </section>
     </section>
 
@@ -17945,10 +18162,25 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
-        version: "ver.0.22.4",
+        version: "ver.0.23.0",
         date: "2026年9月7日",
-        summary: "カード効果テキストの表示形式を整理し、能力と効果の区別や複数効果のまとまりを読み取りやすくしました。講義室を意味する「場」の表記も「講義室」に統一しました。",
+        summary: "トレーニングの対戦準備画面を刷新し、CPU同士の対戦を観戦できる機能と対戦データ表示を追加しました。カード効果テキストの表示形式も整理し、講義室を意味する「場」を「講義室」に統一しました。",
         changes: [
+          {
+            title: "トレーニングの対戦準備画面",
+            before: "自分とAIのデッキを一覧から順番に選択する画面で、手番や操作者は選べなかった。",
+            after: "左右の使用デッキ、対戦ルール、先攻側を個別に選べる準備画面へ変更。左側はユーザーとCPUを切り替えられ、両方のデッキを選択するまでBATTLEボタンは使用できない。「確認」から選択中のデッキ内容も確認できる。"
+          },
+          {
+            title: "CPU同士の観戦",
+            before: "トレーニングはユーザーとAIの対戦のみで、AI同士の対戦を観戦できなかった。",
+            after: "左側をCPUに切り替えるとCPU同士の対戦になり、両方の手札を公開して観戦できる。初期手札のマリガンは両CPUが自動で行い、観戦中は通常速度・2倍・4倍、一時停止、演出スキップを選べる。"
+          },
+          {
+            title: "対戦データと再戦",
+            before: "トレーニング終了後に試合内容をまとめて確認する画面や、同条件の連続対戦がなかった。",
+            after: "勝者、先攻、終了ターン、残り気力、ダメージ、出席数、破壊数、ドロー数、カード使用回数、最大手札・盤面数などを表示。結果から「再戦」を選び、1〜100回の繰り返しを手入力で指定できる。同じ条件の再戦はデータを蓄積し、別のデッキやルールの対戦が完了した時点で前のデータと入れ替える。データは端末に保存しない。"
+          },
           {
             title: "カード効果テキストの表示",
             before: "能力名と通常の効果文章が同じ書式で続き、複数の独立した効果も一続きに表示されるカードがあった。",
@@ -18891,9 +19123,24 @@
       soloSelection: {
         ruleId: "normal",
         activeSide: "player",
+        leftController: "player",
+        initiative: "random",
         playerDeckName: "",
         opponentDeckName: "",
-        previewName: ""
+        previewName: "",
+        previewExpanded: false,
+        pickerOpen: false
+      },
+      training: {
+        active: false,
+        leftController: "player",
+        speed: 1,
+        paused: false,
+        skipAnimations: false,
+        series: null,
+        replayRemaining: 0,
+        replayTotal: 0,
+        currentConfigKey: ""
       },
       dungeon: {
         entranceToken: 0,
@@ -19240,13 +19487,39 @@
       soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
       soloRuleSelect: document.getElementById("soloRuleSelect"),
       soloRuleDescription: document.getElementById("soloRuleDescription"),
+      soloRuleCycleButton: document.getElementById("soloRuleCycleButton"),
+      soloRuleCycleLabel: document.getElementById("soloRuleCycleLabel"),
+      soloInitiativeCycleButton: document.getElementById("soloInitiativeCycleButton"),
+      soloInitiativeLabel: document.getElementById("soloInitiativeLabel"),
+      soloLeftControllerButton: document.getElementById("soloLeftControllerButton"),
+      soloLeftControllerLabel: document.getElementById("soloLeftControllerLabel"),
+      soloLeftRoleTitle: document.getElementById("soloLeftRoleTitle"),
+      soloLeftAvatar: document.getElementById("soloLeftAvatar"),
       soloPlayerSlot: document.getElementById("soloPlayerSlot"),
       soloAiSlot: document.getElementById("soloAiSlot"),
       soloPlayerDeckName: document.getElementById("soloPlayerDeckName"),
       soloAiDeckName: document.getElementById("soloAiDeckName"),
+      soloPlayerDeckConfirmButton: document.getElementById("soloPlayerDeckConfirmButton"),
+      soloAiDeckConfirmButton: document.getElementById("soloAiDeckConfirmButton"),
       soloDeckGrid: document.getElementById("soloDeckGrid"),
       soloDeckDetail: document.getElementById("soloDeckDetail"),
+      soloDeckPicker: document.getElementById("soloDeckPicker"),
+      soloDeckPickerTitle: document.getElementById("soloDeckPickerTitle"),
+      soloDeckPickerSubtitle: document.getElementById("soloDeckPickerSubtitle"),
+      soloDeckPickerCloseButton: document.getElementById("soloDeckPickerCloseButton"),
       soloBattleStartButton: document.getElementById("soloBattleStartButton"),
+      soloBattleReadyLabel: document.getElementById("soloBattleReadyLabel"),
+      soloObserverNote: document.getElementById("soloObserverNote"),
+      soloTrainingDataButton: document.getElementById("soloTrainingDataButton"),
+      soloTrainingDataOverlay: document.getElementById("soloTrainingDataOverlay"),
+      soloTrainingDataSummary: document.getElementById("soloTrainingDataSummary"),
+      soloTrainingDataContent: document.getElementById("soloTrainingDataContent"),
+      soloTrainingDataCloseButton: document.getElementById("soloTrainingDataCloseButton"),
+      soloTrainingReplayOverlay: document.getElementById("soloTrainingReplayOverlay"),
+      soloTrainingReplayForm: document.getElementById("soloTrainingReplayForm"),
+      soloTrainingReplayCount: document.getElementById("soloTrainingReplayCount"),
+      soloTrainingReplaySkip: document.getElementById("soloTrainingReplaySkip"),
+      soloTrainingReplayCancelButton: document.getElementById("soloTrainingReplayCancelButton"),
       dungeonDeckBackSoloButton: document.getElementById("dungeonDeckBackSoloButton"),
       dungeonDeckManageButton: document.getElementById("dungeonDeckManageButton"),
       dungeonResume: document.getElementById("dungeonResume"),
@@ -19896,6 +20169,66 @@
         analytics.final = final;
         analyticsPushEvent("game_end", { final });
       });
+    }
+
+    function collectTrainingMatchResult(winner) {
+      const events = state.analytics?.events || [];
+      const actions = events.filter((event) => event.eventType === "action");
+      const cardStats = Object.values(state.analytics?.cardStats || {});
+      const sides = ["player", "opponent"];
+      const result = {
+        winner: winner || "draw",
+        firstSide: state.firstSide,
+        finalTurn: state.actionTurn,
+        life: {},
+        lifeDamage: {},
+        attendeeDamage: {},
+        played: {},
+        destroyed: {},
+        draws: {},
+        maxHand: {},
+        maxBoard: {},
+        unusedWill: {},
+        cardUses: {},
+        actionHistory: actions.map((event) => ({ turn: event.turn, side: event.side, actionType: event.actionType, cardName: event.cardName || "" }))
+      };
+      sides.forEach((side) => {
+        const turnEvents = events.filter((event) => event.eventType === "turn_start" && event.side === side);
+        const sideStats = cardStats.filter((stats) => stats.side === side);
+        result.life[side] = Math.max(0, Number(state.players[side]?.life) || 0);
+        result.lifeDamage[side] = Math.max(0, 20 - result.life[oppositeSide(side)]);
+        const totalDamage = sideStats.reduce((sum, stats) => sum + (Number(stats.damageDealt) || 0), 0);
+        result.attendeeDamage[side] = Math.max(0, totalDamage - result.lifeDamage[side]);
+        result.played[side] = sideStats.reduce((sum, stats) => sum + (Number(stats.playCount) || 0), 0);
+        result.destroyed[side] = actions.filter((event) => event.side === oppositeSide(side) && event.details?.targetDiedAfterAttack).length;
+        result.draws[side] = actions.filter((event) => event.side === side && event.actionType === "draw").length;
+        result.maxHand[side] = Math.max(state.players[side]?.hand?.length || 0, ...turnEvents.map((event) => Number(event.handCount) || 0));
+        result.maxBoard[side] = Math.max(countOccupiedClassroomSlots(side), ...turnEvents.map((event) => {
+          const board = event.boardSnapshot?.[side];
+          return (board?.teacher ? 1 : 0) + (board?.seats || []).filter(Boolean).length;
+        }));
+        result.unusedWill[side] = Math.max(0, Number(state.players[side]?.will) || 0);
+        sideStats.filter((stats) => stats.playCount > 0).forEach((stats) => {
+          result.cardUses[stats.cardName || stats.cardId] = (result.cardUses[stats.cardName || stats.cardId] || 0) + stats.playCount;
+        });
+      });
+      return result;
+    }
+
+    function recordTrainingMatchResult(winner) {
+      if (!state.training.active) return;
+      const key = state.training.currentConfigKey || trainingConfigKey();
+      if (!state.training.series || state.training.series.configKey !== key) {
+        state.training.series = {
+          configKey: key,
+          ruleId: state.soloSelection.ruleId,
+          leftController: state.soloSelection.leftController,
+          playerDeckName: state.soloSelection.playerDeckName,
+          opponentDeckName: state.soloSelection.opponentDeckName,
+          matches: []
+        };
+      }
+      state.training.series.matches.push(collectTrainingMatchResult(winner));
     }
 
     function anonymizeAnalyticsEvent(event, perspective = "player") {
@@ -24189,9 +24522,12 @@
     function enterMulligan(token) {
       if (!isCurrentPreBattle(token, "dealing")) return;
       state.phase = "mulligan";
-      state.message = "引き直すカードを0〜5枚選んでください。";
+      state.message = isTrainingAiVsAi()
+        ? "両方のCPUが初期手札を確認しています。"
+        : "引き直すカードを0〜5枚選んでください。";
       analyticsCaptureMulliganInitial();
       render();
+      autoTrainingMulligan();
     }
 
     function isDeckToHandLocked() {
@@ -24681,9 +25017,11 @@
       state.message = `${turnLabel(side)} ${SIDES[side]}。戦意${player.will}/${player.maxWill}、${drawText}`;
       addLog(`${turnLabel(side)} ${SIDES[side]}開始。戦意${player.will}/${player.maxWill}、${drawText}`);
       analyticsRecordTurnStart(side);
+      if (side === "player" && isTrainingAiVsAi()) state.aiThinking = true;
       render();
       showTurnOverlay(side);
       if (side === "opponent" && !isOnlineBattle()) scheduleOpponentAI();
+      if (side === "player" && isTrainingAiVsAi()) window.setTimeout(runTrainingLeftAI, trainingAnimationDelay(AI_START_DELAY));
     }
 
     function resolveOpponentTurnStartEffects(side) {
@@ -24973,8 +25311,101 @@
       return (dungeonFloorRuleState().evolutionAttendCounts[evolutionFrom] || 0) >= 2;
     }
 
-    function sleep(ms) {
-      return new Promise((resolve) => window.setTimeout(resolve, ms));
+    async function waitForTrainingPlayback() {
+      while (state.training.active && state.training.paused && state.screen === "battle" && !state.gameOver) {
+        await new Promise((resolve) => window.setTimeout(resolve, 120));
+      }
+    }
+
+    function trainingAnimationDelay(ms) {
+      if (!state.training.active) return ms;
+      if (state.training.skipAnimations) return 0;
+      return Math.max(20, Math.round(ms / Math.max(1, Number(state.training.speed) || 1)));
+    }
+
+    async function sleep(ms) {
+      await waitForTrainingPlayback();
+      return new Promise((resolve) => window.setTimeout(resolve, trainingAnimationDelay(ms)));
+    }
+
+    function isTrainingAiVsAi() {
+      return state.training.active && state.training.leftController === "ai" && !isOnlineBattle();
+    }
+
+    function isTrainingLeftAiActive() {
+      return isTrainingAiVsAi() && state.phase === "battle" && state.currentSide === "player" && !state.gameOver;
+    }
+
+    function findTrainingAiPlayMove(side) {
+      const player = state.players[side];
+      const candidates = player.hand
+        .filter((card) => card.type !== "item" && effectiveCardCost(card) <= player.will)
+        .sort((a, b) => effectiveCardCost(b) - effectiveCardCost(a) || (b.attack || 0) - (a.attack || 0));
+      for (const card of candidates) {
+        if (card.type === "environment" && canPlaceCard(side, card, "environment", null, null)) {
+          return { card, zone: "environment", owner: null, index: null };
+        }
+        if (card.type === "teacher" && canPlaceCard(side, card, "teacher", side, null)) {
+          return { card, zone: "teacher", owner: side, index: null };
+        }
+        const seatIndex = AI_SEAT_PRIORITY.find((index) => canPlaceCard(side, card, "seat", side, index));
+        if (seatIndex !== undefined) return { card, zone: "seat", owner: side, index: seatIndex };
+        if (canPlaceCard(side, card, "teacher", side, null)) return { card, zone: "teacher", owner: side, index: null };
+      }
+      return null;
+    }
+
+    function findTrainingAiAttackTarget(side, attacker) {
+      const targetSide = oppositeSide(side);
+      const priorityIds = new Set(listAttackPriorityCards(targetSide).map((card) => card.instanceId));
+      return listBoardRefs(targetSide)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter(({ card }) => card && canAibenNyoteiAttackTarget(attacker, card))
+        .filter(({ card }) => !isDesignDomainAttackBlocked(attacker, card))
+        .filter(({ card }) => attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(card.instanceId))
+        .sort((a, b) => {
+          const aKill = (attacker.attack || 0) >= a.card.currentHp ? 1 : 0;
+          const bKill = (attacker.attack || 0) >= b.card.currentHp ? 1 : 0;
+          return bKill - aKill || (b.card.attack || 0) - (a.card.attack || 0) || a.card.currentHp - b.card.currentHp;
+        })[0]?.ref || null;
+    }
+
+    async function runTrainingLeftAI() {
+      if (!isTrainingLeftAiActive()) return;
+      state.aiThinking = true;
+      state.message = "左側CPUが行動を考えています。";
+      render();
+      await sleep(AI_START_DELAY);
+      let safety = 0;
+      while (isTrainingLeftAiActive() && safety < 8) {
+        safety += 1;
+        const move = findTrainingAiPlayMove("player");
+        if (!move) break;
+        placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
+        render();
+        await waitForOrderedAttendance();
+        await sleep(AI_STEP_DELAY);
+      }
+      const attackers = listBoardRefs("player");
+      for (const ref of attackers) {
+        if (!isTrainingLeftAiActive()) return;
+        const attacker = getBoardCardFromRef(ref);
+        if (!attacker || !canAttackSilently(attacker)) continue;
+        if (canTeacherChooseLecture(ref) && lectureTargetEntries("player", attacker).length >= 2) {
+          performTeacherLecture("player", ref, { renderAfter: false });
+          render();
+          await sleep(AI_STEP_DELAY);
+          continue;
+        }
+        const target = findTrainingAiAttackTarget("player", attacker);
+        state.selectedAttacker = { ...ref };
+        if (target) await attackCard(target.owner, target.zone, target.index);
+        else await attackLifeForCurrentSide("opponent");
+        if (state.gameOver) return;
+        await sleep(AI_STEP_DELAY);
+      }
+      state.aiThinking = false;
+      if (isTrainingLeftAiActive()) endTurn({ fromAi: true });
     }
 
     function aiLifeHealingValue(card) {
@@ -30261,7 +30692,7 @@
           || card.summerTeacherChoiceBaseId
           || null;
         if (!SUMMER_TEACHER_CHOICES[choiceBaseId]) {
-          if (side === "player" && !onlineCanSendCommand()) {
+          if (side === "player" && !onlineCanSendCommand() && !isTrainingAiVsAi()) {
             openSummerTeacherChoice(card, { zone, owner, index });
             return true;
           }
@@ -35714,7 +36145,9 @@
       }
       resetBattleDrawers();
       const isLo = Boolean(options.libraryOut) && winner !== "draw";
-      const label = isOnlineSpectator()
+      const label = isTrainingAiVsAi()
+        ? (winner === "player" ? "左側CPUの勝利" : winner === "opponent" ? "右側CPUの勝利" : "引き分け")
+        : isOnlineSpectator()
         ? (winner === "player" ? "プレイヤー1の勝利" : winner === "opponent" ? "プレイヤー2の勝利" : "引き分け")
         : (options.crabVictory ? "かーちー🦀" : winner === "player" ? "勝利" : winner === "opponent" ? "敗北" : "引き分け");
       const labelHtml = isLo && !isOnlineSpectator()
@@ -35730,7 +36163,13 @@
         && winner === "player"
         && Boolean(DUNGEON_FLOORS[nextDungeonFloor]);
       const dungeonReward = options.dungeonReward || null;
-      const resultActions = isDungeonVictory
+      const resultActions = state.training.active && !state.dungeon.active && !isOnlineBattle()
+        ? `
+            <button class="button secondary" type="button" data-result-training-back="true">戻る</button>
+            <button class="button secondary" type="button" data-result-training-data="true">データ</button>
+            <button class="button" type="button" data-result-training-replay="true">再戦</button>
+          `
+        : isDungeonVictory
         ? `
             <button class="button secondary" type="button" data-result-dungeon-interrupt="true">中断する</button>
             ${dungeonReward
@@ -35759,6 +36198,48 @@
       elements.resultOverlay.className = "result-overlay hidden";
       elements.resultOverlay.innerHTML = "";
       delete elements.resultOverlay.dataset.resultKey;
+    }
+
+    function openTrainingDataOverlay() {
+      if (state.screen !== "soloDeck") {
+        state.training.active = false;
+        state.screen = "soloDeck";
+        hideResultOverlay();
+        render();
+      }
+      renderTrainingDataPanel();
+      elements.soloTrainingDataOverlay?.classList.remove("hidden");
+    }
+
+    function closeTrainingDataOverlay() {
+      elements.soloTrainingDataOverlay?.classList.add("hidden");
+    }
+
+    function openTrainingReplayOverlay() {
+      if (!state.training.series?.matches?.length) return;
+      elements.soloTrainingReplayCount.value = "1";
+      elements.soloTrainingReplaySkip.checked = false;
+      elements.soloTrainingReplayOverlay.classList.remove("hidden");
+    }
+
+    function closeTrainingReplayOverlay() {
+      elements.soloTrainingReplayOverlay?.classList.add("hidden");
+    }
+
+    function startTrainingReplaySeries(count, skipAnimations) {
+      const safeCount = Math.max(1, Math.min(100, Math.floor(Number(count) || 1)));
+      state.training.replayRemaining = safeCount;
+      state.training.replayTotal = safeCount;
+      state.training.skipAnimations = Boolean(skipAnimations);
+      closeTrainingReplayOverlay();
+      hideResultOverlay();
+      startNextTrainingReplay();
+    }
+
+    function startNextTrainingReplay() {
+      if (state.training.replayRemaining <= 0) return;
+      state.training.replayRemaining -= 1;
+      startSoloBattleWithSelectedDecks({ replay: true, skipAnimations: state.training.skipAnimations });
     }
 
     function getBoardCard(owner, zone, index = null) {
@@ -36298,8 +36779,16 @@
       state.message = winner ? `${reason} ${SIDES[winner]}の勝利！` : reason;
       addLog(state.message);
       analyticsFinalizeGame(winner, reason, options);
+      recordTrainingMatchResult(winner);
       onlineSubmitAnalyticsLog("game_end");
       showResultOverlay(winner, state.gameResultOptions);
+      if (state.training.active && state.training.replayRemaining > 0) {
+        window.setTimeout(() => {
+          if (!state.gameOver || state.training.replayRemaining <= 0) return;
+          hideResultOverlay();
+          startNextTrainingReplay();
+        }, trainingAnimationDelay(state.training.skipAnimations ? 40 : 1100));
+      }
       if (isOnlineHost() && state.online.started && !state.online.isHandlingRemoteCommand) {
         onlineBroadcastState(true);
       }
@@ -36434,6 +36923,7 @@
       renderTrash();
       renderLog();
       renderControls();
+      renderTrainingWatchControls();
       renderTutorialCoach();
       window.__chibattleFour?.render();
       setupPlaymatDropEvents();
@@ -36441,6 +36931,47 @@
       flushAnimationQueue();
       scheduleCardTemplateScaleSync();
       onlineBroadcastState();
+    }
+
+    function renderTrainingWatchControls() {
+      let controls = document.getElementById("trainingWatchControls");
+      const visible = state.screen === "battle" && isTrainingAiVsAi();
+      if (!visible) {
+        controls?.remove();
+        return;
+      }
+      if (!controls) {
+        controls = document.createElement("div");
+        controls.id = "trainingWatchControls";
+        controls.className = "training-watch-controls";
+        controls.setAttribute("aria-label", "AI対戦の再生速度");
+        controls.addEventListener("click", (event) => {
+          const speedButton = event.target.closest("[data-training-speed]");
+          if (speedButton) {
+            state.training.speed = Number(speedButton.dataset.trainingSpeed) || 1;
+            state.training.skipAnimations = false;
+            renderTrainingWatchControls();
+            return;
+          }
+          if (event.target.closest("[data-training-pause]")) {
+            state.training.paused = !state.training.paused;
+            renderTrainingWatchControls();
+            return;
+          }
+          if (event.target.closest("[data-training-skip]")) {
+            state.training.skipAnimations = true;
+            state.training.paused = false;
+            renderTrainingWatchControls();
+          }
+        });
+        document.body.appendChild(controls);
+      }
+      controls.innerHTML = `
+        <button type="button" data-training-speed="1" class="${state.training.speed === 1 && !state.training.skipAnimations ? "active" : ""}">×1</button>
+        <button type="button" data-training-speed="2" class="${state.training.speed === 2 && !state.training.skipAnimations ? "active" : ""}">×2</button>
+        <button type="button" data-training-speed="4" class="${state.training.speed === 4 && !state.training.skipAnimations ? "active" : ""}">×4</button>
+        <button type="button" data-training-pause>${state.training.paused ? "再開" : "一時停止"}</button>
+        <button type="button" data-training-skip class="${state.training.skipAnimations ? "active" : ""}">演出スキップ</button>`;
     }
 
     const CARD_TEMPLATE_BASE_WIDTH = 420;
@@ -37773,16 +38304,31 @@
       elements.opponentRpsCard.classList.toggle("reveal", state.rpsRevealed);
 
       elements.initialDealHand.innerHTML = "";
+      elements.initialDealHand.classList.toggle("training-both-hands", state.phase === "dealing" && isTrainingAiVsAi());
       if (state.phase === "dealing") {
-        state.players.player.hand.forEach((card, index) => {
+        const appendInitialCard = (container, card, index, handLength) => {
           const cardElement = document.createElement("div");
           cardElement.className = `card initial-deal-card ${card.type}${cardVisualClass(card)}`;
-          if (index === state.players.player.hand.length - 1) cardElement.classList.add("latest");
+          if (index === handLength - 1) cardElement.classList.add("latest");
           cardElement.dataset.cardId = card.instanceId;
           cardElement.innerHTML = cardTemplate(card, false);
           attachCardDetailEvents(cardElement, card);
-          elements.initialDealHand.appendChild(cardElement);
-        });
+          container.appendChild(cardElement);
+        };
+        if (isTrainingAiVsAi()) {
+          [["player", "左側CPU"], ["opponent", "右側CPU"]].forEach(([side, label]) => {
+            const group = document.createElement("div");
+            group.className = "training-initial-hand-group";
+            const heading = document.createElement("span");
+            heading.className = "training-initial-hand-label";
+            heading.textContent = label;
+            group.appendChild(heading);
+            state.players[side].hand.forEach((card, index, hand) => appendInitialCard(group, card, index, hand.length));
+            elements.initialDealHand.appendChild(group);
+          });
+        } else {
+          state.players.player.hand.forEach((card, index, hand) => appendInitialCard(elements.initialDealHand, card, index, hand.length));
+        }
       }
     }
 
@@ -37792,6 +38338,7 @@
       const mulliganActive = state.screen === "battle"
         && ["mulligan", "mulliganDraw"].includes(state.phase)
         && !isOnlineSpectator()
+        && !isTrainingAiVsAi()
         && (state.phase === "mulliganDraw" || !state.players.player.mulliganUsed);
       const active = !peeking && (mulliganActive || (state.screen === "battle" && Boolean(thinChoice) && !isOnlineSpectator()));
       elements.mulliganStage.classList.toggle("choice-stage", Boolean(thinChoice));
@@ -37990,7 +38537,7 @@
         : opponentHandCardWidth;
       elements.opponentHand.style.setProperty("--opponent-hand-stack-step", `${Math.max(3, opponentHandStep)}px`);
       [...hand].reverse().forEach((card) => {
-        if (isOnlineSpectator() && !card?.hidden) {
+        if ((isOnlineSpectator() && !card?.hidden) || isTrainingAiVsAi()) {
           const face = document.createElement("div");
           face.className = `card hand-card ${card.type}${cardVisualClass(card)}`;
           face.dataset.cardId = card.instanceId;
@@ -40258,10 +40805,24 @@
       if (elements.soloRuleSelect.innerHTML !== ruleOptions) elements.soloRuleSelect.innerHTML = ruleOptions;
       elements.soloRuleSelect.value = ruleId;
       elements.soloRuleDescription.textContent = ruleDescriptionText(ruleId);
-      elements.soloPlayerSlot.classList.toggle("active", selection.activeSide === "player");
-      elements.soloAiSlot.classList.toggle("active", selection.activeSide === "opponent");
+      elements.soloRuleCycleLabel.textContent = rule.name;
+      const initiativeLabels = { random: "ランダム", player: "左が先攻", opponent: "右が先攻" };
+      elements.soloInitiativeLabel.textContent = initiativeLabels[selection.initiative] || initiativeLabels.random;
+      const leftIsAi = selection.leftController === "ai";
+      elements.soloLeftControllerLabel.textContent = leftIsAi ? "CPU" : "ユーザー";
+      elements.soloLeftRoleTitle.textContent = leftIsAi ? "CPU" : "USER";
+      elements.soloLeftAvatar.classList.toggle("cpu", leftIsAi);
+      elements.soloLeftAvatar.classList.toggle("user", !leftIsAi);
+      elements.soloObserverNote.textContent = leftIsAi
+        ? "CPU同士の対戦では両方の手札を公開し、操作せずに観戦できます"
+        : "ユーザーとCPUの使用デッキと手番を選んでください";
       elements.soloPlayerDeckName.textContent = selection.playerDeckName || "未選択";
       elements.soloAiDeckName.textContent = selection.opponentDeckName || "未選択";
+      elements.soloPlayerDeckConfirmButton.disabled = !selection.playerDeckName;
+      elements.soloAiDeckConfirmButton.disabled = !selection.opponentDeckName;
+      elements.soloDeckPicker.classList.toggle("hidden", !selection.pickerOpen);
+      elements.soloDeckPickerTitle.textContent = selection.activeSide === "player" ? "左側のデッキ選択" : "右側CPUのデッキ選択";
+      elements.soloDeckPickerSubtitle.textContent = `${onlineDeckFormatDefinition(format).groupLabel}から使用するデッキを選んでください。同じデッキ同士でも対戦できます。`;
       elements.soloDeckGrid.innerHTML = "";
       if (names.length === 0) {
         const empty = document.createElement("p");
@@ -40283,7 +40844,8 @@
           const key = selection.activeSide === "player" ? "playerDeckName" : "opponentDeckName";
           selection[key] = name;
           selection.previewName = name;
-          if (selection.activeSide === "player") selection.activeSide = "opponent";
+          selection.previewExpanded = false;
+          selection.pickerOpen = false;
           render();
         });
         elements.soloDeckGrid.appendChild(button);
@@ -40306,6 +40868,97 @@
         deckDescriptorForRule(ruleId, selection.opponentDeckName, opponentSaved), opponentSaved.counts || {}, ruleId
       ).valid;
       elements.soloBattleStartButton.disabled = !playerValid || !opponentValid;
+      elements.soloBattleReadyLabel.textContent = playerValid && opponentValid ? "開始" : "未準備";
+      elements.soloTrainingDataButton.disabled = !state.training.series?.matches?.length;
+      renderTrainingDataPanel();
+    }
+
+    function openSoloDeckPicker(side) {
+      state.soloSelection.activeSide = side;
+      state.soloSelection.previewName = "";
+      state.soloSelection.previewExpanded = false;
+      state.soloSelection.pickerOpen = true;
+      render();
+    }
+
+    function closeSoloDeckPicker() {
+      state.soloSelection.pickerOpen = false;
+      render();
+    }
+
+    function previewSoloSelectedDeck(side) {
+      const selection = state.soloSelection;
+      selection.activeSide = side;
+      selection.previewName = side === "player" ? selection.playerDeckName : selection.opponentDeckName;
+      selection.previewExpanded = true;
+      selection.pickerOpen = true;
+      render();
+    }
+
+    function cycleSoloRule() {
+      const ids = ONLINE_RULE_DEFINITIONS.map((definition) => definition.id);
+      const current = Math.max(0, ids.indexOf(state.soloSelection.ruleId));
+      state.soloSelection.ruleId = ids[(current + 1) % ids.length];
+      state.soloSelection.playerDeckName = "";
+      state.soloSelection.opponentDeckName = "";
+      state.soloSelection.previewName = "";
+      state.soloSelection.previewExpanded = false;
+      state.soloSelection.pickerOpen = false;
+      render();
+    }
+
+    function cycleSoloInitiative() {
+      const values = ["random", "player", "opponent"];
+      const current = Math.max(0, values.indexOf(state.soloSelection.initiative));
+      state.soloSelection.initiative = values[(current + 1) % values.length];
+      render();
+    }
+
+    function cycleSoloLeftController() {
+      state.soloSelection.leftController = state.soloSelection.leftController === "ai" ? "player" : "ai";
+      render();
+    }
+
+    function trainingConfigKey() {
+      const selection = state.soloSelection;
+      return [selection.ruleId, selection.leftController, selection.playerDeckName, selection.opponentDeckName].join("|");
+    }
+
+    function summarizeTrainingMatch(match, index) {
+      const sideLabel = (side) => side === "player" ? "左側" : side === "opponent" ? "右側" : "引き分け";
+      const cardUses = Object.entries(match.cardUses || {})
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ja"))
+        .slice(0, 8)
+        .map(([name, count]) => `${escapeHtml(name)} ${count}回`)
+        .join(" / ") || "なし";
+      return `<article class="training-data-match"><h3>${index + 1}試合目：${escapeHtml(sideLabel(match.winner))}の勝利</h3><div class="training-data-grid">
+        <div><strong>先攻</strong><br>${escapeHtml(sideLabel(match.firstSide))}</div>
+        <div><strong>終了ターン</strong><br>${match.finalTurn}</div>
+        <div><strong>残り気力</strong><br>左 ${match.life.player} / 右 ${match.life.opponent}</div>
+        <div><strong>本体ダメージ</strong><br>左 ${match.lifeDamage.player} / 右 ${match.lifeDamage.opponent}</div>
+        <div><strong>出席者ダメージ</strong><br>左 ${match.attendeeDamage.player} / 右 ${match.attendeeDamage.opponent}</div>
+        <div><strong>出席数</strong><br>左 ${match.played.player} / 右 ${match.played.opponent}</div>
+        <div><strong>破壊された数</strong><br>左 ${match.destroyed.player} / 右 ${match.destroyed.opponent}</div>
+        <div><strong>ドロー</strong><br>左 ${match.draws.player} / 右 ${match.draws.opponent}</div>
+        <div><strong>最大手札 / 最大盤面</strong><br>左 ${match.maxHand.player}/${match.maxBoard.player} 右 ${match.maxHand.opponent}/${match.maxBoard.opponent}</div>
+        <div><strong>未使用戦意</strong><br>左 ${match.unusedWill.player} / 右 ${match.unusedWill.opponent}</div>
+        <div style="grid-column:1/-1"><strong>カード使用回数</strong><br>${cardUses}</div>
+      </div></article>`;
+    }
+
+    function renderTrainingDataPanel() {
+      const series = state.training.series;
+      if (!elements.soloTrainingDataContent) return;
+      if (!series?.matches?.length) {
+        elements.soloTrainingDataSummary.textContent = "まだ対戦データがありません。";
+        elements.soloTrainingDataContent.innerHTML = "";
+        return;
+      }
+      const leftWins = series.matches.filter((match) => match.winner === "player").length;
+      const rightWins = series.matches.filter((match) => match.winner === "opponent").length;
+      const draws = series.matches.length - leftWins - rightWins;
+      elements.soloTrainingDataSummary.textContent = `${series.matches.length}試合：左 ${leftWins}勝 / 右 ${rightWins}勝 / 引き分け ${draws}`;
+      elements.soloTrainingDataContent.innerHTML = series.matches.map(summarizeTrainingMatch).join("");
     }
 
     function renderDungeonDeckSelection() {
@@ -41766,14 +42419,18 @@
     function startSoloBattleFromHome() {
       SIDES.opponent = SOLO_OPPONENT_LABEL;
       state.screen = "soloDeck";
+      state.training.active = false;
+      state.training.paused = false;
+      state.training.skipAnimations = false;
       state.soloSelection.ruleId = normalizeOnlineRuleId(state.soloSelection.ruleId);
       state.soloSelection.activeSide = "player";
       state.soloSelection.previewName = "";
       state.soloSelection.previewExpanded = false;
+      state.soloSelection.pickerOpen = false;
       render();
     }
 
-    function startSoloBattleWithSelectedDecks() {
+    function startSoloBattleWithSelectedDecks(options = {}) {
       const ruleId = normalizeOnlineRuleId(state.soloSelection.ruleId);
       const format = onlineRuleDefinition(ruleId).deck.formats[0] || "normal";
       const decks = state.deckBuilder[onlineDeckFormatDefinition(format).collectionKey] || {};
@@ -41788,7 +42445,19 @@
       const opponentDescriptor = deckDescriptorForRule(ruleId, state.soloSelection.opponentDeckName, opponentSaved);
       state.deckBuilder.counts.player = copyOnlineDeckCounts(playerDescriptor, playerSaved.counts || {});
       state.deckBuilder.counts.opponent = copyOnlineDeckCounts(opponentDescriptor, opponentSaved.counts || {});
-      startNewGameWithDecks({ ruleId, playerDeckDescriptor: playerDescriptor, opponentDeckDescriptor: opponentDescriptor });
+      const configKey = trainingConfigKey();
+      if (!options.replay && state.training.series?.configKey !== configKey) state.training.series = null;
+      state.training.active = true;
+      state.training.leftController = state.soloSelection.leftController;
+      state.training.currentConfigKey = configKey;
+      state.training.paused = false;
+      state.training.skipAnimations = Boolean(options.skipAnimations);
+      startNewGameWithDecks({
+        ruleId,
+        playerDeckDescriptor: playerDescriptor,
+        opponentDeckDescriptor: opponentDescriptor,
+        training: true
+      });
     }
 
     function startNewGameWithDecks(options = {}) {
@@ -41808,8 +42477,54 @@
       initializeGame({
         ruleId,
         playerDeckDescriptor: playerDescriptor,
-        opponentDeckDescriptor: opponentDescriptor
+        opponentDeckDescriptor: opponentDescriptor,
+        deferPreBattle: options.training === true
       });
+      if (options.training === true) window.setTimeout(() => beginTrainingPreBattle(state.preBattleToken), 420);
+    }
+
+    function beginTrainingPreBattle(token) {
+      if (!isCurrentPreBattle(token, "versus")) return;
+      const preference = state.soloSelection.initiative;
+      state.firstSide = preference === "player" || preference === "opponent"
+        ? preference
+        : (Math.random() < 0.5 ? "player" : "opponent");
+      if (state.analytics?.game) state.analytics.game.firstSide = state.firstSide;
+      state.phase = "orderChoice";
+      state.preBattleBusy = true;
+      state.message = state.firstSide === "player" ? "左側が先攻です。" : "右側が先攻です。";
+      addLog(`トレーニング設定：${state.message}`);
+      render();
+      window.setTimeout(() => beginInitialDeal(token), trainingAnimationDelay(650));
+    }
+
+    function autoTrainingMulligan() {
+      if (!isTrainingAiVsAi() || state.phase !== "mulligan") return false;
+      const playerIds = chooseAiMulliganReturnIds(state.players.player.hand);
+      const opponentIds = chooseAiMulliganReturnIds(state.players.opponent.hand);
+      const returnedNames = (side, ids) => {
+        const selected = new Set(ids);
+        return state.players[side].hand.filter((card) => selected.has(card.instanceId)).map((card) => card.name);
+      };
+      const playerReturned = returnedNames("player", playerIds);
+      const opponentReturned = returnedNames("opponent", opponentIds);
+      const namesText = (names) => names.length ? names.map((name) => `「${name}」`).join("、") : "なし";
+      state.message = `引き直すカード　左側CPU：${namesText(playerReturned)}／右側CPU：${namesText(opponentReturned)}`;
+      render();
+      window.setTimeout(() => {
+        if (!isTrainingAiVsAi() || state.phase !== "mulligan") return;
+        replaceSelectedCards("player", playerIds);
+        replaceSelectedCards("opponent", opponentIds);
+        state.players.player.mulliganUsed = true;
+        state.players.opponent.mulliganUsed = true;
+        state.message = `引き直し完了　左側CPU：${playerIds.length}枚／右側CPU：${opponentIds.length}枚`;
+        render();
+        window.setTimeout(() => {
+          if (!isTrainingAiVsAi() || state.phase !== "mulligan") return;
+          beginBattleAfterMulligan();
+        }, trainingAnimationDelay(720));
+      }, trainingAnimationDelay(900));
+      return true;
     }
 
     function startTutorialBattle() {
@@ -43410,7 +44125,7 @@
     elements.soloMenuBackHomeButton.addEventListener("click", showHomeScreen);
     elements.soloTrainingButton.addEventListener("click", startSoloBattleFromHome);
     elements.soloDungeonButton.addEventListener("click", showDungeonEntrance);
-    elements.soloDeckBackHomeButton.addEventListener("click", showHomeScreen);
+    elements.soloDeckBackHomeButton.addEventListener("click", showSoloMenu);
     elements.dungeonDeckBackSoloButton.addEventListener("click", showSoloMenu);
     elements.dungeonDeckManageButton.addEventListener("click", openDungeonDeckManager);
     elements.dungeonResumeButton.addEventListener("click", resumeDungeonRun);
@@ -43442,14 +44157,17 @@
       importDungeonClearData(elements.dungeonClearDataImportInput.files?.[0]);
       elements.dungeonClearDataImportInput.value = "";
     });
-    elements.soloPlayerSlot.addEventListener("click", () => {
-      state.soloSelection.activeSide = "player";
-      render();
+    elements.soloPlayerSlot.addEventListener("click", () => openSoloDeckPicker("player"));
+    elements.soloAiSlot.addEventListener("click", () => openSoloDeckPicker("opponent"));
+    elements.soloPlayerDeckConfirmButton.addEventListener("click", () => previewSoloSelectedDeck("player"));
+    elements.soloAiDeckConfirmButton.addEventListener("click", () => previewSoloSelectedDeck("opponent"));
+    elements.soloDeckPickerCloseButton.addEventListener("click", closeSoloDeckPicker);
+    elements.soloDeckPicker.addEventListener("click", (event) => {
+      if (event.target === elements.soloDeckPicker) closeSoloDeckPicker();
     });
-    elements.soloAiSlot.addEventListener("click", () => {
-      state.soloSelection.activeSide = "opponent";
-      render();
-    });
+    elements.soloLeftControllerButton.addEventListener("click", cycleSoloLeftController);
+    elements.soloRuleCycleButton.addEventListener("click", cycleSoloRule);
+    elements.soloInitiativeCycleButton.addEventListener("click", cycleSoloInitiative);
     elements.soloRuleSelect.addEventListener("change", () => {
       state.soloSelection.ruleId = normalizeOnlineRuleId(elements.soloRuleSelect.value);
       state.soloSelection.activeSide = "player";
@@ -43460,6 +44178,19 @@
       render();
     });
     elements.soloBattleStartButton.addEventListener("click", startSoloBattleWithSelectedDecks);
+    elements.soloTrainingDataButton.addEventListener("click", openTrainingDataOverlay);
+    elements.soloTrainingDataCloseButton.addEventListener("click", closeTrainingDataOverlay);
+    elements.soloTrainingDataOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.soloTrainingDataOverlay) closeTrainingDataOverlay();
+    });
+    elements.soloTrainingReplayCancelButton.addEventListener("click", closeTrainingReplayOverlay);
+    elements.soloTrainingReplayOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.soloTrainingReplayOverlay) closeTrainingReplayOverlay();
+    });
+    elements.soloTrainingReplayForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      startTrainingReplaySeries(elements.soloTrainingReplayCount.value, elements.soloTrainingReplaySkip.checked);
+    });
     elements.homeTutorialButton.addEventListener("click", startTutorialBattle);
     elements.tutorialBackHomeButton.addEventListener("click", showHomeScreen);
     elements.tutorialStartButton.addEventListener("click", startTutorialBattle);
@@ -43721,6 +44452,24 @@
       if (card) showBattleCardTypeDescription(card);
     });
     elements.resultOverlay.addEventListener("click", (event) => {
+      if (event.target.closest("[data-result-training-replay]")) {
+        event.stopPropagation();
+        openTrainingReplayOverlay();
+        return;
+      }
+      if (event.target.closest("[data-result-training-data]")) {
+        event.stopPropagation();
+        openTrainingDataOverlay();
+        return;
+      }
+      if (event.target.closest("[data-result-training-back]")) {
+        event.stopPropagation();
+        state.training.active = false;
+        state.screen = "soloDeck";
+        hideResultOverlay();
+        render();
+        return;
+      }
       if (event.target.closest("[data-result-dungeon-interrupt]")) {
         event.stopPropagation();
         interruptDungeonRun();
