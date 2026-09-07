@@ -17945,6 +17945,18 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.22.4",
+        date: "2026年9月7日",
+        summary: "カード効果テキストの表示形式を整理し、能力と効果の区別や複数効果のまとまりを読み取りやすくしました。",
+        changes: [
+          {
+            title: "カード効果テキストの表示",
+            before: "能力名と通常の効果文章が同じ書式で続き、複数の独立した効果も一続きに表示されるカードがあった。",
+            after: "カード自身が持つ能力を[能力]の形式で効果文章より前へまとめ、条件付きで得る能力は条件文章の中に残す。能力部分と本文、独立した効果ごとに改行し、通常の効果文章の句点は維持する。カード詳細、デッキ編成、カード選択など、共通のカードテキスト表示へ同じ形式を適用する。カードの効果内容・発動条件・数値・ゲーム処理は変更しない。"
+          }
+        ]
+      },
+      {
         version: "ver.0.22.3",
         date: "2026年9月6日",
         summary: "ソロモードの構成を変更し、従来のAIバトルを「トレーニング」へ改名しました。「エリートオープンチャッター」のカードテキストを修正しました。",
@@ -39735,9 +39747,7 @@
 
     function formatCardEffectText(text) {
       return escapeHtml(text)
-        .replaceAll("\n", "<br>")
-        .replace(/(超陽気|陽気|超注目|注目|眠気|余裕|講義|遅刻\d+)/g, "[$1]")
-        .replace(/\](?=[をがはにの])/g, "] ");
+        .replaceAll("\n", "<br>");
     }
 
     function cardEffectDensityClass(card) {
@@ -42300,6 +42310,16 @@
       let markup = "";
       let index = 0;
       while (index < text.length) {
+        const bracketedAbility = text.slice(index).match(/^\[((?:超)?(?:陽気|注目)|眠気|余裕|講義|遅刻\d*|進化|装備|融合)([^\]]*)\]/);
+        if (bracketedAbility) {
+          const displayLabel = bracketedAbility[0];
+          const term = bracketedAbility[1].replace(/\d+$/, "");
+          markup += BATTLE_CARD_TERM_DESCRIPTIONS[term]
+            ? battleCardTermButtonMarkup(term, "", "", displayLabel)
+            : escapeHtml(displayLabel);
+          index += bracketedAbility[0].length;
+          continue;
+        }
         const reference = references.find((entry) => text.startsWith(entry.label, index));
         if (!reference) {
           markup += escapeHtml(text[index]);
@@ -42320,9 +42340,10 @@
       return markup;
     }
 
-    function battleCardTermButtonMarkup(term, suffix = "", className = "") {
+    function battleCardTermButtonMarkup(term, suffix = "", className = "", displayLabel = "") {
       const toneClass = className ? ` ${className}` : "";
-      return `<button class="battle-card-preview-term-link${toneClass}" type="button" data-preview-term="${escapeHtml(term)}">［${escapeHtml(term)}${suffix ? `：${escapeHtml(suffix)}` : ""}］</button>`;
+      const label = displayLabel || `［${term}${suffix ? `：${suffix}` : ""}］`;
+      return `<button class="battle-card-preview-term-link${toneClass}" type="button" data-preview-term="${escapeHtml(term)}">${escapeHtml(label)}</button>`;
     }
 
     function battleCardCurrentEffectsTemplate(card) {
@@ -42702,12 +42723,173 @@
         .replaceAll("出席した時", "手札から出席させた時");
     }
 
+    const CARD_TEXT_ABILITY_TERMS = Object.freeze([
+      ...Object.keys(BATTLE_CARD_TERM_DESCRIPTIONS),
+      "進化",
+      "装備"
+    ]);
+    const CARD_TEXT_REFERENCE_TERMS = Object.freeze(
+      CARD_TEXT_ABILITY_TERMS
+        .filter((term) => !["装備", "融合"].includes(term))
+        .sort((a, b) => b.length - a.length)
+    );
+
+    function splitCardRuleSentences(value) {
+      const sentences = [];
+      let current = "";
+      let quoteDepth = 0;
+      for (const character of String(value || "")) {
+        current += character;
+        if (character === "「") quoteDepth += 1;
+        if (character === "」") quoteDepth = Math.max(0, quoteDepth - 1);
+        if (character === "。" && quoteDepth === 0) {
+          sentences.push(current.trim());
+          current = "";
+        }
+      }
+      if (current.trim()) sentences.push(current.trim());
+      return sentences;
+    }
+
+    function splitCardRuleParagraphs(value) {
+      const continuation = /^(その後|そうした場合|この効果で|ない場合(?:でも)?|それら(?:は|の))/;
+      const paragraphs = [];
+      String(value || "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .forEach((line) => {
+          splitCardRuleSentences(line).forEach((sentence) => {
+            if (continuation.test(sentence) && paragraphs.length > 0) {
+              paragraphs[paragraphs.length - 1] += sentence;
+            } else {
+              paragraphs.push(sentence);
+            }
+          });
+        });
+      return paragraphs.join("\n");
+    }
+
+    function cardTextAbilityReferenceAt(text, index) {
+      const rest = text.slice(index);
+      const lateMatch = rest.match(/^遅刻\d+/);
+      if (lateMatch) return lateMatch[0];
+      const term = CARD_TEXT_REFERENCE_TERMS.find((candidate) => rest.startsWith(candidate));
+      if (!term) return "";
+      if (term === "講義" && rest.startsWith("講義室")) return "";
+      if (term === "遅刻" && rest.startsWith("遅刻ゾーン")) return "";
+      if (term === "進化" && /^(進化前|進化後|進化元|進化先)/.test(rest)) return "";
+      if (term === "融合" && rest.startsWith("融合済み")) return "";
+      return term;
+    }
+
+    function bracketCardAbilityReferences(value) {
+      const text = String(value || "");
+      let result = "";
+      let index = 0;
+      while (index < text.length) {
+        if (text[index] === "[") {
+          const closing = text.indexOf("]", index + 1);
+          if (closing >= 0) {
+            result += text.slice(index, closing + 1);
+            index = closing + 1;
+            continue;
+          }
+        }
+        if (text[index] === "「") {
+          const closing = text.indexOf("」", index + 1);
+          if (closing >= 0) {
+            const quoted = text.slice(index + 1, closing);
+            if (CARD_TEXT_ABILITY_TERMS.includes(quoted) || /^遅刻\d+$/.test(quoted)) {
+              result += `[${quoted}]`;
+            } else {
+              result += text.slice(index, closing + 1);
+            }
+            index = closing + 1;
+            continue;
+          }
+        }
+        const ability = cardTextAbilityReferenceAt(text, index);
+        if (ability) {
+          result += `[${ability}]`;
+          index += ability.length;
+          continue;
+        }
+        result += text[index];
+        index += 1;
+      }
+      return result;
+    }
+
+    function cardPrintedAbilityDisplay(card, rawText) {
+      const base = CARD_BASES[card?.baseId] || card || {};
+      const keywords = Array.isArray(base.keywords) ? base.keywords : [];
+      const abilities = [];
+      const push = (label) => {
+        if (label && !abilities.includes(label)) abilities.push(label);
+      };
+      const evolutionMatch = base.evolutionFrom
+        ? String(rawText || "").match(/^進化：「([^」]+)」(?:から進化する)?。/)
+        : null;
+      const fusionMatch = String(rawText || "").match(/^融合(?:：「([^」]+)」([^。]*))?(?:。|\n)/);
+      const hasEquipmentDeclaration = /^(?:装備カード。|装備(?:。|\n))/.test(String(rawText || ""));
+      const hasLectureDeclaration = String(rawText || "").startsWith("講義。");
+      if (evolutionMatch) push(`進化：「${evolutionMatch[1]}」`);
+      if (fusionMatch) push(`融合${fusionMatch[1] ? `：「${fusionMatch[1]}」${fusionMatch[2] || ""}` : ""}`);
+      if (hasEquipmentDeclaration) push("装備");
+      if (hasLectureDeclaration) push("講義");
+      if (Number(base.late) > 0) push(`遅刻${Number(base.late)}`);
+      keywords.forEach(push);
+      return abilities;
+    }
+
+    function removePrintedAbilityDeclarations(card, rawText, abilities) {
+      const base = CARD_BASES[card?.baseId] || card || {};
+      const baseKeywords = new Set(Array.isArray(base.keywords) ? base.keywords : []);
+      let text = String(rawText || "").trim();
+      let changed = true;
+      while (changed && text) {
+        changed = false;
+        const removeMatch = (match) => {
+          if (!match) return false;
+          text = text.slice(match[0].length).trimStart();
+          changed = true;
+          return true;
+        };
+        if (base.evolutionFrom && removeMatch(text.match(/^進化：「[^」]+」(?:から進化する)?。/))) continue;
+        if (abilities.some((ability) => ability.startsWith("融合")) && removeMatch(text.match(/^融合(?:：「[^」]+」[^。]*)?(?:。|\n)/))) continue;
+        if (abilities.includes("装備") && removeMatch(text.match(/^(?:装備カード。|装備(?:。|\n))/))) continue;
+        if (abilities.includes("講義") && removeMatch(text.match(/^講義。/))) continue;
+        if (Number(base.late) > 0 && removeMatch(text.match(new RegExp(`^遅刻${Number(base.late)}。`)))) continue;
+        const keywordDeclaration = text.match(/^((?:超陽気|超注目|陽気|注目|眠気|余裕)(?:と(?:超陽気|超注目|陽気|注目|眠気|余裕))*)を持つ。/);
+        if (keywordDeclaration) {
+          const declared = keywordDeclaration[1].split("と");
+          if (declared.every((keyword) => baseKeywords.has(keyword))) removeMatch(keywordDeclaration);
+        }
+      }
+      return text;
+    }
+
+    function formatCardRulesDisplayText(card, rawText) {
+      const abilities = cardPrintedAbilityDisplay(card, rawText);
+      const body = removePrintedAbilityDeclarations(card, rawText, abilities);
+      const flavorMatch = card?.baseId === "demon_a_plus" ? body.match(/(-我が.+-)$/) : null;
+      const effectBody = flavorMatch ? body.slice(0, -flavorMatch[0].length).trimEnd() : body;
+      const paragraphBody = splitCardRuleParagraphs(effectBody)
+        .replace(/(^|\n)出席した(?:時|とき)、/g, "$1このカードが出席したとき、");
+      const formattedBody = bracketCardAbilityReferences(paragraphBody);
+      const abilityLine = abilities.map((ability) => `[${ability}]`).join(" ");
+      return [abilityLine, formattedBody, flavorMatch?.[0]].filter(Boolean).join("\n");
+    }
+
     function cardRulesText(card) {
       if (card.darkPresident) {
-        return "このカードが出席したとき、この対戦中、環境「食堂」の効果を得る。このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。";
+        const text = "このカードが出席したとき、この対戦中、環境「食堂」の効果を得る。このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。";
+        return formatCardRulesDisplayText(card, normalizeLectureRoomText(attendanceRuleText(card, text)));
       }
       if (card.summerTeacherChoicePreview) {
-        return SUMMER_TEACHER_CHOICES[card.baseId]?.effect || "効果なし。";
+        const text = SUMMER_TEACHER_CHOICES[card.baseId]?.effect || "効果なし。";
+        return formatCardRulesDisplayText({ ...card, keywords: [], late: 0, evolutionFrom: null }, text);
       }
       const rules = {
         general_student: "効果なし。",
@@ -42938,7 +43120,8 @@
         strict_lateness_teacher: "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
         ta: "カードの効果によって出席される学生トークン。"
       };
-      let text = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      const rawText = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      let text = formatCardRulesDisplayText(card, rawText);
       const fusedNames = utaFusionMaterialEntries(card)
         .map((entry) => CARD_BASES[entry.baseId]?.name || entry.name)
         .filter(Boolean);
@@ -43636,6 +43819,8 @@
       battleCardRestrictionEntries,
       cardStatusDetailText,
       cardRulesText,
+      formatCardRulesDisplayText,
+      CARD_TEXT_ABILITY_TERMS,
       showBattleCardPreview,
       render,
       startTurn,

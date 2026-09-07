@@ -202,7 +202,7 @@ test("やべー！！をデッキ・専攻・カードテスト・更新情報�
     };
   });
   expect(result).toMatchObject({ name: "やべー！！", cost: 2, type: "item", category: "big", specialty: true, inTestHand: true });
-  expect(result.text).toBe("相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。後攻7ターン目以降、1ダメージではなく2ダメージを与える。");
+  expect(result.text).toBe("相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。\n後攻7ターン目以降、1ダメージではなく2ダメージを与える。");
   expect(result.targets).toBeGreaterThanOrEqual(2);
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();

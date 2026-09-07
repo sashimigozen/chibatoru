@@ -36,7 +36,7 @@ test("魔の1号館は2番目のボタンから開く", async ({ page }) => {
 test("9月6日の更新情報にソロモードの変更を記載する", async ({ page }) => {
   await page.locator("#soloMenuBackHomeButton").click();
   await page.locator("#homeUpdatesButton").click();
-  const latest = page.locator(".update-entry").first();
+  const latest = page.locator(".update-entry").filter({ hasText: "ver.0.22.3" });
 
   await expect(latest).toContainText("ver.0.22.3");
   await expect(latest).toContainText("2026年9月6日");

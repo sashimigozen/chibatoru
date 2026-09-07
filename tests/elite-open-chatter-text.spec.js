@@ -43,7 +43,7 @@ test("エリートオープンチャッターはデッキを3枚引く表記で�
     };
   });
   expect(result).toEqual({
-    text: "席マスにのみ出席できる。このカードを手札から出席させたとき、相手はデッキを3枚引く。",
+    text: "席マスにのみ出席できる。\nこのカードを手札から出席させたとき、相手はデッキを3枚引く。",
     placed: true,
     opponentHand: 3,
     opponentDeck: 0
@@ -53,9 +53,9 @@ test("エリートオープンチャッターはデッキを3枚引く表記で�
 test("同日の更新情報にカード修正形式で記載する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const latest = page.locator(".update-entry").first();
-  await latest.locator("summary").click();
-  await expect(latest).toContainText("エリートオープンチャッター");
-  await expect(latest).toContainText("学生／妨害／戦意4／攻撃力3／体力6");
-  await expect(latest).toContainText("相手はデッキを3枚引く。");
+  const entry = page.locator(".update-entry").filter({ hasText: "ver.0.22.3" });
+  await entry.locator("summary").click();
+  await expect(entry).toContainText("エリートオープンチャッター");
+  await expect(entry).toContainText("学生／妨害／戦意4／攻撃力3／体力6");
+  await expect(entry).toContainText("相手はデッキを3枚引く。");
 });

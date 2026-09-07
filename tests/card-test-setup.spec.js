@@ -137,7 +137,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
     expect(result[baseId].hand).toEqual(expect.arrayContaining([
       "yuta", "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"
     ]));
-    expect(result[baseId].rulesText).toBe("融合\n「U太」に融合する。");
+    expect(result[baseId].rulesText).toBe("[融合]\n「U太」に融合する。");
   });
   expect(result.philosophy_cheating.opponentHand.filter((baseId) => ["ruler", "bento"].includes(baseId))).toHaveLength(2);
   expect(result.big_laughter.playerBoard.length).toBeGreaterThanOrEqual(4);
