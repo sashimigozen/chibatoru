@@ -189,6 +189,12 @@ test("BATTLEボタンから準備完了時の「開始」表示を削除する",
   await expect(page.locator(".training-avatar-note")).toHaveCount(0);
   await expect(page.locator(".training-avatar")).toHaveCount(2);
   await expect(page.locator(".training-avatar[aria-label]")).toHaveCount(0);
+  const deckControlSpacing = await page.locator('.training-player-panel[data-side="player"]').evaluate((panel) => {
+    const avatar = panel.querySelector(".training-avatar").getBoundingClientRect();
+    const readout = panel.querySelector(".training-deck-readout").getBoundingClientRect();
+    return Math.round(readout.top - avatar.bottom);
+  });
+  expect(deckControlSpacing).toBeGreaterThanOrEqual(40);
   await page.selectOption("#soloRuleSelect", "chaos");
   await page.locator("#soloPlayerSlot").click();
   await page.locator("#soloDeckGrid .deck-library-card", { hasText: "BATTLE表示確認用" }).click();
