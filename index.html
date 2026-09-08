@@ -7764,7 +7764,7 @@
 
     .training-picker,
     .training-data-overlay,
-    .training-replay-overlay { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 22px; background: rgba(8,20,29,.62); }
+    .training-replay-overlay { position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; padding: 22px; background: rgba(8,20,29,.62); }
     .training-picker.hidden,
     .training-data-overlay.hidden,
     .training-replay-overlay.hidden { display: none; }
@@ -16482,20 +16482,21 @@
           <div class="deck-library-detail hidden" id="soloDeckDetail"></div>
         </div>
       </section>
-      <section class="training-data-overlay hidden" id="soloTrainingDataOverlay" aria-label="対戦データ">
-        <div class="training-data-dialog">
-          <div class="training-picker-head"><div><h2>対戦データ</h2><p id="soloTrainingDataSummary"></p></div><button class="button secondary" id="soloTrainingDataCloseButton" type="button">閉じる</button></div>
-          <div class="training-data-content" id="soloTrainingDataContent"></div>
-        </div>
-      </section>
-      <section class="training-replay-overlay hidden" id="soloTrainingReplayOverlay" aria-label="再戦設定">
-        <form class="training-replay-dialog" id="soloTrainingReplayForm">
-          <h2>再戦</h2>
-          <label>繰り返し回数<input id="soloTrainingReplayCount" type="number" min="1" max="100" value="1" inputmode="numeric"></label>
-          <label class="training-replay-check"><input id="soloTrainingReplaySkip" type="checkbox"> 残りの演出をスキップ</label>
-          <div><button class="button secondary" id="soloTrainingReplayCancelButton" type="button">キャンセル</button><button class="button" type="submit">開始</button></div>
-        </form>
-      </section>
+    </section>
+
+    <section class="training-data-overlay hidden" id="soloTrainingDataOverlay" aria-label="対戦データ">
+      <div class="training-data-dialog">
+        <div class="training-picker-head"><div><h2>対戦データ</h2><p id="soloTrainingDataSummary"></p></div><button class="button secondary" id="soloTrainingDataCloseButton" type="button">閉じる</button></div>
+        <div class="training-data-content" id="soloTrainingDataContent"></div>
+      </div>
+    </section>
+    <section class="training-replay-overlay hidden" id="soloTrainingReplayOverlay" aria-label="再戦設定">
+      <form class="training-replay-dialog" id="soloTrainingReplayForm">
+        <h2>再戦</h2>
+        <label>繰り返し回数<input id="soloTrainingReplayCount" type="number" min="1" max="100" value="1" inputmode="numeric"></label>
+        <label class="training-replay-check"><input id="soloTrainingReplaySkip" type="checkbox"> 残りの演出をスキップ</label>
+        <div><button class="button secondary" id="soloTrainingReplayCancelButton" type="button">キャンセル</button><button class="button" type="submit">開始</button></div>
+      </form>
     </section>
 
     <section class="screen online-screen hidden" id="onlineScreen">
@@ -18161,6 +18162,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.1",
+        date: "2026年9月8日",
+        summary: "トレーニングのリザルト画面から、対戦データの確認と再戦を正しく操作できるようにしました。",
+        changes: [
+          {
+            title: "トレーニングのリザルト操作",
+            before: "リザルトで「データ」を開いて閉じると対戦設定画面へ戻っていた。「再戦」を押しても設定画面が表示されず、対戦設定画面へ戻った後に繰り返し回数の入力画面が表示されていた。",
+            after: "「データ」を閉じると元のリザルト画面に戻る。「再戦」を押すとリザルト上に繰り返し回数の入力画面がすぐに表示され、「開始」で指定回数の再戦を開始できる。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.0",
         date: "2026年9月7日",
@@ -36325,12 +36338,6 @@
     }
 
     function openTrainingDataOverlay() {
-      if (state.screen !== "soloDeck") {
-        state.training.active = false;
-        state.screen = "soloDeck";
-        hideResultOverlay();
-        render();
-      }
       renderTrainingDataPanel();
       elements.soloTrainingDataOverlay?.classList.remove("hidden");
     }
