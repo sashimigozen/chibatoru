@@ -7730,7 +7730,6 @@
     .training-avatar.cpu span { position: absolute; left: 25px; top: 34px; width: 65px; height: 52px; border: 4px solid #526d7d; border-radius: 12px; background: #fff; }
     .training-avatar.cpu span::before { content: "•   •"; display: block; padding-top: 3px; color: #526d7d; font-size: 26px; font-weight: 1000; letter-spacing: 7px; text-align: center; }
     .training-avatar.cpu span::after { content: ""; position: absolute; left: 18px; bottom: 10px; width: 28px; height: 4px; background: #526d7d; }
-    .training-avatar-note { margin: 0 0 18px; color: #738795; font-size: 10px; text-align: center; }
     .training-deck-readout { display: grid; grid-template-columns: 1fr auto; margin-top: 12px; border: 1px solid #8196a4; border-radius: 4px; overflow: hidden; background: #fff; }
     .training-deck-readout > span { grid-column: 1 / -1; padding: 4px 8px; color: #496578; background: #edf3f6; font-size: 11px; font-weight: 1000; }
     .training-deck-readout strong { min-width: 0; padding: 12px 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -16478,8 +16477,7 @@
             <span id="soloLeftRoleTitle">USER</span>
             <button class="training-cycle-button compact" id="soloLeftControllerButton" type="button" aria-label="左側の操作を切り替える"><span aria-hidden="true">⟲</span><strong id="soloLeftControllerLabel">ユーザー</strong></button>
           </div>
-          <div class="training-avatar user" id="soloLeftAvatar" aria-label="ユーザーの代表カード仮表示"><span></span></div>
-          <p class="training-avatar-note">代表カードは後日実装</p>
+          <div class="training-avatar user" id="soloLeftAvatar" aria-hidden="true"><span></span></div>
           <div class="training-deck-readout"><span>使用デッキ</span><strong id="soloPlayerDeckName">未選択</strong><button id="soloPlayerDeckConfirmButton" type="button" disabled>確認</button></div>
           <button class="training-deck-select" id="soloPlayerSlot" type="button">デッキ選択</button>
         </article>
@@ -16499,8 +16497,7 @@
 
         <article class="training-player-panel" data-side="opponent">
           <div class="training-player-heading right"><span>CPU</span><strong>CPU</strong></div>
-          <div class="training-avatar cpu" aria-label="CPUの代表カード仮表示"><span></span></div>
-          <p class="training-avatar-note">代表カードは後日実装</p>
+          <div class="training-avatar cpu" aria-hidden="true"><span></span></div>
           <div class="training-deck-readout"><span>使用デッキ</span><strong id="soloAiDeckName">未選択</strong><button id="soloAiDeckConfirmButton" type="button" disabled>確認</button></div>
           <button class="training-deck-select" id="soloAiSlot" type="button">デッキ選択</button>
         </article>
@@ -18196,7 +18193,7 @@
       {
         version: "ver.0.23.1",
         date: "2026年9月8日",
-        summary: "トレーニングのリザルト操作を修正し、左右の勝率、カード別マリガン確率、ダメージや回復、盤面残存率などを確認できる累積データ画面へ変更しました。",
+        summary: "トレーニングのリザルト操作を修正し、左右の勝率、カード別マリガン確率、ダメージや回復、盤面残存率などを確認できる累積データ画面へ変更しました。対戦準備画面の不要な注釈も整理しました。",
         changes: [
           {
             title: "トレーニングのリザルト操作",
@@ -18207,6 +18204,11 @@
             title: "トレーニングの累積データ",
             before: "対戦データは試合ごとの数値が中心で、左右のプレイヤーごとの傾向や、カード単位のマリガン傾向が分かりにくかった。BATTLEボタンには準備完了時に「開始」と表示していた。",
             after: "左プレイヤーと右プレイヤーを分け、総合勝率、先攻時勝率、後攻時勝率、引き分け率、先攻になった割合、各種平均値を累積表示する。実際に与えた本体・出席者ダメージ、受けたダメージ、本体・出席者の回復量、盤面残存率、出席回数、盤面離脱数、攻撃回数、最大盤面・手札なども左右別に確認できる。カードごとに初手出現率、キープ率、交換率、マリガン後出現率も確認できる。試合ごとの記録は必要なときだけ開いて確認できる。BATTLEボタンの「開始」表示は削除した。"
+          },
+          {
+            title: "対戦準備画面の表示",
+            before: "左右のシルエットの下に、後日実装予定であることを示す注釈を表示していた。",
+            after: "不要な注釈を削除し、左右のシルエットだけを表示する。"
           }
         ]
       },
