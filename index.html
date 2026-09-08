@@ -18198,7 +18198,7 @@
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
-        summary: "AIがデッキ切れを狙うカード構成と相手の校外を確認し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、環境カードを使い切った後の目黒区図書館を判断するように改善しました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。",
+        summary: "AIがデッキ切れを狙うカード構成と相手の校外を確認し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、環境カードを使い切った後の目黒区図書館を判断するように改善しました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
         changes: [
           {
             title: "AIのデッキ切れ戦術",
@@ -18214,6 +18214,16 @@
             title: "後ろから質問する学生のAI配置",
             before: "AIが後ろから質問する学生を効果が発動しない席マスや教卓マスへ出席させる場合があった。",
             after: "相手の教卓マスに効果で処理できる出席者がいる場合に優先し、自分の3行目へ出席させる。相手の教卓マスに対象がいない場合や3行目に空きがない場合は温存し、他の席マスや教卓マスには出席させない。左右どちらのCPUにも同じ判断を適用する。"
+          },
+          {
+            title: "パチンウニー",
+            before: "「パチンウニー」\n学生／展開・敵増殖／戦意3／攻撃力1／体力1\nこのカードを手札から出席させたとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
+            after: "「パチンウニー」\n学生／展開・敵増殖／戦意3／攻撃力1／体力1\nこのカードを手札から出席させたとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを5回終了するまで攻撃できない。\n変更点：この効果で出席した「一般学生」の攻撃不可期間を、相手が自分のターンを2回終了するまでから5回終了するまでに変更。"
+          },
+          {
+            title: "敵",
+            before: "「敵」\n学生／展開・敵増殖／戦意3／攻撃力2／体力2\n相手の講義室に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
+            after: "「敵」\n学生／展開・敵増殖／戦意3／攻撃力2／体力2\n相手の講義室に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5し、[陽気]を持つ。\n変更点：攻撃力+5に加えて、陽気を持つ効果を追加。席マスと教卓マスのどちらにいる場合も適用される。"
           }
         ]
       },
@@ -32450,11 +32460,11 @@
         startOrderedAttendance(
           orderedAttendanceEntries(opponent, seatIndexes, () => createCardFromBase("general_student", opponent), {
             prepare: (student) => {
-              student.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 2;
+              student.attackLockedUntilOwnerTurnsTaken = state.players[opponent].turnsTaken + 5;
               student.attackLockSource = card.name;
             }
           }),
-          { onComplete: (summoned) => addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人出席させました。それらは相手が自分のターンを2回終了するまで攻撃できません。`) }
+          { onComplete: (summoned) => addLog(`${card.name}の効果：相手の3行目の空席に一般学生を${summoned}人出席させました。それらは相手が自分のターンを5回終了するまで攻撃できません。`) }
         );
       }
       if (card.baseId === "loud_student") {
@@ -35940,7 +35950,14 @@
         if (popularTeacher?.baseId === "popular_c" && canUsePrintedCardEffects(popularTeacher)) return true;
       }
       if (keyword === "陽気" && card.baseId === "curry_treater" && isCafeteriaEnvironmentActive()) return true;
+      if (keyword === "陽気" && enemyStudentTrpgAuraActive(card)) return true;
       return false;
+    }
+
+    function enemyStudentTrpgAuraActive(card) {
+      return Boolean(card?.baseId === "enemy_student"
+        && canUsePrintedCardEffects(card)
+        && listBoardRefs(oppositeSide(card.owner)).some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member"));
     }
 
     function hasPresidentDrowsinessAura() {
@@ -36084,9 +36101,7 @@
           const aibenNyoteiBonus = aibenNyoteiStatBonus(card);
           newAttack += aibenNyoteiBonus.attack;
           newMaxHp += designTextbookHpBonus(card);
-          if (card.baseId === "enemy_student" && canUsePrintedCardEffects(card) && listBoardRefs(oppositeSide(owner)).some((ref) => {
-            return getBoardCardFromRef(ref)?.baseId === "trpg_member";
-          })) {
+          if (enemyStudentTrpgAuraActive(card)) {
             newAttack += 5;
           }
           if (isAeNameCard(card) && state.environment?.baseId === "cote_dazur") {
@@ -36144,6 +36159,7 @@
       const coteBonus = isAeNameCard(card) && state.environment?.baseId === "cote_dazur" ? 10 : 0;
       const aibenNyoteiBonus = aibenNyoteiStatBonus(card);
       let newAttack = baseAttack + (state.environment?.baseId === "dark_student_council" ? 2 : 0) + coteBonus + aibenNyoteiBonus.attack;
+      if (enemyStudentTrpgAuraActive(card)) newAttack += 5;
       if (state.environment?.baseId === "building_12_classroom") {
         if (card.type === "teacher") newAttack += 1;
         if (card.type === "student") newAttack -= 1;
@@ -44119,7 +44135,7 @@
       if (aibenNyoteiBonus.attack || aibenNyoteiBonus.defense) add(card.baseId === "aiben" ? "にょてい" : "アイベン", aibenNyoteiBonus.attack, 0, aibenNyoteiBonus.defense);
       const textbookBonus = designTextbookHpBonus(card);
       if (textbookBonus) add("デザイン教科書", 0, textbookBonus);
-      if (canUsePrintedCardEffects(card) && card.baseId === "enemy_student" && listBoardRefs(oppositeSide(card.owner)).some((otherRef) => getBoardCardFromRef(otherRef)?.baseId === "trpg_member")) add("TRPGサークルメンバー", 5, 0);
+      if (enemyStudentTrpgAuraActive(card)) add("TRPGサークルメンバー", 5, 0);
       if (isAeNameCard(card) && environmentId === "cote_dazur") add("コートダジュール", 10, 10);
       if (ref.zone === "seat" && isGangiBuffSeat(ref.index)) add("雁木囲い", 0, 2);
       if (environmentId === "dark_student_council") add("闇学友会", 2, 0);
@@ -44158,6 +44174,7 @@
         if (card.baseId === "signal_professor_m" && isOnTeacherSlot(card) && !hasOtherFriendlyTeacher(card)) add("陽気", "教卓マス");
         if (card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") add("陽気", "人気デザイン講師C");
         if (card.baseId === "curry_treater" && isCafeteriaEnvironmentActive()) add("陽気", "食堂");
+        if (enemyStudentTrpgAuraActive(card)) add("陽気", "TRPGサークルメンバー");
       }
       if (hasKeyword(card, "眠気") && !baseKeywords.has("眠気") && !directSources.眠気) {
         const president = ["player", "opponent"]
@@ -44554,11 +44571,11 @@
         trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
         loud_group: "注目を持つ。このカードは自分の3行目の席マスにのみ出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
-        enemy_student: "相手の場に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5する。",
+        enemy_student: "相手の講義室に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5し、陽気を持つ。",
         enemy_boss: "このカードが出席したとき、自分の場に「敵」が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。",
         live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を2にする。",
         dobby: "このカードが出席したとき、攻撃力3以上の相手の出席者すべての攻撃力を-2する。",
-        pachin_uni: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを2回終了するまで攻撃できない。",
+        pachin_uni: "このカードが出席したとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを5回終了するまで攻撃できない。",
         protein_drinker: "自分のターン終了時、このカードの攻撃力を+1する。",
         proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
