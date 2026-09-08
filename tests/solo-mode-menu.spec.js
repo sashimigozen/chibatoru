@@ -24,6 +24,7 @@ test("従来のAIバトルをトレーニングとして開く", async ({ page }
 
   await expect(page.locator("#soloDeckScreen")).toBeVisible();
   await expect(page.locator("#soloDeckScreen h1")).toHaveText("TRAINING");
+  await expect(page.locator("#soloDeckScreen")).not.toContainText("対戦設定");
   await expect(page.locator("#soloPlayerSlot")).toBeVisible();
   await expect(page.locator("#soloAiSlot")).toBeVisible();
   await expect(page.locator("#soloBattleStartButton")).toBeDisabled();

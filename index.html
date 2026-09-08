@@ -16469,7 +16469,6 @@
         <button class="training-back-button" id="soloDeckBackHomeButton" type="button">‹ <span>ソロ</span></button>
         <div>
           <h1>TRAINING</h1>
-          <p>対戦設定</p>
         </div>
       </div>
       <section class="training-setup-layout" aria-label="トレーニング対戦設定">
@@ -17852,6 +17851,11 @@
       homeless_crab: 1
     };
     const CRAB_SET_IDS = ["circle_crab", "hair_crab", "homeless_crab"];
+    const CRAB_VICTORY_REQUIRED_COUNTS = Object.freeze({
+      circle_crab: 2,
+      hair_crab: 1,
+      homeless_crab: 1
+    });
     const TARGETED_DESTROY_ITEM_IDS = new Set(["seriously_hit", "favorite_number_s"]);
     const IMMEDIATE_ITEM_IDS = [
       "yabe", "aggro_army", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine", "namen_tenno",
@@ -18194,7 +18198,7 @@
       {
         version: "ver.0.23.1",
         date: "2026年9月8日",
-        summary: "トレーニングのリザルト操作を修正し、左右の勝率、カード別マリガン確率、ダメージや回復、盤面残存率などを確認できる累積データ画面へ変更しました。対戦準備画面の配置と選択デッキの確認画面も整理しました。",
+        summary: "トレーニングのリザルト操作と対戦準備画面を整理し、左右別の累積データと選択デッキの内容を確認しやすくしました。AIはデッキ名ではなく採用カード、手札、盤面からコンボや攻め時、特殊勝利まで判断するように改善し、カード選択が必要な効果で停止する問題も修正しました。",
         changes: [
           {
             title: "トレーニングのリザルト操作",
@@ -18208,13 +18212,23 @@
           },
           {
             title: "対戦準備画面の表示",
-            before: "左右のシルエットの下に不要な注釈があり、シルエットとデッキ操作部がパネルの上側に偏っていた。",
-            after: "不要な注釈と説明を削除。使用デッキとデッキ選択の操作部は下枠との余白を上枠に合わせて配置し、ユーザーとCPUの丸いシルエットは直径の半分だけ下へ移動した。"
+            before: "TRAINING見出しの下や左右のシルエットの下に不要な補足表示があり、シルエットとデッキ操作部がパネルの上側に偏っていた。",
+            after: "見出しだけで内容が伝わる補足表示と不要な注釈を削除。使用デッキとデッキ選択の操作部は下枠との余白を上枠に合わせて配置し、ユーザーとCPUの丸いシルエットは直径の半分だけ下へ移動した。"
           },
           {
             title: "選択デッキの確認",
             before: "「確認」を押した際、デッキ選択一覧と同じ画面内に内容が続いて表示され、選択中のデッキ内容が分かりにくかった。",
-            after: "左右どちらの「確認」からも、現在選択中のデッキの合計枚数、タイプ、戦意カーブ、カード一覧と各枚数を直接確認できるようにした。"
+            after: "左右どちらの「確認」からも、現在選択中のデッキの合計枚数、タイプ、カード一覧と各枚数を直接確認できるようにした。確認画面には戦意カーブを表示しない。"
+          },
+          {
+            title: "AIの戦術判断",
+            before: "一部の戦術判断が特定のデッキ構成を前提としており、同じ組み合わせのカードを別のデッキで使用した場合に活用されないことがあった。強力な全体除去も相手の盤面が整う前に使用する場合があった。",
+            after: "AIがデッキ名ではなく、採用カード、手札、盤面、残り戦意、ターン数からコンボや攻め時を判断するように変更。手札で育つカードは十分に強化してから攻勢へ移り、環境と出席者の組み合わせは同じターンに展開できるまで温存する。強力な全体除去は相手が強い盤面を作った際の切り返しとして優先する。カニ勝利を狙える構成では、必要なカニをマリガンで最優先し、カニの回復効果や手札コストに使わず保持しながら、盤面処理・回復・ドローで勝利条件まで耐える。"
+          },
+          {
+            title: "AI戦のカード選択",
+            before: "AI同士の対戦で左側のCPUが、目黒区図書館などの手札・デッキからカードを選ぶ効果を処理すると、プレイヤー用の選択画面が開いたまま進行しないことがあった。",
+            after: "左右どちらのCPUも、手札・デッキ・校外・出席者から選ぶ効果を自動で判断して確定するように修正。目黒区図書館、ロジックハンター、何をやってもダメな学生、3つジェスチャーなどで停止せず対戦を続行する。共通のカード選択処理を使う今後の効果にも自動確定を適用する。"
           }
         ]
       },
@@ -24931,17 +24945,32 @@
     }
 
     function scoreAiMulliganKeep(card, hand, side = "opponent") {
+      if (isAiCrabVictoryStrategyActive(side)) {
+        const requiredCount = CRAB_VICTORY_REQUIRED_COUNTS[card.baseId] || 0;
+        if (requiredCount > 0) {
+          const requiredCopies = hand.filter((entry) => entry.baseId === card.baseId).slice(0, requiredCount);
+          return requiredCopies.some((entry) => entry.instanceId === card.instanceId) ? 1000 : -80;
+        }
+        return -100 - Math.max(0, effectiveCardCost(card));
+      }
+      if (isAiCafeteriaVampireStrategyActive(side)) {
+        if (card.baseId === "cafeteria") return 120;
+        if (card.baseId === "apprentice_vampire") return 115;
+      }
       if (isAiYocchanHyperCarryStrategyActive(side)) {
         const firstTrpg = hand.find((entry) => entry.baseId === "trpg_member");
         const hasYocchan = hand.some((entry) => entry.baseId === "yocchan");
+        const hasTrpgSearchPlan = aiDeckIncludesCard(side, "trpg_member");
         if (card.baseId === "yocchan") return 120;
-        if (card.baseId === "trpg_member") {
+        if (card.baseId === "trpg_member" && hasTrpgSearchPlan) {
           return !hasYocchan && card.instanceId === firstTrpg?.instanceId ? 110 : -10;
         }
-        if (card.baseId === "sage_legacy") return state.firstSide === "player" ? 90 : 22;
-        if (["alpha", "onigiri_draw", "fire_touch"].includes(card.baseId)) return 40;
-        if (["yabe", "ikemasu"].includes(card.baseId)) return 16;
-        return -Math.max(1, effectiveCardCost(card));
+        if (hasTrpgSearchPlan) {
+          if (card.baseId === "sage_legacy") return state.firstSide === "player" ? 90 : 22;
+          if (["alpha", "onigiri_draw", "fire_touch"].includes(card.baseId)) return 40;
+          if (["yabe", "ikemasu"].includes(card.baseId)) return 16;
+          return -Math.max(1, effectiveCardCost(card));
+        }
       }
       const cost = effectiveCardCost(card);
       const attendees = hand.filter((entry) => ["student", "teacher", "vampire"].includes(entry.type));
@@ -25277,14 +25306,98 @@
       return utaCount >= 2 && equipmentCount >= 2;
     }
 
+    function aiDeckIncludesCard(side, baseId) {
+      const player = state.players[side];
+      if (!player) return false;
+      if ((Number(player.originalDeckCounts?.[baseId]) || 0) > 0) return true;
+      return [...player.hand, ...player.deck, ...player.trash]
+        .some((card) => card?.baseId === baseId);
+    }
+
     function isAiYocchanHyperCarryStrategyActive(side = "opponent") {
-      const counts = state.players[side]?.originalDeckCounts || {};
-      const drawCount = ["alpha", "onigiri_draw", "fire_touch", "sage_legacy"]
-        .reduce((total, baseId) => total + (Number(counts[baseId]) || 0), 0);
-      return (Number(counts.yocchan) || 0) >= 2
-        && (Number(counts.trpg_member) || 0) >= 2
-        && (Number(counts.king_ghidorah_bed) || 0) >= 2
-        && drawCount >= 6;
+      return aiDeckIncludesCard(side, "yocchan");
+    }
+
+    function isAiCafeteriaVampireStrategyActive(side = "opponent") {
+      return aiDeckIncludesCard(side, "cafeteria")
+        && aiDeckIncludesCard(side, "apprentice_vampire");
+    }
+
+    function aiDeckCardCount(side, baseId) {
+      const player = state.players[side];
+      if (!player) return 0;
+      const originalCount = Number(player.originalDeckCounts?.[baseId]) || 0;
+      if (originalCount > 0) return originalCount;
+      return [...player.hand, ...player.deck, ...player.trash]
+        .filter((card) => card?.baseId === baseId).length;
+    }
+
+    function isAiCrabVictoryStrategyActive(side = "opponent") {
+      return Object.entries(CRAB_VICTORY_REQUIRED_COUNTS)
+        .every(([baseId, required]) => aiDeckCardCount(side, baseId) >= required);
+    }
+
+    function getAiCrabVictoryPlan(side = "opponent") {
+      const player = state.players[side];
+      const heldCounts = Object.fromEntries(CRAB_SET_IDS.map((baseId) => [
+        baseId,
+        player?.hand.filter((card) => card.baseId === baseId).length || 0
+      ]));
+      const missingCounts = Object.fromEntries(Object.entries(CRAB_VICTORY_REQUIRED_COUNTS).map(([baseId, required]) => [
+        baseId,
+        Math.max(0, required - (heldCounts[baseId] || 0))
+      ]));
+      return {
+        active: isAiCrabVictoryStrategyActive(side),
+        heldCounts,
+        missingCounts,
+        missingTotal: Object.values(missingCounts).reduce((total, count) => total + count, 0),
+        complete: Object.values(missingCounts).every((count) => count === 0),
+        countdownActive: player?.crabCountdown !== null && player?.crabCountdown !== undefined
+      };
+    }
+
+    function isAiProtectedCrabCard(side, card) {
+      return Boolean(card && CRAB_SET_IDS.includes(card.baseId) && isAiCrabVictoryStrategyActive(side));
+    }
+
+    function cafeteriaProjectedCardCost(card) {
+      if (isCafeteriaEnvironmentActive()) return effectiveCardCost(card);
+      const discountByBaseId = {
+        cafeteria_lady: 1,
+        chen_san: 2,
+        tissue_distributor: 2,
+        apprentice_vampire: 3,
+        impossible_high_note: 3
+      };
+      return Math.max(0, effectiveCardCost(card) - (discountByBaseId[card?.baseId] || 0));
+    }
+
+    function getAiCafeteriaVampirePlan(side = "opponent") {
+      const ai = state.players[side];
+      const active = isAiCafeteriaVampireStrategyActive(side);
+      const cafeteria = ai?.hand.find((card) => card.baseId === "cafeteria") || null;
+      const followUps = (ai?.hand || [])
+        .filter((card) => ["cafeteria_lady", "curry_treater", "chen_san", "tissue_distributor", "apprentice_vampire", "impossible_high_note", "vampire"].includes(card.baseId))
+        .sort((a, b) => {
+          const aPriority = a.baseId === "apprentice_vampire" ? 1 : 0;
+          const bPriority = b.baseId === "apprentice_vampire" ? 1 : 0;
+          return bPriority - aPriority || cafeteriaProjectedCardCost(a) - cafeteriaProjectedCardCost(b);
+        });
+      const bestFollowUp = followUps[0] || null;
+      const openSeatCount = ai?.board?.seats
+        .filter((card, index) => !card && isBoardSlotOpen(side, "seat", index)).length || 0;
+      const comboCost = cafeteria && bestFollowUp
+        ? effectiveCardCost(cafeteria) + cafeteriaProjectedCardCost(bestFollowUp)
+        : Infinity;
+      const attackWindow = active
+        && !isCafeteriaEnvironmentActive()
+        && cafeteria
+        && bestFollowUp
+        && openSeatCount > 0
+        && ai.maxWill >= 4
+        && comboCost <= ai.will;
+      return { active, cafeteria, followUps, bestFollowUp, openSeatCount, comboCost, attackWindow };
     }
 
     function aiYocchanCardsInHand(side = "opponent") {
@@ -25311,14 +25424,30 @@
       const readyBoardDamage = aiBoardFaceDamage(side, { readyOnly: true }).max;
       const desiredHandCount = Math.max(0, Math.min(2 - yocchansPlayedThisTurn.length, handYocchans.length));
       const selectedYocchans = handYocchans.slice(0, desiredHandCount);
-      const selectedDamage = selectedYocchans.reduce((total, card) => total + Math.max(0, card.attack || 0), 0);
+      const selectedDamage = selectedYocchans.reduce((total, card) => (
+        total + Math.max(0, card.attack || 0) * aiAttackHitFactor(card)
+      ), 0);
       const requiredWill = selectedYocchans.reduce((total, card) => total + effectiveCardCost(card), 0);
       const hasAttention = listAttentionCards(targetSide).length > 0;
       const turn = Number(ai.turnsTaken) || 0;
-      const canAfford = selectedYocchans.length > 0 && requiredWill <= ai.will;
+      const openSeatCount = ai.board.seats
+        .filter((card, index) => !card && isBoardSlotOpen(side, "seat", index)).length;
+      const canAfford = selectedYocchans.length > 0
+        && requiredWill <= ai.will
+        && openSeatCount >= selectedYocchans.length;
       const lethal = !hasAttention && readyBoardDamage + selectedDamage >= enemy.life;
+      const enemyCount = listBoardRefs(targetSide).length;
+      const grownForAttack = selectedDamage >= 8;
+      const explosiveAttackWindow = turn >= 4
+        && selectedDamage >= Math.max(10, enemy.life * 0.55)
+        && enemyCount <= 2;
+      const pressureWindow = turn >= 6
+        && grownForAttack
+        && (enemyCount <= 2
+          || readyBoardDamage + selectedDamage >= enemy.life * 0.55
+          || listBoardRefs(side).length > enemyCount);
       const shouldDeploy = canAfford && !hasAttention
-        && (lethal && turn >= 8 || turn >= 10);
+        && (lethal || explosiveAttackWindow || pressureWindow || (turn >= 9 && selectedDamage >= 6));
       return {
         handYocchans,
         yocchansPlayedThisTurn,
@@ -25327,8 +25456,12 @@
         readyBoardDamage,
         selectedDamage,
         hasAttention,
+        enemyCount,
+        openSeatCount,
         turn,
         lethal,
+        explosiveAttackWindow,
+        pressureWindow,
         shouldDeploy
       };
     }
@@ -25452,10 +25585,128 @@
       return isTrainingAiVsAi() && state.phase === "battle" && state.currentSide === "player" && !state.gameOver;
     }
 
+    function isCpuControlledBattleSide(side) {
+      if (isOnlineBattle()) return false;
+      return side === "opponent" || (side === "player" && isTrainingAiVsAi());
+    }
+
+    function trainingAiChoiceCardScore(side, card) {
+      if (!card) return -Infinity;
+      let score = Math.max(0, effectiveCardCost(card)) * 0.8
+        + Math.max(0, card.attack || 0) * 1.2
+        + Math.max(0, card.hp || 0) * 0.7;
+      if (AI_DRAW_OR_SEARCH_CARD_IDS.has(card.baseId)) score += 8;
+      if (AI_TACTICAL_ITEM_IDS.has(card.baseId)) score += 5;
+      if (card.evolutionFrom) score += 5;
+      if (isAiProtectedCrabCard(side, card)) score += 1000;
+      if (isAiYocchanHyperCarryStrategyActive(side) && card.baseId === "yocchan") score += 1000;
+      if (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) || card.baseId === "ultimate_yuta") score += 100;
+      if (card.unusable) score -= 40;
+      return score;
+    }
+
+    function chooseTrainingAiCardChoiceIds(side, choice) {
+      const selectable = choice.cards.filter((card) => (
+        !choice.selectableIds || choice.selectableIds.includes(card.instanceId)
+      ));
+      if (selectable.length === 0) return [];
+      if (choice.mode === "logic_hunter") {
+        const target = chooseAiOpponentHandDiscardTarget(selectable, oppositeSide(side));
+        return target ? [target.instanceId] : [];
+      }
+      if (choice.mode === "summer_teacher") {
+        const summer = getHandCard(side, choice.itemId);
+        const selectedBaseId = chooseSummerTeacherEffectForAi(side, summer);
+        const selected = selectable.find((card) => card.baseId === selectedBaseId) || selectable[0];
+        return selected ? [selected.instanceId] : [];
+      }
+      const keepOrGainModes = new Set([
+        "course_registration", "course_registration_draw", "go_away", "happy_experience",
+        "paired_existence", "raptor_temple_source", "raptor_temple_target", "title_match",
+        "music_detergent", "sage_legacy", "thin_item_keep"
+      ]);
+      const sorted = [...selectable].sort((a, b) => {
+        const difference = trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
+        return keepOrGainModes.has(choice.mode) ? difference : -difference;
+      });
+      const count = Math.min(sorted.length, keepOrGainModes.has(choice.mode) ? choice.max : choice.min);
+      return sorted.slice(0, Math.max(choice.min, count)).map((card) => card.instanceId);
+    }
+
+    function resolveTrainingAiPendingSelections(side = "player") {
+      if (side !== "player" || !isTrainingAiVsAi() || state.currentSide !== side || state.gameOver) return false;
+      let resolvedAny = false;
+      let safety = 0;
+      while (safety < 8) {
+        safety += 1;
+        if (state.pendingCardChoice) {
+          const selectedIds = chooseTrainingAiCardChoiceIds(side, state.pendingCardChoice);
+          if (selectedIds.length < state.pendingCardChoice.min) break;
+          state.pendingCardChoice.selectedIds = selectedIds;
+          confirmCardChoiceSelection();
+          resolvedAny = true;
+          continue;
+        }
+        if (state.pendingThreeGestures) {
+          const selectedIds = [...state.pendingThreeGestures.revealed]
+            .sort((a, b) => trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a))
+            .slice(0, 3)
+            .map((card) => card.instanceId);
+          if (selectedIds.length < 3) break;
+          state.pendingThreeGestures.selectedIds = selectedIds;
+          confirmThreeGesturesSelection();
+          resolvedAny = true;
+          continue;
+        }
+        if (state.pendingAttendTarget?.owner === side && !state.pendingAttendTarget.awaitingRemote) {
+          const candidates = effectTargetEntries(side, state.pendingAttendTarget.targetOwner);
+          const target = candidates.sort((a, b) => (
+            scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref)
+          ))[0];
+          if (!target) break;
+          resolveAttendTargetChoice(side, target.ref, false);
+          resolvedAny = true;
+          continue;
+        }
+        if (state.pendingHandDiscardItem) {
+          const item = getHandCard(side, state.pendingHandDiscardItem.itemId);
+          const candidates = state.players[side].hand
+            .filter((card) => card.instanceId !== item?.instanceId)
+            .sort((a, b) => trainingAiChoiceCardScore(side, a) - trainingAiChoiceCardScore(side, b));
+          const target = state.pendingHandDiscardItem.mode === "utaFusion"
+            ? candidates.filter((card) => canFuseUtaMaterial(side, item, card))
+              .sort((a, b) => utaFusionMaterialEntries(b).length - utaFusionMaterialEntries(a).length)[0]
+            : candidates[0];
+          if (!item || !target) break;
+          if (state.pendingHandDiscardItem.mode === "utaFusion") castUtaFusion(side, item, target, false);
+          else castPairedExistence(side, item, target, false);
+          resolvedAny = true;
+          continue;
+        }
+        break;
+      }
+      if (resolvedAny) render();
+      return resolvedAny;
+    }
+
     function trainingYocchanPlayPriority(side, card) {
-      if (!isAiYocchanHyperCarryStrategyActive(side)) return 0;
       const ai = state.players[side];
-      if (card.baseId === "trpg_member") {
+      const cafeteriaPlan = getAiCafeteriaVampirePlan(side);
+      if (card.baseId === "cafeteria" && cafeteriaPlan.active) {
+        return cafeteriaPlan.attackWindow ? 980 : -900;
+      }
+      if (card.baseId === "apprentice_vampire" && cafeteriaPlan.active) {
+        if (isCafeteriaEnvironmentActive()) return 950;
+        if (cafeteriaPlan.cafeteria) return -900;
+      }
+      if (card.baseId === "tissue_distributor" && isCafeteriaEnvironmentActive()) {
+        const vampireCount = listBoardRefs(side)
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((fieldCard) => fieldCard?.type === "vampire").length;
+        if (vampireCount > 0) return 800 + vampireCount * 10;
+      }
+      if (!isAiYocchanHyperCarryStrategyActive(side)) return 0;
+      if (card.baseId === "trpg_member" && aiDeckIncludesCard(side, "trpg_member")) {
         const needsSearch = aiYocchanCardsInHand(side).length === 0 && !aiHasUsedTrpgMember(side);
         return needsSearch && ai.turnsTaken >= 3 ? 900 : -900;
       }
@@ -25495,40 +25746,53 @@
     }
 
     function scoreTrainingYocchanItem(side, item) {
-      if (!isAiYocchanHyperCarryStrategyActive(side) || item?.type !== "item" || item.unusable) return -Infinity;
+      if (item?.type !== "item" || item.unusable) return -Infinity;
       const ai = state.players[side];
       const targetSide = oppositeSide(side);
       const cost = effectiveCardCost(item);
       if (cost > ai.will) return -Infinity;
+      const crabPlan = getAiCrabVictoryPlan(side);
+      if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return -Infinity;
+      const crabDefenseBonus = crabPlan.active ? (crabPlan.countdownActive ? 26 : 16) : 0;
+      const crabSearchBonus = crabPlan.active && !crabPlan.complete ? 24 : 0;
       const plan = getAiYocchanHyperCarryPlan(side);
-      if (plan.shouldDeploy && ai.will - cost < plan.requiredWill) return -Infinity;
+      const yocchanStrategy = isAiYocchanHyperCarryStrategyActive(side);
+      if (yocchanStrategy && plan.shouldDeploy && ai.will - cost < plan.requiredWill) return -Infinity;
       const trpg = ai.hand.find((card) => card.baseId === "trpg_member");
-      const needsTurnThreeSearch = ai.turnsTaken >= 3
+      const needsTurnThreeSearch = yocchanStrategy
+        && aiDeckIncludesCard(side, "trpg_member")
+        && ai.turnsTaken >= 3
         && aiYocchanCardsInHand(side).length === 0
         && !aiHasUsedTrpgMember(side)
         && trpg;
       if (needsTurnThreeSearch && ai.will - cost < effectiveCardCost(trpg)) return -Infinity;
       const hasYocchan = aiYocchanCardsInHand(side).length > 0;
       const targets = effectTargetEntries(side, targetSide);
-      if (item.baseId === "scared_me") return scaredMeHighestCurrentHpTargets(side).length ? 70 : -Infinity;
+      if (item.baseId === "scared_me") return scaredMeHighestCurrentHpTargets(side).length ? 70 + crabDefenseBonus : -Infinity;
       if (item.baseId === "green_curry") {
-        const attention = listAttentionCards(targetSide).length;
-        return targets.length >= 2 || attention > 0 ? 55 + attention * 12 : -Infinity;
+        const assessment = aiGreenCurryBoardAssessment(side);
+        return assessment.shouldUse ? assessment.score + crabDefenseBonus : -Infinity;
       }
       if (item.baseId === "king_ghidorah_bed") {
         const dangerous = targets.length >= 4
           || targets.some(({ card }) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3);
-        return ai.turnsTaken >= 8 || dangerous ? 50 : -Infinity;
+        return ai.turnsTaken >= 8 || dangerous ? 50 + crabDefenseBonus : -Infinity;
       }
-      if (item.baseId === "yabe") return targets.length ? 38 : -Infinity;
-      if (item.baseId === "onigiri_draw") return ai.deck.length >= 2 ? 44 : -Infinity;
-      if (item.baseId === "fire_touch") return ai.deck.length >= 3 && ai.life > 4 ? 42 : -Infinity;
-      if (item.baseId === "sage_legacy") return ai.deck.length >= 2 ? 48 : -Infinity;
-      if (item.baseId === "fluid_pasta") return ai.life < currentLifeCap(side) ? 30 : (hasYocchan ? 12 : -Infinity);
-      if (item.baseId === "peaceful_mind") return ai.life <= 15 ? 28 : (hasYocchan ? 10 : -Infinity);
-      if (item.baseId === "dont_worry") return state.actionTurn >= 5 ? (hasYocchan ? 24 : 14) : -Infinity;
-      if (["aggro_army", "ikemasu"].includes(item.baseId)) return hasYocchan ? 22 : 8;
-      return isImmediateItemBaseId(item.baseId) && hasYocchan ? 6 : -Infinity;
+      if (item.baseId === "yabe") return targets.length ? 38 + crabDefenseBonus : -Infinity;
+      if (item.baseId === "onigiri_draw") return ai.deck.length >= 2 ? 44 + crabSearchBonus : -Infinity;
+      if (item.baseId === "fire_touch") return ai.deck.length >= 3 && ai.life > 4 ? 42 + crabSearchBonus : -Infinity;
+      if (item.baseId === "sage_legacy") return ai.deck.length >= 2 ? 48 + crabSearchBonus : -Infinity;
+      if (item.baseId === "water_2l") {
+        const recoverableCrabs = ai.trash.filter((card) => CRAB_SET_IDS.includes(card.baseId)).length;
+        return recoverableCrabs > 0 ? 60 + recoverableCrabs * 6 : -Infinity;
+      }
+      if (item.baseId === "fluid_pasta") return ai.life < currentLifeCap(side) ? 30 + crabDefenseBonus : (hasYocchan ? 12 : -Infinity);
+      if (item.baseId === "peaceful_mind") return ai.life <= 15 ? 28 + crabDefenseBonus : (hasYocchan ? 10 : -Infinity);
+      if (item.baseId === "dont_worry") return state.actionTurn >= 5 ? (hasYocchan ? 24 : 14) + crabDefenseBonus : -Infinity;
+      if (["aggro_army", "ikemasu"].includes(item.baseId)) return (hasYocchan ? 22 : 8) + crabSearchBonus;
+      return isImmediateItemBaseId(item.baseId) && (hasYocchan || crabPlan.active)
+        ? 6 + crabDefenseBonus + crabSearchBonus
+        : -Infinity;
     }
 
     function useTrainingYocchanKingGhidorah(side, item) {
@@ -25540,7 +25804,7 @@
           - ((a.card.attack || 0) * 2 + (a.card.currentHp || 0)));
       const target = targetEntries[0] || null;
       const discard = kingGhidorahBedDiscardCandidates(side, item)
-        .filter((card) => card.baseId !== "yocchan")
+        .filter((card) => card.baseId !== "yocchan" && !isAiProtectedCrabCard(side, card))
         .sort((a, b) => {
           const aUsedTrpg = a.baseId === "trpg_member" && aiHasUsedTrpgMember(side) ? -100 : 0;
           const bUsedTrpg = b.baseId === "trpg_member" && aiHasUsedTrpgMember(side) ? -100 : 0;
@@ -25568,7 +25832,6 @@
     }
 
     async function tryUseTrainingYocchanItems(side) {
-      if (!isAiYocchanHyperCarryStrategyActive(side)) return false;
       let usedAny = false;
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
@@ -25580,6 +25843,7 @@
           .sort((a, b) => b.score - a.score || effectiveCardCost(a.item) - effectiveCardCost(b.item))[0];
         if (!choice || !useTrainingYocchanItem(side, choice.item)) break;
         usedAny = true;
+        resolveTrainingAiPendingSelections(side);
         render();
         await waitForOrderedAttendance();
         await sleep(AI_STEP_DELAY);
@@ -25609,17 +25873,20 @@
       render();
       await sleep(AI_START_DELAY);
       await tryUseTrainingYocchanItems("player");
+      resolveTrainingAiPendingSelections("player");
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
         safety += 1;
         const move = findTrainingAiPlayMove("player");
         if (!move) break;
         placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
+        resolveTrainingAiPendingSelections("player");
         render();
         await waitForOrderedAttendance();
         await sleep(AI_STEP_DELAY);
       }
       await tryUseTrainingYocchanItems("player");
+      resolveTrainingAiPendingSelections("player");
       const attackers = listBoardRefs("player");
       for (const ref of attackers) {
         if (!isTrainingLeftAiActive()) return;
@@ -25639,7 +25906,10 @@
         await sleep(AI_STEP_DELAY);
       }
       state.aiThinking = false;
-      if (isTrainingLeftAiActive()) endTurn({ fromAi: true });
+      if (isTrainingLeftAiActive()) {
+        resolveTrainingAiPendingSelections("player");
+        endTurn({ fromAi: true });
+      }
     }
 
     function aiLifeHealingValue(card) {
@@ -26089,6 +26359,39 @@
       return score;
     }
 
+    function aiGreenCurryBoardAssessment(side = "opponent") {
+      const targetSide = oppositeSide(side);
+      const enemyEntries = effectTargetEntries(side, targetSide);
+      const enemyCards = enemyEntries.map(({ card }) => card);
+      const enemyAttackTotal = enemyCards.reduce((total, card) => (
+        total + Math.max(0, card.attack || 0) * aiAttackHitFactor(card)
+      ), 0);
+      const enemyThreatTotal = enemyEntries.reduce((total, { card, ref }) => (
+        total + Math.max(0, scoreAiEnemyAttendeeThreat(card, ref))
+      ), 0);
+      const highestThreat = enemyEntries.reduce((highest, { card, ref }) => (
+        Math.max(highest, Math.max(0, scoreAiEnemyAttendeeThreat(card, ref)))
+      ), 0);
+      const ownLife = Math.max(1, Number(state.players[side]?.life) || 1);
+      const incomingLethal = enemyAttackTotal >= ownLife;
+      const wideBoard = enemyCards.length >= 4;
+      const heavyPressure = enemyCards.length >= 3
+        && enemyAttackTotal >= Math.max(7, ownLife * 0.45);
+      const valuableBoard = enemyCards.length >= 3 && enemyThreatTotal >= 18;
+      const dangerousCore = enemyCards.length >= 2 && highestThreat >= 13;
+      const shouldUse = incomingLethal || wideBoard || heavyPressure || valuableBoard || dangerousCore;
+      return {
+        shouldUse,
+        enemyCount: enemyCards.length,
+        enemyAttackTotal,
+        enemyThreatTotal,
+        highestThreat,
+        score: shouldUse
+          ? 32 + enemyCards.length * 6 + enemyAttackTotal + Math.min(20, enemyThreatTotal * 0.4)
+          : 0
+      };
+    }
+
     function isAiResourceItem(item) {
       return AI_RESOURCE_ITEM_IDS.has(item.baseId) || CRAB_SET_IDS.includes(item.baseId);
     }
@@ -26138,6 +26441,8 @@
     }
 
     function adjustAiItemScoreForContext(item, score, timing) {
+      const crabPlan = getAiCrabVictoryPlan("opponent");
+      if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return 0;
       if (score <= 0 && !isAiYocchanHyperCarryStrategyActive()) return 0;
       const context = getAiDecisionContext();
       const lethalForecast = getAiLethalForecast();
@@ -26176,6 +26481,15 @@
       }
       if (isEarlyDungeonAi() && isAiDrawItem(item)) {
         adjusted += timing === "beforeBoard" ? 30 : 20;
+      }
+      if (crabPlan.active) {
+        const defensiveItem = AI_REMOVAL_CARD_IDS.has(item.baseId)
+          || ["yabe", "king_ghidorah_bed", "quiet_please", "i_got_it", "sock_block", "scared_me", "abyss", "roar", "bento", "go_home"].includes(item.baseId);
+        if (defensiveItem && score > 0) adjusted += crabPlan.countdownActive ? 30 : 20;
+        if (healing > 0) adjusted += crabPlan.countdownActive ? 24 + healing * 2 : 12 + healing;
+        if (isAiDrawItem(item) && crabPlan.missingTotal > 0) adjusted += 18 + crabPlan.missingTotal * 3;
+        if (item.baseId === "water_2l" && score > 0) adjusted += 30;
+        if (item.baseId === "dont_worry" && score > 0) adjusted += crabPlan.countdownActive ? 28 : 14;
       }
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId) && isAiUtaStrategyActive()) {
         const target = aiUtaEquipmentTargets("opponent", item)[0];
@@ -26545,6 +26859,12 @@
         return Math.max(1, 3 + linePotential(friendlySeats) - linePotential(enemySeats) * 0.6 + replacementBonus);
       }
       if (card.baseId === "cafeteria") {
+        const cafeteriaPlan = getAiCafeteriaVampirePlan("opponent");
+        if (cafeteriaPlan.active) {
+          if (!cafeteriaPlan.attackWindow) return -100;
+          const apprenticeBonus = cafeteriaPlan.bestFollowUp?.baseId === "apprentice_vampire" ? 18 : 0;
+          return 35 + apprenticeBonus + cafeteriaPlan.followUps.length * 4 + replacementBonus;
+        }
         const cafeteriaCards = state.players.opponent.hand.filter((handCard) =>
           ["cafeteria_lady", "curry_treater", "chen_san", "dry_meal_ticket", "impossible_high_note"].includes(handCard.baseId)).length;
         return 4 + cafeteriaCards * 3 + (state.players.opponent.life < 20 ? 2 : 0) + replacementBonus;
@@ -26766,7 +27086,9 @@
         return cafeteriaSynergy > 0 ? 7 + cafeteriaSynergy * 2 : 2;
       }
       if (item.baseId === "full_throttle") {
-        const disposableItems = opponent.hand.filter((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId).length;
+        const disposableItems = opponent.hand.filter((handCard) => handCard.type === "item"
+          && handCard.instanceId !== item.instanceId
+          && !isAiProtectedCrabCard("opponent", handCard)).length;
         const enemyThreat = enemyCards.reduce((total, card) => total + scoreAiEnemyAttendeeThreat(card), 0);
         return disposableItems > 0 && enemyCards.length > 0 ? 3 + Math.min(disposableItems, 5) * 2 + Math.min(8, enemyThreat * 0.25) : 0;
       }
@@ -26802,7 +27124,7 @@
       if (item.baseId === "fluid_pasta") return opponent.life < 20 ? 5 + Math.min(6, 20 - opponent.life) : 0;
       if (item.baseId === "water_2l") {
         const crabTrashCount = opponent.trash.filter((card) => CRAB_SET_IDS.includes(card.baseId)).length;
-        return crabTrashCount > 0 ? 4 + crabTrashCount : 0;
+        return crabTrashCount > 0 ? 4 + crabTrashCount * 3 : 0;
       }
       if (item.baseId === "night_pool_water") {
         const openSeats = state.players.opponent.board.seats
@@ -26843,6 +27165,7 @@
         return Math.max(comboThreatScore, handSizeScore);
       }
       if (CRAB_SET_IDS.includes(item.baseId)) {
+        if (isAiCrabVictoryStrategyActive("opponent")) return 0;
         if (hasCompleteCrabSet("opponent") || opponent.crabCountdown !== null) return 0;
         return opponent.life < 20 ? 5 + (20 - opponent.life) : 0;
       }
@@ -26918,8 +27241,7 @@
         return targets > 0 ? 5 + targets * 2 : 0;
       }
       if (item.baseId === "green_curry") {
-        const enemyValue = enemyCards.reduce((total, card) => total + (card.attack || 0) + (card.currentHp || 0), 0);
-        return enemyCards.length >= 2 ? 8 + enemyValue : 0;
+        return aiGreenCurryBoardAssessment("opponent").score;
       }
       if (item.baseId === "yakiniku") return friendlyCards.length > 0 ? 5 + friendlyCards.length : 0;
       if (item.baseId === "panpan") return friendlyCards.length > 0 && enemyCards.length > 0 ? 8 : 0;
@@ -26956,9 +27278,11 @@
         + Math.max(0, card.hp || 0) * 0.15
         + (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) ? 8 : 0)
         + (card.baseId === "ultimate_yuta" ? 100 : 0)
+        + (isAiProtectedCrabCard("opponent", card) ? 200 : 0)
         + (isAiYocchanHyperCarryStrategyActive() && card.baseId === "yocchan" ? 100 : 0)
         + (isAiYocchanHyperCarryStrategyActive() && aiHasUsedTrpgMember() && card.baseId === "trpg_member" ? -30 : 0);
       const discard = kingGhidorahBedDiscardCandidates("opponent", item)
+        .filter((card) => !isAiProtectedCrabCard("opponent", card))
         .sort((a, b) => discardValue(a) - discardValue(b))[0] || null;
       const damageKills = (card) => previewFinalDamageToCard(card, 2, item) >= card.currentHp
         && !(card.baseId === "rebirth_student" && !card.rebirthUsed && canUsePrintedCardEffects(card));
@@ -27043,7 +27367,9 @@
       }
       if (item.baseId === "full_throttle") {
         const discardable = state.players.opponent.hand
-          .filter((handCard) => handCard.type === "item" && handCard.instanceId !== item.instanceId)
+          .filter((handCard) => handCard.type === "item"
+            && handCard.instanceId !== item.instanceId
+            && !isAiProtectedCrabCard("opponent", handCard))
           .sort((a, b) => baseScoreAiItem(a) - baseScoreAiItem(b));
         const targets = effectTargetEntries("opponent", "player")
           .sort((a, b) => scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref));
@@ -27366,6 +27692,11 @@
       }
       if (state.currentSide === "opponent" && !fromAi) return;
       const endingSide = state.currentSide;
+      if (fromAi && needsMeguroHandChoice(endingSide) && !options.meguroDiscardId) {
+        const discard = [...state.players[endingSide].hand]
+          .sort((a, b) => trainingAiChoiceCardScore(endingSide, a) - trainingAiChoiceCardScore(endingSide, b))[0];
+        options = { ...options, meguroDiscardId: discard?.instanceId || null };
+      }
       if (endingSide === "player" && needsMeguroHandChoice("player") && !options.meguroDiscardId) {
         openCardChoice({
           mode: "meguro_end_turn",
@@ -32144,12 +32475,15 @@
           addLog(`${card.name}の効果：手札がないため不発になりました。`);
         } else if (Array.isArray(options.badStudentDiscardIds) && options.badStudentDiscardIds.length > 0) {
           resolveBadStudentDiscardChoice(side, options.badStudentDiscardIds, card, { renderAfter: false });
-        } else if (side === "player") {
+        } else if (side === "player" && !isCpuControlledBattleSide(side)) {
           openBadStudentDiscardChoice(side, card);
         } else if (isOnlineHost() && state.online.isHandlingRemoteCommand && requestRemoteBadStudentDiscardChoice(side, card, options.commandId || "")) {
           addLog(`${card.name}の効果：相手が校外エリアへ送る手札を選んでいます。`);
         } else {
-          const discardIds = shuffle(state.players[side].hand).slice(0, discardCount).map((handCard) => handCard.instanceId);
+          const discardIds = [...state.players[side].hand]
+            .sort((a, b) => trainingAiChoiceCardScore(side, a) - trainingAiChoiceCardScore(side, b))
+            .slice(0, discardCount)
+            .map((handCard) => handCard.instanceId);
           resolveBadStudentDiscardChoice(side, discardIds, card, { renderAfter: false });
         }
       }
@@ -32327,7 +32661,7 @@
         const opponentHand = state.players[opponent].hand;
         if (opponentHand.length === 0) {
           addLog(`${card.name}の効果：相手の手札がないため不発になりました。`);
-        } else if (side === "player" && !onlineCanSendCommand()) {
+        } else if (side === "player" && !onlineCanSendCommand() && !isCpuControlledBattleSide(side)) {
           openCardChoice({
             mode: "logic_hunter",
             title: "校外エリアへ送る相手の手札を選んでください",
@@ -32341,7 +32675,7 @@
         } else if (isOnlineHost() && state.online.isHandlingRemoteCommand && requestRemoteLogicHunterChoice(side, card, options.commandId || "")) {
           addLog(`${card.name}の効果：相手が校外エリアへ送る手札を選んでいます。`);
         } else {
-          const target = side === "opponent" && !isOnlineBattle()
+          const target = isCpuControlledBattleSide(side)
             ? chooseAiOpponentHandDiscardTarget(opponentHand, opponent)
             : opponentHand[Math.floor(Math.random() * opponentHand.length)];
           discardOpponentHandCardById(side, target.instanceId, card, false);
@@ -32546,7 +32880,7 @@
       }
 
       // AIだけは従来どおり、攻撃力の高い出席者を優先して選ぶ。
-      if (side === "opponent" && !state.online.isHandlingRemoteCommand) {
+      if (isCpuControlledBattleSide(side) && !state.online.isHandlingRemoteCommand) {
         const targetRef = findAttackLockTarget(targetOwner, side) || candidates[0].ref;
         return resolveKansaiVoiceTarget(side, sourceCard, targetRef, false);
       }
@@ -32570,7 +32904,7 @@
       const targetOwner = oppositeSide(side);
       const candidates = effectTargetEntries(side, targetOwner);
       if (candidates.length === 0) return false;
-      if (side === "opponent" && !state.online.isHandlingRemoteCommand) {
+      if (isCpuControlledBattleSide(side) && !state.online.isHandlingRemoteCommand) {
         const targetRef = findAttackLockTarget(targetOwner, side) || candidates[0].ref;
         return resolveSmallOmataTarget(side, sourceCard, targetRef, false);
       }
@@ -34280,7 +34614,7 @@
           || null;
         return resolveSageLegacyChoice(side, item, selectedId, renderAfter);
       }
-      if (item.baseId === "three_gestures" && side === "player" && !isDeckToHandLocked()) {
+      if (item.baseId === "three_gestures" && side === "player" && !isCpuControlledBattleSide(side) && !isDeckToHandLocked()) {
         openThreeGesturesSelection(item);
         return true;
       }
@@ -34630,7 +34964,7 @@
         let keepIndexes = [0, 1, 2];
         if (revealed.length === 0) {
           resultText = "山梨最低賃金2円の効果により、デッキからカードを手札に加えられませんでした。";
-        } else if (side === "player" && typeof window !== "undefined") {
+        } else if (side === "player" && !isCpuControlledBattleSide(side) && typeof window !== "undefined") {
           const listText = revealed.map((card, index) => `${index + 1}: ${card.name}`).join("\n");
           const input = window.prompt(`手札に加えるカード番号を3つ、カンマ区切りで入力してください。\n${listText}`, "1,2,3");
           const parsed = String(input || "")
@@ -34941,7 +35275,7 @@
         && (entry.zone !== "deck" || !isDeckToHandLocked()));
       if (candidates.length === 0) return 0;
       let selectedEntries = [];
-      if (side === "player" && typeof window !== "undefined") {
+      if (side === "player" && !isCpuControlledBattleSide(side) && typeof window !== "undefined") {
         const listText = candidates
           .slice(0, 60)
           .map((entry, index) => `${index + 1}: ${entry.card.name} (${entry.zone === "deck" ? "山札" : "校外"})`)
@@ -40864,7 +41198,7 @@
           <div class="deck-detail-stat">タイプ<br>${escapeHtml(deckTypeSummary(counts))}</div>
           ${specialty ? `<div class="deck-detail-stat">専攻<br>${escapeHtml(specialty.name)}</div>` : ""}
         </div>
-        ${deckCurveHtml(counts)}
+        ${options.showCurve === false ? "" : deckCurveHtml(counts)}
         ${saved?.theme ? `<p>${escapeHtml(saved.theme)}</p>` : ""}
         ${cards}
       `;
@@ -41148,7 +41482,7 @@
         : `${onlineDeckFormatDefinition(format).groupLabel}から使用するデッキを選んでください。同じデッキ同士でも対戦できます。`;
       elements.soloDeckGrid.classList.toggle("hidden", showingSelectedDeck);
       elements.soloDeckDetail.classList.toggle("hidden", !preview);
-      elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded })}
+      elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded, showCurve: false })}
         <div class="deck-library-detail-actions"><button class="button secondary" type="button" data-solo-view>${selection.previewExpanded ? "内容を閉じる" : "内容を見る"}</button></div>` : "";
       elements.soloDeckDetail.querySelector("[data-solo-view]")?.addEventListener("click", () => {
         selection.previewExpanded = !selection.previewExpanded;
@@ -44975,7 +45309,12 @@
       resolveKingGhidorahBed,
       planAiKingGhidorahBed,
       isAiYocchanHyperCarryStrategyActive,
+      isAiCafeteriaVampireStrategyActive,
+      isAiCrabVictoryStrategyActive,
+      getAiCrabVictoryPlan,
       getAiYocchanHyperCarryPlan,
+      getAiCafeteriaVampirePlan,
+      aiGreenCurryBoardAssessment,
       chooseAiMulliganReturnIds,
       scoreAiPlacement,
       scoreAiItem,
@@ -44984,8 +45323,11 @@
       findTrainingAiPlayMove,
       runOpponentAI,
       runTrainingLeftAI,
+      resolveTrainingAiPendingSelections,
       scoreTrainingYocchanItem,
       useAiItem,
+      endTurn,
+      castImmediateItem,
       confirmCardChoiceSelection,
       preserveOnlineCourseRegistrationChoice,
       restoreOnlineCourseRegistrationChoice,

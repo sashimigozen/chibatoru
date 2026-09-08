@@ -62,6 +62,138 @@ test("専用デッキを判別し、マリガンで中核とサーチを優先�
   expect(result.returned).toEqual(["trpg_member", "general_teacher", "king_ghidorah_bed"]);
 });
 
+test("デッキ名や固定構成ではなく、よっちゃんを採用していれば手札育成と攻め時を判断する", async ({ page }) => {
+  await setup(page, { turn: 6, actionTurn: 11 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const ai = api.state.players.opponent;
+    ai.originalDeckCounts = { yocchan: 1, general_student: 39 };
+    ai.turnsTaken = 6;
+    ai.will = ai.maxWill = 4;
+    const yocchan = api.createCardFromBase("yocchan", "opponent");
+    yocchan.attack = 8;
+    yocchan.hp = yocchan.maxHp = yocchan.currentHp = 9;
+    const general = api.createCardFromBase("general_student", "opponent");
+    ai.hand = [yocchan, general];
+    const returned = new Set(api.chooseAiMulliganReturnIds(ai.hand));
+    const plan = api.getAiYocchanHyperCarryPlan();
+    return {
+      active: api.isAiYocchanHyperCarryStrategyActive(),
+      keepsYocchan: !returned.has(yocchan.instanceId),
+      attackWindow: plan.shouldDeploy,
+      move: api.findAiPlayMove()?.card.baseId || null
+    };
+  });
+  expect(result).toEqual({
+    active: true,
+    keepsYocchan: true,
+    attackWindow: true,
+    move: "yocchan"
+  });
+});
+
+test("食堂と見習いヴァンパイアを採用した任意のデッキで4戦意コンボを優先する", async ({ page }) => {
+  await setup(page, { turn: 4, actionTurn: 7 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const ai = api.state.players.opponent;
+    ai.originalDeckCounts = { cafeteria: 1, apprentice_vampire: 1, general_student: 38 };
+    ai.turnsTaken = 4;
+    ai.will = ai.maxWill = 4;
+    const cafeteria = api.createCardFromBase("cafeteria", "opponent");
+    const apprentice = api.createCardFromBase("apprentice_vampire", "opponent");
+    ai.hand = [cafeteria, apprentice];
+    const returned = new Set(api.chooseAiMulliganReturnIds(ai.hand));
+    const firstMove = api.findAiPlayMove();
+    api.placeCardFromHand("opponent", firstMove.card.instanceId, firstMove.zone, firstMove.owner, firstMove.index, false);
+    const secondMove = api.findAiPlayMove();
+    return {
+      active: api.isAiCafeteriaVampireStrategyActive(),
+      keptBoth: !returned.has(cafeteria.instanceId) && !returned.has(apprentice.instanceId),
+      firstMove: firstMove?.card.baseId || null,
+      secondMove: secondMove?.card.baseId || null,
+      environment: api.state.environment?.baseId || null
+    };
+  });
+  expect(result).toEqual({
+    active: true,
+    keptBoth: true,
+    firstMove: "cafeteria",
+    secondMove: "apprentice_vampire",
+    environment: "cafeteria"
+  });
+});
+
+test("食堂は同じターンに展開できる準備が整うまで温存する", async ({ page }) => {
+  await setup(page, { turn: 3, actionTurn: 5 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const ai = api.state.players.opponent;
+    ai.originalDeckCounts = { cafeteria: 1, apprentice_vampire: 1, general_student: 38 };
+    ai.turnsTaken = 3;
+    ai.will = ai.maxWill = 3;
+    ai.hand = [
+      api.createCardFromBase("cafeteria", "opponent"),
+      api.createCardFromBase("apprentice_vampire", "opponent")
+    ];
+    return {
+      attackWindow: api.getAiCafeteriaVampirePlan().attackWindow,
+      move: api.findAiPlayMove()?.card.baseId || null
+    };
+  });
+  expect(result).toEqual({ attackWindow: false, move: null });
+});
+
+test("グリーンカレーは弱い盤面では温存し、強い盤面への切り返しに使う", async ({ page }) => {
+  await setup(page, { turn: 7, actionTurn: 13 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const state = api.state;
+    const curry = api.createCardFromBase("green_curry", "opponent");
+    const placeEnemy = (count) => {
+      state.players.player.board.seats = Array(9).fill(null);
+      for (let index = 0; index < count; index += 1) {
+        const card = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+        card.attack = 3;
+        card.currentHp = card.maxHp = 3;
+        state.players.player.board.seats[index] = card;
+      }
+    };
+    placeEnemy(2);
+    const weak = api.scoreAiItem(curry);
+    placeEnemy(4);
+    const strong = api.scoreAiItem(curry);
+    return {
+      weak,
+      strong,
+      shouldUseStrong: api.aiGreenCurryBoardAssessment().shouldUse
+    };
+  });
+  expect(result.weak).toBe(0);
+  expect(result.strong).toBeGreaterThan(0);
+  expect(result.shouldUseStrong).toBe(true);
+});
+
+test("左側CPUも特定デッキに限らずキングギドラベッドを盤面処理として評価する", async ({ page }) => {
+  await setup(page, { turn: 8, actionTurn: 15 });
+  const score = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const left = api.state.players.player;
+    left.originalDeckCounts = { king_ghidorah_bed: 1, general_student: 39 };
+    left.turnsTaken = 8;
+    left.will = left.maxWill = 4;
+    const king = api.createCardFromBase("king_ghidorah_bed", "player");
+    left.hand = [king, api.createCardFromBase("general_student", "player")];
+    for (let index = 0; index < 4; index += 1) {
+      const enemy = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+      enemy.currentHp = enemy.maxHp = 2;
+      api.state.players.opponent.board.seats[index] = enemy;
+    }
+    return api.scoreTrainingYocchanItem("player", king);
+  });
+  expect(score).toBeGreaterThan(0);
+});
+
 test("3ターン目はTRPGサークルメンバーを優先し、よっちゃんは温存する", async ({ page }) => {
   await setup(page, { turn: 3, actionTurn: 5 });
   const result = await page.evaluate(() => {

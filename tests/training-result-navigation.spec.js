@@ -215,6 +215,7 @@ test("BATTLEボタンから準備完了時の「開始」表示を削除する",
   await expect(page.locator("#soloDeckPickerTitle")).toHaveText("左側の使用デッキ");
   await expect(page.locator("#soloDeckGrid")).toBeHidden();
   await expect(page.locator("#soloDeckDetail")).toContainText("BATTLE表示確認用");
+  await expect(page.locator("#soloDeckDetail .deck-curve-card")).toHaveCount(0);
   await expect(page.locator('#soloDeckDetail [data-library-card="general_student"]')).toContainText("x40");
   await page.locator("#soloDeckPickerCloseButton").click();
   await page.locator("#soloAiSlot").click();
@@ -222,6 +223,7 @@ test("BATTLEボタンから準備完了時の「開始」表示を削除する",
   await page.locator("#soloAiDeckConfirmButton").click();
   await expect(page.locator("#soloDeckPickerTitle")).toHaveText("右側CPUの使用デッキ");
   await expect(page.locator("#soloDeckGrid")).toBeHidden();
+  await expect(page.locator("#soloDeckDetail .deck-curve-card")).toHaveCount(0);
   await expect(page.locator('#soloDeckDetail [data-library-card="general_student"]')).toContainText("x40");
   await page.locator("#soloDeckPickerCloseButton").click();
   await expect(page.locator("#soloBattleStartButton")).toBeEnabled();
