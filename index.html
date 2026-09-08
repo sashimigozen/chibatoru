@@ -18196,6 +18196,23 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.2",
+        date: "2026年9月9日",
+        summary: "AIがデッキ切れを狙うカード構成と相手の校外を確認し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、環境カードを使い切った後の目黒区図書館を判断するように改善しました。",
+        changes: [
+          {
+            title: "AIのデッキ切れ戦術",
+            before: "AIはDos攻撃とデストロイDos攻撃を個別に評価しており、左側CPUではデッキ切れを狙う順序や耐久を意識した使い方が十分に反映されなかった。",
+            after: "デッキ名に依存せず、Dos攻撃とデストロイDos攻撃を採用している構成を認識する。隙があるときにDos攻撃を使い、校外のDos攻撃を参照して中盤・終盤にデストロイDos攻撃を優先する。左右どちらのCPUにも同じ判断を適用する。"
+          },
+          {
+            title: "AIの環境判断",
+            before: "相手が環境カードを校外へ送り切ったかを確認せず、目黒区図書館を置く時機を判断できなかった。",
+            after: "相手の初期デッキに入っていた環境カードと、現在の環境・相手の校外を照合する。相手が環境カードを使い切るまでは目黒区図書館を温存し、張り替えられにくい時機に使用する。相手の環境が置かれている場合は、環境を張り替える価値も高く評価する。"
+          }
+        ]
+      },
+      {
         version: "ver.0.23.1",
         date: "2026年9月8日",
         summary: "トレーニングのリザルト操作と対戦準備画面を整理し、左右別の累積データと選択デッキの内容を確認しやすくしました。AIはデッキ名ではなく採用カード、手札、盤面からコンボや攻め時、特殊勝利まで判断するように改善し、カード選択が必要な効果で停止する問題も修正しました。",
@@ -25323,6 +25340,82 @@
         && aiDeckIncludesCard(side, "apprentice_vampire");
     }
 
+    function isAiDeckOutStrategyActive(side = "opponent") {
+      return aiDeckIncludesCard(side, "dos_attack")
+        && aiDeckIncludesCard(side, "destroy_dos_attack");
+    }
+
+    function aiOpponentEnvironmentProgress(side = "opponent") {
+      const targetSide = oppositeSide(side);
+      const target = state.players[targetSide];
+      const originalCounts = target?.originalDeckCounts || {};
+      const environmentEntries = Object.entries(originalCounts)
+        .filter(([baseId, count]) => CARD_BASES[baseId]?.type === "environment" && Number(count) > 0);
+      const remaining = environmentEntries.reduce((total, [baseId, count]) => {
+        const trashed = target.trash.filter((card) => card?.baseId === baseId).length;
+        const active = state.environment?.owner === targetSide && state.environment?.baseId === baseId ? 1 : 0;
+        return total + Math.max(0, Number(count) - trashed - active);
+      }, 0);
+      return {
+        total: environmentEntries.reduce((total, [, count]) => total + Number(count), 0),
+        remaining,
+        exhausted: remaining === 0
+      };
+    }
+
+    function aiEnvironmentReplacementBonus(side = "opponent") {
+      return state.environment?.owner === oppositeSide(side) ? 12 : 0;
+    }
+
+    function getAiDeckOutPlan(side = "opponent") {
+      const targetSide = oppositeSide(side);
+      const ai = state.players[side];
+      const target = state.players[targetSide];
+      const dosInTrash = ai?.trash.filter((card) => card?.baseId === "dos_attack").length || 0;
+      const enemyCards = listBoardRefs(targetSide).map(getBoardCardFromRef).filter(Boolean);
+      const incomingAttack = enemyCards.reduce((total, card) => (
+        total + Math.max(0, card.attack || 0) * aiAttackHitFactor(card)
+      ), 0);
+      const safeWindow = enemyCards.length <= 2
+        && incomingAttack < Math.max(5, (Number(ai?.life) || 0) * 0.45);
+      return {
+        active: isAiDeckOutStrategyActive(side),
+        dosInTrash,
+        targetDeckCount: target?.deck.length || 0,
+        enemyCount: enemyCards.length,
+        incomingAttack,
+        safeWindow,
+        environment: aiOpponentEnvironmentProgress(side)
+      };
+    }
+
+    function aiDeckOutItemScore(side, item) {
+      if (!item) return 0;
+      const plan = getAiDeckOutPlan(side);
+      const targetDeckCount = plan.targetDeckCount;
+      if (item.baseId === "dos_attack") {
+        if (targetDeckCount <= 0) return 0;
+        let score = 6 + Math.min(4, targetDeckCount);
+        if (plan.active && plan.dosInTrash === 0) score += 16;
+        if (plan.active && plan.safeWindow) score += 9;
+        if (plan.active && !plan.safeWindow && targetDeckCount > 6) score -= 8;
+        return Math.max(0, score);
+      }
+      if (item.baseId === "destroy_dos_attack") {
+        if (targetDeckCount <= 0) return 0;
+        const millCount = (plan.dosInTrash + 1) * 3;
+        if (targetDeckCount <= millCount) return 50 + millCount;
+        if (plan.dosInTrash <= 0) return 0;
+        const turn = Number(state.players[side]?.turnsTaken) || 0;
+        return 14 + Math.min(24, millCount) + Math.min(8, turn);
+      }
+      if (item.baseId === "handy_jet_engine") {
+        const targetHandCount = state.players[oppositeSide(side)]?.hand.length || 0;
+        return targetHandCount > 0 ? 5 + Math.min(5, targetHandCount) : 0;
+      }
+      return 0;
+    }
+
     function aiDeckCardCount(side, baseId) {
       const player = state.players[side];
       if (!player) return 0;
@@ -25705,6 +25798,14 @@
           .filter((fieldCard) => fieldCard?.type === "vampire").length;
         if (vampireCount > 0) return 800 + vampireCount * 10;
       }
+      if (card.baseId === "meguro_library") {
+        return aiOpponentEnvironmentProgress(side).exhausted
+          ? 700 + aiEnvironmentReplacementBonus(side)
+          : -900;
+      }
+      if (card.type === "environment" && aiEnvironmentReplacementBonus(side) > 0) {
+        return 120 + aiEnvironmentReplacementBonus(side);
+      }
       if (!isAiYocchanHyperCarryStrategyActive(side)) return 0;
       if (card.baseId === "trpg_member" && aiDeckIncludesCard(side, "trpg_member")) {
         const needsSearch = aiYocchanCardsInHand(side).length === 0 && !aiHasUsedTrpgMember(side);
@@ -25757,6 +25858,7 @@
       const crabSearchBonus = crabPlan.active && !crabPlan.complete ? 24 : 0;
       const plan = getAiYocchanHyperCarryPlan(side);
       const yocchanStrategy = isAiYocchanHyperCarryStrategyActive(side);
+      const deckOutStrategy = isAiDeckOutStrategyActive(side);
       if (yocchanStrategy && plan.shouldDeploy && ai.will - cost < plan.requiredWill) return -Infinity;
       const trpg = ai.hand.find((card) => card.baseId === "trpg_member");
       const needsTurnThreeSearch = yocchanStrategy
@@ -25768,6 +25870,10 @@
       if (needsTurnThreeSearch && ai.will - cost < effectiveCardCost(trpg)) return -Infinity;
       const hasYocchan = aiYocchanCardsInHand(side).length > 0;
       const targets = effectTargetEntries(side, targetSide);
+      if (["dos_attack", "destroy_dos_attack", "handy_jet_engine"].includes(item.baseId)) {
+        const deckOutScore = aiDeckOutItemScore(side, item);
+        return deckOutScore > 0 ? deckOutScore + (deckOutStrategy ? 20 : 0) : -Infinity;
+      }
       if (item.baseId === "scared_me") return scaredMeHighestCurrentHpTargets(side).length ? 70 + crabDefenseBonus : -Infinity;
       if (item.baseId === "green_curry") {
         const assessment = aiGreenCurryBoardAssessment(side);
@@ -25790,7 +25896,7 @@
       if (item.baseId === "peaceful_mind") return ai.life <= 15 ? 28 + crabDefenseBonus : (hasYocchan ? 10 : -Infinity);
       if (item.baseId === "dont_worry") return state.actionTurn >= 5 ? (hasYocchan ? 24 : 14) + crabDefenseBonus : -Infinity;
       if (["aggro_army", "ikemasu"].includes(item.baseId)) return (hasYocchan ? 22 : 8) + crabSearchBonus;
-      return isImmediateItemBaseId(item.baseId) && (hasYocchan || crabPlan.active)
+      return isImmediateItemBaseId(item.baseId) && (hasYocchan || crabPlan.active || deckOutStrategy)
         ? 6 + crabDefenseBonus + crabSearchBonus
         : -Infinity;
     }
@@ -26846,7 +26952,12 @@
       if (state.environment?.baseId === card.baseId && card.baseId !== "seat_rules") return -100;
       const friendlySeats = state.players.opponent.board.seats;
       const enemySeats = state.players.player.board.seats;
-      const replacementBonus = state.environment?.owner === "player" ? 4 : 0;
+      const replacementBonus = aiEnvironmentReplacementBonus("opponent");
+      if (card.baseId === "meguro_library") {
+        if (!aiOpponentEnvironmentProgress("opponent").exhausted) return -100;
+        const ownHandCost = Math.max(0, state.players.opponent.hand.length - 2);
+        return 12 + replacementBonus - ownHandCost;
+      }
       if (card.baseId === "classroom") {
         if (!state.environment) return 1;
         return replacementBonus > 0 ? replacementBonus + 3 : 0;
@@ -27137,18 +27248,13 @@
         return enemyHandSize > 4 ? 5 + Math.max(0, enemyHandSize - 4) : 0;
       }
       if (item.baseId === "handy_jet_engine") {
-        const enemyHandSize = state.players.player.hand.length;
-        return enemyHandSize > 0 ? 4 + Math.min(4, enemyHandSize) : 0;
+        return aiDeckOutItemScore("opponent", item);
       }
       if (item.baseId === "dos_attack") {
-        return state.players.player.deck.length > 0 ? 5 + Math.min(3, state.players.player.deck.length) : 0;
+        return aiDeckOutItemScore("opponent", item);
       }
       if (item.baseId === "destroy_dos_attack") {
-        const dosCount = opponent.trash.filter((trashCard) => trashCard.baseId === "dos_attack").length;
-        const millCount = (dosCount + 1) * 3;
-        if (state.players.player.deck.length === 0) return 0;
-        if (state.players.player.deck.length <= millCount) return 30 + millCount;
-        return dosCount > 0 ? 7 + Math.min(15, millCount) : 0;
+        return aiDeckOutItemScore("opponent", item);
       }
       if (item.baseId === "sock_block") {
         const rowTargets = state.players.player.board.seats.filter((card, index) => card && seatRow(index) === 3).length;
@@ -45310,10 +45416,14 @@
       planAiKingGhidorahBed,
       isAiYocchanHyperCarryStrategyActive,
       isAiCafeteriaVampireStrategyActive,
+      isAiDeckOutStrategyActive,
       isAiCrabVictoryStrategyActive,
       getAiCrabVictoryPlan,
       getAiYocchanHyperCarryPlan,
       getAiCafeteriaVampirePlan,
+      getAiDeckOutPlan,
+      aiOpponentEnvironmentProgress,
+      aiDeckOutItemScore,
       aiGreenCurryBoardAssessment,
       chooseAiMulliganReturnIds,
       scoreAiPlacement,
@@ -45321,6 +45431,7 @@
       shouldAiUseItemAtTiming,
       findAiPlayMove,
       findTrainingAiPlayMove,
+      trainingYocchanPlayPriority,
       runOpponentAI,
       runTrainingLeftAI,
       resolveTrainingAiPendingSelections,
