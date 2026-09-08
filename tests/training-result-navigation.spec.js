@@ -192,15 +192,18 @@ test("BATTLEボタンから準備完了時の「開始」表示を削除する",
   const verticalPanelGaps = await page.locator(".training-player-panel").evaluateAll((panels) => panels.map((panel) => {
     const panelRect = panel.getBoundingClientRect();
     const heading = panel.querySelector(".training-player-heading").getBoundingClientRect();
+    const avatar = panel.querySelector(".training-avatar").getBoundingClientRect();
     const deckButton = panel.querySelector(".training-deck-select").getBoundingClientRect();
     return {
       top: Math.round(heading.top - panelRect.top),
-      bottom: Math.round(panelRect.bottom - deckButton.bottom)
+      bottom: Math.round(panelRect.bottom - deckButton.bottom),
+      avatarGap: Math.round(avatar.top - heading.bottom)
     };
   }));
-  verticalPanelGaps.forEach(({ top, bottom }) => {
+  verticalPanelGaps.forEach(({ top, bottom, avatarGap }) => {
     expect(top).toBeLessThanOrEqual(30);
     expect(Math.abs(top - bottom)).toBeLessThanOrEqual(2);
+    expect(avatarGap).toBe(76);
   });
   await page.selectOption("#soloRuleSelect", "chaos");
   await page.locator("#soloPlayerSlot").click();
