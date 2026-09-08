@@ -7757,7 +7757,6 @@
 
     .training-battle-button:not(:disabled) { border-color: #17a5d8; color: #fff; background: #153d54; box-shadow: 0 0 19px rgba(24,181,232,.55); cursor: pointer; }
     .training-battle-button strong { font-size: 21px; font-style: italic; }
-    .training-battle-button span { font-size: 10px; }
     .training-data-button { margin-top: 12px; border: 1px solid #738995; border-radius: 4px; padding: 6px 18px; color: #17384b; background: #fff; font-weight: 1000; cursor: pointer; }
     .training-data-button:disabled { color: #a0adb5; background: #edf1f3; cursor: default; }
     .training-observer-note { width: min(620px, calc(100% - 40px)); margin: 12px auto 0; color: #647886; font-size: 11px; text-align: center; }
@@ -16493,7 +16492,7 @@
           <label class="training-setting-label">手番</label>
           <button class="training-cycle-button" id="soloInitiativeCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloInitiativeLabel">ランダム</strong></button>
           <div class="training-versus">VS</div>
-          <button class="training-battle-button" id="soloBattleStartButton" type="button" disabled><strong>BATTLE!</strong><span id="soloBattleReadyLabel">未準備</span></button>
+          <button class="training-battle-button" id="soloBattleStartButton" type="button" disabled><strong>BATTLE!</strong></button>
           <button class="training-data-button" id="soloTrainingDataButton" type="button" disabled>データ</button>
         </article>
 
@@ -18195,7 +18194,7 @@
       {
         version: "ver.0.23.1",
         date: "2026年9月8日",
-        summary: "トレーニングのリザルト操作を修正し、左右の勝率、カード別マリガン確率、ダメージや回復、盤面残存率などを確認できる累積データ画面へ変更しました。対戦準備画面の注釈と配置も整理しました。",
+        summary: "トレーニングのリザルト操作を修正し、左右の勝率、カード別マリガン確率、ダメージや回復、盤面残存率などを確認できる累積データ画面へ変更しました。対戦準備画面の配置と選択デッキの確認画面も整理しました。",
         changes: [
           {
             title: "トレーニングのリザルト操作",
@@ -18204,13 +18203,18 @@
           },
           {
             title: "トレーニングの累積データ",
-            before: "対戦データは試合ごとの数値が中心で、左右のプレイヤーごとの傾向や、カード単位のマリガン傾向が分かりにくかった。BATTLEボタンには準備完了時に「開始」と表示していた。",
-            after: "左プレイヤーと右プレイヤーを分け、総合勝率、先攻時勝率、後攻時勝率、引き分け率、先攻になった割合、各種平均値を累積表示する。実際に与えた本体・出席者ダメージ、受けたダメージ、本体・出席者の回復量、盤面残存率、出席回数、盤面離脱数、攻撃回数、最大盤面・手札なども左右別に確認できる。カードごとに初手出現率、キープ率、交換率、マリガン後出現率も確認できる。試合ごとの記録は必要なときだけ開いて確認できる。BATTLEボタンの「開始」表示は削除した。"
+            before: "対戦データは試合ごとの数値が中心で、左右のプレイヤーごとの傾向や、カード単位のマリガン傾向が分かりにくかった。BATTLEボタンには準備状況に応じて「開始」や「未準備」という文字も表示していた。",
+            after: "左プレイヤーと右プレイヤーを分け、総合勝率、先攻時勝率、後攻時勝率、引き分け率、先攻になった割合、各種平均値を累積表示する。実際に与えた本体・出席者ダメージ、受けたダメージ、本体・出席者の回復量、盤面残存率、出席回数、盤面離脱数、攻撃回数、最大盤面・手札なども左右別に確認できる。カードごとに初手出現率、キープ率、交換率、マリガン後出現率も確認できる。試合ごとの記録は必要なときだけ開いて確認できる。BATTLEボタンは円の中央に「BATTLE!」だけを表示する。"
           },
           {
             title: "対戦準備画面の表示",
             before: "左右のシルエットの下に不要な注釈があり、シルエットとデッキ操作部がパネルの上側に偏っていた。",
             after: "不要な注釈と説明を削除。使用デッキとデッキ選択の操作部は下枠との余白を上枠に合わせて配置し、ユーザーとCPUの丸いシルエットは直径の半分だけ下へ移動した。"
+          },
+          {
+            title: "選択デッキの確認",
+            before: "「確認」を押した際、デッキ選択一覧と同じ画面内に内容が続いて表示され、選択中のデッキ内容が分かりにくかった。",
+            after: "左右どちらの「確認」からも、現在選択中のデッキの合計枚数、タイプ、戦意カーブ、カード一覧と各枚数を直接確認できるようにした。"
           }
         ]
       },
@@ -19561,7 +19565,6 @@
       soloDeckPickerSubtitle: document.getElementById("soloDeckPickerSubtitle"),
       soloDeckPickerCloseButton: document.getElementById("soloDeckPickerCloseButton"),
       soloBattleStartButton: document.getElementById("soloBattleStartButton"),
-      soloBattleReadyLabel: document.getElementById("soloBattleReadyLabel"),
       soloObserverNote: document.getElementById("soloObserverNote"),
       soloTrainingDataButton: document.getElementById("soloTrainingDataButton"),
       soloTrainingDataOverlay: document.getElementById("soloTrainingDataOverlay"),
@@ -41108,8 +41111,6 @@
       elements.soloPlayerDeckConfirmButton.disabled = !selection.playerDeckName;
       elements.soloAiDeckConfirmButton.disabled = !selection.opponentDeckName;
       elements.soloDeckPicker.classList.toggle("hidden", !selection.pickerOpen);
-      elements.soloDeckPickerTitle.textContent = selection.activeSide === "player" ? "左側のデッキ選択" : "右側CPUのデッキ選択";
-      elements.soloDeckPickerSubtitle.textContent = `${onlineDeckFormatDefinition(format).groupLabel}から使用するデッキを選んでください。同じデッキ同士でも対戦できます。`;
       elements.soloDeckGrid.innerHTML = "";
       if (names.length === 0) {
         const empty = document.createElement("p");
@@ -41138,6 +41139,14 @@
         elements.soloDeckGrid.appendChild(button);
       });
       const preview = decks[selection.previewName];
+      const showingSelectedDeck = Boolean(preview && selection.previewExpanded);
+      elements.soloDeckPickerTitle.textContent = showingSelectedDeck
+        ? (selection.activeSide === "player" ? "左側の使用デッキ" : "右側CPUの使用デッキ")
+        : (selection.activeSide === "player" ? "左側のデッキ選択" : "右側CPUのデッキ選択");
+      elements.soloDeckPickerSubtitle.textContent = showingSelectedDeck
+        ? "現在選択しているデッキの内容です。"
+        : `${onlineDeckFormatDefinition(format).groupLabel}から使用するデッキを選んでください。同じデッキ同士でも対戦できます。`;
+      elements.soloDeckGrid.classList.toggle("hidden", showingSelectedDeck);
       elements.soloDeckDetail.classList.toggle("hidden", !preview);
       elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded })}
         <div class="deck-library-detail-actions"><button class="button secondary" type="button" data-solo-view>${selection.previewExpanded ? "内容を閉じる" : "内容を見る"}</button></div>` : "";
@@ -41155,7 +41164,6 @@
         deckDescriptorForRule(ruleId, selection.opponentDeckName, opponentSaved), opponentSaved.counts || {}, ruleId
       ).valid;
       elements.soloBattleStartButton.disabled = !playerValid || !opponentValid;
-      elements.soloBattleReadyLabel.textContent = playerValid && opponentValid ? "" : "未準備";
       elements.soloTrainingDataButton.disabled = !state.training.series?.matches?.length;
       renderTrainingDataPanel();
     }
