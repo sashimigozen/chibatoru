@@ -7770,11 +7770,40 @@
     .training-replay-overlay.hidden { display: none; }
     .training-picker-dialog,
     .training-data-dialog,
-    .training-replay-dialog { width: min(980px, 100%); max-height: min(86dvh, 760px); overflow: auto; border: 2px solid #2d5369; border-radius: 8px; padding: 20px; background: #f8fbfd; box-shadow: 0 20px 60px rgba(0,0,0,.28); }
+    .training-replay-dialog { width: min(1120px, 100%); max-height: min(86dvh, 760px); overflow: auto; border: 2px solid #2d5369; border-radius: 8px; padding: 20px; background: #f8fbfd; box-shadow: 0 20px 60px rgba(0,0,0,.28); }
     .training-picker-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 16px; }
     .training-picker-head h2 { margin: 0; }
     .training-picker-head p { margin: 5px 0 0; color: #607585; }
     .training-data-content { display: grid; gap: 12px; }
+    .training-data-overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .training-data-overview > div { border: 1px solid #b4c5cf; border-radius: 6px; padding: 10px; background: #fff; text-align: center; }
+    .training-data-overview strong { display: block; color: #0b5f83; font-size: 20px; }
+    .training-player-data-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .training-player-data { border: 2px solid #7fa3b7; border-radius: 8px; padding: 14px; background: #fff; }
+    .training-player-data.player { border-color: #25a9df; }
+    .training-player-data.opponent { border-color: #e08b55; }
+    .training-player-data h3 { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 12px; font-size: 18px; }
+    .training-player-data h3 span { overflow: hidden; color: #667985; font-size: 12px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+    .training-stat-section + .training-stat-section { margin-top: 14px; }
+    .training-stat-section h4 { margin: 0 0 7px; color: #294e63; font-size: 12px; letter-spacing: .04em; }
+    .training-rate-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+    .training-rate-card { border-radius: 5px; padding: 9px; background: #edf3f6; }
+    .training-rate-card span { display: block; color: #536b78; font-size: 11px; font-weight: 900; }
+    .training-rate-card strong { display: block; margin-top: 2px; color: #17384b; font-size: 19px; }
+    .training-rate-card small { color: #6f8089; font-size: 10px; }
+    .training-mulligan-data { margin-top: 13px; border-top: 1px solid #c9d6dd; padding-top: 11px; }
+    .training-mulligan-data h4 { margin: 0 0 8px; font-size: 13px; }
+    .training-mulligan-table-wrap { max-height: 300px; overflow: auto; border: 1px solid #c3d2da; border-radius: 5px; }
+    .training-mulligan-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .training-mulligan-table th,
+    .training-mulligan-table td { border-bottom: 1px solid #d7e1e6; padding: 7px 6px; text-align: right; white-space: nowrap; }
+    .training-mulligan-table thead th { position: sticky; top: 0; z-index: 1; color: #315365; background: #e8f0f4; font-size: 10px; }
+    .training-mulligan-table th:first-child { max-width: 150px; overflow: hidden; text-align: left; text-overflow: ellipsis; }
+    .training-mulligan-table td small { display: block; color: #7a8b94; font-size: 9px; }
+    .training-mulligan-empty { margin: 0; color: #6a7e89; font-size: 12px; }
+    .training-data-history { border-top: 1px solid #b7c8d2; padding-top: 10px; }
+    .training-data-history summary { cursor: pointer; color: #244859; font-weight: 1000; }
+    .training-data-history-list { display: grid; gap: 10px; margin-top: 10px; }
     .training-data-match { border: 1px solid #a8b9c4; border-radius: 6px; padding: 13px; background: #fff; }
     .training-data-match h3 { margin: 0 0 9px; }
     .training-data-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -7795,6 +7824,8 @@
       .training-player-panel, .training-center-panel { min-height: auto; }
       .training-center-panel { grid-row: 1; }
       .training-data-grid { grid-template-columns: 1fr 1fr; }
+      .training-data-overview,
+      .training-player-data-grid { grid-template-columns: 1fr; }
     }
 
     .environment-action-button {
@@ -18165,12 +18196,17 @@
       {
         version: "ver.0.23.1",
         date: "2026年9月8日",
-        summary: "トレーニングのリザルト画面から、対戦データの確認と再戦を正しく操作できるようにしました。",
+        summary: "トレーニングのリザルト操作を修正し、左右の勝率、カード別マリガン確率、ダメージや回復、盤面残存率などを確認できる累積データ画面へ変更しました。",
         changes: [
           {
             title: "トレーニングのリザルト操作",
             before: "リザルトで「データ」を開いて閉じると対戦設定画面へ戻っていた。「再戦」を押しても設定画面が表示されず、対戦設定画面へ戻った後に繰り返し回数の入力画面が表示されていた。",
             after: "「データ」を閉じると元のリザルト画面に戻る。「再戦」を押すとリザルト上に繰り返し回数の入力画面がすぐに表示され、「開始」で指定回数の再戦を開始できる。"
+          },
+          {
+            title: "トレーニングの累積データ",
+            before: "対戦データは試合ごとの数値が中心で、左右のプレイヤーごとの傾向や、カード単位のマリガン傾向が分かりにくかった。BATTLEボタンには準備完了時に「開始」と表示していた。",
+            after: "左プレイヤーと右プレイヤーを分け、総合勝率、先攻時勝率、後攻時勝率、引き分け率、先攻になった割合、各種平均値を累積表示する。実際に与えた本体・出席者ダメージ、受けたダメージ、本体・出席者の回復量、盤面残存率、出席回数、盤面離脱数、攻撃回数、最大盤面・手札なども左右別に確認できる。カードごとに初手出現率、キープ率、交換率、マリガン後出現率も確認できる。試合ごとの記録は必要なときだけ開いて確認できる。BATTLEボタンの「開始」表示は削除した。"
           }
         ]
       },
@@ -20187,6 +20223,7 @@
     function collectTrainingMatchResult(winner) {
       const events = state.analytics?.events || [];
       const actions = events.filter((event) => event.eventType === "action");
+      const effects = events.filter((event) => event.eventType === "effect");
       const cardStats = Object.values(state.analytics?.cardStats || {});
       const sides = ["player", "opponent"];
       const result = {
@@ -20196,34 +20233,93 @@
         life: {},
         lifeDamage: {},
         attendeeDamage: {},
+        totalDamage: {},
+        damageTaken: {},
+        lifeHealing: {},
+        attendeeHealing: {},
+        totalHealing: {},
         played: {},
+        attendance: {},
+        finalBoard: {},
+        boardDepartures: {},
         destroyed: {},
         draws: {},
+        attacks: {},
+        lifeAttacks: {},
+        attendeeAttacks: {},
         maxHand: {},
         maxBoard: {},
         unusedWill: {},
+        mulligan: {},
         cardUses: {},
         actionHistory: actions.map((event) => ({ turn: event.turn, side: event.side, actionType: event.actionType, cardName: event.cardName || "" }))
       };
       sides.forEach((side) => {
         const turnEvents = events.filter((event) => event.eventType === "turn_start" && event.side === side);
+        const mulliganEvent = events.find((event) => event.eventType === "mulligan" && event.side === side);
         const sideStats = cardStats.filter((stats) => stats.side === side);
+        const finalBoard = analyticsBoardSnapshot()[side];
+        const sumEffectAmount = (effectType, predicate, valueKey) => effects
+          .filter((event) => event.effectType === effectType && predicate(event))
+          .reduce((sum, event) => sum + Math.max(0, Number(event.damageDistribution?.[valueKey] ?? event.details?.[valueKey]) || 0), 0);
         result.life[side] = Math.max(0, Number(state.players[side]?.life) || 0);
-        result.lifeDamage[side] = Math.max(0, 20 - result.life[oppositeSide(side)]);
-        const totalDamage = sideStats.reduce((sum, stats) => sum + (Number(stats.damageDealt) || 0), 0);
-        result.attendeeDamage[side] = Math.max(0, totalDamage - result.lifeDamage[side]);
+        result.lifeDamage[side] = sumEffectAmount(
+          "damage_life",
+          (event) => event.side === side && event.details?.targetSide === oppositeSide(side),
+          "dealt"
+        );
+        result.attendeeDamage[side] = sumEffectAmount(
+          "damage_card",
+          (event) => event.side === side && event.details?.targetOwner === oppositeSide(side),
+          "dealt"
+        );
+        result.totalDamage[side] = result.lifeDamage[side] + result.attendeeDamage[side];
+        result.lifeHealing[side] = sumEffectAmount(
+          "heal_life",
+          (event) => event.details?.targetSide === side,
+          "healed"
+        );
+        result.attendeeHealing[side] = sumEffectAmount(
+          "heal_card",
+          (event) => event.details?.targetOwner === side,
+          "healed"
+        );
+        result.totalHealing[side] = result.lifeHealing[side] + result.attendeeHealing[side];
         result.played[side] = sideStats.reduce((sum, stats) => sum + (Number(stats.playCount) || 0), 0);
+        result.attendance[side] = effects.filter((event) => event.effectType === "attendance" && event.details?.owner === side).length;
+        result.finalBoard[side] = (finalBoard?.teacher ? 1 : 0) + (finalBoard?.seats || []).filter(Boolean).length;
+        result.boardDepartures[side] = effects.filter((event) => event.effectType === "board_leave" && event.details?.owner === side).length;
         result.destroyed[side] = actions.filter((event) => event.side === oppositeSide(side) && event.details?.targetDiedAfterAttack).length;
         result.draws[side] = actions.filter((event) => event.side === side && event.actionType === "draw").length;
+        result.attacks[side] = actions.filter((event) => event.side === side && ["attack_card", "attack_life"].includes(event.actionType)).length;
+        result.lifeAttacks[side] = actions.filter((event) => event.side === side && event.actionType === "attack_life").length;
+        result.attendeeAttacks[side] = actions.filter((event) => event.side === side && event.actionType === "attack_card").length;
         result.maxHand[side] = Math.max(state.players[side]?.hand?.length || 0, ...turnEvents.map((event) => Number(event.handCount) || 0));
         result.maxBoard[side] = Math.max(countOccupiedClassroomSlots(side), ...turnEvents.map((event) => {
           const board = event.boardSnapshot?.[side];
           return (board?.teacher ? 1 : 0) + (board?.seats || []).filter(Boolean).length;
         }));
         result.unusedWill[side] = Math.max(0, Number(state.players[side]?.will) || 0);
+        const initialCards = Array.isArray(mulliganEvent?.initialHand) ? mulliganEvent.initialHand.filter(Boolean) : [];
+        const returnedCards = Array.isArray(mulliganEvent?.returnedCards) ? mulliganEvent.returnedCards.filter(Boolean) : [];
+        const redrawnCards = Array.isArray(mulliganEvent?.redrawnCards) ? mulliganEvent.redrawnCards.filter(Boolean) : [];
+        const returnedIds = new Set(returnedCards.map((card) => card.instanceId).filter(Boolean));
+        const keptCards = initialCards.filter((card) => !returnedIds.has(card.instanceId));
+        const mulliganCardInfo = (card) => ({
+          cardId: card.cardId || "",
+          cardName: card.cardName || CARD_BASES[card.cardId]?.name || card.cardId || "不明なカード"
+        });
+        result.mulligan[side] = {
+          initialCards: initialCards.map(mulliganCardInfo),
+          returnedCards: returnedCards.map(mulliganCardInfo),
+          finalCards: [...keptCards, ...redrawnCards].map(mulliganCardInfo)
+        };
         sideStats.filter((stats) => stats.playCount > 0).forEach((stats) => {
           result.cardUses[stats.cardName || stats.cardId] = (result.cardUses[stats.cardName || stats.cardId] || 0) + stats.playCount;
         });
+      });
+      sides.forEach((side) => {
+        result.damageTaken[side] = result.totalDamage[oppositeSide(side)] || 0;
       });
       return result;
     }
@@ -31679,6 +31775,20 @@
         zone,
         index: zone === "seat" ? index : null
       };
+      if (zone === "seat" || zone === "teacher") {
+        analyticsRecordEffect({
+          side: owner,
+          source: card,
+          effectType: "attendance",
+          chosenTargets: [analyticsCardInfo(card)],
+          details: {
+            owner,
+            zone,
+            seat: zone === "seat" ? analyticsSeatInfo(index) : null,
+            attendanceSource
+          }
+        });
+      }
       delete card.pendingAttendanceSource;
       if (zone === "seat" || zone === "teacher") recordSuitStudentAttendance(card);
       const quickQuizResult = resolveQuickQuizBingoAttendance(owner, card, zone, index, {
@@ -35837,12 +35947,22 @@
     }
 
     function healCard(card, amount) {
-      if (!card || card.currentHp === null || amount <= 0) return;
-      if (isAibenNyoteiEffectImmune(card)) return;
+      if (!card || card.currentHp === null || amount <= 0) return 0;
+      if (isAibenNyoteiEffectImmune(card)) return 0;
       const before = card.currentHp;
       card.currentHp = Math.min(card.maxHp, card.currentHp + amount);
       const healed = card.currentHp - before;
-      if (healed > 0) showFloatingTextForCard(card, `+${healed}`, "heal");
+      if (healed > 0) {
+        analyticsRecordEffect({
+          side: card.owner || null,
+          source: card,
+          effectType: "heal_card",
+          chosenTargets: [analyticsCardInfo(card)],
+          details: { targetOwner: card.owner || null, before, after: card.currentHp, healed }
+        });
+        showFloatingTextForCard(card, `+${healed}`, "heal");
+      }
+      return healed;
     }
 
     function damagePlayer(side, amount) {
@@ -35882,11 +36002,20 @@
     }
 
     function healPlayer(side, amount) {
-      if (amount <= 0) return;
+      if (amount <= 0) return 0;
       const before = state.players[side].life;
       state.players[side].life = Math.min(currentLifeCap(side), state.players[side].life + amount);
       const healed = state.players[side].life - before;
-      if (healed > 0) showFloatingTextForLife(side, `+${healed}`, "heal");
+      if (healed > 0) {
+        analyticsRecordEffect({
+          side,
+          effectType: "heal_life",
+          chosenTargets: [{ side, lifeBefore: before, lifeAfter: state.players[side].life }],
+          details: { targetSide: side, before, after: state.players[side].life, healed }
+        });
+        showFloatingTextForLife(side, `+${healed}`, "heal");
+      }
+      return healed;
     }
 
     function currentLifeCap(side = null) {
@@ -36619,6 +36748,18 @@
         reason: trashOptions.reason || (showDestroyFeedback ? "破壊" : "")
       };
       delete moveOptions.showDestroyFeedback;
+      analyticsRecordEffect({
+        side: ref.owner,
+        source: card,
+        effectType: "board_leave",
+        chosenTargets: [analyticsCardInfo(card)],
+        details: {
+          owner: ref.owner,
+          zone: ref.zone,
+          seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null,
+          reason: moveOptions.reason || ""
+        }
+      });
       moveToTrash(ref.owner, card, moveOptions);
       clearBoardCardFromField(ref.owner, ref.zone, ref.index, card);
       if (triggersAbsentStudent) resolveAbsentStudentTrashTrigger(ref.owner, card);
@@ -36642,7 +36783,18 @@
     function tryResolveRebirthStudent(card) {
       if (!canUsePrintedCardEffects(card) || card.baseId !== "rebirth_student" || card.rebirthUsed) return false;
       card.rebirthUsed = true;
+      const before = Math.max(0, Number(card.currentHp) || 0);
       card.currentHp = card.maxHp ?? card.baseMaxHp ?? card.hp ?? 0;
+      const healed = Math.max(0, card.currentHp - before);
+      if (healed > 0) {
+        analyticsRecordEffect({
+          side: card.owner || null,
+          source: card,
+          effectType: "heal_card",
+          chosenTargets: [analyticsCardInfo(card)],
+          details: { targetOwner: card.owner || null, before, after: card.currentHp, healed }
+        });
+      }
       showFloatingTextForCard(card, "全回復", "heal");
       addLog(`${card.name}の効果：一度だけ校外エリアへ送られず、体力を全回復しました。`);
       return true;
@@ -40999,7 +41151,7 @@
         deckDescriptorForRule(ruleId, selection.opponentDeckName, opponentSaved), opponentSaved.counts || {}, ruleId
       ).valid;
       elements.soloBattleStartButton.disabled = !playerValid || !opponentValid;
-      elements.soloBattleReadyLabel.textContent = playerValid && opponentValid ? "開始" : "未準備";
+      elements.soloBattleReadyLabel.textContent = playerValid && opponentValid ? "" : "未準備";
       elements.soloTrainingDataButton.disabled = !state.training.series?.matches?.length;
       renderTrainingDataPanel();
     }
@@ -41055,6 +41207,134 @@
       return [selection.ruleId, selection.leftController, selection.playerDeckName, selection.opponentDeckName].join("|");
     }
 
+    function trainingPercent(value, total) {
+      if (!total) return "—";
+      const percent = value / total * 100;
+      return `${Number.isInteger(percent) ? percent.toFixed(0) : percent.toFixed(1)}%`;
+    }
+
+    function trainingAverage(values) {
+      const numbers = values.map(Number).filter(Number.isFinite);
+      if (!numbers.length) return "—";
+      const average = numbers.reduce((total, value) => total + value, 0) / numbers.length;
+      return Number.isInteger(average) ? String(average) : average.toFixed(1);
+    }
+
+    function trainingCardMulliganMarkup(matches, side) {
+      const cards = new Map();
+      const ensure = (card) => {
+        const key = card?.cardId || card?.cardName || "unknown";
+        if (!cards.has(key)) {
+          cards.set(key, {
+            name: card?.cardName || CARD_BASES[card?.cardId]?.name || card?.cardId || "不明なカード",
+            initialCopies: 0,
+            returnedCopies: 0,
+            initialMatches: 0,
+            finalMatches: 0
+          });
+        }
+        return cards.get(key);
+      };
+      matches.forEach((match) => {
+        const data = match.mulligan?.[side] || {};
+        const initialCards = data.initialCards || [];
+        const returnedCards = data.returnedCards || [];
+        const finalCards = data.finalCards || [];
+        initialCards.forEach((card) => { ensure(card).initialCopies += 1; });
+        returnedCards.forEach((card) => { ensure(card).returnedCopies += 1; });
+        new Set(initialCards.map((card) => card.cardId || card.cardName || "unknown"))
+          .forEach((key) => { ensure(initialCards.find((card) => (card.cardId || card.cardName || "unknown") === key)).initialMatches += 1; });
+        new Set(finalCards.map((card) => card.cardId || card.cardName || "unknown"))
+          .forEach((key) => { ensure(finalCards.find((card) => (card.cardId || card.cardName || "unknown") === key)).finalMatches += 1; });
+      });
+      const rows = [...cards.values()]
+        .sort((a, b) => b.initialMatches - a.initialMatches
+          || b.finalMatches - a.finalMatches
+          || b.initialCopies - a.initialCopies
+          || a.name.localeCompare(b.name, "ja"))
+        .map((card) => {
+          const keptCopies = Math.max(0, card.initialCopies - card.returnedCopies);
+          return `<tr>
+            <th>${escapeHtml(card.name)}</th>
+            <td>${trainingPercent(card.initialMatches, matches.length)}<small>${card.initialMatches}/${matches.length}試合</small></td>
+            <td>${trainingPercent(keptCopies, card.initialCopies)}<small>${keptCopies}/${card.initialCopies}枚</small></td>
+            <td>${trainingPercent(card.returnedCopies, card.initialCopies)}<small>${card.returnedCopies}/${card.initialCopies}枚</small></td>
+            <td>${trainingPercent(card.finalMatches, matches.length)}<small>${card.finalMatches}/${matches.length}試合</small></td>
+          </tr>`;
+        }).join("");
+      if (!rows) return '<p class="training-mulligan-empty">マリガンデータはまだありません。</p>';
+      return `<div class="training-mulligan-table-wrap"><table class="training-mulligan-table">
+        <thead><tr><th>カード</th><th>初手出現率</th><th>キープ率</th><th>交換率</th><th>マリガン後出現率</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>`;
+    }
+
+    function trainingPlayerDataMarkup(series, side) {
+      const matches = series.matches || [];
+      const sideName = side === "player" ? "左プレイヤー" : "右プレイヤー";
+      const deckName = side === "player"
+        ? (series.playerDeckName || state.soloSelection.playerDeckName || "未選択")
+        : (series.opponentDeckName || state.soloSelection.opponentDeckName || "未選択");
+      const wins = matches.filter((match) => match.winner === side).length;
+      const draws = matches.filter((match) => !["player", "opponent"].includes(match.winner)).length;
+      const firstMatches = matches.filter((match) => match.firstSide === side);
+      const secondMatches = matches.filter((match) => match.firstSide && match.firstSide !== side);
+      const firstWins = firstMatches.filter((match) => match.winner === side).length;
+      const secondWins = secondMatches.filter((match) => match.winner === side).length;
+      const averageFor = (key) => trainingAverage(matches.map((match) => match[key]?.[side]));
+      const sumFor = (key) => matches.reduce((total, match) => total + (Number(match[key]?.[side]) || 0), 0);
+      const totalAttendance = sumFor("attendance");
+      const totalFinalBoard = sumFor("finalBoard");
+      const totalAttacks = sumFor("attacks");
+      return `<article class="training-player-data ${side}">
+        <h3>${sideName}<span>${escapeHtml(deckName)}</span></h3>
+        <section class="training-stat-section">
+          <h4>勝敗・手番</h4>
+          <div class="training-rate-grid">
+            <div class="training-rate-card"><span>総合勝率</span><strong>${trainingPercent(wins, matches.length)}</strong><small>${wins}勝 / ${matches.length}試合</small></div>
+            <div class="training-rate-card"><span>引き分け率</span><strong>${trainingPercent(draws, matches.length)}</strong><small>${draws}試合</small></div>
+            <div class="training-rate-card"><span>先攻時勝率</span><strong>${trainingPercent(firstWins, firstMatches.length)}</strong><small>${firstWins}勝 / ${firstMatches.length}試合</small></div>
+            <div class="training-rate-card"><span>後攻時勝率</span><strong>${trainingPercent(secondWins, secondMatches.length)}</strong><small>${secondWins}勝 / ${secondMatches.length}試合</small></div>
+            <div class="training-rate-card"><span>先攻になった割合</span><strong>${trainingPercent(firstMatches.length, matches.length)}</strong><small>${firstMatches.length}試合</small></div>
+            <div class="training-rate-card"><span>平均残り気力</span><strong>${averageFor("life")}</strong><small>終了時</small></div>
+          </div>
+        </section>
+        <section class="training-stat-section">
+          <h4>ダメージ・回復</h4>
+          <div class="training-rate-grid">
+            <div class="training-rate-card"><span>平均総ダメージ</span><strong>${averageFor("totalDamage")}</strong><small>本体＋出席者</small></div>
+            <div class="training-rate-card"><span>平均本体ダメージ</span><strong>${averageFor("lifeDamage")}</strong><small>実際に与えた量</small></div>
+            <div class="training-rate-card"><span>平均出席者ダメージ</span><strong>${averageFor("attendeeDamage")}</strong><small>実際に与えた量</small></div>
+            <div class="training-rate-card"><span>平均被ダメージ</span><strong>${averageFor("damageTaken")}</strong><small>本体＋出席者</small></div>
+            <div class="training-rate-card"><span>平均総回復量</span><strong>${averageFor("totalHealing")}</strong><small>本体＋出席者</small></div>
+            <div class="training-rate-card"><span>平均本体回復量</span><strong>${averageFor("lifeHealing")}</strong><small>実際に回復した量</small></div>
+            <div class="training-rate-card"><span>平均出席者回復量</span><strong>${averageFor("attendeeHealing")}</strong><small>実際に回復した量</small></div>
+          </div>
+        </section>
+        <section class="training-stat-section">
+          <h4>攻撃・盤面・手札</h4>
+          <div class="training-rate-grid">
+            <div class="training-rate-card"><span>盤面残存率</span><strong>${trainingPercent(totalFinalBoard, totalAttendance)}</strong><small>${totalFinalBoard}/${totalAttendance}人が終了時に残存</small></div>
+            <div class="training-rate-card"><span>本体攻撃率</span><strong>${trainingPercent(sumFor("lifeAttacks"), totalAttacks)}</strong><small>${sumFor("lifeAttacks")}/${totalAttacks}回</small></div>
+            <div class="training-rate-card"><span>平均出席回数</span><strong>${averageFor("attendance")}</strong><small>生成・コピーを含む</small></div>
+            <div class="training-rate-card"><span>平均使用カード数</span><strong>${averageFor("played")}</strong><small>手札から使用</small></div>
+            <div class="training-rate-card"><span>平均終了時盤面</span><strong>${averageFor("finalBoard")}</strong><small>出席者数</small></div>
+            <div class="training-rate-card"><span>平均最大盤面</span><strong>${averageFor("maxBoard")}</strong><small>1試合あたり</small></div>
+            <div class="training-rate-card"><span>平均盤面離脱数</span><strong>${averageFor("boardDepartures")}</strong><small>破壊・校外送りなど</small></div>
+            <div class="training-rate-card"><span>平均攻撃回数</span><strong>${averageFor("attacks")}</strong><small>本体＋出席者</small></div>
+            <div class="training-rate-card"><span>平均出席者攻撃回数</span><strong>${averageFor("attendeeAttacks")}</strong><small>1試合あたり</small></div>
+            <div class="training-rate-card"><span>平均ドロー数</span><strong>${averageFor("draws")}</strong><small>1試合あたり</small></div>
+            <div class="training-rate-card"><span>平均最大手札</span><strong>${averageFor("maxHand")}</strong><small>1試合あたり</small></div>
+            <div class="training-rate-card"><span>平均未使用戦意</span><strong>${averageFor("unusedWill")}</strong><small>終了時</small></div>
+          </div>
+        </section>
+        <section class="training-mulligan-data">
+          <h4>カード別マリガン確率</h4>
+          ${trainingCardMulliganMarkup(matches, side)}
+        </section>
+      </article>`;
+    }
+
     function summarizeTrainingMatch(match, index) {
       const sideLabel = (side) => side === "player" ? "左側" : side === "opponent" ? "右側" : "引き分け";
       const cardUses = Object.entries(match.cardUses || {})
@@ -41068,8 +41348,9 @@
         <div><strong>残り気力</strong><br>左 ${match.life.player} / 右 ${match.life.opponent}</div>
         <div><strong>本体ダメージ</strong><br>左 ${match.lifeDamage.player} / 右 ${match.lifeDamage.opponent}</div>
         <div><strong>出席者ダメージ</strong><br>左 ${match.attendeeDamage.player} / 右 ${match.attendeeDamage.opponent}</div>
-        <div><strong>出席数</strong><br>左 ${match.played.player} / 右 ${match.played.opponent}</div>
-        <div><strong>破壊された数</strong><br>左 ${match.destroyed.player} / 右 ${match.destroyed.opponent}</div>
+        <div><strong>回復量</strong><br>左 ${match.totalHealing?.player || 0} / 右 ${match.totalHealing?.opponent || 0}</div>
+        <div><strong>出席回数 / 終了時盤面</strong><br>左 ${match.attendance?.player || 0}/${match.finalBoard?.player || 0} 右 ${match.attendance?.opponent || 0}/${match.finalBoard?.opponent || 0}</div>
+        <div><strong>盤面離脱数</strong><br>左 ${match.boardDepartures?.player || 0} / 右 ${match.boardDepartures?.opponent || 0}</div>
         <div><strong>ドロー</strong><br>左 ${match.draws.player} / 右 ${match.draws.opponent}</div>
         <div><strong>最大手札 / 最大盤面</strong><br>左 ${match.maxHand.player}/${match.maxBoard.player} 右 ${match.maxHand.opponent}/${match.maxBoard.opponent}</div>
         <div><strong>未使用戦意</strong><br>左 ${match.unusedWill.player} / 右 ${match.unusedWill.opponent}</div>
@@ -41088,8 +41369,23 @@
       const leftWins = series.matches.filter((match) => match.winner === "player").length;
       const rightWins = series.matches.filter((match) => match.winner === "opponent").length;
       const draws = series.matches.length - leftWins - rightWins;
-      elements.soloTrainingDataSummary.textContent = `${series.matches.length}試合：左 ${leftWins}勝 / 右 ${rightWins}勝 / 引き分け ${draws}`;
-      elements.soloTrainingDataContent.innerHTML = series.matches.map(summarizeTrainingMatch).join("");
+      const averageTurn = trainingAverage(series.matches.map((match) => match.finalTurn));
+      elements.soloTrainingDataSummary.textContent = `${series.matches.length}試合分の累積データ`;
+      elements.soloTrainingDataContent.innerHTML = `
+        <section class="training-data-overview">
+          <div><span>対戦数</span><strong>${series.matches.length}</strong></div>
+          <div><span>左の勝率</span><strong>${trainingPercent(leftWins, series.matches.length)}</strong></div>
+          <div><span>右の勝率</span><strong>${trainingPercent(rightWins, series.matches.length)}</strong></div>
+          <div><span>引き分け率 / 平均終了ターン</span><strong>${trainingPercent(draws, series.matches.length)} / ${averageTurn}</strong></div>
+        </section>
+        <section class="training-player-data-grid">
+          ${trainingPlayerDataMarkup(series, "player")}
+          ${trainingPlayerDataMarkup(series, "opponent")}
+        </section>
+        <details class="training-data-history">
+          <summary>試合ごとの記録を見る</summary>
+          <div class="training-data-history-list">${series.matches.map(summarizeTrainingMatch).join("")}</div>
+        </details>`;
     }
 
     function renderDungeonDeckSelection() {
