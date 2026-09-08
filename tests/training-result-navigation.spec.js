@@ -198,7 +198,10 @@ test("BATTLEボタンから準備完了時の「開始」表示を削除する",
       bottom: Math.round(panelRect.bottom - deckButton.bottom)
     };
   }));
-  verticalPanelGaps.forEach(({ top, bottom }) => expect(Math.abs(top - bottom)).toBeLessThanOrEqual(2));
+  verticalPanelGaps.forEach(({ top, bottom }) => {
+    expect(top).toBeLessThanOrEqual(30);
+    expect(Math.abs(top - bottom)).toBeLessThanOrEqual(2);
+  });
   await page.selectOption("#soloRuleSelect", "chaos");
   await page.locator("#soloPlayerSlot").click();
   await page.locator("#soloDeckGrid .deck-library-card", { hasText: "BATTLE表示確認用" }).click();
