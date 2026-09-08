@@ -18198,7 +18198,7 @@
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
-        summary: "AIがデッキ切れを狙うカード構成と相手の校外を確認し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、環境カードを使い切った後の目黒区図書館を判断するように改善しました。",
+        summary: "AIがデッキ切れを狙うカード構成と相手の校外を確認し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、環境カードを使い切った後の目黒区図書館を判断するように改善しました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。",
         changes: [
           {
             title: "AIのデッキ切れ戦術",
@@ -18209,6 +18209,11 @@
             title: "AIの環境判断",
             before: "相手が環境カードを校外へ送り切ったかを確認せず、目黒区図書館を置く時機を判断できなかった。",
             after: "相手の初期デッキに入っていた環境カードと、現在の環境・相手の校外を照合する。相手が環境カードを使い切るまでは目黒区図書館を温存し、張り替えられにくい時機に使用する。相手の環境が置かれている場合は、環境を張り替える価値も高く評価する。"
+          },
+          {
+            title: "後ろから質問する学生のAI配置",
+            before: "AIが後ろから質問する学生を効果が発動しない席マスや教卓マスへ出席させる場合があった。",
+            after: "相手の教卓マスに効果で処理できる出席者がいる場合に優先し、自分の3行目へ出席させる。相手の教卓マスに対象がいない場合や3行目に空きがない場合は温存し、他の席マスや教卓マスには出席させない。左右どちらのCPUにも同じ判断を適用する。"
           }
         ]
       },
@@ -25416,6 +25421,12 @@
       return 0;
     }
 
+    function aiBackQuestionTeacherTarget(side, card) {
+      const target = state.players[oppositeSide(side)]?.board?.teacher || null;
+      if (!target || !card) return null;
+      return previewFinalDamageToCard(target, 4, card) > 0 ? target : null;
+    }
+
     function aiDeckCardCount(side, baseId) {
       const player = state.players[side];
       if (!player) return 0;
@@ -25784,6 +25795,9 @@
 
     function trainingYocchanPlayPriority(side, card) {
       const ai = state.players[side];
+      if (card.baseId === "back_question_student") {
+        return aiBackQuestionTeacherTarget(side, card) ? 760 : -900;
+      }
       const cafeteriaPlan = getAiCafeteriaVampirePlan(side);
       if (card.baseId === "cafeteria" && cafeteriaPlan.active) {
         return cafeteriaPlan.attackWindow ? 980 : -900;
@@ -25839,8 +25853,10 @@
         if (card.type === "teacher" && canPlaceCard(side, card, "teacher", side, null)) {
           return { card, zone: "teacher", owner: side, index: null };
         }
-        const seatIndex = AI_SEAT_PRIORITY.find((index) => canPlaceCard(side, card, "seat", side, index));
+        const seatPriority = card.baseId === "back_question_student" ? [6, 7, 8] : AI_SEAT_PRIORITY;
+        const seatIndex = seatPriority.find((index) => canPlaceCard(side, card, "seat", side, index));
         if (seatIndex !== undefined) return { card, zone: "seat", owner: side, index: seatIndex };
+        if (card.baseId === "back_question_student") continue;
         if (canPlaceCard(side, card, "teacher", side, null)) return { card, zone: "teacher", owner: side, index: null };
       }
       return null;
@@ -26793,8 +26809,9 @@
           && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
         score += canSummonBestFriend ? 45 : 0;
       }
-      if (zone === "seat" && card.baseId === "back_question_student") {
-        score += seatRow(index) === 3 && state.players.player.board.teacher ? 40 : -12;
+      if (card.baseId === "back_question_student") {
+        const canProcessTeacher = Boolean(aiBackQuestionTeacherTarget("opponent", card));
+        score += zone === "seat" && seatRow(index) === 3 && canProcessTeacher ? 70 : -200;
       }
       if (zone === "seat" && card.baseId === "best_friend") {
         const besideLoud = adjacentIndexes(index).some((neighbor) => state.players.opponent.board.seats[neighbor]?.baseId === "loud_student");
