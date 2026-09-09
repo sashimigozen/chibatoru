@@ -1561,6 +1561,23 @@
       font-weight: 1000;
     }
 
+    .online-player-identity {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .online-player-avatar {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+    }
+
+    .online-player-avatar > .profile-avatar {
+      transform: scale(.34);
+    }
+
     .online-player-meta {
       color: #64748b;
       font-size: 12px;
@@ -17039,7 +17056,7 @@
           <article class="training-player-panel" data-online-random-side="local">
             <div class="training-player-heading"><span id="onlineRandomLocalPlayerName">USER</span></div>
             <div class="online-random-avatar-wrap">
-              <div class="training-avatar user" aria-hidden="true"><span></span></div>
+              <div class="training-avatar user" id="onlineRandomLocalAvatar" aria-hidden="true"><span></span></div>
               <span class="online-random-ready-badge hidden" id="onlineRandomLocalReadyBadge">OK</span>
             </div>
             <div class="training-deck-readout">
@@ -17132,16 +17149,22 @@
           </div>
           <div class="online-player-list">
             <div class="online-player-row">
-              <div>
-                <div class="online-player-name" id="onlineLocalPlayerName">あなた</div>
-                <div class="online-player-meta" id="onlineLocalDeckText">現在のあなたデッキ</div>
+              <div class="online-player-identity">
+                <span class="avatar-scale-frame online-player-avatar" aria-hidden="true"><span class="profile-avatar user" id="onlineLocalPlayerAvatar"><span></span></span></span>
+                <div>
+                  <div class="online-player-name" id="onlineLocalPlayerName">あなた</div>
+                  <div class="online-player-meta" id="onlineLocalDeckText">現在のあなたデッキ</div>
+                </div>
               </div>
               <span class="online-ready-badge" id="onlineLocalReadyBadge">未準備</span>
             </div>
             <div class="online-player-row">
-              <div>
-                <div class="online-player-name" id="onlineRemotePlayerName">相手</div>
-                <div class="online-player-meta" id="onlineRemoteDeckText">待機中</div>
+              <div class="online-player-identity">
+                <span class="avatar-scale-frame online-player-avatar" aria-hidden="true"><span class="profile-avatar user" id="onlineRemotePlayerAvatar"><span></span></span></span>
+                <div>
+                  <div class="online-player-name" id="onlineRemotePlayerName">相手</div>
+                  <div class="online-player-meta" id="onlineRemoteDeckText">待機中</div>
+                </div>
               </div>
               <span class="online-ready-badge" id="onlineRemoteReadyBadge">未準備</span>
             </div>
@@ -19934,6 +19957,9 @@
         remoteDeckCountsClientId: "",
         remoteDeckValid: null,
         remoteDeckValidationErrors: [],
+        remoteProfile: { ...DEFAULT_PLAYER_PROFILE },
+        hostProfile: { ...DEFAULT_PLAYER_PROFILE },
+        guestProfile: { ...DEFAULT_PLAYER_PROFILE },
         localCardStyles: {},
         remoteCardStyles: {},
         hostCardStyles: {},
@@ -20222,6 +20248,7 @@
       onlineRandomRoomCode: document.getElementById("onlineRandomRoomCode"),
       onlineRandomLocalPlayerName: document.getElementById("onlineRandomLocalPlayerName"),
       onlineRandomRemotePlayerName: document.getElementById("onlineRandomRemotePlayerName"),
+      onlineRandomLocalAvatar: document.getElementById("onlineRandomLocalAvatar"),
       onlineRandomRemotePanel: document.getElementById("onlineRandomRemotePanel"),
       onlineRandomRemoteAvatar: document.getElementById("onlineRandomRemoteAvatar"),
       onlineRandomWaitingText: document.getElementById("onlineRandomWaitingText"),
@@ -20273,6 +20300,8 @@
       onlineRemoteDeckText: document.getElementById("onlineRemoteDeckText"),
       onlineLocalPlayerName: document.getElementById("onlineLocalPlayerName"),
       onlineRemotePlayerName: document.getElementById("onlineRemotePlayerName"),
+      onlineLocalPlayerAvatar: document.getElementById("onlineLocalPlayerAvatar"),
+      onlineRemotePlayerAvatar: document.getElementById("onlineRemotePlayerAvatar"),
       onlineLocalReadyBadge: document.getElementById("onlineLocalReadyBadge"),
       onlineRemoteReadyBadge: document.getElementById("onlineRemoteReadyBadge"),
       homeSoloButton: document.getElementById("homeSoloButton"),
@@ -22326,6 +22355,21 @@
       };
     }
 
+    function onlineProfilePayload() {
+      return normalizePlayerProfile(state.profile);
+    }
+
+    function onlineApplyProfiles(players, explicitSelf = null) {
+      const list = Array.isArray(players) ? players : [];
+      const self = explicitSelf || list.find((player) => player.clientId === state.online.clientId) || null;
+      const host = list.find((player) => player.role === "host") || null;
+      const guest = list.find((player) => player.role === "guest") || null;
+      state.online.hostProfile = normalizePlayerProfile(host?.profile);
+      state.online.guestProfile = normalizePlayerProfile(guest?.profile);
+      const opponent = self?.role === "host" ? guest : self?.role === "guest" ? host : null;
+      state.online.remoteProfile = normalizePlayerProfile(opponent?.profile);
+    }
+
     function onlineGetMessageSessionId(message) {
       return message?.roomSessionId || message?.sessionId || "";
     }
@@ -22630,6 +22674,9 @@
       onlineClearRemoteDeckCounts();
       state.online.remoteDeckValid = null;
       state.online.remoteDeckValidationErrors = [];
+      state.online.remoteProfile = { ...DEFAULT_PLAYER_PROFILE };
+      state.online.hostProfile = { ...DEFAULT_PLAYER_PROFILE };
+      state.online.guestProfile = { ...DEFAULT_PLAYER_PROFILE };
       state.online.deckPreviewOpen = false;
       onlineResetCardStyles();
       state.online.localRpsChoice = null;
@@ -22688,6 +22735,9 @@
       onlineClearRemoteDeckCounts();
       state.online.remoteDeckValid = null;
       state.online.remoteDeckValidationErrors = [];
+      state.online.remoteProfile = { ...DEFAULT_PLAYER_PROFILE };
+      state.online.hostProfile = { ...DEFAULT_PLAYER_PROFILE };
+      state.online.guestProfile = { ...DEFAULT_PLAYER_PROFILE };
       state.online.deckPreviewOpen = false;
       onlineResetCardStyles();
       state.online.pendingTurnCommandId = "";
@@ -22921,6 +22971,7 @@
         specialtyId: localDescriptor.specialtyId,
         deckCounts: createOnlineDeckCounts(),
         cardStyles: onlineSelectedCardStyles(),
+        profile: onlineProfilePayload(),
         ready: state.online.localReady,
         ...payloadOverrides
       });
@@ -22953,6 +23004,7 @@
       const nextClientId = String(clientId || "");
       if (nextClientId === state.online.remoteClientId) return false;
       state.online.remoteClientId = nextClientId;
+      state.online.remoteProfile = { ...DEFAULT_PLAYER_PROFILE };
       onlineClearRemoteDeckCounts();
       state.online.remoteReady = false;
       state.online.remoteDeckValid = null;
@@ -22987,6 +23039,9 @@
       state.online.remoteDeckCountsClientId = state.online.remoteClientId;
       if (Object.prototype.hasOwnProperty.call(message, "cardStyles")) {
         state.online.remoteCardStyles = normalizeOnlineCardStyles(message.cardStyles);
+      }
+      if (Object.prototype.hasOwnProperty.call(message, "profile")) {
+        state.online.remoteProfile = normalizePlayerProfile(message.profile);
       }
       if (Object.prototype.hasOwnProperty.call(message, "ready")) state.online.remoteReady = Boolean(message.ready);
       if (typeof message?.deckValid === "boolean") state.online.remoteDeckValid = message.deckValid;
@@ -23041,6 +23096,7 @@
           document.body.dataset.online = self.role;
         }
         onlineSetRemoteClientId(opponent?.clientId || "");
+        onlineApplyProfiles(players, self);
         onlineApplyPublicDeckState(self, opponent);
         state.online.hostCardStyles = normalizeOnlineCardStyles(host?.cardStyles);
         state.online.guestCardStyles = normalizeOnlineCardStyles(guest?.cardStyles);
@@ -23086,6 +23142,7 @@
         if (!isOnlineSpectator()) {
           onlineSetRemoteClientId(state.online.role === "host" ? (guest?.clientId || "") : (host?.clientId || ""));
         }
+        onlineApplyProfiles(players);
         onlineSetStatus(message.message || "相手の接続が切れました。再入室を待っています。", "bad");
         render();
         return;
@@ -23185,6 +23242,7 @@
         const guest = players.find((player) => player.role === "guest");
         const opponent = self?.role === "host" ? guest : self?.role === "guest" ? host : null;
         onlineSetRemoteClientId(opponent?.clientId || "");
+        onlineApplyProfiles(players, self);
         onlineApplyPublicDeckState(self, opponent);
         state.online.connected = Boolean(host && guest);
         if (!isOnlineSpectator() && !onlineLocalDeckValidation().valid) state.online.localReady = false;
@@ -23236,6 +23294,8 @@
         state.online.roomSessionId = message.roomSessionId || messageSessionId || state.online.roomSessionId;
         onlineApplyRoomRuleId(message.ruleId);
         const localIsHost = isOnlineHost();
+        const players = Array.isArray(message.players) ? message.players : [];
+        onlineApplyProfiles(players);
         state.online.remoteReady = localIsHost ? Boolean(message.guestReady) : Boolean(message.hostReady);
         const remoteDescriptor = onlineDeckDescriptorFromMessage({
           deckName: (localIsHost ? message.guestDeckName : message.hostDeckName) || "__current",
@@ -23398,6 +23458,7 @@
         specialtyId: descriptor.specialtyId,
         deckCounts: state.online.localDeckCounts,
         cardStyles: state.online.localCardStyles,
+        profile: onlineProfilePayload(),
         ready
       };
     }
@@ -38837,9 +38898,13 @@
       const connected = Boolean(state.online.connected);
       const descriptor = onlineLocalDeckDescriptor();
       const bothReady = connected && state.online.localReady && state.online.remoteReady;
+      const localProfile = normalizePlayerProfile(state.profile);
+      const remoteProfile = normalizePlayerProfile(state.online.remoteProfile);
       elements.onlineRandomRoomCode.textContent = state.online.roomCode || "------";
-      elements.onlineRandomLocalPlayerName.textContent = "USER";
-      elements.onlineRandomRemotePlayerName.textContent = "USER";
+      elements.onlineRandomLocalPlayerName.textContent = localProfile.username;
+      elements.onlineRandomRemotePlayerName.textContent = remoteProfile.username;
+      applyPlayerProfileAvatar(elements.onlineRandomLocalAvatar, localProfile.avatarId);
+      applyPlayerProfileAvatar(elements.onlineRandomRemoteAvatar, remoteProfile.avatarId);
       elements.onlineRandomRemotePlayerName.classList.toggle("hidden", randomWaiting);
       elements.onlineRandomRemoteAvatar.classList.toggle("hidden", randomWaiting);
       elements.onlineRandomWaitingText.classList.toggle("hidden", !randomWaiting);
@@ -38947,8 +39012,16 @@
       elements.onlineServerUrlInput.disabled = Boolean(state.online.role);
       elements.onlineSaveServerUrlButton.disabled = Boolean(state.online.role);
       elements.onlineDeckInfo.textContent = spectator ? "観戦専用" : `${localDeckLabel} / ${localSize}枚 / ${localDeckStatus}`;
-      elements.onlineLocalPlayerName.textContent = spectator ? "プレイヤー1" : "あなた";
-      elements.onlineRemotePlayerName.textContent = spectator ? "プレイヤー2" : "相手";
+      const localProfile = normalizePlayerProfile(state.profile);
+      const remoteProfile = normalizePlayerProfile(state.online.remoteProfile);
+      const hostProfile = normalizePlayerProfile(state.online.hostProfile);
+      const guestProfile = normalizePlayerProfile(state.online.guestProfile);
+      elements.onlineLocalPlayerName.textContent = spectator ? hostProfile.username : localProfile.username;
+      elements.onlineRemotePlayerName.textContent = spectator
+        ? guestProfile.username
+        : state.online.connected ? remoteProfile.username : "相手";
+      applyPlayerProfileAvatar(elements.onlineLocalPlayerAvatar, spectator ? hostProfile.avatarId : localProfile.avatarId);
+      applyPlayerProfileAvatar(elements.onlineRemotePlayerAvatar, spectator ? guestProfile.avatarId : remoteProfile.avatarId);
       elements.onlineLocalDeckText.textContent = spectator ? "プレイヤー1（ホスト）" : `${localDeckLabel} / ${localSize}枚 / ${localDeckStatus}`;
       elements.onlineRemoteDeckText.textContent = spectator
         ? "プレイヤー2（ゲスト）"

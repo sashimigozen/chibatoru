@@ -20,6 +20,15 @@ const ROOM_CODE_PATTERN = /^[A-Z0-9]{4,12}$/;
 const MAX_DECK_CARDS = 60;
 const MIN_DECK_CARDS = 40;
 const SERVER_ID = "server";
+const PLAYER_PROFILE_USERNAME_MAX = 20;
+const PLAYER_PROFILE_AVATAR_IDS = new Set([
+  "user", "cpu", "smile", "glasses", "cap", "hair", "robot_round", "robot_antenna"
+]);
+const DEFAULT_PLAYER_PROFILE = Object.freeze({
+  username: "チバトル学生",
+  avatarId: "user",
+  favoriteCardId: ""
+});
 
 // Keep this server-side catalog in sync with the browser's direct-deck catalog.
 // The server deliberately owns a copy: clients are not authoritative for deck
@@ -1002,6 +1011,25 @@ function normalizeCardStyles(cardStyles) {
     .slice(0, 64));
 }
 
+function normalizePlayerProfile(profile, previous = null) {
+  const fallback = previous && typeof previous === "object" && !Array.isArray(previous)
+    ? previous
+    : DEFAULT_PLAYER_PROFILE;
+  const source = profile && typeof profile === "object" && !Array.isArray(profile)
+    ? profile
+    : fallback;
+  const username = String(source.username || "").trim().slice(0, PLAYER_PROFILE_USERNAME_MAX)
+    || DEFAULT_PLAYER_PROFILE.username;
+  const avatarId = PLAYER_PROFILE_AVATAR_IDS.has(source.avatarId)
+    ? source.avatarId
+    : DEFAULT_PLAYER_PROFILE.avatarId;
+  const favoriteCardId = typeof source.favoriteCardId === "string"
+    && /^[a-z0-9_]{1,80}$/i.test(source.favoriteCardId)
+    ? source.favoriteCardId
+    : "";
+  return { username, avatarId, favoriteCardId };
+}
+
 function playerPublicState(player, room = null) {
   const validation = room && isBattleRole(player.role)
     ? deckValidationForPlayer(room, player)
@@ -1015,6 +1043,7 @@ function playerPublicState(player, room = null) {
     deckValid: player.role === "spectator" ? false : Boolean(validation?.valid),
     deckValidationErrors: player.role === "spectator" ? [] : (validation?.errors || []),
     cardStyles: player.role === "spectator" ? {} : (player.cardStyles || {}),
+    profile: normalizePlayerProfile(player.profile),
     ready: player.role === "spectator" ? false : Boolean(player.ready)
   };
 }
@@ -1043,6 +1072,7 @@ function privateDeckUpdateMessage(room, deckOwner) {
     specialtyId: normalizeSpecialtyId(deckOwner.specialtyId || ""),
     deckCounts: deckOwner.deckCounts || null,
     cardStyles: deckOwner.cardStyles || {},
+    profile: normalizePlayerProfile(deckOwner.profile),
     ready: Boolean(deckOwner.ready),
     deckValid: Boolean(validation?.valid),
     deckValidationErrors: validation?.errors || []
@@ -1629,6 +1659,9 @@ function joinRoom(ws, message) {
 
   const descriptor = role === "spectator" ? null : deckDescriptorFromMessage(message, existing);
   const descriptorValidation = descriptor ? validateDeckDescriptor(room.ruleId, descriptor) : null;
+  const profile = role === "spectator"
+    ? normalizePlayerProfile(null)
+    : normalizePlayerProfile(hasOwn(message, "profile") ? message.profile : null, existing?.profile);
   const player = {
     clientId,
     role,
@@ -1641,6 +1674,7 @@ function joinRoom(ws, message) {
     specialtyId: role === "spectator" ? "" : descriptor.specialtyId,
     deckCounts: role === "spectator" ? null : descriptor.deckCounts,
     cardStyles: role === "spectator" ? {} : normalizeCardStyles(message.cardStyles ?? existing?.cardStyles),
+    profile,
     joinedAt: existing?.joinedAt || now(),
     lastSeenAt: now()
   };
@@ -1728,6 +1762,9 @@ function handleDeckUpdate(ws, message) {
   player.specialtyId = descriptor.specialtyId;
   player.deckCounts = descriptor.deckCounts;
   player.cardStyles = normalizeCardStyles(message.cardStyles ?? player.cardStyles);
+  if (hasOwn(message, "profile")) {
+    player.profile = normalizePlayerProfile(message.profile, player.profile);
+  }
   player.ready = requestedReady && validation.valid;
   room.updatedAt = now();
   broadcast(room, {
@@ -1742,6 +1779,7 @@ function handleDeckUpdate(ws, message) {
     specialtyId: player.specialtyId,
     deckCounts: player.deckCounts,
     cardStyles: player.cardStyles,
+    profile: normalizePlayerProfile(player.profile),
     ready: player.ready,
     deckValid: validation.valid,
     deckValidationErrors: validation.errors

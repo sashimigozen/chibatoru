@@ -117,13 +117,13 @@ function connectSpectatorClient(url, roomId, clientId) {
   });
 }
 
-function connectRandomClient(url, clientId) {
+function connectRandomClient(url, clientId, payload = {}) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
     const client = { ws, messages: [] };
     const timer = setTimeout(() => reject(new Error(`random match timeout: ${clientId}`)), 4000);
     ws.on("open", () => {
-      ws.send(JSON.stringify({ type: "randomMatch", protocol: 1, clientId }));
+      ws.send(JSON.stringify({ type: "randomMatch", protocol: 1, clientId, ...payload }));
     });
     ws.on("message", (raw) => {
       const message = JSON.parse(String(raw));
@@ -242,27 +242,49 @@ test("random match pairs waiting clients into one room", async (t) => {
     child.kill("SIGTERM");
   });
 
-  const first = await connectRandomClient(url, "random-a");
+  const first = await connectRandomClient(url, "random-a", {
+    profile: { username: "  左プレイヤー  ", avatarId: "glasses", favoriteCardId: "yocchan" }
+  });
   clients.push(first);
   const firstJoin = first.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-a");
   assert.equal(firstJoin.you.role, "host");
   assert.equal(firstJoin.matchType, "random");
   assert.equal(firstJoin.hasOpponent, false);
   assert.match(firstJoin.roomId, /^R[A-Z0-9]{6}$/);
+  assert.deepEqual(firstJoin.you.profile, {
+    username: "左プレイヤー",
+    avatarId: "glasses",
+    favoriteCardId: "yocchan"
+  });
 
-  const second = await connectRandomClient(url, "random-b");
+  const second = await connectRandomClient(url, "random-b", {
+    profile: { username: "   ", avatarId: "unknown", favoriteCardId: "bad id" }
+  });
   clients.push(second);
   const secondJoin = second.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-b");
   assert.equal(secondJoin.you.role, "guest");
   assert.equal(secondJoin.matchType, "random");
   assert.equal(secondJoin.roomId, firstJoin.roomId);
   assert.equal(secondJoin.hasOpponent, true);
+  assert.deepEqual(secondJoin.you.profile, {
+    username: "チバトル学生",
+    avatarId: "user",
+    favoriteCardId: ""
+  });
+  assert.equal(
+    secondJoin.players.find((player) => player.clientId === "random-a")?.profile?.username,
+    "左プレイヤー"
+  );
 
   const hostUpdate = await waitFor(first, (message) =>
     message.type === "playerJoined"
     && message.roomId === firstJoin.roomId
     && message.players?.some((player) => player.clientId === "random-b" && player.role === "guest"));
   assert.equal(hostUpdate.message.matchType, "random");
+  assert.deepEqual(
+    hostUpdate.message.players.find((player) => player.clientId === "random-b")?.profile,
+    { username: "チバトル学生", avatarId: "user", favoriteCardId: "" }
+  );
 });
 
 test("チバトルふぉーは4席の部屋、手番操作、手札非公開を独立して同期する", async (t) => {
