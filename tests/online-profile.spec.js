@@ -54,6 +54,24 @@ test("ランダムマッチで双方のプロフィール名とアイコンを�
     await expect.poll(() => left.page.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
     await expect.poll(() => right.page.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
 
+    await left.page.evaluate(() => {
+      window.__chibattle.state.online.remoteProfile = {
+        username: "チバトル学生",
+        avatarId: "user",
+        favoriteCardId: ""
+      };
+      window.__chibattle.render();
+    });
+    await right.page.evaluate((profile) => {
+      window.__chibattle.state.online.conn.send({
+        type: "playReveal",
+        protocol: 1,
+        profileSync: true,
+        profileRole: window.__chibattle.state.online.role,
+        profile
+      });
+    }, rightProfile);
+
     await expect(left.page.locator("#onlineRandomLocalPlayerName")).toHaveText("左プレイヤー");
     await expect(left.page.locator("#onlineRandomRemotePlayerName")).toHaveText("右プレイヤー");
     await expect(left.page.locator("#onlineRandomLocalAvatar")).toHaveClass(/avatar-glasses/);

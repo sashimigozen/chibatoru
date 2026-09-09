@@ -22440,6 +22440,32 @@
       return normalizePlayerProfile(state.profile);
     }
 
+    function onlineSendProfileSync() {
+      if (!state.online.connected || !["host", "guest"].includes(state.online.role)) return false;
+      return onlineSend({
+        type: "playReveal",
+        profileSync: true,
+        profileRole: state.online.role,
+        profile: onlineProfilePayload()
+      });
+    }
+
+    function onlineApplyProfileSync(message) {
+      if (!message?.profileSync || !message.profile) return false;
+      const senderId = String(message.senderId || "");
+      if (!isOnlineSpectator() && state.online.remoteClientId && senderId && senderId !== state.online.remoteClientId) {
+        return false;
+      }
+      const profile = normalizePlayerProfile(message.profile);
+      const profileRole = message.profileRole === "host" || message.profileRole === "guest"
+        ? message.profileRole
+        : "";
+      if (profileRole === "host") state.online.hostProfile = profile;
+      if (profileRole === "guest") state.online.guestProfile = profile;
+      if (!isOnlineSpectator() && profileRole !== state.online.role) state.online.remoteProfile = profile;
+      return true;
+    }
+
     function onlineApplyProfiles(players, explicitSelf = null) {
       const list = Array.isArray(players) ? players : [];
       const self = explicitSelf || list.find((player) => player.clientId === state.online.clientId) || null;
@@ -23211,6 +23237,7 @@
         state.online.lastSeenAt = Date.now();
         onlineClearConnectTimer();
         onlineStartReliabilityLoop();
+        onlineSendProfileSync();
         if (isOnlineSpectator()) {
           onlineSetStatus(state.online.started
             ? "観戦者として入室しました。両者の手札を公開して観戦できます。"
@@ -23514,6 +23541,10 @@
       }
       if (message.type === "oneEyedPeekReveal" && isOnlineGuest()) {
         showOneEyedPeekReveal(message.cards || []);
+        return;
+      }
+      if (message.type === "playReveal" && message.profileSync) {
+        if (onlineApplyProfileSync(message)) render();
         return;
       }
       if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {
