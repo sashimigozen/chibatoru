@@ -7761,6 +7761,151 @@
     .training-data-button:disabled { color: #a0adb5; background: #edf1f3; cursor: default; }
     .training-observer-note { width: min(620px, calc(100% - 40px)); margin: 12px auto 0; color: #647886; font-size: 11px; text-align: center; }
 
+    .online-random-setup {
+      position: relative;
+      min-height: calc(100dvh - var(--home-navigation-height, 72px));
+      padding: 20px 24px 28px;
+      color: #14202d;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.96), rgba(235,243,249,.98)),
+        repeating-linear-gradient(90deg, transparent 0 47px, rgba(61,92,112,.035) 48px 49px);
+    }
+
+    .online-random-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      width: min(1180px, 100%);
+      margin: 0 auto 16px;
+    }
+
+    .online-random-room-number {
+      display: grid;
+      grid-template-columns: auto auto;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      border: 2px solid #17384b;
+      border-radius: 4px;
+      padding: 6px 14px;
+      color: #17384b;
+      background: #fff;
+    }
+
+    .online-random-room-number span { font-size: 11px; font-weight: 900; }
+    .online-random-room-number strong { font-size: 17px; letter-spacing: .08em; }
+    .online-random-layout .training-player-panel,
+    .online-random-layout .training-center-panel { min-height: 474px; }
+    .online-random-layout .training-player-heading { position: relative; }
+    .online-random-layout .training-avatar { margin-top: 76px; }
+
+    .online-random-avatar-wrap {
+      position: relative;
+      width: 116px;
+      height: 116px;
+      margin: 76px auto 5px;
+    }
+
+    .online-random-avatar-wrap .training-avatar { margin: 0; }
+    .online-random-ready-badge {
+      position: absolute;
+      top: -9px;
+      right: -12px;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      min-width: 43px;
+      min-height: 43px;
+      border: 2px solid #607e8e;
+      border-radius: 50%;
+      color: #17384b;
+      background: #fff;
+      font-size: 12px;
+      font-weight: 1000;
+      box-shadow: 0 3px 9px rgba(42,62,76,.16);
+    }
+
+    .online-random-match-waiting {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      color: #526d7d;
+      font-size: 17px;
+      font-weight: 1000;
+      text-align: center;
+    }
+
+    .online-random-deck-select-wrap {
+      position: relative;
+      width: min(220px, 100%);
+      margin: 16px auto 0;
+    }
+
+    .online-random-deck-select-wrap .training-deck-select { width: 100%; margin: 0; }
+    .online-random-deck-select-native {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .online-random-deck-select-native:disabled { cursor: default; }
+    .online-random-deck-select-wrap:has(.online-random-deck-select-native:disabled) .training-deck-select {
+      border-color: #9babb4;
+      color: #91a0a8;
+      background: #edf2f5;
+    }
+
+    .online-random-center-title { margin-bottom: 24px !important; }
+    .online-random-rule-select { appearance: none; text-align: center; font-weight: 1000; }
+    .online-random-ready-button {
+      display: grid;
+      place-items: center;
+      width: 142px;
+      height: 110px;
+      margin: 0 auto;
+      border: 3px solid #7e929e;
+      border-radius: 50%;
+      color: #7e929e;
+      background: #eef3f5;
+      font-size: 19px;
+      font-weight: 1000;
+      cursor: default;
+    }
+
+    .online-random-ready-button:not(:disabled) {
+      border-color: #17a5d8;
+      color: #fff;
+      background: #153d54;
+      box-shadow: 0 0 19px rgba(24,181,232,.55);
+      cursor: pointer;
+    }
+
+    .online-random-ready-button.ready:not(:disabled) {
+      border-color: #20a9dc;
+      color: #153d54;
+      background: #e6f8ff;
+    }
+
+    .online-random-status {
+      min-height: 32px;
+      margin: 13px 0 0;
+      color: #637986;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .online-random-remote-placeholder .training-deck-readout,
+    .online-random-remote-placeholder .online-random-deck-select-wrap { opacity: .52; }
+
+    .online-random-preview-overlay { z-index: 145; }
+
     .training-picker,
     .training-data-overlay,
     .training-replay-overlay { position: fixed; inset: 0; z-index: 130; display: grid; place-items: center; padding: 22px; background: rgba(8,20,29,.62); }
@@ -7832,6 +7977,11 @@
       .training-data-grid { grid-template-columns: 1fr 1fr; }
       .training-data-overview,
       .training-player-data-grid { grid-template-columns: 1fr; }
+      .online-random-setup { padding-inline: 14px; }
+      .online-random-layout .training-center-panel { grid-row: 1; }
+      .online-random-layout .training-player-panel { min-height: 430px; }
+      .online-random-layout .training-avatar,
+      .online-random-avatar-wrap { margin-top: 34px; }
     }
 
     .environment-action-button {
@@ -16566,6 +16716,57 @@
         </div>
         <button class="button secondary" id="onlineBackMenuButton" type="button">オンラインメニュー</button>
       </div>
+      <section class="online-random-setup hidden" id="onlineRandomSetupPanel" aria-label="ランダムマッチ対戦準備">
+        <div class="online-random-head">
+          <button class="training-back-button" id="onlineRandomBackButton" type="button">‹ <span>マルチ</span></button>
+          <div class="online-random-room-number"><span>部屋番号</span><strong id="onlineRandomRoomCode">------</strong></div>
+        </div>
+        <section class="training-setup-layout online-random-layout">
+          <article class="training-player-panel" data-online-random-side="local">
+            <div class="training-player-heading"><span id="onlineRandomLocalPlayerName">USER</span></div>
+            <div class="online-random-avatar-wrap">
+              <div class="training-avatar user" aria-hidden="true"><span></span></div>
+              <span class="online-random-ready-badge hidden" id="onlineRandomLocalReadyBadge">OK</span>
+            </div>
+            <div class="training-deck-readout">
+              <span>使用デッキ</span>
+              <strong id="onlineRandomLocalDeckName">未選択</strong>
+              <button id="onlineRandomDeckConfirmButton" type="button">確認</button>
+            </div>
+            <div class="online-random-deck-select-wrap">
+              <button class="training-deck-select" type="button" tabindex="-1" aria-hidden="true">デッキ選択</button>
+              <select class="online-random-deck-select-native" id="onlineRandomDeckSelect" aria-label="ランダムマッチで使用するデッキ"></select>
+            </div>
+          </article>
+
+          <article class="training-center-panel">
+            <h2 class="online-random-center-title">RULE</h2>
+            <label class="training-setting-label" for="onlineRandomRuleSelect">ルール</label>
+            <select class="training-cycle-button online-random-rule-select" id="onlineRandomRuleSelect" aria-label="ランダムマッチの対戦ルール"></select>
+            <p class="training-rule-description" id="onlineRandomRuleDescription"></p>
+            <div class="training-versus">VS</div>
+            <button class="online-random-ready-button" id="onlineRandomReadyButton" type="button" disabled>準備OK</button>
+            <p class="online-random-status" id="onlineRandomStatusText">対戦相手を探しています</p>
+          </article>
+
+          <article class="training-player-panel online-random-remote-placeholder" id="onlineRandomRemotePanel" data-online-random-side="remote">
+            <div class="training-player-heading right"><span id="onlineRandomRemotePlayerName">USER</span></div>
+            <div class="online-random-avatar-wrap">
+              <div class="training-avatar user" id="onlineRandomRemoteAvatar" aria-hidden="true"><span></span></div>
+              <div class="online-random-match-waiting" id="onlineRandomWaitingText">マッチング中…</div>
+              <span class="online-random-ready-badge hidden" id="onlineRandomRemoteReadyBadge">OK</span>
+            </div>
+            <div class="training-deck-readout">
+              <span>使用デッキ</span>
+              <strong>非公開</strong>
+              <button type="button" disabled>確認</button>
+            </div>
+            <div class="online-random-deck-select-wrap">
+              <button class="training-deck-select" type="button" disabled>デッキ選択</button>
+            </div>
+          </article>
+        </section>
+      </section>
       <div class="online-layout hidden" id="onlinePrivatePanel">
         <section class="online-panel online-room-card">
           <div class="panel-head">
@@ -16646,6 +16847,15 @@
         </div>
         <div class="online-spectate-list" id="onlineSpectateList">
           <p class="online-empty">対戦中の部屋を読み込みます。</p>
+        </div>
+      </section>
+      <section class="training-picker online-random-preview-overlay hidden" id="onlineRandomDeckPreviewOverlay" aria-label="使用デッキの確認">
+        <div class="training-picker-dialog">
+          <div class="training-picker-head">
+            <div><h2>使用デッキ</h2><p>選択中のデッキ内容です。</p></div>
+            <button class="button secondary" id="onlineRandomDeckPreviewCloseButton" type="button">閉じる</button>
+          </div>
+          <div id="onlineRandomDeckPreviewContent"></div>
         </div>
       </section>
     </section>
@@ -19109,6 +19319,7 @@
     let playRevealTimer = null;
     let ultimateYutaVictoryToken = 0;
     let oneEyedPeekRevealTimer = null;
+    let onlineRandomAutoStartTimer = null;
     let pendingOnlineOneEyedPeekReveal = false;
     let nextDeferredCardPlayId = 1;
     let handDragCandidate = null;
@@ -19338,6 +19549,7 @@
         spectateRooms: [],
         spectateLoading: false,
         spectateError: "",
+        deckPreviewOpen: false,
         isApplyingRemote: false,
         isHandlingRemoteCommand: false,
         started: false
@@ -19568,6 +19780,26 @@
       onlineSubviewTitle: document.getElementById("onlineSubviewTitle"),
       onlineSubviewSubtitle: document.getElementById("onlineSubviewSubtitle"),
       onlineBackMenuButton: document.getElementById("onlineBackMenuButton"),
+      onlineRandomSetupPanel: document.getElementById("onlineRandomSetupPanel"),
+      onlineRandomBackButton: document.getElementById("onlineRandomBackButton"),
+      onlineRandomRoomCode: document.getElementById("onlineRandomRoomCode"),
+      onlineRandomLocalPlayerName: document.getElementById("onlineRandomLocalPlayerName"),
+      onlineRandomRemotePlayerName: document.getElementById("onlineRandomRemotePlayerName"),
+      onlineRandomRemotePanel: document.getElementById("onlineRandomRemotePanel"),
+      onlineRandomRemoteAvatar: document.getElementById("onlineRandomRemoteAvatar"),
+      onlineRandomWaitingText: document.getElementById("onlineRandomWaitingText"),
+      onlineRandomLocalReadyBadge: document.getElementById("onlineRandomLocalReadyBadge"),
+      onlineRandomRemoteReadyBadge: document.getElementById("onlineRandomRemoteReadyBadge"),
+      onlineRandomLocalDeckName: document.getElementById("onlineRandomLocalDeckName"),
+      onlineRandomDeckConfirmButton: document.getElementById("onlineRandomDeckConfirmButton"),
+      onlineRandomDeckSelect: document.getElementById("onlineRandomDeckSelect"),
+      onlineRandomRuleSelect: document.getElementById("onlineRandomRuleSelect"),
+      onlineRandomRuleDescription: document.getElementById("onlineRandomRuleDescription"),
+      onlineRandomReadyButton: document.getElementById("onlineRandomReadyButton"),
+      onlineRandomStatusText: document.getElementById("onlineRandomStatusText"),
+      onlineRandomDeckPreviewOverlay: document.getElementById("onlineRandomDeckPreviewOverlay"),
+      onlineRandomDeckPreviewCloseButton: document.getElementById("onlineRandomDeckPreviewCloseButton"),
+      onlineRandomDeckPreviewContent: document.getElementById("onlineRandomDeckPreviewContent"),
       onlineRandomMatchButton: document.getElementById("onlineRandomMatchButton"),
       onlineRandomSpinner: document.getElementById("onlineRandomSpinner"),
       onlineRandomMainText: document.getElementById("onlineRandomMainText"),
@@ -21810,6 +22042,38 @@
       }
     }
 
+    function onlineClearRandomAutoStart() {
+      if (onlineRandomAutoStartTimer === null) return;
+      window.clearTimeout(onlineRandomAutoStartTimer);
+      onlineRandomAutoStartTimer = null;
+    }
+
+    function onlineRandomCanAutoStart() {
+      if (state.screen !== "online"
+        || state.online.matchMode !== "random"
+        || !isOnlineHost()
+        || !state.online.connected
+        || !state.online.localReady
+        || !state.online.remoteReady
+        || state.online.started
+        || state.online.startPending
+        || !onlineLocalDeckValidation().valid
+        || !onlineHasCurrentRemoteDeckCounts()) return false;
+      return onlineRemoteDeckValidation().valid && state.online.remoteDeckValid !== false;
+    }
+
+    function onlineScheduleRandomAutoStart() {
+      if (!onlineRandomCanAutoStart()) {
+        onlineClearRandomAutoStart();
+        return;
+      }
+      if (onlineRandomAutoStartTimer !== null) return;
+      onlineRandomAutoStartTimer = window.setTimeout(() => {
+        onlineRandomAutoStartTimer = null;
+        if (onlineRandomCanAutoStart()) onlineStartBattle();
+      }, 900);
+    }
+
     function onlineConnectionErrorMessage(error, fallback) {
       const detail = error?.message || error?.type || "";
       if (getOnlineServerUrl() === ONLINE_DEFAULT_WS_URL) {
@@ -21904,6 +22168,7 @@
 
     function onlineCloseConnection(returnHome = false) {
       onlineStopReliabilityLoop();
+      onlineClearRandomAutoStart();
       closeCourseRegistrationConsent();
       pendingOnlineOneEyedPeekReveal = false;
       window.clearTimeout(oneEyedPeekRevealTimer);
@@ -21928,6 +22193,7 @@
       onlineClearRemoteDeckCounts();
       state.online.remoteDeckValid = null;
       state.online.remoteDeckValidationErrors = [];
+      state.online.deckPreviewOpen = false;
       onlineResetCardStyles();
       state.online.localRpsChoice = null;
       state.online.remoteRpsChoice = null;
@@ -21961,6 +22227,7 @@
     function onlineHandleRoomClosed(message) {
       const notice = message?.message || "部屋が閉じられました。もう一度部屋を作ってください。";
       onlineStopReliabilityLoop();
+      onlineClearRandomAutoStart();
       pendingOnlineOneEyedPeekReveal = false;
       window.clearTimeout(oneEyedPeekRevealTimer);
       oneEyedPeekRevealTimer = null;
@@ -21984,6 +22251,7 @@
       onlineClearRemoteDeckCounts();
       state.online.remoteDeckValid = null;
       state.online.remoteDeckValidationErrors = [];
+      state.online.deckPreviewOpen = false;
       onlineResetCardStyles();
       state.online.pendingTurnCommandId = "";
       state.online.pendingAttackCommandId = "";
@@ -22061,6 +22329,8 @@
         onlineCloseConnection(false);
         return;
       }
+      onlineClearRandomAutoStart();
+      state.online.deckPreviewOpen = false;
       state.online.lobbyView = "menu";
       state.online.matchMode = "private";
       onlineSetStatus("部屋を作るか、部屋コードを入力してください。", "warn");
@@ -22085,6 +22355,7 @@
       state.online.roomCode = "";
       state.online.roomSessionId = "";
       state.online.remoteClientId = "";
+      state.online.deckPreviewOpen = false;
       state.online.localDeckCounts = createOnlineDeckCounts();
       document.body.dataset.online = "";
       onlineSetStatus("ランダムマッチ中です。相手を探しています。", "warn");
@@ -22694,9 +22965,9 @@
       };
     }
 
-    function onlineUpdateRoomRule() {
+    function onlineUpdateRoomRule(sourceSelect = elements.onlineRuleSelect) {
       if (!isOnlineHost() || state.online.started) return;
-      const nextRuleId = normalizeOnlineRuleId(elements.onlineRuleSelect?.value);
+      const nextRuleId = normalizeOnlineRuleId(sourceSelect?.value);
       if (nextRuleId === state.online.roomRuleId) return;
       if (!state.online.conn?.open || !state.online.lastSeenAt) {
         onlineSetStatus("部屋への接続が完了してから対戦ルールを変更できます。", "warn");
@@ -22714,8 +22985,8 @@
       render();
     }
 
-    function onlineUpdateDeckSelection() {
-      const selected = elements.onlineDeckSelect.value || onlineDeckDescriptorValue({ format: "normal", kind: "current" });
+    function onlineUpdateDeckSelection(sourceSelect = elements.onlineDeckSelect) {
+      const selected = sourceSelect?.value || onlineDeckDescriptorValue({ format: "normal", kind: "current" });
       state.online.localDeckName = onlineDeckDescriptorValue(parseOnlineDeckDescriptor(selected));
       state.online.localDeckCounts = createOnlineDeckCounts();
       state.online.localCardStyles = onlineSelectedCardStyles();
@@ -22724,6 +22995,17 @@
         onlineSend(onlineDeckUpdatePayload(false));
       }
       if (isOnlineHost()) onlineSendRoomState();
+      render();
+    }
+
+    function openOnlineRandomDeckPreview() {
+      if (!onlineDeckDescriptorIsAvailable(onlineLocalDeckDescriptor())) return;
+      state.online.deckPreviewOpen = true;
+      render();
+    }
+
+    function closeOnlineRandomDeckPreview() {
+      state.online.deckPreviewOpen = false;
       render();
     }
 
@@ -22745,6 +23027,7 @@
 
     function onlineStartBattle() {
       if (!isOnlineHost()) return;
+      onlineClearRandomAutoStart();
       if (state.online.startPending) return;
       if (!state.online.connected) {
         onlineSetStatus("相手が入室するまで開始できません。", "bad");
@@ -22782,6 +23065,7 @@
         playerDeckDescriptor: onlineLocalDeckDescriptor(),
         opponentDeckDescriptor: remoteDescriptor
       });
+      if (state.online.matchMode === "random") state.message = "バトルを開始します。";
       const snapshot = onlineCreateSnapshot();
       onlineClearPendingMessagesByType("startGame");
       if (!onlineSend({ type: "startGame", snapshot }, { track: true })) {
@@ -38087,6 +38371,66 @@
       });
     }
 
+    function onlineRandomDeckDisplayName(descriptor = onlineLocalDeckDescriptor()) {
+      return descriptor.kind === "saved" ? (descriptor.name || "未選択") : deckNameForOnline(descriptor);
+    }
+
+    function renderOnlineRandomDeckPreview() {
+      if (!elements.onlineRandomDeckPreviewOverlay) return;
+      const visible = state.screen === "online"
+        && state.online.matchMode === "random"
+        && state.online.deckPreviewOpen;
+      elements.onlineRandomDeckPreviewOverlay.classList.toggle("hidden", !visible);
+      if (!visible) return;
+      const descriptor = onlineLocalDeckDescriptor();
+      const source = descriptor.kind === "saved"
+        ? onlineDeckCollectionForDescriptor(descriptor)[descriptor.name]
+        : { counts: getOnlineDeckCountsByName(descriptor), specialtyId: descriptor.specialtyId };
+      elements.onlineRandomDeckPreviewContent.innerHTML = deckDetailHtml(
+        onlineRandomDeckDisplayName(descriptor),
+        source || { counts: {} },
+        { showCards: true, showCurve: false }
+      );
+      attachLibraryCardDetails(elements.onlineRandomDeckPreviewContent);
+    }
+
+    function renderOnlineRandomSetup(randomWaiting, localValidation) {
+      if (!elements.onlineRandomSetupPanel) return;
+      const connected = Boolean(state.online.connected);
+      const descriptor = onlineLocalDeckDescriptor();
+      const bothReady = connected && state.online.localReady && state.online.remoteReady;
+      elements.onlineRandomRoomCode.textContent = state.online.roomCode || "------";
+      elements.onlineRandomLocalPlayerName.textContent = "USER";
+      elements.onlineRandomRemotePlayerName.textContent = "USER";
+      elements.onlineRandomRemotePlayerName.classList.toggle("hidden", randomWaiting);
+      elements.onlineRandomRemoteAvatar.classList.toggle("hidden", randomWaiting);
+      elements.onlineRandomWaitingText.classList.toggle("hidden", !randomWaiting);
+      elements.onlineRandomRemotePanel.classList.toggle("online-random-remote-placeholder", randomWaiting);
+      elements.onlineRandomLocalReadyBadge.classList.toggle("hidden", !state.online.localReady);
+      elements.onlineRandomRemoteReadyBadge.classList.toggle("hidden", !state.online.remoteReady || randomWaiting);
+      elements.onlineRandomLocalDeckName.textContent = onlineRandomDeckDisplayName(descriptor);
+      elements.onlineRandomDeckConfirmButton.disabled = !onlineDeckDescriptorIsAvailable(descriptor);
+      elements.onlineRandomDeckSelect.disabled = !state.online.role || state.online.started || state.online.startPending;
+      elements.onlineRandomReadyButton.disabled = !state.online.role
+        || !connected
+        || !localValidation.valid
+        || bothReady
+        || state.online.started
+        || state.online.startPending;
+      elements.onlineRandomReadyButton.textContent = state.online.startPending || bothReady
+        ? "開始します"
+        : state.online.localReady ? "準備解除" : "準備OK";
+      elements.onlineRandomReadyButton.classList.toggle("ready", state.online.localReady);
+      elements.onlineRandomStatusText.textContent = randomWaiting
+        ? "マッチング中…"
+        : bothReady
+          ? "バトルを開始します"
+          : state.online.localReady
+            ? "相手の準備を待っています"
+            : "デッキを選んで準備OKを押してください";
+      renderOnlineRandomDeckPreview();
+    }
+
     function renderOnlineLobby() {
       if (!elements.onlineScreen) return;
       renderOnlineDeckOptions();
@@ -38095,10 +38439,11 @@
       const spectator = isOnlineSpectator();
       const randomMode = state.online.matchMode === "random";
       const view = spectator ? "spectate" : (state.online.lobbyView || "menu");
-      const randomWaiting = randomMode && Boolean(state.online.role) && !state.online.connected;
-      const showPrivatePanel = view === "private" || Boolean(state.online.role && !spectator);
+      const randomWaiting = randomMode && !state.online.connected;
+      const showRandomPanel = randomMode && view === "private" && !spectator;
+      const showPrivatePanel = !showRandomPanel && (view === "private" || Boolean(state.online.role && !spectator));
       const showSpectatePanel = view === "spectate" && !showPrivatePanel;
-      const showMenu = view === "menu" && !showPrivatePanel && !showSpectatePanel;
+      const showMenu = view === "menu" && !showRandomPanel && !showPrivatePanel && !showSpectatePanel;
       const localDeckDescriptor = onlineLocalDeckDescriptor();
       const localDeckLabel = `${onlineDeckFormatLabel(localDeckDescriptor)}デッキ`;
       const localValidation = onlineLocalDeckValidation();
@@ -38139,7 +38484,7 @@
           : "マッチング中の相手と自動で対戦部屋に入ります";
       elements.onlineMenuHead?.classList.toggle("hidden", !showMenu);
       elements.onlineMatchActions?.classList.toggle("hidden", !showMenu);
-      elements.onlineSubviewHead?.classList.toggle("hidden", showMenu);
+      elements.onlineSubviewHead?.classList.toggle("hidden", showMenu || showRandomPanel);
       if (elements.onlineSubviewTitle) {
         elements.onlineSubviewTitle.textContent = showSpectatePanel
           ? "観戦"
@@ -38155,6 +38500,7 @@
       if (elements.onlineRoomPanelTitle) {
         elements.onlineRoomPanelTitle.textContent = randomMode ? "ランダムマッチ" : "プライベートマッチ";
       }
+      elements.onlineRandomSetupPanel?.classList.toggle("hidden", !showRandomPanel);
       elements.onlinePrivatePanel?.classList.toggle("hidden", !showPrivatePanel);
       elements.onlineSpectatePanel?.classList.toggle("hidden", !showSpectatePanel);
       elements.onlineServerUrlInput.value = elements.onlineServerUrlInput === document.activeElement
@@ -38168,9 +38514,7 @@
       elements.onlineLocalDeckText.textContent = spectator ? "プレイヤー1（ホスト）" : `${localDeckLabel} / ${localSize}枚 / ${localDeckStatus}`;
       elements.onlineRemoteDeckText.textContent = spectator
         ? "プレイヤー2（ゲスト）"
-        : (state.online.remoteDeckName
-          ? `${onlineDeckFormatLabel(parseOnlineDeckDescriptor(state.online.remoteDeckName))}デッキ / ${remoteDeckStatus}`
-          : "待機中");
+        : "非公開";
       elements.onlineLocalReadyBadge.textContent = spectator ? "対戦者" : (state.online.localReady ? "準備OK" : "未準備");
       elements.onlineRemoteReadyBadge.textContent = spectator ? "対戦者" : (state.online.remoteReady ? "準備OK" : "未準備");
       elements.onlineLocalReadyBadge.classList.toggle("ready", spectator || state.online.localReady);
@@ -38195,6 +38539,9 @@
       elements.onlineRoomInput.value = elements.onlineRoomInput === document.activeElement
         ? elements.onlineRoomInput.value
         : (state.online.roomCode || elements.onlineRoomInput.value);
+      if (showRandomPanel) renderOnlineRandomSetup(randomWaiting, localValidation);
+      else renderOnlineRandomDeckPreview();
+      onlineScheduleRandomAutoStart();
       renderOnlineSpectateRooms();
     }
 
@@ -38205,14 +38552,21 @@
         .map((definition) => `<option value="${escapeHtml(definition.id)}">${escapeHtml(definition.name)}</option>`)
         .join("");
       if (elements.onlineRuleSelect.innerHTML !== options) elements.onlineRuleSelect.innerHTML = options;
+      if (elements.onlineRandomRuleSelect?.innerHTML !== options) elements.onlineRandomRuleSelect.innerHTML = options;
       elements.onlineRuleSelect.value = rule.id;
-      elements.onlineRuleSelect.disabled = !isOnlineHost()
+      if (elements.onlineRandomRuleSelect) elements.onlineRandomRuleSelect.value = rule.id;
+      const disabled = !isOnlineHost()
         || !state.online.conn?.open
         || !state.online.lastSeenAt
         || state.online.started
         || state.online.startPending;
+      elements.onlineRuleSelect.disabled = disabled;
+      if (elements.onlineRandomRuleSelect) elements.onlineRandomRuleSelect.disabled = disabled;
       if (elements.onlineRuleDescription) {
         elements.onlineRuleDescription.textContent = ruleDescriptionText(rule.id);
+      }
+      if (elements.onlineRandomRuleDescription) {
+        elements.onlineRandomRuleDescription.textContent = ruleDescriptionText(rule.id);
       }
     }
 
@@ -38256,7 +38610,7 @@
 
     function renderOnlineDeckOptions() {
       if (!elements.onlineDeckSelect) return;
-      const previousValue = elements.onlineDeckSelect.value || state.online.localDeckName || "__current";
+      const previousValue = state.online.localDeckName || elements.onlineDeckSelect.value || "__current";
       const previousDescriptor = parseOnlineDeckDescriptor(previousValue);
       const rule = onlineRuleDefinition();
       const entries = Object.values(ONLINE_DECK_FORMAT_DEFINITIONS).flatMap((formatDefinition) => {
@@ -38300,11 +38654,14 @@
         return `<optgroup label="${escapeHtml(group.label)}">${options}</optgroup>`;
       }).join("");
       if (elements.onlineDeckSelect.innerHTML !== nextHtml) elements.onlineDeckSelect.innerHTML = nextHtml;
+      if (elements.onlineRandomDeckSelect?.innerHTML !== nextHtml) elements.onlineRandomDeckSelect.innerHTML = nextHtml;
       const selectedDescriptor = onlineDeckDescriptorIsAvailable(previousDescriptor)
         ? previousDescriptor
         : { format: "normal", kind: "current" };
-      elements.onlineDeckSelect.value = onlineDeckDescriptorValue(selectedDescriptor);
-      state.online.localDeckName = elements.onlineDeckSelect.value;
+      const selectedValue = onlineDeckDescriptorValue(selectedDescriptor);
+      elements.onlineDeckSelect.value = selectedValue;
+      if (elements.onlineRandomDeckSelect) elements.onlineRandomDeckSelect.value = selectedValue;
+      state.online.localDeckName = selectedValue;
     }
 
     function renderStatus() {
@@ -45367,6 +45724,7 @@
     elements.tutorialExitButton.addEventListener("click", exitTutorialMode);
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
     elements.onlineBackMenuButton.addEventListener("click", onlineReturnToMenu);
+    elements.onlineRandomBackButton.addEventListener("click", onlineReturnToMenu);
     elements.onlineRandomMatchButton.addEventListener("click", onlineRandomMatch);
     elements.onlinePrivateMatchButton.addEventListener("click", onlineSelectPrivateMatch);
     elements.onlineSpectateButton.addEventListener("click", onlineSelectSpectate);
@@ -45383,9 +45741,17 @@
     elements.onlineServerUrlInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") persistOnlineServerUrl();
     });
-    elements.onlineRuleSelect.addEventListener("change", onlineUpdateRoomRule);
-    elements.onlineDeckSelect.addEventListener("change", onlineUpdateDeckSelection);
+    elements.onlineRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRuleSelect));
+    elements.onlineRandomRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRandomRuleSelect));
+    elements.onlineDeckSelect.addEventListener("change", () => onlineUpdateDeckSelection(elements.onlineDeckSelect));
+    elements.onlineRandomDeckSelect.addEventListener("change", () => onlineUpdateDeckSelection(elements.onlineRandomDeckSelect));
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
+    elements.onlineRandomReadyButton.addEventListener("click", onlineToggleReady);
+    elements.onlineRandomDeckConfirmButton.addEventListener("click", openOnlineRandomDeckPreview);
+    elements.onlineRandomDeckPreviewCloseButton.addEventListener("click", closeOnlineRandomDeckPreview);
+    elements.onlineRandomDeckPreviewOverlay.addEventListener("click", (event) => {
+      if (event.target === elements.onlineRandomDeckPreviewOverlay) closeOnlineRandomDeckPreview();
+    });
     elements.onlineStartButton.addEventListener("click", onlineStartBattle);
     elements.deckBackHomeButton.addEventListener("click", () => {
       if (state.deckBuilder.returnScreen === "dungeonDeck") {
