@@ -17273,6 +17273,7 @@
       "sexual_eye", "yoyu_announce", "three_gestures", "music_detergent",
       "sage_legacy", "trpg_member", "lightning_n", "curry_treater", "aggro_army"
     ]);
+    const AI_DECK_OUT_MILL_ITEM_IDS = new Set(["dos_attack", "destroy_dos_attack"]);
     const AI_MULLIGAN_PRIORITY_IDS = new Set([
       "alpha", "hondara", "onigiri_draw", "deck_without",
       "environment_setup", "wet_meal_ticket"
@@ -18198,12 +18199,12 @@
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
-        summary: "AIがデッキ切れを狙うカード構成と相手の校外を確認し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、環境カードを使い切った後の目黒区図書館を判断するように改善しました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
+        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。相手が環境カードを使い切った後の目黒区図書館も判断します。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
         changes: [
           {
             title: "AIのデッキ切れ戦術",
             before: "AIはDos攻撃とデストロイDos攻撃を個別に評価しており、左側CPUではデッキ切れを狙う順序や耐久を意識した使い方が十分に反映されなかった。",
-            after: "デッキ名に依存せず、Dos攻撃とデストロイDos攻撃を採用している構成を認識する。隙があるときにDos攻撃を使い、校外のDos攻撃を参照して中盤・終盤にデストロイDos攻撃を優先する。左右どちらのCPUにも同じ判断を適用する。"
+            after: "デッキ名に依存せず、Dos攻撃とデストロイDos攻撃を採用している構成を認識する。相手のデッキ削りを最優先し、多少盤面が不利でもDos攻撃を使用する。削り札が手札にない場合はドローで探し、手札が減った場合も補充する。危険な状況では盤面処理・回復を先に行い、校外のDos攻撃を参照してデストロイDos攻撃へつなぐ。左右どちらのCPUにも同じ判断を適用する。"
           },
           {
             title: "AIの環境判断",
@@ -24989,6 +24990,12 @@
         if (card.baseId === "cafeteria") return 120;
         if (card.baseId === "apprentice_vampire") return 115;
       }
+      if (isAiDeckOutStrategyActive(side)) {
+        if (card.baseId === "dos_attack") return 140;
+        if (card.baseId === "destroy_dos_attack") return 115;
+        if (AI_DRAW_OR_SEARCH_CARD_IDS.has(card.baseId)) return 70;
+        if (AI_REMOVAL_CARD_IDS.has(card.baseId) || aiLifeHealingValue(card) > 0) return 20;
+      }
       if (isAiYocchanHyperCarryStrategyActive(side)) {
         const firstTrpg = hand.find((entry) => entry.baseId === "trpg_member");
         const hasYocchan = hand.some((entry) => entry.baseId === "yocchan");
@@ -25404,6 +25411,50 @@
       };
     }
 
+    function getAiDeckOutPriorityState(side = "opponent") {
+      const player = state.players[side];
+      const plan = getAiDeckOutPlan(side);
+      const life = Math.max(1, Number(player?.life) || 1);
+      const usefulMillCards = (player?.hand || []).filter((card) => (
+        AI_DECK_OUT_MILL_ITEM_IDS.has(card.baseId) && aiDeckOutItemScore(side, card) > 0
+      ));
+      const playableMillCards = usefulMillCards.filter((card) => effectiveCardCost(card) <= (player?.will || 0));
+      const emergency = plan.incomingAttack >= life
+        || (life <= 7 && plan.incomingAttack >= Math.max(3, life * 0.6));
+      return {
+        ...plan,
+        emergency,
+        handLow: (player?.hand.length || 0) <= 3,
+        needsMillSearch: usefulMillCards.length === 0,
+        usefulMillCards,
+        playableMillCards
+      };
+    }
+
+    function aiDeckOutDrawPriorityBonus(side, item) {
+      if (!isAiDrawItem(item) || !isAiDeckOutStrategyActive(side)) return 0;
+      const priority = getAiDeckOutPriorityState(side);
+      const player = state.players[side];
+      const willAfterDraw = (player?.will || 0) - effectiveCardCost(item);
+      const blocksPlayableMill = priority.playableMillCards.some((card) => (
+        card.instanceId !== item.instanceId && willAfterDraw < effectiveCardCost(card)
+      ));
+      if (blocksPlayableMill) return -80;
+      let bonus = priority.needsMillSearch ? 42 : 4;
+      if (priority.handLow) bonus += 22;
+      if (priority.emergency) bonus -= 32;
+      return bonus;
+    }
+
+    function isAiDeckOutDefensiveItem(item) {
+      return AI_REMOVAL_CARD_IDS.has(item?.baseId)
+        || [
+          "yabe", "king_ghidorah_bed", "quiet_please", "i_got_it", "sock_block",
+          "scared_me", "abyss", "roar", "bento", "go_home", "dont_worry"
+        ].includes(item?.baseId)
+        || aiLifeHealingValue(item) > 0;
+    }
+
     function aiDeckOutItemScore(side, item) {
       if (!item) return 0;
       const plan = getAiDeckOutPlan(side);
@@ -25411,18 +25462,18 @@
       if (item.baseId === "dos_attack") {
         if (targetDeckCount <= 0) return 0;
         let score = 6 + Math.min(4, targetDeckCount);
-        if (plan.active && plan.dosInTrash === 0) score += 16;
-        if (plan.active && plan.safeWindow) score += 9;
-        if (plan.active && !plan.safeWindow && targetDeckCount > 6) score -= 8;
+        if (plan.active && plan.dosInTrash === 0) score += 30;
+        else if (plan.active) score += 10;
+        if (plan.active && plan.safeWindow) score += 4;
         return Math.max(0, score);
       }
       if (item.baseId === "destroy_dos_attack") {
         if (targetDeckCount <= 0) return 0;
         const millCount = (plan.dosInTrash + 1) * 3;
-        if (targetDeckCount <= millCount) return 50 + millCount;
+        if (targetDeckCount <= millCount) return 80 + millCount;
         if (plan.dosInTrash <= 0) return 0;
         const turn = Number(state.players[side]?.turnsTaken) || 0;
-        return 14 + Math.min(24, millCount) + Math.min(8, turn);
+        return 28 + Math.min(24, millCount) + Math.min(8, turn);
       }
       if (item.baseId === "handy_jet_engine") {
         const targetHandCount = state.players[oppositeSide(side)]?.hand.length || 0;
@@ -25885,6 +25936,9 @@
       const plan = getAiYocchanHyperCarryPlan(side);
       const yocchanStrategy = isAiYocchanHyperCarryStrategyActive(side);
       const deckOutStrategy = isAiDeckOutStrategyActive(side);
+      const deckOutPriority = getAiDeckOutPriorityState(side);
+      const deckOutDefenseBonus = deckOutStrategy && deckOutPriority.emergency ? 80 : 0;
+      const deckOutDrawBonus = aiDeckOutDrawPriorityBonus(side, item);
       if (yocchanStrategy && plan.shouldDeploy && ai.will - cost < plan.requiredWill) return -Infinity;
       const trpg = ai.hand.find((card) => card.baseId === "trpg_member");
       const needsTurnThreeSearch = yocchanStrategy
@@ -25898,32 +25952,53 @@
       const targets = effectTargetEntries(side, targetSide);
       if (["dos_attack", "destroy_dos_attack", "handy_jet_engine"].includes(item.baseId)) {
         const deckOutScore = aiDeckOutItemScore(side, item);
-        return deckOutScore > 0 ? deckOutScore + (deckOutStrategy ? 20 : 0) : -Infinity;
+        const priorityBonus = deckOutStrategy
+          ? (deckOutPriority.emergency ? 12 : 56)
+          : 0;
+        return deckOutScore > 0 ? deckOutScore + priorityBonus : -Infinity;
       }
-      if (item.baseId === "scared_me") return scaredMeHighestCurrentHpTargets(side).length ? 70 + crabDefenseBonus : -Infinity;
+      if (item.baseId === "scared_me") return scaredMeHighestCurrentHpTargets(side).length
+        ? 70 + crabDefenseBonus + deckOutDefenseBonus
+        : -Infinity;
       if (item.baseId === "green_curry") {
         const assessment = aiGreenCurryBoardAssessment(side);
-        return assessment.shouldUse ? assessment.score + crabDefenseBonus : -Infinity;
+        return assessment.shouldUse ? assessment.score + crabDefenseBonus + deckOutDefenseBonus : -Infinity;
       }
       if (item.baseId === "king_ghidorah_bed") {
         const dangerous = targets.length >= 4
           || targets.some(({ card }) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3);
-        return ai.turnsTaken >= 8 || dangerous ? 50 + crabDefenseBonus : -Infinity;
+        return ai.turnsTaken >= 8 || dangerous ? 50 + crabDefenseBonus + deckOutDefenseBonus : -Infinity;
       }
-      if (item.baseId === "yabe") return targets.length ? 38 + crabDefenseBonus : -Infinity;
-      if (item.baseId === "onigiri_draw") return ai.deck.length >= 2 ? 44 + crabSearchBonus : -Infinity;
-      if (item.baseId === "fire_touch") return ai.deck.length >= 3 && ai.life > 4 ? 42 + crabSearchBonus : -Infinity;
-      if (item.baseId === "sage_legacy") return ai.deck.length >= 2 ? 48 + crabSearchBonus : -Infinity;
+      if (item.baseId === "yabe") return targets.length ? 38 + crabDefenseBonus + deckOutDefenseBonus : -Infinity;
+      if (item.baseId === "onigiri_draw") return ai.deck.length >= 2
+        ? 44 + crabSearchBonus + deckOutDrawBonus + deckOutDefenseBonus
+        : -Infinity;
+      if (item.baseId === "fire_touch") return ai.deck.length >= 3 && ai.life > 4
+        ? 42 + crabSearchBonus + deckOutDrawBonus
+        : -Infinity;
+      if (item.baseId === "sage_legacy") return ai.deck.length >= 2
+        ? 48 + crabSearchBonus + deckOutDrawBonus
+        : -Infinity;
       if (item.baseId === "water_2l") {
         const recoverableCrabs = ai.trash.filter((card) => CRAB_SET_IDS.includes(card.baseId)).length;
         return recoverableCrabs > 0 ? 60 + recoverableCrabs * 6 : -Infinity;
       }
-      if (item.baseId === "fluid_pasta") return ai.life < currentLifeCap(side) ? 30 + crabDefenseBonus : (hasYocchan ? 12 : -Infinity);
-      if (item.baseId === "peaceful_mind") return ai.life <= 15 ? 28 + crabDefenseBonus : (hasYocchan ? 10 : -Infinity);
-      if (item.baseId === "dont_worry") return state.actionTurn >= 5 ? (hasYocchan ? 24 : 14) + crabDefenseBonus : -Infinity;
-      if (["aggro_army", "ikemasu"].includes(item.baseId)) return (hasYocchan ? 22 : 8) + crabSearchBonus;
+      if (item.baseId === "fluid_pasta") return ai.life < currentLifeCap(side)
+        ? 30 + crabDefenseBonus + deckOutDefenseBonus
+        : (hasYocchan ? 12 : -Infinity);
+      if (item.baseId === "peaceful_mind") return ai.life <= 15
+        ? 28 + crabDefenseBonus + deckOutDefenseBonus
+        : (hasYocchan ? 10 : -Infinity);
+      if (item.baseId === "dont_worry") return state.actionTurn >= 5
+        ? (hasYocchan ? 24 : 14) + crabDefenseBonus + deckOutDefenseBonus
+        : -Infinity;
+      if (["aggro_army", "ikemasu"].includes(item.baseId)) {
+        return (hasYocchan ? 22 : 8) + crabSearchBonus
+          + (item.baseId === "aggro_army" ? deckOutDrawBonus : 0);
+      }
       return isImmediateItemBaseId(item.baseId) && (hasYocchan || crabPlan.active || deckOutStrategy)
-        ? 6 + crabDefenseBonus + crabSearchBonus
+        ? 6 + crabDefenseBonus + crabSearchBonus + deckOutDrawBonus
+          + (deckOutStrategy && deckOutPriority.emergency && isAiDeckOutDefensiveItem(item) ? 80 : 0)
         : -Infinity;
     }
 
@@ -26553,6 +26628,20 @@
         if (needsTurnThreeTrpg && willAfterItem < effectiveCardCost(trpg)) return false;
       }
       if (timing !== "beforeBoard") return true;
+      const deckOutPriority = getAiDeckOutPriorityState("opponent");
+      if (deckOutPriority.active && AI_DECK_OUT_MILL_ITEM_IDS.has(item.baseId)) {
+        return !deckOutPriority.emergency;
+      }
+      if (deckOutPriority.active && isAiDrawItem(item)) {
+        if (deckOutPriority.emergency) return false;
+        if (deckOutPriority.needsMillSearch) return true;
+        const willAfterDraw = state.players.opponent.will - effectiveCardCost(item);
+        const blocksPlayableMill = deckOutPriority.playableMillCards.some((card) => (
+          card.instanceId !== item.instanceId && willAfterDraw < effectiveCardCost(card)
+        ));
+        if (blocksPlayableMill) return false;
+        if (deckOutPriority.handLow) return true;
+      }
       if (item.baseId === "yamanashi_minimum_wage") return false;
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId)
         && isAiUtaStrategyActive()
@@ -26583,6 +26672,7 @@
       const itemCost = effectiveCardCost(item);
       const willAfterItem = context.will - itemCost;
       const blocksBestBoardMove = bestBoardMove && willAfterItem < effectiveCardCost(bestBoardMove.card);
+      const deckOutPriority = getAiDeckOutPriorityState("opponent");
 
       let adjusted = score;
       if (isAiResourceItem(item)) {
@@ -26613,6 +26703,17 @@
       }
       if (isEarlyDungeonAi() && isAiDrawItem(item)) {
         adjusted += timing === "beforeBoard" ? 30 : 20;
+      }
+      if (deckOutPriority.active) {
+        if (AI_DECK_OUT_MILL_ITEM_IDS.has(item.baseId)) {
+          adjusted += deckOutPriority.emergency ? 12 : 56;
+        }
+        if (isAiDrawItem(item)) {
+          adjusted += aiDeckOutDrawPriorityBonus("opponent", item);
+        }
+        if (deckOutPriority.emergency && isAiDeckOutDefensiveItem(item) && score > 0) {
+          adjusted += 80;
+        }
       }
       if (crabPlan.active) {
         const defensiveItem = AI_REMOVAL_CARD_IDS.has(item.baseId)

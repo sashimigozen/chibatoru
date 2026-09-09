@@ -102,6 +102,133 @@ test("左右どちらのCPUもLO用の持ち物を評価する", async ({ page }
   expect(result.right).toBeGreaterThan(0);
 });
 
+test("多少盤面が不利でも左右のCPUはDos攻撃をドローより優先する", async ({ page }) => {
+  await setup(page);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    for (const side of ["player", "opponent"]) {
+      const ai = api.state.players[side];
+      ai.originalDeckCounts = { dos_attack: 3, destroy_dos_attack: 3, onigiri_draw: 3, general_student: 31 };
+      ai.will = 6;
+      ai.hand = [
+        api.createCardFromBase("dos_attack", side),
+        api.createCardFromBase("onigiri_draw", side),
+        api.createCardFromBase("general_student", side),
+        api.createCardFromBase("general_student", side)
+      ];
+      const target = api.state.players[side === "player" ? "opponent" : "player"];
+      target.board.seats[0] = api.makeBoardCard(api.createCardFromBase("general_student", target === api.state.players.player ? "player" : "opponent"));
+      target.board.seats[1] = api.makeBoardCard(api.createCardFromBase("general_student", target === api.state.players.player ? "player" : "opponent"));
+      target.board.seats[2] = api.makeBoardCard(api.createCardFromBase("general_student", target === api.state.players.player ? "player" : "opponent"));
+    }
+    const left = api.state.players.player.hand;
+    const right = api.state.players.opponent.hand;
+    const leftDos = left.find((card) => card.baseId === "dos_attack");
+    const leftDraw = left.find((card) => card.baseId === "onigiri_draw");
+    const rightDos = right.find((card) => card.baseId === "dos_attack");
+    const rightDraw = right.find((card) => card.baseId === "onigiri_draw");
+    const rightDosScore = api.scoreAiItem(rightDos, { timing: "beforeBoard" });
+    return {
+      leftDos: api.scoreTrainingYocchanItem("player", leftDos),
+      leftDraw: api.scoreTrainingYocchanItem("player", leftDraw),
+      rightDos: rightDosScore,
+      rightDraw: api.scoreAiItem(rightDraw, { timing: "beforeBoard" }),
+      rightUsesDosBeforeBoard: api.shouldAiUseItemAtTiming(rightDos, rightDosScore, "beforeBoard")
+    };
+  });
+  expect(result.leftDos).toBeGreaterThan(result.leftDraw);
+  expect(result.rightDos).toBeGreaterThan(result.rightDraw);
+  expect(result.rightUsesDosBeforeBoard).toBe(true);
+});
+
+test("削り札が手札にない時は左右のCPUがドローで探す", async ({ page }) => {
+  await setup(page);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    for (const side of ["player", "opponent"]) {
+      const ai = api.state.players[side];
+      ai.originalDeckCounts = { dos_attack: 3, destroy_dos_attack: 3, onigiri_draw: 3, general_student: 31 };
+      ai.will = 3;
+      ai.hand = [
+        api.createCardFromBase("onigiri_draw", side),
+        api.createCardFromBase("general_student", side),
+        api.createCardFromBase("general_student", side),
+        api.createCardFromBase("general_student", side)
+      ];
+    }
+    const leftDraw = api.state.players.player.hand.find((card) => card.baseId === "onigiri_draw");
+    const rightDraw = api.state.players.opponent.hand.find((card) => card.baseId === "onigiri_draw");
+    const rightScore = api.scoreAiItem(rightDraw, { timing: "beforeBoard" });
+    return {
+      leftScore: api.scoreTrainingYocchanItem("player", leftDraw),
+      rightScore,
+      rightUsesDrawBeforeBoard: api.shouldAiUseItemAtTiming(rightDraw, rightScore, "beforeBoard")
+    };
+  });
+  expect(result.leftScore).toBeGreaterThan(40);
+  expect(result.rightScore).toBeGreaterThan(20);
+  expect(result.rightUsesDrawBeforeBoard).toBe(true);
+});
+
+test("気力が危険な時は左右のCPUがDos攻撃より回復を優先する", async ({ page }) => {
+  await setup(page);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    for (const side of ["player", "opponent"]) {
+      const ai = api.state.players[side];
+      ai.originalDeckCounts = { dos_attack: 3, destroy_dos_attack: 3, fluid_pasta: 3, general_student: 31 };
+      ai.life = 5;
+      ai.will = 5;
+      ai.hand = [
+        api.createCardFromBase("dos_attack", side),
+        api.createCardFromBase("fluid_pasta", side)
+      ];
+      const targetSide = side === "player" ? "opponent" : "player";
+      const target = api.state.players[targetSide];
+      const attacker = api.makeBoardCard(api.createCardFromBase("general_student", targetSide));
+      attacker.attack = 5;
+      target.board.seats[0] = attacker;
+    }
+    const left = api.state.players.player.hand;
+    const right = api.state.players.opponent.hand;
+    const leftDos = left.find((card) => card.baseId === "dos_attack");
+    const leftHeal = left.find((card) => card.baseId === "fluid_pasta");
+    const rightDos = right.find((card) => card.baseId === "dos_attack");
+    const rightHeal = right.find((card) => card.baseId === "fluid_pasta");
+    const rightDosScore = api.scoreAiItem(rightDos, { timing: "beforeBoard" });
+    return {
+      leftDos: api.scoreTrainingYocchanItem("player", leftDos),
+      leftHeal: api.scoreTrainingYocchanItem("player", leftHeal),
+      rightDos: rightDosScore,
+      rightHeal: api.scoreAiItem(rightHeal, { timing: "beforeBoard" }),
+      rightDefersDos: !api.shouldAiUseItemAtTiming(rightDos, rightDosScore, "beforeBoard")
+    };
+  });
+  expect(result.leftHeal).toBeGreaterThan(result.leftDos);
+  expect(result.rightHeal).toBeGreaterThan(result.rightDos);
+  expect(result.rightDefersDos).toBe(true);
+});
+
+test("LO構成のマリガンでは削り札と、それを探すドローを残す", async ({ page }) => {
+  await setup(page);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const ai = api.state.players.opponent;
+    ai.originalDeckCounts = { dos_attack: 3, destroy_dos_attack: 3, onigiri_draw: 3, general_student: 31 };
+    const hand = [
+      api.createCardFromBase("dos_attack", "opponent"),
+      api.createCardFromBase("destroy_dos_attack", "opponent"),
+      api.createCardFromBase("onigiri_draw", "opponent"),
+      api.createCardFromBase("general_student", "opponent")
+    ];
+    const returned = new Set(api.chooseAiMulliganReturnIds(hand, "opponent"));
+    return hand.map((card) => ({ baseId: card.baseId, returned: returned.has(card.instanceId) }));
+  });
+  for (const baseId of ["dos_attack", "destroy_dos_attack", "onigiri_draw"]) {
+    expect(result.find((entry) => entry.baseId === baseId)?.returned).toBe(false);
+  }
+});
+
 test("相手の環境カードが校外と現在の環境にすべて見えるまで目黒区図書館を温存する", async ({ page }) => {
   await setup(page);
   const result = await page.evaluate(() => {
