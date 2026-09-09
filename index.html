@@ -22440,11 +22440,12 @@
       return normalizePlayerProfile(state.profile);
     }
 
-    function onlineSendProfileSync() {
+    function onlineSendProfileSync(profileAck = false) {
       if (!state.online.connected || !["host", "guest"].includes(state.online.role)) return false;
       return onlineSend({
         type: "playReveal",
         profileSync: true,
+        profileAck: Boolean(profileAck),
         profileRole: state.online.role,
         profile: onlineProfilePayload()
       });
@@ -23544,7 +23545,9 @@
         return;
       }
       if (message.type === "playReveal" && message.profileSync) {
-        if (onlineApplyProfileSync(message)) render();
+        const applied = onlineApplyProfileSync(message);
+        if (applied && !message.profileAck) onlineSendProfileSync(true);
+        if (applied) render();
         return;
       }
       if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {

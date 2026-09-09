@@ -62,6 +62,14 @@ test("ランダムマッチで双方のプロフィール名とアイコンを�
       };
       window.__chibattle.render();
     });
+    await right.page.evaluate(() => {
+      window.__chibattle.state.online.remoteProfile = {
+        username: "チバトル学生",
+        avatarId: "user",
+        favoriteCardId: ""
+      };
+      window.__chibattle.render();
+    });
     await right.page.evaluate((profile) => {
       window.__chibattle.state.online.conn.send({
         type: "playReveal",
