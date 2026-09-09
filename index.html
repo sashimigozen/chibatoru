@@ -17274,6 +17274,7 @@
       "sage_legacy", "trpg_member", "lightning_n", "curry_treater", "aggro_army"
     ]);
     const AI_DECK_OUT_MILL_ITEM_IDS = new Set(["dos_attack", "destroy_dos_attack"]);
+    const AI_BIOLOGY_MATERIAL_IDS = new Set(["single_cell", "midge", "organism"]);
     const AI_MULLIGAN_PRIORITY_IDS = new Set([
       "alpha", "hondara", "onigiri_draw", "deck_without",
       "environment_setup", "wet_meal_ticket"
@@ -18199,7 +18200,7 @@
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
-        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。相手が環境カードを使い切った後の目黒区図書館も判断します。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
+        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。相手が環境カードを使い切った後の目黒区図書館も判断します。単細胞生物は完全変異体への合成を目指して守り、パンパンなどの破壊効果では相手の高体力な出席者を優先するようにしました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
         changes: [
           {
             title: "AIのデッキ切れ戦術",
@@ -18215,6 +18216,11 @@
             title: "後ろから質問する学生のAI配置",
             before: "AIが後ろから質問する学生を効果が発動しない席マスや教卓マスへ出席させる場合があった。",
             after: "相手の教卓マスに効果で処理できる出席者がいる場合に優先し、自分の3行目へ出席させる。相手の教卓マスに対象がいない場合や3行目に空きがない場合は温存し、他の席マスや教卓マスには出席させない。左右どちらのCPUにも同じ判断を適用する。"
+          },
+          {
+            title: "AIの生物合成と破壊判断",
+            before: "AIが単細胞生物を反撃で失う攻撃に使ったり、パンパンで自分側の重要な出席者を選ぶ場合があった。破壊対象も現在の体力より攻撃力などを強く評価する場合があった。",
+            after: "単細胞生物、ミジンコ、生物を完全変異体への合成素材として守り、反撃で失う攻撃やパンパンの自分側対象に選びにくくする。パンパンでは自分の価値が低い出席者を選び、相手側は現在の体力が高い出席者を最優先で破壊する。直接破壊する他の効果でも、相手の高体力な出席者を優先する。左右どちらのCPUにも同じ判断を適用する。"
           },
           {
             title: "パチンウニー",
@@ -25367,6 +25373,16 @@
         && aiDeckIncludesCard(side, "destroy_dos_attack");
     }
 
+    function isAiBiologyFusionStrategyActive(side = "opponent") {
+      return aiDeckIncludesCard(side, "single_cell");
+    }
+
+    function isAiProtectedBiologyMaterial(side, card) {
+      return Boolean(card
+        && isAiBiologyFusionStrategyActive(side)
+        && AI_BIOLOGY_MATERIAL_IDS.has(card.baseId));
+    }
+
     function aiOpponentEnvironmentProgress(side = "opponent") {
       const targetSide = oppositeSide(side);
       const target = state.players[targetSide];
@@ -25453,6 +25469,48 @@
           "scared_me", "abyss", "roar", "bento", "go_home", "dont_worry"
         ].includes(item?.baseId)
         || aiLifeHealingValue(item) > 0;
+    }
+
+    function scoreAiDestroyTarget(card, ref = null) {
+      if (!card) return -Infinity;
+      return Math.max(0, card.currentHp || 0) * 12
+        + Math.max(0, card.maxHp || card.hp || 0) * 2
+        + Math.max(0, scoreAiEnemyAttendeeThreat(card, ref));
+    }
+
+    function scoreAiFriendlySacrifice(side, card, ref = null) {
+      if (!card) return Infinity;
+      let score = Math.max(0, card.attack || 0) * 2
+        + Math.max(0, card.currentHp || 0)
+        + Math.max(0, effectiveCardCost(card));
+      if (isAiProtectedBiologyMaterial(side, card)) {
+        const materialBonus = { single_cell: 120, midge: 150, organism: 190 };
+        score += materialBonus[card.baseId] || 100;
+      }
+      if (isAiProtectedCrabCard(side, card)) score += 220;
+      if (isAiYocchanHyperCarryStrategyActive(side) && card.baseId === "yocchan") score += 180;
+      if (ref?.zone === "teacher" && card.type === "teacher") score += 12;
+      return score;
+    }
+
+    function planAiPanpan(side, item = null) {
+      const targetSide = oppositeSide(side);
+      const friendly = listBoardRefs(side)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card && !isPadlocked(entry.card))
+        .sort((a, b) => scoreAiFriendlySacrifice(side, a.card, a.ref)
+          - scoreAiFriendlySacrifice(side, b.card, b.ref))[0] || null;
+      const enemy = effectTargetEntries(side, targetSide)
+        .sort((a, b) => scoreAiDestroyTarget(b.card, b.ref) - scoreAiDestroyTarget(a.card, a.ref))[0] || null;
+      if (!friendly || !enemy) return { friendly: null, enemy: null, score: 0 };
+      const enemyValue = scoreAiDestroyTarget(enemy.card, enemy.ref);
+      const friendlyValue = scoreAiFriendlySacrifice(side, friendly.card, friendly.ref);
+      return {
+        friendly,
+        enemy,
+        score: Math.max(1, 20 + enemyValue * 0.45 - friendlyValue * 0.2
+          - Math.max(0, effectiveCardCost(item)) * 2)
+      };
     }
 
     function aiDeckOutItemScore(side, item) {
@@ -25881,6 +25939,12 @@
       if (card.type === "environment" && aiEnvironmentReplacementBonus(side) > 0) {
         return 120 + aiEnvironmentReplacementBonus(side);
       }
+      if (card.baseId === "single_cell" && isAiBiologyFusionStrategyActive(side)) {
+        const materialCount = listBoardRefs(side)
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((fieldCard) => AI_BIOLOGY_MATERIAL_IDS.has(fieldCard?.baseId)).length;
+        return 650 + materialCount * 30;
+      }
       if (!isAiYocchanHyperCarryStrategyActive(side)) return 0;
       if (card.baseId === "trpg_member" && aiDeckIncludesCard(side, "trpg_member")) {
         const needsSearch = aiYocchanCardsInHand(side).length === 0 && !aiHasUsedTrpgMember(side);
@@ -25964,6 +26028,16 @@
         const assessment = aiGreenCurryBoardAssessment(side);
         return assessment.shouldUse ? assessment.score + crabDefenseBonus + deckOutDefenseBonus : -Infinity;
       }
+      if (item.baseId === "panpan") {
+        return planAiPanpan(side, item).score || -Infinity;
+      }
+      if (TARGETED_DESTROY_ITEM_IDS.has(item.baseId)) {
+        const target = item.baseId === "favorite_number_s"
+          ? effectTargetEntries(side, targetSide, (card, ref) => ref.zone === "teacher" && card.type === "teacher")[0]
+          : effectTargetEntries(side, targetSide)
+            .sort((a, b) => scoreAiDestroyTarget(b.card, b.ref) - scoreAiDestroyTarget(a.card, a.ref))[0];
+        return target ? 45 + scoreAiDestroyTarget(target.card, target.ref) * 0.25 : -Infinity;
+      }
       if (item.baseId === "king_ghidorah_bed") {
         const dangerous = targets.length >= 4
           || targets.some(({ card }) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3);
@@ -26034,6 +26108,21 @@
     function useTrainingYocchanItem(side, item) {
       if (item.baseId === "king_ghidorah_bed") return useTrainingYocchanKingGhidorah(side, item);
       if (item.baseId === "green_curry") return castItemGlobal(side, item, false);
+      if (item.baseId === "panpan") {
+        const plan = planAiPanpan(side, item);
+        return plan.friendly && plan.enemy
+          ? castPanpan(side, item, plan.friendly.ref, plan.enemy.ref, false)
+          : false;
+      }
+      if (TARGETED_DESTROY_ITEM_IDS.has(item.baseId)) {
+        const target = item.baseId === "favorite_number_s"
+          ? effectTargetEntries(side, oppositeSide(side), (card, ref) => ref.zone === "teacher" && card.type === "teacher")[0]
+          : effectTargetEntries(side, oppositeSide(side))
+            .sort((a, b) => scoreAiDestroyTarget(b.card, b.ref) - scoreAiDestroyTarget(a.card, a.ref))[0];
+        return target
+          ? castItemOnCard(side, item, target.ref.owner, target.ref.zone, target.ref.index, false)
+          : false;
+      }
       if (isImmediateItemBaseId(item.baseId)) return castImmediateItem(side, item, false);
       return false;
     }
@@ -26061,11 +26150,13 @@
     function findTrainingAiAttackTarget(side, attacker) {
       const targetSide = oppositeSide(side);
       const priorityIds = new Set(listAttackPriorityCards(targetSide).map((card) => card.instanceId));
+      const preserveBiologyMaterial = isAiProtectedBiologyMaterial(side, attacker);
       return listBoardRefs(targetSide)
         .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
         .filter(({ card }) => card && canAibenNyoteiAttackTarget(attacker, card))
         .filter(({ card }) => !isDesignDomainAttackBlocked(attacker, card))
         .filter(({ card }) => attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(card.instanceId))
+        .filter(({ card }) => !preserveBiologyMaterial || Math.max(0, card.attack || 0) < attacker.currentHp)
         .sort((a, b) => {
           const aKill = (attacker.attack || 0) >= a.card.currentHp ? 1 : 0;
           const bKill = (attacker.attack || 0) >= b.card.currentHp ? 1 : 0;
@@ -26885,7 +26976,11 @@
       }
       if (card.baseId === "single_cell") {
         const sameCount = friendlyRefs.filter((ref) => getBoardCardFromRef(ref)?.baseId === "single_cell").length;
-        score += sameCount > 0 ? 8 : 2;
+        const biologyMaterialCount = friendlyRefs
+          .map((ref) => getBoardCardFromRef(ref))
+          .filter((fieldCard) => AI_BIOLOGY_MATERIAL_IDS.has(fieldCard?.baseId)).length;
+        score += sameCount > 0 ? 28 : 14;
+        score += biologyMaterialCount * 5;
       }
       if (card.baseId === "trpg_member") {
         score += state.players.opponent.deck.some((deckCard) => deckCard.type === "student") ? 6 : -2;
@@ -27459,7 +27554,10 @@
       }
       if (item.baseId === "seriously_hit") {
         return enemyCards.length
-          ? 8 + Math.max(...enemyCards.map((card) => scoreAiEnemyAttendeeThreat(card) + (card.currentHp || 0) * 0.4))
+          ? 8 + Math.max(...listBoardRefs("player")
+            .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+            .filter((entry) => entry.card)
+            .map(({ card, ref }) => scoreAiDestroyTarget(card, ref))) * 0.25
           : 0;
       }
       if (item.baseId === "favorite_number_s") {
@@ -27478,7 +27576,7 @@
         return aiGreenCurryBoardAssessment("opponent").score;
       }
       if (item.baseId === "yakiniku") return friendlyCards.length > 0 ? 5 + friendlyCards.length : 0;
-      if (item.baseId === "panpan") return friendlyCards.length > 0 && enemyCards.length > 0 ? 8 : 0;
+      if (item.baseId === "panpan") return planAiPanpan("opponent", item).score;
       if (item.baseId === "capture") {
         return PLAYER_SEAT_ORDER.some((index) => !state.players.player.board.seats[index] && !isSeatBlocked("player", index)) ? 6 : 0;
       }
@@ -27538,7 +27636,7 @@
         && incomingDamage - removedDamage < ai.life;
       const targetChoices = discard ? destroyTargets.map(({ ref, card }) => ({
         ref, card,
-        score: 4 + threatValue(card, ref) - discardValue(discard)
+        score: 4 + scoreAiDestroyTarget(card, ref) * 0.35 - discardValue(discard)
           + (removesCounterLethal(futureFaceDamage(card, "player", state.actionTurn + 1)) ? 60 : 0)
       })).sort((a, b) => b.score - a.score) : [];
       const target = targetChoices[0] || null;
@@ -27677,7 +27775,7 @@
         const target = lethalTarget?.card
           ? lethalTarget
           : effectTargetEntries("opponent", "player")
-          .sort((a, b) => scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref))[0];
+          .sort((a, b) => scoreAiDestroyTarget(b.card, b.ref) - scoreAiDestroyTarget(a.card, a.ref))[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "favorite_number_s") {
@@ -27695,10 +27793,10 @@
         return castItemGlobal("opponent", item, false);
       }
       if (item.baseId === "panpan") {
-        const friendly = listBoardRefs("opponent")[0];
-        const enemy = effectTargetEntries("opponent", "player")
-          .sort((a, b) => scoreAiEnemyAttendeeThreat(b.card, b.ref) - scoreAiEnemyAttendeeThreat(a.card, a.ref))[0]?.ref;
-        return friendly && enemy ? castPanpan("opponent", item, friendly, enemy, false) : false;
+        const plan = planAiPanpan("opponent", item);
+        return plan.friendly && plan.enemy
+          ? castPanpan("opponent", item, plan.friendly.ref, plan.enemy.ref, false)
+          : false;
       }
       if (item.baseId === "capture") {
         const index = PLAYER_SEAT_ORDER.find((seatIndex) => !state.players.player.board.seats[seatIndex] && !isSeatBlocked("player", seatIndex));
@@ -27824,12 +27922,14 @@
         || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
       const lethalForecast = getAiLethalForecast();
       if (!cannotAttackLife && lethalForecast.immediateLethal) return null;
+      const preserveBiologyMaterial = isAiProtectedBiologyMaterial("opponent", attacker);
       const targets = listBoardRefs("player")
         .map((ref) => ({ ...ref, card: getBoardCardFromRef(ref) }))
         .filter((target) => target.card && !(attacker.type === "teacher" && target.card.baseId === "loud_student" && canUsePrintedCardEffects(target.card)))
         .filter((target) => canAibenNyoteiAttackTarget(attacker, target.card))
         .filter((target) => !isDesignDomainAttackBlocked(attacker, target.card))
         .filter((target) => attacker.baseId === "loud_student" || attentionIds.size === 0 || attentionIds.has(target.card.instanceId))
+        .filter((target) => !preserveBiologyMaterial || Math.max(0, target.card.attack || 0) < attacker.currentHp)
         .map((target) => {
           const canDefeat = (attacker.attack || 0) >= target.card.currentHp;
           const survivesCounter = (target.card.attack || 0) < attacker.currentHp;
@@ -45552,6 +45652,8 @@
       isAiYocchanHyperCarryStrategyActive,
       isAiCafeteriaVampireStrategyActive,
       isAiDeckOutStrategyActive,
+      isAiBiologyFusionStrategyActive,
+      isAiProtectedBiologyMaterial,
       isAiCrabVictoryStrategyActive,
       getAiCrabVictoryPlan,
       getAiYocchanHyperCarryPlan,
@@ -45559,6 +45661,8 @@
       getAiDeckOutPlan,
       aiOpponentEnvironmentProgress,
       aiDeckOutItemScore,
+      scoreAiDestroyTarget,
+      planAiPanpan,
       aiGreenCurryBoardAssessment,
       chooseAiMulliganReturnIds,
       scoreAiPlacement,
@@ -45566,11 +45670,14 @@
       shouldAiUseItemAtTiming,
       findAiPlayMove,
       findTrainingAiPlayMove,
+      findAiAttackTarget,
+      findTrainingAiAttackTarget,
       trainingYocchanPlayPriority,
       runOpponentAI,
       runTrainingLeftAI,
       resolveTrainingAiPendingSelections,
       scoreTrainingYocchanItem,
+      useTrainingYocchanItem,
       useAiItem,
       endTurn,
       castImmediateItem,
