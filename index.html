@@ -17275,6 +17275,11 @@
     ]);
     const AI_DECK_OUT_MILL_ITEM_IDS = new Set(["dos_attack", "destroy_dos_attack"]);
     const AI_BIOLOGY_MATERIAL_IDS = new Set(["single_cell", "midge", "organism"]);
+    const AI_SELF_ENGINE_ENVIRONMENT_IDS = new Set(["cafeteria", "night_pool"]);
+    const AI_DISRUPTIVE_ENVIRONMENT_IDS = new Set([
+      "meguro_library", "seat_rules", "full_lock", "no_late_time",
+      "building_12_classroom", "on_demand_business", "design_domain"
+    ]);
     const AI_MULLIGAN_PRIORITY_IDS = new Set([
       "alpha", "hondara", "onigiri_draw", "deck_without",
       "environment_setup", "wet_meal_ticket"
@@ -18200,7 +18205,7 @@
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
-        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。相手が環境カードを使い切った後の目黒区図書館も判断します。単細胞生物は完全変異体への合成を目指して守り、パンパンなどの破壊効果では相手の高体力な出席者を優先するようにしました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
+        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。環境カードは相手の手札枚数と公開情報から張り替えの危険を読み、目黒区図書館などの妨害環境を置く時機を判断します。食堂やナイトプールなど、自分の動きを作る環境は積極的に使います。単細胞生物は完全変異体への合成を目指して守り、パンパンなどの破壊効果では相手の高体力な出席者を優先するようにしました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
         changes: [
           {
             title: "AIのデッキ切れ戦術",
@@ -18209,8 +18214,8 @@
           },
           {
             title: "AIの環境判断",
-            before: "相手が環境カードを校外へ送り切ったかを確認せず、目黒区図書館を置く時機を判断できなかった。",
-            after: "相手の初期デッキに入っていた環境カードと、現在の環境・相手の校外を照合する。相手が環境カードを使い切るまでは目黒区図書館を温存し、張り替えられにくい時機に使用する。相手の環境が置かれている場合は、環境を張り替える価値も高く評価する。"
+            before: "目黒区図書館は相手が環境カードを使い切るまで必ず温存し、食堂も同じターンに後続を展開できるまで置かない固定的な判断だった。",
+            after: "相手の元デッキや手札の中身は参照せず、相手の手札枚数、現在の環境、相手の校外という公開情報だけから、環境を張り替えられる危険を推定する。妨害環境は相手の手札が少なく危険が低いと読めば賭けとして使用し、相手が持っていそうなら温存する。食堂やナイトプールなど自分の動きを作る環境は、相性のよいカードや空席があれば積極的に使用する。相手の環境を上書きする価値もすべての環境で評価し、左右どちらのCPUにも同じ判断を適用する。"
           },
           {
             title: "後ろから質問する学生のAI配置",
@@ -25386,23 +25391,33 @@
     function aiOpponentEnvironmentProgress(side = "opponent") {
       const targetSide = oppositeSide(side);
       const target = state.players[targetSide];
-      const originalCounts = target?.originalDeckCounts || {};
-      const environmentEntries = Object.entries(originalCounts)
-        .filter(([baseId, count]) => CARD_BASES[baseId]?.type === "environment" && Number(count) > 0);
-      const remaining = environmentEntries.reduce((total, [baseId, count]) => {
-        const trashed = target.trash.filter((card) => card?.baseId === baseId).length;
-        const active = state.environment?.owner === targetSide && state.environment?.baseId === baseId ? 1 : 0;
-        return total + Math.max(0, Number(count) - trashed - active);
-      }, 0);
+      const handSize = target?.hand.length || 0;
+      const deckSize = target?.deck.length || 0;
+      const visibleEnvironmentCount = (target?.trash || [])
+        .filter((card) => card?.type === "environment").length
+        + (state.environment?.owner === targetSide ? 1 : 0);
+      const estimatedEnvironmentRate = 0.13 + Math.min(0.06, visibleEnvironmentCount * 0.02);
+      const replacementRisk = handSize === 0
+        ? 0
+        : 1 - ((1 - estimatedEnvironmentRate) ** handSize);
       return {
-        total: environmentEntries.reduce((total, [, count]) => total + Number(count), 0),
-        remaining,
-        exhausted: remaining === 0
+        handSize,
+        deckSize,
+        visibleEnvironmentCount,
+        replacementRisk
       };
     }
 
     function aiEnvironmentReplacementBonus(side = "opponent") {
       return state.environment?.owner === oppositeSide(side) ? 12 : 0;
+    }
+
+    function aiEnvironmentReplacementRiskPenalty(side, baseId) {
+      const progress = aiOpponentEnvironmentProgress(side);
+      const weight = AI_SELF_ENGINE_ENVIRONMENT_IDS.has(baseId)
+        ? 5
+        : AI_DISRUPTIVE_ENVIRONMENT_IDS.has(baseId) ? 40 : 16;
+      return Math.round(progress.replacementRisk * weight);
     }
 
     function getAiDeckOutPlan(side = "opponent") {
@@ -25918,9 +25933,6 @@
         return aiBackQuestionTeacherTarget(side, card) ? 760 : -900;
       }
       const cafeteriaPlan = getAiCafeteriaVampirePlan(side);
-      if (card.baseId === "cafeteria" && cafeteriaPlan.active) {
-        return cafeteriaPlan.attackWindow ? 980 : -900;
-      }
       if (card.baseId === "apprentice_vampire" && cafeteriaPlan.active) {
         if (isCafeteriaEnvironmentActive()) return 950;
         if (cafeteriaPlan.cafeteria) return -900;
@@ -25931,13 +25943,9 @@
           .filter((fieldCard) => fieldCard?.type === "vampire").length;
         if (vampireCount > 0) return 800 + vampireCount * 10;
       }
-      if (card.baseId === "meguro_library") {
-        return aiOpponentEnvironmentProgress(side).exhausted
-          ? 700 + aiEnvironmentReplacementBonus(side)
-          : -900;
-      }
-      if (card.type === "environment" && aiEnvironmentReplacementBonus(side) > 0) {
-        return 120 + aiEnvironmentReplacementBonus(side);
+      if (card.type === "environment") {
+        const environmentScore = scoreAiEnvironment(card, side);
+        return environmentScore > 0 ? 100 + environmentScore * 5 : -900;
       }
       if (card.baseId === "single_cell" && isAiBiologyFusionStrategyActive(side)) {
         const materialCount = listBoardRefs(side)
@@ -27171,15 +27179,19 @@
       return score;
     }
 
-    function scoreAiEnvironment(card) {
+    function scoreAiEnvironment(card, side = "opponent") {
       if (state.environment?.baseId === card.baseId && card.baseId !== "seat_rules") return -100;
-      const friendlySeats = state.players.opponent.board.seats;
-      const enemySeats = state.players.player.board.seats;
-      const replacementBonus = aiEnvironmentReplacementBonus("opponent");
+      const targetSide = oppositeSide(side);
+      const friendlySeats = state.players[side].board.seats;
+      const enemySeats = state.players[targetSide].board.seats;
+      const replacementBonus = aiEnvironmentReplacementBonus(side);
+      const replacementRiskPenalty = aiEnvironmentReplacementRiskPenalty(side, card.baseId);
       if (card.baseId === "meguro_library") {
-        if (!aiOpponentEnvironmentProgress("opponent").exhausted) return -100;
-        const ownHandCost = Math.max(0, state.players.opponent.hand.length - 2);
-        return 12 + replacementBonus - ownHandCost;
+        const progress = aiOpponentEnvironmentProgress(side);
+        const lowOpponentHandBonus = progress.handSize <= 2 ? 6 : 0;
+        const ownDiscardBurden = state.players[side].hand.length <= 2 ? 6 : 2;
+        return 18 + replacementBonus + lowOpponentHandBonus
+          - replacementRiskPenalty - ownDiscardBurden;
       }
       if (card.baseId === "classroom") {
         if (!state.environment) return 1;
@@ -27193,20 +27205,25 @@
         return Math.max(1, 3 + linePotential(friendlySeats) - linePotential(enemySeats) * 0.6 + replacementBonus);
       }
       if (card.baseId === "cafeteria") {
-        const cafeteriaPlan = getAiCafeteriaVampirePlan("opponent");
+        const cafeteriaPlan = getAiCafeteriaVampirePlan(side);
         if (cafeteriaPlan.active) {
-          if (!cafeteriaPlan.attackWindow) return -100;
           const apprenticeBonus = cafeteriaPlan.bestFollowUp?.baseId === "apprentice_vampire" ? 18 : 0;
-          return 35 + apprenticeBonus + cafeteriaPlan.followUps.length * 4 + replacementBonus;
+          const attackWindowBonus = cafeteriaPlan.attackWindow ? 28 : 0;
+          const preparationBonus = cafeteriaPlan.bestFollowUp && cafeteriaPlan.openSeatCount > 0 ? 12 : 2;
+          return 12 + preparationBonus + attackWindowBonus + apprenticeBonus
+            + cafeteriaPlan.followUps.length * 4 + replacementBonus - replacementRiskPenalty;
         }
-        const cafeteriaCards = state.players.opponent.hand.filter((handCard) =>
+        const cafeteriaCards = state.players[side].hand.filter((handCard) =>
           ["cafeteria_lady", "curry_treater", "chen_san", "dry_meal_ticket", "impossible_high_note"].includes(handCard.baseId)).length;
-        return 4 + cafeteriaCards * 3 + (state.players.opponent.life < 20 ? 2 : 0) + replacementBonus;
+        return 4 + cafeteriaCards * 3 + (state.players[side].life < 20 ? 2 : 0)
+          + replacementBonus - replacementRiskPenalty;
       }
       if (card.baseId === "night_pool") {
-        const friendlyOpen = friendlySeats.filter((fieldCard, index) => !fieldCard && isBoardSlotOpen("opponent", "seat", index)).length;
-        const enemyOpen = enemySeats.filter((fieldCard, index) => !fieldCard && isBoardSlotOpen("player", "seat", index)).length;
-        return 2 + friendlyOpen - enemyOpen * 0.4 + replacementBonus;
+        const friendlyOpen = friendlySeats.filter((fieldCard, index) => !fieldCard && isBoardSlotOpen(side, "seat", index)).length;
+        const enemyOpen = enemySeats.filter((fieldCard, index) => !fieldCard && isBoardSlotOpen(targetSide, "seat", index)).length;
+        const biologyBonus = isAiBiologyFusionStrategyActive(side) ? 14 : 0;
+        return 4 + friendlyOpen * 1.5 - enemyOpen * 0.5 + biologyBonus
+          + replacementBonus - replacementRiskPenalty;
       }
       if (card.baseId === "gangi_fortress") {
         const buffSeats = [3, 4, 6, 7];
@@ -27217,35 +27234,41 @@
       if (card.baseId === "seat_rules") {
         const friendlyLost = friendlySeats.filter((fieldCard, index) => fieldCard && seatCol(index) === 1).length;
         const enemyLost = enemySeats.filter((fieldCard, index) => fieldCard && seatCol(index) === 1).length;
-        return enemyLost * 7 - friendlyLost * 6 + 2 + replacementBonus;
+        return enemyLost * 7 - friendlyLost * 6 + 2 + replacementBonus - replacementRiskPenalty;
       }
-      if (card.baseId === "design_domain") return hasDesignTeacherOnTeacherSlot("opponent") ? 8 + replacementBonus : -100;
-      if (card.baseId === "chaos_world") return (listBoardRefs("player").length > listBoardRefs("opponent").length ? 4 : 1) + replacementBonus;
+      if (card.baseId === "design_domain") {
+        return hasDesignTeacherOnTeacherSlot(side) ? 8 + replacementBonus - replacementRiskPenalty : -100;
+      }
+      if (card.baseId === "chaos_world") {
+        return (listBoardRefs(targetSide).length > listBoardRefs(side).length ? 4 : 1)
+          + replacementBonus - replacementRiskPenalty;
+      }
       if (card.baseId === "door_war") {
-        const doorItems = state.players.opponent.hand.filter((handCard) => ["front_door", "door_front", "back_door"].includes(handCard.baseId)).length;
-        const sturdyNewCards = listBoardRefs("opponent").filter((ref) => {
+        const doorItems = state.players[side].hand.filter((handCard) => ["front_door", "door_front", "back_door"].includes(handCard.baseId)).length;
+        const sturdyNewCards = listBoardRefs(side).filter((ref) => {
           const fieldCard = getBoardCardFromRef(ref);
           return fieldCard?.playedOnTurn === state.actionTurn && (fieldCard.currentHp || 0) + (fieldCard.defense || 0) >= 3;
         }).length;
         return Math.max(0, 2 + doorItems * 4 + sturdyNewCards + replacementBonus);
       }
       if (card.baseId === "shogi_duel_field") {
-        const ownLife = state.players.opponent.life;
-        const enemyLife = state.players.player.life;
+        const ownLife = state.players[side].life;
+        const enemyLife = state.players[targetSide].life;
         if (enemyLife <= 10 && ownLife > enemyLife) return 10 + replacementBonus;
         if (ownLife <= 10 && enemyLife > ownLife) return 5 + replacementBonus;
         return ownLife <= enemyLife ? 3 + replacementBonus : -2;
       }
       if (card.baseId === "aiben_vs_nyotei_title_match") {
-        const ownOpenSeat = titleMatchOpenSeat("opponent") >= 0;
-        const enemyOpenSeat = titleMatchOpenSeat("player") >= 0;
-        const pairOnBoard = listBoardRefs("opponent").filter((ref) => {
+        const ownOpenSeat = titleMatchOpenSeat(side) >= 0;
+        const enemyOpenSeat = titleMatchOpenSeat(targetSide) >= 0;
+        const pairOnBoard = listBoardRefs(side).filter((ref) => {
           const fieldCard = getBoardCardFromRef(ref);
           return ["aiben", "nyotei"].includes(fieldCard?.baseId);
         }).length;
         return ownOpenSeat && enemyOpenSeat ? 7 + pairOnBoard * 2 + replacementBonus : -1;
       }
-      return 0;
+      if (replacementBonus > 0) return Math.max(1, 2 + replacementBonus - replacementRiskPenalty);
+      return state.environment ? -1 : Math.max(1, 2 - replacementRiskPenalty);
     }
 
     async function tryUseAiItems(options = {}) {
@@ -45660,6 +45683,7 @@
       getAiCafeteriaVampirePlan,
       getAiDeckOutPlan,
       aiOpponentEnvironmentProgress,
+      scoreAiEnvironment,
       aiDeckOutItemScore,
       scoreAiDestroyTarget,
       planAiPanpan,

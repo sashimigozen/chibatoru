@@ -124,7 +124,7 @@ test("食堂と見習いヴァンパイアを採用した任意のデッキで4�
   });
 });
 
-test("食堂は同じターンに展開できる準備が整うまで温存する", async ({ page }) => {
+test("食堂は同じターンに展開し切れなくても見習いヴァンパイアがあれば先に置く", async ({ page }) => {
   await setup(page, { turn: 3, actionTurn: 5 });
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -141,7 +141,31 @@ test("食堂は同じターンに展開できる準備が整うまで温存す�
       move: api.findAiPlayMove()?.card.baseId || null
     };
   });
-  expect(result).toEqual({ attackWindow: false, move: null });
+  expect(result).toEqual({ attackWindow: false, move: "cafeteria" });
+});
+
+test("ナイトプールは単細胞生物を使う構成と空席があれば積極的に置く", async ({ page }) => {
+  await setup(page, { turn: 3, actionTurn: 5 });
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const right = api.state.players.opponent;
+    right.originalDeckCounts = { single_cell: 3, night_pool: 1, general_student: 36 };
+    right.will = right.maxWill = 3;
+    right.hand = [
+      api.createCardFromBase("night_pool", "opponent"),
+      api.createCardFromBase("general_student", "opponent")
+    ];
+    const rightMove = api.findAiPlayMove()?.card.baseId || null;
+
+    const left = api.state.players.player;
+    left.originalDeckCounts = { single_cell: 3, night_pool: 1, general_student: 36 };
+    left.will = left.maxWill = 3;
+    const nightPool = api.createCardFromBase("night_pool", "player");
+    left.hand = [nightPool, api.createCardFromBase("general_student", "player")];
+    const leftMove = api.findTrainingAiPlayMove("player")?.card.baseId || null;
+    return { rightMove, leftMove };
+  });
+  expect(result).toEqual({ rightMove: "night_pool", leftMove: "night_pool" });
 });
 
 test("グリーンカレーは弱い盤面では温存し、強い盤面への切り返しに使う", async ({ page }) => {

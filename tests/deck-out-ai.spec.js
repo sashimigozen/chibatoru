@@ -229,51 +229,65 @@ test("LO構成のマリガンでは削り札と、それを探すドローを残
   }
 });
 
-test("相手の環境カードが校外と現在の環境にすべて見えるまで目黒区図書館を温存する", async ({ page }) => {
+test("目黒区図書館は非公開の元デッキを見ず、相手の手札枚数から張り替えリスクを読む", async ({ page }) => {
   await setup(page);
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const enemy = api.state.players.player;
     const ai = api.state.players.opponent;
-    enemy.originalDeckCounts = { cafeteria: 2, general_student: 38 };
-    enemy.trash = [api.createCardFromBase("cafeteria", "player")];
     ai.hand = [
       api.createCardFromBase("meguro_library", "opponent"),
       api.createCardFromBase("general_student", "opponent")
     ];
-    const before = {
+
+    enemy.originalDeckCounts = { cafeteria: 30, general_student: 10 };
+    enemy.trash = [];
+    enemy.hand = [];
+    const lowHand = {
       progress: api.aiOpponentEnvironmentProgress("opponent"),
-      move: api.findAiPlayMove()?.card.baseId || null
+      score: api.scoreAiEnvironment(ai.hand[0], "opponent")
     };
-    api.state.environment = api.makeBoardCard(api.createCardFromBase("cafeteria", "player"));
-    api.state.environment.owner = "player";
-    const after = {
+
+    enemy.originalDeckCounts = { general_student: 40 };
+    const lowHandDifferentDeck = api.scoreAiEnvironment(ai.hand[0], "opponent");
+
+    enemy.trash = [];
+    enemy.hand = Array.from({ length: 9 }, () => api.createCardFromBase("general_student", "player"));
+    const largeHand = {
       progress: api.aiOpponentEnvironmentProgress("opponent"),
-      move: api.findAiPlayMove()?.card.baseId || null
+      score: api.scoreAiEnvironment(ai.hand[0], "opponent")
     };
-    return { before, after };
+    return { lowHand, lowHandDifferentDeck, largeHand };
   });
-  expect(result.before.progress.exhausted).toBe(false);
-  expect(result.before.move).toBe("general_student");
-  expect(result.after.progress.exhausted).toBe(true);
-  expect(result.after.move).toBe("meguro_library");
+  expect(result.lowHand.progress.replacementRisk).toBe(0);
+  expect(result.lowHand.score).toBeGreaterThan(0);
+  expect(result.lowHandDifferentDeck).toBe(result.lowHand.score);
+  expect(result.largeHand.progress.replacementRisk).toBeGreaterThan(0.5);
+  expect(result.largeHand.score).toBeLessThanOrEqual(0);
 });
 
-test("左側CPUも相手の環境消費を見て目黒区図書館を判断し、相手の環境を張り替える", async ({ page }) => {
+test("左側CPUも同じ読み合いで目黒区図書館と環境の張り替えを判断する", async ({ page }) => {
   await setup(page);
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const enemy = api.state.players.opponent;
-    enemy.originalDeckCounts = { classroom: 1, general_student: 39 };
     const meguro = api.createCardFromBase("meguro_library", "player");
-    const classroom = api.createCardFromBase("classroom", "player");
+    const nightPool = api.createCardFromBase("night_pool", "player");
+
+    enemy.hand = [];
+    const gamble = api.trainingYocchanPlayPriority("player", meguro);
+
+    enemy.hand = Array.from({ length: 9 }, () => api.createCardFromBase("general_student", "opponent"));
     const held = api.trainingYocchanPlayPriority("player", meguro);
+
+    enemy.hand = [];
     api.state.environment = api.makeBoardCard(api.createCardFromBase("classroom", "opponent"));
     api.state.environment.owner = "opponent";
     const ready = api.trainingYocchanPlayPriority("player", meguro);
-    const replacement = api.trainingYocchanPlayPriority("player", classroom);
-    return { held, ready, replacement };
+    const replacement = api.trainingYocchanPlayPriority("player", nightPool);
+    return { gamble, held, ready, replacement };
   });
+  expect(result.gamble).toBeGreaterThan(0);
   expect(result.held).toBe(-900);
   expect(result.ready).toBeGreaterThan(0);
   expect(result.replacement).toBeGreaterThan(0);
