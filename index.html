@@ -7817,6 +7817,11 @@
     .training-watch-controls { position: fixed; z-index: 34; left: 50%; bottom: 18px; display: flex; gap: 6px; transform: translateX(-50%); border: 1px solid #8196a3; border-radius: 7px; padding: 6px; background: rgba(255,255,255,.96); box-shadow: 0 4px 15px rgba(0,0,0,.18); }
     .training-watch-controls button { border: 1px solid #879ba7; border-radius: 4px; padding: 6px 10px; background: #fff; cursor: pointer; }
     .training-watch-controls button.active { border-color: #168fc0; color: #fff; background: #168fc0; }
+    .training-watch-controls .training-watch-collapse,
+    .training-watch-controls .training-watch-expand { min-width: 32px; padding-inline: 8px; color: #244859; font-weight: 1000; }
+    .training-watch-controls .training-watch-collapse { margin-left: 2px; }
+    .training-watch-controls.collapsed { gap: 0; padding: 4px; }
+    .training-watch-controls.collapsed .training-watch-expand { width: 38px; height: 30px; padding: 0; font-size: 17px; line-height: 1; }
 
     @media (max-width: 900px) {
       .training-setup-layout { grid-template-columns: 1fr; }
@@ -18205,7 +18210,7 @@
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
-        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。環境カードは相手の手札枚数と公開情報から張り替えの危険を読み、目黒区図書館などの妨害環境を置く時機を判断します。食堂やナイトプールなど、自分の動きを作る環境は積極的に使います。単細胞生物は完全変異体への合成を目指して守り、パンパンなどの破壊効果では相手の高体力な出席者を優先するようにしました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
+        summary: "AIがデッキ切れを狙うカード構成では相手のデッキ削りを最優先し、Dos攻撃からデストロイDos攻撃へつなぐ順序や、削り札を探すドロー、危険時の盤面処理・回復を判断するように改善しました。環境カードは相手の手札枚数と公開情報から張り替えの危険を読み、目黒区図書館などの妨害環境を置く時機を判断します。食堂やナイトプールなど、自分の動きを作る環境は積極的に使います。CPU同士の観戦操作バーは対戦中に折りたたみ、いつでも再表示できます。単細胞生物は完全変異体への合成を目指して守り、パンパンなどの破壊効果では相手の高体力な出席者を優先するようにしました。後ろから質問する学生は3行目から相手の教卓マスを処理する役割に合わせて配置するようにしました。パチンウニーが出席させた一般学生の攻撃不可期間を5回に変更し、「敵」は条件を満たすと陽気も持つようにしました。",
         changes: [
           {
             title: "AIのデッキ切れ戦術",
@@ -18216,6 +18221,11 @@
             title: "AIの環境判断",
             before: "目黒区図書館は相手が環境カードを使い切るまで必ず温存し、食堂も同じターンに後続を展開できるまで置かない固定的な判断だった。",
             after: "相手の元デッキや手札の中身は参照せず、相手の手札枚数、現在の環境、相手の校外という公開情報だけから、環境を張り替えられる危険を推定する。妨害環境は相手の手札が少なく危険が低いと読めば賭けとして使用し、相手が持っていそうなら温存する。食堂やナイトプールなど自分の動きを作る環境は、相性のよいカードや空席があれば積極的に使用する。相手の環境を上書きする価値もすべての環境で評価し、左右どちらのCPUにも同じ判断を適用する。"
+          },
+          {
+            title: "CPU同士の観戦操作",
+            before: "倍速、一時停止、演出スキップの操作バーを対戦中に隠せず、盤面を広く見たい場合も表示され続けていた。",
+            after: "操作バーの「_」ボタンで対戦中に折りたためるようにした。折りたたみ中も小さな再表示ボタンを残し、同じ対戦中にいつでも操作バーを戻せる。次の対戦を開始した場合は通常表示へ戻る。"
           },
           {
             title: "後ろから質問する学生のAI配置",
@@ -19252,6 +19262,7 @@
         speed: 1,
         paused: false,
         skipAnimations: false,
+        controlsCollapsed: false,
         series: null,
         replayRemaining: 0,
         replayTotal: 0,
@@ -37933,6 +37944,16 @@
         controls.className = "training-watch-controls";
         controls.setAttribute("aria-label", "AI対戦の再生速度");
         controls.addEventListener("click", (event) => {
+          if (event.target.closest("[data-training-collapse]")) {
+            state.training.controlsCollapsed = true;
+            renderTrainingWatchControls();
+            return;
+          }
+          if (event.target.closest("[data-training-expand]")) {
+            state.training.controlsCollapsed = false;
+            renderTrainingWatchControls();
+            return;
+          }
           const speedButton = event.target.closest("[data-training-speed]");
           if (speedButton) {
             state.training.speed = Number(speedButton.dataset.trainingSpeed) || 1;
@@ -37953,12 +37974,20 @@
         });
         document.body.appendChild(controls);
       }
+      controls.classList.toggle("collapsed", Boolean(state.training.controlsCollapsed));
+      if (state.training.controlsCollapsed) {
+        controls.setAttribute("aria-label", "AI対戦の観戦操作を表示");
+        controls.innerHTML = `<button type="button" class="training-watch-expand" data-training-expand aria-label="観戦操作を表示" title="観戦操作を表示">▴</button>`;
+        return;
+      }
+      controls.setAttribute("aria-label", "AI対戦の再生速度");
       controls.innerHTML = `
         <button type="button" data-training-speed="1" class="${state.training.speed === 1 && !state.training.skipAnimations ? "active" : ""}">×1</button>
         <button type="button" data-training-speed="2" class="${state.training.speed === 2 && !state.training.skipAnimations ? "active" : ""}">×2</button>
         <button type="button" data-training-speed="4" class="${state.training.speed === 4 && !state.training.skipAnimations ? "active" : ""}">×4</button>
         <button type="button" data-training-pause>${state.training.paused ? "再開" : "一時停止"}</button>
-        <button type="button" data-training-skip class="${state.training.skipAnimations ? "active" : ""}">演出スキップ</button>`;
+        <button type="button" data-training-skip class="${state.training.skipAnimations ? "active" : ""}">演出スキップ</button>
+        <button type="button" class="training-watch-collapse" data-training-collapse aria-label="観戦操作を隠す" title="観戦操作を隠す">_</button>`;
     }
 
     const CARD_TEMPLATE_BASE_WIDTH = 420;
@@ -43558,6 +43587,7 @@
       state.training.active = false;
       state.training.paused = false;
       state.training.skipAnimations = false;
+      state.training.controlsCollapsed = false;
       state.soloSelection.ruleId = normalizeOnlineRuleId(state.soloSelection.ruleId);
       state.soloSelection.activeSide = "player";
       state.soloSelection.previewName = "";
@@ -43588,6 +43618,7 @@
       state.training.currentConfigKey = configKey;
       state.training.paused = false;
       state.training.skipAnimations = Boolean(options.skipAnimations);
+      state.training.controlsCollapsed = false;
       startNewGameWithDecks({
         ruleId,
         playerDeckDescriptor: playerDescriptor,
