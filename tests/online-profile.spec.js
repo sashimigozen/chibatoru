@@ -63,6 +63,26 @@ test("ランダムマッチで双方のプロフィール名とアイコンを�
     await expect(right.page.locator("#onlineRandomRemotePlayerName")).toHaveText("左プレイヤー");
     await expect(right.page.locator("#onlineRandomLocalAvatar")).toHaveClass(/avatar-robot-antenna/);
     await expect(right.page.locator("#onlineRandomRemoteAvatar")).toHaveClass(/avatar-glasses/);
+
+    await left.page.locator("#onlineRandomRemoteAvatar").click();
+    await expect(left.page.locator("#profileViewerModal")).toBeVisible();
+    await expect(left.page.locator("#profileViewerName")).toHaveText("右プレイヤー");
+    await expect(left.page.locator("#profileViewerFavoriteName")).toHaveText("食堂");
+    await expect(left.page.locator("#profileViewerAvatar")).toHaveClass(/avatar-robot-antenna/);
+    await left.page.locator("#profileViewerCloseButton").click();
+
+    await left.page.evaluate(() => {
+      window.__chibattle.state.screen = "battle";
+      window.__chibattle.render();
+    });
+    await right.page.evaluate(() => {
+      window.__chibattle.state.screen = "battle";
+      window.__chibattle.render();
+    });
+    await expect(left.page.locator("#playerBoardTitle")).toHaveText("左プレイヤーの講義室");
+    await expect(left.page.locator("#opponentBoardTitle")).toHaveText("右プレイヤーの講義室");
+    await expect(right.page.locator("#playerBoardTitle")).toHaveText("右プレイヤーの講義室");
+    await expect(right.page.locator("#opponentBoardTitle")).toHaveText("左プレイヤーの講義室");
   } finally {
     await left.context.close();
     await right.context.close();
@@ -101,6 +121,14 @@ test("プライベートマッチでも双方のプロフィール名とアイ�
     await expect(guest.page.locator("#onlineRemotePlayerName")).toHaveText("部屋主");
     await expect(guest.page.locator("#onlineLocalPlayerAvatar")).toHaveClass(/avatar-smile/);
     await expect(guest.page.locator("#onlineRemotePlayerAvatar")).toHaveClass(/avatar-cap/);
+
+    await guest.page.locator("#onlineLocalProfileButton").click();
+    await expect(guest.page.locator("#profileViewerName")).toHaveText("参加者");
+    await expect(guest.page.locator("#profileViewerFavoriteName")).toHaveText("一般学生");
+    await guest.page.locator("#profileViewerCloseButton").click();
+    await guest.page.locator("#onlineRemoteProfileButton").click();
+    await expect(guest.page.locator("#profileViewerName")).toHaveText("部屋主");
+    await expect(guest.page.locator("#profileViewerFavoriteName")).toHaveText("一般教師");
   } finally {
     await host.context.close();
     await guest.context.close();

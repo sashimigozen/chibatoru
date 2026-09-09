@@ -1578,6 +1578,35 @@
       transform: scale(.34);
     }
 
+    .profile-clickable-avatar,
+    .online-player-avatar-button {
+      appearance: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .profile-clickable-avatar:hover,
+    .profile-clickable-avatar:focus-visible,
+    .online-player-avatar-button:hover,
+    .online-player-avatar-button:focus-visible {
+      outline: 3px solid rgba(32, 169, 220, .34);
+      outline-offset: 3px;
+    }
+
+    .profile-clickable-avatar:disabled,
+    .online-player-avatar-button:disabled {
+      cursor: default;
+      outline: none;
+    }
+
+    .online-player-avatar-button {
+      display: block;
+      flex: 0 0 44px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+    }
+
     .online-player-meta {
       color: #64748b;
       font-size: 12px;
@@ -7989,6 +8018,21 @@
     .profile-favorite-copy h3 { margin: 0; color: #17384b; font-size: 18px; }
     .profile-favorite-copy p { margin: 0; color: #617786; font-size: 11px; line-height: 1.6; }
     .profile-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #d5e0e8; padding-top: 16px; }
+
+    .profile-viewer-dialog { width: min(620px, 94vw); }
+    .profile-viewer-body { display: grid; gap: 18px; }
+    .profile-viewer-identity {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      border: 1px solid #afc0cb;
+      border-radius: 7px;
+      padding: 16px;
+      background: #fff;
+    }
+    .profile-viewer-identity .avatar-scale-frame { width: 96px; height: 96px; flex: 0 0 96px; }
+    .profile-viewer-identity .profile-avatar { transform: scale(.75); }
+    .profile-viewer-name { margin: 0; color: #17384b; font-size: 24px; overflow-wrap: anywhere; }
 
     .profile-picker-dialog {
       width: min(980px, 97vw);
@@ -17056,7 +17100,7 @@
           <article class="training-player-panel" data-online-random-side="local">
             <div class="training-player-heading"><span id="onlineRandomLocalPlayerName">USER</span></div>
             <div class="online-random-avatar-wrap">
-              <div class="training-avatar user" id="onlineRandomLocalAvatar" aria-hidden="true"><span></span></div>
+              <button class="training-avatar user profile-clickable-avatar" id="onlineRandomLocalAvatar" type="button" aria-label="自分のプロフィールを表示"><span></span></button>
               <span class="online-random-ready-badge hidden" id="onlineRandomLocalReadyBadge">OK</span>
             </div>
             <div class="training-deck-readout">
@@ -17083,7 +17127,7 @@
           <article class="training-player-panel online-random-remote-placeholder" id="onlineRandomRemotePanel" data-online-random-side="remote">
             <div class="training-player-heading right"><span id="onlineRandomRemotePlayerName">USER</span></div>
             <div class="online-random-avatar-wrap">
-              <div class="training-avatar user" id="onlineRandomRemoteAvatar" aria-hidden="true"><span></span></div>
+              <button class="training-avatar user profile-clickable-avatar" id="onlineRandomRemoteAvatar" type="button" aria-label="相手のプロフィールを表示"><span></span></button>
               <div class="online-random-match-waiting" id="onlineRandomWaitingText">マッチング中…</div>
               <span class="online-random-ready-badge hidden" id="onlineRandomRemoteReadyBadge">OK</span>
             </div>
@@ -17150,7 +17194,7 @@
           <div class="online-player-list">
             <div class="online-player-row">
               <div class="online-player-identity">
-                <span class="avatar-scale-frame online-player-avatar" aria-hidden="true"><span class="profile-avatar user" id="onlineLocalPlayerAvatar"><span></span></span></span>
+                <button class="online-player-avatar-button" id="onlineLocalProfileButton" type="button" aria-label="自分のプロフィールを表示"><span class="avatar-scale-frame online-player-avatar" aria-hidden="true"><span class="profile-avatar user" id="onlineLocalPlayerAvatar"><span></span></span></span></button>
                 <div>
                   <div class="online-player-name" id="onlineLocalPlayerName">あなた</div>
                   <div class="online-player-meta" id="onlineLocalDeckText">現在のあなたデッキ</div>
@@ -17160,7 +17204,7 @@
             </div>
             <div class="online-player-row">
               <div class="online-player-identity">
-                <span class="avatar-scale-frame online-player-avatar" aria-hidden="true"><span class="profile-avatar user" id="onlineRemotePlayerAvatar"><span></span></span></span>
+                <button class="online-player-avatar-button" id="onlineRemoteProfileButton" type="button" aria-label="相手のプロフィールを表示"><span class="avatar-scale-frame online-player-avatar" aria-hidden="true"><span class="profile-avatar user" id="onlineRemotePlayerAvatar"><span></span></span></span></button>
                 <div>
                   <div class="online-player-name" id="onlineRemotePlayerName">相手</div>
                   <div class="online-player-meta" id="onlineRemoteDeckText">待機中</div>
@@ -17799,6 +17843,33 @@
         <button class="button secondary" id="profileFavoriteClearButton" type="button">未設定にする</button>
       </div>
       <div class="deck-window-grid profile-card-grid" id="profileCardGrid"></div>
+    </section>
+  </div>
+  <div class="modal-backdrop hidden" id="profileViewerModal" role="dialog" aria-modal="true" aria-labelledby="profileViewerTitle">
+    <section class="profile-dialog profile-viewer-dialog">
+      <div class="profile-dialog-head">
+        <div>
+          <h2 id="profileViewerTitle">プロフィール</h2>
+          <p>プレイヤーのプロフィール</p>
+        </div>
+        <button class="button secondary" id="profileViewerCloseButton" type="button">閉じる</button>
+      </div>
+      <div class="profile-viewer-body">
+        <div class="profile-viewer-identity">
+          <span class="avatar-scale-frame" aria-hidden="true"><span class="profile-avatar user" id="profileViewerAvatar"><span></span></span></span>
+          <h3 class="profile-viewer-name" id="profileViewerName"></h3>
+        </div>
+        <section aria-labelledby="profileViewerFavoriteTitle">
+          <h3 class="profile-section-title" id="profileViewerFavoriteTitle">好きなカード</h3>
+          <div class="profile-favorite-panel">
+            <div class="profile-favorite-card" id="profileViewerFavoriteCard"></div>
+            <div class="profile-favorite-copy">
+              <h3 id="profileViewerFavoriteName">未設定</h3>
+              <p id="profileViewerFavoriteText">好きなカードは未設定です。</p>
+            </div>
+          </div>
+        </section>
+      </div>
     </section>
   </div>
   <div class="modal-backdrop hidden" id="deckModal">
@@ -19803,6 +19874,7 @@
         cardSearch: "",
         cardPickerOpen: false
       },
+      profileViewer: null,
       phase: "versus",
       actionTurn: 0,
       firstSide: null,
@@ -20227,6 +20299,13 @@
       profileCardSearchInput: document.getElementById("profileCardSearchInput"),
       profileFavoriteClearButton: document.getElementById("profileFavoriteClearButton"),
       profileCardGrid: document.getElementById("profileCardGrid"),
+      profileViewerModal: document.getElementById("profileViewerModal"),
+      profileViewerCloseButton: document.getElementById("profileViewerCloseButton"),
+      profileViewerAvatar: document.getElementById("profileViewerAvatar"),
+      profileViewerName: document.getElementById("profileViewerName"),
+      profileViewerFavoriteCard: document.getElementById("profileViewerFavoriteCard"),
+      profileViewerFavoriteName: document.getElementById("profileViewerFavoriteName"),
+      profileViewerFavoriteText: document.getElementById("profileViewerFavoriteText"),
       homeUpdatesButton: document.getElementById("homeUpdatesButton"),
       homeUpdatesDot: document.getElementById("homeUpdatesDot"),
       updatesBackHomeButton: document.getElementById("updatesBackHomeButton"),
@@ -20302,6 +20381,8 @@
       onlineRemotePlayerName: document.getElementById("onlineRemotePlayerName"),
       onlineLocalPlayerAvatar: document.getElementById("onlineLocalPlayerAvatar"),
       onlineRemotePlayerAvatar: document.getElementById("onlineRemotePlayerAvatar"),
+      onlineLocalProfileButton: document.getElementById("onlineLocalProfileButton"),
+      onlineRemoteProfileButton: document.getElementById("onlineRemoteProfileButton"),
       onlineLocalReadyBadge: document.getElementById("onlineLocalReadyBadge"),
       onlineRemoteReadyBadge: document.getElementById("onlineRemoteReadyBadge"),
       homeSoloButton: document.getElementById("homeSoloButton"),
@@ -22370,6 +22451,25 @@
       state.online.remoteProfile = normalizePlayerProfile(opponent?.profile);
     }
 
+    function onlineVisibleProfiles() {
+      if (isOnlineSpectator()) {
+        return {
+          local: normalizePlayerProfile(state.online.hostProfile),
+          remote: normalizePlayerProfile(state.online.guestProfile)
+        };
+      }
+      return {
+        local: normalizePlayerProfile(state.profile),
+        remote: normalizePlayerProfile(state.online.remoteProfile)
+      };
+    }
+
+    function displaySideName(side) {
+      if (!state.online.role) return SIDES[side] || "";
+      const profiles = onlineVisibleProfiles();
+      return side === "opponent" ? profiles.remote.username : profiles.local.username;
+    }
+
     function onlineGetMessageSessionId(message) {
       return message?.roomSessionId || message?.sessionId || "";
     }
@@ -22648,6 +22748,7 @@
     }
 
     function onlineCloseConnection(returnHome = false) {
+      state.profileViewer = null;
       onlineStopReliabilityLoop();
       onlineClearRandomAutoStart();
       closeCourseRegistrationConsent();
@@ -22709,6 +22810,7 @@
     }
 
     function onlineHandleRoomClosed(message) {
+      state.profileViewer = null;
       const notice = message?.message || "部屋が閉じられました。もう一度部屋を作ってください。";
       onlineStopReliabilityLoop();
       onlineClearRandomAutoStart();
@@ -23069,6 +23171,7 @@
 
     function onlineConfirmPendingStart() {
       if (!isOnlineHost() || !state.online.startPending) return false;
+      state.profileViewer = null;
       state.online.startPending = false;
       state.online.started = true;
       state.screen = "battle";
@@ -23128,6 +23231,7 @@
         return;
       }
       if (message.type === "opponentDisconnected") {
+        state.profileViewer = null;
         onlineApplyRoomRuleId(message.ruleId);
         const players = Array.isArray(message.players) ? message.players : [];
         const host = players.find((player) => player.role === "host");
@@ -23148,6 +23252,7 @@
         return;
       }
       if (message.type === "startGame") {
+        state.profileViewer = null;
         onlineApplyRoomRuleId(message.ruleId);
         if (isOnlineHost()) {
           onlineConfirmPendingStart();
@@ -38694,6 +38799,7 @@
       renderTrashDetailStage();
       renderBoards();
       renderPlayerProfile();
+      renderProfileViewer();
       renderHomeUpdateStatus();
       renderUpdateHistory();
       renderDeckLibrary();
@@ -38905,6 +39011,9 @@
       elements.onlineRandomRemotePlayerName.textContent = remoteProfile.username;
       applyPlayerProfileAvatar(elements.onlineRandomLocalAvatar, localProfile.avatarId);
       applyPlayerProfileAvatar(elements.onlineRandomRemoteAvatar, remoteProfile.avatarId);
+      elements.onlineRandomLocalAvatar.setAttribute("aria-label", `${localProfile.username}のプロフィールを表示`);
+      elements.onlineRandomRemoteAvatar.setAttribute("aria-label", `${remoteProfile.username}のプロフィールを表示`);
+      elements.onlineRandomRemoteAvatar.disabled = randomWaiting || !connected;
       elements.onlineRandomRemotePlayerName.classList.toggle("hidden", randomWaiting);
       elements.onlineRandomRemoteAvatar.classList.toggle("hidden", randomWaiting);
       elements.onlineRandomWaitingText.classList.toggle("hidden", !randomWaiting);
@@ -39022,6 +39131,11 @@
         : state.online.connected ? remoteProfile.username : "相手";
       applyPlayerProfileAvatar(elements.onlineLocalPlayerAvatar, spectator ? hostProfile.avatarId : localProfile.avatarId);
       applyPlayerProfileAvatar(elements.onlineRemotePlayerAvatar, spectator ? guestProfile.avatarId : remoteProfile.avatarId);
+      const visibleLocalProfile = spectator ? hostProfile : localProfile;
+      const visibleRemoteProfile = spectator ? guestProfile : remoteProfile;
+      elements.onlineLocalProfileButton.setAttribute("aria-label", `${visibleLocalProfile.username}のプロフィールを表示`);
+      elements.onlineRemoteProfileButton.setAttribute("aria-label", `${visibleRemoteProfile.username}のプロフィールを表示`);
+      elements.onlineRemoteProfileButton.disabled = !spectator && !state.online.connected;
       elements.onlineLocalDeckText.textContent = spectator ? "プレイヤー1（ホスト）" : `${localDeckLabel} / ${localSize}枚 / ${localDeckStatus}`;
       elements.onlineRemoteDeckText.textContent = spectator
         ? "プレイヤー2（ゲスト）"
@@ -39179,18 +39293,21 @@
       const current = state.players[state.currentSide];
       const deckValidation = state.players.player.deckValid;
       const spectator = isOnlineSpectator();
-      elements.playerRpsLabel.textContent = spectator ? "プレイヤー1" : "あなた";
-      elements.opponentRpsLabel.textContent = spectator ? "プレイヤー2" : SIDES.opponent;
-      elements.playerHandTitle.textContent = spectator ? "プレイヤー1の手札" : "あなたの手札";
-      elements.opponentHandTitle.textContent = spectator ? "プレイヤー2の手札" : "相手の手札";
-      elements.playerBoardTitle.textContent = spectator ? "プレイヤー1の講義室" : "あなたの講義室";
-      elements.opponentBoardTitle.textContent = spectator ? "プレイヤー2の講義室" : "相手の講義室";
+      const onlineProfiles = state.online.role ? onlineVisibleProfiles() : null;
+      const playerDisplayName = onlineProfiles?.local.username || (spectator ? "プレイヤー1" : "あなた");
+      const opponentDisplayName = onlineProfiles?.remote.username || (spectator ? "プレイヤー2" : SIDES.opponent);
+      elements.playerRpsLabel.textContent = playerDisplayName;
+      elements.opponentRpsLabel.textContent = opponentDisplayName;
+      elements.playerHandTitle.textContent = `${playerDisplayName}の手札`;
+      elements.opponentHandTitle.textContent = `${opponentDisplayName}の手札`;
+      elements.playerBoardTitle.textContent = `${playerDisplayName}の講義室`;
+      elements.opponentBoardTitle.textContent = `${opponentDisplayName}の講義室`;
       elements.phaseText.textContent = phaseLabel();
       elements.currentSideText.textContent = state.phase === "battle"
-        ? (spectator ? (state.currentSide === "player" ? "プレイヤー1" : "プレイヤー2") : SIDES[state.currentSide])
+        ? (state.currentSide === "player" ? playerDisplayName : opponentDisplayName)
         : "準備";
       elements.firstSideText.textContent = state.firstSide
-        ? (spectator ? (state.firstSide === "player" ? "プレイヤー1" : "プレイヤー2") : SIDES[state.firstSide])
+        ? (state.firstSide === "player" ? playerDisplayName : opponentDisplayName)
         : "未決定";
       elements.turnText.textContent = turnLabel(state.currentSide);
       elements.lifeText.textContent = `${state.players.player.life} / ${state.players.opponent.life}`;
@@ -40174,7 +40291,7 @@
       } else if (state.phase === "rps") {
         elements.preBattleTitle.textContent = state.rpsWinner === "draw" ? "あいこ" : "カードじゃんけん";
       } else if (state.phase === "orderChoice") {
-        elements.preBattleTitle.textContent = state.rpsWinner === "player" ? "あなたの勝ち" : `${SIDES.opponent}の勝ち`;
+        elements.preBattleTitle.textContent = `${displaySideName(state.rpsWinner)}の勝ち`;
       } else {
         elements.preBattleTitle.textContent = "初期手札";
       }
@@ -42351,6 +42468,44 @@
     function playerProfileAvatarMarkup(avatarId) {
       const avatar = playerProfileAvatarDefinition(avatarId);
       return `<span class="avatar-scale-frame" aria-hidden="true"><span class="profile-avatar ${avatar.classes.join(" ")}"><span></span></span></span>`;
+    }
+
+    function openProfileViewer(profile) {
+      state.profileViewer = normalizePlayerProfile(profile);
+      renderProfileViewer();
+    }
+
+    function closeProfileViewer() {
+      state.profileViewer = null;
+      renderProfileViewer();
+    }
+
+    function renderProfileViewer() {
+      const profile = state.profileViewer;
+      elements.profileViewerModal?.classList.toggle("hidden", !profile);
+      if (!profile) return;
+      elements.profileViewerName.textContent = profile.username;
+      applyPlayerProfileAvatar(elements.profileViewerAvatar, profile.avatarId);
+      const favorite = profile.favoriteCardId ? CARD_BASES[profile.favoriteCardId] : null;
+      elements.profileViewerFavoriteName.textContent = favorite?.name || "未設定";
+      elements.profileViewerFavoriteText.textContent = favorite
+        ? `${profile.username}の好きなカードです。`
+        : "好きなカードは未設定です。";
+      elements.profileViewerFavoriteCard.innerHTML = "";
+      if (favorite) {
+        const card = makePreviewCard(profile.favoriteCardId, "player");
+        const cardElement = document.createElement("button");
+        cardElement.type = "button";
+        cardElement.className = `card ${card.type}${cardVisualClass(card)}`;
+        cardElement.innerHTML = cardTemplate(card, false);
+        attachCardDetailEvents(cardElement, card);
+        elements.profileViewerFavoriteCard.appendChild(cardElement);
+      } else {
+        const empty = document.createElement("span");
+        empty.className = "small-info";
+        empty.textContent = "カード未選択";
+        elements.profileViewerFavoriteCard.appendChild(empty);
+      }
     }
 
     function openPlayerProfile() {
@@ -44826,7 +44981,7 @@
 
     function showTurnOverlay(side) {
       if (state.screen !== "battle" || !elements.turnOverlay) return;
-      showCenterAnnouncement(`${turnLabel(side)} ${SIDES[side]}`);
+      showCenterAnnouncement(`${turnLabel(side)} ${displaySideName(side)}`);
     }
 
     function showCenterAnnouncement(text, variant = "") {
@@ -46342,6 +46497,14 @@
     elements.profileCardPickerModal.addEventListener("click", (event) => {
       if (event.target === elements.profileCardPickerModal) closePlayerProfileCardPicker();
     });
+    elements.profileViewerCloseButton.addEventListener("click", closeProfileViewer);
+    elements.profileViewerModal.addEventListener("click", (event) => {
+      if (event.target === elements.profileViewerModal) closeProfileViewer();
+    });
+    elements.onlineRandomLocalAvatar.addEventListener("click", () => openProfileViewer(state.profile));
+    elements.onlineRandomRemoteAvatar.addEventListener("click", () => openProfileViewer(state.online.remoteProfile));
+    elements.onlineLocalProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().local));
+    elements.onlineRemoteProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().remote));
     elements.homeUpdatesButton.addEventListener("click", showUpdatesScreen);
     elements.updatesBackHomeButton.addEventListener("click", showHomeScreen);
     elements.homeBattleButton.addEventListener("click", showOnlineScreen);
