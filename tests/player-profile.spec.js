@@ -58,6 +58,28 @@ test("既存カード検索と描画を使って好きなカードを保存す�
   await expect(page.locator("#homeProfileFavorite")).toContainText("キングギドラベッド");
 });
 
+test("好きなカード一覧はカード全体を保ち、一覧部分だけ縦スクロールする", async ({ page }) => {
+  await page.locator("#homeProfileButton").click();
+  await page.locator("#profileFavoriteCardButton").click();
+
+  const layout = await page.locator("#profileCardGrid").evaluate((grid) => {
+    const firstCard = grid.querySelector("[data-profile-card-id]");
+    const cardRect = firstCard.getBoundingClientRect();
+    return {
+      cardRatio: cardRect.width / cardRect.height,
+      cardIsPortrait: cardRect.height > cardRect.width,
+      overflowY: getComputedStyle(grid).overflowY,
+      canScroll: grid.scrollHeight > grid.clientHeight
+    };
+  });
+
+  expect(layout.cardRatio).toBeGreaterThan(0.6);
+  expect(layout.cardRatio).toBeLessThan(0.8);
+  expect(layout.cardIsPortrait).toBe(true);
+  expect(layout.overflowY).toBe("auto");
+  expect(layout.canScroll).toBe(true);
+});
+
 test("プロフィールはソロのユーザー側だけに反映し、CPUへ切り替えると既存表示へ戻る", async ({ page }) => {
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({
     username: "テスト観戦者",
