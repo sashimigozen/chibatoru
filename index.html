@@ -7819,9 +7819,10 @@
     .training-watch-controls button.active { border-color: #168fc0; color: #fff; background: #168fc0; }
     .training-watch-controls .training-watch-collapse,
     .training-watch-controls .training-watch-expand { min-width: 32px; padding-inline: 8px; color: #244859; font-weight: 1000; }
-    .training-watch-controls .training-watch-collapse { margin-left: 2px; }
-    .training-watch-controls.collapsed { gap: 0; padding: 4px; }
-    .training-watch-controls.collapsed .training-watch-expand { width: 38px; height: 30px; padding: 0; font-size: 17px; line-height: 1; }
+    .training-watch-controls .training-watch-collapse,
+    .training-watch-controls .training-watch-expand { margin-left: 2px; }
+    .training-watch-controls.collapsed { border-color: transparent; background: transparent; box-shadow: none; }
+    .training-watch-controls.collapsed button:not(.training-watch-expand) { visibility: hidden; pointer-events: none; }
 
     @media (max-width: 900px) {
       .training-setup-layout { grid-template-columns: 1fr; }
@@ -37975,19 +37976,18 @@
         document.body.appendChild(controls);
       }
       controls.classList.toggle("collapsed", Boolean(state.training.controlsCollapsed));
-      if (state.training.controlsCollapsed) {
-        controls.setAttribute("aria-label", "AI対戦の観戦操作を表示");
-        controls.innerHTML = `<button type="button" class="training-watch-expand" data-training-expand aria-label="観戦操作を表示" title="観戦操作を表示">▴</button>`;
-        return;
-      }
-      controls.setAttribute("aria-label", "AI対戦の再生速度");
+      controls.setAttribute("aria-label", state.training.controlsCollapsed
+        ? "AI対戦の観戦操作を表示"
+        : "AI対戦の再生速度");
       controls.innerHTML = `
         <button type="button" data-training-speed="1" class="${state.training.speed === 1 && !state.training.skipAnimations ? "active" : ""}">×1</button>
         <button type="button" data-training-speed="2" class="${state.training.speed === 2 && !state.training.skipAnimations ? "active" : ""}">×2</button>
         <button type="button" data-training-speed="4" class="${state.training.speed === 4 && !state.training.skipAnimations ? "active" : ""}">×4</button>
         <button type="button" data-training-pause>${state.training.paused ? "再開" : "一時停止"}</button>
         <button type="button" data-training-skip class="${state.training.skipAnimations ? "active" : ""}">演出スキップ</button>
-        <button type="button" class="training-watch-collapse" data-training-collapse aria-label="観戦操作を隠す" title="観戦操作を隠す">_</button>`;
+        ${state.training.controlsCollapsed
+          ? '<button type="button" class="training-watch-expand" data-training-expand aria-label="観戦操作を表示" title="観戦操作を表示">^</button>'
+          : '<button type="button" class="training-watch-collapse" data-training-collapse aria-label="観戦操作を隠す" title="観戦操作を隠す">_</button>'}`;
     }
 
     const CARD_TEMPLATE_BASE_WIDTH = 420;

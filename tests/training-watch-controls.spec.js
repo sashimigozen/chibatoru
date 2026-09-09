@@ -27,11 +27,16 @@ test("CPU同士の観戦操作を対戦中に折りたたみ、その場で再�
 
   await controls.locator('[data-training-speed="4"]').click();
   await expect(controls.locator('[data-training-speed="4"]')).toHaveClass(/active/);
+  const collapseBox = await controls.locator("[data-training-collapse]").boundingBox();
   await controls.locator("[data-training-collapse]").click();
 
   await expect(controls).toHaveClass(/collapsed/);
-  await expect(controls.locator("[data-training-speed]")).toHaveCount(0);
+  await expect(controls.locator("[data-training-speed]").first()).toBeHidden();
   await expect(controls.locator("[data-training-expand]")).toBeVisible();
+  await expect(controls.locator("[data-training-expand]")).toHaveText("^");
+  const expandBox = await controls.locator("[data-training-expand]").boundingBox();
+  expect(Math.abs(expandBox.x - collapseBox.x)).toBeLessThan(1);
+  expect(Math.abs(expandBox.y - collapseBox.y)).toBeLessThan(1);
 
   await controls.locator("[data-training-expand]").click();
   await expect(controls).not.toHaveClass(/collapsed/);
