@@ -6663,8 +6663,10 @@
 
       .home-screen {
         min-height: 100dvh;
+        align-content: start;
         gap: 18px;
-        padding: 12px 4px;
+        padding: 100px 4px 88px;
+        overflow-y: auto;
       }
 
       .home-title h1 {
@@ -7282,6 +7284,87 @@
       box-shadow: 0 5px 0 #cbd5e1;
     }
 
+    .home-profile-button {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      display: grid;
+      grid-template-columns: 66px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      width: min(280px, calc(100% - 180px));
+      min-height: 94px;
+      border: 2px solid #18384c;
+      border-left: 7px solid #20a9dc;
+      border-radius: 6px;
+      padding: 8px 18px 8px 10px;
+      color: #ffffff;
+      background: linear-gradient(145deg, #101d29, #17364a);
+      box-shadow: 0 7px 0 #b8c8d3, 0 14px 30px rgba(15, 23, 42, .18);
+      text-align: left;
+      cursor: pointer;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+
+    .home-profile-button::after {
+      content: "";
+      position: absolute;
+      right: 10px;
+      bottom: 9px;
+      width: 14px;
+      height: 14px;
+      border-right: 3px solid #58d3ff;
+      border-bottom: 3px solid #58d3ff;
+      transform: rotate(-45deg);
+    }
+
+    .home-profile-button:hover,
+    .home-profile-button:focus-visible {
+      border-color: #20a9dc;
+      box-shadow: 0 5px 0 #91b6ca, 0 16px 34px rgba(15, 23, 42, .22), 0 0 0 3px rgba(32, 169, 220, .16);
+      transform: translateY(2px);
+      outline: none;
+    }
+
+    .avatar-scale-frame {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 66px;
+      height: 66px;
+      overflow: hidden;
+    }
+
+    .avatar-scale-frame > .profile-avatar {
+      position: absolute;
+      margin: 0;
+      transform: scale(.52);
+    }
+
+    .home-profile-copy {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+      padding-right: 15px;
+    }
+
+    .home-profile-kicker {
+      color: #76dcff;
+      font-size: 9px;
+      font-weight: 1000;
+      letter-spacing: .16em;
+    }
+
+    .home-profile-name,
+    .home-profile-favorite {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .home-profile-name { font-size: 16px; }
+    .home-profile-favorite { color: #b9cfdb; font-size: 10px; font-weight: 800; }
+
     .notification-dot {
       position: absolute;
       top: -5px;
@@ -7715,7 +7798,8 @@
     .training-cycle-button span { color: #118bb8; font-size: 22px; }
     .training-cycle-button.compact { width: 178px; min-height: 39px; padding: 5px 12px; font-size: 14px; }
 
-    .training-avatar {
+    .training-avatar,
+    .profile-avatar {
       position: relative;
       width: 116px;
       height: 116px;
@@ -7726,11 +7810,186 @@
       overflow: hidden;
     }
 
-    .training-avatar.user span::before { content: ""; position: absolute; top: 20px; left: 39px; width: 38px; height: 38px; border-radius: 50%; background: #526d7d; }
-    .training-avatar.user span::after { content: ""; position: absolute; left: 24px; bottom: 13px; width: 68px; height: 45px; border-radius: 50% 50% 18% 18%; background: #526d7d; }
-    .training-avatar.cpu span { position: absolute; left: 25px; top: 34px; width: 65px; height: 52px; border: 4px solid #526d7d; border-radius: 12px; background: #fff; }
-    .training-avatar.cpu span::before { content: "•   •"; display: block; padding-top: 3px; color: #526d7d; font-size: 26px; font-weight: 1000; letter-spacing: 7px; text-align: center; }
-    .training-avatar.cpu span::after { content: ""; position: absolute; left: 18px; bottom: 10px; width: 28px; height: 4px; background: #526d7d; }
+    :is(.training-avatar, .profile-avatar).user span::before { content: ""; position: absolute; top: 20px; left: 39px; width: 38px; height: 38px; border-radius: 50%; background: #526d7d; }
+    :is(.training-avatar, .profile-avatar).user span::after { content: ""; position: absolute; left: 24px; bottom: 13px; width: 68px; height: 45px; border-radius: 50% 50% 18% 18%; background: #526d7d; }
+    :is(.training-avatar, .profile-avatar).cpu span { position: absolute; left: 25px; top: 34px; width: 65px; height: 52px; border: 4px solid #526d7d; border-radius: 12px; background: #fff; }
+    :is(.training-avatar, .profile-avatar).cpu span::before { content: "•   •"; display: block; padding-top: 3px; color: #526d7d; font-size: 26px; font-weight: 1000; letter-spacing: 7px; text-align: center; }
+    :is(.training-avatar, .profile-avatar).cpu span::after { content: ""; position: absolute; left: 18px; bottom: 10px; width: 28px; height: 4px; background: #526d7d; }
+    :is(.training-avatar, .profile-avatar).avatar-smile::before {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      top: 44px;
+      left: 49px;
+      width: 18px;
+      height: 9px;
+      border-bottom: 3px solid #e9f0f4;
+      border-radius: 0 0 14px 14px;
+    }
+    :is(.training-avatar, .profile-avatar).avatar-glasses::before,
+    :is(.training-avatar, .profile-avatar).avatar-glasses::after {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      top: 33px;
+      width: 17px;
+      height: 12px;
+      border: 3px solid #e9f0f4;
+      border-radius: 4px;
+    }
+    :is(.training-avatar, .profile-avatar).avatar-glasses::before { left: 38px; }
+    :is(.training-avatar, .profile-avatar).avatar-glasses::after { right: 38px; }
+    :is(.training-avatar, .profile-avatar).avatar-cap::before {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      top: 16px;
+      left: 32px;
+      width: 48px;
+      height: 18px;
+      border-radius: 28px 28px 4px 4px;
+      background: #2b9bc3;
+      box-shadow: 14px 12px 0 -5px #2b9bc3;
+      transform: rotate(-4deg);
+    }
+    :is(.training-avatar, .profile-avatar).avatar-hair::before {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      top: 15px;
+      left: 36px;
+      width: 45px;
+      height: 29px;
+      border-radius: 48% 58% 38% 18%;
+      background: #253e4d;
+      transform: rotate(-8deg);
+    }
+    :is(.training-avatar, .profile-avatar).cpu.avatar-robot-round span { border-radius: 50%; }
+    :is(.training-avatar, .profile-avatar).cpu.avatar-robot-round span::after { left: 17px; width: 30px; border-radius: 999px; }
+    :is(.training-avatar, .profile-avatar).cpu.avatar-robot-antenna::before {
+      content: "";
+      position: absolute;
+      top: 17px;
+      left: 54px;
+      width: 5px;
+      height: 18px;
+      border-radius: 999px;
+      background: #526d7d;
+    }
+    :is(.training-avatar, .profile-avatar).cpu.avatar-robot-antenna::after {
+      content: "";
+      position: absolute;
+      top: 12px;
+      left: 50px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #20a9dc;
+    }
+    :is(.training-avatar, .profile-avatar).cpu.avatar-robot-antenna span { top: 39px; height: 47px; border-radius: 18px 18px 9px 9px; }
+    .training-player-heading > span { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .profile-dialog {
+      width: min(900px, 96vw);
+      max-height: min(900px, 92dvh);
+      overflow: auto;
+      border: 2px solid #27404e;
+      border-radius: 9px;
+      padding: 20px;
+      color: #14202d;
+      background: #f8fbfd;
+      box-shadow: 0 24px 58px rgba(15, 23, 42, .32);
+    }
+
+    .profile-dialog-head,
+    .profile-picker-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      border-bottom: 2px solid #d5e0e8;
+      padding-bottom: 12px;
+    }
+
+    .profile-dialog-head h2,
+    .profile-picker-head h2 { margin: 0; color: #17384b; font-size: 24px; letter-spacing: .04em; }
+    .profile-dialog-head p { margin: 3px 0 0; color: #617786; font-size: 11px; font-weight: 800; }
+
+    .profile-form { display: grid; grid-template-columns: minmax(250px, .8fr) minmax(300px, 1.2fr); gap: 22px; }
+    .profile-column { display: grid; align-content: start; gap: 16px; }
+    .profile-field { display: grid; gap: 7px; color: #3e5969; font-size: 12px; font-weight: 1000; }
+    .profile-field input,
+    .profile-card-search {
+      width: 100%;
+      min-height: 44px;
+      border: 2px solid #829aaa;
+      border-radius: 5px;
+      padding: 9px 12px;
+      color: #14202d;
+      background: #fff;
+      font: inherit;
+    }
+    .profile-field input:focus,
+    .profile-card-search:focus { border-color: #20a9dc; outline: 3px solid rgba(32,169,220,.16); }
+    .profile-field input[aria-invalid="true"] { border-color: #c33b3b; }
+    .profile-error { min-height: 18px; margin: 0; color: #b42318; font-size: 11px; font-weight: 900; }
+
+    .profile-section-title { margin: 0 0 8px; color: #3e5969; font-size: 12px; }
+    .profile-avatar-grid { display: grid; grid-template-columns: repeat(4, minmax(64px, 1fr)); gap: 8px; }
+    .profile-avatar-option {
+      display: grid;
+      justify-items: center;
+      gap: 2px;
+      min-height: 96px;
+      border: 2px solid #b6c5cf;
+      border-radius: 6px;
+      padding: 5px 4px 7px;
+      color: #3d5868;
+      background: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .profile-avatar-option.selected { border-color: #159ed1; background: #eaf8fe; box-shadow: inset 0 0 0 2px rgba(21,158,209,.14); }
+    .profile-avatar-option .avatar-scale-frame { width: 62px; height: 62px; }
+    .profile-avatar-option .profile-avatar { transform: scale(.49); }
+
+    .profile-favorite-panel {
+      display: grid;
+      grid-template-columns: 144px minmax(0, 1fr);
+      gap: 14px;
+      align-items: center;
+      min-height: 218px;
+      border: 1px solid #afc0cb;
+      border-radius: 7px;
+      padding: 14px;
+      background: #fff;
+    }
+    .profile-favorite-card { display: grid; place-items: center; min-height: 190px; }
+    .profile-favorite-card .card { width: 132px; min-height: 184px; flex-basis: 132px; }
+    .profile-favorite-copy { display: grid; gap: 10px; }
+    .profile-favorite-copy h3 { margin: 0; color: #17384b; font-size: 18px; }
+    .profile-favorite-copy p { margin: 0; color: #617786; font-size: 11px; line-height: 1.6; }
+    .profile-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #d5e0e8; padding-top: 16px; }
+
+    .profile-picker-dialog {
+      width: min(980px, 97vw);
+      height: min(820px, 92dvh);
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      border: 2px solid #27404e;
+      border-radius: 9px;
+      padding: 16px;
+      color: #14202d;
+      background: #f8fbfd;
+      box-shadow: 0 24px 58px rgba(15, 23, 42, .32);
+    }
+    .profile-picker-tools { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-bottom: 12px; }
+    .profile-card-grid { grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); }
+    .profile-card-option { border: 3px solid transparent; border-radius: 7px; padding: 2px; background: transparent; cursor: pointer; }
+    .profile-card-option.selected { border-color: #14a8dc; background: #dff6ff; box-shadow: 0 0 0 2px rgba(20,168,220,.18); }
+    .profile-card-empty { grid-column: 1 / -1; margin: auto; color: #647786; font-weight: 900; }
     .training-deck-readout { display: grid; grid-template-columns: 1fr auto; margin-top: auto; border: 1px solid #8196a4; border-radius: 4px; overflow: hidden; background: #fff; }
     .training-deck-readout > span { grid-column: 1 / -1; padding: 4px 8px; color: #496578; background: #edf3f6; font-size: 11px; font-weight: 1000; }
     .training-deck-readout strong { min-width: 0; padding: 12px 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -8008,6 +8267,26 @@
 
     @media (max-width: 760px) {
       .home-news-button { top: 10px; right: 10px; min-width: 98px; }
+      .home-profile-button {
+        top: 10px;
+        left: 10px;
+        grid-template-columns: 48px minmax(0, 1fr);
+        width: min(210px, calc(100% - 122px));
+        min-height: 72px;
+        padding: 5px 12px 5px 5px;
+      }
+      .home-profile-button::after { right: 7px; bottom: 7px; width: 10px; height: 10px; }
+      .home-profile-button .avatar-scale-frame { width: 48px; height: 48px; }
+      .home-profile-button .profile-avatar { transform: scale(.38); }
+      .home-profile-name { font-size: 13px; }
+      .home-profile-favorite { font-size: 8px; }
+      .profile-dialog { padding: 14px; }
+      .profile-form { grid-template-columns: 1fr; gap: 16px; }
+      .profile-actions { grid-column: 1; }
+      .profile-avatar-grid { grid-template-columns: repeat(4, minmax(58px, 1fr)); }
+      .profile-favorite-panel { grid-template-columns: 110px minmax(0, 1fr); }
+      .profile-favorite-card .card { width: 100px; min-height: 140px; flex-basis: 100px; }
+      .profile-card-grid { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); }
       .deck-library-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .deck-detail-summary { grid-template-columns: 1fr; }
       .update-change { grid-template-columns: 1fr; }
@@ -8019,6 +8298,13 @@
       .dungeon-interior-windows { width: 92vw; height: min(126px, 18vh); gap: 7px; }
       body.dungeon-interior .dungeon-deck-screen,
       body.dungeon-interior .dungeon-floor-screen { padding: 14px; }
+    }
+
+    @media (max-width: 480px) {
+      .home-profile-favorite { display: none; }
+      .profile-avatar-grid { grid-template-columns: repeat(2, minmax(72px, 1fr)); }
+      .profile-favorite-panel { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+      .profile-picker-tools { grid-template-columns: 1fr; }
     }
 
     .card {
@@ -16418,6 +16704,16 @@
   </div>
   <main class="app" id="appRoot">
     <section class="screen home-screen" id="homeScreen">
+      <button class="home-profile-button" id="homeProfileButton" type="button" aria-label="プロフィールを設定">
+        <span class="avatar-scale-frame" aria-hidden="true">
+          <span class="profile-avatar user" id="homeProfileAvatar"><span></span></span>
+        </span>
+        <span class="home-profile-copy">
+          <span class="home-profile-kicker">PLAYER PROFILE</span>
+          <strong class="home-profile-name" id="homeProfileName">チバトル学生</strong>
+          <span class="home-profile-favorite" id="homeProfileFavorite">好きなカード 未設定</span>
+        </span>
+      </button>
       <button class="home-news-button" id="homeUpdatesButton" type="button">
         更新情報
         <span class="notification-dot hidden" id="homeUpdatesDot" aria-label="未読の更新情報あり"></span>
@@ -17410,6 +17706,60 @@
       </div>
     </section>
   </div>
+  <div class="modal-backdrop hidden" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+    <section class="profile-dialog">
+      <div class="profile-dialog-head">
+        <div>
+          <h2 id="profileTitle">プロフィール</h2>
+          <p>この端末で使う名前・アイコン・好きなカードを設定します。</p>
+        </div>
+        <button class="button secondary" id="profileCloseButton" type="button">閉じる</button>
+      </div>
+      <form class="profile-form" id="profileForm" novalidate>
+        <div class="profile-column">
+          <label class="profile-field" for="profileUsernameInput">
+            ユーザー名
+            <input id="profileUsernameInput" type="text" maxlength="20" autocomplete="nickname" required>
+          </label>
+          <p class="profile-error" id="profileUsernameError" aria-live="polite"></p>
+          <section aria-labelledby="profileAvatarTitle">
+            <h3 class="profile-section-title" id="profileAvatarTitle">アイコン</h3>
+            <div class="profile-avatar-grid" id="profileAvatarGrid"></div>
+          </section>
+        </div>
+        <div class="profile-column">
+          <section aria-labelledby="profileFavoriteTitle">
+            <h3 class="profile-section-title" id="profileFavoriteTitle">好きなカード</h3>
+            <div class="profile-favorite-panel">
+              <div class="profile-favorite-card" id="profileFavoriteCardPreview"></div>
+              <div class="profile-favorite-copy">
+                <h3 id="profileFavoriteCardName">未設定</h3>
+                <p>ゲーム内のカードから1枚選べます。</p>
+                <button class="button" id="profileFavoriteCardButton" type="button">好きなカードを選ぶ</button>
+              </div>
+            </div>
+          </section>
+        </div>
+        <div class="profile-actions">
+          <button class="button secondary" id="profileCancelButton" type="button">キャンセル</button>
+          <button class="button" type="submit">保存</button>
+        </div>
+      </form>
+    </section>
+  </div>
+  <div class="modal-backdrop hidden" id="profileCardPickerModal" role="dialog" aria-modal="true" aria-labelledby="profileCardPickerTitle">
+    <section class="profile-picker-dialog">
+      <div class="profile-picker-head">
+        <h2 id="profileCardPickerTitle">好きなカードを選ぶ</h2>
+        <button class="button secondary" id="profileCardPickerCloseButton" type="button">戻る</button>
+      </div>
+      <div class="profile-picker-tools">
+        <input class="profile-card-search" id="profileCardSearchInput" type="search" placeholder="カード名・テキストで検索" aria-label="好きなカードを検索">
+        <button class="button secondary" id="profileFavoriteClearButton" type="button">未設定にする</button>
+      </div>
+      <div class="deck-window-grid profile-card-grid" id="profileCardGrid"></div>
+    </section>
+  </div>
   <div class="modal-backdrop hidden" id="deckModal">
     <section class="deck-window" aria-modal="true" role="dialog">
       <div class="deck-window-head">
@@ -17565,6 +17915,23 @@
     const DUNGEON_CLEAR_BACKUP_ITERATIONS = 250000;
     const STARTER_DECK_SEED_STORAGE_KEY = "chibattle-starter-decks-seeded-v1";
     const STARTER_DECK_SEED_VERSION = "2026-07-03-starter-v4";
+    const PLAYER_PROFILE_STORAGE_KEY = "chibattle-player-profile-v1";
+    const PLAYER_PROFILE_USERNAME_MAX = 20;
+    const PLAYER_PROFILE_AVATARS = Object.freeze([
+      Object.freeze({ id: "user", name: "スタンダード", classes: ["user"] }),
+      Object.freeze({ id: "cpu", name: "ロボット", classes: ["cpu"] }),
+      Object.freeze({ id: "smile", name: "スマイル", classes: ["user", "avatar-smile"] }),
+      Object.freeze({ id: "glasses", name: "メガネ", classes: ["user", "avatar-glasses"] }),
+      Object.freeze({ id: "cap", name: "キャップ", classes: ["user", "avatar-cap"] }),
+      Object.freeze({ id: "hair", name: "ヘアスタイル", classes: ["user", "avatar-hair"] }),
+      Object.freeze({ id: "robot_round", name: "ラウンドロボ", classes: ["cpu", "avatar-robot-round"] }),
+      Object.freeze({ id: "robot_antenna", name: "アンテナロボ", classes: ["cpu", "avatar-robot-antenna"] })
+    ]);
+    const DEFAULT_PLAYER_PROFILE = Object.freeze({
+      username: "チバトル学生",
+      avatarId: "user",
+      favoriteCardId: ""
+    });
     const SPECIALTY_DEFINITIONS = [
       { id: "gakuyukai_item", name: "学友会・持ち物" },
       { id: "cafeteria", name: "食堂" },
@@ -19360,8 +19727,41 @@
     let boardWasResolvingOrderedAttendance = false;
     let renderingOrderedAttendanceCompletion = false;
 
+    function normalizePlayerProfile(value) {
+      const source = value && typeof value === "object" ? value : {};
+      const trimmedName = typeof source.username === "string" ? source.username.trim() : "";
+      const username = (trimmedName || DEFAULT_PLAYER_PROFILE.username).slice(0, PLAYER_PROFILE_USERNAME_MAX);
+      const avatarId = PLAYER_PROFILE_AVATARS.some((avatar) => avatar.id === source.avatarId)
+        ? source.avatarId
+        : DEFAULT_PLAYER_PROFILE.avatarId;
+      const favoriteCardId = typeof source.favoriteCardId === "string" && ALL_DECK_IDS.includes(source.favoriteCardId) && CARD_BASES[source.favoriteCardId]
+        ? source.favoriteCardId
+        : "";
+      return { username, avatarId, favoriteCardId };
+    }
+
+    function loadPlayerProfile() {
+      try {
+        return normalizePlayerProfile(JSON.parse(localStorage.getItem(PLAYER_PROFILE_STORAGE_KEY) || "null"));
+      } catch {
+        return { ...DEFAULT_PLAYER_PROFILE };
+      }
+    }
+
+    function savePlayerProfile(profile) {
+      const normalized = normalizePlayerProfile(profile);
+      localStorage.setItem(PLAYER_PROFILE_STORAGE_KEY, JSON.stringify(normalized));
+      return normalized;
+    }
+
     const state = {
       screen: "home",
+      profile: loadPlayerProfile(),
+      profileEditor: {
+        draft: null,
+        cardSearch: "",
+        cardPickerOpen: false
+      },
       phase: "versus",
       actionTurn: 0,
       firstSide: null,
@@ -19764,6 +20164,25 @@
       battleRoomCode: document.getElementById("battleRoomCode"),
       battleRoomCodeValue: document.getElementById("battleRoomCodeValue"),
       homeDeckButton: document.getElementById("homeDeckButton"),
+      homeProfileButton: document.getElementById("homeProfileButton"),
+      homeProfileAvatar: document.getElementById("homeProfileAvatar"),
+      homeProfileName: document.getElementById("homeProfileName"),
+      homeProfileFavorite: document.getElementById("homeProfileFavorite"),
+      profileModal: document.getElementById("profileModal"),
+      profileForm: document.getElementById("profileForm"),
+      profileCloseButton: document.getElementById("profileCloseButton"),
+      profileCancelButton: document.getElementById("profileCancelButton"),
+      profileUsernameInput: document.getElementById("profileUsernameInput"),
+      profileUsernameError: document.getElementById("profileUsernameError"),
+      profileAvatarGrid: document.getElementById("profileAvatarGrid"),
+      profileFavoriteCardPreview: document.getElementById("profileFavoriteCardPreview"),
+      profileFavoriteCardName: document.getElementById("profileFavoriteCardName"),
+      profileFavoriteCardButton: document.getElementById("profileFavoriteCardButton"),
+      profileCardPickerModal: document.getElementById("profileCardPickerModal"),
+      profileCardPickerCloseButton: document.getElementById("profileCardPickerCloseButton"),
+      profileCardSearchInput: document.getElementById("profileCardSearchInput"),
+      profileFavoriteClearButton: document.getElementById("profileFavoriteClearButton"),
+      profileCardGrid: document.getElementById("profileCardGrid"),
       homeUpdatesButton: document.getElementById("homeUpdatesButton"),
       homeUpdatesDot: document.getElementById("homeUpdatesDot"),
       updatesBackHomeButton: document.getElementById("updatesBackHomeButton"),
@@ -38195,6 +38614,7 @@
       renderSelectionPeekReturn();
       renderTrashDetailStage();
       renderBoards();
+      renderPlayerProfile();
       renderHomeUpdateStatus();
       renderUpdateHistory();
       renderDeckLibrary();
@@ -41826,6 +42246,176 @@
       renderHomeUpdateStatus();
     }
 
+    function playerProfileAvatarDefinition(avatarId) {
+      return PLAYER_PROFILE_AVATARS.find((avatar) => avatar.id === avatarId) || PLAYER_PROFILE_AVATARS[0];
+    }
+
+    function applyPlayerProfileAvatar(element, avatarId) {
+      if (!element) return;
+      const removableClasses = PLAYER_PROFILE_AVATARS.flatMap((avatar) => avatar.classes);
+      element.classList.remove(...new Set(removableClasses));
+      element.classList.add(...playerProfileAvatarDefinition(avatarId).classes);
+    }
+
+    function playerProfileAvatarMarkup(avatarId) {
+      const avatar = playerProfileAvatarDefinition(avatarId);
+      return `<span class="avatar-scale-frame" aria-hidden="true"><span class="profile-avatar ${avatar.classes.join(" ")}"><span></span></span></span>`;
+    }
+
+    function openPlayerProfile() {
+      state.profileEditor.draft = { ...state.profile };
+      state.profileEditor.cardSearch = "";
+      state.profileEditor.cardPickerOpen = false;
+      renderPlayerProfile();
+      window.setTimeout(() => elements.profileUsernameInput?.focus(), 0);
+    }
+
+    function closePlayerProfile() {
+      state.profileEditor.draft = null;
+      state.profileEditor.cardSearch = "";
+      state.profileEditor.cardPickerOpen = false;
+      renderPlayerProfile();
+    }
+
+    function openPlayerProfileCardPicker() {
+      if (!state.profileEditor.draft) return;
+      state.profileEditor.cardPickerOpen = true;
+      state.profileEditor.cardSearch = "";
+      renderPlayerProfile();
+      window.setTimeout(() => elements.profileCardSearchInput?.focus(), 0);
+    }
+
+    function closePlayerProfileCardPicker() {
+      state.profileEditor.cardPickerOpen = false;
+      renderPlayerProfile();
+    }
+
+    function cardMatchesSearchQuery(baseId, query, owner = "player") {
+      const card = CARD_BASES[baseId];
+      const normalizedQuery = String(query || "").trim().toLocaleLowerCase("ja");
+      if (!card || !normalizedQuery) return Boolean(card);
+      const previewCard = makePreviewCard(baseId, owner);
+      return `${card.name}\n${cardRulesText(previewCard)}`.toLocaleLowerCase("ja").includes(normalizedQuery);
+    }
+
+    function renderPlayerProfileCardPicker() {
+      const draft = state.profileEditor.draft;
+      const open = Boolean(draft && state.profileEditor.cardPickerOpen);
+      elements.profileCardPickerModal?.classList.toggle("hidden", !open);
+      if (!open || !elements.profileCardGrid) return;
+      if (elements.profileCardSearchInput && elements.profileCardSearchInput.value !== state.profileEditor.cardSearch) {
+        elements.profileCardSearchInput.value = state.profileEditor.cardSearch;
+      }
+      const matchingIds = getDeckEditorIds("").filter((baseId) => cardMatchesSearchQuery(baseId, state.profileEditor.cardSearch));
+      elements.profileCardGrid.innerHTML = "";
+      if (!matchingIds.length) {
+        const empty = document.createElement("p");
+        empty.className = "profile-card-empty";
+        empty.textContent = "一致するカードがありません。";
+        elements.profileCardGrid.appendChild(empty);
+        return;
+      }
+      matchingIds.forEach((baseId) => {
+        const card = makePreviewCard(baseId, "player");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `card deck-window-card profile-card-option ${card.type}${cardVisualClass(card)}${draft.favoriteCardId === baseId ? " selected" : ""}`;
+        button.dataset.profileCardId = baseId;
+        button.setAttribute("aria-pressed", draft.favoriteCardId === baseId ? "true" : "false");
+        button.setAttribute("aria-label", `${card.name}を好きなカードに設定`);
+        button.innerHTML = cardTemplate(card, false);
+        button.addEventListener("click", () => {
+          state.profileEditor.draft.favoriteCardId = baseId;
+          closePlayerProfileCardPicker();
+        });
+        elements.profileCardGrid.appendChild(button);
+      });
+    }
+
+    function renderPlayerProfile() {
+      const profile = normalizePlayerProfile(state.profile);
+      state.profile = profile;
+      if (elements.homeProfileName) elements.homeProfileName.textContent = profile.username;
+      if (elements.homeProfileFavorite) {
+        elements.homeProfileFavorite.textContent = profile.favoriteCardId
+          ? `好きなカード ${CARD_BASES[profile.favoriteCardId].name}`
+          : "好きなカード 未設定";
+      }
+      applyPlayerProfileAvatar(elements.homeProfileAvatar, profile.avatarId);
+
+      const draft = state.profileEditor.draft;
+      elements.profileModal?.classList.toggle("hidden", !draft);
+      if (!draft) {
+        elements.profileCardPickerModal?.classList.add("hidden");
+        return;
+      }
+      if (elements.profileUsernameInput && document.activeElement !== elements.profileUsernameInput) {
+        elements.profileUsernameInput.value = draft.username;
+      }
+      elements.profileUsernameInput?.setAttribute("maxlength", String(PLAYER_PROFILE_USERNAME_MAX));
+      if (elements.profileUsernameError) elements.profileUsernameError.textContent = "";
+      elements.profileUsernameInput?.removeAttribute("aria-invalid");
+
+      if (elements.profileAvatarGrid) {
+        elements.profileAvatarGrid.innerHTML = PLAYER_PROFILE_AVATARS.map((avatar) => `
+          <button class="profile-avatar-option${draft.avatarId === avatar.id ? " selected" : ""}" type="button" data-profile-avatar="${avatar.id}" aria-pressed="${draft.avatarId === avatar.id}">
+            ${playerProfileAvatarMarkup(avatar.id)}
+            <span>${escapeHtml(avatar.name)}</span>
+          </button>
+        `).join("");
+        elements.profileAvatarGrid.querySelectorAll("[data-profile-avatar]").forEach((button) => {
+          button.addEventListener("click", () => {
+            state.profileEditor.draft.avatarId = button.dataset.profileAvatar;
+            renderPlayerProfile();
+          });
+        });
+      }
+
+      const favoriteId = draft.favoriteCardId;
+      const favorite = favoriteId ? CARD_BASES[favoriteId] : null;
+      if (elements.profileFavoriteCardName) elements.profileFavoriteCardName.textContent = favorite?.name || "未設定";
+      if (elements.profileFavoriteCardPreview) {
+        elements.profileFavoriteCardPreview.innerHTML = "";
+        if (favorite) {
+          const card = makePreviewCard(favoriteId, "player");
+          const cardElement = document.createElement("button");
+          cardElement.type = "button";
+          cardElement.className = `card ${card.type}${cardVisualClass(card)}`;
+          cardElement.innerHTML = cardTemplate(card, false);
+          attachCardDetailEvents(cardElement, card);
+          elements.profileFavoriteCardPreview.appendChild(cardElement);
+        } else {
+          const empty = document.createElement("span");
+          empty.className = "small-info";
+          empty.textContent = "カード未選択";
+          elements.profileFavoriteCardPreview.appendChild(empty);
+        }
+      }
+      renderPlayerProfileCardPicker();
+    }
+
+    function submitPlayerProfile(event) {
+      event.preventDefault();
+      const draft = state.profileEditor.draft;
+      if (!draft) return;
+      const username = String(elements.profileUsernameInput?.value || "").trim();
+      if (!username) {
+        elements.profileUsernameInput?.setAttribute("aria-invalid", "true");
+        if (elements.profileUsernameError) elements.profileUsernameError.textContent = "ユーザー名を入力してください。";
+        elements.profileUsernameInput?.focus();
+        return;
+      }
+      draft.username = username.slice(0, PLAYER_PROFILE_USERNAME_MAX);
+      try {
+        state.profile = savePlayerProfile(draft);
+      } catch {
+        if (elements.profileUsernameError) elements.profileUsernameError.textContent = "プロフィールを保存できませんでした。";
+        return;
+      }
+      closePlayerProfile();
+      render();
+    }
+
     function renderHomeUpdateStatus() {
       if (!elements.homeUpdatesDot) return;
       const read = loadReadUpdateVersions();
@@ -42151,12 +42741,7 @@
     function deckCardMatchesFilters(baseId) {
       const card = CARD_BASES[baseId];
       const filters = state.deckBuilder.filters;
-      const query = filters.query.trim().toLocaleLowerCase("ja");
-      if (query) {
-        const previewCard = makePreviewCard(baseId, state.deckBuilder.activeSide || "player");
-        const searchableText = `${card.name}\n${cardRulesText(previewCard)}`.toLocaleLowerCase("ja");
-        if (!searchableText.includes(query)) return false;
-      }
+      if (!cardMatchesSearchQuery(baseId, filters.query, state.deckBuilder.activeSide || "player")) return false;
       if (filters.types.length && !filters.types.includes(card.type)) return false;
       const costKey = card.noCost ? "なし" : String(card.cost ?? 0);
       if (filters.costs.length && !filters.costs.includes(costKey)) return false;
@@ -42183,9 +42768,8 @@
       elements.soloInitiativeLabel.textContent = initiativeLabels[selection.initiative] || initiativeLabels.random;
       const leftIsAi = selection.leftController === "ai";
       elements.soloLeftControllerLabel.textContent = leftIsAi ? "CPU" : "ユーザー";
-      elements.soloLeftRoleTitle.textContent = leftIsAi ? "CPU" : "USER";
-      elements.soloLeftAvatar.classList.toggle("cpu", leftIsAi);
-      elements.soloLeftAvatar.classList.toggle("user", !leftIsAi);
+      elements.soloLeftRoleTitle.textContent = leftIsAi ? "CPU" : state.profile.username;
+      applyPlayerProfileAvatar(elements.soloLeftAvatar, leftIsAi ? "cpu" : state.profile.avatarId);
       elements.soloObserverNote.textContent = leftIsAi
         ? "CPU同士の対戦では両方の手札を公開し、操作せずに観戦できます"
         : "ユーザーとCPUの使用デッキと手番を選んでください";
@@ -45640,6 +46224,33 @@
 
     elements.homeDeckButton.addEventListener("click", showDeckScreen);
     elements.homeNavDeckButton.addEventListener("click", showDeckScreen);
+    elements.homeProfileButton.addEventListener("click", openPlayerProfile);
+    elements.profileCloseButton.addEventListener("click", closePlayerProfile);
+    elements.profileCancelButton.addEventListener("click", closePlayerProfile);
+    elements.profileForm.addEventListener("submit", submitPlayerProfile);
+    elements.profileUsernameInput.addEventListener("input", () => {
+      if (!state.profileEditor.draft) return;
+      state.profileEditor.draft.username = elements.profileUsernameInput.value;
+      elements.profileUsernameInput.removeAttribute("aria-invalid");
+      elements.profileUsernameError.textContent = "";
+    });
+    elements.profileFavoriteCardButton.addEventListener("click", openPlayerProfileCardPicker);
+    elements.profileCardPickerCloseButton.addEventListener("click", closePlayerProfileCardPicker);
+    elements.profileFavoriteClearButton.addEventListener("click", () => {
+      if (!state.profileEditor.draft) return;
+      state.profileEditor.draft.favoriteCardId = "";
+      closePlayerProfileCardPicker();
+    });
+    elements.profileCardSearchInput.addEventListener("input", () => {
+      state.profileEditor.cardSearch = elements.profileCardSearchInput.value;
+      renderPlayerProfileCardPicker();
+    });
+    elements.profileModal.addEventListener("click", (event) => {
+      if (event.target === elements.profileModal) closePlayerProfile();
+    });
+    elements.profileCardPickerModal.addEventListener("click", (event) => {
+      if (event.target === elements.profileCardPickerModal) closePlayerProfileCardPicker();
+    });
     elements.homeUpdatesButton.addEventListener("click", showUpdatesScreen);
     elements.updatesBackHomeButton.addEventListener("click", showHomeScreen);
     elements.homeBattleButton.addEventListener("click", showOnlineScreen);
