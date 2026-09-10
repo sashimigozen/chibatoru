@@ -37,7 +37,8 @@ test("ユーザー名を検証・整形して安全に保存し、再読み込�
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({
     username: "<b>チバ</b>",
     avatarId: "glasses",
-    favoriteCardId: ""
+    favoriteCardId: "",
+    favoriteCardStyle: "normal"
   });
   await page.reload();
   await expect(page.locator("#homeProfileName")).toHaveText("<b>チバ</b>");
@@ -56,6 +57,46 @@ test("既存カード検索と描画を使って好きなカードを保存す�
   await expect(page.locator("#homeProfileFavorite")).toContainText("キングギドラベッド");
   await page.reload();
   await expect(page.locator("#homeProfileFavorite")).toContainText("キングギドラベッド");
+});
+
+test("複数レアリティを持つ好きなカードは一覧で切り替え、選んだレアリティを保存する", async ({ page }) => {
+  const styleKey = "chibattle-dungeon-card-styles-v1";
+  await page.evaluate(({ styleKey, profileKey }) => {
+    localStorage.setItem(styleKey, JSON.stringify({
+      unlocked: { king_ghidorah_bed: true },
+      prismUnlocked: { king_ghidorah_bed: true },
+      selected: { king_ghidorah_bed: "normal" }
+    }));
+    localStorage.removeItem(profileKey);
+  }, { styleKey, profileKey: storageKey });
+  await page.reload();
+
+  await page.locator("#homeProfileButton").click();
+  await page.locator("#profileFavoriteCardButton").click();
+  await expect(page.locator("#profileCardGrid [data-profile-card-style-cycle]")).toHaveCount(1);
+  await expect(page.locator("#profileCardGrid [data-profile-card-id=yuta]").locator("xpath=..").locator("[data-profile-card-style-cycle]")).toHaveCount(0);
+  await page.locator("#profileCardSearchInput").fill("キングギドラベッド");
+  const option = page.locator("#profileCardGrid [data-profile-card-id=king_ghidorah_bed]");
+  const cycle = page.locator("#profileCardGrid [data-profile-card-style-cycle=king_ghidorah_bed]");
+  await expect(cycle).toHaveCount(1);
+  await expect(option).not.toHaveClass(/reward-foil/);
+  await cycle.click();
+  await expect(option).toHaveClass(/reward-foil/);
+  await expect(option).not.toHaveClass(/reward-prism/);
+  await cycle.click();
+  await expect(option).toHaveClass(/reward-prism/);
+  await option.click();
+
+  await expect(page.locator("#profileFavoriteCardPreview .card")).toHaveClass(/reward-prism/);
+  await page.locator("#profileForm button[type=submit]").click();
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toMatchObject({
+    favoriteCardId: "king_ghidorah_bed",
+    favoriteCardStyle: "prism"
+  });
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)).selected.king_ghidorah_bed, styleKey)).toBe("normal");
+  await page.reload();
+  await page.locator("#homeProfileButton").click();
+  await expect(page.locator("#profileFavoriteCardPreview .card")).toHaveClass(/reward-prism/);
 });
 
 test("好きなカード一覧はカード全体を保ち、一覧部分だけ縦スクロールする", async ({ page }) => {

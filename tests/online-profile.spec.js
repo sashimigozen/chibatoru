@@ -43,8 +43,8 @@ async function profilePage(browser, profile) {
 }
 
 test("ランダムマッチで双方のプロフィール名とアイコンを相手にも表示する", async ({ browser }) => {
-  const leftProfile = { username: "左プレイヤー", avatarId: "glasses", favoriteCardId: "yocchan" };
-  const rightProfile = { username: "右プレイヤー", avatarId: "robot_antenna", favoriteCardId: "cafeteria" };
+  const leftProfile = { username: "左プレイヤー", avatarId: "glasses", favoriteCardId: "yocchan", favoriteCardStyle: "normal" };
+  const rightProfile = { username: "右プレイヤー", avatarId: "robot_antenna", favoriteCardId: "king_ghidorah_bed", favoriteCardStyle: "prism" };
   const left = await profilePage(browser, leftProfile);
   const right = await profilePage(browser, rightProfile);
 
@@ -93,7 +93,8 @@ test("ランダムマッチで双方のプロフィール名とアイコンを�
     await left.page.locator("#onlineRandomRemoteAvatar").click();
     await expect(left.page.locator("#profileViewerModal")).toBeVisible();
     await expect(left.page.locator("#profileViewerName")).toHaveText("右プレイヤー");
-    await expect(left.page.locator("#profileViewerFavoriteName")).toHaveText("食堂");
+    await expect(left.page.locator("#profileViewerFavoriteName")).toHaveText("キングギドラベッド");
+    await expect(left.page.locator("#profileViewerFavoriteCard .card")).toHaveClass(/reward-prism/);
     await expect(left.page.locator("#profileViewerAvatar")).toHaveClass(/avatar-robot-antenna/);
     await left.page.locator("#profileViewerCloseButton").click();
 

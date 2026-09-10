@@ -27,7 +27,8 @@ const PLAYER_PROFILE_AVATAR_IDS = new Set([
 const DEFAULT_PLAYER_PROFILE = Object.freeze({
   username: "チバトル学生",
   avatarId: "user",
-  favoriteCardId: ""
+  favoriteCardId: "",
+  favoriteCardStyle: "normal"
 });
 
 // Keep this server-side catalog in sync with the browser's direct-deck catalog.
@@ -1027,7 +1028,15 @@ function normalizePlayerProfile(profile, previous = null) {
     && /^[a-z0-9_]{1,80}$/i.test(source.favoriteCardId)
     ? source.favoriteCardId
     : "";
-  return { username, avatarId, favoriteCardId };
+  const requestedFavoriteCardStyle = ["normal", "reward", "prism"].includes(source.favoriteCardStyle)
+    ? source.favoriteCardStyle
+    : "normal";
+  const favoriteCardStyle = !favoriteCardId
+    ? "normal"
+    : requestedFavoriteCardStyle === "prism" && favoriteCardId !== "king_ghidorah_bed"
+      ? "reward"
+      : requestedFavoriteCardStyle;
+  return { username, avatarId, favoriteCardId, favoriteCardStyle };
 }
 
 function playerPublicState(player, room = null) {

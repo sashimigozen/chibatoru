@@ -243,7 +243,7 @@ test("random match pairs waiting clients into one room", async (t) => {
   });
 
   const first = await connectRandomClient(url, "random-a", {
-    profile: { username: "  左プレイヤー  ", avatarId: "glasses", favoriteCardId: "yocchan" }
+    profile: { username: "  左プレイヤー  ", avatarId: "glasses", favoriteCardId: "vampire", favoriteCardStyle: "reward" }
   });
   clients.push(first);
   const firstJoin = first.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-a");
@@ -254,7 +254,8 @@ test("random match pairs waiting clients into one room", async (t) => {
   assert.deepEqual(firstJoin.you.profile, {
     username: "左プレイヤー",
     avatarId: "glasses",
-    favoriteCardId: "yocchan"
+    favoriteCardId: "vampire",
+    favoriteCardStyle: "reward"
   });
 
   const second = await connectRandomClient(url, "random-b", {
@@ -269,7 +270,8 @@ test("random match pairs waiting clients into one room", async (t) => {
   assert.deepEqual(secondJoin.you.profile, {
     username: "チバトル学生",
     avatarId: "user",
-    favoriteCardId: ""
+    favoriteCardId: "",
+    favoriteCardStyle: "normal"
   });
   assert.equal(
     secondJoin.players.find((player) => player.clientId === "random-a")?.profile?.username,
@@ -283,7 +285,7 @@ test("random match pairs waiting clients into one room", async (t) => {
   assert.equal(hostUpdate.message.matchType, "random");
   assert.deepEqual(
     hostUpdate.message.players.find((player) => player.clientId === "random-b")?.profile,
-    { username: "チバトル学生", avatarId: "user", favoriteCardId: "" }
+    { username: "チバトル学生", avatarId: "user", favoriteCardId: "", favoriteCardStyle: "normal" }
   );
 });
 

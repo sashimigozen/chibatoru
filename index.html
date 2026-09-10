@@ -8067,6 +8067,14 @@
       background: transparent;
       cursor: pointer;
     }
+    .profile-card-entry { position: relative; min-width: 0; align-self: start; }
+    .profile-card-entry .card-style-cycle-button {
+      right: -5px;
+      bottom: -5px;
+      width: 30px;
+      height: 30px;
+    }
+    .profile-card-entry .card-style-cycle-button svg { width: 16px; height: 16px; }
     .profile-card-option.selected { border-color: #14a8dc; background: #dff6ff; box-shadow: 0 0 0 2px rgba(20,168,220,.18); }
     .profile-card-empty { grid-column: 1 / -1; margin: auto; color: #647786; font-weight: 900; }
     .training-deck-readout { display: grid; grid-template-columns: 1fr auto; margin-top: auto; border: 1px solid #8196a4; border-radius: 4px; overflow: hidden; background: #fff; }
@@ -18042,7 +18050,8 @@
     const DEFAULT_PLAYER_PROFILE = Object.freeze({
       username: "チバトル学生",
       avatarId: "user",
-      favoriteCardId: ""
+      favoriteCardId: "",
+      favoriteCardStyle: "normal"
     });
     const SPECIALTY_DEFINITIONS = [
       { id: "gakuyukai_item", name: "学友会・持ち物" },
@@ -19849,12 +19858,21 @@
       const favoriteCardId = typeof source.favoriteCardId === "string" && ALL_DECK_IDS.includes(source.favoriteCardId) && CARD_BASES[source.favoriteCardId]
         ? source.favoriteCardId
         : "";
-      return { username, avatarId, favoriteCardId };
+      const favoriteCardStyle = normalizeProfileCardStyle(favoriteCardId, source.favoriteCardStyle);
+      return { username, avatarId, favoriteCardId, favoriteCardStyle };
     }
 
     function loadPlayerProfile() {
       try {
-        return normalizePlayerProfile(JSON.parse(localStorage.getItem(PLAYER_PROFILE_STORAGE_KEY) || "null"));
+        const source = JSON.parse(localStorage.getItem(PLAYER_PROFILE_STORAGE_KEY) || "null");
+        const profile = normalizePlayerProfile(source);
+        if (profile.favoriteCardId && !Object.prototype.hasOwnProperty.call(source || {}, "favoriteCardStyle")) {
+          profile.favoriteCardStyle = localCardStyleMode(profile.favoriteCardId);
+        }
+        if (profile.favoriteCardId && !availableCardStyleModes(profile.favoriteCardId).includes(profile.favoriteCardStyle)) {
+          profile.favoriteCardStyle = "normal";
+        }
+        return profile;
       } catch {
         return { ...DEFAULT_PLAYER_PROFILE };
       }
@@ -19862,6 +19880,9 @@
 
     function savePlayerProfile(profile) {
       const normalized = normalizePlayerProfile(profile);
+      if (normalized.favoriteCardId && !availableCardStyleModes(normalized.favoriteCardId).includes(normalized.favoriteCardStyle)) {
+        normalized.favoriteCardStyle = "normal";
+      }
       localStorage.setItem(PLAYER_PROFILE_STORAGE_KEY, JSON.stringify(normalized));
       return normalized;
     }
@@ -19872,7 +19893,8 @@
       profileEditor: {
         draft: null,
         cardSearch: "",
-        cardPickerOpen: false
+        cardPickerOpen: false,
+        cardStyleDrafts: {}
       },
       profileViewer: null,
       phase: "versus",
@@ -21636,6 +21658,18 @@
       return selections?.[baseId] === "reward" ? reward.style : "";
     }
 
+    function normalizeProfileCardStyle(baseId, mode) {
+      if (!baseId || !rewardForCardBaseId(baseId)) return "normal";
+      if (mode === "prism") return isPrismCard(baseId) ? "prism" : "reward";
+      return mode === "reward" ? "reward" : "normal";
+    }
+
+    function makeProfilePreviewCard(baseId, mode = "normal") {
+      const card = makePreviewCard(baseId, "player");
+      card.profileStyleMode = normalizeProfileCardStyle(baseId, mode);
+      return card;
+    }
+
     function onlineCardStylesForOwner(owner) {
       if (isOnlineSpectator()) {
         return owner === "player" ? state.online.hostCardStyles : state.online.guestCardStyles;
@@ -21937,6 +21971,10 @@
       if (!reward) return "";
       const classes = (style) => style
         ? ` reward-foil reward-foil-${reward.style}${isPrismCard(card.baseId) && style.endsWith("-prism") ? " reward-prism" : ""}` : "";
+
+      if (["normal", "reward", "prism"].includes(card?.profileStyleMode)) {
+        return classes(rewardFoilStyleForSelection(card.baseId, { [card.baseId]: card.profileStyleMode }));
+      }
 
       // Online snapshots can carry an old visual flag. The owner's published
       // selection is the only authority so one player's style never leaks.
@@ -42527,7 +42565,7 @@
         : "好きなカードは未設定です。";
       elements.profileViewerFavoriteCard.innerHTML = "";
       if (favorite) {
-        const card = makePreviewCard(profile.favoriteCardId, "player");
+        const card = makeProfilePreviewCard(profile.favoriteCardId, profile.favoriteCardStyle);
         const cardElement = document.createElement("button");
         cardElement.type = "button";
         cardElement.className = `card ${card.type}${cardVisualClass(card)}`;
@@ -42546,6 +42584,9 @@
       state.profileEditor.draft = { ...state.profile };
       state.profileEditor.cardSearch = "";
       state.profileEditor.cardPickerOpen = false;
+      state.profileEditor.cardStyleDrafts = state.profile.favoriteCardId
+        ? { [state.profile.favoriteCardId]: state.profile.favoriteCardStyle }
+        : {};
       renderPlayerProfile();
       window.setTimeout(() => elements.profileUsernameInput?.focus(), 0);
     }
@@ -42554,6 +42595,7 @@
       state.profileEditor.draft = null;
       state.profileEditor.cardSearch = "";
       state.profileEditor.cardPickerOpen = false;
+      state.profileEditor.cardStyleDrafts = {};
       renderPlayerProfile();
     }
 
@@ -42596,7 +42638,14 @@
         return;
       }
       matchingIds.forEach((baseId) => {
-        const card = makePreviewCard(baseId, "player");
+        const modes = availableCardStyleModes(baseId);
+        const favoriteMode = draft.favoriteCardId === baseId ? draft.favoriteCardStyle : localCardStyleMode(baseId);
+        const requestedMode = state.profileEditor.cardStyleDrafts[baseId] || favoriteMode;
+        const mode = modes.includes(requestedMode) ? requestedMode : modes[0];
+        state.profileEditor.cardStyleDrafts[baseId] = mode;
+        const card = makeProfilePreviewCard(baseId, mode);
+        const entry = document.createElement("div");
+        entry.className = "profile-card-entry";
         const button = document.createElement("button");
         button.type = "button";
         button.className = `card deck-window-card profile-card-option ${card.type}${cardVisualClass(card)}${draft.favoriteCardId === baseId ? " selected" : ""}`;
@@ -42606,9 +42655,28 @@
         button.innerHTML = cardTemplate(card, false);
         button.addEventListener("click", () => {
           state.profileEditor.draft.favoriteCardId = baseId;
+          state.profileEditor.draft.favoriteCardStyle = mode;
           closePlayerProfileCardPicker();
         });
-        elements.profileCardGrid.appendChild(button);
+        entry.appendChild(button);
+        if (modes.length > 1) {
+          const nextMode = modes[(modes.indexOf(mode) + 1) % modes.length];
+          const cycleButton = document.createElement("button");
+          cycleButton.type = "button";
+          cycleButton.className = "card-style-cycle-button";
+          cycleButton.dataset.profileCardStyleCycle = baseId;
+          cycleButton.title = `${cardStyleModeLabel(nextMode)}に切り替える`;
+          cycleButton.setAttribute("aria-label", `${card.name}を${cardStyleModeLabel(nextMode)}に切り替える`);
+          cycleButton.innerHTML = cardStyleCycleIconTemplate();
+          cycleButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            state.profileEditor.cardStyleDrafts[baseId] = nextMode;
+            if (draft.favoriteCardId === baseId) draft.favoriteCardStyle = nextMode;
+            renderPlayerProfileCardPicker();
+          });
+          entry.appendChild(cycleButton);
+        }
+        elements.profileCardGrid.appendChild(entry);
       });
     }
 
@@ -42657,7 +42725,7 @@
       if (elements.profileFavoriteCardPreview) {
         elements.profileFavoriteCardPreview.innerHTML = "";
         if (favorite) {
-          const card = makePreviewCard(favoriteId, "player");
+          const card = makeProfilePreviewCard(favoriteId, draft.favoriteCardStyle);
           const cardElement = document.createElement("button");
           cardElement.type = "button";
           cardElement.className = `card ${card.type}${cardVisualClass(card)}`;
@@ -46519,6 +46587,7 @@
     elements.profileFavoriteClearButton.addEventListener("click", () => {
       if (!state.profileEditor.draft) return;
       state.profileEditor.draft.favoriteCardId = "";
+      state.profileEditor.draft.favoriteCardStyle = "normal";
       closePlayerProfileCardPicker();
     });
     elements.profileCardSearchInput.addEventListener("input", () => {
