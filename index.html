@@ -22489,6 +22489,17 @@
       });
     }
 
+    function onlineScheduleProfileSync() {
+      const connToken = state.online.connToken;
+      const roomSessionId = state.online.roomSessionId;
+      [0, 250, 1000].forEach((delay) => {
+        window.setTimeout(() => {
+          if (state.online.connToken !== connToken || state.online.roomSessionId !== roomSessionId) return;
+          onlineSendProfileSync();
+        }, delay);
+      });
+    }
+
     function onlineApplyProfileSync(message) {
       if (!message?.profileSync || !message.profile) return false;
       const senderId = String(message.senderId || "");
@@ -23276,7 +23287,7 @@
         state.online.lastSeenAt = Date.now();
         onlineClearConnectTimer();
         onlineStartReliabilityLoop();
-        onlineSendProfileSync();
+        onlineScheduleProfileSync();
         if (isOnlineSpectator()) {
           onlineSetStatus(state.online.started
             ? "観戦者として入室しました。両者の手札を公開して観戦できます。"
