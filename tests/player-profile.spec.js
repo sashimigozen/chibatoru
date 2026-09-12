@@ -152,7 +152,7 @@ test("プロフィールはソロのユーザー側だけに反映し、CPUへ�
     favoriteCardId: "general_student"
   })), storageKey);
   await page.reload();
-  await page.locator("#homeSoloButton").click();
+  await page.locator("#homeNavSoloButton").click();
   await page.locator("#soloTrainingButton").click();
   await expect(page.locator("#soloLeftRoleTitle")).toHaveText("テスト観戦者");
   await expect(page.locator("#soloLeftAvatar")).toHaveClass(/avatar-robot-antenna/);

@@ -38,7 +38,7 @@ async function profilePage(browser, profile) {
   }, { key: storageKey, value: profile });
   const page = await context.newPage();
   await page.goto(gameUrl);
-  await page.locator("#homeBattleButton").click();
+  await page.locator("#homeNavBattleButton").click();
   return { context, page };
 }
 

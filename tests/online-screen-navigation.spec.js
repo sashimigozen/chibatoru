@@ -6,7 +6,7 @@ const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
 test("オンラインバトルの各機能を専用画面へ切り替える", async ({ page }) => {
   await page.goto(gameUrl);
-  await page.locator("#homeBattleButton").click();
+  await page.locator("#homeNavBattleButton").click();
 
   await expect(page.locator("#onlineScreen")).toBeVisible();
   await expect(page.locator("#onlineMenuHead")).toBeVisible();

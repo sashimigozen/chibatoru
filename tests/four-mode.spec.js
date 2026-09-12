@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 test("オンラインメニューのチバトルふぉーは他のボタンと同じ色で準備中表示にする", async ({ page }) => {
-  await page.locator("#homeBattleButton").click();
+  await page.locator("#homeNavBattleButton").click();
   const buttons = page.locator("#onlineMatchActions .online-match-button");
   await expect(buttons.nth(1)).toHaveAttribute("id", "onlinePrivateMatchButton");
   await expect(buttons.nth(2)).toHaveAttribute("id", "onlineFourMatchButton");
@@ -211,7 +211,7 @@ test("ドロー不能で終了し、同点は同順位にする", async ({ page 
 });
 
 test("通常のプライベートマッチ画面は引き続き使用できる", async ({ page }) => {
-  await page.locator("#homeBattleButton").click();
+  await page.locator("#homeNavBattleButton").click();
   await page.locator("#onlinePrivateMatchButton").click();
   await expect(page.locator("#onlinePrivatePanel")).toBeVisible();
   await expect(page.locator("#onlineSubviewTitle")).toHaveText("プライベートマッチ");

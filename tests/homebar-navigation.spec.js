@@ -63,7 +63,8 @@ test("下部ホームバーだけを既存画面へ追加し、素材どおり�
   await expect(page.locator("#homeNavSoloButton")).toHaveAttribute("aria-current", "page");
 
   await page.locator("#homeNavHomeButton").click();
-  await page.locator("#homeTutorialButton").click();
+  await expect(page.locator("#homeUtilityMenuButton")).toBeDisabled();
+  await page.evaluate(() => document.getElementById("homeTutorialButton").click());
   await expect(page.locator("#battleScreen")).toBeVisible();
   await expect(navigation).toBeHidden();
 });

@@ -193,5 +193,5 @@ test("オンライン準備画面の対戦者欄に保存デッキ名を表示�
   });
   expect(`${texts.info} ${texts.local} ${texts.remote}`).not.toContain("秘密の");
   expect(texts.local).toContain("通常デッキ");
-  expect(texts.remote).toContain("通常デッキ");
+  expect(texts.remote).toBe("非公開");
 });

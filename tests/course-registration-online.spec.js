@@ -44,7 +44,7 @@ async function connectPlayers(browser) {
   await Promise.all([host.goto(gameUrl), guest.goto(gameUrl)]);
 
   for (const page of [host, guest]) {
-    await page.locator("#homeBattleButton").click();
+    await page.locator("#homeNavBattleButton").click();
     await page.locator("#onlinePrivateMatchButton").click();
   }
   await host.locator("#onlineCreateRoomButton").click();
@@ -170,7 +170,7 @@ test("ホストがカオスルールでデッキを選び準備OKにしても通
   try {
     await Promise.all([host.goto(gameUrl), guest.goto(gameUrl)]);
     for (const page of [host, guest]) {
-      await page.locator("#homeBattleButton").click();
+      await page.locator("#homeNavBattleButton").click();
       await page.locator("#onlinePrivateMatchButton").click();
       await page.evaluate(() => {
         window.__chibattle.state.deckBuilder.chaosDecks = {
@@ -268,7 +268,7 @@ test("専攻ルールでゲストが準備OKにした状態をゲスト画面で
   try {
     await Promise.all([host.goto(gameUrl), guest.goto(gameUrl)]);
     for (const page of [host, guest]) {
-      await page.locator("#homeBattleButton").click();
+      await page.locator("#homeNavBattleButton").click();
       await page.locator("#onlinePrivateMatchButton").click();
       await page.evaluate(() => {
         const counts = {};

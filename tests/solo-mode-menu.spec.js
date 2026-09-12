@@ -6,7 +6,7 @@ const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
 test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
-  await page.locator("#homeSoloButton").click();
+  await page.locator("#homeNavSoloButton").click();
 });
 
 test("ソロモードをAIバトル、魔の1号館、トレーニングの順に表示する", async ({ page }) => {

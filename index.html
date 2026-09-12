@@ -16869,6 +16869,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
+  <link rel="stylesheet" href="home-ui.css?v=1" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -16879,42 +16880,71 @@
     </div>
   </div>
   <main class="app" id="appRoot">
-    <section class="screen home-screen" id="homeScreen">
-      <button class="home-profile-button" id="homeProfileButton" type="button" aria-label="プロフィールを設定">
+    <section class="screen home-screen home-desk-screen" id="homeScreen">
+      <button class="home-profile-button home-student-card" id="homeProfileButton" type="button" aria-label="プロフィールを設定">
         <span class="avatar-scale-frame" aria-hidden="true">
           <span class="profile-avatar user" id="homeProfileAvatar"><span></span></span>
         </span>
         <span class="home-profile-copy">
-          <span class="home-profile-kicker">PLAYER PROFILE</span>
+          <span class="home-profile-kicker">CHIBATTLE STUDENT ID</span>
           <strong class="home-profile-name" id="homeProfileName">チバトル学生</strong>
-          <span class="home-profile-favorite" id="homeProfileFavorite">好きなカード 未設定</span>
+          <span class="home-profile-comment" id="homeProfileComment">対戦よろしく　お願いします　エンジョイ</span>
+          <span class="home-profile-favorite visually-hidden-home-copy" id="homeProfileFavorite">好きなカード 未設定</span>
         </span>
       </button>
-      <button class="home-news-button" id="homeUpdatesButton" type="button">
-        更新情報
-        <span class="notification-dot hidden" id="homeUpdatesDot" aria-label="未読の更新情報あり"></span>
-      </button>
-      <div class="home-title">
-        <h1>チバトル（仮）</h1>
-        <p>デジタルカードゲーム プロトタイプ</p>
+
+      <div class="home-comment-sticky" id="homeCommentSticky">
+        <small>3ワードコメント</small>
+        <span class="home-comment-sticky-text" id="homeCommentStickyText">対戦よろしく\nお願いします\nエンジョイ</span>
       </div>
-      <div class="home-actions">
-        <button class="home-button featured" id="homeDeckButton" type="button">
-          <span class="home-button-main">デッキ変更</span>
-          <span class="home-button-sub">自分とAIのデッキを作る</span>
+
+      <div class="home-favorite-card-object" id="homeFavoriteCardObject">
+        <button class="home-favorite-card-hitarea home-scene-object" id="homeFavoriteCardButton" type="button" aria-label="好きなカードを表示" data-home-object="favorite-card">
+          <span class="home-favorite-card-flip-stage" id="homeFavoriteCardScene">
+            <span class="home-favorite-card-face home-favorite-card-back">
+              <img class="home-scene-object-image" id="homeFavoriteCardImage" src="assets/home/home-ui-favorite-card.png" alt="" draggable="false" />
+            </span>
+            <span class="home-favorite-card-face home-favorite-card-front" id="homeFavoriteCardFront"></span>
+          </span>
+          <span class="home-favorite-card-label" id="homeFavoriteCardLabel">好きなカード</span>
         </button>
-        <button class="home-button online featured" id="homeBattleButton" type="button">
-          <span class="home-button-main">マルチ</span>
-          <span class="home-button-sub">部屋を作る・入る</span>
+        <button class="card-style-cycle-button home-favorite-card-turn-button" id="homeFavoriteCardFlipButton" type="button" aria-label="好きなカードを表向きにする" aria-pressed="false" title="好きなカードを表向きにする"></button>
+      </div>
+
+      <button class="home-deck-panel home-scene-object" id="homeDeckButton" type="button" aria-label="デッキ画面を開く" data-home-object="deck-case">
+        <img class="home-scene-object-image" id="homeDeckCaseImage" src="assets/home/home-ui-deck-case.png" alt="" draggable="false" />
+        <strong class="home-deck-name" id="homeDeckName">カード</strong>
+      </button>
+
+      <button class="home-random-match-button" id="homeBattleButton" type="button" aria-label="ランダムマッチへ進む">
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path d="m12 8 4 3-2 4 21 21-5 5-21-21-4 2 3 4"></path>
+          <path d="m36 8-4 3 2 4-8 8"></path>
+          <path d="m15 30-7 7 3 3 7-7"></path>
+        </svg>
+        <span class="home-random-match-copy">
+          <strong>ランダムマッチ</strong>
+          <span>対戦相手を探す</span>
+        </span>
+      </button>
+
+      <div class="home-utility-buttons" aria-label="ホームメニュー">
+        <button class="home-utility-button home-menu-static" id="homeUtilityMenuButton" type="button" aria-label="メニュー" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
         </button>
-        <button class="home-button under-online under-online-start" id="homeSoloButton" type="button">
-          <span class="home-button-main">ソロ</span>
-          <span class="home-button-sub">AIバトル・魔の1号館・トレーニング</span>
+        <button class="home-news-button home-utility-button" id="homeUpdatesButton" type="button" aria-label="更新情報">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M9.5 20h5"></path></svg>
+          <span class="notification-dot hidden" id="homeUpdatesDot" aria-label="未読の更新情報あり"></span>
         </button>
-        <button class="home-button under-online under-online-end" id="homeTutorialButton" type="button">
-          <span class="home-button-main">チュートリアル</span>
-          <span class="home-button-sub">基本操作を試す</span>
+        <button class="home-utility-button" type="button" aria-label="プレゼント（準備中）" title="準備中" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10h16v10H4zM3 6h18v4H3zM12 6v14M12 6H8.5C5 6 5 2.5 7.5 2.5 10 2.5 12 6 12 6Zm0 0h3.5c3.5 0 3.5-3.5 1-3.5C14 2.5 12 6 12 6Z"></path></svg>
         </button>
+      </div>
+
+      <div class="home-utility-menu hidden" id="homeUtilityMenu" aria-label="その他のメニュー">
+        <button id="homeSoloButton" type="button">ソロプレイ</button>
+        <button id="homeTutorialButton" type="button">チュートリアル</button>
+        <button id="homeUtilityProfileButton" type="button">プロフィール設定</button>
       </div>
     </section>
 
@@ -16959,6 +16989,7 @@
           <span class="solo-mode-sub">自分とAIのデッキを選び、対戦を練習する</span>
         </button>
       </div>
+
     </section>
 
     <section class="screen dungeon-entrance-screen hidden" id="dungeonEntranceScreen" aria-label="魔の1号館への入口">
@@ -17962,6 +17993,10 @@
       </div>
       <div class="profile-word-grid" id="profileCommentWordGrid"></div>
     </section>
+  </div>
+  <div class="home-favorite-card-preview hidden" id="homeFavoriteCardPreview" role="dialog" aria-modal="true" aria-label="好きなカードの拡大表示" aria-hidden="true">
+    <button class="home-favorite-card-preview-close" id="homeFavoriteCardPreviewCloseButton" type="button" aria-label="閉じる">×</button>
+    <div class="home-favorite-card-preview-card" id="homeFavoriteCardPreviewCard"></div>
   </div>
   <div class="modal-backdrop hidden" id="profileViewerModal" role="dialog" aria-modal="true" aria-labelledby="profileViewerTitle">
     <section class="profile-dialog profile-viewer-dialog">
@@ -19054,6 +19089,28 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.3",
+        date: "2026年9月13日",
+        summary: "ホーム画面を机上のカードゲームをイメージしたデザインへ変更しました。プロフィール、好きなカード、カード一覧、ランダムマッチへ、画面上のオブジェクトから直接進めます。",
+        changes: [
+          {
+            title: "ホーム画面のデザイン",
+            before: "ホーム画面は文字中心のボタンを並べた構成だった。",
+            after: "机上にプロフィール、好きなカード、デッキケース、ランダムマッチを配置した画面へ変更。画面下のナビゲーションは従来どおり利用できる。"
+          },
+          {
+            title: "好きなカードの表示",
+            before: "ホーム画面では好きなカード名のみを表示していた。",
+            after: "中央のカードを回転ボタンでめくると、プロフィールで設定した好きなカードを選択中のレアリティで表示する。表向きのカードを押すと画面いっぱいに拡大して確認できる。"
+          },
+          {
+            title: "ホーム画面からの移動",
+            before: "ランダムマッチを始めるには、ホーム画面からマルチ画面を経由する必要があった。",
+            after: "ランダムマッチのパネルを押すと、対戦相手の検索を直接開始する。デッキケースからはカード画面、プロフィールカードからはプロフィール設定を開ける。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.2",
         date: "2026年9月9日",
@@ -20465,7 +20522,24 @@
       homeProfileButton: document.getElementById("homeProfileButton"),
       homeProfileAvatar: document.getElementById("homeProfileAvatar"),
       homeProfileName: document.getElementById("homeProfileName"),
+      homeProfileComment: document.getElementById("homeProfileComment"),
       homeProfileFavorite: document.getElementById("homeProfileFavorite"),
+      homeCommentSticky: document.getElementById("homeCommentSticky"),
+      homeCommentStickyText: document.getElementById("homeCommentStickyText"),
+      homeFavoriteCardObject: document.getElementById("homeFavoriteCardObject"),
+      homeFavoriteCardButton: document.getElementById("homeFavoriteCardButton"),
+      homeFavoriteCardScene: document.getElementById("homeFavoriteCardScene"),
+      homeFavoriteCardFront: document.getElementById("homeFavoriteCardFront"),
+      homeFavoriteCardFlipButton: document.getElementById("homeFavoriteCardFlipButton"),
+      homeFavoriteCardLabel: document.getElementById("homeFavoriteCardLabel"),
+      homeFavoriteCardPreview: document.getElementById("homeFavoriteCardPreview"),
+      homeFavoriteCardPreviewCard: document.getElementById("homeFavoriteCardPreviewCard"),
+      homeFavoriteCardPreviewCloseButton: document.getElementById("homeFavoriteCardPreviewCloseButton"),
+      homeDeckName: document.getElementById("homeDeckName"),
+      homeDeckCount: document.getElementById("homeDeckCount"),
+      homeUtilityMenuButton: document.getElementById("homeUtilityMenuButton"),
+      homeUtilityMenu: document.getElementById("homeUtilityMenu"),
+      homeUtilityProfileButton: document.getElementById("homeUtilityProfileButton"),
       profileModal: document.getElementById("profileModal"),
       profileForm: document.getElementById("profileForm"),
       profileCloseButton: document.getElementById("profileCloseButton"),
@@ -42922,15 +42996,92 @@
       });
     }
 
+    function applyHomeFavoriteCardPerspective() {
+      const stage = elements.homeFavoriteCardScene;
+      const cardElement = elements.homeFavoriteCardFront?.querySelector(".home-favorite-card-render");
+      if (!stage || !cardElement || !stage.clientWidth || !cardElement.offsetWidth) return;
+      const stageScale = stage.clientWidth / 775;
+      const cardScale = cardElement.offsetWidth / 420;
+      const matrix = [
+        1.367956913189 * stageScale / cardScale, 0.300533127243 * stageScale / cardScale, 0, 0.000020521687494 / cardScale,
+        -0.275898301394 * stageScale / cardScale, 1.172522865854 * stageScale / cardScale, 0, -0.000059886759582 / cardScale,
+        0, 0, 1, 0,
+        191 * stageScale, 17 * stageScale, 0, 1,
+      ];
+      cardElement.style.transform = `matrix3d(${matrix.join(",")})`;
+    }
+
+    function renderHomeFavoriteCardFront(profile = state.profile) {
+      if (!elements.homeFavoriteCardFront || !elements.homeFavoriteCardFlipButton) return;
+      const favoriteId = profile?.favoriteCardId;
+      const favorite = favoriteId ? CARD_BASES[favoriteId] : null;
+      elements.homeFavoriteCardFront.innerHTML = "";
+      if (!favorite) {
+        const empty = document.createElement("span");
+        empty.className = "home-favorite-card-empty";
+        empty.textContent = "未設定";
+        elements.homeFavoriteCardFront.appendChild(empty);
+        elements.homeFavoriteCardFlipButton.disabled = true;
+        elements.homeFavoriteCardButton?.classList.remove("is-flipped");
+        elements.homeFavoriteCardFlipButton.setAttribute("aria-pressed", "false");
+        return;
+      }
+      const card = makeProfilePreviewCard(favoriteId, profile.favoriteCardStyle);
+      const cardElement = document.createElement("span");
+      cardElement.className = `card home-favorite-card-render ${card.type}${cardVisualClass(card)}`;
+      cardElement.innerHTML = cardTemplate(card, false);
+      elements.homeFavoriteCardFront.appendChild(cardElement);
+      applyHomeFavoriteCardPerspective();
+      elements.homeFavoriteCardFlipButton.disabled = false;
+    }
+
+    function toggleHomeFavoriteCardFace() {
+      if (!elements.homeFavoriteCardButton || elements.homeFavoriteCardFlipButton?.disabled) return;
+      const flipped = elements.homeFavoriteCardButton.classList.toggle("is-flipped");
+      const label = flipped ? "カードを裏向きにする" : "好きなカードを表向きにする";
+      elements.homeFavoriteCardFlipButton.setAttribute("aria-pressed", String(flipped));
+      elements.homeFavoriteCardFlipButton.setAttribute("aria-label", label);
+      elements.homeFavoriteCardFlipButton.title = label;
+    }
+
+    function openHomeFavoriteCardPreview() {
+      const favoriteId = state.profile?.favoriteCardId;
+      if (!favoriteId || !CARD_BASES[favoriteId]) return;
+      const card = makeProfilePreviewCard(favoriteId, state.profile.favoriteCardStyle);
+      const cardElement = document.createElement("span");
+      cardElement.className = `card ${card.type}${cardVisualClass(card)}`;
+      cardElement.innerHTML = cardTemplate(card, false);
+      elements.homeFavoriteCardPreviewCard.innerHTML = "";
+      elements.homeFavoriteCardPreviewCard.appendChild(cardElement);
+      elements.homeFavoriteCardPreview.classList.remove("hidden");
+      elements.homeFavoriteCardPreview.setAttribute("aria-hidden", "false");
+      elements.homeFavoriteCardPreviewCloseButton.focus();
+    }
+
+    function closeHomeFavoriteCardPreview() {
+      elements.homeFavoriteCardPreview.classList.add("hidden");
+      elements.homeFavoriteCardPreview.setAttribute("aria-hidden", "true");
+      elements.homeFavoriteCardButton.focus();
+    }
+
     function renderPlayerProfile() {
       const profile = normalizePlayerProfile(state.profile);
       state.profile = profile;
       if (elements.homeProfileName) elements.homeProfileName.textContent = profile.username;
+      const commentText = playerProfileCommentText(profile.commentParts);
+      if (elements.homeProfileComment) elements.homeProfileComment.textContent = commentText;
+      if (elements.homeCommentStickyText) elements.homeCommentStickyText.textContent = profile.commentParts.join("\n");
       if (elements.homeProfileFavorite) {
         elements.homeProfileFavorite.textContent = profile.favoriteCardId
           ? `好きなカード ${CARD_BASES[profile.favoriteCardId].name}`
           : "好きなカード 未設定";
       }
+      if (elements.homeFavoriteCardLabel) {
+        elements.homeFavoriteCardLabel.textContent = profile.favoriteCardId
+          ? CARD_BASES[profile.favoriteCardId].name
+          : "好きなカード";
+      }
+      renderHomeFavoriteCardFront(profile);
       applyPlayerProfileAvatar(elements.homeProfileAvatar, profile.avatarId);
 
       const draft = state.profileEditor.draft;
@@ -44985,6 +45136,12 @@
       return true;
     }
 
+    function setHomeUtilityMenuOpen(open) {
+      if (!elements.homeUtilityMenu || !elements.homeUtilityMenuButton) return;
+      elements.homeUtilityMenu.classList.toggle("hidden", !open);
+      elements.homeUtilityMenuButton.setAttribute("aria-expanded", open ? "true" : "false");
+    }
+
     function showHomeScreen() {
       closeTeacherActionChoice();
       clearOrderedAttendance();
@@ -46811,6 +46968,7 @@
     const cardTemplateMutationObserver = new MutationObserver(() => scheduleCardTemplateScaleSync());
     cardTemplateMutationObserver.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", scheduleCardTemplateScaleSync);
+    window.addEventListener("resize", applyHomeFavoriteCardPerspective);
     document.addEventListener("mousemove", updatePlayerHandHoverOverlay);
     window.addEventListener("blur", clearPlayerHandCardHoverOverlay);
 
@@ -46827,6 +46985,24 @@
     elements.homeDeckButton.addEventListener("click", showDeckScreen);
     elements.homeNavDeckButton.addEventListener("click", showDeckScreen);
     elements.homeProfileButton.addEventListener("click", openPlayerProfile);
+    elements.homeFavoriteCardButton.addEventListener("click", openHomeFavoriteCardPreview);
+    elements.homeFavoriteCardFlipButton.innerHTML = cardStyleCycleIconTemplate();
+    elements.homeFavoriteCardFlipButton.addEventListener("click", toggleHomeFavoriteCardFace);
+    elements.homeFavoriteCardPreviewCloseButton.addEventListener("click", closeHomeFavoriteCardPreview);
+    elements.homeFavoriteCardPreview.addEventListener("click", (event) => {
+      if (event.target === elements.homeFavoriteCardPreview) closeHomeFavoriteCardPreview();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !elements.homeFavoriteCardPreview.classList.contains("hidden")) {
+        closeHomeFavoriteCardPreview();
+      }
+    });
+    elements.homeUtilityProfileButton.addEventListener("click", () => {
+      setHomeUtilityMenuOpen(false);
+      openPlayerProfile();
+    });
+    elements.homeUtilityMenu.addEventListener("click", (event) => event.stopPropagation());
+    document.addEventListener("click", () => setHomeUtilityMenuOpen(false));
     elements.profileCloseButton.addEventListener("click", closePlayerProfile);
     elements.profileCancelButton.addEventListener("click", closePlayerProfile);
     elements.profileForm.addEventListener("submit", submitPlayerProfile);
@@ -46875,10 +47051,16 @@
     elements.onlineRemoteProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().remote));
     elements.homeUpdatesButton.addEventListener("click", showUpdatesScreen);
     elements.updatesBackHomeButton.addEventListener("click", showHomeScreen);
-    elements.homeBattleButton.addEventListener("click", showOnlineScreen);
+    elements.homeBattleButton.addEventListener("click", () => {
+      showOnlineScreen();
+      onlineRandomMatch();
+    });
     elements.homeNavHomeButton.addEventListener("click", showHomeScreen);
     elements.homeNavBattleButton.addEventListener("click", showOnlineScreen);
-    elements.homeSoloButton.addEventListener("click", showSoloMenu);
+    elements.homeSoloButton.addEventListener("click", () => {
+      setHomeUtilityMenuOpen(false);
+      showSoloMenu();
+    });
     elements.homeNavSoloButton.addEventListener("click", showSoloMenu);
     elements.soloMenuBackHomeButton.addEventListener("click", showHomeScreen);
     elements.soloTrainingButton.addEventListener("click", startSoloBattleFromHome);
@@ -46949,7 +47131,10 @@
       event.preventDefault();
       startTrainingReplaySeries(elements.soloTrainingReplayCount.value, elements.soloTrainingReplaySkip.checked);
     });
-    elements.homeTutorialButton.addEventListener("click", startTutorialBattle);
+    elements.homeTutorialButton.addEventListener("click", () => {
+      setHomeUtilityMenuOpen(false);
+      startTutorialBattle();
+    });
     elements.tutorialBackHomeButton.addEventListener("click", showHomeScreen);
     elements.tutorialStartButton.addEventListener("click", startTutorialBattle);
     elements.tutorialBackStepButton.addEventListener("click", goBackTutorialStep);

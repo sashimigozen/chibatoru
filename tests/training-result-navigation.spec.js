@@ -187,9 +187,9 @@ test("BATTLEボタンから準備完了時の「開始」表示を削除する",
     api.startSoloBattleFromHome();
   });
   await expect(page.locator(".training-avatar-note")).toHaveCount(0);
-  await expect(page.locator(".training-avatar")).toHaveCount(2);
-  await expect(page.locator(".training-avatar[aria-label]")).toHaveCount(0);
-  const verticalPanelGaps = await page.locator(".training-player-panel").evaluateAll((panels) => panels.map((panel) => {
+  await expect(page.locator("#soloDeckScreen .training-avatar")).toHaveCount(2);
+  await expect(page.locator("#soloDeckScreen .training-avatar[aria-label]")).toHaveCount(0);
+  const verticalPanelGaps = await page.locator("#soloDeckScreen .training-player-panel").evaluateAll((panels) => panels.map((panel) => {
     const panelRect = panel.getBoundingClientRect();
     const heading = panel.querySelector(".training-player-heading").getBoundingClientRect();
     const avatar = panel.querySelector(".training-avatar").getBoundingClientRect();
