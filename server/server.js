@@ -24,11 +24,13 @@ const PLAYER_PROFILE_USERNAME_MAX = 20;
 const PLAYER_PROFILE_AVATAR_IDS = new Set([
   "user", "cpu", "smile", "glasses", "cap", "hair", "robot_round", "robot_antenna"
 ]);
+const DEFAULT_PLAYER_PROFILE_COMMENT_PARTS = Object.freeze(["対戦よろしく", "お願いします", "エンジョイ"]);
 const DEFAULT_PLAYER_PROFILE = Object.freeze({
   username: "チバトル学生",
   avatarId: "user",
   favoriteCardId: "",
-  favoriteCardStyle: "normal"
+  favoriteCardStyle: "normal",
+  commentParts: DEFAULT_PLAYER_PROFILE_COMMENT_PARTS
 });
 
 // Keep this server-side catalog in sync with the browser's direct-deck catalog.
@@ -1036,7 +1038,12 @@ function normalizePlayerProfile(profile, previous = null) {
     : requestedFavoriteCardStyle === "prism" && favoriteCardId !== "king_ghidorah_bed"
       ? "reward"
       : requestedFavoriteCardStyle;
-  return { username, avatarId, favoriteCardId, favoriteCardStyle };
+  const commentSource = Array.isArray(source.commentParts) ? source.commentParts : [];
+  const commentParts = DEFAULT_PLAYER_PROFILE_COMMENT_PARTS.map((fallbackComment, index) => {
+    const comment = typeof commentSource[index] === "string" ? commentSource[index].trim().slice(0, 32) : "";
+    return comment || fallbackComment;
+  });
+  return { username, avatarId, favoriteCardId, favoriteCardStyle, commentParts };
 }
 
 function playerPublicState(player, room = null) {

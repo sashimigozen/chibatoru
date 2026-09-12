@@ -19,6 +19,7 @@ test("未設定時は既定プロフィールを表示し、8種類の既存系�
   await expect(page.locator("#profileModal")).toBeVisible();
   await expect(page.locator("#profileAvatarGrid [data-profile-avatar]")).toHaveCount(8);
   await expect(page.locator("#profileAvatarGrid [aria-pressed=true]")).toHaveCount(1);
+  await expect(page.locator("#profileCommentPreview")).toHaveText("対戦よろしく　お願いします　エンジョイ");
 });
 
 test("ユーザー名を検証・整形して安全に保存し、再読み込み後も維持する", async ({ page }) => {
@@ -38,11 +39,34 @@ test("ユーザー名を検証・整形して安全に保存し、再読み込�
     username: "<b>チバ</b>",
     avatarId: "glasses",
     favoriteCardId: "",
-    favoriteCardStyle: "normal"
+    favoriteCardStyle: "normal",
+    commentParts: ["対戦よろしく", "お願いします", "エンジョイ"]
   });
   await page.reload();
   await expect(page.locator("#homeProfileName")).toHaveText("<b>チバ</b>");
   await expect(page.locator("#homeProfileAvatar")).toHaveClass(/avatar-glasses/);
+});
+
+test("3枠で共通の300ワードを検索し、重複を含むコメントを保存できる", async ({ page }) => {
+  await page.locator("#homeProfileButton").click();
+  const slots = page.locator("#profileCommentSlots [data-profile-comment-slot]");
+  await expect(slots).toHaveCount(3);
+
+  for (let slot = 0; slot < 3; slot += 1) {
+    await slots.nth(slot).click();
+    await expect(page.locator("#profileCommentPickerModal")).toBeVisible();
+    if (slot === 0) await expect(page.locator("#profileCommentWordGrid .profile-word-option")).toHaveCount(300);
+    await page.locator("#profileCommentSearchInput").fill("デス");
+    await page.locator("#profileCommentWordGrid .profile-word-option", { hasText: /^デス$/ }).click();
+  }
+
+  await expect(page.locator("#profileCommentPreview")).toHaveText("デス　デス　デス");
+  await page.locator("#profileForm button[type=submit]").click();
+  await expect.poll(() => page.evaluate((key) => JSON.parse(localStorage.getItem(key)).commentParts, storageKey))
+    .toEqual(["デス", "デス", "デス"]);
+  await page.reload();
+  await page.locator("#homeProfileButton").click();
+  await expect(page.locator("#profileCommentPreview")).toHaveText("デス　デス　デス");
 });
 
 test("既存カード検索と描画を使って好きなカードを保存する", async ({ page }) => {
@@ -144,10 +168,13 @@ test("壊れた保存値や存在しないカードIDは既定値へ正規化し
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({
     username: "   ",
     avatarId: "unknown-avatar",
-    favoriteCardId: "missing-card"
+    favoriteCardId: "missing-card",
+    commentParts: ["U太", "存在しない", null, "余分"]
   })), storageKey);
   await page.reload();
   await expect(page.locator("#homeProfileName")).toHaveText("チバトル学生");
   await expect(page.locator("#homeProfileAvatar")).toHaveClass(/user/);
   await expect(page.locator("#homeProfileFavorite")).toContainText("未設定");
+  await page.locator("#homeProfileButton").click();
+  await expect(page.locator("#profileCommentPreview")).toHaveText("U太　お願いします　エンジョイ");
 });

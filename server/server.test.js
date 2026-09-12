@@ -243,7 +243,13 @@ test("random match pairs waiting clients into one room", async (t) => {
   });
 
   const first = await connectRandomClient(url, "random-a", {
-    profile: { username: "  左プレイヤー  ", avatarId: "glasses", favoriteCardId: "vampire", favoriteCardStyle: "reward" }
+    profile: {
+      username: "  左プレイヤー  ",
+      avatarId: "glasses",
+      favoriteCardId: "vampire",
+      favoriteCardStyle: "reward",
+      commentParts: ["U太", "最強", "だぞ"]
+    }
   });
   clients.push(first);
   const firstJoin = first.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-a");
@@ -255,11 +261,12 @@ test("random match pairs waiting clients into one room", async (t) => {
     username: "左プレイヤー",
     avatarId: "glasses",
     favoriteCardId: "vampire",
-    favoriteCardStyle: "reward"
+    favoriteCardStyle: "reward",
+    commentParts: ["U太", "最強", "だぞ"]
   });
 
   const second = await connectRandomClient(url, "random-b", {
-    profile: { username: "   ", avatarId: "unknown", favoriteCardId: "bad id" }
+    profile: { username: "   ", avatarId: "unknown", favoriteCardId: "bad id", commentParts: ["", "お願いします", null] }
   });
   clients.push(second);
   const secondJoin = second.messages.find((message) => message.type === "playerJoined" && message.you?.clientId === "random-b");
@@ -271,7 +278,8 @@ test("random match pairs waiting clients into one room", async (t) => {
     username: "チバトル学生",
     avatarId: "user",
     favoriteCardId: "",
-    favoriteCardStyle: "normal"
+    favoriteCardStyle: "normal",
+    commentParts: ["対戦よろしく", "お願いします", "エンジョイ"]
   });
   assert.equal(
     secondJoin.players.find((player) => player.clientId === "random-a")?.profile?.username,
@@ -285,7 +293,13 @@ test("random match pairs waiting clients into one room", async (t) => {
   assert.equal(hostUpdate.message.matchType, "random");
   assert.deepEqual(
     hostUpdate.message.players.find((player) => player.clientId === "random-b")?.profile,
-    { username: "チバトル学生", avatarId: "user", favoriteCardId: "", favoriteCardStyle: "normal" }
+    {
+      username: "チバトル学生",
+      avatarId: "user",
+      favoriteCardId: "",
+      favoriteCardStyle: "normal",
+      commentParts: ["対戦よろしく", "お願いします", "エンジョイ"]
+    }
   );
 });
 

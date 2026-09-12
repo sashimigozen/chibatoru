@@ -43,8 +43,8 @@ async function profilePage(browser, profile) {
 }
 
 test("ランダムマッチで双方のプロフィール名とアイコンを相手にも表示する", async ({ browser }) => {
-  const leftProfile = { username: "左プレイヤー", avatarId: "glasses", favoriteCardId: "yocchan", favoriteCardStyle: "normal" };
-  const rightProfile = { username: "右プレイヤー", avatarId: "robot_antenna", favoriteCardId: "king_ghidorah_bed", favoriteCardStyle: "prism" };
+  const leftProfile = { username: "左プレイヤー", avatarId: "glasses", favoriteCardId: "yocchan", favoriteCardStyle: "normal", commentParts: ["U太", "最強", "だぞ"] };
+  const rightProfile = { username: "右プレイヤー", avatarId: "robot_antenna", favoriteCardId: "king_ghidorah_bed", favoriteCardStyle: "prism", commentParts: ["カニ", "しか勝たん", "で草"] };
   const left = await profilePage(browser, leftProfile);
   const right = await profilePage(browser, rightProfile);
 
@@ -93,6 +93,7 @@ test("ランダムマッチで双方のプロフィール名とアイコンを�
     await left.page.locator("#onlineRandomRemoteAvatar").click();
     await expect(left.page.locator("#profileViewerModal")).toBeVisible();
     await expect(left.page.locator("#profileViewerName")).toHaveText("右プレイヤー");
+    await expect(left.page.locator("#profileViewerComment")).toHaveText("カニ　しか勝たん　で草");
     await expect(left.page.locator("#profileViewerFavoriteName")).toHaveText("キングギドラベッド");
     await expect(left.page.locator("#profileViewerFavoriteCard .card")).toHaveClass(/reward-prism/);
     await expect(left.page.locator("#profileViewerAvatar")).toHaveClass(/avatar-robot-antenna/);
@@ -120,12 +121,14 @@ test("プライベートマッチでも双方のプロフィール名とアイ�
   const host = await profilePage(browser, {
     username: "部屋主",
     avatarId: "cap",
-    favoriteCardId: "general_teacher"
+    favoriteCardId: "general_teacher",
+    commentParts: ["講義室", "守る", "ます"]
   });
   const guest = await profilePage(browser, {
     username: "参加者",
     avatarId: "smile",
-    favoriteCardId: "general_student"
+    favoriteCardId: "general_student",
+    commentParts: ["学生", "出す", "だよ"]
   });
 
   try {
@@ -151,10 +154,12 @@ test("プライベートマッチでも双方のプロフィール名とアイ�
 
     await guest.page.locator("#onlineLocalProfileButton").click();
     await expect(guest.page.locator("#profileViewerName")).toHaveText("参加者");
+    await expect(guest.page.locator("#profileViewerComment")).toHaveText("学生　出す　だよ");
     await expect(guest.page.locator("#profileViewerFavoriteName")).toHaveText("一般学生");
     await guest.page.locator("#profileViewerCloseButton").click();
     await guest.page.locator("#onlineRemoteProfileButton").click();
     await expect(guest.page.locator("#profileViewerName")).toHaveText("部屋主");
+    await expect(guest.page.locator("#profileViewerComment")).toHaveText("講義室　守る　ます");
     await expect(guest.page.locator("#profileViewerFavoriteName")).toHaveText("一般教師");
   } finally {
     await host.context.close();
