@@ -12,19 +12,42 @@
   right: 0;
   bottom: var(--home-desk-nav-height);
   left: 0;
-  display: block;
+  display: flex;
   width: 100vw;
-  height: calc(100dvh - var(--home-desk-nav-height));
-  min-height: 620px;
+  height: auto;
+  min-width: 0;
+  min-height: 0;
+  align-items: flex-end;
+  justify-content: center;
   margin: 0;
   padding: 0 !important;
   overflow: hidden;
   background-color: #d9d4ca;
+  isolation: isolate;
+}
+
+.home-desk-stage-frame {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1670px;
+  height: 942px;
+  overflow: hidden;
+}
+
+.home-desk-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1670px;
+  height: 942px;
+  overflow: hidden;
   background-image: url("assets/home/home-ui-preview-desk-clean.png");
   background-position: center center;
   background-repeat: no-repeat;
-  background-size: contain;
+  background-size: 100% 100%;
   isolation: isolate;
+  transform: scale(var(--home-desk-scale, 1));
+  transform-origin: top left;
 }
 
 .home-desk-screen button {
@@ -616,6 +639,127 @@
   .app.home-navigation-visible > .home-desk-screen:not(.hidden) {
     min-width: 960px;
   }
+}
+
+/* The desk, its controls, and the home bar share one 1670 × 1026 design canvas.
+   JavaScript scales that canvas as a unit so viewport changes cannot separate
+   interactive hit areas from the objects painted into the background. */
+.app.home-navigation-visible > .home-desk-screen:not(.hidden) {
+  min-width: 0;
+}
+
+.home-desk-stage .home-profile-button.home-student-card {
+  top: 30px;
+  left: 38px;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 16px;
+  width: 390px;
+  min-height: 132px;
+  border-left-width: 10px;
+  padding: 20px;
+}
+
+.home-desk-stage .home-student-card .avatar-scale-frame {
+  width: 76px;
+  height: 76px;
+}
+
+.home-desk-stage .home-student-card .home-profile-kicker {
+  font-size: 11px;
+}
+
+.home-desk-stage .home-student-card .home-profile-name {
+  font-size: 25px;
+}
+
+.home-desk-stage .home-profile-comment {
+  font-size: 14px;
+}
+
+.home-desk-stage .home-comment-sticky {
+  top: 12.5%;
+  left: 67.5%;
+  width: 212px;
+  padding: 24px;
+  font-size: 17px;
+}
+
+.home-desk-stage .home-favorite-card-object {
+  width: 335px;
+}
+
+.home-desk-stage .home-favorite-card-hitarea > .home-favorite-card-label {
+  top: calc(100% + 14px);
+  padding: 8px 16px;
+  font-size: 18px;
+}
+
+.home-desk-stage .home-favorite-card-turn-button.card-style-cycle-button {
+  right: -12px;
+  width: 34px;
+  height: 34px;
+}
+
+.home-desk-stage #homeDeckButton.home-deck-panel {
+  width: 26.2%;
+}
+
+.home-desk-stage .home-deck-name {
+  padding: 8px 20px;
+  font-size: 20px;
+}
+
+.home-desk-stage #homeBattleButton.home-random-match-button {
+  right: 154px;
+  bottom: 202px;
+  grid-template-columns: 62px minmax(0, 1fr);
+  gap: 16px;
+  width: 420px;
+  min-height: 108px;
+  padding: 21px;
+}
+
+.home-desk-stage .home-random-match-copy strong {
+  font-size: 30px;
+}
+
+.home-desk-stage .home-random-match-copy span {
+  font-size: 13px;
+}
+
+.home-desk-stage .home-utility-buttons {
+  top: 28px;
+  right: 30px;
+  gap: 12px;
+}
+
+.home-desk-stage .home-utility-button,
+.home-desk-stage .home-news-button.home-utility-button {
+  width: 58px;
+}
+
+.home-desk-stage .home-utility-menu {
+  top: 28px;
+  right: 102px;
+  width: 240px;
+}
+
+.home-navigation.home-desk-aligned {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.home-navigation.home-desk-aligned .home-nav-item {
+  flex-direction: row;
+  gap: calc(7px * var(--home-desk-scale, 1));
+  padding: calc(7px * var(--home-desk-scale, 1)) calc(10px * var(--home-desk-scale, 1));
+  font-size: calc(18px * var(--home-desk-scale, 1));
+}
+
+.home-navigation.home-desk-aligned .home-nav-item img {
+  width: calc(38px * var(--home-desk-scale, 1));
+  height: calc(38px * var(--home-desk-scale, 1));
 }
 
 @media (prefers-reduced-motion: reduce) {

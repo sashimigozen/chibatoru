@@ -58,3 +58,65 @@ test("デッキケースからカード画面を開き、ランダムマッチ�
   await expect(page.locator("#onlineRandomSetupPanel")).toBeVisible();
   await expect(page.locator("#onlineRandomMainText")).toContainText(/マッチング中|マッチしました/);
 });
+
+test("ホームの背景・操作オブジェクト・ホームバーは画面サイズが変わっても同じ座標で追従する", async ({ page }) => {
+  const viewports = [
+    { width: 1670, height: 1026 },
+    { width: 1122, height: 706 },
+    { width: 900, height: 900 },
+    { width: 1600, height: 700 }
+  ];
+  const objectIds = [
+    "homeProfileButton",
+    "homeCommentSticky",
+    "homeFavoriteCardObject",
+    "homeDeckButton",
+    "homeBattleButton",
+    "homeUtilityMenuButton"
+  ];
+  let baseline = null;
+
+  for (const viewport of viewports) {
+    await page.setViewportSize(viewport);
+    await page.reload();
+    const metrics = await page.evaluate((ids) => {
+      const bounds = (id) => {
+        const rect = document.getElementById(id).getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      };
+      const frame = bounds("homeDeskStageFrame");
+      const navigation = bounds("homeNavigation");
+      const normalize = (rect) => ({
+        x: (rect.x - frame.x) / frame.width,
+        y: (rect.y - frame.y) / frame.height,
+        width: rect.width / frame.width,
+        height: rect.height / frame.height
+      });
+      return {
+        viewport: { width: innerWidth, height: innerHeight },
+        frame,
+        navigation,
+        objects: Object.fromEntries(ids.map((id) => [id, normalize(bounds(id))]))
+      };
+    }, objectIds);
+
+    expect(metrics.frame.width / metrics.frame.height).toBeCloseTo(1670 / 942, 3);
+    expect(Math.abs(metrics.navigation.x - metrics.frame.x)).toBeLessThan(1.1);
+    expect(Math.abs(metrics.navigation.width - metrics.frame.width)).toBeLessThan(1.1);
+    expect(Math.abs(metrics.navigation.y - (metrics.frame.y + metrics.frame.height))).toBeLessThan(1.1);
+    expect(Math.abs(metrics.navigation.y + metrics.navigation.height - metrics.viewport.height)).toBeLessThan(1.1);
+    expect(metrics.frame.x).toBeGreaterThanOrEqual(-.6);
+    expect(metrics.frame.y).toBeGreaterThanOrEqual(-.6);
+    expect(metrics.frame.x + metrics.frame.width).toBeLessThanOrEqual(metrics.viewport.width + .6);
+
+    if (!baseline) {
+      baseline = metrics.objects;
+      continue;
+    }
+    objectIds.forEach((id) => {
+      ["x", "y", "width", "height"].forEach((property) => {
+        expect(metrics.objects[id][property]).toBeCloseTo(baseline[id][property], 3);
+      });
+    });
+  }
+});

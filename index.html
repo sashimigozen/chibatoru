@@ -16869,7 +16869,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
-  <link rel="stylesheet" href="home-ui.css?v=1" />
+  <link rel="stylesheet" href="home-ui.css?v=0.23.6" />
   <link rel="stylesheet" href="card-back.css?v=1" />
 </head>
 <body>
@@ -16882,6 +16882,8 @@
   </div>
   <main class="app" id="appRoot">
     <section class="screen home-screen home-desk-screen" id="homeScreen">
+      <div class="home-desk-stage-frame" id="homeDeskStageFrame">
+        <div class="home-desk-stage" id="homeDeskStage">
       <button class="home-profile-button home-student-card" id="homeProfileButton" type="button" aria-label="プロフィールを設定">
         <span class="avatar-scale-frame" aria-hidden="true">
           <span class="profile-avatar user" id="homeProfileAvatar"><span></span></span>
@@ -16946,6 +16948,8 @@
         <button id="homeSoloButton" type="button">ソロプレイ</button>
         <button id="homeTutorialButton" type="button">チュートリアル</button>
         <button id="homeUtilityProfileButton" type="button">プロフィール設定</button>
+      </div>
+        </div>
       </div>
     </section>
 
@@ -19091,6 +19095,18 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.6",
+        date: "2026年9月13日",
+        summary: "ホーム画面の背景、各ボタン、下部ホームバーが、画面サイズを変えても同じ位置関係を保つようにしました。",
+        changes: [
+          {
+            title: "ホーム画面の画面サイズ対応",
+            before: "背景と各ボタン、下部ホームバーが別々の基準で拡縮されるため、画面サイズによって背景上の位置がずれることがあった。",
+            after: "背景と各ボタンを同じ基準画面としてまとめて拡縮し、下部ホームバーも同じ横幅と倍率で追従する。"
+          }
+        ]
+      },
+      {
         version: "ver.0.23.5",
         date: "2026年9月13日",
         summary: "ホーム画面の好きなカードは、表向きのときだけ拡大表示できるようにしました。",
@@ -20522,6 +20538,8 @@
       appRoot: document.getElementById("appRoot"),
       dungeonInteriorBackdrop: document.getElementById("dungeonInteriorBackdrop"),
       homeScreen: document.getElementById("homeScreen"),
+      homeDeskStageFrame: document.getElementById("homeDeskStageFrame"),
+      homeDeskStage: document.getElementById("homeDeskStage"),
       homeNavigation: document.getElementById("homeNavigation"),
       homeNavHomeButton: document.getElementById("homeNavHomeButton"),
       homeNavDeckButton: document.getElementById("homeNavDeckButton"),
@@ -39292,6 +39310,50 @@
       return "home";
     }
 
+    const HOME_DESK_DESIGN_WIDTH = 1670;
+    const HOME_DESK_DESIGN_HEIGHT = 942;
+    const HOME_DESK_DESIGN_NAV_HEIGHT = 84;
+
+    function syncHomeDeskLayout() {
+      const frame = elements.homeDeskStageFrame;
+      const stage = elements.homeDeskStage;
+      const navigation = elements.homeNavigation;
+      if (!frame || !stage || !navigation) return;
+
+      const homeActive = state.screen === "home"
+        && !elements.homeScreen?.classList.contains("hidden")
+        && !navigation.classList.contains("hidden");
+      if (!homeActive) {
+        navigation.classList.remove("home-desk-aligned");
+        navigation.style.removeProperty("width");
+        navigation.style.removeProperty("height");
+        navigation.style.removeProperty("--home-desk-scale");
+        elements.homeScreen?.style.removeProperty("bottom");
+        frame.style.removeProperty("width");
+        frame.style.removeProperty("height");
+        stage.style.removeProperty("--home-desk-scale");
+        return;
+      }
+
+      const scale = Math.max(.1, Math.min(
+        window.innerWidth / HOME_DESK_DESIGN_WIDTH,
+        window.innerHeight / (HOME_DESK_DESIGN_HEIGHT + HOME_DESK_DESIGN_NAV_HEIGHT)
+      ));
+      const stageWidth = HOME_DESK_DESIGN_WIDTH * scale;
+      const stageHeight = HOME_DESK_DESIGN_HEIGHT * scale;
+      const navigationHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
+
+      frame.style.width = `${stageWidth}px`;
+      frame.style.height = `${stageHeight}px`;
+      stage.style.setProperty("--home-desk-scale", String(scale));
+      elements.homeScreen.style.bottom = `${navigationHeight}px`;
+
+      navigation.classList.add("home-desk-aligned");
+      navigation.style.width = `${stageWidth}px`;
+      navigation.style.height = `${navigationHeight}px`;
+      navigation.style.setProperty("--home-desk-scale", String(scale));
+    }
+
     function renderHomeNavigation() {
       if (!elements.homeNavigation) return;
       const hidden = ["battle", "fourBattle"].includes(state.screen)
@@ -39310,6 +39372,7 @@
         if (active) button.setAttribute("aria-current", "page");
         else button.removeAttribute("aria-current");
       });
+      syncHomeDeskLayout();
     }
 
     function renderTutorial() {
@@ -46996,6 +47059,7 @@
     const cardTemplateMutationObserver = new MutationObserver(() => scheduleCardTemplateScaleSync());
     cardTemplateMutationObserver.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", scheduleCardTemplateScaleSync);
+    window.addEventListener("resize", syncHomeDeskLayout);
     window.addEventListener("resize", applyHomeFavoriteCardPerspective);
     document.addEventListener("mousemove", updatePlayerHandHoverOverlay);
     window.addEventListener("blur", clearPlayerHandCardHoverOverlay);
