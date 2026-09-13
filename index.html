@@ -16869,7 +16869,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
-  <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
+  <link rel="stylesheet" href="home-ui.css?v=0.23.9" />
   <link rel="stylesheet" href="card-back.css?v=1" />
 </head>
 <body>
@@ -19094,6 +19094,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.9",
+        date: "2026年9月13日",
+        summary: "ホームバーを背景画像のすぐ下へ配置しました。",
+        changes: [
+          {
+            title: "ホームバーの配置",
+            before: "背景画像とホームバーの間にできる余白を、ホームバーと同じ色の追加領域で覆っていた。",
+            after: "ホームバー自体を背景画像の下端へ移動し、背景画像の直後からホームバーが始まる。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.8",
         date: "2026年9月13日",
@@ -39349,10 +39361,11 @@
         && !navigation.classList.contains("hidden");
       if (!homeActive) {
         navigation.classList.remove("home-desk-aligned");
+        navigation.style.removeProperty("top");
         navigation.style.removeProperty("width");
         navigation.style.removeProperty("height");
         navigation.style.removeProperty("--home-desk-scale");
-        navigation.style.removeProperty("--home-desk-fill-height");
+        navigation.style.removeProperty("--home-desk-nav-item-height");
         elements.homeScreen?.style.removeProperty("bottom");
         frame.style.removeProperty("width");
         frame.style.removeProperty("height");
@@ -39366,8 +39379,8 @@
       ));
       const stageWidth = HOME_DESK_DESIGN_WIDTH * scale;
       const stageHeight = HOME_DESK_DESIGN_HEIGHT * scale;
-      const navigationHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
-      const fillHeight = Math.max(0, window.innerHeight - stageHeight - navigationHeight);
+      const navigationItemHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
+      const navigationHeight = Math.max(navigationItemHeight, window.innerHeight - stageHeight);
 
       frame.style.width = `${stageWidth}px`;
       frame.style.height = `${stageHeight}px`;
@@ -39375,10 +39388,11 @@
       elements.homeScreen.style.bottom = `${navigationHeight}px`;
 
       navigation.classList.add("home-desk-aligned");
+      navigation.style.top = `${stageHeight}px`;
       navigation.style.width = `${stageWidth}px`;
       navigation.style.height = `${navigationHeight}px`;
       navigation.style.setProperty("--home-desk-scale", String(scale));
-      navigation.style.setProperty("--home-desk-fill-height", `${fillHeight}px`);
+      navigation.style.setProperty("--home-desk-nav-item-height", `${navigationItemHeight}px`);
     }
 
     function renderHomeNavigation() {

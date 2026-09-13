@@ -746,24 +746,17 @@
 
 .home-navigation.home-desk-aligned {
   right: auto;
+  bottom: auto;
   left: 50%;
+  align-items: start;
   transform: translateX(-50%);
-}
-
-.home-navigation.home-desk-aligned::before {
-  position: absolute;
-  right: 0;
-  bottom: 100%;
-  left: 0;
-  height: var(--home-desk-fill-height, 0px);
-  background: #0d1720;
-  content: "";
-  pointer-events: none;
 }
 
 .home-navigation.home-desk-aligned .home-nav-item {
   flex-direction: row;
   gap: calc(7px * var(--home-desk-scale, 1));
+  height: var(--home-desk-nav-item-height, auto);
+  align-self: start;
   padding: calc(7px * var(--home-desk-scale, 1)) calc(10px * var(--home-desk-scale, 1));
   font-size: calc(18px * var(--home-desk-scale, 1));
 }
