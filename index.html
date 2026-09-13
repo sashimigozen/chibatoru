@@ -16869,7 +16869,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
-  <link rel="stylesheet" href="home-ui.css?v=0.23.7" />
+  <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=1" />
 </head>
 <body>
@@ -19094,6 +19094,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.8",
+        date: "2026年9月13日",
+        summary: "ホーム画面の背景下に余白ができる場合、ホームバーと同じ色で覆うようにしました。",
+        changes: [
+          {
+            title: "ホーム画面下部の余白",
+            before: "画面の縦横比によっては、背景画像の下端とホームバーの間に背景画像ではない部分が見えた。",
+            after: "ホームバーを上方向へ延長した見た目にして余白を覆い、ホームバー内のアイコンと文字の位置は維持する。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.7",
         date: "2026年9月13日",
@@ -39340,6 +39352,7 @@
         navigation.style.removeProperty("width");
         navigation.style.removeProperty("height");
         navigation.style.removeProperty("--home-desk-scale");
+        navigation.style.removeProperty("--home-desk-fill-height");
         elements.homeScreen?.style.removeProperty("bottom");
         frame.style.removeProperty("width");
         frame.style.removeProperty("height");
@@ -39354,6 +39367,7 @@
       const stageWidth = HOME_DESK_DESIGN_WIDTH * scale;
       const stageHeight = HOME_DESK_DESIGN_HEIGHT * scale;
       const navigationHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
+      const fillHeight = Math.max(0, window.innerHeight - stageHeight - navigationHeight);
 
       frame.style.width = `${stageWidth}px`;
       frame.style.height = `${stageHeight}px`;
@@ -39364,6 +39378,7 @@
       navigation.style.width = `${stageWidth}px`;
       navigation.style.height = `${navigationHeight}px`;
       navigation.style.setProperty("--home-desk-scale", String(scale));
+      navigation.style.setProperty("--home-desk-fill-height", `${fillHeight}px`);
     }
 
     function renderHomeNavigation() {

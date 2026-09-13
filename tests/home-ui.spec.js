@@ -86,6 +86,10 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
       };
       const frame = bounds("homeDeskStageFrame");
       const navigation = bounds("homeNavigation");
+      const navigationFillHeight = Number.parseFloat(getComputedStyle(
+        document.getElementById("homeNavigation"),
+        "::before"
+      ).height) || 0;
       const normalize = (rect) => ({
         x: (rect.x - frame.x) / frame.width,
         y: (rect.y - frame.y) / frame.height,
@@ -96,6 +100,7 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
         viewport: { width: innerWidth, height: innerHeight },
         frame,
         navigation,
+        navigationFillHeight,
         objects: Object.fromEntries(ids.map((id) => [id, normalize(bounds(id))]))
       };
     }, objectIds);
@@ -104,6 +109,7 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
     expect(Math.abs(metrics.navigation.x - metrics.frame.x)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.width - metrics.frame.width)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.y + metrics.navigation.height - metrics.viewport.height)).toBeLessThan(1.1);
+    expect(Math.abs(metrics.navigationFillHeight - (metrics.navigation.y - (metrics.frame.y + metrics.frame.height)))).toBeLessThan(1.1);
     expect(metrics.frame.x).toBeGreaterThanOrEqual(-.6);
     expect(Math.abs(metrics.frame.y)).toBeLessThan(1.1);
     expect(metrics.frame.x + metrics.frame.width).toBeLessThanOrEqual(metrics.viewport.width + .6);
