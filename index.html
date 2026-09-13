@@ -16869,7 +16869,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
-  <link rel="stylesheet" href="home-ui.css?v=0.23.10" />
+  <link rel="stylesheet" href="home-ui.css?v=0.23.11" />
   <link rel="stylesheet" href="card-back.css?v=1" />
 </head>
 <body>
@@ -19094,6 +19094,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.11",
+        date: "2026年9月13日",
+        summary: "ホームバーが表示される全画面で、位置と大きさを統一しました。",
+        changes: [
+          {
+            title: "ホームバーの共通配置",
+            before: "ホーム画面とカード・バトル・ソロなどの画面で、ホームバーの位置や横幅が切り替わっていた。",
+            after: "ホームバーがある全画面で、同じ上端位置・横幅・ボタン高さを維持する。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.10",
         date: "2026年9月13日",
@@ -39373,10 +39385,11 @@
       const navigation = elements.homeNavigation;
       if (!frame || !stage || !navigation) return;
 
+      const navigationVisible = !navigation.classList.contains("hidden");
       const homeActive = state.screen === "home"
         && !elements.homeScreen?.classList.contains("hidden")
-        && !navigation.classList.contains("hidden");
-      if (!homeActive) {
+        && navigationVisible;
+      if (!navigationVisible) {
         navigation.classList.remove("home-desk-aligned");
         navigation.style.removeProperty("top");
         navigation.style.removeProperty("width");
@@ -39399,17 +39412,25 @@
       const navigationItemHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
       const navigationHeight = Math.max(navigationItemHeight, window.innerHeight - stageHeight);
 
-      frame.style.width = `${stageWidth}px`;
-      frame.style.height = `${stageHeight}px`;
-      stage.style.setProperty("--home-desk-scale", String(scale));
-      elements.homeScreen.style.bottom = `${navigationHeight}px`;
-
       navigation.classList.add("home-desk-aligned");
       navigation.style.top = `${stageHeight}px`;
       navigation.style.width = `${stageWidth}px`;
       navigation.style.height = `${navigationHeight}px`;
       navigation.style.setProperty("--home-desk-scale", String(scale));
       navigation.style.setProperty("--home-desk-nav-item-height", `${navigationItemHeight}px`);
+
+      if (!homeActive) {
+        elements.homeScreen?.style.removeProperty("bottom");
+        frame.style.removeProperty("width");
+        frame.style.removeProperty("height");
+        stage.style.removeProperty("--home-desk-scale");
+        return;
+      }
+
+      frame.style.width = `${stageWidth}px`;
+      frame.style.height = `${stageHeight}px`;
+      stage.style.setProperty("--home-desk-scale", String(scale));
+      elements.homeScreen.style.bottom = `${navigationHeight}px`;
     }
 
     function renderHomeNavigation() {

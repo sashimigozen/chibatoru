@@ -52,17 +52,38 @@ test("ホームの好きなカードをめくり、表だけでカード名と�
 });
 
 test("デッキケースからカード画面を開き、ランダムマッチは検索画面へ直接進む", async ({ page }) => {
+  const navigationMetrics = () => page.locator("#homeNavigation").evaluate((navigation) => {
+    const navigationRect = navigation.getBoundingClientRect();
+    const itemRect = navigation.querySelector(".home-nav-item").getBoundingClientRect();
+    return {
+      x: navigationRect.x,
+      y: navigationRect.y,
+      width: navigationRect.width,
+      itemY: itemRect.y,
+      itemHeight: itemRect.height
+    };
+  });
+  const homeNavigation = await navigationMetrics();
+  const expectSameNavigationPosition = async () => {
+    const current = await navigationMetrics();
+    Object.keys(homeNavigation).forEach((property) => {
+      expect(current[property]).toBeCloseTo(homeNavigation[property], 3);
+    });
+  };
+
   const deckButton = page.locator("#homeDeckButton");
   await deckButton.hover();
   await expect.poll(() => page.locator("#homeDeckName").evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
   await deckButton.click();
   await expect(page.locator("#deckScreen")).toBeVisible();
+  await expectSameNavigationPosition();
 
   await page.locator("#homeNavHomeButton").click();
   await page.locator("#homeBattleButton").click();
   await expect(page.locator("#onlineScreen")).toBeVisible();
   await expect(page.locator("#onlineRandomSetupPanel")).toBeVisible();
   await expect(page.locator("#onlineRandomMainText")).toContainText(/マッチング中|マッチしました/);
+  await expectSameNavigationPosition();
 });
 
 test("ホームの背景・操作オブジェクト・ホームバーは画面サイズが変わっても同じ座標で追従する", async ({ page }) => {

@@ -6,6 +6,10 @@
   --home-desk-paper: #f7f4eb;
 }
 
+body[data-screen="home"] {
+  background: #0d1720;
+}
+
 .app.home-navigation-visible > .home-desk-screen:not(.hidden) {
   position: fixed;
   top: 0;
@@ -749,6 +753,8 @@
   bottom: auto;
   left: 50%;
   align-items: start;
+  background: transparent;
+  pointer-events: none;
   transform: translateX(-50%);
 }
 
@@ -757,6 +763,7 @@
   gap: calc(7px * var(--home-desk-scale, 1));
   height: var(--home-desk-nav-item-height, auto);
   align-self: start;
+  pointer-events: auto;
   padding: calc(7px * var(--home-desk-scale, 1)) calc(10px * var(--home-desk-scale, 1));
   font-size: calc(18px * var(--home-desk-scale, 1));
 }
