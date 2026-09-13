@@ -19095,14 +19095,39 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
-        version: "ver.0.23.11",
+        version: "ver.0.23.12",
         date: "2026年9月13日",
-        summary: "ホームバーが表示される全画面で、位置と大きさを統一しました。",
+        summary: "ホーム画面を机上のカードゲームをイメージしたデザインへ変更しました。プロフィール、好きなカード、カード画面、ランダムマッチへ直接進めます。背景上の操作とホームバーは画面サイズや画面遷移をまたいで位置を維持し、好きなカードと対戦中のカード背面も同じ外形・デザインへ統一しました。",
         changes: [
+          {
+            title: "ホーム画面のデザイン",
+            before: "ホーム画面は文字中心のボタンを並べた構成だった。",
+            after: "机上にプロフィール、好きなカード、デッキケース、ランダムマッチを配置した画面へ変更した。"
+          },
+          {
+            title: "ホーム画面からの移動",
+            before: "ランダムマッチを始めるには、ホーム画面からマルチ画面を経由する必要があった。",
+            after: "ランダムマッチから対戦相手の検索を直接開始する。デッキケースからはカード画面、プロフィールカードからはプロフィール設定を開ける。"
+          },
+          {
+            title: "好きなカードの表示と操作",
+            before: "ホーム画面では好きなカード名のみを表示していた。",
+            after: "中央のカードをめくると、設定した好きなカードを選択中のレアリティで表示する。表面だけ拡大表示でき、表裏は同じ775:932の外形を維持する。"
+          },
+          {
+            title: "ホーム画面の画面サイズ対応",
+            before: "画面サイズによって背景と各操作の位置がずれることがあった。",
+            after: "背景と各操作を同じ基準で拡縮して上端に揃え、ホームバーを背景画像の直下へ配置する。"
+          },
           {
             title: "ホームバーの共通配置",
             before: "ホーム画面とカード・バトル・ソロなどの画面で、ホームバーの位置や横幅が切り替わっていた。",
             after: "ホームバーがある全画面で、同じ上端位置・横幅・ボタン高さを維持する。"
+          },
+          {
+            title: "対戦中のカード背面",
+            before: "相手の手札と山札は、青い斜線を使ったカード背面だった。",
+            after: "ホーム画面の好きなカードと同じ、白い縁・青い装飾・中央の結晶を持つ背面へ変更した。対戦画面内の大きさと縦横比は維持する。"
           }
         ]
       },
@@ -20040,8 +20065,33 @@
       return `${entry.version}:${(hash >>> 0).toString(36)}`;
     }
 
+    function updateHistorySeriesKey(entry) {
+      const version = String(entry?.version || "");
+      const match = version.match(/^ver\.(\d+)\.(\d+)\.\d+$/);
+      return match ? `${entry.date}:${match[1]}.${match[2]}` : `${entry?.date || ""}:${version}`;
+    }
+
+    function consolidateUpdateHistory(entries) {
+      const displayedSeries = new Map();
+      entries.forEach((entry) => {
+        const key = updateHistorySeriesKey(entry);
+        const current = displayedSeries.get(key);
+        if (!current) {
+          displayedSeries.set(key, { ...entry, displayVersion: entry.version });
+          return;
+        }
+        const currentPatch = Number(String(current.displayVersion).match(/\.(\d+)$/)?.[1]);
+        const entryPatch = Number(String(entry.version).match(/\.(\d+)$/)?.[1]);
+        if (Number.isFinite(entryPatch) && (!Number.isFinite(currentPatch) || entryPatch < currentPatch)) {
+          current.displayVersion = entry.version;
+        }
+      });
+      return [...displayedSeries.values()];
+    }
+
     const LATEST_UPDATE_VERSION = UPDATE_HISTORY[0]?.version || "";
     const LATEST_UPDATE_READ_ID = updateReadId(UPDATE_HISTORY[0]);
+    const DISPLAY_UPDATE_HISTORY = consolidateUpdateHistory(UPDATE_HISTORY);
 
     const DECK_FILTER_TYPES = ["student", "teacher", "vampire", "item", "environment"];
 
@@ -43368,7 +43418,7 @@
       if (state.screen !== "updates" || !elements.updateList) return;
       const read = loadReadUpdateVersions();
       elements.updateList.innerHTML = "";
-      UPDATE_HISTORY.forEach((entry) => {
+      DISPLAY_UPDATE_HISTORY.forEach((entry) => {
         const details = document.createElement("details");
         const unread = entry.version === LATEST_UPDATE_VERSION && !read.has(updateReadId(entry));
         details.className = `update-entry${unread ? " unread" : ""}`;
@@ -43379,7 +43429,7 @@
           return `<div class="update-change"><div class="update-after"><strong>${escapeHtml(change.title)}</strong><br>${escapeHtml(change.after)}</div></div>`;
         }).join("");
         details.innerHTML = `
-          <summary><span>${escapeHtml(entry.version)}（${escapeHtml(entry.date)}）</span></summary>
+          <summary><span>${escapeHtml(entry.displayVersion || entry.version)}（${escapeHtml(entry.date)}）</span></summary>
           <div class="update-body"><p>${escapeHtml(entry.summary)}</p>${changes}</div>
         `;
         details.addEventListener("toggle", () => {

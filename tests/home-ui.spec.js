@@ -147,3 +147,10 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
     });
   }
 });
+
+test("同じ日付と同じメジャー・マイナー系統の更新情報は最小バージョンへ統合する", async ({ page }) => {
+  await page.locator("#homeUpdatesButton").click();
+  const sameDaySeries = page.locator("#updateList .update-entry > summary").filter({ hasText: "2026年9月13日" });
+  await expect(sameDaySeries).toHaveCount(1);
+  await expect(sameDaySeries).toContainText("ver.0.23.3");
+});
