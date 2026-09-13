@@ -4,6 +4,31 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
+test("対戦中の非公開カードと山札はホームと共通の背面を使い、既存比率を保つ", async ({ page }) => {
+  await page.goto(gameUrl);
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.screen = "battle";
+    api.state.phase = "battle";
+    api.state.players.opponent.hand = [
+      api.createCardFromBase("general_student", "opponent"),
+      api.createCardFromBase("aggro_student", "opponent")
+    ];
+    api.render();
+    const back = document.querySelector("#opponentHand .card-back");
+    const deck = document.getElementById("opponentDeckPile");
+    const backRect = back.getBoundingClientRect();
+    return {
+      backImage: getComputedStyle(back).backgroundImage,
+      deckImage: getComputedStyle(deck).backgroundImage,
+      backRatio: backRect.width / backRect.height
+    };
+  });
+  expect(result.backImage).toContain("assets/card-back.png");
+  expect(result.deckImage).toContain("assets/card-back.png");
+  expect(result.backRatio).toBeCloseTo(21 / 32, 2);
+});
+
 test("オンライン観戦者には両プレイヤーの手札を表向きで表示する", async ({ page }) => {
   await page.goto(gameUrl);
   const result = await page.evaluate(() => {

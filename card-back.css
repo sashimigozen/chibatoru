@@ -1,0 +1,44 @@
+/* Keep every battle card-back slot at its existing size while sharing the home card-back artwork. */
+.battle-screen .card-back,
+.battle-screen .opponent-hand-zone .opponent-hand .card-back,
+.battle-screen .rps-card.card-back {
+  border: 0 !important;
+  border-color: transparent !important;
+  padding: 0 !important;
+  overflow: hidden;
+  background-color: #183653 !important;
+  background-image: url("assets/card-back.png") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
+
+.battle-screen .card-back::before,
+.battle-screen .card-back::after,
+.battle-screen .opponent-hand-zone .opponent-hand .card-back::before,
+.battle-screen .opponent-hand-zone .opponent-hand .card-back::after {
+  display: none !important;
+}
+
+.battle-screen .deck-pile,
+.battle-screen .opponent-hand-zone .opponent-deck-pile,
+.battle-screen .player-hand-zone .player-deck-pile {
+  border: 0 !important;
+  border-color: transparent !important;
+  overflow: visible;
+  background-color: #183653 !important;
+  background-image: url("assets/card-back.png") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
+
+.battle-screen .deck-pile::before,
+.battle-screen .deck-pile::after {
+  border-color: transparent !important;
+  background-color: #183653 !important;
+  background-image: url("assets/card-back.png") !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 100% 100% !important;
+}
