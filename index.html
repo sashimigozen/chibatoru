@@ -16869,7 +16869,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
-  <link rel="stylesheet" href="home-ui.css?v=0.23.9" />
+  <link rel="stylesheet" href="home-ui.css?v=0.23.10" />
   <link rel="stylesheet" href="card-back.css?v=1" />
 </head>
 <body>
@@ -19094,6 +19094,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.10",
+        date: "2026年9月13日",
+        summary: "ホーム画面で好きなカードをめくいたとき、表面が裏面と同じ外形になるように修正しました。",
+        changes: [
+          {
+            title: "好きなカードの表裏比率",
+            before: "ホーム画面全体の縮小倍率が表面カードへ二重にかかり、裏面より小さく表示された。",
+            after: "表面カードは縮小前の寸法から描画倍率を計算し、裏面の775:932の外形に合わせて表示する。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.9",
         date: "2026年9月13日",
@@ -39293,6 +39305,11 @@
       document.querySelectorAll(".card > .card-scale-stage").forEach((stage) => {
         const shell = stage.parentElement;
         if (!shell || shell.classList.contains("hand-card-hover-overlay")) return;
+        if (shell.classList.contains("home-favorite-card-render")) {
+          const scale = Math.min(shell.offsetWidth / CARD_TEMPLATE_BASE_WIDTH, shell.offsetHeight / CARD_TEMPLATE_BASE_HEIGHT);
+          if (scale > 0) stage.style.setProperty("--card-template-scale", String(scale));
+          return;
+        }
         const bounds = shell.getBoundingClientRect();
         if (bounds.width <= 0 || bounds.height <= 0) return;
         const scale = Math.min(bounds.width / CARD_TEMPLATE_BASE_WIDTH, bounds.height / CARD_TEMPLATE_BASE_HEIGHT);

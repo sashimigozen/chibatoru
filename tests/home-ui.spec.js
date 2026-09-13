@@ -34,6 +34,12 @@ test("ホームの好きなカードをめくり、表だけでカード名と�
   await page.locator("#homeFavoriteCardFlipButton").click();
   await expect(cardButton).toHaveClass(/is-flipped/);
   await expect(cardButton).toHaveAttribute("aria-disabled", "false");
+  await expect.poll(() => page.locator("#homeFavoriteCardFront .card-scale-stage").evaluate((stage) => {
+    const shell = stage.parentElement;
+    const actual = Number.parseFloat(getComputedStyle(stage).getPropertyValue("--card-template-scale"));
+    const expected = Math.min(shell.offsetWidth / 420, shell.offsetHeight / 640);
+    return Math.abs(actual - expected);
+  })).toBeLessThan(.001);
   await cardButton.hover();
   await expect.poll(() => cardLabel.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
   await expect(cardLabel).toHaveText("アグロキング");
