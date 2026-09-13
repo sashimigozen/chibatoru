@@ -27,9 +27,13 @@ test("ホームの好きなカードをめくり、表だけでカード名と�
 
   await cardButton.hover();
   await expect.poll(() => cardLabel.evaluate((element) => getComputedStyle(element).opacity)).toBe("0");
+  await expect(cardButton).toHaveAttribute("aria-disabled", "true");
+  await cardButton.dispatchEvent("click");
+  await expect(page.locator("#homeFavoriteCardPreview")).toBeHidden();
 
   await page.locator("#homeFavoriteCardFlipButton").click();
   await expect(cardButton).toHaveClass(/is-flipped/);
+  await expect(cardButton).toHaveAttribute("aria-disabled", "false");
   await cardButton.hover();
   await expect.poll(() => cardLabel.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
   await expect(cardLabel).toHaveText("アグロキング");

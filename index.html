@@ -16900,7 +16900,7 @@
       </div>
 
       <div class="home-favorite-card-object" id="homeFavoriteCardObject">
-        <button class="home-favorite-card-hitarea home-scene-object" id="homeFavoriteCardButton" type="button" aria-label="好きなカードを表示" data-home-object="favorite-card">
+        <button class="home-favorite-card-hitarea home-scene-object" id="homeFavoriteCardButton" type="button" aria-label="好きなカードを表示" aria-disabled="true" data-home-object="favorite-card">
           <span class="home-favorite-card-flip-stage" id="homeFavoriteCardScene">
             <span class="home-favorite-card-face home-favorite-card-back">
               <img class="home-scene-object-image" id="homeFavoriteCardImage" src="assets/home/home-ui-favorite-card.png" alt="" draggable="false" />
@@ -19090,6 +19090,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.5",
+        date: "2026年9月13日",
+        summary: "ホーム画面の好きなカードは、表向きのときだけ拡大表示できるようにしました。",
+        changes: [
+          {
+            title: "好きなカードのクリック操作",
+            before: "カードが裏向きでも、押すと設定した好きなカードの拡大表示が開いた。",
+            after: "裏向きでは押しても反応せず、表向きにめくった後だけ拡大表示が開く。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.4",
         date: "2026年9月13日",
@@ -43036,6 +43048,7 @@
         elements.homeFavoriteCardFront.appendChild(empty);
         elements.homeFavoriteCardFlipButton.disabled = true;
         elements.homeFavoriteCardButton?.classList.remove("is-flipped");
+        elements.homeFavoriteCardButton?.setAttribute("aria-disabled", "true");
         elements.homeFavoriteCardFlipButton.setAttribute("aria-pressed", "false");
         return;
       }
@@ -43052,12 +43065,14 @@
       if (!elements.homeFavoriteCardButton || elements.homeFavoriteCardFlipButton?.disabled) return;
       const flipped = elements.homeFavoriteCardButton.classList.toggle("is-flipped");
       const label = flipped ? "カードを裏向きにする" : "好きなカードを表向きにする";
+      elements.homeFavoriteCardButton.setAttribute("aria-disabled", String(!flipped));
       elements.homeFavoriteCardFlipButton.setAttribute("aria-pressed", String(flipped));
       elements.homeFavoriteCardFlipButton.setAttribute("aria-label", label);
       elements.homeFavoriteCardFlipButton.title = label;
     }
 
     function openHomeFavoriteCardPreview() {
+      if (!elements.homeFavoriteCardButton?.classList.contains("is-flipped")) return;
       const favoriteId = state.profile?.favoriteCardId;
       if (!favoriteId || !CARD_BASES[favoriteId]) return;
       const card = makeProfilePreviewCard(favoriteId, state.profile.favoriteCardStyle);
