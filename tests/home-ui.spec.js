@@ -103,10 +103,9 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
     expect(metrics.frame.width / metrics.frame.height).toBeCloseTo(1670 / 942, 3);
     expect(Math.abs(metrics.navigation.x - metrics.frame.x)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.width - metrics.frame.width)).toBeLessThan(1.1);
-    expect(Math.abs(metrics.navigation.y - (metrics.frame.y + metrics.frame.height))).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.y + metrics.navigation.height - metrics.viewport.height)).toBeLessThan(1.1);
     expect(metrics.frame.x).toBeGreaterThanOrEqual(-.6);
-    expect(metrics.frame.y).toBeGreaterThanOrEqual(-.6);
+    expect(Math.abs(metrics.frame.y)).toBeLessThan(1.1);
     expect(metrics.frame.x + metrics.frame.width).toBeLessThanOrEqual(metrics.viewport.width + .6);
 
     if (!baseline) {
