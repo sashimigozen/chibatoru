@@ -38,7 +38,7 @@ function setup(role = "guest") {
     nextCardInstanceId: 1, pendingAnimations: [],
     onlineTransformSnapshotForGuest: structuredClone, onlineTransformSnapshotForSpectator: structuredClone
   };
-  for (const name of ["captureOnlineVisualState", "preserveOnlineThinItemChoice", "preserveOnlineCourseRegistrationChoice", "preserveOnlineCourseRegistrationConsent", "restoreOnlineGuestMulliganState", "restoreOnlineThinItemChoice", "restoreOnlineCourseRegistrationChoice", "restoreOnlineCourseRegistrationConsent", "closeItemConfirm", "hideResultOverlay", "render", "showOnlineSnapshotVisuals", "onlineSend"]) c[name] = () => {};
+  for (const name of ["onlineApplySnapshotCardStyles", "captureOnlineVisualState", "preserveOnlineThinItemChoice", "preserveOnlineCourseRegistrationChoice", "preserveOnlineCourseRegistrationConsent", "restoreOnlineGuestMulliganState", "restoreOnlineThinItemChoice", "restoreOnlineCourseRegistrationChoice", "restoreOnlineCourseRegistrationConsent", "closeItemConfirm", "hideResultOverlay", "render", "showOnlineSnapshotVisuals", "onlineSend"]) c[name] = () => {};
   vm.createContext(c);
   for (const name of ["closeBattleInspector", "setBattleDrawer", "resetBattleDrawers", "showResultOverlay", "onlineApplySnapshot"]) vm.runInContext(source(name), c);
   function open(kind) {

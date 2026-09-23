@@ -19112,7 +19112,7 @@
       {
         version: "ver.0.23.4",
         date: "2026年9月23日",
-        summary: "オンライン対戦で、ホストとゲストの山札を右側の操作列へ正しく配置しました。画面幅が変わっても、山札・ターン終了ボタン・上下の戦意表示の縦中心線が揃います。また、更新情報を読んだ後に未読表示が確実に消えるよう修正しました。",
+        summary: "オンライン対戦で、ホストとゲストの山札を右側の操作列へ正しく配置しました。画面幅が変わっても、山札・ターン終了ボタン・上下の戦意表示の縦中心線が揃います。また、双方が設定したカードレアリティを盤面やカード演出へ反映し、更新情報を読んだ後に未読表示が確実に消えるよう修正しました。",
         changes: [
           {
             title: "オンライン対戦の山札位置",
@@ -19123,6 +19123,11 @@
             title: "更新情報の既読表示",
             before: "統合された更新情報では、読んだ後も未読表示が残ることがあった。",
             after: "更新情報の保存内容と表示内容で同じ既読IDを使用し、一度読んだ更新の未読表示を消す。"
+          },
+          {
+            title: "オンライン対戦のカードレアリティ",
+            before: "オンライン対戦では、自分や相手が設定した高レアリティの見た目が、盤面やカードを出したときの演出へ反映されないことがあった。",
+            after: "ホストとゲストのレアリティ設定を対戦状態と一緒に同期し、双方の画面の盤面・カード使用・出席・進化演出へ正しく反映する。"
           }
         ]
       },
@@ -22109,6 +22114,41 @@
       return owner === "player" ? state.online.localCardStyles : state.online.remoteCardStyles;
     }
 
+    function onlineApplyCardStyles(players, explicitSelf = null) {
+      const list = Array.isArray(players) ? players : [];
+      if (list.length === 0) return false;
+      const self = explicitSelf || list.find((player) => player.clientId === state.online.clientId) || null;
+      const host = list.find((player) => player.role === "host") || null;
+      const guest = list.find((player) => player.role === "guest") || null;
+      state.online.hostCardStyles = normalizeOnlineCardStyles(host?.cardStyles);
+      state.online.guestCardStyles = normalizeOnlineCardStyles(guest?.cardStyles);
+      if (isOnlineSpectator()) return true;
+      const localRole = self?.role || state.online.role;
+      const opponent = localRole === "host" ? guest : localRole === "guest" ? host : null;
+      state.online.localCardStyles = self && Object.prototype.hasOwnProperty.call(self, "cardStyles")
+        ? normalizeOnlineCardStyles(self.cardStyles)
+        : normalizeOnlineCardStyles(onlineSelectedCardStyles());
+      state.online.remoteCardStyles = normalizeOnlineCardStyles(opponent?.cardStyles);
+      return true;
+    }
+
+    function onlineApplySnapshotCardStyles(snapshot) {
+      const styles = snapshot?.cardStyles;
+      if (!styles || typeof styles !== "object" || Array.isArray(styles)) return false;
+      const hostStyles = normalizeOnlineCardStyles(styles.host);
+      const guestStyles = normalizeOnlineCardStyles(styles.guest);
+      state.online.hostCardStyles = hostStyles;
+      state.online.guestCardStyles = guestStyles;
+      if (isOnlineGuest()) {
+        state.online.localCardStyles = guestStyles;
+        state.online.remoteCardStyles = hostStyles;
+      } else if (isOnlineHost()) {
+        state.online.localCardStyles = hostStyles;
+        state.online.remoteCardStyles = guestStyles;
+      }
+      return true;
+    }
+
     function rewardFoilStyleForOwner(baseId, owner) {
       if (state.online.started) {
         return rewardFoilStyleForSelection(baseId, onlineCardStylesForOwner(owner));
@@ -23709,10 +23749,7 @@
         onlineSetRemoteClientId(opponent?.clientId || "");
         onlineApplyProfiles(players, self);
         onlineApplyPublicDeckState(self, opponent);
-        state.online.hostCardStyles = normalizeOnlineCardStyles(host?.cardStyles);
-        state.online.guestCardStyles = normalizeOnlineCardStyles(guest?.cardStyles);
-        state.online.localCardStyles = normalizeOnlineCardStyles(self?.cardStyles || onlineSelectedCardStyles());
-        state.online.remoteCardStyles = normalizeOnlineCardStyles(opponent?.cardStyles);
+        onlineApplyCardStyles(players, self);
         state.online.connected = Boolean(host && guest);
         state.online.started = Boolean(message.started || state.online.started);
         if (!isOnlineSpectator() && !onlineLocalDeckValidation().valid) state.online.localReady = false;
@@ -23756,6 +23793,7 @@
           onlineSetRemoteClientId(state.online.role === "host" ? (guest?.clientId || "") : (host?.clientId || ""));
         }
         onlineApplyProfiles(players);
+        onlineApplyCardStyles(players);
         onlineSetStatus(message.message || "相手の接続が切れました。再入室を待っています。", "bad");
         render();
         return;
@@ -23857,6 +23895,7 @@
         const opponent = self?.role === "host" ? guest : self?.role === "guest" ? host : null;
         onlineSetRemoteClientId(opponent?.clientId || "");
         onlineApplyProfiles(players, self);
+        onlineApplyCardStyles(players, self);
         onlineApplyPublicDeckState(self, opponent);
         state.online.connected = Boolean(host && guest);
         if (!isOnlineSpectator() && !onlineLocalDeckValidation().valid) state.online.localReady = false;
@@ -23910,6 +23949,7 @@
         const localIsHost = isOnlineHost();
         const players = Array.isArray(message.players) ? message.players : [];
         onlineApplyProfiles(players);
+        onlineApplyCardStyles(players);
         state.online.remoteReady = localIsHost ? Boolean(message.guestReady) : Boolean(message.hostReady);
         const remoteDescriptor = onlineDeckDescriptorFromMessage({
           deckName: (localIsHost ? message.guestDeckName : message.hostDeckName) || "__current",
@@ -24032,18 +24072,21 @@
         return;
       }
       if (message.type === "playReveal" && (isOnlineGuest() || isOnlineSpectator())) {
-        showCardPlayAnimation(message.card, message.destination || "trash", {
+        const card = isOnlineGuest() ? onlineSwapOwnersDeep(message.card) : message.card;
+        showCardPlayAnimation(card, message.destination || "trash", {
           remote: true,
           rewardFoilReveal: Boolean(message.rewardFoilReveal)
         });
         return;
       }
       if (message.type === "donguriReveal" && (isOnlineGuest() || isOnlineSpectator())) {
-        showDonguriEvolutionAnimation(message.payload || {}, { remote: true });
+        const payload = isOnlineGuest() ? onlineSwapOwnersDeep(message.payload || {}) : (message.payload || {});
+        showDonguriEvolutionAnimation(payload, { remote: true });
         return;
       }
       if (message.type === "evolutionReveal" && (isOnlineGuest() || isOnlineSpectator())) {
-        showEvolutionAnimation(message.payload || {}, { remote: true });
+        const payload = isOnlineGuest() ? onlineSwapOwnersDeep(message.payload || {}) : (message.payload || {});
+        showEvolutionAnimation(payload, { remote: true });
         return;
       }
       if (message.type === "returnRoom" && (isOnlineGuest() || isOnlineSpectator())) {
@@ -24174,6 +24217,8 @@
       state.deckBuilder.counts.player = localCounts;
       state.deckBuilder.counts.opponent = remoteCounts;
       state.online.localCardStyles = onlineSelectedCardStyles();
+      state.online.hostCardStyles = normalizeOnlineCardStyles(state.online.localCardStyles);
+      state.online.guestCardStyles = normalizeOnlineCardStyles(state.online.remoteCardStyles);
       state.online.startPending = true;
       onlineResetAnalyticsLogState();
       initializeGame({
@@ -24892,12 +24937,17 @@
       return {
         seq: state.online.lastSnapshotSeq,
         nextCardInstanceId,
+        cardStyles: {
+          host: normalizeOnlineCardStyles(state.online.localCardStyles),
+          guest: normalizeOnlineCardStyles(state.online.remoteCardStyles)
+        },
         state: JSON.parse(JSON.stringify(snapshotState))
       };
     }
 
     function onlineApplySnapshot(snapshot) {
       if (!snapshot || snapshot.seq <= state.online.lastSnapshotSeq) return;
+      onlineApplySnapshotCardStyles(snapshot);
       const isNewBattle = state.screen !== "battle" || !state.online.started
         || state.preBattleToken !== snapshot.state.preBattleToken
         || (state.gameOver && !snapshot.state.gameOver);
