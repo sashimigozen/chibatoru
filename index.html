@@ -15734,18 +15734,24 @@
       }
 
       .battle-screen .opponent-hand-table {
+        position: absolute !important;
+        top: 0 !important;
+        right: 0 !important;
+        left: 48px !important;
         display: flex !important;
         align-items: flex-end !important;
         gap: 9px !important;
-        width: 100% !important;
+        width: auto !important;
         height: 52px !important;
         padding: 0 !important;
       }
 
       .battle-screen .opponent-deck-pile {
-        position: relative !important;
-        inset: auto !important;
-        flex: 0 0 39px !important;
+        position: absolute !important;
+        top: 0 !important;
+        right: auto !important;
+        bottom: auto !important;
+        left: 0 !important;
         width: 39px !important;
         min-width: 39px !important;
         height: 52px !important;
@@ -17718,12 +17724,12 @@
             <h2 id="opponentHandTitle">相手の手札</h2>
             <span class="small-info" id="opponentHandInfo">5枚</span>
           </div>
+          <button class="deck-pile opponent-deck-pile" id="opponentDeckPile" type="button" aria-label="相手の山札">
+            <span class="deck-stack"></span>
+            <span class="deck-label">山札</span>
+            <span class="deck-count-pill" id="opponentDeckPileCount">35</span>
+          </button>
           <div class="hand-table opponent-hand-table">
-            <button class="deck-pile opponent-deck-pile" id="opponentDeckPile" type="button" aria-label="相手の山札">
-              <span class="deck-stack"></span>
-              <span class="deck-label">山札</span>
-              <span class="deck-count-pill" id="opponentDeckPileCount">35</span>
-            </button>
             <div class="hand opponent-hand" id="opponentHand"></div>
           </div>
         </section>
