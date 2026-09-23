@@ -45,9 +45,9 @@ async function chooseValidDeck(page) {
   await expect(page.locator("#onlineReadyButton")).toBeEnabled();
 }
 
-test("ゲスト側でも山札を手札レーンの外に固定する", async ({ browser }) => {
-  const hostContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const guestContext = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+test("ゲスト本人の山札をホスト本人の山札と同じ位置に固定する", async ({ browser }) => {
+  const hostContext = await browser.newContext({ viewport: { width: 1122, height: 696 } });
+  const guestContext = await browser.newContext({ viewport: { width: 1122, height: 696 } });
   const host = await hostContext.newPage();
   const guest = await guestContext.newPage();
 
@@ -81,42 +81,62 @@ test("ゲスト側でも山札を手札レーンの外に固定する", async ({
         role: window.__chibattle.state.online.role,
         hand: rect("#playerHand"),
         deck: rect("#playerDeckPile"),
+        action: rect(".battle-action-slot"),
+        playerWill: rect(".battle-v16-player-mana"),
+        opponentWill: rect(".battle-v16-opponent-mana"),
         deckCount: window.__chibattle.state.players.player.deck.length
       };
     });
 
     const hostLayout = await host.evaluate(() => {
-      const hand = document.querySelector("#opponentHand").getBoundingClientRect();
-      const deck = document.querySelector("#opponentDeckPile").getBoundingClientRect();
+      const hand = document.querySelector("#playerHand").getBoundingClientRect();
+      const deck = document.querySelector("#playerDeckPile").getBoundingClientRect();
       return {
         role: window.__chibattle.state.online.role,
-        deckParentClass: document.querySelector("#opponentDeckPile").parentElement.className,
-        hand: { left: hand.left, right: hand.right },
-        deck: { left: deck.left, right: deck.right },
-        guestDeckCount: window.__chibattle.state.players.opponent.deck.length
+        hand: { left: hand.left, right: hand.right, top: hand.top, bottom: hand.bottom },
+        deck: { left: deck.left, right: deck.right, top: deck.top, bottom: deck.bottom },
+        action: (() => {
+          const rect = document.querySelector(".battle-action-slot").getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        })(),
+        playerWill: (() => {
+          const rect = document.querySelector(".battle-v16-player-mana").getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        })(),
+        opponentWill: (() => {
+          const rect = document.querySelector(".battle-v16-opponent-mana").getBoundingClientRect();
+          return { left: rect.left, right: rect.right };
+        })(),
+        deckCount: window.__chibattle.state.players.player.deck.length
       };
     });
+
+    const centerX = (rect) => (rect.left + rect.right) / 2;
+    const expectSameCenter = (layout) => {
+      expect(Math.abs(centerX(layout.deck) - centerX(layout.action))).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(centerX(layout.deck) - centerX(layout.playerWill))).toBeLessThanOrEqual(0.5);
+      expect(Math.abs(centerX(layout.deck) - centerX(layout.opponentWill))).toBeLessThanOrEqual(0.5);
+    };
 
     expect(guestLayout.role).toBe("guest");
     expect(guestLayout.deckCount).toBeGreaterThan(0);
     expect(guestLayout.deck.left).toBeGreaterThanOrEqual(guestLayout.hand.right + 1);
+    expectSameCenter(guestLayout);
 
     expect(hostLayout.role).toBe("host");
-    expect(hostLayout.guestDeckCount).toBe(guestLayout.deckCount);
-    expect(hostLayout.deckParentClass).toContain("opponent-hand-zone");
-    expect(hostLayout.deckParentClass).not.toContain("opponent-hand-table");
-    expect(hostLayout.deck.right).toBeLessThanOrEqual(hostLayout.hand.left - 1);
+    expect(hostLayout.deckCount).toBe(guestLayout.deckCount);
+    expect(guestLayout.deck).toEqual(hostLayout.deck);
+    expectSameCenter(hostLayout);
 
-    await host.setViewportSize({ width: 600, height: 800 });
-    const mobileLayout = await host.evaluate(() => {
-      const hand = document.querySelector("#opponentHand").getBoundingClientRect();
-      const deck = document.querySelector("#opponentDeckPile").getBoundingClientRect();
-      return {
-        hand: { left: hand.left, right: hand.right },
-        deck: { left: deck.left, right: deck.right }
-      };
-    });
-    expect(mobileLayout.deck.right).toBeLessThanOrEqual(mobileLayout.hand.left - 1);
+    await Promise.all([
+      host.setViewportSize({ width: 600, height: 800 }),
+      guest.setViewportSize({ width: 600, height: 800 })
+    ]);
+    const mobileDecks = await Promise.all([host, guest].map((page) => page.evaluate(() => {
+      const deck = document.querySelector("#playerDeckPile").getBoundingClientRect();
+      return { left: deck.left, right: deck.right, top: deck.top, bottom: deck.bottom };
+    })));
+    expect(mobileDecks[1]).toEqual(mobileDecks[0]);
   } finally {
     await hostContext.close();
     await guestContext.close();
