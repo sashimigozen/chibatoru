@@ -18793,7 +18793,7 @@
       suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
       ta_squad: { name: "TA隊長", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
       happy_blue_bird: { name: "幸せの青い鳥", type: "student", cost: 2, attack: 5, hp: 5, allowedZones: ["seat", "teacher"] },
-      absolute_woman: { name: "「絶対」女", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat"] },
+      absolute_woman: { name: "「絶対」女", type: "student", cost: 7, attack: 1, hp: 3, attackLimit: 3, keywords: ["陽気"], allowedZones: ["seat"] },
       pad_present_creator: { name: "パッドプレゼンクリエイター", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
@@ -19109,6 +19109,23 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.5",
+        date: "2026年9月24日",
+        summary: "「絶対」女と「スモール小俣」の能力・カードテキストを調整しました。「絶対」女は陽気を持ち、1ターンに3回まで攻撃できます。「スモール小俣」は現在戦意が10なら手札で戦意10と表示され、通常の単体指名効果から「ビッグ小俣」を出席させる効果へ変わります。",
+        changes: [
+          {
+            title: "「絶対」女",
+            before: "戦意3／攻撃力1／体力1。攻撃した出席者を破壊する効果だけを持っていた。",
+            after: "戦意7／攻撃力1／体力3。[陽気]を持ち、攻撃した出席者を破壊する。1ターンに3回まで攻撃できる。"
+          },
+          {
+            title: "スモール小俣",
+            before: "現在戦意が10でも手札では戦意4と表示され、戦意10で出席させた場合に効果が変わることがカードテキストから分かりにくかった。",
+            after: "現在戦意が9以下なら戦意4、10なら手札で戦意10と表示する。戦意10で手札から出席させたときは単体指名を行わず、このカードと自分の席マスにいる出席者すべてを破壊した後、「ビッグ小俣」を出席させる。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.4",
         date: "2026年9月23日",
@@ -27659,21 +27676,32 @@
       resolveTrainingAiPendingSelections("player");
       const attackers = listBoardRefs("player");
       for (const ref of attackers) {
-        if (!isTrainingLeftAiActive()) return;
-        const attacker = getBoardCardFromRef(ref);
-        if (!attacker || !canAttackSilently(attacker)) continue;
-        if (canTeacherChooseLecture(ref) && lectureTargetEntries("player", attacker).length >= 2) {
-          performTeacherLecture("player", ref, { renderAfter: false });
-          render();
+        let attackSafety = 0;
+        while (isTrainingLeftAiActive() && attackSafety < 12) {
+          attackSafety += 1;
+          const attacker = getBoardCardFromRef(ref);
+          if (!attacker || !canAttackSilently(attacker)) break;
+          if (canTeacherChooseLecture(ref) && lectureTargetEntries("player", attacker).length >= 2) {
+            performTeacherLecture("player", ref, { renderAfter: false });
+            render();
+            await sleep(AI_STEP_DELAY);
+            break;
+          }
+          const target = findTrainingAiAttackTarget("player", attacker);
+          const lifeBlocked = !target && (listAttentionCards("opponent").length > 0
+            || state.environment?.baseId === "meguro_library"
+            || isAibenNyoteiAttackLifeBlocked(attacker, "opponent")
+            || attacker.baseId === "happy_blue_bird"
+            || (attacker.playedOnTurn === state.actionTurn
+              && hasKeyword(attacker, "陽気")
+              && !hasKeyword(attacker, "超陽気")));
+          if (lifeBlocked) break;
+          state.selectedAttacker = { ...ref };
+          if (target) await attackCard(target.owner, target.zone, target.index);
+          else await attackLifeForCurrentSide("opponent");
+          if (state.gameOver) return;
           await sleep(AI_STEP_DELAY);
-          continue;
         }
-        const target = findTrainingAiAttackTarget("player", attacker);
-        state.selectedAttacker = { ...ref };
-        if (target) await attackCard(target.owner, target.zone, target.index);
-        else await attackLifeForCurrentSide("opponent");
-        if (state.gameOver) return;
-        await sleep(AI_STEP_DELAY);
       }
       state.aiThinking = false;
       if (isTrainingLeftAiActive()) {
@@ -29318,62 +29346,65 @@
     async function aiAttackWithReadyCards() {
       const attackers = listBoardRefs("opponent");
       for (const ref of attackers) {
-        if (!isOpponentAiActive()) return;
-        const attacker = getBoardCardFromRef(ref);
-        if (!attacker || !canAttackSilently(attacker)) continue;
-        if (shouldAiUseLecture(ref, attacker)) {
-          performTeacherLecture("opponent", ref, { renderAfter: false });
+        let attackSafety = 0;
+        while (isOpponentAiActive() && attackSafety < 12) {
+          attackSafety += 1;
+          const attacker = getBoardCardFromRef(ref);
+          if (!attacker || !canAttackSilently(attacker)) break;
+          if (shouldAiUseLecture(ref, attacker)) {
+            performTeacherLecture("opponent", ref, { renderAfter: false });
+            render();
+            if (state.gameOver) return;
+            await sleep(AI_STEP_DELAY);
+            break;
+          }
+          const target = findAiAttackTarget(attacker);
+          if (target) {
+            if (!await waitForAttackResolution(ref, target)) return;
+            const resolvingAttacker = getBoardCardFromRef(ref);
+            const targetCard = getBoardCardFromRef(target);
+            if (!resolvingAttacker || !targetCard) {
+              finishAttackResolution();
+              return;
+            }
+            markCardAttackUsed(resolvingAttacker);
+            if (attackMissesFromDrowsiness(resolvingAttacker)) {
+              addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
+              showFloatingTextForCard(targetCard, "ミス", "miss");
+            } else {
+              resolveCardAttackWithBoardCleanup(resolvingAttacker, target);
+            }
+          } else {
+            if (listAttentionCards("player").length > 0
+              || state.environment?.baseId === "meguro_library"
+              || isAibenNyoteiAttackLifeBlocked(attacker, "player")
+              || attacker.baseId === "happy_blue_bird"
+              || (attacker.playedOnTurn === state.actionTurn
+                && hasKeyword(attacker, "陽気")
+                && !hasKeyword(attacker, "超陽気"))) {
+              break;
+            }
+            if (!await waitForAttackResolution(ref, { owner: "player", zone: "life", index: null })) return;
+            const resolvingAttacker = getBoardCardFromRef(ref);
+            if (!resolvingAttacker) {
+              finishAttackResolution();
+              return;
+            }
+            markCardAttackUsed(resolvingAttacker);
+            if (attackMissesFromDrowsiness(resolvingAttacker)) {
+              addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
+              showFloatingTextForLife("player", "ミス", "miss");
+            } else {
+              const dealtDamage = resolveLifeAttack(resolvingAttacker, "player");
+              addLog(`${resolvingAttacker.name}があなた本体に${dealtDamage}ダメージ。`);
+            }
+          }
+          checkLifeVictory();
+          finishAttackResolution();
           render();
           if (state.gameOver) return;
           await sleep(AI_STEP_DELAY);
-          continue;
         }
-        const target = findAiAttackTarget(attacker);
-        if (target) {
-          if (!await waitForAttackResolution(ref, target)) return;
-          const resolvingAttacker = getBoardCardFromRef(ref);
-          const targetCard = getBoardCardFromRef(target);
-          if (!resolvingAttacker || !targetCard) {
-            finishAttackResolution();
-            return;
-          }
-          resolvingAttacker.hasAttacked = true;
-          if (attackMissesFromDrowsiness(resolvingAttacker)) {
-            addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
-            showFloatingTextForCard(targetCard, "ミス", "miss");
-          } else {
-            resolveCardAttackWithBoardCleanup(resolvingAttacker, target);
-          }
-        } else {
-          if (listAttentionCards("player").length > 0
-            || state.environment?.baseId === "meguro_library"
-            || isAibenNyoteiAttackLifeBlocked(attacker, "player")
-            || attacker.baseId === "happy_blue_bird"
-            || (attacker.playedOnTurn === state.actionTurn
-              && hasKeyword(attacker, "陽気")
-              && !hasKeyword(attacker, "超陽気"))) {
-            continue;
-          }
-          if (!await waitForAttackResolution(ref, { owner: "player", zone: "life", index: null })) return;
-          const resolvingAttacker = getBoardCardFromRef(ref);
-          if (!resolvingAttacker) {
-            finishAttackResolution();
-            return;
-          }
-          resolvingAttacker.hasAttacked = true;
-          if (attackMissesFromDrowsiness(resolvingAttacker)) {
-            addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
-            showFloatingTextForLife("player", "ミス", "miss");
-          } else {
-            const dealtDamage = resolveLifeAttack(resolvingAttacker, "player");
-            addLog(`${resolvingAttacker.name}があなた本体に${dealtDamage}ダメージ。`);
-          }
-        }
-        checkLifeVictory();
-        finishAttackResolution();
-        render();
-        if (state.gameOver) return;
-        await sleep(AI_STEP_DELAY);
       }
     }
 
@@ -29673,7 +29704,7 @@
     function performTeacherLecture(side, ref, options = {}) {
       if (!ref || ref.owner !== side || state.currentSide !== side || !canTeacherChooseLecture(ref)) return false;
       const teacher = getBoardCardFromRef(ref);
-      teacher.hasAttacked = true;
+      markCardAttackUsed(teacher);
       showSharedCenterAnnouncement("講義");
       const affected = resolveTeacherLectureEffect(side, teacher);
       analyticsRecordAction({
@@ -30353,7 +30384,7 @@
           addLog(`${attacker.name}の効果：攻撃できる相手の出席者がいないため不発。`);
           return;
         }
-        attacker.hasAttacked = true;
+        markCardAttackUsed(attacker);
         flashAttackFocus(attackerRef, targetEntry.ref);
         if (attackMissesFromDrowsiness(attacker)) {
           addLog(`${attacker.name}は眠気で自動攻撃を外しました。`);
@@ -30558,7 +30589,7 @@
     function resetAttackFlags(side) {
       listBoardRefs(side).forEach((ref) => {
         const card = getBoardCardFromRef(ref);
-        if (card) card.hasAttacked = false;
+        if (card) resetCardAttackUsage(card);
       });
     }
 
@@ -33254,6 +33285,7 @@
         maxHp: card.hp ?? null,
         currentHp: card.hp ?? null,
         hasAttacked: false,
+        attacksUsedThisTurn: 0,
         playedOnTurn: state.actionTurn,
         analyticsEnteredTurn: state.actionTurn
       };
@@ -33275,7 +33307,7 @@
       const transformed = makeBoardCard(createCardFromBase("suit_student", target.owner));
       transformed.instanceId = target.instanceId;
       transformed.owner = target.owner;
-      transformed.hasAttacked = Boolean(target.hasAttacked);
+      copyCardAttackUsage(target, transformed);
       transformed.playedOnTurn = target.playedOnTurn;
       transformed.analyticsEnteredTurn = target.analyticsEnteredTurn;
 
@@ -33451,9 +33483,9 @@
         ? Math.max(0, (previous.maxHp || 0) - (previous.currentHp || 0))
         : 0;
       if (previous) {
-        const previousWasReady = !previous.hasAttacked
+        const previousWasReady = cardAttacksUsedThisTurn(previous) < cardAttackLimit(previous)
           && (previous.playedOnTurn !== state.actionTurn || hasKeyword(previous, "陽気") || hasKeyword(previous, "超陽気"));
-        evolved.hasAttacked = Boolean(previous.hasAttacked);
+        copyCardAttackUsage(previous, evolved);
         if (previousWasReady) evolved.playedOnTurn = previous.playedOnTurn ?? Math.max(0, state.actionTurn - 1);
       }
       if (card.baseId === "dark_yuta" && previous) {
@@ -35408,7 +35440,7 @@
         render();
         return;
       }
-      resolvingAttacker.hasAttacked = true;
+      markCardAttackUsed(resolvingAttacker);
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
         showFloatingTextForCard(target, "ミス", "miss");
@@ -35547,7 +35579,7 @@
         render();
         return;
       }
-      resolvingAttacker.hasAttacked = true;
+      markCardAttackUsed(resolvingAttacker);
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
         showFloatingTextForLife(targetSide, "ミス", "miss");
@@ -35662,7 +35694,7 @@
         && attacker.currentHp > 0
         && !(target.baseId === "rebirth_student" && !target.rebirthUsed)
       ) {
-        attacker.hasAttacked = false;
+        resetCardAttackUsage(attacker);
         addLog(`${attacker.name}の効果：攻撃した出席者が校外エリアへ送られるため、もう一度攻撃できます。`);
       }
     }
@@ -36977,7 +37009,7 @@
         );
         const trashCard = trashIndex >= 0 ? player.trash.splice(trashIndex, 1)[0] : entry.card;
         const restored = makeBoardCard({ ...trashCard, owner: side });
-        restored.hasAttacked = false;
+        resetCardAttackUsage(restored);
         restored.playedOnTurn = state.actionTurn;
         if (attendCard(side, restored, entry.zone, entry.index, {
           attendanceSource: ATTENDANCE_SOURCE.TRASH,
@@ -37441,6 +37473,39 @@
         || isSameNameAttackLocked(card));
     }
 
+    function cardAttackLimit(card) {
+      const limit = Number(card?.attackLimit ?? CARD_BASES[card?.baseId]?.attackLimit ?? 1);
+      return Number.isFinite(limit) ? Math.max(1, Math.floor(limit)) : 1;
+    }
+
+    function cardAttacksUsedThisTurn(card) {
+      if (card?.hasAttacked) return cardAttackLimit(card);
+      const stored = Number(card?.attacksUsedThisTurn);
+      if (Number.isFinite(stored) && stored >= 0) return Math.floor(stored);
+      return 0;
+    }
+
+    function markCardAttackUsed(card) {
+      if (!card) return 0;
+      const used = Math.min(cardAttackLimit(card), cardAttacksUsedThisTurn(card) + 1);
+      card.attacksUsedThisTurn = used;
+      card.hasAttacked = used >= cardAttackLimit(card);
+      return used;
+    }
+
+    function resetCardAttackUsage(card) {
+      if (!card) return;
+      card.attacksUsedThisTurn = 0;
+      card.hasAttacked = false;
+    }
+
+    function copyCardAttackUsage(source, target) {
+      if (!target) return;
+      const used = Math.min(cardAttackLimit(target), cardAttacksUsedThisTurn(source));
+      target.attacksUsedThisTurn = used;
+      target.hasAttacked = used >= cardAttackLimit(target);
+    }
+
     function canAttack(card) {
       if (isPadlocked(card)) {
         state.message = `${card.name}は南京錠により攻撃できません。`;
@@ -37478,7 +37543,7 @@
         state.message = `${card.name}は出したターンなので攻撃できません。`;
         return false;
       }
-      if (card.hasAttacked) {
+      if (cardAttacksUsedThisTurn(card) >= cardAttackLimit(card)) {
         state.message = `${card.name}はこのターンすでに攻撃しました。`;
         return false;
       }
@@ -37491,7 +37556,7 @@
         && !isAttackLocked(card)
         && !isFriendlyTeacherAttackBlocked(card)
         && (card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気"))
-        && !card.hasAttacked;
+        && cardAttacksUsedThisTurn(card) < cardAttackLimit(card);
     }
 
     function attackMissesFromDrowsiness(card) {
@@ -43019,6 +43084,12 @@
         : 0;
       const intrinsicCost = card.summerTeacherChoiceCost ?? card.cost ?? 0;
       if (inBattle
+        && card.baseId === "small_omata"
+        && card.owner
+        && state.players[card.owner]?.will >= 10) {
+        return 10;
+      }
+      if (inBattle
         && card.baseId === "king_ghidorah_bed"
         && card.owner
         && state.players[card.owner]?.will >= 8) {
@@ -46928,14 +46999,14 @@
         handy_jet_engine: "相手の手札をランダムに2枚、校外エリアへ送る。",
         dos_attack: "相手のデッキの上から3枚を校外エリアへ送る。",
         destroy_dos_attack: "自分の校外エリアにある「Dos攻撃」の枚数+1を数え、その数×3枚、相手のデッキの上から校外エリアへ送る。",
-        absolute_woman: "このカードが出席者を攻撃したとき、その出席者を破壊する。",
+        absolute_woman: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を破壊する。このカードは1ターンに3回まで攻撃できる。",
         pad_present_creator: "このカードがある限り、自分の最大戦意は3になる。ターン開始時、自分の講義室に出席している全ての出席者の体力は相手の最大戦意の差だけ上がる。",
         environment_setup: "次の2つから1つを選ぶ。1. 自分のデッキから環境カードをランダムに1枚手札に加える。2. 自分の校外エリアから環境カードをランダムに1枚手札に戻す。",
         diamond_dust: "自分の校外エリアに「ダブルダイヤモンドクロス」が2枚以上あり、自分の教卓マスに「デザインデーモンスレイヤー」がいる場合に使用できる。お互いの講義室の出席者すべてと環境を破壊する。校外エリアにあるこのカードは、手札を2枚校外エリアへ送ることで手札に戻せる。",
         happy_experience: "自分の出席者1人を指名する。手札にその進化先がある場合、そのカードに進化させる。この効果で進化したカードの出席時・進化時の能力は使用しない。",
         go_away: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。",
         loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
-        small_omata: "教卓マスにのみ出席できる。出席した時、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。自分の戦意が10のとき、このカードを出席させる場合、戦意を10支払う。出席後、このカードを破壊し、自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
+        small_omata: "このカードは教卓マスにのみ出席できる。このカードを手札から出席させたとき、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。このカードを戦意10で手札から出席させたとき、このカードと自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
         big_omata: "注目と陽気を持つ。自分の席マスすべてを占有し、1人の出席者として扱う。出席した時、相手の講義室の出席者すべては1ターン攻撃できない。",
         wood_gitch: "このカードを手札から出席させた時、手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
         gitch: "進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。",
@@ -47819,6 +47890,7 @@
       findTrainingAiPlayMove,
       findAiAttackTarget,
       findTrainingAiAttackTarget,
+      aiAttackWithReadyCards,
       trainingYocchanPlayPriority,
       runOpponentAI,
       runTrainingLeftAI,
@@ -47905,7 +47977,12 @@
       resolveStudentEndTurnEffects,
       resolveInternEndTurnEffect,
       resolveHappyBlueBirdEndTurnAttacks,
+      attackCard,
       resolveCardAttackWithBoardCleanup,
+      cardAttackLimit,
+      cardAttacksUsedThisTurn,
+      canAttackSilently,
+      resetAttackFlags,
       canSelectedAttackerTargetLife,
       resolveChaosWorldAtTurnStart,
       resolveRaptorTempleExchange,
