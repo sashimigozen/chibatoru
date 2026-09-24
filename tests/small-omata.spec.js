@@ -99,7 +99,7 @@ test("戦意10では単体指名を行わず、戦意10を使ってビッグ小�
   });
 });
 
-test("ver.0.23.5の更新情報にカード2枚の変更を統合する", async ({ page }) => {
+test("ver.0.23.5の更新情報に同日のカード変更を統合する", async ({ page }) => {
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.state.screen = "home";
@@ -111,4 +111,7 @@ test("ver.0.23.5の更新情報にカード2枚の変更を統合する", async 
   await entry.locator("summary").click();
   await expect(entry.locator(".update-change", { hasText: "「絶対」女" })).toContainText("1ターンに3回まで攻撃できる");
   await expect(entry.locator(".update-change", { hasText: "スモール小俣" })).toContainText("10なら手札で戦意10と表示する");
+  await expect(entry.locator(".update-change", { hasText: "木っち（ぎっち）" })).toContainText("自分の手札1枚を選び");
+  await expect(entry.locator(".update-change", { hasText: "陳さん" })).toContainText("手札から出席させたとき");
+  await expect(entry.locator(".update-change", { hasText: "ありえない高音" })).toContainText("手札から出席させたとき");
 });

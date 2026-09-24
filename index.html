@@ -19112,7 +19112,7 @@
       {
         version: "ver.0.23.5",
         date: "2026年9月24日",
-        summary: "「絶対」女と「スモール小俣」の能力・カードテキストを調整しました。「絶対」女は陽気を持ち、1ターンに3回まで攻撃できます。「スモール小俣」は現在戦意が10なら手札で戦意10と表示され、通常の単体指名効果から「ビッグ小俣」を出席させる効果へ変わります。",
+        summary: "「絶対」女、「スモール小俣」、「木っち（ぎっち）」、「陳さん」、「ありえない高音」の能力・カードテキストを調整しました。「絶対」女は陽気を持ち、1ターンに3回まで攻撃できます。「スモール小俣」は現在戦意が10なら手札で戦意10と表示され、通常の単体指名効果から「ビッグ小俣」を出席させる効果へ変わります。「木っち（ぎっち）」は、手札を1枚選んで同名カードに変化させます。「陳さん」と「ありえない高音」は、効果が手札から出席させた場合に発動することをカードテキストに明記しました。",
         changes: [
           {
             title: "「絶対」女",
@@ -19123,6 +19123,21 @@
             title: "スモール小俣",
             before: "現在戦意が10でも手札では戦意4と表示され、戦意10で出席させた場合に効果が変わることがカードテキストから分かりにくかった。",
             after: "現在戦意が9以下なら戦意4、10なら手札で戦意10と表示する。戦意10で手札から出席させたときは単体指名を行わず、このカードと自分の席マスにいる出席者すべてを破壊した後、「ビッグ小俣」を出席させる。"
+          },
+          {
+            title: "木っち（ぎっち）",
+            before: "手札から出席させたとき、「木っち（ぎっち）」1枚を手札に生成していた。",
+            after: "このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは[講義]を持たない。"
+          },
+          {
+            title: "陳さん",
+            before: "出席したとき、相手の席マスにいる出席者1人をランダムに指名し、破壊すると表記していた。",
+            after: "手札から出席させたときに発動する効果であることを明記。相手の席マスにいる出席者1人をランダムに指名し、破壊する。"
+          },
+          {
+            title: "ありえない高音",
+            before: "出席したとき、相手の出席者を弱体化すると表記していた。",
+            after: "手札から出席させたときに発動する効果であることを明記。通常は相手の出席者1人をランダムに指名し、環境が「食堂」なら相手の出席者すべてを対象にする。"
           }
         ]
       },
@@ -25487,6 +25502,7 @@
           placeCardFromHand("opponent", payload.instanceId, target.zone, target.owner, target.index ?? null, true, {
             commandId: command.id || "",
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
+            woodGitchTransformId: payload.woodGitchTransformId || null,
             summerTeacherChoiceId: payload.summerTeacherChoiceId || null,
             summerTeacherChoiceBaseId: payload.summerTeacherChoiceBaseId || null
           });
@@ -31847,6 +31863,10 @@
         resolveHappyExperienceChoice("player", item, evolutionCard, pending.context, true);
         return;
       }
+      if (mode === "wood_gitch_transform") {
+        resolveWoodGitchHandTransform("player", selectedIds[0], pending.context?.sourceCard || CARD_BASES.wood_gitch, true);
+        return;
+      }
       if (mode === "diamond_dust_recovery") {
         if (onlineCanSendCommand()) {
           onlineSendCommand("diamondDustRecovery", { instanceId: itemId, selectedIds });
@@ -31994,6 +32014,20 @@
         placeCardFromHand("player", summer.instanceId, target.zone, target.owner, target.index ?? null, true, {
           summerTeacherChoiceBaseId: selectedBaseId
         });
+        return;
+      }
+      if (mode === "wood_gitch_online_play") {
+        const target = pending.playTarget || {};
+        onlineSendCommand("playCard", {
+          instanceId: pending.playCardId,
+          zone: target.zone,
+          owner: target.owner,
+          index: target.index ?? null,
+          woodGitchTransformId: selectedIds[0] || null
+        });
+        state.message = "木っち（ぎっち）の出席と手札の変化先を送信しました。";
+        clearSelections();
+        render();
         return;
       }
       if (mode === "bad_student_online_play") {
@@ -32962,6 +32996,23 @@
       }
       if (onlineCanSendCommand()) {
         const card = getHandCard("player", instanceId);
+        if (card?.baseId === "wood_gitch") {
+          const transformCards = state.players.player.hand.filter((handCard) => handCard.instanceId !== instanceId);
+          if (transformCards.length > 0) {
+            openCardChoice({
+              mode: "wood_gitch_online_play",
+              title: card.name,
+              message: "出席後、「木っち（ぎっち）」に変化させる手札を1枚選んでください。",
+              cards: transformCards,
+              min: 1,
+              max: 1,
+              confirmLabel: "選んで出席",
+              playCardId: instanceId,
+              playTarget: { zone, owner, index }
+            });
+            return;
+          }
+        }
         if (card?.baseId === "failure_student") {
           const discardCards = state.players.player.hand.filter((handCard) => handCard.instanceId !== instanceId);
           const discardCount = Math.min(2, discardCards.length);
@@ -33243,7 +33294,8 @@
           owner,
           attendanceSource: ATTENDANCE_SOURCE.HAND,
           commandId: options.commandId || "",
-          badStudentDiscardIds: options.badStudentDiscardIds || []
+          badStudentDiscardIds: options.badStudentDiscardIds || [],
+          woodGitchTransformId: options.woodGitchTransformId || null
         });
         const costLog = card.noCost && !isChaosBattle() ? "戦意なし" : `戦意-${playCost}`;
         addLog(`${SIDES[side]}は${card.name}を出席させました。${costLog}。`);
@@ -34062,8 +34114,7 @@
         addLog(`${card.name}の出席時効果：お互いの席マスにいる他の出席者${seatAffected}人に1ダメージ、教卓マスにいる出席者${teacherAffected}人に2ダメージ。`);
       }
       if (card.baseId === "wood_gitch") {
-        state.players[side].hand.push(createCardFromBase("wood_gitch", side));
-        addLog(`${card.name}の手札出席時効果：手札に「木っち（ぎっち）」を1枚生成しました。`);
+        beginWoodGitchHandTransform(side, card, options);
       }
       if (card.baseId === "small_omata") {
         // At 10 will, Small Omata immediately becomes Big Omata. Its single-target
@@ -34721,6 +34772,54 @@
       return effectTargetEntries(sourceSide || oppositeSide(owner), owner)
         .filter((entry) => entry.card && !isAttackLocked(entry.card))
         .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0))[0]?.ref || null;
+    }
+
+    function resolveWoodGitchHandTransform(side, targetInstanceId, sourceCard, renderAfter = true) {
+      const player = state.players[side];
+      const targetIndex = player?.hand.findIndex((card) => card.instanceId === targetInstanceId) ?? -1;
+      if (!player || targetIndex < 0) return false;
+      const target = player.hand[targetIndex];
+      const transformed = createCardFromBase("wood_gitch", side);
+      transformed.instanceId = target.instanceId;
+      transformed.handTurns = target.handTurns || 0;
+      player.hand.splice(targetIndex, 1, transformed);
+      addLog(`${sourceCard?.name || CARD_BASES.wood_gitch.name}の効果：手札の「${target.name}」を「木っち（ぎっち）」に変化させました。`);
+      state.message = `手札の「${target.name}」が「木っち（ぎっち）」に変化しました。`;
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function beginWoodGitchHandTransform(side, sourceCard, options = {}) {
+      const candidates = state.players[side]?.hand || [];
+      if (candidates.length === 0) {
+        addLog(`${sourceCard.name}の効果：変化させる手札がありません。`);
+        return false;
+      }
+      const requestedId = options.woodGitchTransformId || null;
+      if (requestedId && candidates.some((card) => card.instanceId === requestedId)) {
+        return resolveWoodGitchHandTransform(side, requestedId, sourceCard, false);
+      }
+      if (isCpuControlledBattleSide(side)) {
+        const target = [...candidates]
+          .sort((a, b) => trainingAiChoiceCardScore(side, a) - trainingAiChoiceCardScore(side, b))[0];
+        return resolveWoodGitchHandTransform(side, target.instanceId, sourceCard, false);
+      }
+      if (side !== "player") {
+        const target = [...candidates]
+          .sort((a, b) => trainingAiChoiceCardScore(side, a) - trainingAiChoiceCardScore(side, b))[0];
+        return resolveWoodGitchHandTransform(side, target.instanceId, sourceCard, false);
+      }
+      return openCardChoice({
+        mode: "wood_gitch_transform",
+        title: sourceCard.name,
+        message: "「木っち（ぎっち）」に変化させる自分の手札を1枚選んでください。",
+        cards: candidates,
+        min: 1,
+        max: 1,
+        confirmLabel: "このカードを変化",
+        context: { sourceCard }
+      });
     }
 
     function beginKansaiVoiceTargetChoice(side, sourceCard) {
@@ -46952,12 +47051,12 @@
         france_asakura: "このカードが出席したとき、場の環境カードを破壊する。",
         cafeteria_lady: "環境が「食堂」であるかぎり、このカードの戦意を-1、攻撃力を+1、体力を+2する。",
         curry_treater: "このカードが出席したとき、自分のデッキから「グリーンカレー」1枚を手札に加える。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
-        chen_san: "このカードが出席したとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
+        chen_san: "このカードを手札から出席させたとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
         tissue_distributor: "このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の場のヴァンパイアすべての体力を+2する。",
         apprentice_vampire: "このカードが席マスに出席したとき、隣の空き席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-3する。",
         vampire: "陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。",
         zombie: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を「ゾンビ」にする。ヴァンパイアにはこの効果は使用しない。",
-        impossible_high_note: "このカードが出席したとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
+        impossible_high_note: "このカードを手札から出席させたとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
         dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを2枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
         acting_out_man: "このカードが出席したとき、自分の教師すべての体力を2回復し、相手の学生すべてに1ダメージを与える。",
@@ -47008,7 +47107,7 @@
         loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
         small_omata: "このカードは教卓マスにのみ出席できる。このカードを手札から出席させたとき、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。このカードを戦意10で手札から出席させたとき、このカードと自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
         big_omata: "注目と陽気を持つ。自分の席マスすべてを占有し、1人の出席者として扱う。出席した時、相手の講義室の出席者すべては1ターン攻撃できない。",
-        wood_gitch: "このカードを手札から出席させた時、手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
+        wood_gitch: "このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。",
         gitch: "進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。",
         gigi_blood: "進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
@@ -47843,10 +47942,13 @@
       createCardFromBase,
       moveToTrash,
       moveHandCardToTrash,
+      beginWoodGitchHandTransform,
+      resolveWoodGitchHandTransform,
       resolveGoAwayChoice,
       pickCardsFromDeckAndTrash,
       restoreRecentBoardCard,
       makeBoardCard,
+      playCard,
       placeCardFromHand,
       startCardTest,
       beginItemUse,
