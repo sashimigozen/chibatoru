@@ -18351,7 +18351,7 @@
     ));
     const ONLINE_DECK_DESCRIPTOR_PREFIX = "chibattle-online-deck-v1";
     const SPECIALTY_CARD_IDS = Object.freeze({
-      common: ["aggro_army", "aggro_kingdom", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "pad_present_creator", "quick_quiz_tournament", "sage_legacy", "smart_me", "strict_lateness_teacher", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
+      common: ["aggro_army", "aggro_kingdom", "ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_blue_bird", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "king_ghidorah_bed", "laughing_front_student", "on_demand_business", "oni_shima_ai", "pad_present_creator", "quick_quiz_tournament", "sage_legacy", "smart_me", "strict_lateness_teacher", "strong_student", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"],
       gakuyukai_item: ["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "company_one_day", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "enough_to_fly", "failure_student", "front_door", "full_throttle", "greeting_3000", "ii_daro_tte", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "tsurai_nara", "ultimate_yuta", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"],
       cafeteria: ["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"],
       design: ["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"],
@@ -18743,7 +18743,7 @@
       gigi_blood: []
     };
     let ALL_DECK_IDS = [
-      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "single_cell", "absent_student", "adjective_student", "general_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
+      "aggro_student", "aggro_king", "scout_student", "ta_squad", "happy_blue_bird", "suit_student", "bust_suit", "intern", "single_cell", "absent_student", "adjective_student", "general_student", "strong_student", "yuta", "aggro_queen", "ae_student", "super_ae_student", "hurried_student",
       "lazy_student", "cancel_student", "tokyo_tech_bro", "back_question_student", "best_friend", "laughing_front_student", "eaten_student", "trpg_member", "ttb", "predator",
       "student_comedy", "acting_out_man", "seat_taking_group", "sniper", "cynical_student", "loud_student", "college_student_vibe", "enemy_student", "enemy_boss", "live_person", "dobby", "pachin_uni", "protein_drinker", "fridge_thief",
       "failure_student", "success_student", "bounce_day", "yocchan", "trendy_student", "rebirth_student", "lone_wolf", "proliferating_enemy", "delayed_student", "infight_shogi", "aiben", "nyotei", "extra_people", "angry_maker", "elite_open_chatter", "word_increaser", "impossible_pink_fat", "loud_group", "ta_killer", "dark_yuta",
@@ -18790,6 +18790,7 @@
 
     const CARD_BASES = {
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
+      strong_student: { name: "強靭な学生", type: "student", cost: 6, attack: 7, hp: 7, allowedZones: ["seat", "teacher"] },
       suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
       ta_squad: { name: "TA隊長", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
       happy_blue_bird: { name: "幸せの青い鳥", type: "student", cost: 2, attack: 5, hp: 5, allowedZones: ["seat", "teacher"] },
@@ -19022,6 +19023,7 @@
     // depending on an old UI-only grouping.
     const CATEGORY_BY_CARD_ID = Object.freeze({
       absolute_woman: "common",
+      strong_student: "common",
       pad_present_creator: "common",
       diamond_dust: "design",
       happy_experience: "common",
@@ -19109,6 +19111,22 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.6",
+        date: "2026年9月26日",
+        summary: "「ちがうよ」のカードテキストを明確化し、新しい共通カード「強靭な学生」を追加しました。",
+        changes: [
+          {
+            title: "ちがうよ",
+            before: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
+            after: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。"
+          },
+          {
+            title: "強靭な学生",
+            after: "「強靭な学生」\n学生／共通カード／戦意6／攻撃力7／体力7\n効果なし。"
+          }
+        ]
+      },
       {
         version: "ver.0.23.5",
         date: "2026年9月24日",
@@ -47130,7 +47148,8 @@
         homeless_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         quiet_please: "相手の攻撃力4以上の出席者1人を指名する。その出席者は攻撃できない。",
         seriously_hit: "相手の出席者1人を指名し、破壊する。",
-        chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれカードを4枚引く。",
+        chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。",
+        strong_student: "効果なし。",
         favorite_number_s: "相手の教卓マスにいる教師1人を指名し、破壊する。その後、その教師と同名のカード1枚を自分の手札に加える。",
         sexual_eye: "自分のデッキから「U太」を1枚まで引く。",
         yoyu_announce: "「U太」を1枚手札に生成し、カードを1枚ドローする。",
