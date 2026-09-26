@@ -697,6 +697,12 @@
       effect: "自分のデッキから学生、教師、持ち物をそれぞれ1枚ずつランダムに手札へ加える。",
       combo: "", notes: "該当する種類がデッキにない場合、その種類は手札に加えない。"
     });
+    upsertCard({
+      id: "pure_destruction", name: "純粋の破壊", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "自分の講義室に戦意6以上の学生がいるなら、このカードの戦意は0になる。環境マスにある環境カードを校外エリアへ送る。その後、自分のデッキから戦意6以上の学生カード1枚をランダムに手札へ加える。",
+      combo: "バカでかい型", notes: "環境カードがない場合でも使用できる。"
+    });
     function normalizeLectureRoomText(value) {
       return String(value || "")
         .replaceAll("お互いの場", "お互いの講義室")
