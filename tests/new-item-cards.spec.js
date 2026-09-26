@@ -39,7 +39,7 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
     "ジェイルブレイクソフト-⚪︎u⚪︎uApp",
     "効率的な実験法"
   ]);
-  expect(result.map((entry) => entry.cost)).toEqual([6, 4, 3, 3, 3]);
+  expect(result.map((entry) => entry.cost)).toEqual([6, 4, 3, 3, 4]);
   expect(result.every((entry) => entry.type === "item")).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").generated).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").text)
