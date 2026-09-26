@@ -667,6 +667,36 @@
       effect: "自分の講義室の空いている席マスに「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室の空いている席マスに出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。各プレイヤーは、自分が送った枚数だけ、自分の講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
       combo: "アイベン / にょてい", notes: "お互いの講義室に空いている席マスが1つずつ必要。0枚選択可。各プレイヤーの強化値は、自分が送った手札の枚数だけ。"
     });
+    upsertCard({
+      id: "classroom_change", name: "教室変更", type: "item", cost: 6, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに遅刻1を付与する。",
+      combo: "遅刻", notes: "元のマスへ出席できない場合、その出席者を校外エリアへ送る。"
+    });
+    upsertCard({
+      id: "annoying_na", name: "煩わしいなぁ", type: "item", cost: 4, attack: null, hp: null,
+      availability: "deck", placement: "自分のターン開始時に手札から使用",
+      effect: "自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ2回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。",
+      combo: "", notes: "攻撃時効果、ターン終了時効果、常時効果は使用できる。"
+    });
+    upsertCard({
+      id: "childhood_memory_tutuapp", name: "-幼き日の思い出-⚪︎u⚪︎uApp", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
+      combo: "ジェイルブレイクソフト-⚪︎u⚪︎uApp", notes: "手札で迎えた自分のターン開始回数を数える。"
+    });
+    upsertCard({
+      id: "jailbreak_tutuapp", name: "ジェイルブレイクソフト-⚪︎u⚪︎uApp", type: "item", cost: 3, attack: null, hp: null,
+      availability: "generated", placement: "手札から使用",
+      effect: "お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げ、その差分と同じ枚数のカードを引く。",
+      combo: "-幼き日の思い出-⚪︎u⚪︎uApp", notes: "この効果で出席したカードの出席時効果は使用する。比較には選択時に手札へ表示されている戦意を使う。"
+    });
+    upsertCard({
+      id: "efficient_experiment_method", name: "効率的な実験法", type: "item", cost: 3, attack: null, hp: null,
+      availability: "deck", placement: "手札から使用",
+      effect: "自分のデッキから学生、教師、持ち物をそれぞれ1枚ずつランダムに手札へ加える。",
+      combo: "", notes: "該当する種類がデッキにない場合、その種類は手札に加えない。"
+    });
     function normalizeLectureRoomText(value) {
       return String(value || "")
         .replaceAll("お互いの場", "お互いの講義室")
