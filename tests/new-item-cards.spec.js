@@ -42,8 +42,10 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
   expect(result.map((entry) => entry.cost)).toEqual([6, 4, 3, 3, 3]);
   expect(result.every((entry) => entry.type === "item")).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").generated).toBe(true);
+  expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").text)
+    .toBe("お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。\n相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。");
   expect(result.find((entry) => entry.baseId === "classroom_change").text)
-    .toBe("相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻1]を付与する。");
+    .toBe("相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻2]を付与する。");
 
   const sources = ["index.html", "card_rules.txt", "カード管理台帳.html"]
     .map((file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
@@ -53,7 +55,7 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
   }
 });
 
-test("教室変更は相手の出席者を遅刻1にし、戻れない出席者を校外へ送る", async ({ page }) => {
+test("教室変更は相手の出席者を遅刻2にし、戻れない出席者を校外へ送る", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -82,10 +84,13 @@ test("教室変更は相手の出席者を遅刻1にし、戻れない出席者�
       remaining: entry.remaining,
       preserve: entry.preserveBoardState
     }));
+    api.resolveLateZone("opponent");
+    const lateAfterFirstTurn = state.players.opponent.late.map((entry) => entry.remaining);
     state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase("aggro_student", "opponent"));
     api.resolveLateZone("opponent");
     return {
       lateBefore,
+      lateAfterFirstTurn,
       returnedAttack: state.players.opponent.board.seats[1]?.attack,
       returnedHp: state.players.opponent.board.seats[1]?.currentHp,
       blockedSentToTrash: state.players.opponent.trash.some((card) => card.instanceId === blocked.instanceId)
@@ -93,7 +98,8 @@ test("教室変更は相手の出席者を遅刻1にし、戻れない出席者�
   });
 
   expect(result.lateBefore).toHaveLength(2);
-  expect(result.lateBefore.every((entry) => entry.remaining === 1 && entry.preserve)).toBe(true);
+  expect(result.lateBefore.every((entry) => entry.remaining === 2 && entry.preserve)).toBe(true);
+  expect(result.lateAfterFirstTurn).toEqual([1, 1]);
   expect(result.returnedAttack).toBe(4);
   expect(result.returnedHp).toBe(1);
   expect(result.blockedSentToTrash).toBe(true);
@@ -180,7 +186,7 @@ test("効率的な実験法は学生・教師・持ち物を1枚ずつ手札へ�
   expect(result).toEqual(["item", "student", "teacher"]);
 });
 
-test("ジェイルブレイクは両者を無料出席させ、戦意差で使用者側を強化して引く", async ({ page }) => {
+test("ジェイルブレイクは両者を無料出席させ、戦意差で使用者側だけを強化する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -214,7 +220,7 @@ test("ジェイルブレイクは両者を無料出席させ、戦意差で使�
     will: 7,
     own: { attack: 6, hp: 6 },
     enemy: "strong_student",
-    handCount: 4,
+    handCount: 0,
     itemInTrash: true
   });
 });
