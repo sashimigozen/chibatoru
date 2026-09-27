@@ -91,12 +91,12 @@ test("旧データのトークンも回収・デッキ戻し・逆行の対象�
       playerTrash: state.players.player.trash.map(c => c.baseId), opponentTrash: state.players.opponent.trash.length,
       hand: state.players.opponent.hand.map(c => c.baseId), history: state.recentBoardTrash.length };
   });
-  expect(result.returned).toBe(false);
+  expect(result.returned).toBe(true);
   expect(result.restored).toBe(false);
-  expect(result.will).toBe(10);
+  expect(result.will).toBe(8);
   expect(result.picked).toBe(1);
   expect(result.hand).toEqual(["key"]);
-  expect(result.playerTrash).toEqual(Array(4).fill("general_student"));
+  expect(result.playerTrash).toEqual(["go_away"]);
   expect(result.opponentTrash).toBe(0);
   expect(result.history).toBe(0);
 });
@@ -128,6 +128,41 @@ test("通常カード5枚のデッキ戻しとドローは引き続き使える"
     return { success, deck: player.deck.length, hand: player.hand.length, trash: player.trash.map(c => c.baseId) };
   });
   expect(result).toEqual({ success: true, deck: 3, hand: 2, trash: ["go_away"] });
+});
+
+test("行かれてはいかがですかは通常カードを1枚から5枚まで選べる", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const cases = [1, 3, 5, 6].map((count) => {
+      const player = api.state.players.player;
+      player.deck = [];
+      player.trash = Array.from({ length: count }, () => api.createCardFromBase("general_student", "player"));
+      const item = api.createCardFromBase("go_away", "player");
+      player.hand = [item];
+      player.will = 10;
+      const success = api.resolveGoAwayChoice("player", item, player.trash.map((card) => card.instanceId), false);
+      return {
+        count,
+        success,
+        will: player.will,
+        deck: player.deck.length,
+        hand: player.hand.length,
+        trash: player.trash.length
+      };
+    });
+    return {
+      text: api.cardRulesText(api.createCardFromBase("go_away", "player")),
+      cases
+    };
+  });
+
+  expect(result.text).toBe("自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚まで指名する。\nそれらを自分のデッキに戻してシャッフルし、カードを2枚引く。");
+  expect(result.cases).toEqual([
+      { count: 1, success: true, will: 8, deck: 0, hand: 1, trash: 1 },
+      { count: 3, success: true, will: 8, deck: 1, hand: 2, trash: 1 },
+      { count: 5, success: true, will: 8, deck: 3, hand: 2, trash: 1 },
+      { count: 6, success: false, will: 10, deck: 0, hand: 1, trash: 6 }
+    ]);
 });
 
 test("今回の更新情報を表示し、一度読んだら未読表示が消える", async ({ page }) => {
