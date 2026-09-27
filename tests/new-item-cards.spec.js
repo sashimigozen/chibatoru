@@ -39,7 +39,7 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
     "ジェイルブレイクソフト-⚪︎u⚪︎uApp",
     "効率的な実験法"
   ]);
-  expect(result.map((entry) => entry.cost)).toEqual([6, 4, 3, 3, 4]);
+  expect(result.map((entry) => entry.cost)).toEqual([6, 4, 3, 3, 3]);
   expect(result.every((entry) => entry.type === "item")).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").generated).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").text)
@@ -181,9 +181,12 @@ test("効率的な実験法は学生・教師・持ち物を1枚ずつ手札へ�
       api.createCardFromBase("hondara", "player")
     ];
     api.castImmediateItem("player", item, false);
-    return state.players.player.hand.map((card) => card.type).sort();
+    return {
+      handTypes: state.players.player.hand.map((card) => card.type).sort(),
+      will: state.players.player.will
+    };
   });
-  expect(result).toEqual(["item", "student", "teacher"]);
+  expect(result).toEqual({ handTypes: ["item", "student", "teacher"], will: 7 });
 });
 
 test("ジェイルブレイクは両者を無料出席させ、戦意差で使用者側だけを強化する", async ({ page }) => {
