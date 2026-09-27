@@ -50,6 +50,31 @@ test("2枚を共通カードとして登録し、確定したカードテキス�
   ]);
 });
 
+test("ガン詰め講師のカードテストは初期手札に2枚用意し、専用デッキをドローカード中心にする", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("cornering_lecturer");
+    const hand = api.state.players.player.hand.map((card) => card.baseId);
+    const deck = api.state.players.player.deck.map((card) => card.baseId);
+    const drawCardIds = new Set(["onigiri_draw", "sage_legacy", "wet_meal_ticket", "scary_question"]);
+    return {
+      hand,
+      deckCount: deck.length,
+      lecturerCount: deck.filter((baseId) => baseId === "cornering_lecturer").length,
+      drawCardCount: deck.filter((baseId) => drawCardIds.has(baseId)).length,
+      otherCards: deck.filter((baseId) => baseId !== "cornering_lecturer" && !drawCardIds.has(baseId))
+    };
+  });
+
+  expect(result).toEqual({
+    hand: ["cornering_lecturer", "cornering_lecturer"],
+    deckCount: 45,
+    lecturerCount: 1,
+    drawCardCount: 44,
+    otherCards: []
+  });
+});
+
 test("ガン詰め講師の効果1は自分のデッキに怖い質問を10枚生成する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -182,7 +207,8 @@ test("ver.0.23.6の更新情報へ2枚を統合する", async ({ page }) => {
   const entry = page.locator(".update-entry", { hasText: "2026年9月26日" }).first();
   await expect(entry.locator("summary")).toContainText("ver.0.23.6");
   await entry.locator("summary").click();
-  await expect(entry.locator(".update-change", { hasText: "ガン詰め講師" })).toContainText("送った枚数と同じ回数");
-  const scaryQuestionChange = entry.locator(".update-change", { hasText: "怖い質問" }).last();
+  const lecturerChange = entry.locator("strong", { hasText: /^ガン詰め講師$/ }).locator("..").locator("..");
+  await expect(lecturerChange).toContainText("送った枚数と同じ回数");
+  const scaryQuestionChange = entry.locator("strong", { hasText: /^怖い質問$/ }).locator("..").locator("..");
   await expect(scaryQuestionChange).toContainText("その後、自分のデッキからカードを1枚引く");
 });

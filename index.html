@@ -18719,7 +18719,7 @@
       destructive_lie: [],
       leaving_on_time_lecturer: [],
       cursed_students: ["aggro_student"],
-      cornering_lecturer: ["scary_question"],
+      cornering_lecturer: ["cornering_lecturer"],
       scary_question: [],
       absolute_woman: [],
       diamond_dust: [],
@@ -19128,7 +19128,7 @@
       {
         version: "ver.0.23.6",
         date: "2026年9月26日",
-        summary: "「ちがうよ」のカードテキストを明確化し、「強靭な学生」「教室変更」「煩わしいなぁ」「-幼き日の思い出-⚪︎u⚪︎uApp」「ジェイルブレイクソフト-⚪︎u⚪︎uApp」「効率的な実験法」「純粋の破壊」「破壊させる嘘」「定時帰りの講師」「呪われた学生たち」「ガン詰め講師」「怖い質問」を追加しました。戦意0と使用不能カードの戦意表示も調整しました。",
+        summary: "「ちがうよ」のカードテキストを明確化し、「強靭な学生」「教室変更」「煩わしいなぁ」「-幼き日の思い出-⚪︎u⚪︎uApp」「ジェイルブレイクソフト-⚪︎u⚪︎uApp」「効率的な実験法」「純粋の破壊」「破壊させる嘘」「定時帰りの講師」「呪われた学生たち」「ガン詰め講師」「怖い質問」を追加しました。戦意0と使用不能カードの戦意表示、および「ガン詰め講師」のカードテスト構成も調整しました。",
         changes: [
           {
             title: "ちがうよ",
@@ -19182,6 +19182,11 @@
           {
             title: "怖い質問",
             after: "「怖い質問」\n持ち物／共通カード／戦意1\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。"
+          },
+          {
+            title: "ガン詰め講師のカードテスト",
+            before: "初期手札に「ガン詰め講師」と「怖い質問」を1枚ずつ用意していた。",
+            after: "初期手札に「ガン詰め講師」を2枚用意し、専用デッキをドロー効果を持つカード中心の構成に変更。デッキにも「ガン詰め講師」を1枚追加。"
           },
           {
             title: "戦意表示",
@@ -46359,7 +46364,20 @@
     }
 
     function createTestDeck(side, baseId, extraBaseIds = []) {
+      if (side === "player" && baseId === "cornering_lecturer") {
+        return corneringLecturerTestDeckBaseIds().map((deckBaseId) => createCardFromBase(deckBaseId, side));
+      }
       return testDeckBaseIds(baseId, extraBaseIds).map((deckBaseId) => createCardFromBase(deckBaseId, side));
+    }
+
+    function corneringLecturerTestDeckBaseIds() {
+      return [
+        "cornering_lecturer",
+        ...Array(11).fill("onigiri_draw"),
+        ...Array(11).fill("sage_legacy"),
+        ...Array(11).fill("wet_meal_ticket"),
+        ...Array(11).fill("scary_question")
+      ];
     }
 
     function testDeckBaseIds(baseId, extraBaseIds = []) {
@@ -46390,6 +46408,7 @@
       const names = testHandBaseIds(baseId).map((handBaseId) => CARD_BASES[handBaseId].name);
       if (names.length === 1) return `${names[0]}1枚`;
       if (baseId === "ruler") return "定規2枚";
+      if (baseId === "cornering_lecturer") return "ガン詰め講師2枚";
       return names.join("と");
     }
 
