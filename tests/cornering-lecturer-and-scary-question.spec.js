@@ -35,7 +35,7 @@ test("2枚を共通カードとして登録し、確定したカードテキス�
       attack: 2,
       hp: 3,
       category: "common",
-      text: "このカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてを校外エリアへ送る。その後、送った枚数と同じ回数、「怖い質問」の効果を発動する。\n指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。"
+      text: "このカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてをデッキに戻してシャッフルする。その後、戻した枚数と同じ回数、「怖い質問」の効果を発動する。\n指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。"
     },
     {
       baseId: "scary_question",
@@ -102,7 +102,7 @@ test("ガン詰め講師の効果1は自分のデッキに怖い質問を10枚�
   expect(result).toEqual({ played: true, teacher: "cornering_lecturer", questions: 10, will: 0 });
 });
 
-test("効果2は最初に手札の怖い質問をすべて校外へ送り、その枚数だけ効果を発動する", async ({ page }) => {
+test("効果2は最初に手札の怖い質問をすべてデッキへ戻し、その枚数だけ効果を発動する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -140,9 +140,10 @@ test("効果2は最初に手札の怖い質問をすべて校外へ送り、そ�
       opponentSeat: state.players.opponent.board.seats[0],
       opponentLife: state.players.opponent.life,
       handCount: state.players.player.hand.length,
-      handQuestions: state.players.player.hand.filter((card) => card.baseId === "scary_question").length,
       trashQuestions: state.players.player.trash.filter((card) => card.baseId === "scary_question").length,
-      deckCount: state.players.player.deck.length
+      deckCount: state.players.player.deck.length,
+      remainingQuestions: [...state.players.player.hand, ...state.players.player.deck]
+        .filter((card) => card.baseId === "scary_question").length
     };
   });
 
@@ -151,9 +152,9 @@ test("効果2は最初に手札の怖い質問をすべて校外へ送り、そ�
     opponentSeat: null,
     opponentLife: 18,
     handCount: 3,
-    handQuestions: 1,
-    trashQuestions: 3,
-    deckCount: 0
+    trashQuestions: 0,
+    deckCount: 3,
+    remainingQuestions: 4
   });
 });
 
@@ -208,7 +209,7 @@ test("ver.0.23.6の更新情報へ2枚を統合する", async ({ page }) => {
   await expect(entry.locator("summary")).toContainText("ver.0.23.6");
   await entry.locator("summary").click();
   const lecturerChange = entry.locator("strong", { hasText: /^ガン詰め講師$/ }).locator("..").locator("..");
-  await expect(lecturerChange).toContainText("送った枚数と同じ回数");
+  await expect(lecturerChange).toContainText("戻した枚数と同じ回数");
   const scaryQuestionChange = entry.locator("strong", { hasText: /^怖い質問$/ }).locator("..").locator("..");
   await expect(scaryQuestionChange).toContainText("その後、自分のデッキからカードを1枚引く");
 });

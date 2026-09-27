@@ -19177,7 +19177,7 @@
           },
           {
             title: "ガン詰め講師",
-            after: "「ガン詰め講師」\n教師／共通カード／戦意4／攻撃力2／体力3\nこのカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてを校外エリアへ送る。その後、送った枚数と同じ回数、「怖い質問」の効果を発動する。指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。"
+            after: "「ガン詰め講師」\n教師／共通カード／戦意4／攻撃力2／体力3\nこのカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてをデッキに戻してシャッフルする。その後、戻した枚数と同じ回数、「怖い質問」の効果を発動する。指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。"
           },
           {
             title: "怖い質問",
@@ -33606,7 +33606,7 @@
       },
       activate: {
         label: "効果2：怖い質問を発動",
-        effect: "自分の手札にある「怖い質問」すべてを校外エリアへ送る。その後、送った枚数と同じ回数、「怖い質問」の効果を発動する。"
+        effect: "自分の手札にある「怖い質問」すべてをデッキに戻してシャッフルする。その後、戻した枚数と同じ回数、「怖い質問」の効果を発動する。"
       }
     });
 
@@ -35424,12 +35424,10 @@
       const questions = state.players[side].hand.filter((handCard) => handCard.baseId === "scary_question");
       const questionIds = new Set(questions.map((question) => question.instanceId));
       state.players[side].hand = state.players[side].hand.filter((handCard) => !questionIds.has(handCard.instanceId));
-      questions.forEach((question) => moveToTrash(side, question, {
-        suppressLog: true,
-        suppressToast: true,
-        reason: card.name,
-        sourceZone: "hand"
-      }));
+      if (questions.length > 0) {
+        state.players[side].deck = shuffle([...state.players[side].deck, ...questions]);
+        queueAnimation("shuffle", side);
+      }
       let attendeeHits = 0;
       let lifeHits = 0;
       let drawn = 0;
@@ -35440,7 +35438,7 @@
         else attendeeHits += 1;
         drawn += result.drawn;
       });
-      addLog(`${card.name}の効果：手札の「怖い質問」を${questions.length}枚校外エリアへ送り、その効果を${questions.length}回発動しました（出席者へ${attendeeHits}回、相手本体へ${lifeHits}回、${drawn}枚ドロー）。`);
+      addLog(`${card.name}の効果：手札の「怖い質問」を${questions.length}枚デッキに戻してシャッフルし、その効果を${questions.length}回発動しました（出席者へ${attendeeHits}回、相手本体へ${lifeHits}回、${drawn}枚ドロー）。`);
       checkLifeVictory();
       return true;
     }
@@ -47861,7 +47859,7 @@
         impossible_pink_fat: "このカードが出席したとき、自分の場の出席者1人とこのカードに注目を付与する。",
         general_teacher: "講義。教卓マスにいるかぎり、陽気を持つ。",
         leaving_on_time_lecturer: "陽気を持つ。このカードを出席させた後、自分が2回ターンを終了したとき、このカードを校外エリアへ送る。",
-        cornering_lecturer: "このカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてを校外エリアへ送る。その後、送った枚数と同じ回数、「怖い質問」の効果を発動する。指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。",
+        cornering_lecturer: "このカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてをデッキに戻してシャッフルする。その後、戻した枚数と同じ回数、「怖い質問」の効果を発動する。指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。",
         pro_k: "このカードが教卓マスに出席したとき、自分の1行1列と1行3列にTAを1人ずつ出席させ、「咆哮」1枚を手札に生成する。このカードが教卓マスにいるかぎり、自分のTAすべての体力を+1する。",
         lightning_n: "このカードを手札から出席させたとき、「定規」1枚を手札に生成する。このカードを手札から教卓マスに出席させたとき、自分のデッキから「定規」を1枚まで引く。このカードが教卓マスにいるかぎり、講義の対象はヴァンパイアになる。",
         fairy_t: "このカードを手札から教卓マスに出席させたとき、相手の3行目にいる学生を、空いている1行目の席マスへ移動させてもよい。",
