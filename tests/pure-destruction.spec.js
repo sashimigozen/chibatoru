@@ -91,10 +91,13 @@ test("戦意6以上の学生がいれば戦意0になり、環境がなくても
     state.environment = null;
     const item = state.players.player.hand[0];
     const displayedCost = api.effectiveCardCost(item);
+    api.render();
+    const displayedBadge = document.querySelector('#playerHand [data-base-id="pure_destruction"] .card-header .stat-cost')?.textContent || "";
 
     const used = api.castImmediateItem("player", item, false);
     return {
       displayedCost,
+      displayedBadge,
       used,
       will: state.players.player.will,
       hand: state.players.player.hand.map((card) => card.baseId),
@@ -104,6 +107,7 @@ test("戦意6以上の学生がいれば戦意0になり、環境がなくても
 
   expect(result).toEqual({
     displayedCost: 0,
+    displayedBadge: "0",
     used: true,
     will: 0,
     hand: ["loud_student"],

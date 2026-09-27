@@ -57,7 +57,7 @@ for (const count of [0, 2, 4, 5, 7]) {
   });
 }
 
-test("戦意0で学生・持ち物・環境を使用でき、カードと確認画面にも戦意0を表示する", async ({ page }) => {
+test("戦意0で学生・持ち物・環境を使用でき、カードの丸には0だけを表示する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const player = api.state.players.player;
@@ -73,8 +73,9 @@ test("戦意0で学生・持ち物・環境を使用でき、カードと確認�
     api.showBattleCardPreview(card);
     return { placed, used, environment, will: player.will, displayedZero };
   });
-  expect(result).toEqual({ placed: true, used: true, environment: true, will: 0, displayedZero: "戦意0" });
-  await expect(page.locator("#battleCardPreview")).toContainText("戦意0");
+  expect(result).toEqual({ placed: true, used: true, environment: true, will: 0, displayedZero: "0" });
+  await expect(page.locator("#battleCardPreview .card-header .stat-cost")).toHaveText("0");
+  await expect(page.locator("#battleCardPreview .card-header .stat-cost")).toHaveAttribute("aria-label", "戦意0");
 });
 
 test("戦意10のスモール小俣も変化を維持しつつ消費戦意0になる", async ({ page }) => {

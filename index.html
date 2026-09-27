@@ -16846,27 +16846,6 @@
       }
     }
 
-    /* A zero still consumes will.  Spell it out so it cannot be mistaken for
-       the separate "戦意なし" state used by generated cards. */
-    .card:not(.field-card) .card-stat.stat-cost.zero-cost {
-      font-size: clamp(7px, 1vw, 11px) !important;
-      letter-spacing: -.08em;
-      white-space: nowrap;
-    }
-
-    .battle-screen .field-card .field-stat.cost.zero-cost {
-      width: 36px !important;
-      min-width: 36px !important;
-      border-radius: 999px !important;
-      font-size: 7px !important;
-      letter-spacing: -.08em;
-      white-space: nowrap;
-    }
-
-    .battle-screen .field-card:has(.field-stat.cost.zero-cost) .field-card-title {
-      padding-left: 38px;
-    }
-
     /* The local deck uses one explicit desktop anchor for both online roles.
        Its centre is the same x-axis as the will displays and end-turn button;
        unlike the legacy rule, this does not depend on opposing left/right or
@@ -19134,7 +19113,7 @@
       {
         version: "ver.0.23.6",
         date: "2026年9月26日",
-        summary: "「ちがうよ」のカードテキストを明確化し、「強靭な学生」「教室変更」「煩わしいなぁ」「-幼き日の思い出-⚪︎u⚪︎uApp」「ジェイルブレイクソフト-⚪︎u⚪︎uApp」「効率的な実験法」「純粋の破壊」を追加しました。",
+        summary: "「ちがうよ」のカードテキストを明確化し、「強靭な学生」「教室変更」「煩わしいなぁ」「-幼き日の思い出-⚪︎u⚪︎uApp」「ジェイルブレイクソフト-⚪︎u⚪︎uApp」「効率的な実験法」「純粋の破壊」を追加しました。戦意0と使用不能カードの戦意表示も調整しました。",
         changes: [
           {
             title: "ちがうよ",
@@ -19168,6 +19147,11 @@
           {
             title: "純粋の破壊",
             after: "「純粋の破壊」\n持ち物／バカでかい型／戦意3\n自分の講義室に戦意6以上の学生がいるなら、このカードの戦意は0になる。環境マスにある環境カードを校外エリアへ送る。その後、自分のデッキから戦意6以上の学生カード1枚をランダムに手札へ加える。"
+          },
+          {
+            title: "戦意表示",
+            before: "戦意が0のカードは、戦意の丸の中に「戦意0」と表示されていた。",
+            after: "戦意が0のカードは、戦意の丸の中に数字の「0」だけを表示する。使用できないカードには、戦意の数字と丸を表示しない。"
           }
         ]
       },
@@ -43540,9 +43524,9 @@
       const hasStats = card.type !== "environment" && card.type !== "item";
       const hpValue = boardCard ? card.currentHp : displayedCardHp(card);
       const effectiveCost = effectiveCardCost(card);
-      const costBadge = card.noCost && !isChaosBattle()
+      const costBadge = !shouldDisplayWillBadge(card)
         ? ""
-        : `<span class="card-stat stat-cost${effectiveCost === 0 ? " zero-cost" : ""}" aria-label="戦意${effectiveCost}">${effectiveCost === 0 ? "戦意0" : effectiveCost}</span>`;
+        : `<span class="card-stat stat-cost" aria-label="戦意${effectiveCost}">${effectiveCost}</span>`;
       const attackValue = boardCard ? `攻${card.attack}` : displayedCardAttack(card);
       const hpDisplayValue = boardCard ? `体${hpValue}` : hpValue;
       const defenseValue = boardCard ? card.defense : (card.defense ?? 0);
@@ -43641,9 +43625,9 @@
       const status = statusParts.length ? `<span class="field-card-status status-icons">${statusIconHtml(statusParts)}</span>` : "";
       const hasStats = card.type !== "environment" && card.type !== "item";
       const effectiveCost = effectiveCardCost(card);
-      const cost = card.noCost && !isChaosBattle()
+      const cost = !shouldDisplayWillBadge(card)
         ? ""
-        : `<span class="field-stat cost${effectiveCost === 0 ? " zero-cost" : ""}" aria-label="戦意${effectiveCost}">${effectiveCost === 0 ? "戦意0" : effectiveCost}</span>`;
+        : `<span class="field-stat cost" aria-label="戦意${effectiveCost}">${effectiveCost}</span>`;
       const stats = hasStats
         ? `<span class="field-card-stats"><span class="field-stat attack">${card.attack}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
@@ -43679,6 +43663,11 @@
     function costText(card) {
       if (card.noCost && !isChaosBattle()) return "戦意なし";
       return `戦意${effectiveCardCost(card)}`;
+    }
+
+    function shouldDisplayWillBadge(card) {
+      if (!card || card.unusable) return false;
+      return !card.noCost || isChaosBattle();
     }
 
     function isChaosBattle() {

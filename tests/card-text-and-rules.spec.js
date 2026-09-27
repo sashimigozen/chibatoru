@@ -170,7 +170,7 @@ test("更新情報のカード追加・修正をカード名、ステータス�
   await expect(cardChange.locator(".update-after")).toContainText("「思ってまう」\n持ち物／学友会・持ち物／戦意1／エースぺ");
 });
 
-test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
+test("戦意0は丸の中に0だけを表示し、使用不能カードには丸を表示しない", async ({ page }) => {
   await page.goto(gameUrl);
 
   await page.evaluate(() => {
@@ -179,8 +179,23 @@ test("戦意0と戦意なしを表示上で区別する", async ({ page }) => {
 
   const zeroCostCard = page.locator('.player-hand .hand-card[data-base-id="tsurai_nara"]');
   await expect(zeroCostCard).toBeVisible();
-  await expect(zeroCostCard.locator(".card-header .stat-cost")).toHaveText("戦意0");
+  await expect(zeroCostCard.locator(".card-header .stat-cost")).toHaveText("0");
   await expect(zeroCostCard.locator(".card-header .stat-cost")).toHaveAttribute("aria-label", "戦意0");
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.hand = [api.createCardFromBase("alpha", "player")];
+    api.render();
+  });
+  const unusableCard = page.locator('.player-hand .hand-card[data-base-id="alpha"]');
+  await expect(unusableCard).toBeVisible();
+  await expect(unusableCard.locator(".stat-cost")).toHaveCount(0);
+
+  await page.evaluate(() => {
+    window.__chibattle.state.battleRuleId = "chaos";
+    window.__chibattle.render();
+  });
+  await expect(unusableCard.locator(".stat-cost")).toHaveCount(0);
 
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
