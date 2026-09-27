@@ -721,6 +721,18 @@
       effect: "このカードを手札から出席させたとき、自分の講義室の空いている席マスを3つ選ぶ。それぞれに「アグロ大学生」1人を出席させる。",
       combo: "アグロ大学生", notes: "共通カード。空いている席マスを3つ選べない場合は出席させられない。"
     });
+    upsertCard({
+      id: "cornering_lecturer", name: "ガン詰め講師", type: "teacher", cost: 4, attack: 2, hp: 3,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "このカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてを校外エリアへ送る。その後、送った枚数と同じ回数、「怖い質問」の効果を発動する。指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。",
+      combo: "怖い質問", notes: "共通カード。効果2は、処理開始時に手札にあった「怖い質問」の枚数だけ発動する。"
+    });
+    upsertCard({
+      id: "scary_question", name: "怖い質問", type: "item", cost: 1, attack: null, hp: null,
+      availability: "deck", placement: "対象をランダムに決定して使用",
+      effect: "相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。",
+      combo: "ガン詰め講師", notes: "共通カード。相手の出席者がいない場合、通常は使用できない。"
+    });
     function normalizeLectureRoomText(value) {
       return String(value || "")
         .replaceAll("お互いの場", "お互いの講義室")

@@ -1,0 +1,188 @@
+const { test, expect } = require("@playwright/test");
+const path = require("node:path");
+const { pathToFileURL } = require("node:url");
+
+const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
+
+test.beforeEach(async ({ page }) => {
+  await page.goto(gameUrl);
+});
+
+test("2枚を共通カードとして登録し、確定したカードテキストを表示する", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return ["cornering_lecturer", "scary_question"].map((baseId) => {
+      const card = api.createCardFromBase(baseId, "player");
+      return {
+        baseId,
+        name: card.name,
+        type: card.type,
+        cost: card.cost,
+        attack: card.attack ?? null,
+        hp: card.hp ?? null,
+        category: card.category,
+        text: api.cardRulesText(card)
+      };
+    });
+  });
+
+  expect(result).toEqual([
+    {
+      baseId: "cornering_lecturer",
+      name: "ガン詰め講師",
+      type: "teacher",
+      cost: 4,
+      attack: 2,
+      hp: 3,
+      category: "common",
+      text: "このカードを手札から教卓マスに出席させたとき、次の中から1つを選ぶ。\n1. 自分のデッキに「怖い質問」10枚を生成する。\n2. 自分の手札にある「怖い質問」すべてを校外エリアへ送る。その後、送った枚数と同じ回数、「怖い質問」の効果を発動する。\n指名できる相手の出席者がいない場合、相手本体を対象としてその効果を発動する。"
+    },
+    {
+      baseId: "scary_question",
+      name: "怖い質問",
+      type: "item",
+      cost: 1,
+      attack: null,
+      hp: null,
+      category: "common",
+      text: "相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。"
+    }
+  ]);
+});
+
+test("ガン詰め講師の効果1は自分のデッキに怖い質問を10枚生成する", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.currentSide = "player";
+    state.actionTurn = 1;
+    state.players.player.will = 4;
+    state.players.player.deck = [];
+    state.players.player.hand = [api.createCardFromBase("cornering_lecturer", "player")];
+    state.players.player.board.teacher = null;
+    const lecturer = state.players.player.hand[0];
+    const played = api.placeCardFromHand("player", lecturer.instanceId, "teacher", "player", null, false, {
+      corneringLecturerChoiceId: "generate"
+    });
+    return {
+      played,
+      teacher: state.players.player.board.teacher?.baseId || null,
+      questions: state.players.player.deck.filter((card) => card.baseId === "scary_question").length,
+      will: state.players.player.will
+    };
+  });
+
+  expect(result).toEqual({ played: true, teacher: "cornering_lecturer", questions: 10, will: 0 });
+});
+
+test("効果2は最初に手札の怖い質問をすべて校外へ送り、その枚数だけ効果を発動する", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.currentSide = "player";
+    state.actionTurn = 1;
+    state.players.player.will = 4;
+    state.players.player.deck = [
+      api.createCardFromBase("scary_question", "player"),
+      api.createCardFromBase("general_student", "player"),
+      api.createCardFromBase("general_teacher", "player")
+    ];
+    state.players.player.hand = [
+      api.createCardFromBase("cornering_lecturer", "player"),
+      api.createCardFromBase("scary_question", "player"),
+      api.createCardFromBase("scary_question", "player"),
+      api.createCardFromBase("scary_question", "player")
+    ];
+    state.players.player.trash = [];
+    state.players.player.board.teacher = null;
+    state.players.opponent.board.seats.fill(null);
+    state.players.opponent.board.teacher = null;
+    state.players.opponent.life = 20;
+    state.players.opponent.board.seats[0] = api.makeBoardCard({
+      ...api.createCardFromBase("general_student", "opponent"),
+      hp: 1
+    });
+    const lecturer = state.players.player.hand[0];
+    const played = api.placeCardFromHand("player", lecturer.instanceId, "teacher", "player", null, false, {
+      corneringLecturerChoiceId: "activate"
+    });
+    return {
+      played,
+      opponentSeat: state.players.opponent.board.seats[0],
+      opponentLife: state.players.opponent.life,
+      handCount: state.players.player.hand.length,
+      handQuestions: state.players.player.hand.filter((card) => card.baseId === "scary_question").length,
+      trashQuestions: state.players.player.trash.filter((card) => card.baseId === "scary_question").length,
+      deckCount: state.players.player.deck.length
+    };
+  });
+
+  expect(result).toEqual({
+    played: true,
+    opponentSeat: null,
+    opponentLife: 18,
+    handCount: 3,
+    handQuestions: 1,
+    trashQuestions: 3,
+    deckCount: 0
+  });
+});
+
+test("通常の怖い質問は相手の出席者がいる場合だけ使え、1ダメージ後に1枚引く", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.screen = "battle";
+    state.phase = "battle";
+    state.currentSide = "player";
+    state.actionTurn = 1;
+    state.players.player.will = 1;
+    state.players.player.deck = [api.createCardFromBase("general_student", "player")];
+    state.players.player.hand = [api.createCardFromBase("scary_question", "player")];
+    state.players.player.trash = [];
+    state.players.opponent.board.seats.fill(null);
+    state.players.opponent.board.teacher = null;
+    const item = state.players.player.hand[0];
+    const withoutTarget = api.canUseItemNow(item);
+    state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase("strong_student", "opponent"));
+    const withTarget = api.canUseItemNow(item);
+    const used = api.castImmediateItem("player", item, false);
+    return {
+      withoutTarget,
+      withTarget,
+      used,
+      targetHp: state.players.opponent.board.seats[0]?.currentHp || null,
+      hand: state.players.player.hand.map((card) => card.baseId),
+      trash: state.players.player.trash.map((card) => card.baseId),
+      will: state.players.player.will
+    };
+  });
+
+  expect(result).toEqual({
+    withoutTarget: false,
+    withTarget: true,
+    used: true,
+    targetHp: 6,
+    hand: ["general_student"],
+    trash: ["scary_question"],
+    will: 0
+  });
+});
+
+test("ver.0.23.6の更新情報へ2枚を統合する", async ({ page }) => {
+  await page.evaluate(() => {
+    window.__chibattle.state.screen = "home";
+    window.__chibattle.render();
+  });
+  await page.locator("#homeUpdatesButton").click();
+  const entry = page.locator(".update-entry", { hasText: "2026年9月26日" }).first();
+  await expect(entry.locator("summary")).toContainText("ver.0.23.6");
+  await entry.locator("summary").click();
+  await expect(entry.locator(".update-change", { hasText: "ガン詰め講師" })).toContainText("送った枚数と同じ回数");
+  const scaryQuestionChange = entry.locator(".update-change", { hasText: "怖い質問" }).last();
+  await expect(scaryQuestionChange).toContainText("その後、自分のデッキからカードを1枚引く");
+});
