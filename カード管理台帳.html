@@ -703,6 +703,24 @@
       effect: "自分の講義室に戦意6以上の学生がいるなら、このカードの戦意は0になる。環境マスにある環境カードを校外エリアへ送る。その後、自分のデッキから戦意6以上の学生カード1枚をランダムに手札へ加える。",
       combo: "バカでかい型", notes: "環境カードがない場合でも使用できる。"
     });
+    upsertCard({
+      id: "destructive_lie", name: "破壊させる嘘", type: "item", cost: 2, attack: null, hp: null,
+      availability: "deck", placement: "自分の出席者を指名して使用",
+      effect: "自分の講義室にいる出席者1人を指名し、破壊する。その後、自分のデッキからカードを2枚引く。",
+      combo: "バカでかい型", notes: "自分の講義室に指名できる出席者がいない場合は使用できない。"
+    });
+    upsertCard({
+      id: "leaving_on_time_lecturer", name: "定時帰りの講師", type: "teacher", cost: 4, attack: 1, hp: 8,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "陽気を持つ。このカードを出席させた後、自分が2回ターンを終了したとき、このカードを校外エリアへ送る。",
+      combo: "", notes: "共通カード。ターン終了回数は、このカードの持ち主のターンだけを数える。"
+    });
+    upsertCard({
+      id: "cursed_students", name: "呪われた学生たち", type: "student", cost: 3, attack: 0, hp: 0,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "このカードを手札から出席させたとき、自分の講義室の空いている席マスを3つ選ぶ。それぞれに「アグロ大学生」1人を出席させる。",
+      combo: "アグロ大学生", notes: "共通カード。空いている席マスを3つ選べない場合は出席させられない。"
+    });
     function normalizeLectureRoomText(value) {
       return String(value || "")
         .replaceAll("お互いの場", "お互いの講義室")
