@@ -19126,6 +19126,18 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.7",
+        date: "2026年9月28日",
+        summary: "対戦ログを試合開始時の最初の記録まで確認できるように改善しました。",
+        changes: [
+          {
+            title: "対戦ログ",
+            before: "対戦ログは最新40件だけを保持し、盤面が更新されるたびに最新位置へ戻っていた。",
+            after: "対戦中のログを省略せず保持し、試合開始時の最初のログまでスクロールできるように変更。過去ログを確認している間は、盤面が更新されてもスクロール位置を維持する。"
+          }
+        ]
+      },
+      {
         version: "ver.0.23.6",
         date: "2026年9月26日",
         summary: "「ちがうよ」「行かれてはいかがですか」のカードテキストを明確化し、「強靭な学生」「教室変更」「煩わしいなぁ」「-幼き日の思い出-⚪︎u⚪︎uApp」「ジェイルブレイクソフト-⚪︎u⚪︎uApp」「効率的な実験法」「純粋の破壊」「破壊させる嘘」「定時帰りの講師」「呪われた学生たち」「ガン詰め講師」「怖い質問」を追加しました。「効率的な実験法」の戦意、戦意0と使用不能カードの戦意表示、および「ガン詰め講師」のカードテスト構成も調整しました。",
@@ -40282,7 +40294,6 @@
 
     function addLog(message) {
       state.log.unshift(normalizeLectureRoomText(message));
-      state.log = state.log.slice(0, 40);
     }
 
     function normalizeLectureRoomText(value) {
@@ -48184,6 +48195,10 @@
     }
 
     function renderLog() {
+      const hadEntries = elements.log.childElementCount > 0;
+      const previousScrollTop = elements.log.scrollTop;
+      const distanceFromBottom = elements.log.scrollHeight - elements.log.scrollTop - elements.log.clientHeight;
+      const shouldFollowLatest = !hadEntries || distanceFromBottom <= 12;
       elements.log.innerHTML = "";
       [...state.log].reverse().forEach((message) => {
         const item = document.createElement("li");
@@ -48198,7 +48213,7 @@
         renderLogMessage(item, message);
         elements.log.appendChild(item);
       });
-      elements.log.scrollTop = elements.log.scrollHeight;
+      elements.log.scrollTop = shouldFollowLatest ? elements.log.scrollHeight : previousScrollTop;
     }
 
     function renderLogMessage(container, message) {
