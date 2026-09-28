@@ -14016,6 +14016,48 @@
     .battle-screen .battle-inspector-thumbnail { flex-shrink:0; width:44px; height:64px; pointer-events:none; }
     .battle-screen .battle-inspector-thumbnail .card { width:44px !important; height:64px !important; min-width:0 !important; min-height:0 !important; margin:0 !important; padding:0 !important; pointer-events:none; }
     .battle-screen .battle-inspector-count { flex-shrink:0; padding:3px 7px; border-radius:10px; background:#162638; color:#fff; font-size:16px; white-space:nowrap; }
+    .battle-screen .battle-active-effects {
+      position: absolute;
+      z-index: 24;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      width: 188px;
+      min-height: 58px;
+      overflow: hidden;
+      border: 1px dashed #71879b;
+      border-left-width: 5px;
+      border-radius: 4px;
+      padding: 8px 10px;
+      background: rgba(250, 253, 255, .9);
+      color: #253f58;
+      box-shadow: 0 4px 12px rgba(31, 58, 82, .12);
+      text-align: left;
+      cursor: pointer;
+    }
+    .battle-screen .battle-active-effects.opponent { border-left-color: #d75b64; }
+    .battle-screen .battle-active-effects.self { border-left-color: #4b8fd8; }
+    .battle-screen .battle-active-effects:hover { background: #fff; box-shadow: 0 6px 16px rgba(31, 58, 82, .18); }
+    .battle-screen .battle-active-effects:focus-visible { outline: 2px solid #2d78c7; outline-offset: 2px; }
+    .battle-screen .battle-active-effects-heading { grid-column: 1; grid-row: 1; overflow: hidden; font-size: 12px; font-weight: 1000; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+    .battle-screen .battle-active-effects-summary { grid-column: 1 / -1; grid-row: 2; overflow: hidden; margin-top: 5px; color: #60768a; font-size: 10px; font-weight: 800; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; }
+    .battle-screen .battle-active-effects-count { display: grid; grid-column: 2; grid-row: 1; min-width: 22px; height: 22px; place-items: center; border-radius: 11px; background: #71879b; color: #fff; font-size: 11px; font-weight: 1000; }
+    .battle-screen .battle-active-effects.opponent.has-effects .battle-active-effects-count { background: #c9424d; }
+    .battle-screen .battle-active-effects.self.has-effects .battle-active-effects-count { background: #2777ca; }
+    .battle-screen .battle-active-effects:not(.has-effects) { opacity: .72; }
+    .battle-screen .battle-inspector-effect-list { display: grid; gap: 9px; }
+    .battle-screen .battle-inspector-effect {
+      border: 1px solid rgba(203, 220, 235, .4);
+      border-left-width: 5px;
+      border-radius: 5px;
+      padding: 10px 11px;
+      background: rgba(255, 255, 255, .08);
+      color: #f5f8fb;
+    }
+    .battle-screen .battle-inspector-effect.self { border-left-color: #6caeff; }
+    .battle-screen .battle-inspector-effect.opponent { border-left-color: #ee7880; }
+    .battle-screen .battle-inspector-effect-name { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 1000; }
+    .battle-screen .battle-inspector-effect-detail { margin: 0; color: #d7e2ec; font-size: 11px; font-weight: 700; line-height: 1.5; }
 
     /* Detail panel rests in the unused left margin, never above the opponent's vital area. */
     .battle-screen .side { position:static !important; }
@@ -14496,6 +14538,14 @@
        the end-turn button's centre line. */
     .battle-screen .battle-v16-opponent-mana,
     .battle-screen .battle-v16-player-mana { left: 1051px !important; }
+    .battle-screen .battle-active-effects.opponent {
+      top: 307px !important;
+      left: 836px !important;
+    }
+    .battle-screen .battle-active-effects.self {
+      top: 518px !important;
+      left: 836px !important;
+    }
     .battle-screen #playerLifeTarget { left: 573px !important; }
     /* The hand table retains a legacy -70px internal offset. 908px therefore
        places the visible 70px deck exactly on the right-rail centre. */
@@ -16173,6 +16223,37 @@
         font-size: 10px !important;
       }
 
+      .battle-screen .battle-active-effects {
+        position: absolute !important;
+        width: 82px !important;
+        min-height: 42px !important;
+        grid-template-columns: minmax(0, 1fr) auto !important;
+        padding: 5px 6px !important;
+        border-left-width: 4px !important;
+      }
+
+      .battle-screen .battle-active-effects.opponent {
+        top: calc(var(--mobile-opponent-top) + 105px) !important;
+        right: 8px !important;
+        left: auto !important;
+      }
+
+      .battle-screen .battle-active-effects.self {
+        top: calc(var(--mobile-center-top) + var(--mobile-slot) * 3.45) !important;
+        right: auto !important;
+        left: 8px !important;
+      }
+
+      .battle-screen .battle-active-effects-heading {
+        overflow: visible !important;
+        font-size: 9px !important;
+        line-height: 1.1 !important;
+        text-overflow: clip !important;
+        white-space: normal !important;
+      }
+      .battle-screen .battle-active-effects-summary { display: none !important; }
+      .battle-screen .battle-active-effects-count { min-width: 18px !important; height: 18px !important; font-size: 9px !important; }
+
       /* Bottom hand: a fixed rail, progressive overlap, no arch or overflow. */
       .battle-screen .player-hand-zone {
         position: absolute !important;
@@ -17688,6 +17769,17 @@
         <span id="battlePlayerWillHud">0/0</span>
       </div>
 
+      <button class="battle-active-effects opponent" id="opponentActiveEffectsButton" type="button" aria-label="相手の継続効果を確認">
+        <span class="battle-active-effects-heading">相手の継続効果</span>
+        <span class="battle-active-effects-summary" id="opponentActiveEffectsSummary">現在なし</span>
+        <span class="battle-active-effects-count" id="opponentActiveEffectsCount">0</span>
+      </button>
+      <button class="battle-active-effects self" id="playerActiveEffectsButton" type="button" aria-label="自分の継続効果を確認">
+        <span class="battle-active-effects-heading">自分の継続効果</span>
+        <span class="battle-active-effects-summary" id="playerActiveEffectsSummary">現在なし</span>
+        <span class="battle-active-effects-count" id="playerActiveEffectsCount">0</span>
+      </button>
+
       <aside class="battle-v16-menu-drawer" id="battleMenuDrawer" aria-label="メニュー" aria-hidden="true">
         <div class="battle-v16-drawer-head">
           <strong>MENU</strong>
@@ -19128,12 +19220,17 @@
       {
         version: "ver.0.23.7",
         date: "2026年9月28日",
-        summary: "対戦ログを試合開始時の最初の記録まで確認できるように改善しました。",
+        summary: "対戦ログを試合開始時の最初の記録まで確認できるようにし、試合画面から自分と相手の継続効果を確認できるように改善しました。",
         changes: [
           {
             title: "対戦ログ",
             before: "対戦ログは最新40件だけを保持し、盤面が更新されるたびに最新位置へ戻っていた。",
             after: "対戦中のログを省略せず保持し、試合開始時の最初のログまでスクロールできるように変更。過去ログを確認している間は、盤面が更新されてもスクロール位置を維持する。"
+          },
+          {
+            title: "継続効果の確認",
+            before: "「深淵」「インターン」など、カードが手札や講義室を離れた後も続く効果は、気力を長押ししなければ確認できなかった。",
+            after: "試合画面に「相手の継続効果」と「自分の継続効果」を追加。効果名と件数を常時確認でき、選択すると詳細と残り回数を一覧表示する。"
           }
         ]
       },
@@ -21085,6 +21182,12 @@
       playerWillHudPill: document.getElementById("playerWillHudPill"),
       battlePlayerWillHud: document.getElementById("battlePlayerWillHud"),
       battleOpponentWillHud: document.getElementById("battleOpponentWillHud"),
+      playerActiveEffectsButton: document.getElementById("playerActiveEffectsButton"),
+      opponentActiveEffectsButton: document.getElementById("opponentActiveEffectsButton"),
+      playerActiveEffectsSummary: document.getElementById("playerActiveEffectsSummary"),
+      opponentActiveEffectsSummary: document.getElementById("opponentActiveEffectsSummary"),
+      playerActiveEffectsCount: document.getElementById("playerActiveEffectsCount"),
+      opponentActiveEffectsCount: document.getElementById("opponentActiveEffectsCount"),
       battleTurnStatus: document.getElementById("battleTurnStatus"),
       battleMenuButton: document.getElementById("battleMenuButton"),
       battleTestUndoButton: document.getElementById("battleTestUndoButton"),
@@ -42628,6 +42731,7 @@
       renderPlayerBoard("player", elements.playerProfessorLane, elements.playerSeatGrid);
       renderLateZone("player", elements.playerLateZone);
       renderLifeTargets();
+      renderActiveEffectSummaries();
       retainedFeedback.forEach(({ layer, instanceId, animations }) => {
         const target = document.querySelector(`[data-card-id="${instanceId}"]`);
         if (!target) return;
@@ -43288,14 +43392,35 @@
       if (player.abyssTurns && player.abyssTurns > 0) {
         lines.push(`深淵：自分のターン終了時、相手の出席者1人をランダムに破壊します。残り${player.abyssTurns}回。`);
       }
+      if (player.internTurnsRemaining && player.internTurnsRemaining > 0) {
+        lines.push(`インターン：自分のターン終了時、自分の学生1人をランダムに「スーツを着た学生」にします。残り${player.internTurnsRemaining}回。`);
+      }
+      if (player.effectUseLockTurnsRemaining && player.effectUseLockTurnsRemaining > 0) {
+        lines.push(`煩わしいなぁ：出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できません。自分のターン終了まで残り${player.effectUseLockTurnsRemaining}回。`);
+      }
       if (player.crabCountdown !== null && player.crabCountdown !== undefined) {
         lines.push(`カニカウント：残り${Math.max(0, player.crabCountdown)}。0になると勝利します。`);
+      }
+      const activeLifeFloorShields = (player.lifeFloorShields || []).filter((shield) => shield?.untilActionTurn >= state.actionTurn).length;
+      if (activeLifeFloorShields > 0) {
+        lines.push(`立てー！！：次の相手ターン中、気力が1未満になる場合、代わりに1になります。残り${activeLifeFloorShields}回。`);
+      }
+      if (player.designTextbookUntilTurn && player.designTextbookUntilTurn >= state.actionTurn) {
+        lines.push("UXデザインの教科書：デザイン教師の体力が+1されています。");
       }
       if (player.handCostTaxUntilActionTurn && player.handCostTaxUntilActionTurn >= state.actionTurn) {
         lines.push("バカMac：手札のカードの戦意が+1されています。");
       }
+      const blockedSeats = (state.temporarySeatBlocks || []).filter((block) => block.owner === side).length;
+      if (blockedSeats > 0) {
+        lines.push(`出席不可：席マス${blockedSeats}か所に出席できません。`);
+      }
       if ((state.deckToHandLocks || []).some((lock) => lock.releaseAtActionTurn > state.actionTurn)) {
         lines.push("山梨最低賃金2円：デッキからカードを手札に加えられません。");
+      }
+      const courseRegistrationTurns = courseRegistrationRemainingTurns(side);
+      if (state.courseRegistration && courseRegistrationTurns > 0) {
+        lines.push(`履修登録結論パ：通常のドローの代わりに、選んだカードを手札に加えます。残り${courseRegistrationTurns}回。`);
       }
       if (state.cafeteriaEffectPermanentlyActive) {
         lines.push("闇学長：この対戦中、環境「食堂」の効果を得ています。");
@@ -43317,6 +43442,41 @@
         lines.push("遅刻じゃない時間：遅刻の効果がなくなっています。");
       }
       return lines;
+    }
+
+    function activeEffectLineParts(line) {
+      const text = String(line || "");
+      const separator = text.indexOf("：");
+      if (separator < 0) return { name: "継続効果", detail: text };
+      return {
+        name: text.slice(0, separator),
+        detail: text.slice(separator + 1)
+      };
+    }
+
+    function activeEffectOwnerName(side) {
+      if (isOnlineSpectator()) return side === "player" ? "プレイヤー1" : "プレイヤー2";
+      return side === "player" ? "自分" : "相手";
+    }
+
+    function renderActiveEffectSummaries() {
+      ["opponent", "player"].forEach((side) => {
+        const button = side === "player" ? elements.playerActiveEffectsButton : elements.opponentActiveEffectsButton;
+        const summary = side === "player" ? elements.playerActiveEffectsSummary : elements.opponentActiveEffectsSummary;
+        const count = side === "player" ? elements.playerActiveEffectsCount : elements.opponentActiveEffectsCount;
+        if (!button || !summary || !count) return;
+        const ownerName = activeEffectOwnerName(side);
+        const lines = playerActiveEffectLines(side);
+        const names = lines.map((line) => activeEffectLineParts(line).name);
+        button.querySelector(".battle-active-effects-heading").textContent = `${ownerName}の継続効果`;
+        summary.textContent = names.length > 0
+          ? `${names.slice(0, 2).join("・")}${names.length > 2 ? ` ほか${names.length - 2}件` : ""}`
+          : "現在なし";
+        count.textContent = String(lines.length);
+        button.classList.toggle("has-effects", lines.length > 0);
+        button.setAttribute("aria-label", `${ownerName}の継続効果を確認、${lines.length}件`);
+      });
+      if (state.battleInspector?.kind === "effects") renderBattleInspector();
     }
 
     function playerEffectDetailTemplate(side) {
@@ -48107,6 +48267,10 @@
       openBattleInspector({ kind: "late", side, filter: "all" });
     }
 
+    function openActiveEffectsOverview(side) {
+      openBattleInspector({ kind: "effects", side });
+    }
+
     function openBattleInspector(detail) {
       state.battleInspector = detail;
       renderBattleInspector();
@@ -48131,7 +48295,22 @@
       const title = document.getElementById("battleDrawerTitle");
       if (!inspector || !detail) return;
       const ownerClass = detail.side === "player" ? "self" : "opponent";
-      const ownerName = detail.side === "player" ? "自分" : "相手";
+      if (detail.kind === "effects") {
+        const ownerName = activeEffectOwnerName(detail.side);
+        const effects = playerActiveEffectLines(detail.side).map(activeEffectLineParts);
+        title.textContent = `${ownerName}の継続効果`;
+        elements.log?.classList.add("hidden");
+        inspector.classList.remove("hidden");
+        inspector.innerHTML = effects.length > 0
+          ? `<div class="battle-inspector-effect-list">${effects.map((effect) => `
+              <article class="battle-inspector-effect ${ownerClass}">
+                <strong class="battle-inspector-effect-name">${escapeHtml(effect.name)}</strong>
+                <p class="battle-inspector-effect-detail">${escapeHtml(effect.detail)}</p>
+              </article>
+            `).join("")}</div>`
+          : `<p class="battle-inspector-empty">継続中の効果はありません。</p>`;
+        return;
+      }
       const filters = ["all", "student", "teacher", "vampire", "item", "environment"];
       const labels = { all:"すべて", student:"学生", teacher:"教師", vampire:"ヴァンパイア", item:"持ち物", environment:"環境" };
       const trash = state.players[detail.side].trash;
@@ -48153,6 +48332,7 @@
       const entries = detail.kind === "trash"
         ? [...stacks.values()].sort((a, b) => (a.cost === b.cost ? 0 : a.cost - b.cost) || a.text.localeCompare(b.text, "ja"))
         : state.players[detail.side].late.map((entry) => ({ card: entry.card, text: `${entry.card.name}　残り${entry.remaining}　→ ${slotShortLabel(entry.zone, entry.index)}` }));
+      const ownerName = detail.side === "player" ? "自分" : "相手";
       title.textContent = detail.kind === "trash" ? `${ownerName}の校外` : `${ownerName}の遅刻ゾーン`;
       elements.log?.classList.add("hidden");
       inspector.classList.remove("hidden");
@@ -48558,6 +48738,8 @@
     });
     elements.playerTrashButton.addEventListener("click", () => openTrashOverview("player"));
     elements.opponentTrashButton.addEventListener("click", () => openTrashOverview("opponent"));
+    elements.playerActiveEffectsButton.addEventListener("click", () => openActiveEffectsOverview("player"));
+    elements.opponentActiveEffectsButton.addEventListener("click", () => openActiveEffectsOverview("opponent"));
     document.querySelectorAll("[data-rps-choice]").forEach((button) => {
       button.addEventListener("click", () => selectRpsCard(button.dataset.rpsChoice));
     });
