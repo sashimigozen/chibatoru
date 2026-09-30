@@ -170,6 +170,72 @@ test("真の敵は敵を引いた場合に追加攻撃を得て出席させる",
   expect(result).toEqual({ limit: 2, used: 1, summoned: 1, canAttackAgain: true });
 });
 
+test("三敵は山札上3枚から選んだ敵だけをランダムな空席に出席させる", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const first = api.createCardFromBase("enemy_student", "player");
+    const chosen = api.createCardFromBase("true_enemy", "player");
+    const item = api.createCardFromBase("salt_to_enemy", "player");
+    api.state.players.player.deck = [first, chosen, item];
+    const triple = api.createCardFromBase("triple_enemy", "player");
+    api.state.players.player.hand = [triple];
+    api.playCard(triple.instanceId, "seat", "player", 0);
+    const mode = api.state.pendingCardChoice?.mode;
+    const candidates = api.state.pendingCardChoice?.cards.map((card) => card.instanceId);
+    const selectableIds = api.state.pendingCardChoice?.selectableIds;
+    api.state.pendingCardChoice.selectedIds = [chosen.instanceId];
+    const previousRandom = Math.random;
+    Math.random = () => 0.99;
+    api.confirmCardChoiceSelection();
+    Math.random = previousRandom;
+    const summoned = api.state.players.player.board.seats[8];
+    return { mode, candidates, selectableIds, summoned: summoned?.baseId, source: summoned?.lastAttendanceSource,
+      deck: api.state.players.player.deck.map((card) => card.instanceId),
+      firstRemains: api.state.players.player.deck.includes(first), itemRemains: api.state.players.player.deck.includes(item),
+      hand: api.state.players.player.hand.map((card) => card.instanceId),
+      rules: api.cardRulesText(triple), bossName: api.CARD_BASES.enemy_boss.name };
+  });
+  expect(result.mode).toBe("triple_enemy");
+  expect(result.candidates).toHaveLength(3);
+  expect(result.selectableIds).toHaveLength(2);
+  expect(result.summoned).toBe("true_enemy");
+  expect(result.source).toBe("deck");
+  expect(result.deck).toHaveLength(2);
+  expect(result.firstRemains).toBe(true);
+  expect(result.itemRemains).toBe(true);
+  expect(result.hand).toHaveLength(0);
+  expect(result.rules).toContain("出席者カード1枚を選び");
+  expect(result.bossName).toBe("敵の幹部");
+});
+
+test("三敵は候補以外の指定を拒否し、空席がなければ山札を変えない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const enemy = api.createCardFromBase("enemy_student", "player");
+    api.state.players.player.deck = [enemy];
+    const triple = api.createCardFromBase("triple_enemy", "player");
+    api.state.players.player.hand = [triple];
+    const willBefore = api.state.players.player.will;
+    const forged = api.placeCardFromHand("player", triple.instanceId, "seat", "player", 0, false,
+      { tripleEnemyChoiceId: "not-in-deck" });
+    const rejectedWithoutPayment = api.state.players.player.hand.includes(triple)
+      && api.state.players.player.will === willBefore;
+    for (let index = 1; index < 9; index += 1) {
+      api.state.players.player.board.seats[index] = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    }
+    const played = api.placeCardFromHand("player", triple.instanceId, "seat", "player", 0, false,
+      { tripleEnemyChoiceId: enemy.instanceId });
+    return { forged, rejectedWithoutPayment, played,
+      deck: api.state.players.player.deck.map((card) => card.instanceId),
+      board: api.state.players.player.board.seats.filter((card) => card?.instanceId === enemy.instanceId).length };
+  });
+  expect(result.forged).toBe(false);
+  expect(result.rejectedWithoutPayment).toBe(true);
+  expect(result.played).toBe(true);
+  expect(result.deck).toHaveLength(1);
+  expect(result.board).toBe(0);
+});
+
 test("敵に塩は相手の指定空席へTRPGサークルメンバーを生成する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -222,6 +288,30 @@ test("形容詞学生vs冷笑学生は出席前の選択UIから弱体化を実�
   });
   expect(result).toEqual({ mode: "adjective_choice", placed: "adjective_vs_cynical",
     secondSeat: "adjective_vs_cynical", enemyAttack: 0 });
+});
+
+test("形容詞学生vs冷笑学生の盤面名はPCとスマホの横2席カード内に収まる", async ({ page }) => {
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    const card = api.makeBoardCard(api.createCardFromBase("adjective_vs_cynical", "player"));
+    api.attendCard("player", card, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.GENERATED });
+    api.render();
+  });
+
+  for (const width of [1440, 768, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const name = page.locator('.multi-seat-board-card[data-base-id="adjective_vs_cynical"] .field-card-art-name');
+    const metrics = await name.evaluate((element) => ({
+      text: element.textContent.trim(),
+      height: element.clientHeight,
+      contentHeight: element.scrollHeight,
+      width: element.clientWidth,
+      contentWidth: element.scrollWidth
+    }));
+    expect(metrics.text).toBe("形容詞学生vs冷笑学生");
+    expect(metrics.contentHeight, `${width}pxでカード名が縦にはみ出しています`).toBeLessThanOrEqual(metrics.height);
+    expect(metrics.contentWidth, `${width}pxでカード名が横にはみ出しています`).toBeLessThanOrEqual(metrics.width);
+  }
 });
 
 test("負荷カード、敵の群れ、ジェスチャー学生の手札・山札効果", async ({ page }) => {
