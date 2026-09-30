@@ -7309,10 +7309,23 @@
       pointer-events: auto;
     }
 
-    .mulligan-stage:not(.hidden) ~ .game-shell .battle-action-slot #mulliganButton {
-      display: block;
+    .mulligan-stage > .mulligan-confirm-button {
+      position: fixed;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      left: 50%;
+      z-index: 1;
+      width: min(420px, calc(100vw - 24px));
       min-height: 58px;
-      pointer-events: auto;
+      transform: translateX(-50%);
+    }
+
+    @media (max-width: 760px) {
+      .mulligan-stage > .mulligan-confirm-button {
+        right: 12px;
+        left: auto;
+        width: min(160px, calc(100vw - 24px));
+        transform: none;
+      }
     }
 
     .home-news-button {
@@ -16988,6 +17001,18 @@
         left: 838px !important;
         transform: none !important;
       }
+
+      .battle-screen {
+        min-width: 0 !important;
+        min-height: 100dvh !important;
+        height: 100dvh;
+        overflow: hidden !important;
+      }
+
+      .battle-screen .game-shell {
+        zoom: var(--battle-shell-scale, 1);
+        margin: var(--battle-shell-top, 12px) auto 0 !important;
+      }
     }
 
   </style>
@@ -17780,7 +17805,7 @@
     <div class="mulligan-stage" id="mulliganStage">
       <div class="mulligan-window">
         <h2 id="mulliganTitle">引き直すカードを選んでください</h2>
-        <p id="mulliganMessage">引き直したいカードを0〜5枚選び、右側の「確定」を押してください。</p>
+        <p id="mulliganMessage">引き直したいカードを0〜5枚選び、画面下の「確定」を押してください。</p>
         <div class="mulligan-hand" id="mulliganHand"></div>
         <div class="mulligan-action-row hidden" id="thinItemChoiceActions">
           <button class="button mulligan-hand-button" id="thinItemKeepConfirmButton" type="button">この4枚を残す</button>
@@ -17789,6 +17814,7 @@
           </button>
         </div>
       </div>
+      <button class="button secondary mulligan-confirm-button" id="mulliganButton" type="button">選択0枚で確定</button>
     </div>
 
     <div class="mulligan-stage hidden" id="threeGesturesStage">
@@ -17941,7 +17967,6 @@
       </div>
 
       <div class="battle-action-slot">
-        <button class="button secondary battle-end-button" id="mulliganButton" type="button">選択0枚で確定</button>
         <button class="button battle-end-button hidden" id="itemTargetConfirmButton" type="button">対象を確定</button>
         <button class="button warning battle-end-button hidden" id="endTurnButton" type="button">ターン終了</button>
       </div>
@@ -19324,8 +19349,13 @@
       {
         version: "ver.0.23.13",
         date: "2026年9月30日",
-        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテスト、デッキ一覧とホーム画面の表示を改善しました。",
+        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテスト、デッキ一覧とホーム・バトル画面の表示を改善しました。",
         changes: [
+          {
+            title: "バトル画面の縦方向の余白",
+            before: "PCでは盤面の高さが固定され、縦長画面には余白が残り、低い画面では手札が見切れていた。",
+            after: "盤面の比率を保ちながら画面の幅と高さに合わせ、余る場合は中央に配置する。スマートフォンの盤面配置は従来どおり。マリガンの確定ボタンが選択画面に隠れないよう配置も修正した。"
+          },
           {
             title: "ホーム画面の表示幅",
             before: "横長の画面ではホームの机の左右に余白が残っていた。",
@@ -41259,6 +41289,7 @@
       removeLegacyTrashTokens();
       continueCrotchFebrezeEffects();
       renderScreen();
+      syncBattleLayout();
       renderHomeNavigation();
       renderTutorial();
       renderOnlineLobby();
@@ -41479,6 +41510,20 @@
       frame.style.height = `${visibleStageHeight}px`;
       stage.style.setProperty("--home-desk-scale", String(scale));
       elements.homeScreen.style.bottom = `${navigationHeight}px`;
+    }
+
+    function syncBattleLayout() {
+      const shell = elements.battleScreen?.querySelector(".game-shell");
+      if (!shell) return;
+      if (window.innerWidth <= 760) {
+        shell.style.removeProperty("--battle-shell-scale");
+        shell.style.removeProperty("--battle-shell-top");
+        return;
+      }
+      const scale = Math.max(.1, Math.min((window.innerWidth - 24) / 1200, (window.innerHeight - 24) / 826));
+      const top = Math.max(0, (window.innerHeight - 826 * scale) / (2 * scale));
+      shell.style.setProperty("--battle-shell-scale", String(scale));
+      shell.style.setProperty("--battle-shell-top", `${top}px`);
     }
 
     function renderHomeNavigation() {
@@ -42930,7 +42975,7 @@
         ? "引き直すカードを選んでください"
         : "カードを引き直しています";
       elements.mulliganMessage.textContent = state.phase === "mulligan"
-        ? "引き直したいカードを0〜5枚選び、右側の「確定」を押してください。"
+        ? "引き直したいカードを0〜5枚選び、画面下の「確定」を押してください。"
         : normalizeLectureRoomText(state.message);
       elements.mulliganHand.innerHTML = "";
       player.hand.forEach((card) => {
@@ -49438,6 +49483,7 @@
     cardTemplateMutationObserver.observe(document.body, { childList: true, subtree: true });
     window.addEventListener("resize", scheduleCardTemplateScaleSync);
     window.addEventListener("resize", syncHomeDeskLayout);
+    window.addEventListener("resize", syncBattleLayout);
     window.addEventListener("resize", applyHomeFavoriteCardPerspective);
     document.addEventListener("mousemove", updatePlayerHandHoverOverlay);
     window.addEventListener("blur", clearPlayerHandCardHoverOverlay);
