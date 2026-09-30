@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
 });
 
-test("パチンウニーは手札から出席したとき一般学生を出席させ、相手の5回目のターン終了まで攻撃不可にする", async ({ page }) => {
+test("パチンウニーは手札から出席したとき一般学生を出席させ、永続的に攻撃不可にする", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     api.startCardTest("pachin_uni");
@@ -33,7 +33,7 @@ test("パチンウニーは手札から出席したとき一般学生を出席�
       played,
       text,
       studentIds: students.map((card) => card?.baseId || null),
-      lockValues: students.map((card) => card?.attackLockedUntilOwnerTurnsTaken || null),
+      lockValues: students.map((card) => card?.attackLockedPermanently || false),
       duringFirstTurn: restrictionAt(4),
       duringFifthTurn: restrictionAt(8),
       afterFifthTurn: restrictionAt(9)
@@ -41,12 +41,12 @@ test("パチンウニーは手札から出席したとき一般学生を出席�
   });
 
   expect(result.played).toBe(true);
-  expect(result.text).toBe("このカードを手札から出席させたとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは、その相手が自分のターンを5回終了するまで攻撃できない。");
+  expect(result.text).toBe("このカードを手札から出席させたとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは攻撃できない。");
   expect(result.studentIds).toEqual(["general_student", "general_student", "general_student"]);
-  expect(result.lockValues).toEqual([8, 8, 8]);
-  expect(result.duringFirstTurn).toContain("攻撃不可：自分のターンをあと5回");
-  expect(result.duringFifthTurn).toContain("攻撃不可：自分のターンをあと1回");
-  expect(result.afterFifthTurn.some((label) => label.startsWith("攻撃不可"))).toBe(false);
+  expect(result.lockValues).toEqual([true, true, true]);
+  expect(result.duringFirstTurn).toContain("攻撃不可：永続");
+  expect(result.duringFifthTurn).toContain("攻撃不可：永続");
+  expect(result.afterFifthTurn).toContain("攻撃不可：永続");
 });
 
 test("効果で出席したパチンウニー自身は一般学生を出席させない", async ({ page }) => {

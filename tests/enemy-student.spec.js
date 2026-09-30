@@ -27,7 +27,7 @@ test("敵の表示テキストに攻撃力+5と陽気を表示する", async ({ 
     };
   });
 
-  expect(result.text).toBe("相手の講義室に「TRPGサークルメンバー」がいる場合、このカードの攻撃力を+5し、[陽気]を持つ。");
+  expect(result.text).toBe("このカードはデッキに4枚以上入れられる。\n相手の講義室に「TRPGサークルメンバー」がいるかぎり、このカードの戦意を-1し、攻撃力を+5し、[陽気]を持つ。");
   expect(result.markup).toContain('data-preview-term="陽気"');
 });
 
@@ -54,10 +54,10 @@ test("相手のTRPGサークルメンバーにより席マスの敵は攻撃力7
     return { active, inactive };
   });
 
-  expect(result.active.attack).toBe(7);
+  expect(result.active.attack).toBe(6);
   expect(result.active.cheerful).toBe(true);
   expect(result.active.currentEffects).toContain("TRPGサークルメンバー");
-  expect(result.inactive).toEqual({ attack: 2, cheerful: false });
+  expect(result.inactive).toEqual({ attack: 1, cheerful: false });
 });
 
 test("教卓マスにいる敵にも攻撃力+5と陽気を適用する", async ({ page }) => {
@@ -73,5 +73,5 @@ test("教卓マスにいる敵にも攻撃力+5と陽気を適用する", async 
     };
   });
 
-  expect(result).toEqual({ attack: 7, cheerful: true });
+  expect(result).toEqual({ attack: 6, cheerful: true });
 });

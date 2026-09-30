@@ -73,6 +73,7 @@ const ACE_CARD_IDS = new Set([
   "think_so", "illegal_cafeteria", "namen_tenno"
 ]);
 const CARD_COPY_LIMITS = Object.freeze({
+  enemy_student: MAX_DECK_CARDS,
   circle_crab: 2,
   hair_crab: 1,
   homeless_crab: 1
