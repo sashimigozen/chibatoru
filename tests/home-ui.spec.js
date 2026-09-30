@@ -89,9 +89,14 @@ test("デッキケースからカード画面を開き、ランダムマッチ�
 test("ホームの背景・操作オブジェクト・ホームバーは画面サイズが変わっても同じ座標で追従する", async ({ page }) => {
   const viewports = [
     { width: 1670, height: 1026 },
+    { width: 1920, height: 1080 },
+    { width: 1280, height: 720 },
     { width: 1122, height: 706 },
     { width: 900, height: 900 },
-    { width: 1600, height: 700 }
+    { width: 390, height: 844 },
+    { width: 1600, height: 700 },
+    { width: 1920, height: 800 },
+    { width: 1920, height: 640 }
   ];
   const objectIds = [
     "homeProfileButton",
@@ -112,29 +117,37 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
         return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
       };
       const frame = bounds("homeDeskStageFrame");
+      const stage = bounds("homeDeskStage");
       const navigation = bounds("homeNavigation");
       const normalize = (rect) => ({
-        x: (rect.x - frame.x) / frame.width,
-        y: (rect.y - frame.y) / frame.height,
-        width: rect.width / frame.width,
-        height: rect.height / frame.height
+        x: (rect.x - frame.x) / stage.width,
+        y: (rect.y - frame.y) / stage.height,
+        width: rect.width / stage.width,
+        height: rect.height / stage.height
       });
       return {
         viewport: { width: innerWidth, height: innerHeight },
         frame,
+        stage,
         navigation,
+        compact: document.getElementById("homeDeskStage").classList.contains("home-desk-compact"),
         objects: Object.fromEntries(ids.map((id) => [id, normalize(bounds(id))]))
       };
     }, objectIds);
 
-    expect(metrics.frame.width / metrics.frame.height).toBeCloseTo(1670 / 942, 3);
+    expect(metrics.stage.width / metrics.stage.height).toBeCloseTo(1670 / 942, 3);
+    expect(Math.abs(metrics.frame.width - metrics.stage.width)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.x - metrics.frame.x)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.width - metrics.frame.width)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.y - (metrics.frame.y + metrics.frame.height))).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.y + metrics.navigation.height - metrics.viewport.height)).toBeLessThan(1.1);
     expect(metrics.frame.x).toBeGreaterThanOrEqual(-.6);
     expect(Math.abs(metrics.frame.y)).toBeLessThan(1.1);
-    expect(metrics.frame.x + metrics.frame.width).toBeLessThanOrEqual(metrics.viewport.width + .6);
+    expect(Math.abs(metrics.frame.width - metrics.viewport.width)).toBeLessThan(1.1);
+    objectIds.forEach((id) => {
+      expect(metrics.objects[id].y + metrics.objects[id].height).toBeLessThanOrEqual(metrics.frame.height / metrics.stage.height + .001);
+    });
+    if (metrics.compact) continue;
 
     if (!baseline) {
       baseline = metrics.objects;

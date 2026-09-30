@@ -16992,7 +16992,7 @@
 
   </style>
   <link rel="stylesheet" href="four-mode.css" />
-  <link rel="stylesheet" href="home-ui.css?v=0.23.11" />
+  <link rel="stylesheet" href="home-ui.css?v=0.23.13" />
   <link rel="stylesheet" href="card-back.css?v=1" />
 </head>
 <body>
@@ -19324,8 +19324,13 @@
       {
         version: "ver.0.23.13",
         date: "2026年9月30日",
-        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテスト、デッキ一覧の並び替えを改善しました。",
+        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテスト、デッキ一覧とホーム画面の表示を改善しました。",
         changes: [
+          {
+            title: "ホーム画面の表示幅",
+            before: "横長の画面ではホームの机の左右に余白が残っていた。",
+            after: "机と操作部品の比率を保ちながら表示幅に合わせ、下端だけを必要な範囲で収めるようにした。"
+          },
           {
             title: "デッキ一覧の並び替え",
             before: "保存デッキを名前順で表示していた。",
@@ -41439,20 +41444,24 @@
         frame.style.removeProperty("width");
         frame.style.removeProperty("height");
         stage.style.removeProperty("--home-desk-scale");
+        stage.style.removeProperty("--home-desk-visible-height");
+        stage.classList.remove("home-desk-compact");
         return;
       }
 
-      const scale = Math.max(.1, Math.min(
-        window.innerWidth / HOME_DESK_DESIGN_WIDTH,
-        window.innerHeight / (HOME_DESK_DESIGN_HEIGHT + HOME_DESK_DESIGN_NAV_HEIGHT)
-      ));
+      const scale = Math.max(.1, window.innerWidth / HOME_DESK_DESIGN_WIDTH);
       const stageWidth = HOME_DESK_DESIGN_WIDTH * scale;
       const stageHeight = HOME_DESK_DESIGN_HEIGHT * scale;
       const navigationItemHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
-      const navigationHeight = Math.max(navigationItemHeight, window.innerHeight - stageHeight);
+      const visibleStageHeight = Math.min(stageHeight, window.innerHeight - navigationItemHeight);
+      const navigationHeight = window.innerHeight - visibleStageHeight;
+      const visibleDesignHeight = visibleStageHeight / scale;
+
+      stage.style.setProperty("--home-desk-visible-height", `${visibleDesignHeight}px`);
+      stage.classList.toggle("home-desk-compact", visibleDesignHeight < 850);
 
       navigation.classList.add("home-desk-aligned");
-      navigation.style.top = `${stageHeight}px`;
+      navigation.style.top = `${visibleStageHeight}px`;
       navigation.style.width = `${stageWidth}px`;
       navigation.style.height = `${navigationHeight}px`;
       navigation.style.setProperty("--home-desk-scale", String(scale));
@@ -41467,7 +41476,7 @@
       }
 
       frame.style.width = `${stageWidth}px`;
-      frame.style.height = `${stageHeight}px`;
+      frame.style.height = `${visibleStageHeight}px`;
       stage.style.setProperty("--home-desk-scale", String(scale));
       elements.homeScreen.style.bottom = `${navigationHeight}px`;
     }

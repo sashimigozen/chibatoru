@@ -646,8 +646,8 @@ body[data-screen="home"] {
 }
 
 /* The desk, its controls, and the home bar share one 1670 × 1026 design canvas.
-   JavaScript scales that canvas as a unit so viewport changes cannot separate
-   interactive hit areas from the objects painted into the background. */
+   JavaScript scales them uniformly; compact layouts reposition the independent
+   controls before cropping the desk's bottom edge. */
 .app.home-navigation-visible > .home-desk-screen:not(.hidden) {
   min-width: 0;
 }
@@ -746,6 +746,30 @@ body[data-screen="home"] {
   top: 28px;
   right: 102px;
   width: 240px;
+}
+
+.home-desk-stage.home-desk-compact {
+  --home-deck-width: clamp(160px, calc(var(--home-desk-visible-height) * .51), 437px);
+  --home-favorite-width: clamp(160px, calc(var(--home-desk-visible-height) * .39), 335px);
+}
+
+.home-desk-stage.home-desk-compact #homeDeckButton.home-deck-panel {
+  top: clamp(150px, calc(var(--home-desk-visible-height) - var(--home-deck-width) - 30px), 384px);
+  width: var(--home-deck-width);
+}
+
+.home-desk-stage.home-desk-compact .home-deck-name {
+  top: calc(100% - 18px);
+}
+
+.home-desk-stage.home-desk-compact .home-favorite-card-object {
+  top: min(47.15%, calc(var(--home-desk-visible-height) - var(--home-favorite-width) * .61 - 20px));
+  width: var(--home-favorite-width);
+}
+
+.home-desk-stage.home-desk-compact #homeBattleButton.home-random-match-button {
+  top: calc(var(--home-desk-visible-height) - 128px);
+  bottom: auto;
 }
 
 .home-navigation.home-desk-aligned {
