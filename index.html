@@ -7500,6 +7500,40 @@
       gap: 12px;
     }
 
+    .deck-library-sort {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-bottom: 12px;
+    }
+
+    .deck-library-sort-field {
+      display: flex;
+      flex: 1 1 180px;
+      align-items: center;
+      gap: 8px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .deck-library-sort-field .control {
+      flex: 1;
+      min-width: 0;
+      min-height: 36px;
+      border: 1px solid #a8b8ce;
+      border-radius: 5px;
+      padding: 6px 8px;
+      color: #172033;
+      background: #ffffff;
+      font-size: 13px;
+    }
+
+    .deck-library-sort-field .control:focus-visible {
+      outline: 2px solid #2563eb;
+      outline-offset: 2px;
+    }
+
     .deck-library-card {
       display: grid;
       place-items: center;
@@ -17599,6 +17633,22 @@
           </div>
           <span class="small-info" id="deckLibraryCount">0個</span>
         </div>
+        <div class="deck-library-sort" role="group" aria-label="デッキ一覧の並び替え">
+          <label class="deck-library-sort-field" for="deckLibrarySortKey">並び替え
+            <select class="control" id="deckLibrarySortKey">
+              <option value="created">作成順</option>
+              <option value="updated">更新順</option>
+              <option value="name">名前順</option>
+              <option value="size">枚数順</option>
+            </select>
+          </label>
+          <label class="deck-library-sort-field" for="deckLibrarySortDirection">順序
+            <select class="control" id="deckLibrarySortDirection">
+              <option value="asc">昇順</option>
+              <option value="desc">降順</option>
+            </select>
+          </label>
+        </div>
         <div class="deck-library-grid" id="deckLibraryGrid"></div>
         <div class="deck-specialty-choice hidden" id="deckSpecialtyChoice"></div>
         <div class="deck-library-detail hidden" id="deckLibraryDetail"></div>
@@ -19274,8 +19324,13 @@
       {
         version: "ver.0.23.13",
         date: "2026年9月30日",
-        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテストを改善しました。",
+        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテスト、デッキ一覧の並び替えを改善しました。",
         changes: [
+          {
+            title: "デッキ一覧の並び替え",
+            before: "保存デッキを名前順で表示していた。",
+            after: "作成順を初期表示に変更。作成順・更新順・名前順・枚数順を選び、昇順・降順を切り替えられる。"
+          },
           {
             title: "ベストフレンド",
             before: "「バカでかい声の学生」の効果ダメージを受けず、隣接中に攻撃力と体力が+2。ターン終了時の3ダメージも隣接中のみ発動していた。",
@@ -20744,6 +20799,7 @@
         selectedName: "",
         editingName: "",
         originalFingerprint: "",
+        librarySort: { key: "created", direction: "asc" },
         filters: {
           query: "",
           types: [],
@@ -21397,6 +21453,8 @@
       deckLibraryDetail: document.getElementById("deckLibraryDetail"),
       deckLibraryCount: document.getElementById("deckLibraryCount"),
       deckLibraryTitle: document.getElementById("deckLibraryTitle"),
+      deckLibrarySortKey: document.getElementById("deckLibrarySortKey"),
+      deckLibrarySortDirection: document.getElementById("deckLibrarySortDirection"),
       deckScreenSubtitle: document.getElementById("deckScreenSubtitle"),
       normalDeckFormatButton: document.getElementById("normalDeckFormatButton"),
       specialtyDeckFormatButton: document.getElementById("specialtyDeckFormatButton"),
@@ -45602,6 +45660,28 @@
       });
     }
 
+    function sortedDeckLibraryNames(collection) {
+      const { key, direction } = state.deckBuilder.librarySort;
+      const order = direction === "desc" ? -1 : 1;
+      return Object.entries(collection).map(([name, deck], index) => ({ name, deck, index }))
+        .sort((a, b) => {
+          let comparison = a.index - b.index;
+          if (key === "created") {
+            const aOrder = Number(a.deck?.createdOrder) || 0;
+            const bOrder = Number(b.deck?.createdOrder) || 0;
+            comparison = aOrder && bOrder ? aOrder - bOrder : aOrder ? 1 : bOrder ? -1 : a.index - b.index;
+          }
+          if (key === "name") comparison = a.name.localeCompare(b.name, "ja");
+          if (key === "size") comparison = deckSize(a.deck?.counts || {}) - deckSize(b.deck?.counts || {});
+          if (key === "updated") {
+            const time = (deck) => Date.parse(deck?.savedAt || "") || 0;
+            comparison = time(a.deck) - time(b.deck);
+          }
+          return order * (comparison || a.index - b.index);
+        })
+        .map(({ name }) => name);
+    }
+
     function renderDeckLibrary() {
       if (!elements.deckLibraryView || !elements.deckEditorView) return;
       const editing = state.deckBuilder.view === "editor";
@@ -45611,7 +45691,9 @@
       const specialty = isSpecialtyDeckFormat();
       const chaos = isChaosDeckFormat();
       const collection = activeDeckCollection();
-      const names = Object.keys(collection).sort((a, b) => a.localeCompare(b, "ja"));
+      const names = sortedDeckLibraryNames(collection);
+      elements.deckLibrarySortKey.value = state.deckBuilder.librarySort.key;
+      elements.deckLibrarySortDirection.value = state.deckBuilder.librarySort.direction;
       elements.deckLibraryTitle.textContent = specialty ? "専攻デッキ" : chaos ? "カオスデッキ" : "保存デッキ";
       elements.deckBackHomeButton.textContent = state.deckBuilder.returnScreen === "dungeonDeck" ? "戻る" : "ホーム";
       elements.deckScreenSubtitle.textContent = specialty
@@ -46714,9 +46796,12 @@
       const collection = activeDeckCollection();
       const formatLabel = isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "保存デッキ";
       if (collection[name] && !window.confirm(`${formatLabel}「${name}」を上書きしますか？`)) return;
+      const createdOrder = collection[name]?.createdOrder || (collection[name] ? 0 :
+        Object.values(collection).reduce((max, deck) => Math.max(max, Number(deck?.createdOrder) || 0), 0) + 1);
       collection[name] = {
         counts: copyDeckCounts(counts, { unlimited: isChaosDeckFormat() }),
         savedAt: new Date().toISOString(),
+        ...(createdOrder ? { createdOrder } : {}),
         ...(isSpecialtyDeckFormat() ? { specialtyId: state.deckBuilder.specialtyId } : {})
       };
       const persisted = isSpecialtyDeckFormat()
@@ -49558,6 +49643,14 @@
     elements.normalDeckFormatButton.addEventListener("click", () => setDeckFormat("normal"));
     elements.specialtyDeckFormatButton.addEventListener("click", () => setDeckFormat("specialty"));
     elements.chaosDeckFormatButton.addEventListener("click", () => setDeckFormat("chaos"));
+    elements.deckLibrarySortKey.addEventListener("change", () => {
+      state.deckBuilder.librarySort.key = elements.deckLibrarySortKey.value;
+      renderDeckLibrary();
+    });
+    elements.deckLibrarySortDirection.addEventListener("change", () => {
+      state.deckBuilder.librarySort.direction = elements.deckLibrarySortDirection.value;
+      renderDeckLibrary();
+    });
     elements.testBackDeckButton.addEventListener("click", returnFromCardTestToDeck);
     elements.testUndoButton.addEventListener("click", goBackTestStep);
     elements.battleTestUndoButton.addEventListener("click", goBackTestStep);
