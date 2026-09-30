@@ -153,6 +153,33 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
 });
 
+test("敵系統のカードテストでは敵を引けて敵に塩からTRPGサークルメンバーを出せる", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const snapshots = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return ["enemy_student", "enemy_boss", "true_enemy", "enemy_horde", "triple_enemy", "salt_to_enemy"]
+      .map((baseId) => {
+        api.startCardTest(baseId);
+        const player = api.state.players.player;
+        const salt = player.hand.find((card) => card.baseId === "salt_to_enemy");
+        const hand = player.hand.map((card) => card.baseId);
+        const deck = player.deck.slice(0, 10).map((card) => card.baseId);
+        const used = api.castCaptureOnSlot("player", salt, "opponent", "seat", 1, false);
+        return { baseId, hand, deck,
+          used, trpg: api.state.players.opponent.board.seats[1]?.baseId };
+      });
+  });
+
+  for (const snapshot of snapshots) {
+    expect(snapshot.hand).toContain("enemy_student");
+    expect(snapshot.hand).toContain("salt_to_enemy");
+    expect(snapshot.deck.filter((baseId) => baseId === "enemy_student").length).toBeGreaterThan(0);
+    expect(snapshot.used).toBe(true);
+    expect(snapshot.trpg).toBe("trpg_member");
+  }
+});
+
 test("融合カードの確認から融合可能なU太だけを選んで融合する", async ({ page }) => {
   await page.goto(gameUrl);
 

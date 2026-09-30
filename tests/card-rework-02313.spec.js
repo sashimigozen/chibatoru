@@ -39,7 +39,7 @@ test("ベストフレンドはバカでかいカードに隣接すると強化�
       buffed,
       damage,
       hpAfterDamage,
-      targetDefeated: !api.state.players.opponent.board.seats[0],
+      targetHpAfterTurn: target.currentHp,
       rules: api.cardRulesText(api.createCardFromBase("best_friend", "player"))
     };
   });
@@ -47,8 +47,27 @@ test("ベストフレンドはバカでかいカードに隣接すると強化�
   expect(result.buffed).toEqual({ attack: 3, hp: 4 });
   expect(result.damage).toBe(0);
   expect(result.hpAfterDamage).toBe(4);
-  expect(result.targetDefeated).toBe(true);
+  expect(result.targetHpAfterTurn).toBe(2);
   expect(result.rules).toContain("「バカでかい」とつくカードの効果によるダメージを受けない");
+  expect(result.rules).not.toContain("3ダメージ");
+});
+
+test("ベストフレンドは手札から出席した場合だけバカでかいカードを1枚引く", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const first = api.createCardFromBase("loud_student", "player");
+    const second = api.createCardFromBase("loud_typing_student", "player");
+    api.state.players.player.deck = [api.createCardFromBase("ruler", "player"), first, second];
+    const friend = api.makeBoardCard(api.createCardFromBase("best_friend", "player"));
+    api.attendCard("player", friend, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    const handAfterFirst = api.state.players.player.hand.map((card) => card.instanceId);
+    const generated = api.makeBoardCard(api.createCardFromBase("best_friend", "player"));
+    api.attendCard("player", generated, "seat", 3, { attendanceSource: api.ATTENDANCE_SOURCE.GENERATED });
+    return { drewFirst: handAfterFirst.includes(first.instanceId), drewSecond: handAfterFirst.includes(second.instanceId),
+      handSizeAfterGenerated: api.state.players.player.hand.length,
+      secondStillInDeck: api.state.players.player.deck.some((card) => card.instanceId === second.instanceId) };
+  });
+  expect(result).toEqual({ drewFirst: true, drewSecond: false, handSizeAfterGenerated: 1, secondStillInDeck: true });
 });
 
 test("敵はTRPGサークルメンバーがいる間だけ戦意-1と攻撃力+5を得て、4枚以上入れられる", async ({ page }) => {

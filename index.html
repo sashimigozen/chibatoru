@@ -15706,6 +15706,20 @@
       line-height: 1.18 !important;
     }
 
+    .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card[data-base-id="adjective_vs_cynical"] .field-card-art-name {
+      inset: 7px 8px 32px !important;
+      padding: 0 !important;
+      font-size: 13px !important;
+      line-height: 1.08 !important;
+    }
+
+    @media (max-width: 700px) {
+      .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card[data-base-id="adjective_vs_cynical"] .field-card-art-name {
+        inset: 5px 6px 30px !important;
+        font-size: 10px !important;
+      }
+    }
+
     .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card .field-card-stats {
       left: 10px !important;
       right: 10px !important;
@@ -18920,7 +18934,7 @@
       trpg_member: { name: "TRPGサークルメンバー", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
       college_student_vibe: { name: "大学生って感じの学生", type: "student", cost: 4, attack: 1, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       enemy_student: { name: "敵", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
-      enemy_boss: { name: "敵のボス", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+      enemy_boss: { name: "敵の幹部", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       live_person: { name: "ライブ人", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       dobby: { name: "ドービィ", type: "student", cost: 6, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       pachin_uni: { name: "パチンウニー", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
@@ -19260,12 +19274,12 @@
       {
         version: "ver.0.23.13",
         date: "2026年9月30日",
-        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。さらに、病や敵の増殖、座席移動を軸にした新カード37枚を実装しました。",
+        summary: "ベストフレンド、敵など6枚の能力を更新し、「負荷」「高負荷」を追加しました。病や敵の増殖、座席移動を軸にした新カード37枚を実装し、「三敵」の効果と敵系統のカードテストを改善しました。",
         changes: [
           {
             title: "ベストフレンド",
             before: "「バカでかい声の学生」の効果ダメージを受けず、隣接中に攻撃力と体力が+2。ターン終了時の3ダメージも隣接中のみ発動していた。",
-            after: "「ベストフレンド」\n学生／バカでかい型／戦意2／攻撃力1／体力2\n「バカでかい」とつくカードの効果ダメージを受けない。そのようなカードと隣接しているかぎり攻撃力と体力を+2。自分のターン終了時、隣接の有無にかかわらず相手の出席者1人にランダムで3ダメージ。"
+            after: "「ベストフレンド」\n学生／バカでかい型／戦意2／攻撃力1／体力2\n手札から出席したとき、デッキから「バカでかい」とつくカード1枚を引く。そのようなカードの効果ダメージを受けず、隣接しているかぎり攻撃力と体力を+2。ターン終了時の3ダメージは削除。"
           },
           {
             title: "敵",
@@ -19306,7 +19320,7 @@
           },
           {
             title: "新カード：敵の増殖",
-            after: "真の敵、敵の群れ、敵の敵、復活の敵、三敵、敵に塩を追加。敵を生成・再出席させる効果と、相手にTRPGサークルメンバーを出席させる効果を使えます。"
+            after: "真の敵、敵の群れ、敵の敵、復活の敵、三敵、敵に塩を追加。「三敵」は山札上3枚から選んだ敵をランダムな席に出席させます。「敵のボス」は「敵の幹部」に改名。敵系統のカードテストでは敵を引ける山札と「敵に塩」を用意しました。"
           },
           {
             title: "新カード：手札と負荷",
@@ -19314,7 +19328,7 @@
           },
           {
             title: "新カード：出席者と持ち物",
-            after: "アグロプリンセス、アグロ散歩、甘いカレー、スプーンの魔術師、形容詞学生vs冷笑学生、焼き鳥ハラスメント、片手にスタバ学生、バカでかいタイピング音の学生、見習いベストフレンド、後ろにいるクイーン、レーザービーム、ア↑ティ↓テュードを追加。選択が必要な効果にはカード・対象選択を用意しました。"
+            after: "アグロプリンセス、アグロ散歩、甘いカレー、スプーンの魔術師、形容詞学生vs冷笑学生、焼き鳥ハラスメント、片手にスタバ学生、バカでかいタイピング音の学生、見習いベストフレンド、後ろにいるクイーン、レーザービーム、ア↑ティ↓テュードを追加。選択が必要な効果にはカード・対象選択を用意しました。形容詞学生vs冷笑学生の盤面表示は、カード名が横2席の枠内に収まるよう調整しました。"
           }
         ]
       },
@@ -25892,6 +25906,7 @@
             spoonDestroyIds: payload.spoonDestroyIds || [],
             enemyReviveIds: payload.enemyReviveIds || [],
             starbucksTeacherId: payload.starbucksTeacherId || null,
+            tripleEnemyChoiceId: payload.tripleEnemyChoiceId || null,
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
             woodGitchTransformId: payload.woodGitchTransformId || null,
             summerTeacherChoiceId: payload.summerTeacherChoiceId || null,
@@ -28970,6 +28985,7 @@
       if (zone === "seat" && card.baseId === "best_friend") {
         const besideLoud = adjacentIndexes(index).some((neighbor) => state.players.opponent.board.seats[neighbor]?.baseId === "loud_student");
         score += besideLoud ? 40 : 0;
+        score += state.players.opponent.deck.some((deckCard) => deckCard.name.includes("バカでかい")) ? 8 : 0;
       }
       if (zone === "seat" && card.baseId === "loud_student") {
         const friendlyVictims = friendlyRefs
@@ -30366,7 +30382,6 @@
         const redrawn = redrawHand(opponent);
         addLog(`${card.name}の効果：${SIDES[opponent]}は手札${redrawn.returned}枚をデッキに戻してシャッフルし、${redrawn.drawn}枚引き直しました。`);
       });
-      resolveBestFriendEndTurnEffect(side);
       resolveAggroStudentEffects(side);
       resolveHappyBlueBirdEndTurnAttacks(side);
       listBoardRefs(side).forEach((ref) => {
@@ -30846,26 +30861,6 @@
       });
       startOrderedAttendance(entries, { initialDelayMs: ORDERED_ATTENDANCE_STEP_MS });
       return entries.length;
-    }
-
-    function resolveBestFriendEndTurnEffect(side) {
-      listBoardRefs(side).forEach((ref) => {
-        runEffectFeedbackBatch(() => {
-          const card = getBoardCardFromRef(ref);
-          if (card?.baseId !== "best_friend" || ref.zone !== "seat" || !canUsePrintedCardEffects(card)) return;
-          const opponent = oppositeSide(side);
-          const choice = chooseRandomEffectTarget(side, opponent, null, "best_friend", card);
-          if (choice.pending) return;
-          const targetEntry = choice.target;
-          const target = targetEntry?.card || null;
-          if (!target) {
-            addLog(`${card.name}の効果：相手の出席者がいないため不発。`);
-            return;
-          }
-          dealDamageToCard(target, 3, card);
-          addLog(`${card.name}の効果：${target.name}に3ダメージ。`);
-        });
-      });
     }
 
     function resolveAbyssEffect(side) {
@@ -32317,6 +32312,18 @@
           onlineSendCommand("playCard", { instanceId: card.instanceId, ...target, ...choices });
           render();
         } else placeCardFromHand("player", card.instanceId, target.zone, target.owner, target.index, true, choices);
+        return;
+      }
+      if (mode === "triple_enemy") {
+        const card = getHandCard("player", pending.playCardId);
+        const target = pending.playTarget;
+        if (!card || !target) return;
+        const choiceId = selectedIds[0];
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("playCard", { instanceId: card.instanceId, ...target, tripleEnemyChoiceId: choiceId });
+          render();
+        } else placeCardFromHand("player", card.instanceId, target.zone, target.owner, target.index, true,
+          { tripleEnemyChoiceId: choiceId });
         return;
       }
       if (mode === "jailbreak_source") {
@@ -33971,6 +33978,17 @@
         });
         return;
       }
+      if (localCard?.baseId === "triple_enemy") {
+        const cards = tripleEnemyCandidates("player");
+        if (cards.length > 0) {
+          openCardChoice({ mode: "triple_enemy", title: localCard.name,
+            message: "山札の上から3枚を見て、出席させる「敵」とつく出席者を1人選んでください。席はランダムに決まります。",
+            cards: state.players.player.deck.slice(0, 3), selectableIds: cards.map((card) => card.instanceId),
+            min: 1, max: 1, confirmLabel: "選んで出席",
+            playCardId: instanceId, playTarget: { zone, owner, index } });
+          return;
+        }
+      }
       if (localCard?.baseId === "summer_teacher") {
         openSummerTeacherChoice(localCard, { zone, owner, index });
         return;
@@ -34183,6 +34201,11 @@
       card.spoonDestroyIds = Array.isArray(options.spoonDestroyIds) ? options.spoonDestroyIds : [];
       card.enemyReviveIds = Array.isArray(options.enemyReviveIds) ? options.enemyReviveIds : [];
       card.starbucksTeacherId = options.starbucksTeacherId || null;
+      if (card.baseId === "triple_enemy") {
+        const candidates = tripleEnemyCandidates(side);
+        if (options.tripleEnemyChoiceId && !candidates.some((entry) => entry.instanceId === options.tripleEnemyChoiceId)) return false;
+        card.tripleEnemyChoiceId = options.tripleEnemyChoiceId || candidates[0]?.instanceId || null;
+      }
       if (side === "opponent" && !isOnlineBattle()) {
         if (card.baseId === "spoon_wizard") card.spoonDestroyIds = listBoardRefs(side)
           .slice(0, listBoardRefs(oppositeSide(side)).length)
@@ -35196,6 +35219,12 @@
       }
     }
 
+    function tripleEnemyCandidates(side) {
+      return state.players[side].deck.slice(0, 3).filter((card) =>
+        card.name.includes("敵") && ["student", "teacher", "vampire"].includes(card.type)
+        && !card.evolutionFrom && card.allowedZones?.includes("seat"));
+    }
+
     function resolveAttendEffects(side, card, zone, index, options = {}) {
       // This is the common local-attendance trigger. Shared listeners are
       // dispatched by attendCard separately, so suppressing a locked card's
@@ -35307,6 +35336,22 @@
         shuffle(state.players[opponent].hand).slice(0, count).forEach(addHandLoad);
         addLog(`${card.name}の効果：相手の手札${Math.min(count, state.players[opponent].hand.length)}枚に負荷を付与しました。`);
       }
+      if (card.baseId === "best_friend") {
+        const deck = state.players[side].deck;
+        const matchIndex = isDeckToHandLocked() ? -1
+          : deck.findIndex((entry) => entry.name.includes("バカでかい"));
+        if (matchIndex >= 0) {
+          const [drawn] = deck.splice(matchIndex, 1);
+          drawn.handTurns = 0;
+          state.players[side].hand.push(drawn);
+          queueAnimation("draw", side, 1);
+          shuffleDeckAfterSearch(side);
+          addLog(`${card.name}の効果：デッキから${drawn.name}を1枚引きました。`);
+        } else {
+          if (!isDeckToHandLocked()) shuffleDeckAfterSearch(side);
+          addLog(`${card.name}の効果：引ける「バカでかい」とつくカードがありません。`);
+        }
+      }
       if (card.baseId === "enemy_horde") {
         state.players[side].hand.push(createCardFromBase("enemy_student", side));
         state.players[side].deck = shuffle([...state.players[side].deck, createCardFromBase("enemy_student", side)]);
@@ -35321,11 +35366,26 @@
       }
       if (card.baseId === "triple_enemy") {
         const deck = state.players[side].deck;
-        const revealed = deck.splice(0, 3);
-        const found = isDeckToHandLocked() ? [] : revealed.filter((entry) => entry.name.includes("敵"));
-        state.players[side].hand.push(...found);
-        deck.unshift(...revealed.filter((entry) => !found.includes(entry)));
-        addLog(`${card.name}の効果：山札の上から3枚を見て「敵」とつくカード${found.length}枚を手札に加えました。`);
+        const candidates = tripleEnemyCandidates(side);
+        const chosen = candidates.find((entry) => entry.instanceId === card.tripleEnemyChoiceId)
+          || candidates[0];
+        const openSeats = chosen ? state.players[side].board.seats
+          .map((_, seatIndex) => canPlaceCard(side, chosen, "seat", side, seatIndex) ? seatIndex : null)
+          .filter((seatIndex) => seatIndex !== null) : [];
+        const seatIndex = openSeats[Math.floor(Math.random() * openSeats.length)];
+        if (chosen && seatIndex !== undefined) {
+          const deckIndex = deck.findIndex((entry) => entry.instanceId === chosen.instanceId);
+          deck.splice(deckIndex, 1);
+          const placed = makeBoardCard(chosen);
+          if (attendCard(side, placed, "seat", seatIndex, { attendanceSource: ATTENDANCE_SOURCE.DECK })) {
+            showCardPlayAnimation(placed, "board");
+            addLog(`${card.name}の効果：山札から${placed.name}をランダムな席マスに出席させました。`);
+          } else {
+            deck.splice(deckIndex, 0, chosen);
+          }
+        } else {
+          addLog(`${card.name}の効果：出席できる「敵」とつく出席者カードか空き席マスがありません。`);
+        }
       }
       if (card.baseId === "apprentice_best_friend"
         && listBoardRefs(side).some((ref) => getBoardCardFromRef(ref)?.name.includes("バカでかい"))) {
@@ -47280,12 +47340,26 @@
     }
 
     function testHandBaseIds(baseId) {
-      return [baseId, ...(TEST_HAND_COMPANIONS[baseId] || [])];
+      const companions = [...(TEST_HAND_COMPANIONS[baseId] || [])];
+      if (isEnemyCardTest(baseId)) {
+        if (baseId !== "enemy_student" && !companions.includes("enemy_student")) companions.push("enemy_student");
+        if (baseId !== "salt_to_enemy" && !companions.includes("salt_to_enemy")) companions.push("salt_to_enemy");
+      }
+      return [baseId, ...companions];
+    }
+
+    function isEnemyCardTest(baseId) {
+      return CARD_BASES[baseId]?.name.includes("敵") || false;
     }
 
     function createTestDeck(side, baseId, extraBaseIds = []) {
       if (side === "player" && baseId === "cornering_lecturer") {
         return corneringLecturerTestDeckBaseIds().map((deckBaseId) => createCardFromBase(deckBaseId, side));
+      }
+      if (side === "player" && isEnemyCardTest(baseId)) {
+        const enemyDeck = ["enemy_student", "general_student", "true_enemy", "enemy_horde", "enemy_enemy",
+          "enemy_revive", "triple_enemy", "proliferating_enemy", "enemy_boss", "salt_to_enemy"];
+        return Array.from({ length: 45 }, (_, index) => createCardFromBase(enemyDeck[index % enemyDeck.length], side));
       }
       return testDeckBaseIds(baseId, extraBaseIds).map((deckBaseId) => createCardFromBase(deckBaseId, side));
     }
@@ -48745,7 +48819,7 @@
         laughing_front_student: "このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
         loud_student: "陽気を持つ。このカードを手札から出席させたとき、お互いの講義室の他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。このカードは注目と超注目を無視して攻撃できる。「ベストフレンド」とつく出席者と隣接しているかぎり、超陽気を持つ。",
-        best_friend: "このカードは「バカでかい」とつくカードの効果によるダメージを受けない。このカードが「バカでかい」とつくカードと隣接しているかぎり、攻撃力と体力を+2する。自分のターン終了時、相手の出席者1人をランダムに指名し、3ダメージを与える。",
+        best_friend: "このカードを手札から出席させたとき、自分のデッキから名前に「バカでかい」を含むカード1枚を引く。このカードは「バカでかい」とつくカードの効果によるダメージを受けない。このカードが「バカでかい」とつくカードと隣接しているかぎり、攻撃力と体力を+2する。",
         ttb: "このカードが出席したとき、お互いのデッキのランダムな位置に「怪しげな文書」を2枚ずつ生成する。自分のターン終了時、このカードが自分の場にいるなら、相手のデッキのランダムな位置に「怪しげな文書」を1枚生成する。",
         predator: "陽気を持つ。このカードを出席させるには、自分の場の出席者1人を破壊する。その場所に、このカードを出席させる。このカードが出席したとき、隣接する空いている席マスに「ベストフレンド」を1人出席させる。",
         trpg_member: "このカードが出席したとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
@@ -48845,7 +48919,7 @@
         rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
         enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」すべてを破壊する。破壊した人数だけ相手本体にダメージを与える。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
-        triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見て、名前に「敵」を含むカードすべてを手札に加える。",
+        triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中から名前に「敵」を含む出席者カード1枚を選び、自分の空いている席マスにランダムに出席させる。",
         salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
