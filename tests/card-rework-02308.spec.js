@@ -190,18 +190,20 @@ test("高負荷は手札からの効果破棄を防ぐが、山札から校外�
   expect(result).toEqual({ blocked: false, moved: true, inTrash: true });
 });
 
-test("ver.0.23.13のお知らせにカード変更、新カード、負荷のルールを表示する", async ({ page }) => {
+test("ver.0.23.8のお知らせにカード変更、新カード、負荷のルールを表示する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.13" }) });
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.8" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(12);
+  await expect(entry.locator(".update-change")).toHaveCount(16);
   for (const name of ["ベストフレンド", "敵", "アクティングアウトマン", "バカでかい声の学生", "パチンウニー", "スタディアブローダー"]) {
-    await expect(entry.locator(".update-before strong", { hasText: name })).toHaveCount(1);
+    await expect(entry.locator(".update-before strong").filter({ hasText: new RegExp(`^${name}$`) })).toHaveCount(1);
   }
   await expect(entry.locator(".update-change").filter({ has: page.locator(".update-before strong", { hasText: /^敵$/ }) }).locator(".update-after"))
     .toContainText("戦意2／攻撃力1／体力2");
   await expect(entry.locator(".update-after", { hasText: "スタディアブローダー" })).toContainText("戦意10／攻撃力2／体力4");
-  await expect(entry.locator(".update-after", { hasText: "高負荷：" })).toContainText("手札から校外エリアへ送れず");
-  await expect(entry.locator(".update-after", { hasText: "ストレスヘアー" })).toContainText("装備は合計1枚まで");
+  await expect(entry.locator(".update-after", { hasText: "[高負荷]" })).toContainText("手札から校外エリアへ送れず");
+  await expect(entry.locator(".update-after", { hasText: "ストレスヘアー" })).toContainText("装備カードは通常、1人につき1枚まで");
+  await expect(entry.locator(".update-after", { hasText: "帽子男" })).toContainText("学生／共通カード／戦意5／攻撃力3／体力3");
+  await expect(entry.locator(".update-after", { hasText: "三敵" })).toContainText("学生／展開・敵増殖／戦意3／攻撃力1／体力2");
 });
