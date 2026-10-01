@@ -73,12 +73,12 @@ test("効果で出席した幹部は敵を生成しない", async ({ page }) => 
   expect(result).toEqual({ attended: true, summoned: 0 });
 });
 
-test("ver.0.23.14のお知らせに敵の幹部の変更が表示される", async ({ page }) => {
+test("ver.0.23.9のお知らせにカード改装が表示される", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.14" }) });
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.9" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(3);
+  await expect(entry.locator(".update-change")).toHaveCount(5);
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^敵の幹部$/ }) }).locator(".update-after"))
     .toContainText("カード名に「敵」を含む出席者が2人以上");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^怖い質問$/ }) }).locator(".update-after"))
