@@ -48,7 +48,9 @@ test("ベストフレンドはバカでかいカードに隣接すると強化�
   expect(result.damage).toBe(0);
   expect(result.hpAfterDamage).toBe(4);
   expect(result.targetHpAfterTurn).toBe(2);
+  expect(result.rules).toContain("自分のデッキから「バカでかい」とつくカード1枚を手札に加える");
   expect(result.rules).toContain("「バカでかい」とつくカードの効果によるダメージを受けない");
+  expect(result.rules).not.toContain("名前に「バカでかい」を含む");
   expect(result.rules).not.toContain("3ダメージ");
 });
 
