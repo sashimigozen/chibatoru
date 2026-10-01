@@ -90,4 +90,6 @@ test("ver.0.23.9の更新情報に先攻1ターン目の超陽気修正を表示
   await expect(entry).toHaveCount(1);
   await expect(entry).toContainText("通常の陽気を持つ出席者も相手の出席者を攻撃できます");
   await expect(entry).toContainText("超陽気を持つ出席者は相手本体にも攻撃できます");
+  await expect(entry).toContainText("負荷が付いたカードには薄い紫色");
+  await expect(entry).toContainText("高負荷が付いたカードには薄い赤色");
 });

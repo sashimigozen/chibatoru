@@ -17015,6 +17015,27 @@
       }
     }
 
+    /* 負荷はカードタイプの色を残したまま、手札上のカード全体を色で判別できるようにする。 */
+    .card.hand-load .card-face::after,
+    .card.hand-high-load .card-face::after {
+      position: absolute;
+      z-index: 11;
+      inset: 0;
+      border-radius: inherit;
+      content: "";
+      pointer-events: none;
+    }
+
+    .card.hand-load .card-face::after {
+      background: rgba(119, 62, 181, .24);
+      box-shadow: inset 0 0 0 4px rgba(89, 38, 148, .72);
+    }
+
+    .card.hand-high-load .card-face::after {
+      background: rgba(211, 47, 61, .24);
+      box-shadow: inset 0 0 0 4px rgba(164, 24, 36, .78);
+    }
+
   </style>
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
@@ -19349,12 +19370,17 @@
       {
         version: "ver.0.23.9",
         date: "2026年10月1日",
-        summary: "先攻1ターン目の攻撃制限を修正しました。",
+        summary: "先攻1ターン目の攻撃制限を修正し、負荷状態をカードの色で確認できるようにしました。",
         changes: [
           {
             title: "先攻1ターン目の攻撃",
             before: "先攻1ターン目は、攻撃できる効果を持つ出席者も攻撃できなかった。",
             after: "先攻1ターン目でも攻撃できるように修正しました。通常の陽気を持つ出席者も相手の出席者を攻撃できます。超陽気を持つ出席者は相手本体にも攻撃できます。"
+          },
+          {
+            title: "負荷状態の表示",
+            before: "手札のカードが負荷または高負荷になっていても、カードを見ただけでは判別しにくかった。",
+            after: "負荷が付いたカードには薄い紫色、高負荷が付いたカードには薄い赤色を重ねて表示するようにしました。カードタイプの色も引き続き判別できます。"
           }
         ]
       },
@@ -22882,7 +22908,15 @@
     }
 
     function cardVisualClass(card) {
-      return `${isAceCard(card) ? " ace-card" : ""}${card?.darkPresident ? " dark-president-foil" : ""}${cardRewardStyleClass(card)}`;
+      const handLoadLevel = Math.min(2, Number(card?.handLoadLevel) || 0);
+      const isLoadedHandCard = handLoadLevel > 0
+        && Boolean(state.players[card?.owner]?.hand?.some((entry) => entry.instanceId === card?.instanceId));
+      const handLoadClass = !isLoadedHandCard
+        ? ""
+        : handLoadLevel >= 2
+          ? " hand-high-load"
+          : " hand-load";
+      return `${isAceCard(card) ? " ace-card" : ""}${card?.darkPresident ? " dark-president-foil" : ""}${cardRewardStyleClass(card)}${handLoadClass}`;
     }
 
     function rewardPrismSurfaceHtml(card) {
