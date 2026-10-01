@@ -46,7 +46,8 @@ test("全トークンは両プレイヤーの破壊・手札破棄で消滅し�
     return { ids, checks, trash: [state.players.player.trash.length, state.players.opponent.trash.length], history: state.recentBoardTrash.length,
       snapshotHasVanishedCard: JSON.stringify(snapshot.state.players).includes('"tokenVanished":true') };
   });
-  expect(result.ids).toHaveLength(6);
+  expect(result.ids).toHaveLength(7);
+  expect(result.ids).toContain("recovered_dark_yuta");
   expect(result.checks.every(Boolean)).toBe(true);
   expect(result.trash).toEqual([0, 0]);
   expect(result.history).toBe(0);
