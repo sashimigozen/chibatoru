@@ -27,7 +27,7 @@ test("敵の表示テキストに攻撃力+5と陽気を表示する", async ({ 
     };
   });
 
-  expect(result.text).toBe("このカードはデッキに4枚以上入れられる。\n相手の講義室に「TRPGサークルメンバー」がいるかぎり、このカードの戦意を-1し、攻撃力を+5し、[陽気]を持つ。");
+  expect(result.text).toBe("このカードはデッキに4枚以上入れられる。\n相手の講義室に「TRPGサークルメンバー」がいるかぎり、このカードの攻撃力を+5し、[陽気]を持つ。");
   expect(result.markup).toContain('data-preview-term="陽気"');
 });
 
