@@ -150,6 +150,13 @@ test("病はU太を変化させ、別の学生へ新しい病を拡散する", a
   expect(result).toEqual({ transformed: "sick_yuta", studentIllness: 2, yutaTrash: true, illnessTrash: true });
 });
 
+test("ver.0.23.8のお知らせに病に臥すU太の特殊進化条件を表示する", async ({ page }) => {
+  await page.evaluate(() => document.querySelector("#homeUpdatesButton").click());
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.8" }) });
+  const group = entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^新カード：病とU太$/ }) });
+  await expect(group.locator(".update-after")).toContainText("このカードに「病」が装備されたとき、その「病」を校外エリアへ送り、このカードを「病に打ち勝った裏U太」に特殊進化させる。");
+});
+
 test("ぃぎだかったぁ...は病1枚ごとにダメージか回復を抽選する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -224,6 +231,60 @@ test("真の敵は敵を引いた場合に追加攻撃を得て出席させる",
   expect(result).toEqual({ limit: 2, used: 1, summoned: 1, canAttackAgain: true });
 });
 
+test("真の敵は敵とつく持ち物を引いても追加攻撃を得ない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const attacker = api.makeBoardCard(api.createCardFromBase("true_enemy", "player"));
+    attacker.playedOnTurn = api.state.actionTurn - 1;
+    api.state.players.player.board.seats[0] = attacker;
+    api.state.players.player.deck = [api.createCardFromBase("salt_to_enemy", "player")];
+    api.markCardAttackUsed(attacker);
+    return {
+      limit: api.cardAttackLimit(attacker),
+      used: api.cardAttacksUsedThisTurn(attacker),
+      hand: api.state.players.player.hand.map((card) => card.baseId),
+      canAttackAgain: api.canAttackSilently(attacker),
+      rules: api.cardRulesText(attacker)
+    };
+  });
+  expect(result).toEqual({
+    limit: 1,
+    used: 1,
+    hand: ["salt_to_enemy"],
+    canAttackAgain: false,
+    rules: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。\nそれが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。\n自分の空いている席マスがあるなら、その出席者を出席させ、[超陽気]を付与する。"
+  });
+});
+
+test("見習いベストフレンドは手札から出席した本人だけが2人まで出席させる", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.board.seats[0] = api.makeBoardCard(api.createCardFromBase("loud_student", "player"));
+    const apprentice = api.createCardFromBase("apprentice_best_friend", "player");
+    api.state.players.player.hand = [apprentice];
+    const played = api.placeCardFromHand("player", apprentice.instanceId, "seat", "player", 1, false);
+    const apprentices = api.state.players.player.board.seats
+      .filter((card) => card?.baseId === "apprentice_best_friend");
+    return {
+      played,
+      count: apprentices.length,
+      handSourceCount: apprentices.filter((card) => card.lastAttendanceSource === api.ATTENDANCE_SOURCE.HAND).length,
+      generatedSourceCount: apprentices.filter((card) => card.lastAttendanceSource === api.ATTENDANCE_SOURCE.GENERATED).length
+    };
+  });
+  expect(result).toEqual({ played: true, count: 3, handSourceCount: 1, generatedSourceCount: 2 });
+});
+
+test("形容詞学生vs冷笑学生の表示文を既存文体へ統一する", async ({ page }) => {
+  const rules = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return api.cardRulesText(api.createCardFromBase("adjective_vs_cynical", "player"));
+  });
+  expect(rules).toContain("このカードを手札から出席させるとき、次の効果から1つを選ぶ。");
+  expect(rules).toContain("50%の確率で、この効果を繰り返す。");
+  expect(rules).not.toContain("50%の確率でもう一度");
+});
+
 test("三敵は山札上3枚から選んだ敵だけをランダムな空席に出席させる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -259,6 +320,8 @@ test("三敵は山札上3枚から選んだ敵だけをランダムな空席に�
   expect(result.itemRemains).toBe(true);
   expect(result.hand).toHaveLength(0);
   expect(result.rules).toContain("出席者カード1枚を選び");
+  expect(result.rules).toContain("「敵」とつく出席者カード1枚");
+  expect(result.rules).not.toContain("名前に「敵」を含む");
   expect(result.bossName).toBe("敵の幹部");
 });
 
