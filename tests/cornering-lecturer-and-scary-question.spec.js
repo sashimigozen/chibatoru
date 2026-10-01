@@ -50,6 +50,38 @@ test("2枚を共通カードとして登録し、確定したカードテキス�
   ]);
 });
 
+test("怖い質問は生成専用で、どのデッキ形式の編成欄にも表示しない", async ({ page }) => {
+  expect(await page.evaluate(() => window.__chibattle.CARD_BASES.scary_question.generated)).toBe(true);
+  await page.locator("#homeNavDeckButton").click();
+  for (const [format, button] of [
+    ["normal", "#normalDeckFormatButton"],
+    ["specialty", "#specialtyDeckFormatButton"],
+    ["chaos", "#chaosDeckFormatButton"]
+  ]) {
+    await page.locator(button).click();
+    await page.locator("#deckLibraryGrid .new-deck").click();
+    if (format === "specialty") await page.locator("#deckSpecialtyChoice button").first().click();
+    await expect(page.locator("#deckEditorView")).toBeVisible();
+    await expect(page.locator('#deckEditorList [data-card-test="scary_question"]')).toHaveCount(0);
+    await page.locator("#deckEditorBackButton").click();
+  }
+});
+
+test("古いJSONに怖い質問があってもデッキへ取り込まない", async ({ page }) => {
+  await page.locator("#homeNavDeckButton").click();
+  await page.locator("#chaosDeckFormatButton").click();
+  await page.locator("#deckLibraryGrid .new-deck").click();
+  await page.locator("#deckFileInput").setInputFiles({
+    name: "old-deck.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify({ counts: { general_student: 40, scary_question: 3 } }))
+  });
+  await expect.poll(() => page.evaluate(() => {
+    const counts = window.__chibattle.state.deckBuilder.counts.player;
+    return { studentCount: counts.general_student, hasQuestion: Object.hasOwn(counts, "scary_question") };
+  })).toEqual({ studentCount: 40, hasQuestion: false });
+});
+
 test("ガン詰め講師のカードテストは初期手札に2枚用意し、専用デッキをドローカード中心にする", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
