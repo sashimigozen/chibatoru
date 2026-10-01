@@ -78,7 +78,9 @@ test("ver.0.23.9のお知らせにカード改装が表示される", async ({ p
   await page.locator("#homeUpdatesButton").click();
   const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.9" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(7);
+  await expect(entry.locator(".update-change")).toHaveCount(8);
+  await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^U太の装備効果$/ }) }).locator(".update-after"))
+    .toContainText("U太以外の出席者は、装備カードを装備しただけでは陽気を持ちません");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^敵の幹部$/ }) }).locator(".update-after"))
     .toContainText("カード名に「敵」を含む出席者が2人以上");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^怖い質問$/ }) }).locator(".update-after"))
