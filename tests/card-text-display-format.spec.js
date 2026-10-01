@@ -106,7 +106,7 @@ test("カード効果に残る講義室を意味する場を共通表示処理�
   expect(result.remaining).toEqual([]);
   expect(result.directFormatter).toBe("自分の講義室に出席者がいる場合、相手の講義室の出席者に1ダメージを与える。");
   expect(result.midge).toContain("自分の講義室に「ミジンコ」が2人いる場合");
-  expect(result.organism).toContain("自分の講義室に「生物」「ミジンコ」「単細胞生物」がいる場合");
+  expect(result.organism).toContain("自分の講義室に「生物」「ミジンコ」「単細胞生物」が1人ずついる場合");
   expect(result.eatenStudent).toContain("相手の講義室に学生と教師がいるなら");
   expect(result.loudStudent).toContain("お互いの講義室の他の出席者すべてに1ダメージ");
   expect(result.ttb).toContain("このカードが自分の講義室にいるなら");
