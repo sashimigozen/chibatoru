@@ -72,7 +72,7 @@ test("ベストフレンドは手札から出席した場合だけバカでか�
   expect(result).toEqual({ drewFirst: true, drewSecond: false, handSizeAfterGenerated: 1, secondStillInDeck: true });
 });
 
-test("敵はTRPGサークルメンバーがいる間だけ戦意-1と攻撃力+5を得て、4枚以上入れられる", async ({ page }) => {
+test("敵はTRPGサークルメンバーがいても戦意2のまま攻撃力+5と陽気を得て、4枚以上入れられる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const enemy = api.makeBoardCard(api.createCardFromBase("enemy_student", "player"));
@@ -88,7 +88,7 @@ test("敵はTRPGサークルメンバーがいる間だけ戦意-1と攻撃力+5
     return { before, active, after: api.effectiveCardCost(inHand), limit: api.maxCopiesForCard("enemy_student") };
   });
 
-  expect(result).toEqual({ before: 2, active: { cost: 1, attack: 6, cheerful: true }, after: 2, limit: 60 });
+  expect(result).toEqual({ before: 2, active: { cost: 2, attack: 6, cheerful: true }, after: 2, limit: 60 });
 });
 
 test("アクティングアウトマンは相手の2回目の出席を止め、場を離れると解除する", async ({ page }) => {

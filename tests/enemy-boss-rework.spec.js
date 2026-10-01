@@ -78,7 +78,7 @@ test("ver.0.23.9のお知らせにカード改装が表示される", async ({ p
   await page.locator("#homeUpdatesButton").click();
   const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.9" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(9);
+  await expect(entry.locator(".update-change")).toHaveCount(10);
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^U太の装備効果$/ }) }).locator(".update-after"))
     .toContainText("U太以外の出席者は、装備カードを装備しただけでは陽気を持ちません");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^敵の幹部$/ }) }).locator(".update-after"))
@@ -91,4 +91,6 @@ test("ver.0.23.9のお知らせにカード改装が表示される", async ({ p
     .toContainText("このターンに出席した出席者だけ");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^カードテスト$/ }) }).locator(".update-after"))
     .toContainText("必要な進化素材、対象、山札上部、相手の手札、環境カード、校外エリアのカード");
+  await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^敵$/ }) }).locator(".update-after"))
+    .toContainText("戦意が下がる効果を削除");
 });
