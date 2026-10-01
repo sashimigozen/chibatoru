@@ -78,11 +78,13 @@ test("ver.0.23.9のお知らせにカード改装が表示される", async ({ p
   await page.locator("#homeUpdatesButton").click();
   const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.9" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(6);
+  await expect(entry.locator(".update-change")).toHaveCount(7);
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^敵の幹部$/ }) }).locator(".update-after"))
     .toContainText("カード名に「敵」を含む出席者が2人以上");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^怖い質問$/ }) }).locator(".update-after"))
     .toContainText("生成専用カード");
   await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^アカデミックムーブ$/ }) }).locator(".update-after"))
     .toContainText("このターンに出席した出席者だけ");
+  await expect(entry.locator(".update-change").filter({ has: page.locator("strong", { hasText: /^カードテスト$/ }) }).locator(".update-after"))
+    .toContainText("必要な進化素材、対象、山札上部、相手の手札、環境カード、校外エリアのカード");
 });

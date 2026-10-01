@@ -153,6 +153,91 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.course_registration_party.opponentDeckSize).toBeGreaterThanOrEqual(5);
 });
 
+test("最新カードのテストに必要な手札・デッキ・盤面・校外エリアを用意する", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const snapshots = {};
+    const ids = [
+      "single_cell", "hat_man", "academic_move", "confucius_says", "aggro_walk", "red_ideology", "illness",
+      "igidakatta", "contrarian_portal", "stress_hair", "attitude", "folder_galaxy", "variable_student", "spoon_wizard",
+      "starbucks_student", "loud_typing_student", "apprentice_best_friend", "true_enemy", "rear_queen",
+      "enemy_enemy", "enemy_revive", "triple_enemy", "efficient_experiment_method", "pure_destruction",
+      "cursed_students", "childhood_memory_tutuapp"
+    ];
+    const board = (side) => api.state.players[side].board.seats.filter(Boolean);
+    ids.forEach((baseId) => {
+      api.startCardTest(baseId);
+      const player = api.state.players.player;
+      const opponent = api.state.players.opponent;
+      const target = player.hand.find((card) => card.baseId === baseId);
+      snapshots[baseId] = {
+        hand: player.hand.map((card) => card.baseId),
+        deckTop: player.deck.slice(0, 6).map((card) => card.baseId),
+        board: board("player").map((card) => card.baseId),
+        opponentBoard: board("opponent").map((card) => card.baseId),
+        opponentHand: opponent.hand.map((card) => card.baseId),
+        trash: player.trash.map((card) => card.baseId),
+        opponentTrash: opponent.trash.map((card) => card.baseId),
+        environment: api.state.environment?.baseId || null,
+        effectiveCost: target ? api.effectiveCardCost(target) : null,
+        ownIllnesses: board("player").reduce((sum, card) => sum + (card.illnessEquipments?.length || 0), 0),
+        enemyIllnesses: board("opponent").reduce((sum, card) => sum + (card.illnessEquipments?.length || 0), 0),
+        openOwnSeats: player.board.seats.filter((card) => !card).length,
+        enemyTeacherOpen: opponent.board.teacher === null
+      };
+    });
+    return snapshots;
+  });
+
+  expect(result.single_cell.hand.filter((baseId) => baseId === "single_cell")).toHaveLength(7);
+  expect(result.single_cell.openOwnSeats).toBe(9);
+  expect(result.hat_man.opponentBoard).toEqual(["general_student", "strong_student"]);
+  expect(result.academic_move.hand).toEqual(["academic_move", "general_student"]);
+  expect(result.confucius_says.deckTop).toEqual([
+    "general_student", "general_teacher", "ruler", "cafeteria", "cafeteria_lady", "ruler"
+  ]);
+  expect(result.aggro_walk.board).toContain("aggro_student");
+  for (const baseId of ["red_ideology", "contrarian_portal"]) {
+    expect(result[baseId].board).toEqual(["general_student", "aggro_student", "strong_student"]);
+  }
+  expect(result.illness.hand.filter((baseId) => baseId === "illness")).toHaveLength(2);
+  expect(result.illness.board).toContain("yuta");
+  expect(result.igidakatta.ownIllnesses).toBe(1);
+  expect(result.igidakatta.enemyIllnesses).toBe(1);
+  expect(result.stress_hair.hand.filter((baseId) => baseId === "stress_hair")).toHaveLength(2);
+  expect(result.stress_hair.board).toEqual(["yuta", "dark_yuta"]);
+  expect(result.attitude.enemyTeacherOpen).toBe(true);
+  expect(result.attitude.opponentBoard).toContain("general_student");
+  expect(result.folder_galaxy.hand).toEqual(expect.arrayContaining(["folder_galaxy", "ruler", "bento"]));
+  expect(result.folder_galaxy.opponentHand).toEqual(expect.arrayContaining(["ruler", "bento"]));
+  expect(result.variable_student.hand).toEqual(["variable_student", "general_student"]);
+  expect(result.variable_student.opponentHand).toEqual(["general_student"]);
+  expect(result.spoon_wizard.opponentTrash).toContain("green_curry");
+  expect(result.spoon_wizard.effectiveCost).toBe(0);
+  expect(result.starbucks_student.trash).toContain("general_teacher");
+  expect(result.starbucks_student.board).toEqual(["general_student", "strong_student"]);
+  expect(result.loud_typing_student.board).toEqual(["general_student", "aggro_student"]);
+  expect(result.loud_typing_student.opponentBoard).toEqual(["strong_student", "strong_student", "strong_student"]);
+  expect(result.apprentice_best_friend.board).toContain("loud_student");
+  for (const baseId of ["true_enemy", "triple_enemy"]) {
+    expect(result[baseId].deckTop.slice(0, 3)).toEqual(["enemy_student", "true_enemy", "enemy_horde"]);
+  }
+  expect(result.rear_queen.opponentBoard).toEqual(["strong_student", "strong_student", "strong_student"]);
+  expect(result.enemy_enemy.board).toEqual(["enemy_student", "enemy_student", "enemy_student"]);
+  expect(result.enemy_revive.trash).toEqual(expect.arrayContaining(["enemy_student", "true_enemy", "enemy_horde"]));
+  expect(result.efficient_experiment_method.deckTop.slice(0, 3)).toEqual(["general_student", "general_teacher", "ruler"]);
+  expect(result.pure_destruction.board).toContain("strong_student");
+  expect(result.pure_destruction.environment).toBe("cafeteria");
+  expect(result.pure_destruction.effectiveCost).toBe(0);
+  expect(result.cursed_students.openOwnSeats).toBe(9);
+  expect(result.childhood_memory_tutuapp.hand).toEqual(expect.arrayContaining([
+    "childhood_memory_tutuapp", "jailbreak_tutuapp", "general_student"
+  ]));
+  expect(result.childhood_memory_tutuapp.opponentHand).toEqual(["general_student", "general_teacher"]);
+});
+
 test("敵系統のカードテストでは敵を引けて敵に塩からTRPGサークルメンバーを出せる", async ({ page }) => {
   await page.goto(gameUrl);
 
