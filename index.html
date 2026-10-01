@@ -19347,6 +19347,18 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.9",
+        date: "2026年10月1日",
+        summary: "先攻1ターン目の攻撃制限を修正しました。",
+        changes: [
+          {
+            title: "先攻1ターン目の攻撃",
+            before: "先攻1ターン目は、攻撃できる効果を持つ出席者も攻撃できなかった。",
+            after: "先攻1ターン目でも攻撃できるように修正しました。通常の陽気を持つ出席者も相手の出席者を攻撃できます。超陽気を持つ出席者は相手本体にも攻撃できます。"
+          }
+        ]
+      },
+      {
         version: "ver.0.23.8",
         date: "2026年9月30日",
         summary: "既存カード6枚の能力・数値を調整し、「敵のボス」の名称を変更しました。「負荷」「高負荷」と新カード37枚を追加し、デッキ一覧の並び替え、ホーム画面とバトル画面の表示も改善しました。",
@@ -28377,7 +28389,6 @@
 
     function canAiCardAttackAfterSuperCheerful(card) {
       return !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
-        && !isFirstPlayerFirstTurn()
         && !isAttackLocked(card)
         && !card.hasAttacked;
     }
@@ -28919,8 +28930,7 @@
           score += 26 + Math.min(12, lethalForecast.opponentNextTurnDamage - context.ownLife);
         }
         const canAttackLifeNow = aiCardCanAttackLifeOnAttendance(card, "opponent", zone, index)
-          && aiCanCardTargetLife(card, "opponent", { onAttendance: true, zone, index })
-          && !isFirstPlayerFirstTurn();
+          && aiCanCardTargetLife(card, "opponent", { onAttendance: true, zone, index });
         if (canAttackLifeNow) {
           const readyDamage = aiBoardFaceDamage("opponent", { readyOnly: true }).max;
           const directDamage = aiAffordableDirectLifeDamage("opponent", Math.max(0, context.will - effectiveCardCost(card)));
@@ -39299,10 +39309,6 @@
         state.message = "目黒区図書館の効果で、このターンは攻撃できません。";
         return false;
       }
-      if (isFirstPlayerFirstTurn()) {
-        state.message = "先攻1ターン目は攻撃できません。";
-        return false;
-      }
       if (card.attackLockedPermanently) {
         state.message = `${card.name}は効果により攻撃できません。`;
         return false;
@@ -39332,7 +39338,6 @@
 
     function canAttackSilently(card) {
       return !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
-        && !isFirstPlayerFirstTurn()
         && !isAttackLocked(card)
         && (card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気"))
         && cardAttacksUsedThisTurn(card) < cardAttackLimit(card);
@@ -39451,10 +39456,6 @@
       if (state.environment?.baseId === "meguro_library") return false;
       if (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student") return false;
       return !(attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
-    }
-
-    function isFirstPlayerFirstTurn() {
-      return !state.testMode && state.currentSide === state.firstSide && state.players[state.currentSide]?.turnsTaken === 1;
     }
 
     function hasKeyword(card, keyword) {
