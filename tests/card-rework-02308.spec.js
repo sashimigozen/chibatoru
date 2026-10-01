@@ -142,8 +142,10 @@ test("スタディアブローダーの2回出席で高負荷になり、ター�
     const second = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
     api.attendCard("player", first, "teacher", null, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const oneLoad = loaded.handLoadLevel;
+    const oneLoadCost = api.effectiveCardCost(loaded);
     api.attendCard("player", second, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const highLoad = loaded.handLoadLevel;
+    const highLoadCost = api.effectiveCardCost(loaded);
     const third = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
     api.attendCard("player", third, "seat", 1, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const cappedLoad = loaded.handLoadLevel;
@@ -155,21 +157,28 @@ test("スタディアブローダーの2回出席で高負荷になり、ター�
     const discardAllowed = api.moveHandCardToTrash("opponent", loaded, { effectDiscard: true });
     const stillInHand = opponent.hand.some((card) => card.instanceId === loaded.instanceId);
     const stillOutOfTrash = !opponent.trash.some((card) => card.instanceId === loaded.instanceId);
-    opponent.will = 10;
+    opponent.will = 1;
+    const insufficient = api.placeCardFromHand("opponent", loaded.instanceId, "seat", "opponent", 0, false);
+    opponent.will = 3;
     const played = api.placeCardFromHand("opponent", loaded.instanceId, "seat", "opponent", 0, false);
-    return { oneLoad, highLoad, cappedLoad, text, life, discardAllowed, stillInHand, stillOutOfTrash, played,
+    return { oneLoad, oneLoadCost, highLoad, highLoadCost, cappedLoad, text, life, discardAllowed,
+      stillInHand, stillOutOfTrash, insufficient, played, remainingWill: opponent.will,
       boardLoad: opponent.board.seats[0]?.handLoadLevel ?? null, playerLife: player.life };
   });
 
   expect(result.oneLoad).toBe(1);
+  expect(result.oneLoadCost).toBe(2);
   expect(result.highLoad).toBe(2);
+  expect(result.highLoadCost).toBe(3);
   expect(result.cappedLoad).toBe(2);
   expect(result.text).toContain("[高負荷]");
   expect(result.life).toBe(18);
   expect(result.discardAllowed).toBe(false);
   expect(result.stillInHand).toBe(true);
   expect(result.stillOutOfTrash).toBe(true);
+  expect(result.insufficient).toBe(false);
   expect(result.played).toBe(true);
+  expect(result.remainingWill).toBe(0);
   expect(result.boardLoad).toBe(0);
 });
 
@@ -206,6 +215,8 @@ test("手札の負荷は紫、高負荷は赤の透過色で表示し、手札�
   const highLoaded = page.locator(`.player-hand .hand-card[data-card-id="${cardIds.highLoaded}"]`);
   await expect(loaded).toHaveClass(/\bhand-load\b/);
   await expect(highLoaded).toHaveClass(/\bhand-high-load\b/);
+  await expect(loaded.locator(".stat-cost").first()).toHaveText("2");
+  await expect(highLoaded.locator(".stat-cost").first()).toHaveText("4");
 
   const overlayColors = await page.evaluate(({ loadedId, highLoadedId }) => {
     const color = (id) => getComputedStyle(document.querySelector(`[data-card-id="${id}"] .card-face`), "::after").backgroundColor;
