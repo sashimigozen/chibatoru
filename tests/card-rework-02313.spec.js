@@ -195,7 +195,7 @@ test("ver.0.23.13のお知らせにカード変更、新カード、負荷のル
   await page.locator("#homeUpdatesButton").click();
   const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.13" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(12);
+  await expect(entry.locator(".update-change")).toHaveCount(15);
   for (const name of ["ベストフレンド", "敵", "アクティングアウトマン", "バカでかい声の学生", "パチンウニー", "スタディアブローダー"]) {
     await expect(entry.locator(".update-before strong", { hasText: name })).toHaveCount(1);
   }
