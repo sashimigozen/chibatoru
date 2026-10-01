@@ -19370,7 +19370,7 @@
       {
         version: "ver.0.23.9",
         date: "2026年10月1日",
-        summary: "先攻1ターン目の攻撃制限と負荷表示を改善し、生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。「敵の幹部」「アカデミックムーブ」「怖い質問」も調整しました。",
+        summary: "先攻1ターン目の攻撃制限と負荷状態を改善し、生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。「敵の幹部」「アカデミックムーブ」「怖い質問」も調整しました。",
         changes: [
           {
             title: "先攻1ターン目の攻撃",
@@ -19378,9 +19378,9 @@
             after: "先攻1ターン目でも攻撃できるように修正しました。通常の陽気を持つ出席者も相手の出席者を攻撃できます。超陽気を持つ出席者は相手本体にも攻撃できます。"
           },
           {
-            title: "負荷状態の表示",
+            title: "負荷状態",
             before: "手札のカードが負荷または高負荷になっていても、カードを見ただけでは判別しにくかった。",
-            after: "負荷が付いたカードには薄い紫色、高負荷が付いたカードには薄い赤色を重ねて表示するようにしました。カードタイプの色も引き続き判別できます。"
+            after: "負荷が付いたカードには薄い紫色、高負荷が付いたカードには薄い赤色を重ねて表示するようにしました。カードタイプの色も引き続き判別できます。さらに、高負荷になったカードは戦意が+1されます。"
           },
           {
             title: "特殊進化",
@@ -34390,7 +34390,7 @@
       }
       // 戦意10以上で出席するスモール小俣は、必ず大型化する。
       const isForcedBigOmata = card.baseId === "small_omata" && player.will >= 10;
-      const playCost = isForcedBigOmata && !isChaosBattle() ? 10 : effectiveCardCost(card, zone, index);
+      const playCost = effectiveCardCost(card, zone, index);
       if (player.will < playCost) {
         state.message = `戦意が足りません。${card.name}のコストは${playCost}です。`;
         clearSelections();
@@ -45065,6 +45065,7 @@
 
     function effectiveCardCost(card, zone = null, index = null) {
       if (!card || card.noCost || isChaosBattle()) return 0;
+      const highLoadIncrease = isHighLoadHandCard(card) ? 1 : 0;
       let discount = 0;
       const inBattle = state.screen === "battle" && state.phase === "battle";
       if (inBattle && isCafeteriaEnvironmentActive()) {
@@ -45095,17 +45096,17 @@
       }
       if (inBattle && card.baseId === "spoon_wizard" && card.owner
         && state.players[oppositeSide(card.owner)].trash.some((entry) => entry.baseId === "green_curry")) {
-        return 0;
+        return highLoadIncrease;
       }
       if (inBattle && card.baseId === "attitude" && card.owner
         && listBoardRefs(card.owner).some((ref) => String(getBoardCardFromRef(ref)?.name || "").includes("デザイン"))) {
-        return 0;
+        return highLoadIncrease;
       }
       if (inBattle
         && card.baseId === "pure_destruction"
         && card.owner
         && hasSixPlusStudentInClassroom(card.owner)) {
-        return 0;
+        return highLoadIncrease;
       }
       const tax = inBattle
         && card.owner
@@ -45117,15 +45118,15 @@
         && card.baseId === "small_omata"
         && card.owner
         && state.players[card.owner]?.will >= 10) {
-        return 10;
+        return 10 + highLoadIncrease;
       }
       if (inBattle
         && card.baseId === "king_ghidorah_bed"
         && card.owner
         && state.players[card.owner]?.will >= 8) {
-        return 8;
+        return 8 + highLoadIncrease;
       }
-      return Math.max(0, intrinsicCost - discount + tax);
+      return Math.max(0, intrinsicCost - discount + tax) + highLoadIncrease;
     }
 
     function hasActiveCafeteriaVampireBuff(card) {
@@ -48309,7 +48310,7 @@
       "余裕": "自分のターン終了時、この出席者の体力を1回復する。",
       "遅刻": "手札から出した後、指定された回数の自分のターンを待ってから出席する。",
       "負荷": "手札に持ったまま自分のターンを終了すると、自分本体に1ダメージ。同じカードに再び負荷が付くと高負荷になる。",
-      "高負荷": "手札に持ったまま自分のターンを終了すると、自分本体に2ダメージ。効果で手札から校外エリアへ送れず、負荷も追加されない。",
+      "高負荷": "このカードの戦意を+1する。手札に持ったまま自分のターンを終了すると、自分本体に2ダメージ。効果で手札から校外エリアへ送れず、負荷も追加されない。",
       "講義": "教師マスにいる攻撃可能な教師が、攻撃の代わりに選んで行う。相手の対象となる出席者すべてに1ダメージを与える。",
       "融合": "指定された複数のカードを組み合わせ、別のカードへ変える。",
     };
