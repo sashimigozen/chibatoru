@@ -103,7 +103,7 @@ test("アカデミックムーブはこのターンの出席者だけに付与�
     api.resolveStudentEndTurnEffects("opponent");
     return { rules, marked, afterPlayer, opponentAfterOwnTurn: state.players.opponent.board.seats[0]?.baseId || null };
   });
-  expect(result.rules).toBe("お互いの講義室にこのターン出席した出席者はすべて、[超陽気]と「自分のターン終了時に校外エリアに送る」を得る。");
+  expect(result.rules).toBe("お互いの講義室にこのターン出席した出席者すべては[超陽気]を持つ。それらは自分のターン終了時、校外エリアへ送られる。");
   expect(result.marked).toEqual([false, true, true, true]);
   expect(result.afterPlayer).toEqual({ old: "general_student", ownEarlier: null, ownLater: null, opponentEarlier: "general_student" });
   expect(result.opponentAfterOwnTurn).toBeNull();
@@ -542,6 +542,14 @@ test("熱心な学生は相手教師の講義を回復に変え、変数学生�
       movedSeat: api.state.players.player.board.seats.findIndex((card) => card?.instanceId === moved.instanceId) };
   });
   expect(result).toEqual({ dealt: 0, diligentHp: 3, sourceEmpty: true, movedSeat: 1 });
+});
+
+test("変数学生のテキストは席マスの出席者だけを移動させることを明記する", async ({ page }) => {
+  const rules = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return api.cardRulesText(api.createCardFromBase("variable_student", "player"));
+  });
+  expect(rules).toBe("このカードが講義室にいるかぎり、相手の席マスに出席者が出席するたび、その出席者を相手の空いている席マス1つへランダムに移動させる。");
 });
 
 test("バカでかいタイピング音は周囲8方向と相手学生にダメージ", async ({ page }) => {
