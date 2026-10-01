@@ -19377,7 +19377,7 @@
       {
         version: "ver.0.23.9",
         date: "2026年10月1日",
-        summary: "先攻1ターン目の攻撃制限、負荷状態、カードテストを改善し、生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。「敵の幹部」「アカデミックムーブ」「怖い質問」も調整しました。",
+        summary: "先攻1ターン目の攻撃制限、負荷状態、カードテスト、U太の装備効果を改善し、生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。「敵の幹部」「アカデミックムーブ」「怖い質問」も調整しました。",
         changes: [
           {
             title: "先攻1ターン目の攻撃",
@@ -19398,6 +19398,11 @@
             title: "カードテスト",
             before: "最近追加されたカードをテストするとき、効果に必要な手札、デッキ、講義室、校外エリアのカードが不足する場合があった。",
             after: "カードごとに必要な進化素材、対象、山札上部、相手の手札、環境カード、校外エリアのカードを用意するようにしました。単細胞生物の特殊進化、病、負荷、敵系統などの効果をカードテストから続けて確認できます。"
+          },
+          {
+            title: "U太の装備効果",
+            before: "「イヤホン」を装備したU太が陽気を持たず、ほかのU太専用装備では陽気を持っていた。",
+            after: "U太は「イヤホン」を含むどの装備カードを装備した場合でも陽気を持つように修正しました。U太以外の出席者は、装備カードを装備しただけでは陽気を持ちません。"
           },
           {
             title: "敵の幹部",
@@ -39580,7 +39585,7 @@
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
       if (keyword === "陽気" && card.baseId === "general_teacher") return isOnTeacherSlot(card);
-      if (keyword === "陽気" && isUtaEquipmentTarget(card) && utaEquipmentCount(card) > 0) return true;
+      if (keyword === "陽気" && isUtaEquipmentTarget(card) && hasEquipmentCard(card)) return true;
       if (keyword === "陽気" && card.type === "teacher" && String(card.name || "").includes("デザイン")) {
         const popularTeacher = state.players[card.owner]?.board.teacher;
         if (popularTeacher?.baseId === "popular_c" && canUsePrintedCardEffects(popularTeacher)) return true;
@@ -48742,9 +48747,10 @@
         if (card.baseId === "loud_student" && isAdjacentToBestFriend(card)) add("超陽気", "ベストフレンド");
       } else if (hasKeyword(card, "陽気")) {
         if (card.baseId === "general_teacher" && isOnTeacherSlot(card)) add("陽気", "教卓マス");
-        if (isUtaEquipmentTarget(card) && utaEquipmentCount(card) > 0) {
-          const equipmentNames = normalizeUtaEquipmentEntries(card).map((entry) => CARD_BASES[entry.baseId]?.name).filter(Boolean);
-          if (card.stressHairEquipment) equipmentNames.push(CARD_BASES.stress_hair.name);
+        if (isUtaEquipmentTarget(card) && hasEquipmentCard(card)) {
+          const equipmentNames = equipmentEntriesForCard(card)
+            .map((entry) => CARD_BASES[entry.baseId]?.name)
+            .filter(Boolean);
           add("陽気", equipmentNames.join("・"));
         }
         if (card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") add("陽気", "人気デザイン講師C");

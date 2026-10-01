@@ -807,6 +807,62 @@ test("すべての装備カードを状態欄の「装」アイコンで統一�
   expect(result.tappedPreviewShowsEarphones).toBe(true);
 });
 
+test("U太はイヤホンを含むどの装備でも陽気を持ち、ほかの出席者は装備だけでは陽気を持たない", async ({ page }) => {
+  await page.goto(gameUrl);
+
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const resetBoard = () => {
+      api.state.screen = "battle";
+      api.state.phase = "battle";
+      api.state.currentSide = "player";
+      api.state.actionTurn = 1;
+      api.state.players.player.will = 10;
+      api.state.players.player.board.seats = Array(9).fill(null);
+      api.state.players.player.board.teacher = null;
+      api.state.players.player.hand = [];
+    };
+
+    resetBoard();
+    const yutaWithEarphones = api.makeBoardCard(api.createCardFromBase("yuta", "player"));
+    const earphonesForYuta = api.createCardFromBase("earphones", "player");
+    api.state.players.player.board.seats[0] = yutaWithEarphones;
+    api.state.players.player.hand.push(earphonesForYuta);
+    const earphonesAttached = api.castItemOnCard("player", earphonesForYuta, "player", "seat", 0, false);
+    const yutaEarphonesCheerful = api.hasKeyword(yutaWithEarphones, "陽気");
+
+    resetBoard();
+    const yutaWithOtherEquipment = api.makeBoardCard(api.createCardFromBase("yuta", "player"));
+    yutaWithOtherEquipment.yutaEquipments = [{ baseId: "red_happi" }];
+    api.state.players.player.board.seats[0] = yutaWithOtherEquipment;
+    const yutaOtherEquipmentCheerful = api.hasKeyword(yutaWithOtherEquipment, "陽気");
+
+    resetBoard();
+    const generalStudent = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    const earphonesForStudent = api.createCardFromBase("earphones", "player");
+    api.state.players.player.board.seats[0] = generalStudent;
+    api.state.players.player.hand.push(earphonesForStudent);
+    const studentEarphonesAttached = api.castItemOnCard("player", earphonesForStudent, "player", "seat", 0, false);
+    const studentCheerful = api.hasKeyword(generalStudent, "陽気");
+
+    return {
+      earphonesAttached,
+      yutaEarphonesCheerful,
+      yutaOtherEquipmentCheerful,
+      studentEarphonesAttached,
+      studentCheerful
+    };
+  });
+
+  expect(result).toEqual({
+    earphonesAttached: true,
+    yutaEarphonesCheerful: true,
+    yutaOtherEquipmentCheerful: true,
+    studentEarphonesAttached: true,
+    studentCheerful: false
+  });
+});
+
 test("指名破壊は対象を選んだ後に破壊するボタンで確定する", async ({ page }) => {
   await page.goto(gameUrl);
 
