@@ -19188,7 +19188,7 @@
       chigauyo: { name: "ちがうよ", type: "item", cost: 3, target: "self" },
       pure_destruction: { name: "純粋の破壊", type: "item", cost: 3, target: "self" },
       destructive_lie: { name: "破壊させる嘘", type: "item", cost: 2, target: "friendlyAny" },
-      scary_question: { name: "怖い質問", type: "item", cost: 1, target: "self" },
+      scary_question: { name: "怖い質問", type: "item", cost: 1, target: "self", generated: true },
       classroom_change: { name: "教室変更", type: "item", cost: 6, target: "self" },
       annoying_na: { name: "煩わしいなぁ", type: "item", cost: 4, target: "self" },
       childhood_memory_tutuapp: { name: "-幼き日の思い出-⚪︎u⚪︎uApp", type: "item", cost: 3, target: "self" },
@@ -19234,7 +19234,7 @@
       president_tea_room: { name: "学長の茶室", type: "item", cost: 1, target: "self", generated: true },
       suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
-      academic_move: { name: "アカデミックムーブ", type: "environment", cost: 3, allowedZones: ["environment"], category: "common" },
+      academic_move: { name: "アカデミックムーブ", type: "environment", cost: 5, allowedZones: ["environment"], category: "common" },
       aggro_kingdom: { name: "アグロキングダム", type: "environment", cost: 2, allowedZones: ["environment"] },
       quick_quiz_tournament: { name: "早押しクイズ大会", type: "environment", cost: 1, allowedZones: ["environment"] },
       cafeteria: { name: "食堂", type: "environment", cost: 2, allowedZones: ["environment"] },
@@ -19370,7 +19370,7 @@
       {
         version: "ver.0.23.9",
         date: "2026年10月1日",
-        summary: "先攻1ターン目の攻撃制限を修正し、負荷状態をカードの色で確認できるようにしました。生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。",
+        summary: "先攻1ターン目の攻撃制限と負荷表示を改善し、生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。「敵の幹部」「アカデミックムーブ」「怖い質問」も調整しました。",
         changes: [
           {
             title: "先攻1ターン目の攻撃",
@@ -19386,6 +19386,21 @@
             title: "特殊進化",
             before: "「ミジンコ」「生物」「完全変異体」は条件を満たすと新しい出席者として場に出ていた。「病に打ち勝った裏U太」は通常の進化カードとして扱われていた。",
             after: "生物系カードは、先に出席していた進化元を残して特殊進化するように変更しました。進化元が受けていたダメージと攻撃状態を引き継ぎ、進化時効果を発動します。「病に臥すU太」は新しい「病」を装備されると、その「病」を校外エリアへ送り、「病に打ち勝った裏U太」に特殊進化します。"
+          },
+          {
+            title: "敵の幹部",
+            before: "出席したとき、自分の講義室に名前が「敵」の出席者が2人以上いる場合に「敵」を2人出席させていた。",
+            after: "手札から出席したとき、自分の講義室にカード名に「敵」を含む出席者が2人以上いる場合、空いている席マスに「敵」を2人出席させる。条件には「敵の幹部」自身も含む。"
+          },
+          {
+            title: "怖い質問",
+            before: "デッキ編成で直接追加できた。",
+            after: "生成専用カードとし、デッキ編成の一覧から除外。ガン詰め講師の効果で生成して使う挙動は維持する。"
+          },
+          {
+            title: "アカデミックムーブ",
+            before: "戦意3。環境を置いたとき、以前のターンから講義室にいる出席者にも超陽気とターン終了時退場を付けていた。",
+            after: "戦意5。このターンに出席した出席者だけが超陽気と、自分のターン終了時に校外エリアへ送られる効果を得る。環境を置く前にこのターン出席した出席者も対象。"
           }
         ]
       },
@@ -35571,7 +35586,7 @@
       }
       if (card.baseId === "enemy_boss") {
         const enemyCount = listBoardRefs(side).filter((ref) => (
-          getBoardCardFromRef(ref)?.baseId === "enemy_student"
+          getBoardCardFromRef(ref)?.name.includes("敵")
         )).length;
         if (enemyCount >= 2) {
           const seatIndexes = orderedRandomOpenSeatIndexes(side, 2);
@@ -35580,7 +35595,7 @@
             { onComplete: (summoned) => addLog(`${card.name}の効果：「敵」を${summoned}人出席させました。`) }
           );
         } else {
-          addLog(`${card.name}の効果：自分の場の「敵」が2人未満のため、発動しませんでした。`);
+          addLog(`${card.name}の効果：自分の講義室に名前に「敵」を含む出席者が2人未満のため、発動しませんでした。`);
         }
       }
       if (card.baseId === "infight_shogi") {
@@ -36095,11 +36110,11 @@
       if (card.baseId === "academic_move" && zone === "environment") {
         ["player", "opponent"].forEach((owner) => listBoardRefs(owner).forEach((ref) => {
           const attendee = getBoardCardFromRef(ref);
-          if (!attendee) return;
+          if (attendee?.attendanceEvent?.turn !== state.actionTurn) return;
           addKeyword(attendee, "超陽気", card.name);
           attendee.academicMoveMarked = true;
         }));
-        addLog(`${card.name}の効果：講義室の出席者全員が超陽気とターン終了時退場を得ました。`);
+        addLog(`${card.name}の効果：このターン出席した出席者が超陽気と自分のターン終了時退場を得ました。`);
       }
       if (card.baseId === "full_lock" && zone === "environment") {
         state.fullLockSeatBlocks = [];
@@ -48981,7 +48996,7 @@
         college_student_vibe: "注目を持つ。このカードが席マスに出席したとき、右隣の席マスが空いていれば、このカードのコピーを出席させる。",
         loud_group: "注目を持つ。このカードは自分の3行目の席マスにのみ出席できる。このカードが席マスに出席したとき、右隣の空き席マスにこのカードのコピーを最大2人出席させる。自分の場にこのカード以外の「注目」を持つ出席者がいれば、体力+1する。",
         enemy_student: "このカードはデッキに4枚以上入れられる。相手の講義室に「TRPGサークルメンバー」がいるかぎり、このカードの戦意を-1し、攻撃力を+5し、陽気を持つ。",
-        enemy_boss: "このカードが出席したとき、自分の場に「敵」が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。",
+        enemy_boss: "このカードを手札から出席させたとき、自分の講義室にカード名に「敵」を含む出席者が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。",
         live_person: "このカードが出席したとき、相手の出席者すべての攻撃力を2にする。",
         dobby: "このカードが出席したとき、攻撃力3以上の相手の出席者すべての攻撃力を-2する。",
         pachin_uni: "このカードを手札から出席させたとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは攻撃できない。",
@@ -49040,7 +49055,7 @@
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
         acting_out_man: "このカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
-        academic_move: "この環境があるかぎり、お互いの講義室に出席した出席者は超陽気を持ち、そのターン終了時に校外エリアへ送られる。",
+        academic_move: "お互いの講義室にこのターン出席した出席者はすべて、超陽気と「自分のターン終了時に校外エリアに送る」を得る。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
         gesture_student: "このカードを手札から出席させたとき、「３つジェスチャー」2枚を手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",
