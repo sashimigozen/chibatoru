@@ -190,18 +190,54 @@ test("高負荷は手札からの効果破棄を防ぐが、山札から校外�
   expect(result).toEqual({ blocked: false, moved: true, inTrash: true });
 });
 
-test("ver.0.23.13のお知らせにカード変更、新カード、負荷のルールを表示する", async ({ page }) => {
+test("手札の負荷は紫、高負荷は赤の透過色で表示し、手札を離れると解除する", async ({ page }) => {
+  const cardIds = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const loaded = api.createCardFromBase("general_student", "player");
+    const highLoaded = api.createCardFromBase("general_teacher", "player");
+    loaded.handLoadLevel = 1;
+    highLoaded.handLoadLevel = 2;
+    api.state.players.player.hand = [loaded, highLoaded];
+    api.render();
+    return { loaded: loaded.instanceId, highLoaded: highLoaded.instanceId };
+  });
+
+  const loaded = page.locator(`.player-hand .hand-card[data-card-id="${cardIds.loaded}"]`);
+  const highLoaded = page.locator(`.player-hand .hand-card[data-card-id="${cardIds.highLoaded}"]`);
+  await expect(loaded).toHaveClass(/\bhand-load\b/);
+  await expect(highLoaded).toHaveClass(/\bhand-high-load\b/);
+
+  const overlayColors = await page.evaluate(({ loadedId, highLoadedId }) => {
+    const color = (id) => getComputedStyle(document.querySelector(`[data-card-id="${id}"] .card-face`), "::after").backgroundColor;
+    return { loaded: color(loadedId), highLoaded: color(highLoadedId) };
+  }, { loadedId: cardIds.loaded, highLoadedId: cardIds.highLoaded });
+  expect(overlayColors.loaded).toBe("rgba(119, 62, 181, 0.24)");
+  expect(overlayColors.highLoaded).toBe("rgba(211, 47, 61, 0.24)");
+
+  await page.evaluate((instanceId) => {
+    const api = window.__chibattle;
+    const card = api.state.players.player.hand.find((entry) => entry.instanceId === instanceId);
+    api.state.players.player.hand = api.state.players.player.hand.filter((entry) => entry.instanceId !== instanceId);
+    api.state.players.player.board.seats[0] = api.makeBoardCard(card);
+    api.render();
+  }, cardIds.loaded);
+  await expect(page.locator(`.board-card[data-card-id="${cardIds.loaded}"]`)).not.toHaveClass(/hand-load|hand-high-load/);
+});
+
+test("ver.0.23.8のお知らせにカード変更、新カード、負荷のルールを表示する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeUpdatesButton").click();
-  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.13" }) });
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.8" }) });
   await expect(entry).toHaveCount(1);
-  await expect(entry.locator(".update-change")).toHaveCount(15);
+  await expect(entry.locator(".update-change")).toHaveCount(16);
   for (const name of ["ベストフレンド", "敵", "アクティングアウトマン", "バカでかい声の学生", "パチンウニー", "スタディアブローダー"]) {
-    await expect(entry.locator(".update-before strong", { hasText: name })).toHaveCount(1);
+    await expect(entry.locator(".update-before strong").filter({ hasText: new RegExp(`^${name}$`) })).toHaveCount(1);
   }
   await expect(entry.locator(".update-change").filter({ has: page.locator(".update-before strong", { hasText: /^敵$/ }) }).locator(".update-after"))
     .toContainText("戦意2／攻撃力1／体力2");
   await expect(entry.locator(".update-after", { hasText: "スタディアブローダー" })).toContainText("戦意10／攻撃力2／体力4");
-  await expect(entry.locator(".update-after", { hasText: "高負荷：" })).toContainText("手札から校外エリアへ送れず");
-  await expect(entry.locator(".update-after", { hasText: "ストレスヘアー" })).toContainText("装備は合計1枚まで");
+  await expect(entry.locator(".update-after", { hasText: "[高負荷]" })).toContainText("手札から校外エリアへ送れず");
+  await expect(entry.locator(".update-after", { hasText: "ストレスヘアー" })).toContainText("装備カードは通常、1人につき1枚まで");
+  await expect(entry.locator(".update-after", { hasText: "帽子男" })).toContainText("学生／共通カード／戦意5／攻撃力3／体力3");
+  await expect(entry.locator(".update-after", { hasText: "三敵" })).toContainText("学生／展開・敵増殖／戦意3／攻撃力1／体力2");
 });
