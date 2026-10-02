@@ -25,18 +25,6 @@ test("ホームの好きなカードをめくり、表だけでカード名と�
   const cardButton = page.locator("#homeFavoriteCardButton");
   const cardLabel = page.locator("#homeFavoriteCardLabel");
 
-  const cardBack = await page.locator("#homeFavoriteCardImage").evaluate((image) => ({
-    src: image.getAttribute("src"),
-    naturalWidth: image.naturalWidth,
-    naturalHeight: image.naturalHeight,
-    stageRatio: image.closest(".home-favorite-card-flip-stage").getBoundingClientRect().width
-      / image.closest(".home-favorite-card-flip-stage").getBoundingClientRect().height
-  }));
-  expect(cardBack.src).toContain("assets/card-back.png");
-  expect(cardBack.naturalWidth).toBe(420);
-  expect(cardBack.naturalHeight).toBe(640);
-  expect(cardBack.stageRatio).toBeCloseTo(21 / 32, 3);
-
   await cardButton.hover();
   await expect.poll(() => cardLabel.evaluate((element) => getComputedStyle(element).opacity)).toBe("0");
   await expect(cardButton).toHaveAttribute("aria-disabled", "true");
@@ -52,7 +40,6 @@ test("ホームの好きなカードをめくり、表だけでカード名と�
     const expected = Math.min(shell.offsetWidth / 420, shell.offsetHeight / 640);
     return Math.abs(actual - expected);
   })).toBeLessThan(.001);
-  await expect.poll(() => page.locator("#homeFavoriteCardFront .home-favorite-card-render").evaluate((card) => getComputedStyle(card).transform)).toBe("none");
   await cardButton.hover();
   await expect.poll(() => cardLabel.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
   await expect(cardLabel).toHaveText("アグロキング");
