@@ -211,9 +211,10 @@ test("スプーンの魔術師と復活の敵は選択したカードだけを�
     api.state.players.player.hand.push(revive);
     api.placeCardFromHand("player", revive.instanceId, "seat", "player", 3, false, { enemyReviveIds: [enemy.instanceId] });
     return { ...spoonResult, revived: api.state.players.player.board.seats.some((card) => card?.instanceId === enemy.instanceId),
+      reviveCost: api.effectiveCardCost(revive),
       leftTrash: api.state.players.player.trash.some((card) => card.instanceId === enemy.instanceId) };
   });
-  expect(result).toEqual({ allyGone: true, enemyGone: true, revived: true, leftTrash: false });
+  expect(result).toEqual({ allyGone: true, enemyGone: true, revived: true, reviveCost: 6, leftTrash: false });
 });
 
 test("真の敵は敵を引いた場合に追加攻撃を得て出席させる", async ({ page }) => {
@@ -398,6 +399,8 @@ test("ver.0.23.10の更新情報に敵に塩と敵の群れの調整を表示す
   await expect(entry).toContainText("戦意2は維持");
   await expect(entry).toContainText("手札に「敵」1枚を生成");
   await expect(entry).toContainText("デッキと校外エリアには生成しません");
+  await expect(entry).toContainText("復活の敵");
+  await expect(entry).toContainText("戦意6");
 });
 
 test("子曰くの二段階UIでタイプを宣言してカードを選べる", async ({ page }) => {
