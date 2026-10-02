@@ -19377,7 +19377,7 @@
       {
         version: "ver.0.23.10",
         date: "2026年10月2日",
-        summary: "カード調整、カードキーワードの説明表示、対戦画面のカード背面改善、保存デッキとホームバーの操作・配置改善を行いました。",
+        summary: "カード調整、カードキーワードの説明表示、対戦画面のカード背面改善、保存デッキとホームバーの操作・配置改善、AIの攻撃判断改善を行いました。",
         changes: [
           {
             title: "敵に塩",
@@ -19423,6 +19423,11 @@
             title: "ホームバーの配置",
             before: "画面の縦横比によっては、ホームバーが背景画像の直下に配置され、画面下端より上に表示されることがあった。",
             after: "ホームバーが表示されるすべての画面で、画面サイズに追従して常に下端へ配置されるように変更しました。"
+          },
+          {
+            title: "AIの攻撃判断",
+            before: "AIは、講義やアグロクイーンなどの効果ダメージで倒せる出席者にも攻撃し、不要な反撃を受けることがあった。",
+            after: "講義で倒せる場合は攻撃より講義を優先します。アグロクイーンと後ろにいるクイーンのターン終了時効果で確実に倒せる対象には攻撃せず、効果を持つ出席者が反撃で破壊される攻撃も避けるようにしました。"
           }
         ]
       },
@@ -28286,12 +28291,16 @@
       const targetSide = oppositeSide(side);
       const priorityIds = new Set(listAttackPriorityCards(targetSide).map((card) => card.instanceId));
       const preserveBiologyMaterial = isAiProtectedBiologyMaterial(side, attacker);
+      const effectKillPlan = planAiGuaranteedEndTurnEffectKills(side);
+      const preserveEffectSource = effectKillPlan.sourceIds.has(attacker.instanceId);
       return listBoardRefs(targetSide)
         .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
         .filter(({ card }) => card && canAibenNyoteiAttackTarget(attacker, card))
         .filter(({ card }) => !isDesignDomainAttackBlocked(attacker, card))
         .filter(({ card }) => attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(card.instanceId))
         .filter(({ card }) => !preserveBiologyMaterial || Math.max(0, card.attack || 0) < attacker.currentHp)
+        .filter(({ card }) => !effectKillPlan.targetIds.has(card.instanceId))
+        .filter(({ card }) => !preserveEffectSource || Math.max(0, card.attack || 0) < attacker.currentHp)
         .sort((a, b) => {
           const aKill = (attacker.attack || 0) >= a.card.currentHp ? 1 : 0;
           const bKill = (attacker.attack || 0) >= b.card.currentHp ? 1 : 0;
@@ -28327,7 +28336,7 @@
           attackSafety += 1;
           const attacker = getBoardCardFromRef(ref);
           if (!attacker || !canAttackSilently(attacker)) break;
-          if (canTeacherChooseLecture(ref) && lectureTargetEntries("player", attacker).length >= 2) {
+          if (shouldAiUseLecture(ref, attacker, "player")) {
             performTeacherLecture("player", ref, { renderAfter: false });
             render();
             await sleep(AI_STEP_DELAY);
@@ -30184,6 +30193,8 @@
       const lethalForecast = getAiLethalForecast();
       if (!cannotAttackLife && lethalForecast.immediateLethal) return null;
       const preserveBiologyMaterial = isAiProtectedBiologyMaterial("opponent", attacker);
+      const effectKillPlan = planAiGuaranteedEndTurnEffectKills("opponent");
+      const preserveEffectSource = effectKillPlan.sourceIds.has(attacker.instanceId);
       const targets = listBoardRefs("player")
         .map((ref) => ({ ...ref, card: getBoardCardFromRef(ref) }))
         .filter((target) => target.card && !(attacker.type === "teacher" && target.card.baseId === "loud_student" && canUsePrintedCardEffects(target.card)))
@@ -30191,6 +30202,8 @@
         .filter((target) => !isDesignDomainAttackBlocked(attacker, target.card))
         .filter((target) => attacker.baseId === "loud_student" || attentionIds.size === 0 || attentionIds.has(target.card.instanceId))
         .filter((target) => !preserveBiologyMaterial || Math.max(0, target.card.attack || 0) < attacker.currentHp)
+        .filter((target) => !effectKillPlan.targetIds.has(target.card.instanceId))
+        .filter((target) => !preserveEffectSource || Math.max(0, target.card.attack || 0) < attacker.currentHp)
         .map((target) => {
           const canDefeat = (attacker.attack || 0) >= target.card.currentHp;
           const survivesCounter = (target.card.attack || 0) < attacker.currentHp;
@@ -30240,15 +30253,63 @@
       return best;
     }
 
-    function shouldAiUseLecture(ref, teacher) {
-      if (!canTeacherChooseLecture(ref) || teacher?.owner !== "opponent") return false;
-      const targets = lectureTargetEntries("opponent", teacher);
+    function shouldAiUseLecture(ref, teacher, side = "opponent") {
+      if (!canTeacherChooseLecture(ref) || teacher?.owner !== side) return false;
+      const targets = lectureTargetEntries(side, teacher);
       if (targets.length === 0) return false;
       if (targets.some(({ card }) => previewFinalDamageToCard(card, 1, teacher, {
         ignoreWeakness: teacher.baseId === "lightning_n",
         damageKind: "lecture"
       }) >= card.currentHp)) return true;
       return targets.length >= 2;
+    }
+
+    function planAiGuaranteedEndTurnEffectKills(side) {
+      const targetSide = oppositeSide(side);
+      const guaranteedDamageByTargetId = new Map();
+      const sourceIdsByTargetId = new Map();
+      const addGuaranteedDamage = (entry, amount, source, options = {}) => {
+        if (!entry?.card?.instanceId) return;
+        const damage = previewFinalDamageToCard(entry.card, amount, source, options);
+        if (damage <= 0) return;
+        guaranteedDamageByTargetId.set(
+          entry.card.instanceId,
+          (guaranteedDamageByTargetId.get(entry.card.instanceId) || 0) + damage
+        );
+        if (!sourceIdsByTargetId.has(entry.card.instanceId)) {
+          sourceIdsByTargetId.set(entry.card.instanceId, new Set());
+        }
+        sourceIdsByTargetId.get(entry.card.instanceId).add(source.instanceId);
+      };
+
+      listBoardRefs(side).forEach((ref) => {
+        const source = getBoardCardFromRef(ref);
+        if (!source || !canUsePrintedCardEffects(source)) return;
+        if (source.baseId === "rear_queen") {
+          const targets = listBoardRefs(targetSide)
+            .map((targetRef) => ({ ref: targetRef, card: getBoardCardFromRef(targetRef) }))
+            .filter(({ card }) => card?.type === "student");
+          if (targets.length <= 3) {
+            targets.forEach((entry) => addGuaranteedDamage(entry, 4, source));
+          }
+        }
+        if (source.baseId === "aggro_queen" && ref.zone === "seat" && ref.index === 5) {
+          const targets = effectTargetEntries(side, targetSide, (card) => card.type === "student");
+          if (targets.length === 1) addGuaranteedDamage(targets[0], 2, source);
+        }
+      });
+
+      const targetIds = new Set();
+      const sourceIds = new Set();
+      listBoardRefs(targetSide)
+        .map((ref) => getBoardCardFromRef(ref))
+        .filter((card) => card
+          && (guaranteedDamageByTargetId.get(card.instanceId) || 0) >= card.currentHp)
+        .forEach((card) => {
+          targetIds.add(card.instanceId);
+          sourceIdsByTargetId.get(card.instanceId)?.forEach((sourceId) => sourceIds.add(sourceId));
+        });
+      return { targetIds, sourceIds };
     }
 
     function endTurn(options = {}) {
@@ -50318,6 +50379,8 @@
       findTrainingAiPlayMove,
       findAiAttackTarget,
       findTrainingAiAttackTarget,
+      shouldAiUseLecture,
+      planAiGuaranteedEndTurnEffectKills,
       aiAttackWithReadyCards,
       trainingYocchanPlayPriority,
       runOpponentAI,
