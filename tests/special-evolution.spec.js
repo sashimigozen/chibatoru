@@ -226,7 +226,7 @@ test("特殊進化カードはトークンとして進化元とカード文を�
   expect(result.texts[2]).toContain("[進化]：「生物」");
   expect(result.texts[3]).toContain("[進化]：「病に臥すU太」");
   expect(result.sickText).toContain("その「病」を校外エリアへ送り");
-  expect(result.sickText).toContain("特殊進化させる");
+  expect(result.sickText).toContain("[特殊進化]させる");
 });
 
 test("ver.0.23.9の更新情報に特殊進化の変更を統合して表示する", async ({ page }) => {

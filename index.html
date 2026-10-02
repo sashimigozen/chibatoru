@@ -17039,7 +17039,7 @@
   </style>
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
-  <link rel="stylesheet" href="card-back.css?v=1" />
+  <link rel="stylesheet" href="card-back.css?v=2" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -17074,7 +17074,7 @@
         <button class="home-favorite-card-hitarea home-scene-object" id="homeFavoriteCardButton" type="button" aria-label="好きなカードを表示" aria-disabled="true" data-home-object="favorite-card">
           <span class="home-favorite-card-flip-stage" id="homeFavoriteCardScene">
             <span class="home-favorite-card-face home-favorite-card-back">
-              <img class="home-scene-object-image" id="homeFavoriteCardImage" src="assets/home/home-ui-favorite-card.png" alt="" draggable="false" />
+              <img class="home-scene-object-image" id="homeFavoriteCardImage" src="assets/card-back.png?v=2" alt="" draggable="false" />
             </span>
             <span class="home-favorite-card-face home-favorite-card-front" id="homeFavoriteCardFront"></span>
           </span>
@@ -19377,7 +19377,7 @@
       {
         version: "ver.0.23.10",
         date: "2026年10月2日",
-        summary: "「敵に塩」「敵の群れ」「復活の敵」「スタディアブローダー」を調整しました。",
+        summary: "カード調整、カードキーワードの説明表示、カード背面の共通化を行いました。",
         changes: [
           {
             title: "敵に塩",
@@ -19398,6 +19398,21 @@
             title: "スタディアブローダー",
             before: "手札から出席させたとき、相手の手札すべてに[負荷]を付与していた。席マスへの出席でも発動した。",
             after: "戦意10。手札から教卓マスに出席させたとき、相手の講義室にいる出席者すべてに2ダメージを与え、その後、相手の手札すべてに[負荷]を付与するように変更しました。席マスへの出席では発動しません。"
+          },
+          {
+            title: "白い学生",
+            before: "相手の手札からカード1枚をランダムに選び、[負荷]を付与していた。",
+            after: "相手の手札にある[負荷]を持つカード1枚をランダムに選び、さらに[負荷]を付与して[高負荷]にする効果へ変更しました。[負荷]を持つカードがなければ発動しません。"
+          },
+          {
+            title: "カードキーワードの説明",
+            before: "カード確認に表示される[負荷]、[高負荷]、[進化]、[特殊進化]、[装備]など、一部のキーワードはクリックしても説明を確認できなかった。",
+            after: "カード確認に表示される角括弧内のキーワードをリンクとして表示し、クリックするとその場でルール説明を確認できるようにしました。"
+          },
+          {
+            title: "カード背面",
+            before: "対戦画面などのカード背面に、外側の影や曲がった縁が含まれており、表示箇所によって見え方も異なっていた。",
+            after: "中央の紺色デザインと白い縁を残し、外側の影と曲がりを取り除いた21:32の背面へ変更しました。ホーム画面と対戦画面で同じ背面を使用します。"
           }
         ]
       },
@@ -35548,10 +35563,19 @@
           addLog(`${card.name}の効果：相手の出席者${destroyed}人を破壊しました。`);
         }
       }
-      if (card.baseId === "white_student" || card.baseId === "overfitting_student") {
-        const count = card.baseId === "white_student" ? 1 : 2;
-        shuffle(state.players[opponent].hand).slice(0, count).forEach(addHandLoad);
-        addLog(`${card.name}の効果：相手の手札${Math.min(count, state.players[opponent].hand.length)}枚に負荷を付与しました。`);
+      if (card.baseId === "white_student") {
+        const target = shuffle(state.players[opponent].hand
+          .filter((entry) => Math.min(2, Number(entry.handLoadLevel) || 0) === 1))[0];
+        if (target) {
+          addHandLoad(target);
+          addLog(`${card.name}の効果：相手の手札にある負荷を持つカード1枚に負荷を付与しました。`);
+        } else {
+          addLog(`${card.name}の効果：相手の手札に負荷を持つカードがありません。`);
+        }
+      }
+      if (card.baseId === "overfitting_student") {
+        shuffle(state.players[opponent].hand).slice(0, 2).forEach(addHandLoad);
+        addLog(`${card.name}の効果：相手の手札${Math.min(2, state.players[opponent].hand.length)}枚に負荷を付与しました。`);
       }
       if (card.baseId === "best_friend") {
         const deck = state.players[side].deck;
@@ -45465,18 +45489,10 @@
     }
 
     function applyHomeFavoriteCardPerspective() {
-      const stage = elements.homeFavoriteCardScene;
       const cardElement = elements.homeFavoriteCardFront?.querySelector(".home-favorite-card-render");
-      if (!stage || !cardElement || !stage.clientWidth || !cardElement.offsetWidth) return;
-      const stageScale = stage.clientWidth / 775;
-      const cardScale = cardElement.offsetWidth / 420;
-      const matrix = [
-        1.367956913189 * stageScale / cardScale, 0.300533127243 * stageScale / cardScale, 0, 0.000020521687494 / cardScale,
-        -0.275898301394 * stageScale / cardScale, 1.172522865854 * stageScale / cardScale, 0, -0.000059886759582 / cardScale,
-        0, 0, 1, 0,
-        191 * stageScale, 17 * stageScale, 0, 1,
-      ];
-      cardElement.style.transform = `matrix3d(${matrix.join(",")})`;
+      if (!cardElement) return;
+      cardElement.style.transform = "none";
+      syncCardTemplateScales();
     }
 
     function renderHomeFavoriteCardFront(profile = state.profile) {
@@ -48509,6 +48525,9 @@
       "遅刻": "手札から出した後、指定された回数の自分のターンを待ってから出席する。",
       "負荷": "手札に持ったまま自分のターンを終了すると、自分本体に1ダメージ。同じカードに再び負荷が付くと高負荷になる。",
       "高負荷": "このカードの戦意を+1する。手札に持ったまま自分のターンを終了すると、自分本体に2ダメージ。効果で手札から校外エリアへ送れず、負荷も追加されない。",
+      "進化": "指定された進化元を、同じマスで進化後のカードに変える。通常は進化元を出席させた次のターン以降に、進化後のカードの戦意を使って行う。進化元が受けていたダメージと攻撃状態を引き継ぐ。",
+      "特殊進化": "カードの効果で条件を満たしたとき、戦意を使わずに進化する。進化元が受けていたダメージと攻撃状態を引き継ぎ、出席回数には数えない。",
+      "装備": "出席者につけて継続的に効果を与える。装備カードは通常、出席者1人につき1枚までつけられる。",
       "講義": "教師マスにいる攻撃可能な教師が、攻撃の代わりに選んで行う。相手の対象となる出席者すべてに1ダメージを与える。",
       "融合": "指定された複数のカードを組み合わせ、別のカードへ変える。",
     };
@@ -48562,11 +48581,11 @@
           const sourceMarkup = evolutionSource
             ? `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(evolutionSource.value)}">${escapeHtml(evolutionSource.label)}</button>`
             : escapeHtml(evolutionHeading[1]);
-          markup += `[進化]：「${sourceMarkup}」`;
+          markup += `${battleCardTermButtonMarkup("進化", "", "", "[進化]")}：「${sourceMarkup}」`;
           index += evolutionHeading[0].length;
           continue;
         }
-        const bracketedAbility = text.slice(index).match(/^\[((?:超)?(?:陽気|注目)|眠気|余裕|講義|遅刻\d*|進化|装備|融合)([^\]]*)\]/);
+        const bracketedAbility = text.slice(index).match(/^\[([^\]]+)\]/);
         if (bracketedAbility) {
           const displayLabel = bracketedAbility[0];
           const term = bracketedAbility[1].replace(/\d+$/, "");
@@ -49283,7 +49302,7 @@
         loud_typing_student: "このカードを手札から出席させたとき、周囲1マスにいる学生すべてに1ダメージを与える。その後、相手の講義室にいる学生すべてに5ダメージを与える。",
         tiny_rhythm_student: "このカードが攻撃するとき、相手の手札からカード1枚をランダムに選び、負荷を付与する。",
         apprentice_best_friend: "このカードを手札から出席させたとき、自分の講義室に「バカでかい」とつく出席者がいるなら、自分の空いている席マスへ「見習いベストフレンド」を2人までランダムに出席させる。",
-        white_student: "このカードを手札から出席させたとき、相手の手札からカード1枚をランダムに選び、負荷を付与する。",
+        white_student: "このカードを手札から出席させたとき、相手の手札にある負荷を持つカード1枚をランダムに選び、それに負荷を付与する。",
         true_enemy: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。それが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。自分の空いている席マスがあるなら、その出席者を出席させ、超陽気を付与する。",
         enemy_horde: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
         rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",

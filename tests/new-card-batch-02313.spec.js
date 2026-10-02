@@ -404,6 +404,10 @@ test("ver.0.23.10の更新情報に同日分のカード調整をまとめて表
   await expect(entry).toContainText("スタディアブローダー");
   await expect(entry).toContainText("手札から教卓マスに出席させたとき");
   await expect(entry).toContainText("相手の講義室にいる出席者すべてに2ダメージ");
+  await expect(entry).toContainText("白い学生");
+  await expect(entry).toContainText("さらに[負荷]を付与して[高負荷]にする");
+  await expect(entry).toContainText("カードキーワードの説明");
+  await expect(entry).toContainText("角括弧内のキーワードをリンクとして表示");
 });
 
 test("子曰くの二段階UIでタイプを宣言してカードを選べる", async ({ page }) => {
@@ -475,23 +479,39 @@ test("形容詞学生vs冷笑学生の盤面名はPCとスマホの横2席カー
 test("負荷カード、敵の群れ、ジェスチャー学生の手札・山札効果", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
-    api.state.players.opponent.hand = [api.createCardFromBase("ruler", "opponent")];
+    const loaded = api.createCardFromBase("ruler", "opponent");
+    loaded.handLoadLevel = 1;
+    const unloaded = api.createCardFromBase("general_student", "opponent");
+    const highLoaded = api.createCardFromBase("general_teacher", "opponent");
+    highLoaded.handLoadLevel = 2;
+    api.state.players.opponent.hand = [loaded, unloaded, highLoaded];
     api.attendCard("player", api.makeBoardCard(api.createCardFromBase("white_student", "player")), "seat", 0,
       { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
-    const load = api.state.players.opponent.hand[0].handLoadLevel;
+    const load = loaded.handLoadLevel;
+    api.state.players.opponent.hand = [unloaded, highLoaded];
+    api.attendCard("player", api.makeBoardCard(api.createCardFromBase("white_student", "player")), "seat", 3,
+      { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    const noCandidateLoads = [Number(unloaded.handLoadLevel) || 0, Number(highLoaded.handLoadLevel) || 0];
     api.attendCard("player", api.makeBoardCard(api.createCardFromBase("gesture_student", "player")), "seat", 1,
       { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const gestures = api.state.players.player.hand.filter((card) => card.baseId === "three_gestures").length;
     api.attendCard("player", api.makeBoardCard(api.createCardFromBase("enemy_horde", "player")), "seat", 2,
       { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
-    return { load, gestures, enemyRules: api.cardRulesText(api.createCardFromBase("enemy_horde", "player")),
+    return { load, unloaded: Number(unloaded.handLoadLevel) || 0,
+      highLoaded: Number(highLoaded.handLoadLevel) || 0, noCandidateLoads,
+      whiteRules: api.cardRulesText(api.createCardFromBase("white_student", "player")),
+      gestures, enemyRules: api.cardRulesText(api.createCardFromBase("enemy_horde", "player")),
       enemyHand: api.state.players.player.hand.filter((card) => card.baseId === "enemy_student").length,
       enemyDeck: api.state.players.player.deck.filter((card) => card.baseId === "enemy_student").length,
       enemyTrash: api.state.players.player.trash.filter((card) => card.baseId === "enemy_student").length,
       enemyBoard: api.state.players.player.board.seats.filter((card) => card?.baseId === "enemy_student").length };
   });
   expect(result).toEqual({
-    load: 1,
+    load: 2,
+    unloaded: 0,
+    highLoaded: 2,
+    noCandidateLoads: [0, 2],
+    whiteRules: "このカードを手札から出席させたとき、相手の手札にある[負荷]を持つカード1枚をランダムに選び、それに[負荷]を付与する。",
     gestures: 2,
     enemyRules: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
     enemyHand: 1,
