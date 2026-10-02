@@ -133,25 +133,42 @@ test("バカでかい声の学生は他の出席者へ1ダメージを与え、�
   expect(result).toEqual({ friendHp: 4, allyHp: 1, opponentHp: 1, loudHp: 9, hyperCheerful: true });
 });
 
-test("スタディアブローダーの2回出席で高負荷になり、ターン終了ダメージと破棄禁止が働く", async ({ page }) => {
+test("スタディアブローダーは手札から教卓マスに出席したときだけ全体ダメージと負荷を与える", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const player = api.state.players.player;
     const opponent = api.state.players.opponent;
     const loaded = api.createCardFromBase("general_student", "opponent");
     opponent.hand = [loaded];
+    const seatTarget = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+    seatTarget.maxHp = 10;
+    seatTarget.currentHp = 10;
+    opponent.board.seats[8] = seatTarget;
+    const teacherTarget = api.makeBoardCard(api.createCardFromBase("general_teacher", "opponent"));
+    teacherTarget.maxHp = 10;
+    teacherTarget.currentHp = 10;
+    opponent.board.teacher = teacherTarget;
     const first = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
-    const second = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
     api.attendCard("player", first, "teacher", null, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const oneLoad = loaded.handLoadLevel;
     const oneLoadCost = api.effectiveCardCost(loaded);
-    api.attendCard("player", second, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    const afterTeacherDamage = { seat: seatTarget.currentHp, teacher: teacherTarget.currentHp };
+    const seatOnly = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
+    api.attendCard("player", seatOnly, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    const afterSeatLoad = loaded.handLoadLevel;
+    const afterSeatDamage = { seat: seatTarget.currentHp, teacher: teacherTarget.currentHp };
+    player.board.teacher = null;
+    const second = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
+    api.attendCard("player", second, "teacher", null, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const highLoad = loaded.handLoadLevel;
     const highLoadCost = api.effectiveCardCost(loaded);
+    player.board.teacher = null;
     const third = api.makeBoardCard(api.createCardFromBase("signal_professor_m", "player"));
-    api.attendCard("player", third, "seat", 1, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
+    api.attendCard("player", third, "teacher", null, { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
     const cappedLoad = loaded.handLoadLevel;
     const text = api.cardRulesText(loaded);
+    const professorText = api.cardRulesText(api.createCardFromBase("signal_professor_m", "player"));
+    const professorCost = api.effectiveCardCost(api.createCardFromBase("signal_professor_m", "player"));
     api.state.currentSide = "opponent";
     opponent.life = 20;
     api.resolveEndTurnEffects("opponent");
@@ -163,17 +180,23 @@ test("スタディアブローダーの2回出席で高負荷になり、ター�
     const insufficient = api.placeCardFromHand("opponent", loaded.instanceId, "seat", "opponent", 0, false);
     opponent.will = 3;
     const played = api.placeCardFromHand("opponent", loaded.instanceId, "seat", "opponent", 0, false);
-    return { oneLoad, oneLoadCost, highLoad, highLoadCost, cappedLoad, text, life, discardAllowed,
+    return { oneLoad, oneLoadCost, afterTeacherDamage, afterSeatLoad, afterSeatDamage,
+      highLoad, highLoadCost, cappedLoad, text, professorText, professorCost, life, discardAllowed,
       stillInHand, stillOutOfTrash, insufficient, played, remainingWill: opponent.will,
       boardLoad: opponent.board.seats[0]?.handLoadLevel ?? null, playerLife: player.life };
   });
 
   expect(result.oneLoad).toBe(1);
   expect(result.oneLoadCost).toBe(2);
+  expect(result.afterTeacherDamage).toEqual({ seat: 8, teacher: 8 });
+  expect(result.afterSeatLoad).toBe(1);
+  expect(result.afterSeatDamage).toEqual({ seat: 8, teacher: 8 });
   expect(result.highLoad).toBe(2);
   expect(result.highLoadCost).toBe(3);
   expect(result.cappedLoad).toBe(2);
   expect(result.text).toContain("[高負荷]");
+  expect(result.professorText).toBe("このカードを手札から教卓マスに出席させたとき、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手の手札すべてに[負荷]を付与する。");
+  expect(result.professorCost).toBe(10);
   expect(result.life).toBe(18);
   expect(result.discardAllowed).toBe(false);
   expect(result.stillInHand).toBe(true);

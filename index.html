@@ -19377,7 +19377,7 @@
       {
         version: "ver.0.23.10",
         date: "2026年10月2日",
-        summary: "「敵に塩」「敵の群れ」「復活の敵」を調整しました。",
+        summary: "「敵に塩」「敵の群れ」「復活の敵」「スタディアブローダー」を調整しました。",
         changes: [
           {
             title: "敵に塩",
@@ -19393,6 +19393,11 @@
             title: "復活の敵",
             before: "戦意5。",
             after: "戦意6。効果と攻撃力・体力は変更していません。"
+          },
+          {
+            title: "スタディアブローダー",
+            before: "手札から出席させたとき、相手の手札すべてに[負荷]を付与していた。席マスへの出席でも発動した。",
+            after: "戦意10。手札から教卓マスに出席させたとき、相手の講義室にいる出席者すべてに2ダメージを与え、その後、相手の手札すべてに[負荷]を付与するように変更しました。席マスへの出席では発動しません。"
           }
         ]
       },
@@ -36104,9 +36109,14 @@
           addLog(`${card.name}の効果：1行2列が空いていないためTAを出席させられません。`);
         }
       }
-      if (card.baseId === "signal_professor_m") {
+      if (card.baseId === "signal_professor_m" && zone === "teacher") {
+        const targets = listBoardRefs(opponent);
+        targets.forEach((ref) => {
+          const target = getBoardCardFromRef(ref);
+          if (target) dealDamageToCard(target, 2, card);
+        });
         state.players[opponent].hand.forEach((handCard) => addHandLoad(handCard));
-        addLog(`${card.name}の効果：相手の手札すべてに負荷を付与しました。`);
+        addLog(`${card.name}の効果：相手の出席者${targets.length}人に2ダメージを与え、相手の手札すべてに負荷を付与しました。`);
       }
       if (card.baseId === "president" && zone === "teacher") {
         const targets = listBoardRefs(opponent);
@@ -49226,7 +49236,7 @@
         kansai_voice_t: "このカードが教卓マスに出席したとき、相手の出席者1人を指名する。その出席者は攻撃できない。",
         kyoto_sound_i: "このカードが教卓マスに出席したとき、相手の学生すべての攻撃力を+2し、それらに2ダメージを与える。",
         kyushu_info_c: "このカードが教卓マスに出席したとき、自分の1行2列に、陽気を持つTAを1人出席させる。",
-        signal_professor_m: "このカードを手札から出席させたとき、相手の手札すべてに負荷を付与する。",
+        signal_professor_m: "このカードを手札から教卓マスに出席させたとき、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手の手札すべてに負荷を付与する。",
         logic_hunter: "このカードが教卓マスに出席したとき、相手の手札を見て、その中から1枚を選び、校外エリアへ送る。",
         president: "このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。",
         suzaku: "自分の教卓マスに「デザイン」と名のつく出席者がいなければ出席できない。このカードが席マスに出席したとき、相手のヴァンパイアを2人までランダムに指名し、それらに3ダメージを与える。",

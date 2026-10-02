@@ -387,7 +387,7 @@ test("敵に塩は戦意2のまま相手の指定空席へTRPGサークルメン
   });
 });
 
-test("ver.0.23.10の更新情報に敵に塩と敵の群れの調整を表示する", async ({ page }) => {
+test("ver.0.23.10の更新情報に同日分のカード調整をまとめて表示する", async ({ page }) => {
   await page.evaluate(() => {
     window.__chibattle.state.screen = "home";
     window.__chibattle.render();
@@ -401,6 +401,9 @@ test("ver.0.23.10の更新情報に敵に塩と敵の群れの調整を表示す
   await expect(entry).toContainText("デッキと校外エリアには生成しません");
   await expect(entry).toContainText("復活の敵");
   await expect(entry).toContainText("戦意6");
+  await expect(entry).toContainText("スタディアブローダー");
+  await expect(entry).toContainText("手札から教卓マスに出席させたとき");
+  await expect(entry).toContainText("相手の講義室にいる出席者すべてに2ダメージ");
 });
 
 test("子曰くの二段階UIでタイプを宣言してカードを選べる", async ({ page }) => {
