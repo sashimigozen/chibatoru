@@ -17074,7 +17074,7 @@
         <button class="home-favorite-card-hitarea home-scene-object" id="homeFavoriteCardButton" type="button" aria-label="好きなカードを表示" aria-disabled="true" data-home-object="favorite-card">
           <span class="home-favorite-card-flip-stage" id="homeFavoriteCardScene">
             <span class="home-favorite-card-face home-favorite-card-back">
-              <img class="home-scene-object-image" id="homeFavoriteCardImage" src="assets/card-back.png?v=2" alt="" draggable="false" />
+              <img class="home-scene-object-image" id="homeFavoriteCardImage" src="assets/home/home-ui-favorite-card.png" alt="" draggable="false" />
             </span>
             <span class="home-favorite-card-face home-favorite-card-front" id="homeFavoriteCardFront"></span>
           </span>
@@ -19377,7 +19377,7 @@
       {
         version: "ver.0.23.10",
         date: "2026年10月2日",
-        summary: "カード調整、カードキーワードの説明表示、カード背面の共通化を行いました。",
+        summary: "カード調整、カードキーワードの説明表示、対戦画面のカード背面改善を行いました。",
         changes: [
           {
             title: "敵に塩",
@@ -19411,8 +19411,8 @@
           },
           {
             title: "カード背面",
-            before: "対戦画面などのカード背面に、外側の影や曲がった縁が含まれており、表示箇所によって見え方も異なっていた。",
-            after: "中央の紺色デザインと白い縁を残し、外側の影と曲がりを取り除いた21:32の背面へ変更しました。ホーム画面と対戦画面で同じ背面を使用します。"
+            before: "対戦画面のカード背面に、外側の影や曲がった縁が含まれており、表示箇所によって見え方も異なっていた。",
+            after: "中央の紺色デザインと白い縁を残し、外側の影と曲がりを取り除いた21:32の背面へ変更しました。対戦画面内のカード背面で共通して使用します。"
           }
         ]
       },
@@ -45489,10 +45489,18 @@
     }
 
     function applyHomeFavoriteCardPerspective() {
+      const stage = elements.homeFavoriteCardScene;
       const cardElement = elements.homeFavoriteCardFront?.querySelector(".home-favorite-card-render");
-      if (!cardElement) return;
-      cardElement.style.transform = "none";
-      syncCardTemplateScales();
+      if (!stage || !cardElement || !stage.clientWidth || !cardElement.offsetWidth) return;
+      const stageScale = stage.clientWidth / 775;
+      const cardScale = cardElement.offsetWidth / 420;
+      const matrix = [
+        1.367956913189 * stageScale / cardScale, 0.300533127243 * stageScale / cardScale, 0, 0.000020521687494 / cardScale,
+        -0.275898301394 * stageScale / cardScale, 1.172522865854 * stageScale / cardScale, 0, -0.000059886759582 / cardScale,
+        0, 0, 1, 0,
+        191 * stageScale, 17 * stageScale, 0, 1,
+      ];
+      cardElement.style.transform = `matrix3d(${matrix.join(",")})`;
     }
 
     function renderHomeFavoriteCardFront(profile = state.profile) {
