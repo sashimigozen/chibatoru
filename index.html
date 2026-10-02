@@ -19375,6 +19375,23 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.10",
+        date: "2026年10月2日",
+        summary: "「敵に塩」と「敵の群れ」の効果を調整しました。",
+        changes: [
+          {
+            title: "敵に塩",
+            before: "相手の席マスに「TRPGサークルメンバー」を出席させても、その出席時効果は発動しなかった。",
+            after: "戦意2は維持し、出席させた「TRPGサークルメンバー」の出席時効果が発動するように変更しました。相手は自分のデッキから学生カード3枚をランダムに手札へ加えます。"
+          },
+          {
+            title: "敵の群れ",
+            before: "手札、デッキ、校外エリアに「敵」を1枚ずつ生成し、空いている席マスに「敵」1人をランダムに出席させていた。",
+            after: "手札に「敵」1枚を生成し、空いている席マスに「敵」1人をランダムに出席させる効果へ変更しました。デッキと校外エリアには生成しません。"
+          }
+        ]
+      },
+      {
         version: "ver.0.23.9",
         date: "2026年10月1日",
         summary: "先攻1ターン目の攻撃制限、負荷状態、カードテスト、U太の装備効果、カードテキストを改善し、生物系カードと「病に打ち勝った裏U太」を特殊進化へ変更しました。「敵」「敵の幹部」「アカデミックムーブ」「怖い質問」も調整しました。",
@@ -35422,7 +35439,9 @@
       const attendanceSource = attendanceSourceForEffect(options);
       card.lastAttendanceSource = attendanceSource;
       const triggerPolicy = card.attendanceTrigger || CARD_BASES[card.baseId]?.attendanceTrigger || ATTENDANCE_TRIGGER.HAND;
-      if (triggerPolicy !== ATTENDANCE_TRIGGER.ANY && attendanceSource !== ATTENDANCE_SOURCE.HAND) return;
+      if (!options.forceLocalAttendEffects
+        && triggerPolicy !== ATTENDANCE_TRIGGER.ANY
+        && attendanceSource !== ATTENDANCE_SOURCE.HAND) return;
       if (arePlayedEffectsSuppressed(side)) {
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
@@ -35542,8 +35561,6 @@
       }
       if (card.baseId === "enemy_horde") {
         state.players[side].hand.push(createCardFromBase("enemy_student", side));
-        state.players[side].deck = shuffle([...state.players[side].deck, createCardFromBase("enemy_student", side)]);
-        moveToTrash(side, createCardFromBase("enemy_student", side));
         summonToRandomOpenSeat(side, "enemy_student", card.name);
       }
       if (card.baseId === "enemy_enemy") {
@@ -37990,7 +38007,9 @@
       else {
         const summoned = makeBoardCard(createCardFromBase("trpg_member", owner));
         attendCard(owner, summoned, "seat", index, {
-          attendanceSource: ATTENDANCE_SOURCE.GENERATED, ignoreAttendanceLimit: true
+          attendanceSource: ATTENDANCE_SOURCE.GENERATED,
+          ignoreAttendanceLimit: true,
+          forceLocalAttendEffects: true
         });
       }
       moveHandCardToTrash(side, item);
@@ -49251,12 +49270,12 @@
         apprentice_best_friend: "このカードを手札から出席させたとき、自分の講義室に「バカでかい」とつく出席者がいるなら、自分の空いている席マスへ「見習いベストフレンド」を2人までランダムに出席させる。",
         white_student: "このカードを手札から出席させたとき、相手の手札からカード1枚をランダムに選び、負荷を付与する。",
         true_enemy: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。それが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。自分の空いている席マスがあるなら、その出席者を出席させ、超陽気を付与する。",
-        enemy_horde: "このカードを手札から出席させたとき、「敵」を自分の手札、デッキ、校外エリアに1枚ずつ生成する。その後、自分の空いている席マス1つに「敵」1人をランダムに出席させる。",
+        enemy_horde: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
         rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
         enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」すべてを破壊する。破壊した人数だけ相手本体にダメージを与える。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
         triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中から「敵」とつく出席者カード1枚を選び、自分の空いている席マスにランダムに出席させる。",
-        salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。",
+        salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。その出席時効果は発動する。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",

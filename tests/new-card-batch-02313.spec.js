@@ -353,16 +353,51 @@ test("三敵は候補以外の指定を拒否し、空席がなければ山札�
   expect(result.board).toBe(0);
 });
 
-test("敵に塩は相手の指定空席へTRPGサークルメンバーを生成する", async ({ page }) => {
+test("敵に塩は戦意2のまま相手の指定空席へTRPGサークルメンバーを出席させ、その出席時効果を発動する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const item = api.createCardFromBase("salt_to_enemy", "player");
     api.state.players.player.hand.push(item);
+    api.state.players.opponent.deck = [
+      api.createCardFromBase("general_student", "opponent"),
+      api.createCardFromBase("enemy_student", "opponent"),
+      api.createCardFromBase("aggro_student", "opponent"),
+      api.createCardFromBase("ruler", "opponent")
+    ];
     const used = api.castCaptureOnSlot("player", item, "opponent", "seat", 7, false);
-    return { used, placed: api.state.players.opponent.board.seats[7]?.baseId,
-      discarded: api.state.players.player.trash.some((card) => card.baseId === "salt_to_enemy") };
+    return {
+      used,
+      cost: api.effectiveCardCost(item),
+      rules: api.cardRulesText(item),
+      placed: api.state.players.opponent.board.seats[7]?.baseId,
+      opponentHand: api.state.players.opponent.hand.map((card) => card.baseId).sort(),
+      opponentDeck: api.state.players.opponent.deck.map((card) => card.baseId),
+      discarded: api.state.players.player.trash.some((card) => card.baseId === "salt_to_enemy")
+    };
   });
-  expect(result).toEqual({ used: true, placed: "trpg_member", discarded: true });
+  expect(result).toEqual({
+    used: true,
+    cost: 2,
+    rules: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。\nその出席時効果は発動する。",
+    placed: "trpg_member",
+    opponentHand: ["aggro_student", "enemy_student", "general_student"],
+    opponentDeck: ["ruler"],
+    discarded: true
+  });
+});
+
+test("ver.0.23.10の更新情報に敵に塩と敵の群れの調整を表示する", async ({ page }) => {
+  await page.evaluate(() => {
+    window.__chibattle.state.screen = "home";
+    window.__chibattle.render();
+  });
+  await page.locator("#homeUpdatesButton").click();
+  const entry = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.23.10" }) });
+  await expect(entry).toHaveCount(1);
+  await expect(entry).toContainText("出席時効果が発動するように変更");
+  await expect(entry).toContainText("戦意2は維持");
+  await expect(entry).toContainText("手札に「敵」1枚を生成");
+  await expect(entry).toContainText("デッキと校外エリアには生成しません");
 });
 
 test("子曰くの二段階UIでタイプを宣言してカードを選べる", async ({ page }) => {
@@ -443,12 +478,21 @@ test("負荷カード、敵の群れ、ジェスチャー学生の手札・山�
     const gestures = api.state.players.player.hand.filter((card) => card.baseId === "three_gestures").length;
     api.attendCard("player", api.makeBoardCard(api.createCardFromBase("enemy_horde", "player")), "seat", 2,
       { attendanceSource: api.ATTENDANCE_SOURCE.HAND });
-    return { load, gestures, enemyHand: api.state.players.player.hand.filter((card) => card.baseId === "enemy_student").length,
+    return { load, gestures, enemyRules: api.cardRulesText(api.createCardFromBase("enemy_horde", "player")),
+      enemyHand: api.state.players.player.hand.filter((card) => card.baseId === "enemy_student").length,
       enemyDeck: api.state.players.player.deck.filter((card) => card.baseId === "enemy_student").length,
       enemyTrash: api.state.players.player.trash.filter((card) => card.baseId === "enemy_student").length,
       enemyBoard: api.state.players.player.board.seats.filter((card) => card?.baseId === "enemy_student").length };
   });
-  expect(result).toEqual({ load: 1, gestures: 2, enemyHand: 1, enemyDeck: 1, enemyTrash: 1, enemyBoard: 1 });
+  expect(result).toEqual({
+    load: 1,
+    gestures: 2,
+    enemyRules: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
+    enemyHand: 1,
+    enemyDeck: 0,
+    enemyTrash: 0,
+    enemyBoard: 1
+  });
 });
 
 test("レーザービーム、アグロ散歩、焼き鳥ハラスメントは対象にだけ作用する", async ({ page }) => {
