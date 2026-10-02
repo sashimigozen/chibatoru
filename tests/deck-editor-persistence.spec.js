@@ -9,6 +9,27 @@ async function openSavedChaosDeck(page, name) {
   await expect(page.locator("#deckEditorView")).toBeVisible();
 }
 
+test("保存デッキをダブルクリックすると直接デッキ編成を開く", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeNavDeckButton").click();
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.deckBuilder.savedDecks["ダブルクリックテスト"] = {
+      counts: { general_student: 3 },
+      savedAt: "2026-10-02T00:00:00.000Z"
+    };
+    api.render();
+  });
+
+  const savedDeck = page.locator("#deckLibraryGrid .deck-library-card", { hasText: "ダブルクリックテスト" });
+  await expect(savedDeck).toHaveAttribute("title", "ダブルクリックで変更");
+  await savedDeck.dblclick();
+
+  await expect(page.locator("#deckEditorView")).toBeVisible();
+  await expect(page.locator("#deckSaveNameInput")).toHaveValue("ダブルクリックテスト");
+  expect(await page.evaluate(() => window.__chibattle.state.deckBuilder.counts.player.general_student)).toBe(3);
+});
+
 test("カオスデッキの4枚以上を保存・再編集・再保存・再起動で維持する", async ({ page }) => {
   page.on("dialog", dialog => dialog.accept());
   await page.goto(gameUrl);

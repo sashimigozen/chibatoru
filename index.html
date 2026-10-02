@@ -19377,7 +19377,7 @@
       {
         version: "ver.0.23.10",
         date: "2026年10月2日",
-        summary: "カード調整、カードキーワードの説明表示、対戦画面のカード背面改善を行いました。",
+        summary: "カード調整、カードキーワードの説明表示、対戦画面のカード背面改善、保存デッキの操作改善を行いました。",
         changes: [
           {
             title: "敵に塩",
@@ -19413,6 +19413,11 @@
             title: "カード背面",
             before: "対戦画面のカード背面に、外側の影や曲がった縁が含まれており、表示箇所によって見え方も異なっていた。",
             after: "中央の紺色デザインと白い縁を残し、外側の影と曲がりを取り除いた21:32の背面へ変更しました。対戦画面内のカード背面で共通して使用します。"
+          },
+          {
+            title: "保存デッキ一覧",
+            before: "保存デッキを編集するには、一覧で選択してから「変更する」を押す必要があった。",
+            after: "保存デッキをダブルクリックすると、そのデッキを読み込んで直接デッキ編成画面へ移動できるようにしました。従来の単クリックと「変更する」も引き続き使用できます。"
           }
         ]
       },
@@ -45896,11 +45901,20 @@
         button.type = "button";
         button.className = `deck-library-card${state.deckBuilder.selectedName === name ? " selected" : ""}`;
         button.textContent = name;
-        button.addEventListener("click", () => {
+        button.title = "ダブルクリックで変更";
+        button.addEventListener("click", (event) => {
+          if (event.detail > 1) {
+            beginExistingDeckEditor(name);
+            return;
+          }
           state.deckBuilder.selectedName = name;
           state.deckBuilder.detailExpanded = false;
           if (specialty) state.deckBuilder.specialtyId = collection[name]?.specialtyId || "";
           render();
+        });
+        button.addEventListener("dblclick", (event) => {
+          event.preventDefault();
+          beginExistingDeckEditor(name);
         });
         elements.deckLibraryGrid.appendChild(button);
       });
