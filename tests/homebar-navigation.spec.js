@@ -68,3 +68,31 @@ test("下部ホームバーだけを既存画面へ追加し、素材どおり�
   await expect(page.locator("#battleScreen")).toBeVisible();
   await expect(navigation).toBeHidden();
 });
+
+test("ホームバーは画面サイズと表示画面にかかわらず下端へ追従する", async ({ page }) => {
+  await page.goto(gameUrl);
+  const navigation = page.locator("#homeNavigation");
+  const expectAtViewportBottom = async () => {
+    await expect(navigation).toBeVisible();
+    await expect.poll(() => navigation.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return Math.abs(window.innerHeight - rect.bottom);
+    })).toBeLessThan(1.1);
+  };
+
+  for (const viewport of [
+    { width: 1280, height: 900 },
+    { width: 1920, height: 1200 },
+    { width: 1122, height: 706 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await expectAtViewportBottom();
+  }
+
+  await page.locator("#homeNavDeckButton").click();
+  await expectAtViewportBottom();
+  await page.locator("#homeNavBattleButton").click();
+  await expectAtViewportBottom();
+  await page.locator("#homeNavSoloButton").click();
+  await expectAtViewportBottom();
+});
