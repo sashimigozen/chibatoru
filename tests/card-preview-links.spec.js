@@ -14,10 +14,18 @@ test("カード確認の効果文でカード名・能力・タイプを直接�
     const padlock = markup("padlock");
     const trpgMember = markup("trpg_member");
     const yuta = markup("yuta");
+    const evolution = markup("oni_shima_ai");
+    const specialEvolution = markup("single_cell");
+    const loadedCard = api.createCardFromBase("general_student", "player");
+    loadedCard.handLoadLevel = 1;
+    api.state.players.player.hand = [loadedCard];
+    const load = api.battleCardRulesMarkup(loadedCard);
+    loadedCard.handLoadLevel = 2;
+    const highLoad = api.battleCardRulesMarkup(loadedCard);
     const removedTerms = [
       "攻撃力", "防御力", "体力", "戦意", "気力",
       "講義室", "教卓マス", "教師マス", "席マス", "環境マス", "校外エリア", "遅刻ゾーン",
-      "出席者", "デッキ", "手札", "出席", "装備", "進化"
+      "出席者", "デッキ", "手札", "出席"
     ];
     return {
       lectureRoomRemainsPlainText: wall.includes("講義室")
@@ -26,12 +34,11 @@ test("カード確認の効果文でカード名・能力・タイプを直接�
       studentTypeLinked: trpgMember.includes('data-preview-type-term="student"'),
       relatedCardLinked: padlock.includes('data-related-card="key"'),
       lectureAbilityLinked: padlock.includes('data-preview-term="講義"'),
-      equipmentAndEvolutionRemainPlainText: padlock.includes("装備")
-        && padlock.includes("進化")
-        && !padlock.includes('data-preview-term="装備"')
-        && !padlock.includes('data-preview-term="進化"')
-        && !("装備" in api.BATTLE_CARD_TERM_DESCRIPTIONS)
-        && !("進化" in api.BATTLE_CARD_TERM_DESCRIPTIONS),
+      equipmentLinked: padlock.includes('data-preview-term="装備"'),
+      evolutionLinked: evolution.includes('data-preview-term="進化"'),
+      specialEvolutionLinked: specialEvolution.includes('data-preview-term="特殊進化"'),
+      loadLinked: load.includes('data-preview-term="負荷"'),
+      highLoadLinked: highLoad.includes('data-preview-term="高負荷"'),
       keywordLinked: yuta.includes('data-preview-term="余裕"')
         && yuta.includes('data-preview-term="陽気"'),
       handAndAttendanceRemainPlainText: trpgMember.includes("手札")
@@ -78,4 +85,35 @@ test("カード確認の効果文でカード名・能力・タイプを直接�
   });
   await page.locator('[data-preview-term="余裕"]').click();
   await expect(page.locator("[data-preview-term-description]")).toContainText("体力を1回復");
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.showBattleCardPreview(api.createCardFromBase("padlock", "player"));
+  });
+  await page.locator('[data-preview-term="装備"]').click();
+  await expect(page.locator("[data-preview-term-description]")).toContainText("1人につき1枚");
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.showBattleCardPreview(api.createCardFromBase("oni_shima_ai", "player"));
+  });
+  await page.locator('[data-preview-term="進化"]').click();
+  await expect(page.locator("[data-preview-term-description]")).toContainText("同じマス");
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.showBattleCardPreview(api.createCardFromBase("single_cell", "player"));
+  });
+  await page.locator('[data-preview-term="特殊進化"]').click();
+  await expect(page.locator("[data-preview-term-description]")).toContainText("戦意を使わず");
+
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    const loaded = api.createCardFromBase("general_student", "player");
+    loaded.handLoadLevel = 1;
+    api.state.players.player.hand = [loaded];
+    api.showBattleCardPreview(loaded);
+  });
+  await page.locator('[data-preview-term="負荷"]').click();
+  await expect(page.locator("[data-preview-term-description]")).toContainText("自分本体に1ダメージ");
 });
