@@ -17036,6 +17036,47 @@
       box-shadow: inset 0 0 0 4px rgba(164, 24, 36, .78);
     }
 
+    /* Keep the spectator indicator in the lower information rail, left of
+       the deck and beyond the bounded hand lane. It scales with the playmat. */
+    .battle-screen .battle-spectator-count {
+      position: absolute;
+      z-index: 14;
+      right: 204px;
+      bottom: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 82px;
+      max-width: 180px;
+      height: 40px;
+      padding: 0 12px;
+      border: 1px solid #71899b;
+      border-radius: 4px;
+      background: #f7fafc;
+      color: #24445b;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1;
+      pointer-events: none;
+    }
+
+    .battle-spectator-count svg {
+      width: 26px;
+      height: 22px;
+      flex: 0 0 auto;
+    }
+
+    .battle-spectator-count small { font-size: 12px; }
+
+    @media (min-width: 761px) {
+      .battle-screen.has-spectators .player-hand {
+        /* --hand-stack-step already includes the intended spacing. A legacy
+           flex gap would otherwise accumulate for every extra card. */
+        column-gap: 0 !important;
+      }
+    }
+
   </style>
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
@@ -17995,6 +18036,10 @@
       <aside class="side">
         <section class="panel battle-card-preview hidden" id="battleCardPreview" role="dialog" aria-label="カード詳細"></section>
       </aside>
+      <div class="battle-spectator-count hidden" id="battleSpectatorCount" role="status" aria-live="polite" aria-label="観戦者0人">
+        <svg viewBox="0 0 28 22" fill="none" aria-hidden="true"><rect x="1.5" y="4" width="17" height="14" rx="2" fill="#dbe8ef" stroke="currentColor" stroke-width="2"/><path d="M18.5 8L26.5 4.5V17.5L18.5 14Z" fill="#dbe8ef" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+        <span id="battleSpectatorCountValue">0</span><small>人</small>
+      </div>
     </section>
     <div class="turn-overlay" id="turnOverlay" aria-live="polite"></div>
     <div class="tutorial-layer hidden" id="tutorialLayer" aria-live="polite">
@@ -19381,7 +19426,7 @@
       {
         version: "ver.0.23.11",
         date: "2026年10月3日",
-        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。オンラインの「敵」の強化、プロフィールとレアリティの同期不具合を修正しました。",
+        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。オンラインの「敵」の強化、プロフィールとレアリティの同期不具合を修正し、観戦者の人数表示を追加しました。",
         changes: [
           {
             title: "お盆mac",
@@ -19411,6 +19456,11 @@
             title: "オンラインのプロフィール・レアリティ同期",
             before: "対戦開始や再同期でゲスト自身のプロフィールがホストの設定に置き換わり、レアリティ情報のない部屋の同期で高レアリティが通常表示へ戻ることがあった。",
             after: "端末自身のプロフィールと編集状態を対戦状態の同期から除外しました。双方のプロフィールとカードのレアリティを区別して同期し、情報の省略や再接続でも名前・アイコン・好きなカードとレアリティが維持されるようにしました。"
+          },
+          {
+            title: "対戦中の観戦者表示",
+            before: "対戦画面では、現在の観戦者数を確認できなかった。",
+            after: "観戦者が1人以上いる間、対戦画面の右下にカメラマークと人数を表示します。手札が多い場合も表示や山札と重ならないようにし、入退室に合わせて人数だけを更新します。0人になると表示が消え、退出メッセージは出ません。"
           }
         ]
       },
@@ -21012,6 +21062,7 @@
         connToken: 0,
         connectTimer: null,
         connected: false,
+        spectatorCount: 0,
         remoteClientId: "",
         localReady: false,
         remoteReady: false,
@@ -21273,6 +21324,8 @@
       deckScreen: document.getElementById("deckScreen"),
       battleScreen: document.getElementById("battleScreen"),
       spectatorBanner: document.getElementById("spectatorBanner"),
+      battleSpectatorCount: document.getElementById("battleSpectatorCount"),
+      battleSpectatorCountValue: document.getElementById("battleSpectatorCountValue"),
       battleRoomCode: document.getElementById("battleRoomCode"),
       battleRoomCodeValue: document.getElementById("battleRoomCodeValue"),
       homeDeckButton: document.getElementById("homeDeckButton"),
@@ -23751,6 +23804,17 @@
       return state.online.role === "spectator";
     }
 
+    function onlineUpdateSpectatorCount(players) {
+      if (!Array.isArray(players)) return;
+      state.online.spectatorCount = players.filter((player) => player?.role === "spectator").length;
+    }
+
+    function hasBattleSpectators() {
+      return state.screen === "battle" && state.online.started
+        && ["host", "guest", "spectator"].includes(state.online.role)
+        && state.online.spectatorCount > 0;
+    }
+
     function isOnlineBattle() {
       return isOnlineConnected() && state.online.started;
     }
@@ -23935,6 +23999,7 @@
       state.online.roomSessionId = "";
       state.online.connected = false;
       state.online.remoteClientId = "";
+      state.online.spectatorCount = 0;
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.online.roomRuleId = "normal";
@@ -24352,12 +24417,20 @@
 
     function onlineHandleMessage(message) {
       if (!message || message.protocol !== ONLINE_PROTOCOL_VERSION) return;
+      if (message.type === "spectatorCount") {
+        if (message.senderId !== "server" || message.roomSessionId !== state.online.roomSessionId) return;
+        if (!Number.isSafeInteger(message.spectatorCount) || message.spectatorCount < 0) return;
+        state.online.spectatorCount = message.spectatorCount;
+        render();
+        return;
+      }
       if (message.type === "playerJoined") {
         state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
         state.online.roomCode = message.roomId || state.online.roomCode;
         state.online.matchMode = message.matchType || state.online.matchMode || "private";
         onlineApplyRoomRuleId(message.ruleId);
         const players = Array.isArray(message.players) ? message.players : [];
+        onlineUpdateSpectatorCount(message.players);
         const self = players.find((player) => player.clientId === state.online.clientId) || message.you;
         const host = players.find((player) => player.role === "host");
         const guest = players.find((player) => player.role === "guest");
@@ -24400,6 +24473,7 @@
         state.profileViewer = null;
         onlineApplyRoomRuleId(message.ruleId);
         const players = Array.isArray(message.players) ? message.players : [];
+        onlineUpdateSpectatorCount(message.players);
         const host = players.find((player) => player.role === "host");
         const guest = players.find((player) => player.role === "guest");
         state.online.connected = Boolean(host && guest);
@@ -24509,6 +24583,7 @@
         state.online.matchMode = message.matchType || state.online.matchMode || "private";
         onlineApplyRoomRuleId(message.ruleId);
         const players = Array.isArray(message.players) ? message.players : [];
+        onlineUpdateSpectatorCount(message.players);
         const self = players.find((player) => player.clientId === state.online.clientId);
         const host = players.find((player) => player.role === "host");
         const guest = players.find((player) => player.role === "guest");
@@ -24568,6 +24643,7 @@
         onlineApplyRoomRuleId(message.ruleId);
         const localIsHost = isOnlineHost();
         const players = Array.isArray(message.players) ? message.players : [];
+        onlineUpdateSpectatorCount(message.players);
         onlineApplyProfiles(players);
         onlineApplyCardStyles(players);
         state.online.remoteReady = localIsHost ? Boolean(message.guestReady) : Boolean(message.hostReady);
@@ -42367,6 +42443,11 @@
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
       elements.battleScreen.classList.toggle("hidden", state.screen !== "battle");
       elements.spectatorBanner.classList.toggle("hidden", state.screen !== "battle" || !isOnlineSpectator());
+      const showSpectatorCount = hasBattleSpectators();
+      elements.battleSpectatorCount.classList.toggle("hidden", !showSpectatorCount);
+      elements.battleScreen.classList.toggle("has-spectators", showSpectatorCount);
+      elements.battleSpectatorCountValue.textContent = String(state.online.spectatorCount);
+      elements.battleSpectatorCount.setAttribute("aria-label", `観戦者${state.online.spectatorCount}人`);
       const showRoomCode = state.screen === "battle" && Boolean(state.online.role && state.online.roomCode);
       elements.battleRoomCode?.classList.toggle("hidden", !showRoomCode);
       if (elements.battleRoomCodeValue) {
@@ -44120,7 +44201,9 @@
       const handStep = player.hand.length > 1
         ? Math.min(46, (handLaneWidth - handCardWidth) / (player.hand.length - 1))
         : 46;
-      elements.playerHand.style.setProperty("--hand-stack-step", `${Math.max(4, handStep)}px`);
+      // With viewers present, even an unusually large hand must stay inside
+      // its own lane rather than grow into the spectator indicator.
+      elements.playerHand.style.setProperty("--hand-stack-step", `${Math.max(hasBattleSpectators() ? 0 : 4, handStep)}px`);
       player.hand.forEach((card) => {
         if (isOnlineSpectator()) {
           if (card?.hidden) {

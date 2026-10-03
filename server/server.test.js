@@ -598,6 +598,14 @@ test("public room list exposes spectatable battles and allows spectator joins", 
   const spectatorJoin = spectator.messages.find((message) => message.type === "playerJoined");
   assert.equal(spectatorJoin.you.role, "spectator");
   assert.equal(spectatorJoin.hasOpponent, true);
+  assert.equal(spectatorJoin.players.filter((player) => player.role === "spectator").length, 1);
+  const leaveStart = host.messages.length;
+  spectator.ws.close();
+  const left = await waitFor(host, (message) => message.type === "spectatorCount", leaveStart);
+  assert.equal(left.message.spectatorCount, 0);
+  assert.equal(left.message.roomSessionId, spectatorJoin.roomSessionId);
+  await waitFor(guest, (message) => message.type === "spectatorCount" && message.spectatorCount === 0);
+  assert.equal(host.messages.slice(leaveStart).some((message) => message.type === "opponentDisconnected"), false);
 });
 
 test("reward card styles are shared with the opponent and spectators", async (t) => {
