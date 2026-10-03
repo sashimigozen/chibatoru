@@ -40,6 +40,7 @@ async function startBasic(page) {
 
 async function advanceTo(page, title) {
   for (let attempt = 0; attempt < 64; attempt += 1) {
+    await expect(page.locator("#tutorialCoachText")).not.toContainText(/今回は|この練習では|練習用|残り2|今は0人/);
     if (await page.locator("#tutorialCoachTitle").textContent() === title) return;
     await page.locator("#tutorialNextButton").click();
   }
@@ -98,10 +99,14 @@ test("5タイプを紹介し、出席・ターン終了・反撃を体験して�
   await expect.poll(() => page.evaluate(() => window.__chibattle.state.players.player.board.seats[4].currentHp)).toBe(1);
   expect(await page.evaluate(() => window.__chibattle.state.players.opponent.board.seats[0])).toBeNull();
   await page.locator("#tutorialNextButton").click();
-  await expect(page.locator("#tutorialCoachTitle")).toHaveText("リーサルに挑戦");
+  await expect(page.locator("#tutorialCoachTitle")).toHaveText("自由にプレイしよう");
+  await expect(page.locator("#tutorialCoachText")).toHaveText("ここからは自由にプレイして、勝利を目指そう！\n勝利後は「戻る」で一覧に戻れます。");
+  await expect(page.locator("#tutorialNextButton")).toHaveText("プレイする");
+  await page.screenshot({ path: test.info().outputPath("free-play-guide.png") });
   expect(await coachLayout(page)).toEqual(fixedLayout);
   await page.locator("#tutorialNextButton").click();
   await expect(page.locator("#tutorialLayer")).toBeHidden();
+  expect(await page.evaluate(() => window.__chibattle.state.message)).toBe("ここからは自由にプレイして、勝利を目指そう！");
   await expect(page.locator('#playerHand [data-base-id="ruler"]')).toBeEnabled();
   await seat(page, "player", 8).click();
   await page.locator("#opponentLifeTarget").click();
