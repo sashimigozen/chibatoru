@@ -9,11 +9,11 @@ test.beforeEach(async ({ page }) => {
   await page.locator("#homeNavSoloButton").click();
 });
 
-test("ソロモードをAIバトル、魔の1号館、トレーニングの順に表示する", async ({ page }) => {
+test("ソロモードをチュートリアル、AIバトル、魔の1号館、トレーニングの順に表示する", async ({ page }) => {
   const order = await page.locator("#soloMenuScreen .solo-mode-button").evaluateAll((buttons) =>
     buttons.map((button) => button.id));
 
-  expect(order).toEqual(["soloAiBattleButton", "soloDungeonButton", "soloTrainingButton"]);
+  expect(order).toEqual(["soloTutorialButton", "soloAiBattleButton", "soloDungeonButton", "soloTrainingButton"]);
   await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
   await expect(page.locator("#soloAiBattleButton")).toContainText("COMING SOON");
   await expect(page.locator("#soloAiBattleButton")).toContainText("ランダムなAIデッキ");
@@ -39,7 +39,7 @@ test("左側をCPUへ切り替えてCPU同士の観戦設定にできる", async
   await expect(page.locator("#soloObserverNote")).toContainText("両方の手札を公開");
 });
 
-test("魔の1号館は2番目のボタンから開く", async ({ page }) => {
+test("魔の1号館は3番目のボタンから開く", async ({ page }) => {
   await page.locator("#soloDungeonButton").click();
   await expect(page.locator("#dungeonEntranceScreen")).toBeVisible();
 });
