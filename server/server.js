@@ -1069,6 +1069,10 @@ function roomPlayers(room) {
   return [...room.players.values()].map((player) => playerPublicState(player, room));
 }
 
+function roomSpectatorCount(room) {
+  return [...room.players.values()].filter((player) => player.role === "spectator").length;
+}
+
 // Deck contents are needed by the authoritative host to create the initial
 // game snapshot, but are not part of ordinary public room state.  Re-send the
 // guest descriptor whenever either player joins/rejoins so a stale descriptor
@@ -1133,7 +1137,7 @@ function publicRoomState(room) {
     roomRule: publicRoomRule(room.ruleId),
     started: Boolean(room.started),
     players: battlePlayers(room).length,
-    spectators: [...room.players.values()].filter((player) => player.role === "spectator").length,
+    spectators: roomSpectatorCount(room),
     hostReady: Boolean(host?.ready),
     guestReady: Boolean(guest?.ready),
     updatedAt: room.updatedAt,
@@ -2200,6 +2204,13 @@ wss.on("connection", (ws) => {
         disconnectedRole: player.role,
         players: roomPlayers(room),
         message: "対戦者の接続が切れました。再入室を待っています。"
+      });
+    } else if (player.role === "spectator") {
+      broadcast(room, {
+        type: "spectatorCount",
+        senderId: SERVER_ID,
+        roomSessionId: room.sessionId,
+        spectatorCount: roomSpectatorCount(room)
       });
     }
   });
