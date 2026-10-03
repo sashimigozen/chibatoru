@@ -65,6 +65,9 @@ test("下部ホームバーだけを既存画面へ追加し、素材どおり�
   await page.locator("#homeNavHomeButton").click();
   await expect(page.locator("#homeUtilityMenuButton")).toBeDisabled();
   await page.evaluate(() => document.getElementById("homeTutorialButton").click());
+  await expect(page.locator("#tutorialScreen")).toBeVisible();
+  await expect(navigation).toBeVisible();
+  await page.locator('[data-tutorial-chapter="basic"]').click();
   await expect(page.locator("#battleScreen")).toBeVisible();
   await expect(navigation).toBeHidden();
 });
