@@ -19381,7 +19381,7 @@
       {
         version: "ver.0.23.11",
         date: "2026年10月3日",
-        summary: "食堂の新カード「お盆mac」「59番パイア」を追加し、負荷状態の対戦ログ表示を整理しました。",
+        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を調整しました。",
         changes: [
           {
             title: "お盆mac",
@@ -19396,6 +19396,11 @@
           {
             title: "負荷・高負荷のログ",
             after: "ターン終了時に負荷・高負荷のカード名を対戦ログへ記録しないようにしました。ダメージ処理はこれまでどおり行います。"
+          },
+          {
+            title: "デッキ一覧の並び順",
+            before: "昇順では作成順の古いデッキが先に表示されていた。",
+            after: "昇順と降順の動作を入れ替え、昇順では最新の作成デッキが先に表示されるようにしました。"
           }
         ]
       },
@@ -46615,7 +46620,7 @@
 
     function sortedDeckLibraryNames(collection) {
       const { key, direction } = state.deckBuilder.librarySort;
-      const order = direction === "desc" ? -1 : 1;
+      const order = direction === "desc" ? 1 : -1;
       return Object.entries(collection).map(([name, deck], index) => ({ name, deck, index }))
         .sort((a, b) => {
           let comparison = a.index - b.index;

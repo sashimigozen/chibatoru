@@ -15,26 +15,26 @@ test("保存デッキを作成順で表示し、項目と昇降順を切り替�
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.state.deckBuilder.chaosDecks = {
-      "Zデッキ": { counts: { general_student: 42 }, savedAt: "2026-09-02T00:00:00.000Z" },
-      "Aデッキ": { counts: { general_student: 40 }, savedAt: "2026-09-03T00:00:00.000Z" },
-      "Mデッキ": { counts: { general_student: 41 }, savedAt: "2026-09-01T00:00:00.000Z" }
+      "Zデッキ": { counts: { general_student: 42 }, createdOrder: 1, savedAt: "2026-09-02T00:00:00.000Z" },
+      "Aデッキ": { counts: { general_student: 40 }, createdOrder: 3, savedAt: "2026-09-03T00:00:00.000Z" },
+      "Mデッキ": { counts: { general_student: 41 }, createdOrder: 2, savedAt: "2026-09-01T00:00:00.000Z" }
     };
     api.render();
   });
 
   await expect(page.locator("#deckLibrarySortKey")).toHaveValue("created");
   await expect(page.locator("#deckLibrarySortDirection")).toHaveValue("asc");
-  expect(await deckNames(page)).toEqual(["Zデッキ", "Aデッキ", "Mデッキ"]);
+  expect(await deckNames(page)).toEqual(["Aデッキ", "Mデッキ", "Zデッキ"]);
 
   const cases = [
-    ["name", "asc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
-    ["name", "desc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
-    ["updated", "asc", ["Mデッキ", "Zデッキ", "Aデッキ"]],
-    ["updated", "desc", ["Aデッキ", "Zデッキ", "Mデッキ"]],
-    ["size", "asc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
-    ["size", "desc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
-    ["created", "desc", ["Mデッキ", "Aデッキ", "Zデッキ"]],
-    ["created", "asc", ["Zデッキ", "Aデッキ", "Mデッキ"]]
+    ["name", "asc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
+    ["name", "desc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
+    ["updated", "asc", ["Aデッキ", "Zデッキ", "Mデッキ"]],
+    ["updated", "desc", ["Mデッキ", "Zデッキ", "Aデッキ"]],
+    ["size", "asc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
+    ["size", "desc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
+    ["created", "desc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
+    ["created", "asc", ["Aデッキ", "Mデッキ", "Zデッキ"]]
   ];
   for (const [key, direction, expected] of cases) {
     await page.locator("#deckLibrarySortKey").selectOption(key);
@@ -47,7 +47,7 @@ test("保存デッキを作成順で表示し、項目と昇降順を切り替�
     api.state.deckBuilder.chaosDecks["Zデッキ"].savedAt = "2026-09-04T00:00:00.000Z";
     api.render();
   });
-  expect(await deckNames(page)).toEqual(["Zデッキ", "Aデッキ", "Mデッキ"]);
+  expect(await deckNames(page)).toEqual(["Aデッキ", "Mデッキ", "Zデッキ"]);
 });
 
 test("数字のデッキ名でも保存・再読込後に作成順を維持する", async ({ page }) => {
@@ -64,11 +64,11 @@ test("数字のデッキ名でも保存・再読込後に作成順を維持す�
     await page.locator("#deckSaveNameInput").fill(name);
     await page.locator("#saveDeckButton").click();
   }
-  expect(await deckNames(page)).toEqual(["9", "1"]);
+  expect(await deckNames(page)).toEqual(["1", "9"]);
   await page.reload();
   await page.locator("#homeNavDeckButton").click();
   await page.locator("#chaosDeckFormatButton").click();
-  expect(await deckNames(page)).toEqual(["9", "1"]);
+  expect(await deckNames(page)).toEqual(["1", "9"]);
 });
 
 test("並び替え操作はデスクトップとスマートフォンの幅で操作できる", async ({ page }) => {
