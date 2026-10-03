@@ -19381,7 +19381,7 @@
       {
         version: "ver.0.23.11",
         date: "2026年10月3日",
-        summary: "食堂の新カードを追加し、対戦ログを整理して最新デッキを初期表示するようにしました。",
+        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。「敵に塩」使用後の「敵」の強化がオンラインでも即時反映されるよう修正しました。",
         changes: [
           {
             title: "お盆mac",
@@ -19401,6 +19401,11 @@
             title: "デッキ一覧の並び順",
             before: "昇順と降順の動作を入れ替え、昇順では最新の作成デッキが先に表示されていた。",
             after: "昇順は古い順、降順は新しい順に戻し、初回は作成順の降順（最新の作成デッキが先頭）にしました。"
+          },
+          {
+            title: "敵の継続強化",
+            before: "「敵に塩」で相手の講義室に「TRPGサークルメンバー」を出席させても、「敵」の攻撃力がすぐに再計算されず、オンラインでも強化前の数値が表示・使用されることがあった。",
+            after: "「敵に塩」の処理後に盤面の継続効果を再計算し、「敵」の攻撃力+5と[陽気]がその場で反映されるようにしました。席マス・教卓マス、オンラインのホスト・ゲストで同じ数値を表示・使用します。"
           }
         ]
       },
@@ -38809,6 +38814,9 @@
         ? `${SIDES[side]}はキャプチャーを使い、${SIDES[owner]}の${seatRow(index)}行${seatCol(index) + 1}列を3ターン出席不可にしました。`
         : `${SIDES[side]}は敵に塩を使い、相手の${seatRow(index)}行${seatCol(index) + 1}列にTRPGサークルメンバーを出席させました。`);
       clearSelections();
+      // Resolve the new attendee's continuous effects before rendering or
+      // sending the host's snapshot, including calls with renderAfter=false.
+      applyBoardAuras();
       if (renderAfter) render();
       return true;
     }
