@@ -140,6 +140,9 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
     expect(Math.abs(metrics.navigation.x - metrics.frame.x)).toBeLessThan(1.1);
     expect(Math.abs(metrics.navigation.width - metrics.frame.width)).toBeLessThan(1.1);
     expect(metrics.navigation.y).toBeGreaterThanOrEqual(metrics.frame.y + metrics.frame.height - 1.1);
+    if (viewport.width > 760) {
+      expect(Math.abs(metrics.navigation.y - (metrics.frame.y + metrics.frame.height))).toBeLessThan(1.1);
+    }
     expect(Math.abs(metrics.navigation.y + metrics.navigation.height - metrics.viewport.height)).toBeLessThan(1.1);
     expect(metrics.frame.x).toBeGreaterThanOrEqual(-.6);
     expect(Math.abs(metrics.frame.y)).toBeLessThan(1.1);
@@ -159,6 +162,34 @@ test("ホームの背景・操作オブジェクト・ホームバーは画面�
       });
     });
   }
+});
+
+test("ホームバーの全ボタンを背景の下端まで伸ばし、伸ばした部分でも画面を移動できる", async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1200 });
+  const navigation = page.locator("#homeNavigation");
+  await expect.poll(() => navigation.evaluate((element) => {
+    const frame = document.getElementById("homeDeskStageFrame").getBoundingClientRect();
+    return Math.abs(element.getBoundingClientRect().top - frame.bottom);
+  })).toBeLessThan(1.1);
+  const metrics = await navigation.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, height: rect.height,
+      buttons: [...element.querySelectorAll(".home-nav-item")].map((button) => {
+        const r = button.getBoundingClientRect();
+        return { top: r.top, bottom: r.bottom, height: r.height };
+      }) };
+  });
+  expect(metrics.height).toBeGreaterThan(84 * 1920 / 1670);
+  for (const button of metrics.buttons) {
+    expect(Math.abs(button.top - metrics.top)).toBeLessThan(1.1);
+    expect(Math.abs(button.bottom - metrics.bottom)).toBeLessThan(1.1);
+  }
+  const cardButton = await page.locator("#homeNavDeckButton").boundingBox();
+  await page.mouse.click(cardButton.x + cardButton.width / 2, cardButton.y + 2);
+  await expect(page.locator("#deckScreen")).toBeVisible();
+  const after = await navigation.boundingBox();
+  expect(after.y).toBeCloseTo(metrics.top, 3);
+  expect(after.height).toBeCloseTo(metrics.height, 3);
 });
 
 test("同じ日付と同じメジャー・マイナー系統の更新情報は最小バージョンへ統合する", async ({ page }) => {
