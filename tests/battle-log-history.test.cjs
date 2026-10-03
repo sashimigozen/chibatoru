@@ -30,6 +30,34 @@ test("対戦ログを40件で切らず、試合開始時の記録まで保持す
   assert.equal(context.state.log[0], "ログ60");
 });
 
+test("負荷・高負荷のターン終了時ダメージは処理するがカード名を対戦ログへ残さない", () => {
+  const dealt = [];
+  const logs = [];
+  const context = {
+    state: {
+      players: {
+        player: { hand: [{ name: "負荷カード", handLoadLevel: 1 }, { name: "高負荷カード", handLoadLevel: 2 }, { name: "通常カード", handLoadLevel: 0 }] },
+        opponent: { hand: [{ name: "相手の負荷カード", handLoadLevel: 1 }, { name: "相手の高負荷カード", handLoadLevel: 2 }] }
+      }
+    },
+    damagePlayer: (side, damage) => dealt.push({ side, damage }),
+    addLog: (message) => logs.push(message)
+  };
+  vm.createContext(context);
+  vm.runInContext(source("resolveHandLoadEndTurn"), context);
+
+  context.resolveHandLoadEndTurn("player");
+  context.resolveHandLoadEndTurn("opponent");
+
+  assert.deepEqual(dealt, [
+    { side: "player", damage: 1 },
+    { side: "player", damage: 2 },
+    { side: "opponent", damage: 1 },
+    { side: "opponent", damage: 2 }
+  ]);
+  assert.deepEqual(logs, []);
+});
+
 test("過去ログを読んでいる間は位置を保ち、末尾では最新ログを追従する", () => {
   const makeLog = ({ childElementCount, scrollTop, scrollHeight, clientHeight }) => ({
     childElementCount,
