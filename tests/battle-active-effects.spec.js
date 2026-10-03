@@ -93,3 +93,20 @@ test("継続効果ボタンはデスクトップとスマートフォンの盤�
     });
   }
 });
+
+test("相手の継続効果とターン表示の上辺が画面の拡大縮小後も揃う", async ({ page }) => {
+  await prepareEffectState(page);
+  for (const viewport of [
+    { width: 1920, height: 1080 },
+    { width: 1440, height: 900 },
+    { width: 1122, height: 768 },
+    { width: 900, height: 900 }
+  ]) {
+    await page.setViewportSize(viewport);
+    await expect.poll(() => page.evaluate(() => {
+      const effects = document.getElementById("opponentActiveEffectsButton").getBoundingClientRect();
+      const turn = document.querySelector(".battle-v16-turn").getBoundingClientRect();
+      return Math.abs(effects.top - turn.top);
+    })).toBeLessThan(0.5);
+  }
+});

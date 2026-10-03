@@ -100,8 +100,9 @@ test("観戦者の入退室・再入室でホスト、ゲスト、観戦者の�
     await page.locator("#homeNavBattleButton").click();
     return page;
   }
-  async function joinSpectator(roomCode) {
+  async function joinSpectator(roomCode, username) {
     const page = await openBattleMenu();
+    await page.evaluate((name) => { window.__chibattle.state.profile.username = name; }, username);
     await page.locator("#onlineSpectateButton").click();
     await page.locator("#onlineSpectateRoomInput").fill(roomCode);
     await page.locator("#onlineSpectateSearchButton").click();
@@ -148,20 +149,94 @@ test("観戦者の入退室・再入室でホスト、ゲスト、観戦者の�
     });
     await expect.poll(() => guest.evaluate(() => window.__chibattle.state.phase)).toBe("battle");
     await expectCount([host, guest], 0);
-    const first = await joinSpectator(roomCode);
+    const first = await joinSpectator(roomCode, "観戦者A");
     await expectCount([host, guest, first], 1);
-    const second = await joinSpectator(roomCode);
+    for (const page of [host, guest, first]) {
+      await page.locator("#battleSpectatorCount").click();
+      await expect(page.locator("#battleSpectatorNames li")).toHaveText(["観戦者A"]);
+    }
+    const second = await joinSpectator(roomCode, "観戦者B");
     await expectCount([host, guest, first, second], 2);
+    for (const page of [host, guest, first]) {
+      await expect(page.locator("#battleSpectatorNames li")).toHaveText(["観戦者A", "観戦者B"]);
+    }
     const before = await host.evaluate(() => ({ message: window.__chibattle.state.message, log: [...window.__chibattle.state.log], status: window.__chibattle.state.online.status }));
     await second.context().close();
     await expectCount([host, guest, first], 1);
+    await expect(host.locator("#battleSpectatorNames li")).toHaveText(["観戦者A"]);
     await first.context().close();
     await expectCount([host, guest], 0);
+    await expect(host.locator("#battleSpectatorList")).toBeHidden();
     expect(await host.evaluate(() => ({ message: window.__chibattle.state.message, log: [...window.__chibattle.state.log], status: window.__chibattle.state.online.status }))).toEqual(before);
-    const returning = await joinSpectator(roomCode);
+    const returning = await joinSpectator(roomCode, "観戦者C");
     await expectCount([host, guest, returning], 1);
+    await host.locator("#battleSpectatorCount").click();
+    await expect(host.locator("#battleSpectatorNames li")).toHaveText(["観戦者C"]);
     expect(pageErrors).toEqual([]);
   } finally {
     for (const context of contexts) await context.close();
   }
+});
+
+test("観戦者一覧は盤面・手札・山札に重ならず、一覧内スクロールと閉じる操作ができる", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(gameUrl.href);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.screen = "battle";
+    api.state.phase = "battle";
+    api.state.online.role = "host";
+    api.state.online.started = true;
+    api.state.online.roomSessionId = "list-test";
+    api.state.players.player.hand = Array.from({ length: 140 }, () => api.createCardFromBase("general_student", "player"));
+    api.onlineHandleMessage({ type: "spectatorCount", protocol: 1, senderId: "server", roomSessionId: "list-test", spectatorCount: 31,
+      spectatorNames: ["<img src=x>", ...Array.from({ length: 30 }, (_, i) => `観戦者${i + 1}`)] });
+  });
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1122, height: 768 }]) {
+    await page.setViewportSize(viewport);
+    await page.locator("#battleSpectatorCount").click();
+    await expect(page.locator("#battleSpectatorList")).toBeVisible();
+    await expect(page.locator("#battleSpectatorCount")).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator("#battleSpectatorNames li")).toHaveCount(31);
+    await expect(page.locator("#battleSpectatorNames li").first()).toHaveText("<img src=x>");
+    await expect(page.locator("#battleSpectatorNames img")).toHaveCount(0);
+    const metrics = await page.evaluate(() => {
+      const bounds = (element) => {
+        const r = element.getBoundingClientRect();
+        return { left: r.left, right: r.right, top: r.top, bottom: r.bottom };
+      };
+      // The visible classroom frame is the shell's pseudo-element; .playmat
+      // itself spans the full canvas, including the unused information rail.
+      const shell = document.querySelector("#battleScreen .game-shell");
+      const frame = getComputedStyle(shell, "::before");
+      const boardRight = shell.getBoundingClientRect().left
+        + (parseFloat(frame.left) + parseFloat(frame.width)) * Number(getComputedStyle(shell).zoom);
+      return { list: bounds(document.getElementById("battleSpectatorList")),
+        boardRight, deck: bounds(document.getElementById("playerDeckPile")),
+        handRight: Math.max(...[...document.querySelectorAll("#playerHand .hand-card")].map((card) => card.getBoundingClientRect().right)),
+        effects: bounds(document.getElementById("playerActiveEffectsButton")) };
+    });
+    expect(metrics.list.left).toBeGreaterThan(metrics.boardRight);
+    expect(metrics.list.left).toBeGreaterThan(metrics.handRight);
+    expect(metrics.list.right).toBeLessThan(metrics.deck.left);
+    expect(metrics.list.top).toBeGreaterThan(metrics.effects.bottom);
+    const list = page.locator("#battleSpectatorNames");
+    await list.hover();
+    await page.mouse.wheel(0, 500);
+    await expect.poll(() => list.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await page.locator("#battleSpectatorListCloseButton").click();
+    await expect(page.locator("#battleSpectatorList")).toBeHidden();
+    await expect(page.locator("#battleSpectatorCount")).toBeFocused();
+    await page.locator("#battleSpectatorCount").click();
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#battleSpectatorList")).toBeHidden();
+    await page.locator("#battleSpectatorCount").click();
+    // Outside clicks still reach the original control; there is no overlay.
+    await page.locator("#battleMenuButton").click();
+    await expect(page.locator("#battleMenuDrawer")).toHaveClass(/open/);
+    await expect(page.locator("#battleSpectatorList")).toBeHidden();
+    await page.locator("#battleMenuCloseButton").click();
+  }
+  expect(errors).toEqual([]);
 });
