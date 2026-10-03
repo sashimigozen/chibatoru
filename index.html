@@ -3259,6 +3259,11 @@
       text-align: center;
     }
 
+    #mulliganStage .mulligan-order.status {
+      padding: 6px 16px;
+      font-size: 18px;
+    }
+
     .mulligan-window p {
       margin: -8px 0 0;
       color: #475569;
@@ -16880,7 +16885,7 @@
     }
 
     .app.home-navigation-visible > .screen:not(.hidden) {
-      padding-bottom: calc(clamp(64px, 9vh, 84px) + 24px);
+      padding-bottom: calc(var(--home-desk-nav-height, clamp(64px, 9vh, 84px)) + 24px);
     }
 
     .home-nav-item {
@@ -17893,6 +17898,7 @@
 
     <div class="mulligan-stage" id="mulliganStage">
       <div class="mulligan-window">
+        <span class="status mulligan-order hidden" id="mulliganOrder" aria-live="polite"></span>
         <h2 id="mulliganTitle">引き直すカードを選んでください</h2>
         <p id="mulliganMessage">引き直したいカードを0〜5枚選び、画面下の「確定」を押してください。</p>
         <div class="mulligan-hand" id="mulliganHand"></div>
@@ -19457,7 +19463,7 @@
       {
         version: "ver.0.23.11",
         date: "2026年10月3日",
-        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。オンラインの「敵」の強化、プロフィールとレアリティの同期不具合を修正し、観戦者の人数表示と名前一覧を追加しました。継続効果の配置とマリガンの確定ボタンも修正しました。",
+        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。オンラインの「敵」の強化、プロフィールとレアリティの同期不具合を修正し、観戦者の人数表示と名前一覧、マリガンの先攻・後攻表示を追加しました。継続効果の配置、マリガンの確定ボタン、ホームバーの隙間も修正しました。",
         changes: [
           {
             title: "お盆mac",
@@ -19497,6 +19503,15 @@
             title: "継続効果の配置・マリガンの確定ボタン",
             before: "相手の継続効果の上辺がターン表示より下にあり、マリガンの確定ボタンがカーソルを合わせると右へ動いていた。",
             after: "相手の継続効果の上辺をターン表示の上辺に揃えました。マリガンの確定ボタンは、カーソルを合わせたり押したりしても位置が変わらないようにしました。"
+          },
+          {
+            title: "ホームバーの高さ",
+            before: "画面の縦横比によっては、背景画像の下端とホームバーの間に隙間が残っていた。",
+            after: "背景画像やオブジェクトの比率・配置を変えず、PCのホームバーと各ボタンを隙間の分だけ上方向へ伸ばすようにしました。画面下端への固定と、ホームバーがある各画面での位置の統一は維持しています。"
+          },
+          {
+            title: "マリガンの先攻・後攻表示",
+            after: "引き直すカードを選ぶ画面に、自分が先攻か後攻かを表示します。ソロ・オンラインとも決定済みの先後に合わせ、ホスト・ゲストそれぞれ自分の先後を確認できます。"
           }
         ]
       },
@@ -21659,6 +21674,7 @@
       mulliganStage: document.getElementById("mulliganStage"),
       mulliganHand: document.getElementById("mulliganHand"),
       mulliganTitle: document.getElementById("mulliganTitle"),
+      mulliganOrder: document.getElementById("mulliganOrder"),
       mulliganMessage: document.getElementById("mulliganMessage"),
       thinItemChoiceActions: document.getElementById("thinItemChoiceActions"),
       thinItemKeepConfirmButton: document.getElementById("thinItemKeepConfirmButton"),
@@ -42565,6 +42581,7 @@
         && !elements.homeScreen?.classList.contains("hidden")
         && navigationVisible;
       if (!navigationVisible) {
+        elements.appRoot?.style.removeProperty("--home-desk-nav-height");
         navigation.classList.remove("home-desk-aligned");
         navigation.style.removeProperty("top");
         navigation.style.removeProperty("width");
@@ -42583,7 +42600,13 @@
       const scale = Math.max(.1, window.innerWidth / HOME_DESK_DESIGN_WIDTH);
       const stageWidth = HOME_DESK_DESIGN_WIDTH * scale;
       const stageHeight = HOME_DESK_DESIGN_HEIGHT * scale;
-      const navigationHeight = Math.min(HOME_DESK_DESIGN_NAV_HEIGHT * scale, window.innerHeight);
+      const baseNavigationHeight = HOME_DESK_DESIGN_NAV_HEIGHT * scale;
+      // Extend every desktop button upward to fill any space below the desk.
+      // Leave the desk scale/object positions and the existing compact layout
+      // unchanged; rounding down the desk edge avoids a fractional-pixel seam.
+      const navigationHeight = Math.min(window.innerHeight, window.innerWidth > 760
+        ? Math.max(baseNavigationHeight, window.innerHeight - Math.floor(stageHeight))
+        : baseNavigationHeight);
       const navigationTop = window.innerHeight - navigationHeight;
       const visibleStageHeight = Math.min(stageHeight, navigationTop);
       const visibleDesignHeight = visibleStageHeight / scale;
@@ -42597,6 +42620,7 @@
       navigation.style.height = `${navigationHeight}px`;
       navigation.style.setProperty("--home-desk-scale", String(scale));
       navigation.style.setProperty("--home-desk-nav-item-height", `${navigationHeight}px`);
+      elements.appRoot?.style.setProperty("--home-desk-nav-height", `${navigationHeight}px`);
 
       if (!homeActive) {
         elements.homeScreen?.style.removeProperty("bottom");
@@ -44055,6 +44079,10 @@
       const active = !peeking && (mulliganActive || (state.screen === "battle" && Boolean(thinChoice) && !isOnlineSpectator()));
       elements.mulliganStage.classList.toggle("choice-stage", Boolean(thinChoice));
       elements.mulliganStage.classList.toggle("hidden", !active);
+      const order = active && mulliganActive && !thinChoice && ["player", "opponent"].includes(state.firstSide)
+        ? turnOrderLabel("player") : "";
+      elements.mulliganOrder.textContent = order ? `あなたは${order}` : "";
+      elements.mulliganOrder.classList.toggle("hidden", !order);
       if (!active) {
         elements.mulliganHand.innerHTML = "";
         elements.thinItemChoiceActions.classList.add("hidden");
