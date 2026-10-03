@@ -7316,7 +7316,9 @@
       z-index: 1;
       width: min(420px, calc(100vw - 24px));
       min-height: 58px;
-      transform: translateX(-50%);
+      /* Keep centring on hover/press; the common button transform must not
+         replace this positioning transform. */
+      transform: translateX(-50%) !important;
     }
 
     @media (max-width: 760px) {
@@ -7324,7 +7326,7 @@
         right: 12px;
         left: auto;
         width: min(160px, calc(100vw - 24px));
-        transform: none;
+        transform: none !important;
       }
     }
 
@@ -14586,7 +14588,8 @@
     .battle-screen .battle-v16-opponent-mana,
     .battle-screen .battle-v16-player-mana { left: 1051px !important; }
     .battle-screen .battle-active-effects.opponent {
-      top: 307px !important;
+      /* Match the top edge of the turn indicator on the same scaled canvas. */
+      top: 278px !important;
       left: 836px !important;
     }
     .battle-screen .battle-active-effects.self {
@@ -17058,8 +17061,32 @@
       font-size: 20px;
       font-weight: 800;
       line-height: 1;
-      pointer-events: none;
+      cursor: pointer;
     }
+
+    .battle-spectator-count:hover { background: #fff; }
+    .battle-spectator-count:focus-visible { outline: 2px solid #2d78c7; outline-offset: 2px; }
+    /* This small list stays in the unused lower information rail. There is
+       no backdrop, so the classroom and the hand remain fully interactive. */
+    .battle-screen .battle-spectator-list {
+      position: absolute;
+      z-index: 25;
+      right: 184px;
+      bottom: 72px;
+      width: 180px;
+      max-height: 150px;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #71899b;
+      border-radius: 4px;
+      background: #f7fafc;
+      color: #24445b;
+      box-shadow: 0 4px 12px rgba(31, 58, 82, .12);
+    }
+    .battle-spectator-list-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-bottom: 1px solid #c4d2de; font-size: 12px; }
+    .battle-spectator-list-close { border: 0; padding: 4px; background: transparent; color: inherit; font-size: 11px; cursor: pointer; }
+    .battle-spectator-names { min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0; padding: 6px 10px; list-style: none; font-size: 12px; }
+    .battle-spectator-names li { padding: 5px 0; overflow-wrap: anywhere; }
 
     .battle-spectator-count svg {
       width: 26px;
@@ -18036,10 +18063,14 @@
       <aside class="side">
         <section class="panel battle-card-preview hidden" id="battleCardPreview" role="dialog" aria-label="カード詳細"></section>
       </aside>
-      <div class="battle-spectator-count hidden" id="battleSpectatorCount" role="status" aria-live="polite" aria-label="観戦者0人">
+      <button class="battle-spectator-count hidden" id="battleSpectatorCount" type="button" aria-label="観戦者0人の一覧を表示" aria-expanded="false" aria-controls="battleSpectatorList">
         <svg viewBox="0 0 28 22" fill="none" aria-hidden="true"><rect x="1.5" y="4" width="17" height="14" rx="2" fill="#dbe8ef" stroke="currentColor" stroke-width="2"/><path d="M18.5 8L26.5 4.5V17.5L18.5 14Z" fill="#dbe8ef" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
         <span id="battleSpectatorCountValue">0</span><small>人</small>
-      </div>
+      </button>
+      <section class="battle-spectator-list hidden" id="battleSpectatorList" aria-label="観戦者一覧">
+        <div class="battle-spectator-list-head"><strong>観戦者一覧</strong><button class="battle-spectator-list-close" id="battleSpectatorListCloseButton" type="button">閉じる</button></div>
+        <ul class="battle-spectator-names" id="battleSpectatorNames"></ul>
+      </section>
     </section>
     <div class="turn-overlay" id="turnOverlay" aria-live="polite"></div>
     <div class="tutorial-layer hidden" id="tutorialLayer" aria-live="polite">
@@ -19426,7 +19457,7 @@
       {
         version: "ver.0.23.11",
         date: "2026年10月3日",
-        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。オンラインの「敵」の強化、プロフィールとレアリティの同期不具合を修正し、観戦者の人数表示を追加しました。",
+        summary: "食堂の新カードを追加し、対戦ログとデッキ一覧を整理しました。オンラインの「敵」の強化、プロフィールとレアリティの同期不具合を修正し、観戦者の人数表示と名前一覧を追加しました。継続効果の配置とマリガンの確定ボタンも修正しました。",
         changes: [
           {
             title: "お盆mac",
@@ -19458,9 +19489,14 @@
             after: "端末自身のプロフィールと編集状態を対戦状態の同期から除外しました。双方のプロフィールとカードのレアリティを区別して同期し、情報の省略や再接続でも名前・アイコン・好きなカードとレアリティが維持されるようにしました。"
           },
           {
-            title: "対戦中の観戦者表示",
+            title: "対戦中の観戦者表示・名前一覧",
             before: "対戦画面では、現在の観戦者数を確認できなかった。",
-            after: "観戦者が1人以上いる間、対戦画面の右下にカメラマークと人数を表示します。手札が多い場合も表示や山札と重ならないようにし、入退室に合わせて人数だけを更新します。0人になると表示が消え、退出メッセージは出ません。"
+            after: "観戦者が1人以上いる間、対戦画面の右下にカメラマークと人数を表示します。クリックすると観戦者の設定名だけを一覧で確認できます。一覧は盤面・手札・山札に重ならない位置に表示し、人数が多い場合は一覧内をスクロールできます。入退室に合わせて人数と一覧を更新し、0人になると表示が消えます。退出メッセージは出ません。"
+          },
+          {
+            title: "継続効果の配置・マリガンの確定ボタン",
+            before: "相手の継続効果の上辺がターン表示より下にあり、マリガンの確定ボタンがカーソルを合わせると右へ動いていた。",
+            after: "相手の継続効果の上辺をターン表示の上辺に揃えました。マリガンの確定ボタンは、カーソルを合わせたり押したりしても位置が変わらないようにしました。"
           }
         ]
       },
@@ -21063,6 +21099,8 @@
         connectTimer: null,
         connected: false,
         spectatorCount: 0,
+        spectatorNames: [],
+        spectatorListOpen: false,
         remoteClientId: "",
         localReady: false,
         remoteReady: false,
@@ -21326,6 +21364,9 @@
       spectatorBanner: document.getElementById("spectatorBanner"),
       battleSpectatorCount: document.getElementById("battleSpectatorCount"),
       battleSpectatorCountValue: document.getElementById("battleSpectatorCountValue"),
+      battleSpectatorList: document.getElementById("battleSpectatorList"),
+      battleSpectatorNames: document.getElementById("battleSpectatorNames"),
+      battleSpectatorListCloseButton: document.getElementById("battleSpectatorListCloseButton"),
       battleRoomCode: document.getElementById("battleRoomCode"),
       battleRoomCodeValue: document.getElementById("battleRoomCodeValue"),
       homeDeckButton: document.getElementById("homeDeckButton"),
@@ -23806,13 +23847,40 @@
 
     function onlineUpdateSpectatorCount(players) {
       if (!Array.isArray(players)) return;
-      state.online.spectatorCount = players.filter((player) => player?.role === "spectator").length;
+      const spectators = players.filter((player) => player?.role === "spectator");
+      state.online.spectatorCount = spectators.length;
+      state.online.spectatorNames = spectators.map((player) => normalizePlayerProfile(player.profile).username);
     }
 
     function hasBattleSpectators() {
       return state.screen === "battle" && state.online.started
         && ["host", "guest", "spectator"].includes(state.online.role)
         && state.online.spectatorCount > 0;
+    }
+
+    function renderBattleSpectatorList() {
+      if (!hasBattleSpectators()) state.online.spectatorListOpen = false;
+      const open = Boolean(state.online.spectatorListOpen);
+      elements.battleSpectatorList.classList.toggle("hidden", !open);
+      elements.battleSpectatorCount.setAttribute("aria-expanded", String(open));
+      if (!open) return;
+      const items = state.online.spectatorNames.map((name) => {
+        const item = document.createElement("li");
+        item.textContent = name;
+        return item;
+      });
+      if (!items.length) {
+        const item = document.createElement("li");
+        item.textContent = "観戦者名を取得できませんでした。";
+        items.push(item);
+      }
+      elements.battleSpectatorNames.replaceChildren(...items);
+    }
+
+    function closeBattleSpectatorList(restoreFocus = false) {
+      state.online.spectatorListOpen = false;
+      renderBattleSpectatorList();
+      if (restoreFocus && hasBattleSpectators()) elements.battleSpectatorCount.focus();
     }
 
     function isOnlineBattle() {
@@ -24000,6 +24068,8 @@
       state.online.connected = false;
       state.online.remoteClientId = "";
       state.online.spectatorCount = 0;
+      state.online.spectatorNames = [];
+      state.online.spectatorListOpen = false;
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.online.roomRuleId = "normal";
@@ -24421,6 +24491,12 @@
         if (message.senderId !== "server" || message.roomSessionId !== state.online.roomSessionId) return;
         if (!Number.isSafeInteger(message.spectatorCount) || message.spectatorCount < 0) return;
         state.online.spectatorCount = message.spectatorCount;
+        if (Array.isArray(message.spectatorNames) && message.spectatorNames.length === message.spectatorCount) {
+          state.online.spectatorNames = message.spectatorNames.map((username) => normalizePlayerProfile({ username }).username);
+        } else if (state.online.spectatorNames.length !== message.spectatorCount) {
+          // A legacy server only sends the count. Do not show departed names.
+          state.online.spectatorNames = [];
+        }
         render();
         return;
       }
@@ -42447,7 +42523,8 @@
       elements.battleSpectatorCount.classList.toggle("hidden", !showSpectatorCount);
       elements.battleScreen.classList.toggle("has-spectators", showSpectatorCount);
       elements.battleSpectatorCountValue.textContent = String(state.online.spectatorCount);
-      elements.battleSpectatorCount.setAttribute("aria-label", `観戦者${state.online.spectatorCount}人`);
+      elements.battleSpectatorCount.setAttribute("aria-label", `観戦者${state.online.spectatorCount}人の一覧を表示`);
+      renderBattleSpectatorList();
       const showRoomCode = state.screen === "battle" && Boolean(state.online.role && state.online.roomCode);
       elements.battleRoomCode?.classList.toggle("hidden", !showRoomCode);
       if (elements.battleRoomCodeValue) {
@@ -50939,6 +51016,19 @@
     elements.opponentTrashButton.addEventListener("click", () => openTrashOverview("opponent"));
     elements.playerActiveEffectsButton.addEventListener("click", () => openActiveEffectsOverview("player"));
     elements.opponentActiveEffectsButton.addEventListener("click", () => openActiveEffectsOverview("opponent"));
+    elements.battleSpectatorCount.addEventListener("click", () => {
+      if (!hasBattleSpectators()) return;
+      state.online.spectatorListOpen = !state.online.spectatorListOpen;
+      renderBattleSpectatorList();
+    });
+    elements.battleSpectatorListCloseButton.addEventListener("click", () => closeBattleSpectatorList(true));
+    document.addEventListener("click", (event) => {
+      if (state.online.spectatorListOpen && !elements.battleSpectatorList.contains(event.target)
+        && !elements.battleSpectatorCount.contains(event.target)) closeBattleSpectatorList();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && state.online.spectatorListOpen) closeBattleSpectatorList(true);
+    });
     document.querySelectorAll("[data-rps-choice]").forEach((button) => {
       button.addEventListener("click", () => selectRpsCard(button.dataset.rpsChoice));
     });

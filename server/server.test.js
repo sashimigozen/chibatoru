@@ -93,13 +93,13 @@ function connectFourClient(url, roomId, clientId, create = false) {
   });
 }
 
-function connectSpectatorClient(url, roomId, clientId) {
+function connectSpectatorClient(url, roomId, clientId, profile = undefined) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
     const client = { ws, messages: [] };
     const timer = setTimeout(() => reject(new Error(`spectator join timeout: ${clientId}`)), 4000);
     ws.on("open", () => {
-      ws.send(JSON.stringify({ type: "joinRoom", protocol: 1, roomId, clientId, spectate: true, role: "spectator" }));
+      ws.send(JSON.stringify({ type: "joinRoom", protocol: 1, roomId, clientId, spectate: true, role: "spectator", profile }));
     });
     ws.on("message", (raw) => {
       const message = JSON.parse(String(raw));
@@ -593,16 +593,18 @@ test("public room list exposes spectatable battles and allows spectator joins", 
   assert.equal(rooms[0].started, true);
   assert.equal(rooms[0].players, 2);
 
-  const spectator = await connectSpectatorClient(url, roomId, "spectator-watch");
+  const spectator = await connectSpectatorClient(url, roomId, "spectator-watch", { username: " 観戦の学生 " });
   clients.push(spectator);
   const spectatorJoin = spectator.messages.find((message) => message.type === "playerJoined");
   assert.equal(spectatorJoin.you.role, "spectator");
+  assert.equal(spectatorJoin.you.profile.username, "観戦の学生");
   assert.equal(spectatorJoin.hasOpponent, true);
   assert.equal(spectatorJoin.players.filter((player) => player.role === "spectator").length, 1);
   const leaveStart = host.messages.length;
   spectator.ws.close();
   const left = await waitFor(host, (message) => message.type === "spectatorCount", leaveStart);
   assert.equal(left.message.spectatorCount, 0);
+  assert.deepEqual(left.message.spectatorNames, []);
   assert.equal(left.message.roomSessionId, spectatorJoin.roomSessionId);
   await waitFor(guest, (message) => message.type === "spectatorCount" && message.spectatorCount === 0);
   assert.equal(host.messages.slice(leaveStart).some((message) => message.type === "opponentDisconnected"), false);

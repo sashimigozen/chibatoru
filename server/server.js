@@ -1680,9 +1680,7 @@ function joinRoom(ws, message) {
 
   const descriptor = role === "spectator" ? null : deckDescriptorFromMessage(message, existing);
   const descriptorValidation = descriptor ? validateDeckDescriptor(room.ruleId, descriptor) : null;
-  const profile = role === "spectator"
-    ? normalizePlayerProfile(null)
-    : normalizePlayerProfile(hasOwn(message, "profile") ? message.profile : null, existing?.profile);
+  const profile = normalizePlayerProfile(hasOwn(message, "profile") ? message.profile : null, existing?.profile);
   const player = {
     clientId,
     role,
@@ -2210,7 +2208,10 @@ wss.on("connection", (ws) => {
         type: "spectatorCount",
         senderId: SERVER_ID,
         roomSessionId: room.sessionId,
-        spectatorCount: roomSpectatorCount(room)
+        spectatorCount: roomSpectatorCount(room),
+        spectatorNames: [...room.players.values()]
+          .filter((member) => member.role === "spectator")
+          .map((member) => normalizePlayerProfile(member.profile).username)
       });
     }
   });

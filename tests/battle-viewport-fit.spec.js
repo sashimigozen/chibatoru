@@ -96,6 +96,29 @@ test("マリガンの確定ボタンは画面内に表示され、押せる", as
     expect(bounds.y).toBeGreaterThanOrEqual(0);
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
     expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height);
+    const expectStationary = async () => {
+      await expect.poll(async () => {
+        const current = await button.boundingBox();
+        return Math.max(Math.abs(current.x - bounds.x), Math.abs(current.y - bounds.y));
+      }).toBeLessThan(0.5);
+    };
+    // Keep the centring transform during hover and press, rather than replacing
+    // it with the common button's lift/press transform.
+    for (let repeat = 0; repeat < 2; repeat++) {
+      await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      await expect(button).toHaveJSProperty("disabled", false);
+      await page.waitForTimeout(160);
+      await expectStationary();
+      await page.mouse.move(0, 0);
+      await page.waitForTimeout(160);
+      await expectStationary();
+    }
+    await button.hover();
+    await page.mouse.down();
+    await page.waitForTimeout(160);
+    await expectStationary();
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
     await button.click();
     await expect(button).toBeHidden();
   }
