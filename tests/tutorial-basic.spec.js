@@ -47,6 +47,11 @@ async function advanceTo(page, title) {
 }
 
 const seat = (page, side, index) => page.locator(`.slot[data-owner="${side}"][data-zone="seat"][data-index="${index}"]`);
+const coachLayout = (page) => page.evaluate(() =>
+  ["tutorialCoach", "tutorialBackStepButton", "tutorialNextButton"].map((id) => {
+    const rect = document.getElementById(id).getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+  }));
 
 test("13編を合意した順番で表示し、基本編のみ開始できる", async ({ page }) => {
   await openList(page);
@@ -62,6 +67,7 @@ test("5タイプを紹介し、出席・ターン終了・反撃を体験して�
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await startBasic(page);
+  const fixedLayout = await coachLayout(page);
   const initial = await page.evaluate(() => {
     const state = window.__chibattle.state;
     return { types: state.players.player.hand.map((card) => card.type), will: state.players.player.will, life: state.players.opponent.life };
@@ -72,10 +78,13 @@ test("5タイプを紹介し、出席・ターン終了・反撃を体験して�
     expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(5);
   }
   await advanceTo(page, "一般学生を出席させよう");
+  expect(await coachLayout(page)).toEqual(fixedLayout);
+  await expect(page.locator("#tutorialNextButton")).toBeHidden();
   await expect(page.locator('#playerHand [data-base-id="ruler"]')).toBeDisabled();
   await page.locator('#playerHand [data-base-id="general_student"]').click();
   await seat(page, "player", 4).click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("出席の結果");
+  expect(await coachLayout(page)).toEqual(fixedLayout);
   expect(await page.evaluate(() => window.__chibattle.state.players.player.will)).toBe(1);
   await page.locator("#tutorialNextButton").click();
   await page.locator("#endTurnButton").click();
@@ -90,6 +99,7 @@ test("5タイプを紹介し、出席・ターン終了・反撃を体験して�
   expect(await page.evaluate(() => window.__chibattle.state.players.opponent.board.seats[0])).toBeNull();
   await page.locator("#tutorialNextButton").click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("リーサルに挑戦");
+  expect(await coachLayout(page)).toEqual(fixedLayout);
   await page.locator("#tutorialNextButton").click();
   await expect(page.locator("#tutorialLayer")).toBeHidden();
   await expect(page.locator('#playerHand [data-base-id="ruler"]')).toBeEnabled();
@@ -127,6 +137,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
   test(`PC ${viewport.width}×${viewport.height}で画面の各エリアを隠さず順に紹介する`, async ({ page }) => {
     await page.setViewportSize(viewport);
     await startBasic(page);
+    const fixedLayout = await coachLayout(page);
     for (const [name, selector] of screenGuideTargets) {
       await advanceTo(page, `画面の見方：${name}`);
       await expect(page.locator(selector).first()).toBeVisible();
@@ -146,6 +157,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
         return aligned && !coversTarget;
       }, selector)).toBe(true);
       await expect(page.locator("#tutorialNextButton")).toBeEnabled();
+      expect(await coachLayout(page)).toEqual(fixedLayout);
       if (name.includes("校外エリア") || name.includes("継続効果") || name === "ログ") {
         await page.locator(selector).click();
         await expect(page.locator("#battleLogDrawer")).toHaveClass(/open/);
@@ -176,5 +188,12 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1920, height: 108
     expect(coach.bottom).toBeLessThanOrEqual(viewport.height);
     const next = await page.locator("#tutorialNextButton").boundingBox();
     expect(next.y + next.height).toBeLessThanOrEqual(coach.bottom);
+    const fixedLayout = await coachLayout(page);
+    await page.locator("#tutorialNextButton").hover();
+    expect(await coachLayout(page)).toEqual(fixedLayout);
+    await page.locator("#tutorialNextButton").click();
+    expect(await coachLayout(page)).toEqual(fixedLayout);
+    await page.locator("#tutorialBackStepButton").click();
+    expect(await coachLayout(page)).toEqual(fixedLayout);
   });
 }

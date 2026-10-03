@@ -223,11 +223,11 @@
       .tutorial-layer .tutorial-coach {
         left: auto;
         right: max(18px, calc((100vw - 1200px * var(--tutorial-board-scale, 1)) / 2 + 12px));
-        top: max(90px, calc((100vh - 826px * var(--tutorial-board-scale, 1)) / 2 + 70px));
+        top: max(48px, calc((100vh - 826px * var(--tutorial-board-scale, 1)) / 2 + 40px * var(--tutorial-board-scale, 1)));
         bottom: auto;
         width: calc(360px * var(--tutorial-board-scale, 1));
         transform: none;
-        max-height: calc(260px * var(--tutorial-board-scale, 1));
+        height: calc(215px * var(--tutorial-board-scale, 1));
         display: flex;
         flex-direction: column;
         padding: calc(14px * var(--tutorial-board-scale, 1));
@@ -236,20 +236,28 @@
       .tutorial-layer .tutorial-coach h2 {
         font-size: clamp(16px, calc(20px * var(--tutorial-board-scale, 1)), 24px);
         flex-shrink: 0;
+        height: 2.5em;
+        padding-right: 48px;
+        overflow-y: auto;
       }
       .tutorial-layer .tutorial-coach p {
         min-height: 0;
+        flex: 1;
         overflow-y: auto;
         font-size: clamp(12px, calc(14px * var(--tutorial-board-scale, 1)), 16px);
       }
       .tutorial-layer .tutorial-coach-actions {
         flex-shrink: 0;
+        height: 34px;
+        margin-top: 10px;
       }
-      .tutorial-layer .tutorial-coach.focus-overlap {
-        right: auto;
-        left: max(18px, calc((100vw - 1200px * var(--tutorial-board-scale, 1)) / 2 + 22px * var(--tutorial-board-scale, 1)));
+      .tutorial-layer .tutorial-coach .tutorial-coach-actions .button {
+        width: 106px;
+        transform: none;
       }
     }
+
+    .tutorial-next-inactive { visibility: hidden; }
 
     .tutorial-layer {
       position: fixed;
@@ -19497,7 +19505,7 @@
           },
           {
             title: "基本編",
-            after: "手札・デッキ・気力・戦意・講義室・環境マス・遅刻ゾーン・校外エリア・継続効果・ターン表示・カード確認・ログ・MENUの位置と見方を、各エリアを光らせながら説明します。練習専用の手札と盤面で5つのカードタイプを紹介し、出席・ターン終了・攻撃と反撃を説明、操作、結果確認の順に体験できます。最後は手札を自由に使って勝利を目指し、結果画面の「戻る」で一覧へ戻れます。"
+            after: "手札・デッキ・気力・戦意・講義室・環境マス・遅刻ゾーン・校外エリア・継続効果・ターン表示・カード確認・ログ・MENUの位置と見方を、各エリアを光らせながら説明します。説明パネルと「次へ」は右上に固定し、長い説明文だけスクロールできます。練習専用の手札と盤面で5つのカードタイプを紹介し、出席・ターン終了・攻撃と反撃を説明、操作、結果確認の順に体験できます。最後は手札を自由に使って勝利を目指し、結果画面の「戻る」で一覧へ戻れます。"
           }
         ]
       },
@@ -21281,22 +21289,22 @@
       {
         id: "basicTrash", title: "画面の見方：自分の校外エリア",
         body: "自分の講義室の右下にある「校外」が、自分の校外エリアです。\n破壊された出席者や使い終えた持ち物などが送られます。押すと、その内容を確認できます。",
-        focus: "#playerTrashButton", coachSide: "left"
+        focus: "#playerTrashButton"
       },
       {
         id: "basicOpponentTrash", title: "画面の見方：相手の校外エリア",
         body: "相手の講義室の左上にある「校外」が、相手の校外エリアです。\n自分の校外エリアとは別です。どちらのカードが送られたか、区別して確認できます。",
-        focus: "#opponentTrashButton", coachSide: "left"
+        focus: "#opponentTrashButton"
       },
       {
         id: "basicOpponentEffects", title: "画面の見方：相手の継続効果",
         body: "右側の上段にある「相手の継続効果」では、相手にかかっている継続効果を確認できます。\n数字は効果の件数です。押すと効果の内容や残り期間が表示されます。今は「現在なし」です。",
-        focus: "#opponentActiveEffectsButton", coachSide: "left"
+        focus: "#opponentActiveEffectsButton"
       },
       {
         id: "basicPlayerEffects", title: "画面の見方：自分の継続効果",
         body: "右側の下段にある「自分の継続効果」は、自分にかかっている効果を確認する場所です。\n深淵やインターンなどの継続する効果を、相手側と区別して確認できます。",
-        focus: "#playerActiveEffectsButton", coachSide: "left"
+        focus: "#playerActiveEffectsButton"
       },
       {
         id: "basicStats", title: "カードの数字",
@@ -21331,12 +21339,12 @@
       {
         id: "basicCardDetail", title: "画面の見方：カード確認",
         body: "カードを押すか長押しすると、カード確認で本文やかかっている状態を読めます。\n[ ]の能力名を押すと説明が開きます。相手の出席者の効果も確認できます。",
-        focus: "#opponentSeatGrid .board-card", coachSide: "left"
+        focus: "#opponentSeatGrid .board-card"
       },
       {
         id: "basicLog", title: "画面の見方：ログ",
         body: "右上の「ログ」を押すと、対戦中の行動や効果の結果を確認できます。\n最初の記録までさかのぼれます。閉じると元の盤面に戻ります。",
-        focus: "#battleLogButton", coachSide: "left"
+        focus: "#battleLogButton"
       },
       {
         id: "basicMenu", title: "画面の見方：MENU",
@@ -43660,7 +43668,7 @@
         : step.body;
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === state.tutorial.chapterId);
       elements.tutorialStepCounter.textContent = `${state.tutorial.stepIndex + 1}/${chapter.steps.length}`;
-      elements.tutorialNextButton.classList.toggle("hidden", Boolean(step.action));
+      elements.tutorialNextButton.classList.toggle("tutorial-next-inactive", Boolean(step.action));
       elements.tutorialNextButton.disabled = state.currentSide !== "player" || state.aiThinking;
       elements.tutorialNextButton.textContent = step.id === "freeBattle" ? "自由に挑戦する" : "次へ";
       window.requestAnimationFrame(() => updateTutorialSpotlight(tutorialFocusSelector(step)));
@@ -43674,21 +43682,7 @@
         return;
       }
       const rect = target.getBoundingClientRect();
-      // 紹介するエリア（特に右側の継続効果）を説明パネルで隠さない。
-      elements.tutorialCoach.classList.remove("focus-overlap");
-      elements.tutorialCoach.style.removeProperty("top");
-      if (window.innerWidth > 760) {
-        const coachRect = elements.tutorialCoach.getBoundingClientRect();
-        const overlaps = coachRect.left < rect.right && coachRect.right > rect.left
-          && coachRect.top < rect.bottom && coachRect.bottom > rect.top;
-        elements.tutorialCoach.classList.toggle("focus-overlap", currentTutorialStep()?.coachSide === "left" || overlaps);
-        const movedRect = elements.tutorialCoach.getBoundingClientRect();
-        if (movedRect.left < rect.right && movedRect.right > rect.left
-          && movedRect.top < rect.bottom && movedRect.bottom > rect.top) {
-          const top = Math.min(rect.bottom + 16, window.innerHeight - movedRect.height - 12);
-          elements.tutorialCoach.style.top = `${Math.max(12, top)}px`;
-        }
-      }
+      // 説明パネルと操作ボタンは固定し、強調枠だけを紹介先へ動かす。
       const pad = 8;
       const left = Math.max(4, rect.left - pad);
       const top = Math.max(4, rect.top - pad);
