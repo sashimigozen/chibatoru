@@ -23,18 +23,18 @@ test("保存デッキを作成順で表示し、項目と昇降順を切り替�
   });
 
   await expect(page.locator("#deckLibrarySortKey")).toHaveValue("created");
-  await expect(page.locator("#deckLibrarySortDirection")).toHaveValue("asc");
+  await expect(page.locator("#deckLibrarySortDirection")).toHaveValue("desc");
   expect(await deckNames(page)).toEqual(["Aデッキ", "Mデッキ", "Zデッキ"]);
 
   const cases = [
-    ["name", "asc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
-    ["name", "desc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
-    ["updated", "asc", ["Aデッキ", "Zデッキ", "Mデッキ"]],
-    ["updated", "desc", ["Mデッキ", "Zデッキ", "Aデッキ"]],
-    ["size", "asc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
-    ["size", "desc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
-    ["created", "desc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
-    ["created", "asc", ["Aデッキ", "Mデッキ", "Zデッキ"]]
+    ["name", "asc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
+    ["name", "desc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
+    ["updated", "asc", ["Mデッキ", "Zデッキ", "Aデッキ"]],
+    ["updated", "desc", ["Aデッキ", "Zデッキ", "Mデッキ"]],
+    ["size", "asc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
+    ["size", "desc", ["Zデッキ", "Mデッキ", "Aデッキ"]],
+    ["created", "desc", ["Aデッキ", "Mデッキ", "Zデッキ"]],
+    ["created", "asc", ["Zデッキ", "Mデッキ", "Aデッキ"]]
   ];
   for (const [key, direction, expected] of cases) {
     await page.locator("#deckLibrarySortKey").selectOption(key);
@@ -47,7 +47,7 @@ test("保存デッキを作成順で表示し、項目と昇降順を切り替�
     api.state.deckBuilder.chaosDecks["Zデッキ"].savedAt = "2026-09-04T00:00:00.000Z";
     api.render();
   });
-  expect(await deckNames(page)).toEqual(["Aデッキ", "Mデッキ", "Zデッキ"]);
+  expect(await deckNames(page)).toEqual(["Zデッキ", "Mデッキ", "Aデッキ"]);
 });
 
 test("数字のデッキ名でも保存・再読込後に作成順を維持する", async ({ page }) => {
