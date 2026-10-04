@@ -39,7 +39,7 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
     "ジェイルブレイクソフト-⚪︎u⚪︎uApp",
     "効率的な実験法"
   ]);
-  expect(result.map((entry) => entry.cost)).toEqual([6, 4, 3, 3, 3]);
+  expect(result.map((entry) => entry.cost)).toEqual([6, 5, 3, 3, 3]);
   expect(result.every((entry) => entry.type === "item")).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").generated).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").text)
@@ -141,11 +141,50 @@ test("煩わしいなぁは開始時だけ使え、指定された使用時効�
   });
 
   expect(result.used).toBe(true);
-  expect(result.counters).toEqual([2, 2]);
+  expect(result.counters).toEqual([1, 1]);
   expect(result.suppressed).toBe(true);
   expect(result.generated).toBe(false);
   expect(result.armyInTrash).toBe(true);
   expect(result.blockedAfterAction).toBe(false);
+});
+
+test("煩わしいなぁは戦意5を消費し、両者それぞれ最初のターン終了で解除される", async ({ page }) => {
+  const text = "自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ1回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。";
+  for (const file of ["index.html", "card_rules.txt", "カード管理台帳.html"]) {
+    expect(fs.readFileSync(path.join(__dirname, "..", file), "utf8")).toContain(text);
+  }
+  for (const side of ["player", "opponent"]) {
+    const result = await page.evaluate((side) => {
+      const api = window.__chibattle;
+      api.startCardTest("annoying_na");
+      const other = side === "player" ? "opponent" : "player";
+      for (const owner of [side, other]) {
+        api.state.players[owner].board.seats = Array(9).fill(null);
+        api.state.players[owner].board.teacher = null;
+        api.state.players[owner].hand = [];
+      }
+      api.state.environment = null;
+      const own = api.state.players[side];
+      const item = api.createCardFromBase("annoying_na", side);
+      own.hand = [item];
+      own.will = 4;
+      const tooCheap = api.castImmediateItem(side, item, false);
+      const before = { will: own.will, cards: own.hand.length };
+      own.will = 5;
+      own.turnActionTaken = false;
+      const used = api.castImmediateItem(side, item, false);
+      const counters = () => [side, other].map((owner) => api.state.players[owner].effectUseLockTurnsRemaining);
+      const initial = counters();
+      api.resolveEndTurnEffects(side);
+      const afterSelf = counters();
+      const otherBlocked = api.arePlayedEffectsSuppressed(other);
+      api.resolveEndTurnEffects(other);
+      return { tooCheap, before, used, cost: item.cost, will: own.will, text: api.cardRulesText(item),
+        initial, afterSelf, otherBlocked, afterBoth: counters() };
+    }, side);
+    expect(result).toEqual({ tooCheap: false, before: { will: 4, cards: 1 }, used: true, cost: 5, will: 0,
+      text: text.replace("使用できる。", "使用できる。\n"), initial: [1, 1], afterSelf: [0, 1], otherBlocked: true, afterBoth: [0, 0] });
+  }
 });
 
 test("幼き日の思い出は手札で3回ターン開始を迎えると⚪︎表記のカードへ変化する", async ({ page }) => {

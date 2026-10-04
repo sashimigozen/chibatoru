@@ -19329,7 +19329,7 @@
       destructive_lie: { name: "破壊させる嘘", type: "item", cost: 2, target: "friendlyAny" },
       scary_question: { name: "怖い質問", type: "item", cost: 1, target: "self", generated: true },
       classroom_change: { name: "教室変更", type: "item", cost: 6, target: "self" },
-      annoying_na: { name: "煩わしいなぁ", type: "item", cost: 4, target: "self" },
+      annoying_na: { name: "煩わしいなぁ", type: "item", cost: 5, target: "self" },
       childhood_memory_tutuapp: { name: "-幼き日の思い出-⚪︎u⚪︎uApp", type: "item", cost: 3, target: "self" },
       jailbreak_tutuapp: { name: "ジェイルブレイクソフト-⚪︎u⚪︎uApp", type: "item", cost: 3, target: "self", generated: true },
       efficient_experiment_method: { name: "効率的な実験法", type: "item", cost: 3, target: "self" },
@@ -19512,7 +19512,7 @@
       {
         version: "ver.0.23.12",
         date: "2026年10月4日",
-        summary: "ソロに13編のチュートリアルを追加しました。専用の手札と盤面で、画面の見方・基本操作・各能力を体験できます。説明を隠す機能、環境の継続効果表示、負荷・高負荷のダメージログも追加しました。",
+        summary: "ソロに13編のチュートリアルを追加しました。専用の手札と盤面で、画面の見方・基本操作・各能力を体験できます。説明を隠す機能、環境の継続効果表示、負荷・高負荷のダメージログも追加しました。「細い」「煩わしいなぁ」「ちがうよ」を調整しました。",
         changes: [
           {
             title: "チュートリアル一覧",
@@ -19533,6 +19533,21 @@
           {
             title: "デッキ編成の能力説明",
             after: "デッキ編成で開くカード詳細でも、[陽気]などの能力を押すと説明を確認できるようにしました。対戦中のカード確認と同じ説明を表示します。"
+          },
+          {
+            title: "細い",
+            before: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
+            after: "お互いの手札がそれぞれ10枚以下の場合にのみ使用できる。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。"
+          },
+          {
+            title: "煩わしいなぁ",
+            before: "戦意4。自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ2回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。",
+            after: "戦意5。自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ1回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。"
+          },
+          {
+            title: "ちがうよ",
+            before: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。",
+            after: "お互いの最大戦意がそれぞれ10の場合にのみ使用できる。お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。"
           }
         ]
       },
@@ -29028,6 +29043,8 @@
 
     function scoreTrainingYocchanItem(side, item) {
       if (item?.type !== "item" || item.unusable) return -Infinity;
+      if (item.baseId === "thin_item" && !canUseThinItem()) return -Infinity;
+      if (item.baseId === "chigauyo" && !canUseChigauyo()) return -Infinity;
       const ai = state.players[side];
       const targetSide = oppositeSide(side);
       const cost = effectiveCardCost(item);
@@ -30399,6 +30416,8 @@
     }
 
     function scoreAiItem(item, options = {}) {
+      if (item?.baseId === "thin_item" && !canUseThinItem()) return 0;
+      if (item?.baseId === "chigauyo" && !canUseChigauyo()) return 0;
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (getAiLethalEnablingItemPlan(item)) return 1000;
       const baseScore = baseScoreAiItem(item);
@@ -31463,9 +31482,9 @@
 
     function applyEffectUseLock() {
       ["player", "opponent"].forEach((side) => {
-        state.players[side].effectUseLockTurnsRemaining = 2;
+        state.players[side].effectUseLockTurnsRemaining = 1;
       });
-      addLog("煩わしいなぁの効果：お互いのプレイヤーがそれぞれ2回ターンを終了するまで、出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できません。");
+      addLog("煩わしいなぁの効果：お互いのプレイヤーがそれぞれ1回ターンを終了するまで、出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できません。");
     }
 
     function resolveEffectUseLockEndTurn(side) {
@@ -34188,6 +34207,8 @@
     function beginItemUse(item) {
       if (state.pendingCrotchFebrezeEffects) return;
       if (!item || state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
+      if (item.baseId === "thin_item" && !canUseThinItem()) return;
+      if (item.baseId === "chigauyo" && !canUseChigauyo()) return;
       if (!tutorialAllowsHandCard(item)) {
         rejectTutorialAction("今は光っている持ち物だけ使えます。");
         return;
@@ -39602,7 +39623,7 @@
       }
       if (item.baseId === "annoying_na") {
         applyEffectUseLock();
-        resultText = "お互いのプレイヤーがそれぞれ2回ターンを終了するまで、出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できなくしました。";
+        resultText = "お互いのプレイヤーがそれぞれ1回ターンを終了するまで、出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できなくしました。";
       }
       if (item.baseId === "childhood_memory_tutuapp") {
         const pulled = pullRandomCardsFromDeck(side, (card) => card.type === "item", 1);
@@ -40515,6 +40536,14 @@
     }
 
     function payForItem(side, item) {
+      if (item?.baseId === "chigauyo" && !canUseChigauyo()) {
+        state.message = "ちがうよはお互いの最大戦意がそれぞれ10の場合にのみ使えます。";
+        return false;
+      }
+      if (item?.baseId === "thin_item" && !canUseThinItem()) {
+        state.message = "細いはお互いの手札がそれぞれ10枚以下の場合にのみ使えます。";
+        return false;
+      }
       const playCost = effectiveCardCost(item);
       if (state.players[side].will < playCost) {
         state.message = `戦意が足りません。${item.name}のコストは${playCost}です。`;
@@ -43897,6 +43926,14 @@
       return canPlaceCardSomewhere(card);
     }
 
+    function canUseThinItem() {
+      return ["player", "opponent"].every((side) => state.players[side].hand.length <= 10);
+    }
+
+    function canUseChigauyo() {
+      return ["player", "opponent"].every((side) => state.players[side].maxWill === 10);
+    }
+
     function canUseObonMac(side) {
       return (state.players[side]?.trash || []).filter((card) => card.type === "vampire").length >= 5;
     }
@@ -43915,6 +43952,8 @@
     }
 
     function canUseItemNow(item) {
+      if (item?.baseId === "thin_item" && !canUseThinItem()) return false;
+      if (item?.baseId === "chigauyo" && !canUseChigauyo()) return false;
       if (item?.baseId === "obon_mac" && !canUseObonMac("player")) return false;
       if (arePlayedEffectsSuppressed("player")) return true;
       if (item.baseId === "annoying_na" && state.players.player.turnActionTaken) return false;
@@ -50701,7 +50740,7 @@
         onigiri_draw: "自分のデッキからカードを2枚引き、自分の気力を2回復する。",
         hondara: "カードを1枚ドローする。",
         fire_touch: "自分の気力を4失い、自分のデッキを上から3枚引く。",
-        thin_item: "相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
+        thin_item: "お互いの手札がそれぞれ10枚以下の場合にのみ使用できる。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。",
         one_eyed_peek: "相手の手札を見る。",
       course_registration_party: "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
         brother_capital: "自分のデッキから戦意2以下の出席者を好きなだけ選び、自分の講義室に特殊出席させる。（エースぺ）",
@@ -50754,13 +50793,13 @@
         homeless_crab: "自分の気力を4回復する。自分のターン終了時、手札に「○○○ガニ」が2枚以上、「毛蟹」と「どこにも居場所がないカニ」が1枚以上ずつある場合、カニカウントが4で開始する。以後、自分のターン終了時に1ずつ減り、0になるとカニ勝利する。カニカウントはお互いに見える。",
         quiet_please: "相手の攻撃力4以上の出席者1人を指名する。その出席者は攻撃できない。",
         seriously_hit: "相手の出席者1人を指名し、破壊する。",
-        chigauyo: "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。",
+        chigauyo: "お互いの最大戦意がそれぞれ10の場合にのみ使用できる。お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。",
         pure_destruction: "自分の講義室に戦意6以上の学生がいるなら、このカードの戦意は0になる。環境マスにある環境カードを校外エリアへ送る。その後、自分のデッキから戦意6以上の学生カード1枚をランダムに手札へ加える。",
         obon_mac: "自分の校外エリアにヴァンパイアが5枚以上ある場合にのみ使用できる。自分の手札にあるヴァンパイアすべての戦意を-2する。",
         destructive_lie: "自分の講義室にいる出席者1人を指名し、破壊する。その後、自分のデッキからカードを2枚引く。",
         scary_question: "相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。",
         classroom_change: "相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに遅刻2を付与する。",
-        annoying_na: "自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ2回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。",
+        annoying_na: "自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ1回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。",
         childhood_memory_tutuapp: "このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
         jailbreak_tutuapp: "お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。",
         efficient_experiment_method: "自分のデッキから学生、教師、持ち物をそれぞれ1枚ずつランダムに手札へ加える。",
