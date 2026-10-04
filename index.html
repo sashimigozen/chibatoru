@@ -18429,7 +18429,7 @@
       "ruler", "double_diamond", "seriously_hit", "green_curry", "roar", "thin_item",
       "handy_jet_engine", "i_got_it", "quiet_please", "vampirization", "bust_suit", "intern", "king_ghidorah_bed", "panpan",
       "favorite_number_s", "namen_tenno", "sock_block", "capture", "abyss", "donguri",
-      "night_pool_water", "substitute_attendance", "greeting_3000", "dos_attack",
+      "night_pool_water", "substitute_attendance", "greeting_3000", "grudge", "dos_attack",
       "destroy_dos_attack", "dropped_cards", "set_log", "sage_legacy", "thanks_all_students", "yakiniku", "pure_destruction", "destructive_lie", "scary_question",
       "dont_worry", "gamma", "yamanashi_minimum_wage"
     ]);
@@ -19061,9 +19061,10 @@
       loud_members: [],
       small_omata: [],
       big_omata: [],
-      wood_gitch: ["gitch"],
-      gitch: [],
-      gigi_blood: [],
+      wood_gitch: ["gitch", "gigi_blood"],
+      gitch: ["gigi_blood"],
+      gigi_blood: ["wood_gitch", "general_student", "ruler"],
+      grudge: [],
       academic_move: ["general_student"],
       aggro_walk: ["aggro_student"],
       illness: ["illness"],
@@ -19110,7 +19111,7 @@
       "dos_attack", "destroy_dos_attack",
       "three_gestures", "music_detergent", "chigauyo",
       "gamma", "substitute_attendance", "night_pool_water", "donguri",
-      "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000",
+      "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000", "grudge",
       "yamanashi_minimum_wage", "baka_mac", "ikemasu", "president_tea_room", "diamond_dust",
       "environment_setup", "go_away", "happy_experience", "course_registration_party", "brother_capital", "crotch_febreze", "lie_pekora", "big_wall", "one_eyed_peek", "big_laughter", "forbidden_book", "think_so", "philosophy_cheating", "smoke_flare", "intern",
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "efficient_experiment_method", "pure_destruction", "scary_question",
@@ -19195,8 +19196,9 @@
       small_omata: { name: "スモール小俣", type: "teacher", cost: 4, attack: 1, hp: 1, allowedZones: ["teacher"] },
       big_omata: { name: "ビッグ小俣", type: "teacher", cost: 0, noCost: true, attack: 9, hp: 9, keywords: ["注目", "陽気"], token: true, allowedZones: ["seat"], occupiedSeatSize: { rows: 3, cols: 3 } },
       wood_gitch: { name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 1, noLecture: true, allowedZones: ["teacher", "seat"] },
-      gitch: { name: "技議っち", type: "teacher", cost: 0, attack: 1, hp: 2, noLecture: true, evolutionFrom: "wood_gitch", allowedZones: ["evolution"] },
-      gigi_blood: { name: "偽魏義ッ血", type: "vampire", cost: 7, attack: 3, hp: 10, evolutionFrom: "gitch", allowedZones: ["evolution"] },
+      gitch: { name: "技議っち", type: "teacher", cost: 0, attack: 1, hp: 4, noLecture: true, evolutionFrom: "wood_gitch", allowedZones: ["evolution"] },
+      gigi_blood: { name: "偽魏義ッ血", type: "vampire", cost: 8, attack: 2, hp: 4, evolutionFrom: "gitch", allowedZones: ["evolution"] },
+      grudge: { name: "怨念", type: "item", cost: 1, target: "self", token: true, generated: true, category: "cafeteria" },
       pro_k: { name: "プロ言の長", type: "teacher", cost: 5, attack: 2, hp: 2, allowedZones: ["teacher"] },
       lightning_n: { name: "デザインデーモンスレイヤー", type: "teacher", cost: 4, attack: 2, hp: 2, allowedZones: ["teacher"] },
       fairy_t: { name: "デザインフェアリー", type: "teacher", cost: 3, attack: 1, hp: 2, allowedZones: ["teacher"] },
@@ -19509,6 +19511,18 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.13",
+        date: "2026年10月5日",
+        summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。",
+        changes: [
+          { title: "木っち（ぎっち）", before: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。", after: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。" },
+          { title: "技議っち", before: "戦意0、攻撃力1、体力2。進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。", after: "戦意0、攻撃力1、体力4。進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。" },
+          { title: "偽魏義ッ血", before: "戦意7、攻撃力3、体力10。進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。", after: "戦意8、攻撃力2、体力4。進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。" },
+          { title: "怨念", after: "戦意1、トークン。相手本体に2ダメージを与える。" },
+          { title: "効果処理・カードテスト", after: "技議っちの追加出席は空いている席マス・教卓マスからランダムに選びます。旧効果の手札選択、攻撃力強化、破壊の肩代わり、復活を削除しました。AI、オンライン、カードテストを新しい効果に揃えました。" }
+        ]
+      },
       {
         version: "ver.0.23.12",
         date: "2026年10月4日",
@@ -21090,7 +21104,6 @@
       pendingCardChoice: null,
       pendingAttendTarget: null,
       pendingGitchSummon: null,
-      pendingGigiResurrection: null,
       pendingSpecialAttendanceQueue: null,
       pendingCrotchFebrezeEffects: null,
       resolvingOrderedAttendance: false,
@@ -25987,7 +26000,6 @@
       snapshotState.pendingCopiedCard = pendingGuestPlacement;
       snapshotState.pendingSpecialAttendanceQueue = null;
       snapshotState.pendingCrotchFebrezeEffects = null;
-      snapshotState.pendingGigiResurrection = null;
       if (pendingGuestPlacement) {
         snapshotState.message = `特殊出席：${pendingGuestPlacement.name}を出席させる場所を選んでください。`;
       }
@@ -26335,7 +26347,6 @@
       transformed.pendingCopiedCard = null;
       transformed.pendingSpecialAttendanceQueue = null;
       transformed.pendingCrotchFebrezeEffects = null;
-      transformed.pendingGigiResurrection = null;
       transformed.message = onlineDisplayTextForSpectator(transformed.message);
       transformed.log = (transformed.log || []).map(onlineDisplayTextForSpectator);
       return transformed;
@@ -26538,7 +26549,6 @@
             starbucksTeacherId: payload.starbucksTeacherId || null,
             tripleEnemyChoiceId: payload.tripleEnemyChoiceId || null,
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
-            woodGitchTransformId: payload.woodGitchTransformId || null,
             summerTeacherChoiceId: payload.summerTeacherChoiceId || null,
             summerTeacherChoiceBaseId: payload.summerTeacherChoiceBaseId || null,
             corneringLecturerChoiceId: payload.corneringLecturerChoiceId || null
@@ -28156,10 +28166,7 @@
       if (options.destroy && isPadlocked(card)) return false;
       if (!options.destroy && card.baseId === "rebirth_student" && !card.rebirthUsed
         && canUsePrintedCardEffects(card)) return false;
-      return !(card.baseId === "gigi_blood" && listBoardRefs(card.owner).some((ref) => {
-        const protector = getBoardCardFromRef(ref);
-        return protector?.baseId === "gitch" && canUsePrintedCardEffects(protector);
-      }));
+      return true;
     }
 
     function scoreAiNonCombatEffectTarget(side, source, entry, options = {}) {
@@ -28338,6 +28345,19 @@
       const targetSide = oppositeSide(side);
       const allTargets = effectTargetEntries(side, targetSide);
       const studentTargets = allTargets.filter(({ card: target }) => target.type === "student");
+      if (card.baseId === "gitch") {
+        const own = state.players[side];
+        const open = own.board.seats.filter((_entry, index) => isBoardSlotOpen(side, "seat", index)).length
+          + Number(isBoardSlotOpen(side, "teacher", null));
+        return Math.min(2, own.deck.length) * 5 + Math.min(2, open) * 4;
+      }
+      if (card.baseId === "gigi_blood") {
+        const own = state.players[side];
+        const transformedCount = own.hand.filter((entry) => entry.instanceId !== card.instanceId).length;
+        const availableWill = Math.max(0, own.will - effectiveCardCost(card));
+        const hits = Math.min(transformedCount, availableWill);
+        return hits * 6 + (hits * 2 >= state.players[targetSide].life ? 1000 : 0);
+      }
       if (card.baseId === "midge") {
         return scoreAiDamageEffectTargets(side, card, allTargets, { damage: 1, random: true });
       }
@@ -29334,6 +29354,7 @@
       if (!card) return 0;
       if (card.baseId === "ruler") return 1;
       if (card.baseId === "double_diamond") return 4;
+      if (card.baseId === "grudge") return 2;
       if (card.baseId === "greeting_3000") {
         return state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
       }
@@ -30572,6 +30593,7 @@
       }
       if (item.baseId === "deck_without") return deck.length >= 2 && opponent.hand.length >= 2 ? 5 : 0;
       if (item.baseId === "smart_me") return state.players.player.late.some((entry) => entry.card?.type === "student") ? 6 : 0;
+      if (item.baseId === "grudge") return state.players.player.life <= 2 ? 1000 : 7;
       if (item.baseId === "greeting_3000") {
         const utaCount = opponent.trash.filter((card) => ["yuta", "dark_yuta"].includes(card.baseId)).length;
         if (utaCount <= 0) return 0;
@@ -33896,10 +33918,6 @@
         resolveHappyExperienceChoice("player", item, evolutionCard, pending.context, true);
         return;
       }
-      if (mode === "wood_gitch_transform") {
-        resolveWoodGitchHandTransform("player", selectedIds[0], pending.context?.sourceCard || CARD_BASES.wood_gitch, true);
-        return;
-      }
       if (mode === "diamond_dust_recovery") {
         if (onlineCanSendCommand()) {
           onlineSendCommand("diamondDustRecovery", { instanceId: itemId, selectedIds });
@@ -34070,20 +34088,6 @@
         placeCardFromHand("player", lecturer.instanceId, target.zone, target.owner, target.index ?? null, true, {
           corneringLecturerChoiceId: choiceId
         });
-        return;
-      }
-      if (mode === "wood_gitch_online_play") {
-        const target = pending.playTarget || {};
-        onlineSendCommand("playCard", {
-          instanceId: pending.playCardId,
-          zone: target.zone,
-          owner: target.owner,
-          index: target.index ?? null,
-          woodGitchTransformId: selectedIds[0] || null
-        });
-        state.message = "木っち（ぎっち）の出席と手札の変化先を送信しました。";
-        clearSelections();
-        render();
         return;
       }
       if (mode === "bad_student_online_play") {
@@ -35303,23 +35307,6 @@
       }
       if (onlineCanSendCommand()) {
         const card = getHandCard("player", instanceId);
-        if (card?.baseId === "wood_gitch") {
-          const transformCards = state.players.player.hand.filter((handCard) => handCard.instanceId !== instanceId);
-          if (transformCards.length > 0) {
-            openCardChoice({
-              mode: "wood_gitch_online_play",
-              title: card.name,
-              message: "出席後、「木っち（ぎっち）」に変化させる手札を1枚選んでください。",
-              cards: transformCards,
-              min: 1,
-              max: 1,
-              confirmLabel: "選んで出席",
-              playCardId: instanceId,
-              playTarget: { zone, owner, index }
-            });
-            return;
-          }
-        }
         if (card?.baseId === "failure_student") {
           const discardCards = state.players.player.hand.filter((handCard) => handCard.instanceId !== instanceId);
           const discardCount = Math.min(2, discardCards.length);
@@ -35695,8 +35682,7 @@
           owner,
           attendanceSource: ATTENDANCE_SOURCE.HAND,
           commandId: options.commandId || "",
-          badStudentDiscardIds: options.badStudentDiscardIds || [],
-          woodGitchTransformId: options.woodGitchTransformId || null
+          badStudentDiscardIds: options.badStudentDiscardIds || []
         });
         const costLog = card.noCost && !isChaosBattle() ? "戦意なし" : `戦意-${playCost}`;
         addLog(`${SIDES[side]}は${card.name}を出席させました。${costLog}。`);
@@ -36049,7 +36035,7 @@
       const delay = evolutionEffectDelay(options);
       const effectTurn = state.actionTurn;
       const commandId = options.commandId || "";
-      const waitForAi = ["midge", "organism", "perfect_mutant", "success_student", "demon_a_plus", "oni_shima_ai", "recovered_dark_yuta"].includes(evolved?.baseId)
+      const waitForAi = ["midge", "organism", "perfect_mutant", "success_student", "demon_a_plus", "oni_shima_ai", "recovered_dark_yuta", "gitch", "gigi_blood"].includes(evolved?.baseId)
         && ((side === "opponent" && isOpponentAiActive()) || (side === "player" && isTrainingLeftAiActive()));
       let resolveAiWait = null;
       let aiWaitPromise = null;
@@ -36161,138 +36147,43 @@
         });
         addLog(`${evolved.name}の進化時効果：相手の学生${affected}人に1ダメージ。`);
       } else if (evolved.baseId === "gitch") {
-        if (normalizeAttendanceSource(options.attendanceSource, ATTENDANCE_SOURCE.EFFECT) !== ATTENDANCE_SOURCE.HAND) {
-          addLog(`${evolved.name}は手札から出席していないため、手札出席時効果は発動しません。`);
-          return false;
-        }
-        return resolveGitchEvolutionEffect(side, evolved, options);
+        return resolveGitchEvolutionEffect(side, evolved);
       } else if (evolved.baseId === "gigi_blood") {
-        if (normalizeAttendanceSource(options.attendanceSource, ATTENDANCE_SOURCE.EFFECT) !== ATTENDANCE_SOURCE.HAND) {
-          addLog(`${evolved.name}は手札から出席していないため、手札出席時効果は発動しません。`);
-          return false;
-        }
-        return resolveGigiBloodEvolutionEffect(side, evolved, options);
+        return resolveGigiBloodEvolutionEffect(side, evolved);
       } else {
         addLog(`${evolved.name}の進化時効果はありません。`);
       }
       return false;
     }
 
-    function finishEvolutionAsyncWork(commandId = "") {
-      cleanupDestroyedCards();
-      applyBoardAuras();
-      checkLifeVictory();
-      if (!finishOnlineEvolutionCommand(commandId)) render();
-    }
-
-    function finishGitchEvolutionEffect(side, sourceCard, commandId = "") {
-      const related = listBoardRefs(side)
-        .map((ref) => getBoardCardFromRef(ref))
-        .filter((card) => card && ["wood_gitch", "gitch"].includes(card.baseId));
-      const amount = related.length;
-      related.forEach((card) => applyPermanentStatBuff(card, amount, 0, 0, sourceCard.name));
-      addLog(`${sourceCard.name}の手札出席時効果：自分の「木っち（ぎっち）」と「技議っち」${amount}人の攻撃力を${amount}上げました。`);
-      finishEvolutionAsyncWork(commandId);
-    }
-
-    function resolveGitchEvolutionEffect(side, sourceCard, options = {}) {
-      const summon = makeBoardCard(createCardFromBase("wood_gitch", side));
-      summon.skipAttendEffectsOnPlacement = true;
-      summon.pendingAttendanceSource = ATTENDANCE_SOURCE.GENERATED;
-      summon.gitchEvolutionSummon = true;
-      summon.gitchSourceInstanceId = sourceCard.instanceId;
-      summon.gitchCommandId = options.commandId || "";
-      if (!hasOpenSpecialAttendanceSlot(side, summon)) {
-        addLog(`${sourceCard.name}の手札出席時効果：木っち（ぎっち）を出席させる空きマスがないため、追加出席しませんでした。`);
-        finishGitchEvolutionEffect(side, sourceCard, options.commandId || "");
-        return true;
+    function resolveGitchEvolutionEffect(side, sourceCard) {
+      const drawn = drawUpTo(side, 2);
+      let summoned = 0;
+      for (let count = 0; count < 2; count += 1) {
+        const card = makeBoardCard(createCardFromBase("wood_gitch", side));
+        const slots = state.players[side].board.seats
+          .map((_entry, index) => ({ zone: "seat", index }))
+          .concat({ zone: "teacher", index: null })
+          .filter((slot) => canPlaceCard(side, card, slot.zone, side, slot.index));
+        if (slots.length === 0) break;
+        const slot = slots[Math.floor(Math.random() * slots.length)];
+        if (!attendCard(side, card, slot.zone, slot.index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED })) break;
+        showCardPlayAnimation(card, "board");
+        summoned += 1;
       }
-      if (side === "opponent" && !isOnlineHost()) {
-        placeCopiedCardInFirstOpenSlot(side, summon);
-        return true;
-      }
-      setPendingCopiedCardForPlacement(
-        summon,
-        `${sourceCard.name}の手札出席時効果：自分の「木っち（ぎっち）」を出席させる場所を選んでください。`,
-        { commandId: options.commandId || "" }
-      );
-      if (isRemoteGuestPlacementAwaiting()) onlineBroadcastState(true);
-      render();
-      return true;
-    }
-
-    function continueGigiBloodResurrection() {
-      const pending = state.pendingGigiResurrection;
-      if (!pending) return false;
-      const player = state.players[pending.side];
-      if (gigiBloodResurrectionCapacity(pending.side) <= 0) {
-        if (pending.cardIds.length > 0) {
-          addLog(`偽魏義ッ血の手札出席時効果：出席させる空きマスがないため、残り${pending.cardIds.length}人は校外エリアに残りました。`);
-        }
-        state.pendingGigiResurrection = null;
-        finishEvolutionAsyncWork(pending.commandId);
-        return false;
-      }
-      while (pending.cardIds.length > 0) {
-        if (gigiBloodResurrectionCapacity(pending.side) <= 0) break;
-        const cardId = pending.cardIds.shift();
-        const trashIndex = player.trash.findIndex((card) => card.instanceId === cardId);
-        if (trashIndex < 0) continue;
-        const [card] = player.trash.splice(trashIndex, 1);
-        card.owner = pending.side;
-        card.type = "vampire";
-        card.transformedType = "vampire";
-        card.skipAttendEffectsOnPlacement = true;
-        card.pendingAttendanceSource = ATTENDANCE_SOURCE.TRASH;
-        card.gigiBloodResurrection = true;
-        card.gigiCommandId = pending.commandId;
-        if (pending.side === "opponent" && !isOnlineHost()) {
-          placeCopiedCardInFirstOpenSlot(pending.side, card);
-          continue;
-        }
-        setPendingCopiedCardForPlacement(
-          card,
-          `偽魏義ッ血の手札出席時効果：${card.name}をヴァンパイアとして出席させる場所を選んでください。`,
-          { commandId: pending.commandId || "" }
-        );
-        if (isRemoteGuestPlacementAwaiting()) onlineBroadcastState(true);
-        render();
-        return true;
-      }
-      state.pendingGigiResurrection = null;
-      finishEvolutionAsyncWork(pending.commandId);
+      addLog(`${sourceCard.name}の進化時効果：カードを${drawn}枚引き、木っち（ぎっち）を${summoned}人ランダムに出席させました。`);
       return false;
     }
 
-    function gigiBloodResurrectionCapacity(side) {
-      const seats = state.players[side]?.board?.seats || [];
-      const openSeats = seats.reduce((count, _entry, index) => (
-        count + (isBoardSlotOpen(side, "seat", index) ? 1 : 0)
-      ), 0);
-      return openSeats + (isBoardSlotOpen(side, "teacher", null) ? 1 : 0);
-    }
-
-    function resolveGigiBloodEvolutionEffect(side, sourceCard, options = {}) {
-      const opponent = oppositeSide(side);
-      const destroyed = destroyBoardRefsToTrash(
-        listBoardRefs(opponent).filter((ref) => getBoardCardFromRef(ref)?.baseId !== "lightning_n"),
-        { reason: sourceCard.name, showDestroyFeedback: true }
-      );
-      const candidates = state.players[side].trash
-        .filter((card) => ["wood_gitch", "gitch"].includes(card.baseId))
-        .map((card) => card.instanceId);
-      const capacity = gigiBloodResurrectionCapacity(side);
-      const cardIds = candidates.slice(0, capacity);
-      addLog(`${sourceCard.name}の手札出席時効果：相手の「デザインデーモンスレイヤー」以外の出席者${destroyed.length}人を破壊しました。`);
-      if (candidates.length > cardIds.length) {
-        addLog(`${sourceCard.name}の手札出席時効果：空きマス数に合わせ、校外エリアから出席させる候補を${cardIds.length}人に制限しました。`);
-      }
-      if (cardIds.length === 0) {
-        finishEvolutionAsyncWork(options.commandId || "");
-        return true;
-      }
-      state.pendingGigiResurrection = { side, cardIds, commandId: options.commandId || "" };
-      return continueGigiBloodResurrection() || true;
+    function resolveGigiBloodEvolutionEffect(side, sourceCard) {
+      const hand = state.players[side].hand;
+      state.players[side].hand = hand.map((card) => ({
+        ...createCardFromBase("grudge", side),
+        instanceId: card.instanceId,
+        handTurns: card.handTurns || 0
+      }));
+      addLog(`${sourceCard.name}の進化時効果：自分の手札${hand.length}枚すべてを「怨念」に変化させました。`);
+      return false;
     }
 
     function resolveSuccessStudentEvolutionEffect(side, sourceCard) {
@@ -36809,7 +36700,8 @@
         });
       }
       if (card.baseId === "wood_gitch") {
-        beginWoodGitchHandTransform(side, card, options);
+        state.players[side].hand.push(createCardFromBase("wood_gitch", side));
+        addLog(`${card.name}の効果：自分の手札に「木っち（ぎっち）」1枚を生成しました。`);
       }
       if (card.baseId === "small_omata") {
         // At 10 will, Small Omata immediately becomes Big Omata. Its single-target
@@ -37519,55 +37411,6 @@
         .filter((entry) => entry.card && !isAttackLocked(entry.card))
         .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0))[0]?.ref || null;
     }
-
-    function resolveWoodGitchHandTransform(side, targetInstanceId, sourceCard, renderAfter = true) {
-      const player = state.players[side];
-      const targetIndex = player?.hand.findIndex((card) => card.instanceId === targetInstanceId) ?? -1;
-      if (!player || targetIndex < 0) return false;
-      const target = player.hand[targetIndex];
-      const transformed = createCardFromBase("wood_gitch", side);
-      transformed.instanceId = target.instanceId;
-      transformed.handTurns = target.handTurns || 0;
-      player.hand.splice(targetIndex, 1, transformed);
-      addLog(`${sourceCard?.name || CARD_BASES.wood_gitch.name}の効果：手札の「${target.name}」を「木っち（ぎっち）」に変化させました。`);
-      state.message = `手札の「${target.name}」が「木っち（ぎっち）」に変化しました。`;
-      clearSelections();
-      if (renderAfter) render();
-      return true;
-    }
-
-    function beginWoodGitchHandTransform(side, sourceCard, options = {}) {
-      const candidates = state.players[side]?.hand || [];
-      if (candidates.length === 0) {
-        addLog(`${sourceCard.name}の効果：変化させる手札がありません。`);
-        return false;
-      }
-      const requestedId = options.woodGitchTransformId || null;
-      if (requestedId && candidates.some((card) => card.instanceId === requestedId)) {
-        return resolveWoodGitchHandTransform(side, requestedId, sourceCard, false);
-      }
-      if (isCpuControlledBattleSide(side)) {
-        const target = [...candidates]
-          .sort((a, b) => trainingAiChoiceCardScore(side, a) - trainingAiChoiceCardScore(side, b))[0];
-        return resolveWoodGitchHandTransform(side, target.instanceId, sourceCard, false);
-      }
-      if (side !== "player") {
-        const target = [...candidates]
-          .sort((a, b) => trainingAiChoiceCardScore(side, a) - trainingAiChoiceCardScore(side, b))[0];
-        return resolveWoodGitchHandTransform(side, target.instanceId, sourceCard, false);
-      }
-      return openCardChoice({
-        mode: "wood_gitch_transform",
-        title: sourceCard.name,
-        message: "「木っち（ぎっち）」に変化させる自分の手札を1枚選んでください。",
-        cards: candidates,
-        min: 1,
-        max: 1,
-        confirmLabel: "このカードを変化",
-        context: { sourceCard }
-      });
-    }
-
     function beginKansaiVoiceTargetChoice(side, sourceCard) {
       if (!canUsePrintedCardEffects(sourceCard)) return false;
       const targetOwner = oppositeSide(side);
@@ -39936,6 +39779,10 @@
           resultText = "相手の遅刻ゾーンに学生がいないため不発になりました。";
         }
       }
+      if (item.baseId === "grudge") {
+        damagePlayer(oppositeSide(side), 2);
+        resultText = "相手本体に2ダメージを与えました。";
+      }
       if (item.baseId === "greeting_3000") {
         const utaCount = state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
         damagePlayer(oppositeSide(side), utaCount);
@@ -40380,12 +40227,7 @@
           addLog(`${card.name}を移せる空きマスがなく、校外エリアへ送りました。`);
           return false;
         }
-        if (card.gitchEvolutionSummon) {
-          const source = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).find((entry) => entry?.instanceId === card.gitchSourceInstanceId) || card;
-          finishGitchEvolutionEffect(side, source, card.gitchCommandId || "");
-        } else if (card.gigiBloodResurrection) {
-          continueGigiBloodResurrection();
-        } else if (card.specialAttendanceQueue) {
+        if (card.specialAttendanceQueue) {
           continueSpecialAttendanceQueue();
         }
         return true;
@@ -40400,10 +40242,8 @@
       if (!["student", "teacher", "vampire"].includes(card.type)) return false;
       if (card.specialAttendanceSeatOnly && zone !== "seat") return false;
       if (card.localOnlinePlacementSubmitted) return false;
-      // Cards produced by the common queue retain all ordinary placement
-      // restrictions.  Gigi's resurrection deliberately changes a former
-      // evolution card into a vampire, so it only requires an open legal slot.
-      if (card.specialAttendanceQueue || card.gitchEvolutionSummon) {
+      // Cards produced by the common queue retain ordinary placement restrictions.
+      if (card.specialAttendanceQueue) {
         return canPlaceCard(side, card, zone, owner, index);
       }
       return isBoardSlotOpen(owner, zone, index);
@@ -40456,15 +40296,6 @@
         ? `${card.name}が${SIDES[side]}の場に移りました。`
         : `${card.name}のコピーが${SIDES[side]}の場に出席しました。`);
       applyBoardAuras();
-      if (card.gitchEvolutionSummon) {
-        const source = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).find((entry) => entry?.instanceId === card.gitchSourceInstanceId) || card;
-        finishGitchEvolutionEffect(side, source, card.gitchCommandId || "");
-        return true;
-      }
-      if (card.gigiBloodResurrection) {
-        continueGigiBloodResurrection();
-        return true;
-      }
       if (card.specialAttendanceQueue) {
         continueSpecialAttendanceQueue();
         return true;
@@ -42150,20 +41981,6 @@
         && trashOptions.reason !== "体力0") {
         addLog(`${card.name}は南京錠により効果で破壊されません。`);
         return null;
-      }
-      if (!trashOptions.ignoreGigiBloodProtection && card.baseId === "gigi_blood") {
-        const protectorRef = listBoardRefs(ref.owner).find((candidateRef) => {
-          const candidate = getBoardCardFromRef(candidateRef);
-          return candidate?.baseId === "gitch"
-            && candidate.instanceId !== card.instanceId
-            && canUsePrintedCardEffects(candidate);
-        });
-        if (protectorRef) {
-          const protector = getBoardCardFromRef(protectorRef);
-          destroyBoardCard(protectorRef, { ...trashOptions, ignoreGigiBloodProtection: true, reason: `${card.name}の身代わり` });
-          addLog(`${protector.name}の効果：${card.name}の代わりに破壊されました。`);
-          return null;
-        }
       }
       const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
       const triggersAbsentStudent = !isTokenCard(card) && card.baseId === "absent_student" && canUsePrintedCardEffects(card);
@@ -48820,11 +48637,6 @@
       if (baseId === "gigi_blood") {
         player.board.seats.fill(null);
         player.board.seats[4] = makePlayerTestAttendee("gitch");
-        player.trash.push(
-          createCardFromBase("wood_gitch", "player"),
-          createCardFromBase("gitch", "player")
-        );
-        opponent.board.teacher = makeOpponentTestAttendee("lightning_n");
       }
       if (baseId === "tokyo_tech_bro") {
         player.late.push(
@@ -50770,9 +50582,10 @@
         loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
         small_omata: "このカードは教卓マスにのみ出席できる。このカードを手札から出席させたとき、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。このカードを戦意10で手札から出席させたとき、このカードと自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
         big_omata: "注目と陽気を持つ。自分の席マスすべてを占有し、1人の出席者として扱う。出席した時、相手の講義室の出席者すべては1ターン攻撃できない。",
-        wood_gitch: "このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。",
-        gitch: "進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。",
-        gigi_blood: "進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。",
+        wood_gitch: "このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
+        gitch: "進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。",
+        gigi_blood: "進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。",
+        grudge: "相手本体に2ダメージを与える。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
         vampirization: "相手の出席者1人を指名し、それをタイプ「ヴァンパイア」にした後、自分の場に移す。",
         bust_suit: "お互いの講義室にいる学生1人を指名する。その出席者を「スーツを着た学生」にする。",
@@ -51688,8 +51501,6 @@
       createCardFromBase,
       moveToTrash,
       moveHandCardToTrash,
-      beginWoodGitchHandTransform,
-      resolveWoodGitchHandTransform,
       resolveGoAwayChoice,
       pickCardsFromDeckAndTrash,
       restoreRecentBoardCard,

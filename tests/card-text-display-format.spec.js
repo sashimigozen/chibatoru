@@ -18,7 +18,7 @@ test("カード自身の能力を冒頭へまとめ、条件付き能力は本�
       reference: text("ta_killer"),
       late: text("adjective_student"),
       evolution: text("oni_shima_ai"),
-      evolutionWithLegacyWording: text("gitch"),
+      evolutionGitch: text("gitch"),
       evolutionWithFlavor: text("demon_a_plus"),
       equipment: text("earphones"),
       fusion: text("double_diamond"),
@@ -37,7 +37,7 @@ test("カード自身の能力を冒頭へまとめ、条件付き能力は本�
   expect(texts.reference).toBe("これは[講義]のダメージを受けない。\n手札から出席させたとき、相手のランダムな教師に1ダメージを与える。");
   expect(texts.late).toBe("[遅刻4]\nこのカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。");
   expect(texts.evolution).toBe("[陽気]\n[進化]：「愛ちゃん」\n進化したとき、相手の学生すべてに1ダメージを与える。");
-  expect(texts.evolutionWithLegacyWording.startsWith("[進化]：「木っち（ぎっち）」から進化する。\n")).toBe(true);
+  expect(texts.evolutionGitch.startsWith("[進化]：「木っち（ぎっち）」\n")).toBe(true);
   expect(texts.evolutionWithFlavor).toContain("\n-我が光に仇なす者よ。今この翼を以って頽落せしめん。羽ばたけ-");
   expect(texts.evolutionWithFlavor.startsWith("[進化]：「デザインファルコン」\n")).toBe(true);
   expect(texts.evolutionWithFlavor).toContain("\n進化したとき、「相手の講義室の出席者1人をランダムに指名し、1ダメージを与える。」を10回行う。\n");
