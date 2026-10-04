@@ -19529,6 +19529,10 @@
           {
             title: "説明の表示切替・環境の継続効果・負荷のログ",
             after: "チュートリアルに「説明を隠す／説明を表示」を追加し、カード確認を遮らず、同じ手順に戻れるようにしました。アカデミックムーブなどの環境効果を自分・相手の継続効果へ表示し、環境変更後も残る退場効果を確認できます。負荷・高負荷による本体のダメージをログに記録しますが、非公開の手札のカード名は記録しません。"
+          },
+          {
+            title: "デッキ編成の能力説明",
+            after: "デッキ編成で開くカード詳細でも、[陽気]などの能力を押すと説明を確認できるようにしました。対戦中のカード確認と同じ説明を表示します。"
           }
         ]
       },
@@ -48452,7 +48456,7 @@
         </button>
       ` : "";
       elements.cardTestCard.innerHTML = `<div class="card-test-style-frame">${cardShellTemplate(card)}${control}</div>${unlocked ? `<div class="card-rarity-label">${cardStyleModeLabel(mode)}</div>` : ""}`;
-      elements.cardTestText.innerHTML = cardDetailTemplate(card);
+      elements.cardTestText.innerHTML = cardDetailTemplate(card, { interactiveTerms: true });
     }
 
     function openCardTestConfirm(baseId) {
@@ -49930,7 +49934,7 @@
       };
     }
 
-    function battleCardRulesMarkup(card) {
+    function battleCardRulesMarkup(card, { abilitiesOnly = false } = {}) {
       const text = String(cardRulesText(card) || "");
       const references = [
         ...Object.entries(CARD_BASES).map(([baseId, base]) => ({ label: base.name, kind: "card", value: baseId, priority: 3 })),
@@ -49946,7 +49950,7 @@
         const evolutionHeading = text.slice(index).match(/^\[進化\]：「([^」]+)」/);
         if (evolutionHeading) {
           const evolutionSource = references.find((entry) => entry.kind === "card" && entry.label === evolutionHeading[1]);
-          const sourceMarkup = evolutionSource
+          const sourceMarkup = evolutionSource && !abilitiesOnly
             ? `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(evolutionSource.value)}">${escapeHtml(evolutionSource.label)}</button>`
             : escapeHtml(evolutionHeading[1]);
           markup += `${battleCardTermButtonMarkup("進化", "", "", "[進化]")}：「${sourceMarkup}」`;
@@ -49969,7 +49973,7 @@
           index += 1;
           continue;
         }
-        if (reference.kind === "plain") {
+        if (reference.kind === "plain" || (abilitiesOnly && reference.kind !== "term")) {
           markup += escapeHtml(reference.label);
         } else if (reference.kind === "card") {
           markup += `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(reference.value)}">［${escapeHtml(reference.label)}］</button>`;
@@ -50223,11 +50227,11 @@
       return entries;
     }
 
-    function showBattleCardTermDescription(term) {
+    function showBattleCardTermDescription(term, container = elements.battleCardPreview) {
       const description = BATTLE_CARD_TERM_DESCRIPTIONS[term];
-      if (!description || !elements.battleCardPreview) return;
-      const termPanel = elements.battleCardPreview.querySelector("[data-preview-term-description]");
-      const effectPanel = elements.battleCardPreview.querySelector("[data-preview-effect-description]");
+      if (!description || !container) return;
+      const termPanel = container.querySelector("[data-preview-term-description]");
+      const effectPanel = container.querySelector("[data-preview-effect-description]");
       if (!termPanel) return;
       termPanel.innerHTML = `<strong>［${escapeHtml(term)}］</strong> ${escapeHtml(description)}`;
       termPanel.classList.add("visible");
@@ -50245,7 +50249,7 @@
       termPanel?.classList.remove("visible");
     }
 
-    function cardDetailTemplate(card) {
+    function cardDetailTemplate(card, { interactiveTerms = false } = {}) {
       const effectiveCost = effectiveCardCost(card);
       const detailLines = [
         `タイプ：${labelForType(card.type)}`,
@@ -50263,7 +50267,8 @@
       return `
         <div class="tooltip-title">${escapeHtml(card.name)}</div>
         <div class="tooltip-meta">${detailLines.map(escapeHtml).join(" / ")}</div>
-        <div class="tooltip-effect"><span class="tooltip-effect-label">効果：</span>${escapeHtml(cardRulesText(card))}</div>
+        <div class="tooltip-effect"><span class="tooltip-effect-label">効果：</span>${interactiveTerms ? battleCardRulesMarkup(card, { abilitiesOnly: true }) : escapeHtml(cardRulesText(card))}</div>
+        ${interactiveTerms ? '<div class="battle-card-preview-term-description" data-preview-term-description role="status"></div>' : ""}
         ${relatedCardsTemplate(card)}
       `;
     }
@@ -51482,6 +51487,12 @@
     elements.courseRegistrationAcceptButton.addEventListener("click", acceptCourseRegistrationConsent);
     elements.courseRegistrationRejectButton.addEventListener("click", rejectCourseRegistrationConsent);
     elements.cardTestModal.addEventListener("click", (event) => {
+      const term = event.target.closest("[data-preview-term]");
+      if (term) {
+        event.stopPropagation();
+        showBattleCardTermDescription(term.dataset.previewTerm, elements.cardTestText);
+        return;
+      }
       const styleCycle = event.target.closest("[data-card-style-cycle]");
       if (styleCycle) {
         event.stopPropagation();
