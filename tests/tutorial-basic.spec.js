@@ -54,11 +54,11 @@ const coachLayout = (page) => page.evaluate(() =>
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }));
 
-test("13編を合意した順番で表示し、基本編のみ開始できる", async ({ page }) => {
+test("13編を合意した順番で表示し、全編を開始できる", async ({ page }) => {
   await openList(page);
   await expect(page.locator("#tutorialChapterList .solo-mode-main")).toHaveText(chapterNames.map((name, index) => `${index + 1}. ${name}`));
   await expect(page.locator('[data-tutorial-chapter="basic"]')).toBeEnabled();
-  await expect(page.locator("#tutorialChapterList button:disabled")).toHaveCount(12);
+  await expect(page.locator("#tutorialChapterList button:disabled")).toHaveCount(0);
   await expect(page.locator("#homeNavSoloButton")).toHaveAttribute("aria-current", "page");
   await page.locator("#tutorialBackHomeButton").click();
   await expect(page.locator("#soloMenuScreen")).toBeVisible();
