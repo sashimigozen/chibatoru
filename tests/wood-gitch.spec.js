@@ -2,188 +2,67 @@ const { test, expect } = require("@playwright/test");
 const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
-
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const rawRules = "このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。";
+const rawRules = "このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。";
 
 test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.startCardTest("wood_gitch");
-    api.state.screen = "battle";
     api.state.phase = "battle";
     api.state.currentSide = "player";
     api.state.players.player.board.teacher = null;
   });
 });
 
-test("木っち（ぎっち）の定義と表示本文を揃える", async ({ page }) => {
-  const definition = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const card = api.createCardFromBase("wood_gitch", "player");
-    return {
-      cost: card.cost,
-      attack: card.attack,
-      hp: card.hp,
-      noLecture: card.noLecture,
-      rules: api.cardRulesText(card)
-    };
-  });
-
-  expect(definition).toEqual({
-    cost: 3,
-    attack: 1,
-    hp: 1,
-    noLecture: true,
-    rules: [
-      "このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。",
-      "このカードは[講義]を持たない。"
-    ].join("\n")
-  });
-
-  const indexSource = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-  const rulesSource = fs.readFileSync(path.join(__dirname, "..", "card_rules.txt"), "utf8");
-  expect(indexSource).toContain(`wood_gitch: "${rawRules}"`);
-  expect(rulesSource).toContain(`wood_gitch: "${rawRules}"`);
+test("木っちの定義・表示・本文を揃える", async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const api = window.__chibattle, card = api.createCardFromBase("wood_gitch", "player");
+    return { cost: card.cost, attack: card.attack, hp: card.hp, noLecture: card.noLecture, text: api.cardRulesText(card) };
+  })).toEqual({ cost: 3, attack: 1, hp: 1, noLecture: true,
+    text: "このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。\nこのカードは[講義]を持たない。" });
+  for (const file of ["index.html", "card_rules.txt"]) {
+    expect(fs.readFileSync(path.join(__dirname, "..", file), "utf8")).toContain('wood_gitch: "' + rawRules + '"');
+  }
 });
 
-test("出席後に手札1枚を選び、同じ位置で木っちへ変化させる", async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const player = api.state.players.player;
-    const source = player.hand.find((card) => card.baseId === "wood_gitch");
-    const target = player.hand.find((card) => card.instanceId !== source.instanceId);
-    const targetId = target.instanceId;
-    const trashBefore = player.trash.length;
-    const placed = api.placeCardFromHand("player", source.instanceId, "teacher", "player", null, false);
-    const pending = {
-      mode: api.state.pendingCardChoice?.mode || null,
-      cards: api.state.pendingCardChoice?.cards.map((card) => card.instanceId) || []
-    };
-    api.state.pendingCardChoice.selectedIds = [targetId];
-    api.confirmCardChoiceSelection();
-    return {
-      placed,
-      pending,
-      hand: player.hand.map((card) => ({ baseId: card.baseId, instanceId: card.instanceId })),
-      trashDelta: player.trash.length - trashBefore
-    };
-  });
-
-  expect(result).toEqual({
-    placed: true,
-    pending: { mode: "wood_gitch_transform", cards: [result.hand[0].instanceId] },
-    hand: [{ baseId: "wood_gitch", instanceId: result.hand[0].instanceId }],
-    trashDelta: 0
-  });
-});
-
-test("出席後に手札がなければ生成せず効果を終える", async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const player = api.state.players.player;
-    const source = player.hand.find((card) => card.baseId === "wood_gitch");
-    player.hand = [source];
-    const placed = api.placeCardFromHand("player", source.instanceId, "teacher", "player", null, false);
-    return {
-      placed,
-      handCount: player.hand.length,
-      pendingChoice: api.state.pendingCardChoice,
-      log: api.state.log.join("\n")
-    };
-  });
-
-  expect(result.placed).toBe(true);
-  expect(result.handCount).toBe(0);
-  expect(result.pendingChoice).toBeNull();
-  expect(result.log).toContain("変化させる手札がありません");
-});
-
-test("CPUは価値の低い手札を木っちへ変化させる", async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const opponent = api.state.players.opponent;
-    api.state.currentSide = "opponent";
-    opponent.board.teacher = null;
-    const source = api.createCardFromBase("wood_gitch", "opponent");
-    const weak = api.createCardFromBase("general_student", "opponent");
-    const strong = api.createCardFromBase("green_curry", "opponent");
-    opponent.hand = [source, weak, strong];
-    const weakId = weak.instanceId;
-    const placed = api.placeCardFromHand("opponent", source.instanceId, "teacher", "opponent", null, false);
-    return {
-      placed,
-      hand: opponent.hand.map((card) => ({ baseId: card.baseId, instanceId: card.instanceId })),
-      weakId
-    };
-  });
-
-  expect(result.placed).toBe(true);
-  expect(result.hand).toContainEqual({ baseId: "wood_gitch", instanceId: result.weakId });
-  expect(result.hand.some((card) => card.baseId === "green_curry")).toBe(true);
-});
-
-test("オンラインで使用者が事前に選んだ手札を変化させる", async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const opponent = api.state.players.opponent;
-    api.state.currentSide = "opponent";
-    opponent.board.teacher = null;
-    const source = api.createCardFromBase("wood_gitch", "opponent");
-    const target = api.createCardFromBase("general_student", "opponent");
-    opponent.hand = [source, target];
-    const targetId = target.instanceId;
-    const placed = api.placeCardFromHand("opponent", source.instanceId, "teacher", "opponent", null, false, {
-      woodGitchTransformId: targetId
+for (const side of ["player", "opponent"]) {
+  for (const empty of [false, true]) {
+    test(side + "の手札出席は他の手札を変えず1枚生成する（空手札=" + empty + "）", async ({ page }) => {
+      expect(await page.evaluate(({ side, empty }) => {
+        const api = window.__chibattle, own = api.state.players[side];
+        api.state.currentSide = side;
+        own.will = 10;
+        own.board.teacher = null;
+        const source = api.createCardFromBase("wood_gitch", side), other = api.createCardFromBase("general_student", side);
+        own.hand = empty ? [source] : [source, other];
+        const placed = api.placeCardFromHand(side, source.instanceId, "teacher", side, null, false);
+        return { placed, hand: own.hand.map(c => c.baseId), otherUnchanged: empty || own.hand[0] === other,
+          fresh: own.hand.at(-1).instanceId !== source.instanceId, pending: api.state.pendingCardChoice };
+      }, { side, empty })).toEqual({ placed: true, hand: empty ? ["wood_gitch"] : ["general_student", "wood_gitch"],
+        otherUnchanged: true, fresh: true, pending: null });
     });
-    return {
-      placed,
-      hand: opponent.hand.map((card) => ({ baseId: card.baseId, instanceId: card.instanceId }))
-    };
-  });
+  }
+}
 
-  expect(result).toEqual({
-    placed: true,
-    hand: [{ baseId: "wood_gitch", instanceId: result.hand[0].instanceId }]
-  });
+test("効果による出席では手札生成しない", async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const api = window.__chibattle, own = api.state.players.player;
+    own.hand = [];
+    const card = api.makeBoardCard(api.createCardFromBase("wood_gitch", "player"));
+    const placed = api.attendCard("player", card, "teacher", null, { attendanceSource: "generated" });
+    return { placed: Boolean(placed), hand: own.hand.length, lecture: card.noLecture };
+  })).toEqual({ placed: true, hand: 0, lecture: true });
 });
 
-test("オンラインのゲストは出席送信前に変化対象を選ぶ", async ({ page }) => {
-  const result = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const player = api.state.players.player;
-    const source = player.hand.find((card) => card.baseId === "wood_gitch");
-    const target = player.hand.find((card) => card.instanceId !== source.instanceId);
-    const sent = [];
-    api.state.online.role = "guest";
-    api.state.online.connected = true;
-    api.state.online.started = true;
-    api.state.online.isApplyingRemote = false;
-    api.state.online.clientId = "guest-test";
-    api.state.online.conn = {
-      open: true,
-      send(message) {
-        sent.push(message);
-      }
-    };
-
+test("オンラインゲストは変化先選択を出さず通常の出席を送信する", async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const api = window.__chibattle, sent = [];
+    const source = api.state.players.player.hand.find(c => c.baseId === "wood_gitch");
+    Object.assign(api.state.online, { connected: true, started: true, role: "guest", clientId: "guest-test", isApplyingRemote: false,
+      conn: { open: true, send: value => sent.push(value) } });
     api.playCard(source.instanceId, "teacher", "player", null);
-    const choice = {
-      mode: api.state.pendingCardChoice?.mode || null,
-      cards: api.state.pendingCardChoice?.cards.map((card) => card.instanceId) || []
-    };
-    api.state.pendingCardChoice.selectedIds = [target.instanceId];
-    api.confirmCardChoiceSelection();
-    const command = sent.find((message) => message.command?.type === "playCard")?.command || null;
-    return { choice, targetId: target.instanceId, payload: command?.payload || null };
-  });
-
-  expect(result.choice).toEqual({ mode: "wood_gitch_online_play", cards: [result.targetId] });
-  expect(result.payload).toMatchObject({
-    zone: "teacher",
-    owner: "player",
-    index: null,
-    woodGitchTransformId: result.targetId
-  });
+    return { pending: api.state.pendingCardChoice, commands: sent.filter(m => m.command).map(m => m.command.type) };
+  })).toEqual({ pending: null, commands: ["playCard"] });
 });

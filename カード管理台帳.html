@@ -733,6 +733,30 @@
       effect: "相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。",
       combo: "ガン詰め講師", notes: "共通カード。相手の出席者がいない場合、通常は使用できない。"
     });
+    upsertCard({
+      id: "wood_gitch", name: "木っち（ぎっち）", type: "teacher", cost: 3, attack: 1, hp: 1,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
+      combo: "木っち（ぎっち） / 技議っち / 偽魏義ッ血 / 怨念", notes: "食堂。"
+    });
+    upsertCard({
+      id: "gitch", name: "技議っち", type: "teacher", cost: 0, attack: 1, hp: 4,
+      availability: "deck", placement: "木っち（ぎっち）の上に進化",
+      effect: "進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。",
+      combo: "木っち（ぎっち） / 技議っち / 偽魏義ッ血 / 怨念", notes: "食堂。"
+    });
+    upsertCard({
+      id: "gigi_blood", name: "偽魏義ッ血", type: "vampire", cost: 8, attack: 2, hp: 4,
+      availability: "deck", placement: "技議っちの上に進化",
+      effect: "進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。",
+      combo: "木っち（ぎっち） / 技議っち / 偽魏義ッ血 / 怨念", notes: "食堂。"
+    });
+    upsertCard({
+      id: "grudge", name: "怨念", type: "item", cost: 1, attack: null, hp: null,
+      availability: "token", placement: "対象を選ばず使用",
+      effect: "相手本体に2ダメージを与える。",
+      combo: "木っち（ぎっち） / 技議っち / 偽魏義ッ血 / 怨念", notes: "食堂。デッキには投入しない。"
+    });
     function normalizeLectureRoomText(value) {
       return String(value || "")
         .replaceAll("お互いの場", "お互いの講義室")
