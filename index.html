@@ -17759,7 +17759,7 @@
       <div class="screen-head">
         <div>
           <h1>チュートリアル</h1>
-          <p class="subtitle">好きな編を選んでください。基本編をプレイできます。他の編は準備中です。</p>
+          <p class="subtitle">好きな編を選んでください。説明を読んで操作し、最後は自由にプレイして勝利を目指しましょう。</p>
         </div>
         <button class="button secondary" id="tutorialBackHomeButton" type="button">ソロに戻る</button>
       </div>
@@ -19497,15 +19497,19 @@
       {
         version: "ver.0.23.12",
         date: "2026年10月4日",
-        summary: "ソロにチュートリアル一覧を追加し、画面の見方と基本操作を学べる基本編を作成しました。",
+        summary: "ソロに13編のチュートリアルを追加しました。専用の手札と盤面で、画面の見方・基本操作・各能力を体験できます。",
         changes: [
           {
             title: "チュートリアル一覧",
-            after: "基本編から負荷編まで13編を表示します。進化編と負荷編の間に融合編を置き、12番を融合編、13番を負荷編にしました。今回は基本編のみプレイでき、他の編は準備中です。"
+            after: "基本編、配置編、講義編、陽気編、注目編、遅刻編、眠気編、余裕編、装備編、吸血編、進化編、融合編、負荷編の13編から、好きな編を自由に選べます。"
           },
           {
             title: "基本編",
             after: "手札・デッキ・気力・戦意・講義室・環境マス・遅刻ゾーン・校外エリア・継続効果・ターン表示・カード確認・ログ・MENUの位置と見方を、各エリアを光らせながら説明します。説明パネルと「次へ」は右上に固定し、長い説明文だけスクロールできます。説明は画面の見方と操作に絞り、練習用の気力や戦意などの補足を削除しました。練習専用の手札と盤面で5つのカードタイプを紹介し、出席・ターン終了・攻撃と反撃を説明、操作、結果確認の順に体験できます。最後は「ここからは自由にプレイして、勝利を目指そう！」と案内し、結果画面の「戻る」で一覧へ戻れます。"
+          },
+          {
+            title: "各能力のチュートリアル",
+            after: "残りの12編にも専用の手札と盤面を用意しました。通常の対戦と同じ処理で「説明 → 操作 → 結果確認」を行い、超陽気・超注目・特殊進化・高負荷も学べます。説明パネルと「次へ」は基本編と同じ位置に固定し、「一つ戻る」で操作前へ戻れます。最後は自由にプレイして勝利を目指し、結果画面の「戻る」で一覧へ戻れます。"
           }
         ]
       },
@@ -21391,6 +21395,110 @@
       }
     ];
 
+    // 操作は通常対戦の処理を使う。編ごとの差分は説明・操作対象・初期配置だけにする。
+    function tutorialPlayStep(baseId, title, body, zone = "seat", index = 4) {
+      return { id: title, title, body, action: "playCard", allowedBaseId: baseId,
+        target: { owner: zone === "environment" ? null : "player", zone, index: zone === "seat" ? index : null },
+        focus: `#playerHand [data-base-id='${baseId}']` };
+    }
+
+    function tutorialAttackStep(baseId, targetBaseId, title, body) {
+      return { id: title, title, body, action: "attackCard", attackerBaseId: baseId, targetBaseId,
+        focus: `.player-board [data-base-id='${baseId}']` };
+    }
+
+    function tutorialItemStep(baseId, owner, index, title, body) {
+      return { id: title, title, body, action: "itemCard", allowedBaseId: baseId,
+        target: { owner, zone: "seat", index }, focus: `#playerHand [data-base-id='${baseId}']` };
+    }
+
+    function abilityTutorialSteps(title, body, steps) {
+      return [
+        { id: "intro", title: `${title}：練習を始めよう`, body, focus: "#playerBoardPanel" },
+        ...steps,
+        { id: "freeBattle", title: "自由にプレイしよう",
+          body: "ここからは自由にプレイして、勝利を目指そう！\n勝利後は「戻る」で一覧に戻れます。", focus: "#opponentLifeTarget" }
+      ];
+    }
+
+    const TUTORIAL_ABILITY_STEPS = {
+      placement: abilityTutorialSteps("配置編", "カードごとに出席できる場所が決まっています。\n手札のカードを選び、光っているマスへ出席させましょう。", [
+        tutorialPlayStep("diligent_student", "指定された行に出席しよう", "「熱心な学生」は1行目にだけ出席できます。\n手札のカードを押し、自分の1行2列を押してください。", "seat", 1),
+        { id: "seatResult", title: "席マスの配置", body: "学生が席マスへ出席しました。\n行の指定や、複数の席マスを使うカードは、カード本文で確認できます。", focus: "#playerSeatGrid" },
+        tutorialPlayStep("general_teacher", "教卓マスに出席しよう", "一般教師を選び、自分の教卓マスを押してください。", "teacher"),
+        { id: "teacherResult", title: "教卓マスの配置", body: "教師が教卓マスへ出席しました。\n席マスにも出席できる教師や、教卓マスにも出席できる学生もいます。出席先はカード本文を確認しましょう。", focus: "#playerTeacherSlot" },
+        tutorialPlayStep("cafeteria", "環境マスに出席しよう", "食堂を選び、環境マスを押してください。", "environment"),
+        { id: "environmentResult", title: "共通の環境マス", body: "環境はお互いに影響します。\n別の環境を出席させると、前の環境は校外エリアへ送られます。", focus: "#environmentSlot" }
+      ]),
+      lecture: abilityTutorialSteps("講義編", "教卓マスの教師は、攻撃の代わりに講義を選べます。\n講義は相手の学生すべてに1ダメージを与えます。", [
+        { id: "lecture", title: "講義を選ぼう", body: "教卓マスの一般教師を押し、「講義」を選んでください。", action: "lecture", attackerBaseId: "general_teacher", focus: "#playerTeacherSlot" },
+        { id: "lectureResult", title: "講義の結果", body: "相手の学生すべてに1ダメージを与えました。\n講義をした教師は行動済みになります。教師やヴァンパイアは通常の講義の対象ではありません。", focus: "#opponentSeatGrid" }
+      ]),
+      cheerful: abilityTutorialSteps("陽気編", "[陽気]は出席したターンでも出席者を攻撃できます。\n[超陽気]なら、相手本体も攻撃できます。", [
+        tutorialPlayStep("zombie", "陽気を持つカードを出席させよう", "ゾンビを選び、光っている席マスに出席させてください。"),
+        tutorialAttackStep("zombie", "aggro_student", "出席したターンに攻撃しよう", "ゾンビを押し、相手のアグロ大学生を押してください。"),
+        { id: "cheerfulResult", title: "陽気の結果", body: "出席したターンに出席者を攻撃できました。\n[陽気]だけでは、出席したターンに相手本体は攻撃できません。", focus: "#opponentTrashButton" },
+        tutorialPlayStep("aggro_princess", "超陽気を持つカードを出席させよう", "アグロプリンセスを選び、光っている席マスに出席させてください。", "seat", 5),
+        { id: "superCheerfulAttack", title: "出席したターンに本体を攻撃しよう", body: "アグロプリンセスを押し、相手の気力を押してください。", action: "attackLife", attackerBaseId: "aggro_princess", targetSide: "opponent", focus: "#playerSeatGrid [data-base-id='aggro_princess']" },
+        { id: "superCheerfulResult", title: "超陽気の結果", body: "出席したターンに相手本体を攻撃できました。\n先攻1ターン目でも、[超陽気]なら本体を攻撃できます。", focus: "#opponentLifeTarget" }
+      ]),
+      attention: abilityTutorialSteps("注目編", "相手に[注目]を持つ出席者がいるなら、攻撃はその出席者へ向ける必要があります。\n[超注目]は、攻撃だけでなく指名する効果の対象も制限します。", [
+        tutorialItemStep("ruler", "opponent", 1, "超注目を指名しよう", "定規を相手の超あえー学生までドラッグして、離してください。\n[超注目]がいる間は、他の出席者を指名できません。"),
+        { id: "superAttentionResult", title: "超注目の結果", body: "定規で超あえー学生に1ダメージを与えました。\n[超注目]の制限は、攻撃にも指名する効果にも働きます。", focus: "#opponentSeatGrid [data-base-id='super_ae_student']" },
+        tutorialItemStep("ruler", "opponent", 1, "超注目を解除しよう", "もう1枚の定規を超あえー学生までドラッグしてください。"),
+        { id: "attentionOnly", title: "注目との違い", body: "超あえー学生が破壊され、[超注目]の制限がなくなりました。\n[注目]は攻撃だけを制限し、指名する効果は制限しません。", focus: "#opponentSeatGrid [data-base-id='ae_student']" },
+        tutorialAttackStep("strong_student", "ae_student", "注目を攻撃しよう", "強靭な学生を押し、相手のあえー学生を押してください。"),
+        { id: "attentionResult", title: "注目の結果", body: "あえー学生を破壊しました。\n[注目]・[超注目]を持つ相手がいなくなれば、本体も攻撃できます。", focus: "#opponentLifeTarget" }
+      ]),
+      late: abilityTutorialSteps("遅刻編", "[遅刻]を持つカードは、出席先を選ぶと遅刻ゾーンで待機します。\n自分のターン開始を迎えるたびに残りターンが減り、0になると出席します。", [
+        tutorialPlayStep("hurried_student", "遅刻カードの出席先を選ぼう", "急いできた学生を選び、光っている席マスを押してください。"),
+        { id: "lateReserved", title: "遅刻ゾーンで待機", body: "カードは遅刻ゾーンへ移動しました。\n出席先の席マスは予約され、そのマスへ他のカードを出席させることはできません。", focus: "#playerLateZone" },
+        { id: "lateWait", title: "次のターンを迎えよう", body: "「ターン終了」を押してください。", action: "endTurn", focus: "#endTurnButton" },
+        { id: "turnStartResult", title: "遅刻から出席", body: "残りターンが0になり、予約した席マスへ出席しました。\n急いできた学生は[陽気]を持つため、出席したターンに出席者を攻撃できます。", focus: "#playerSeatGrid [data-base-id='hurried_student']" },
+        tutorialAttackStep("hurried_student", "aggro_student", "遅刻から出席したカードで攻撃しよう", "急いできた学生を押し、相手のアグロ大学生を押してください。"),
+        { id: "lateResult", title: "遅刻と陽気", body: "遅刻から出席したカードで攻撃できました。\n[陽気]がなければ、出席したターンは通常どおり攻撃できません。", focus: "#playerSeatGrid" }
+      ]),
+      sleepy: abilityTutorialSteps("眠気編", "[眠気]を持つ出席者は、攻撃するたびに50%の確率で攻撃に失敗します。\n成功しても失敗しても、その攻撃の行動回数を使います。", [
+        tutorialAttackStep("strong_student", "general_student", "眠気を持つ出席者で攻撃しよう", "[眠気]を持つ強靭な学生を押し、相手の一般学生を押してください。"),
+        { id: "sleepyResult", title: "眠気の結果", body: "攻撃に失敗すると「ミス」と表示され、ダメージも反撃も発生しません。\n成功した場合は通常どおり攻撃と反撃を行います。どちらの場合も行動済みになります。", focus: "#playerSeatGrid [data-base-id='strong_student']" }
+      ]),
+      composure: abilityTutorialSteps("余裕編", "[余裕]を持つ出席者は、自分のターン終了時に体力を1回復します。\n最大体力を超えては回復しません。", [
+        { id: "wounded", title: "傷ついた出席者を確認しよう", body: "U太の体力表示を確認してください。\nカードを押すと、現在の効果も確認できます。", focus: "#playerSeatGrid [data-base-id='yuta']" },
+        { id: "heal", title: "ターンを終了して回復しよう", body: "「ターン終了」を押してください。", action: "endTurn", focus: "#endTurnButton" },
+        { id: "turnStartResult", title: "余裕の結果", body: "[余裕]により、U太の体力が1回復しました。\n回復するのは出席者の体力で、自分本体の気力ではありません。", focus: "#playerSeatGrid [data-base-id='yuta']" }
+      ]),
+      equipment: abilityTutorialSteps("装備編", "装備カードは、出席者につけて効果を与えます。\n装備できる対象・枚数・効果は、それぞれのカード本文を確認しましょう。", [
+        tutorialItemStep("earphones", "player", 4, "イヤホンを装備しよう", "手札のイヤホンをU太までドラッグして、離してください。"),
+        { id: "equipmentResult", title: "装備の結果", body: "U太に装備の印がつきました。\nイヤホンの装備者は講義の効果を受けません。U太自身の効果により、装備がついている間は[陽気]も持ちます。", focus: "#playerSeatGrid [data-base-id='yuta']" },
+        tutorialAttackStep("yuta", "aggro_student", "装備したU太で攻撃しよう", "U太を押し、相手のアグロ大学生を押してください。\n装備で得た[陽気]により、出席したターンでも出席者を攻撃できます。"),
+        { id: "equipmentAttackResult", title: "装備とカード自身の効果", body: "装備したU太で攻撃できました。\n装備しただけで全員が[陽気]を得るわけではありません。カード自身の効果も確認しましょう。", focus: "#playerSeatGrid [data-base-id='yuta']" }
+      ]),
+      drain: abilityTutorialSteps("吸血編", "ヴァンパイアは攻撃で与えたダメージの分だけ、そのヴァンパイア自身の体力を回復します。\n最大体力を超えては回復しません。", [
+        tutorialAttackStep("apprentice_vampire", "super_ae_student", "ヴァンパイアで攻撃しよう", "傷ついた見習いヴァンパイアを押し、相手の超あえー学生を押してください。"),
+        { id: "drainResult", title: "吸血の結果", body: "攻撃のダメージに応じて、ヴァンパイア自身の体力が回復しました。\n相手本体を攻撃した場合も吸血が働きます。本体の気力を回復する能力ではありません。", focus: "#playerSeatGrid [data-base-id='apprentice_vampire']" }
+      ]),
+      evolution: abilityTutorialSteps("進化編", "[進化]のカードは、対応する進化前の出席者に重ねて使います。\n受けていたダメージや行動済みの状態は引き継ぎます。", [
+        tutorialPlayStep("dark_yuta", "U太を進化させよう", "手札の裏U太を選び、U太がいる席マスを押してください。"),
+        { id: "evolutionResult", title: "進化の結果", body: "U太が裏U太へ進化しました。\n通常の進化は、出席したターンには行えません。必要な戦意や進化元はカード本文を確認しましょう。", focus: "#playerSeatGrid [data-base-id='dark_yuta']" },
+        tutorialPlayStep("single_cell", "特殊進化の条件を満たそう", "単細胞生物を選び、光っている空き席マスへ出席させてください。", "seat", 1),
+        { id: "specialEvolutionResult", title: "特殊進化の結果", body: "先に出席していた単細胞生物がミジンコへ特殊進化し、もう1人は破壊されました。\n特殊進化は効果の条件を満たすと戦意を払わずに行われ、ダメージと行動済みの状態を引き継ぎます。", focus: "#playerSeatGrid [data-base-id='midge']" },
+        { id: "specialEvolutionChain", title: "特殊進化のつながり", body: "ミジンコ2人なら生物へ、生物・ミジンコ・単細胞生物がそろうと完全変異体へ特殊進化します。\nトークンも[進化]のカードですが、デッキへ登録するカードではありません。", focus: "#playerSeatGrid [data-base-id='midge']" }
+      ]),
+      fusion: abilityTutorialSteps("融合編", "融合は、指定されたカードを組み合わせて別のカードを作る仕組みです。\n定規2枚を融合すると、ダブルダイヤモンドクロスが手札に加わります。", [
+        { id: "fusion", title: "定規を融合しよう", body: "手札の定規を押し、カード確認の「融合する」を押してください。\nもう1枚の定規を選び、確定してください。", action: "fusion", allowedBaseId: "ruler", focus: "#playerHand" },
+        { id: "fusionResult", title: "融合の結果", body: "定規2枚が校外エリアへ送られ、ダブルダイヤモンドクロスが手札に加わりました。\n融合そのものと、できたカードを使用することは別の操作です。", focus: "#playerHand [data-base-id='double_diamond']" },
+        tutorialItemStep("double_diamond", "opponent", 0, "融合したカードを使おう", "ダブルダイヤモンドクロスを相手の強靭な学生までドラッグしてください。"),
+        { id: "fusionUseResult", title: "融合カードの結果", body: "ダブルダイヤモンドクロスの効果が発動しました。\n融合の材料と完成するカードは、それぞれのカード本文を確認しましょう。", focus: "#opponentSeatGrid" }
+      ]),
+      load: abilityTutorialSteps("負荷編", "手札の[負荷]は紫色、[高負荷]は赤色で表示されます。\n同じカードに[負荷]をもう一度付与すると[高負荷]になります。", [
+        { id: "loadHand", title: "負荷と高負荷を確認しよう", body: "[負荷]は、自分のターン終了時に本体へ1ダメージ。\n[高負荷]は2ダメージを与え、戦意も+1されます。高負荷のカードは効果で校外エリアへ捨てられず、さらに負荷を付与することもできません。", focus: "#playerHand" },
+        tutorialPlayStep("white_student", "負荷を高負荷にしよう", "白い学生を選び、光っている席マスに出席させてください。\n相手の手札にある[負荷]を持つカードへ、さらに[負荷]を付与します。"),
+        { id: "highLoadResult", title: "高負荷への変化", body: "相手の手札の[負荷]が[高負荷]になりました。\n相手の手札は非公開ですが、次の相手ターン終了時のダメージで効果を確認できます。", focus: ".opponent-hand-zone" },
+        { id: "loadDamage", title: "負荷のダメージを確認しよう", body: "「ターン終了」を押してください。", action: "endTurn", focus: "#endTurnButton" },
+        { id: "turnStartResult", title: "負荷の結果", body: "手札の[負荷]・[高負荷]に応じて、本体の気力が減りました。\n使用できるカードは、手札から使うことで負荷のダメージを避けられます。", focus: "#playerLifeTarget" }
+      ])
+    };
+
     // 配列の順番が一覧の番号になる。追加時は安定したIDを持つ編を末尾に追加する。
     const TUTORIAL_CHAPTERS = [
       { id: "basic", title: "基本編", description: "画面・5つのタイプ・出席・攻撃と勝利", steps: TUTORIAL_STEPS },
@@ -21402,11 +21510,11 @@
       { id: "sleepy", title: "眠気編", description: "眠気と行動制限" },
       { id: "composure", title: "余裕編", description: "余裕の条件と働き" },
       { id: "equipment", title: "装備編", description: "装備の使い方" },
-      { id: "drain", title: "吸血編", description: "吸血と気力の回復" },
+      { id: "drain", title: "吸血編", description: "吸血と体力の回復" },
       { id: "evolution", title: "進化編", description: "進化・特殊進化" },
       { id: "fusion", title: "融合編", description: "融合の仕組み" },
       { id: "load", title: "負荷編", description: "負荷・高負荷" }
-    ];
+    ].map((chapter) => ({ ...chapter, steps: chapter.steps || TUTORIAL_ABILITY_STEPS[chapter.id] }));
 
     const elements = {
       appRoot: document.getElementById("appRoot"),
@@ -31440,6 +31548,7 @@
     function performTeacherLecture(side, ref, options = {}) {
       if (!ref || ref.owner !== side || state.currentSide !== side || !canTeacherChooseLecture(ref)) return false;
       const teacher = getBoardCardFromRef(ref);
+      if (side === "player") pushTutorialHistoryBeforeAction("lecture", { teacher });
       markCardAttackUsed(teacher);
       showSharedCenterAnnouncement("講義");
       const affected = resolveTeacherLectureEffect(side, teacher);
@@ -38161,6 +38270,7 @@
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
         showFloatingTextForCard(target, "ミス", "miss");
+        completeTutorialAction("attackCard", { attacker: resolvingAttacker, target: resolvingTarget });
         clearSelections();
         finishAttackResolution();
         render();
@@ -38300,6 +38410,7 @@
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
         showFloatingTextForLife(targetSide, "ミス", "miss");
+        completeTutorialAction("attackLife", { attacker: resolvingAttacker, targetSide });
         clearSelections();
         finishAttackResolution();
         render();
@@ -38553,6 +38664,7 @@
     }
 
     function castItemOnCard(side, item, targetOwner, targetZone, targetIndex, renderAfter) {
+      if (side === "player" && !tutorialAllowsItemCard(item, targetOwner, targetZone, targetIndex)) return false;
       if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
       const target = getBoardCard(targetOwner, targetZone, targetIndex);
       if (!target) return false;
@@ -38631,6 +38743,9 @@
         if (renderAfter) render();
         return false;
       }
+      if (side === "player" && state.players.player.will >= effectiveCardCost(item)) {
+        pushTutorialHistoryBeforeAction("itemCard", { item, owner: targetOwner, zone: targetZone, index: targetIndex });
+      }
       if (!payForItem(side, item)) return false;
       showCardPlayAnimation(item, "trash");
       if (item.baseId === "illness") {
@@ -38685,6 +38800,7 @@
         state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
         applyBoardAuras();
         addLog(`${SIDES[side]}は${item.name}を${target.name}に装備しました。`);
+        if (side === "player") completeTutorialAction("itemCard", { item, owner: targetOwner, zone: targetZone, index: targetIndex });
         clearSelections();
         if (renderAfter) render();
         return true;
@@ -38816,6 +38932,7 @@
       addLog(`${SIDES[side]}は${item.name}を使いました。`);
       cleanupDestroyedCards();
       applyBoardAuras();
+      if (side === "player") completeTutorialAction("itemCard", { item, owner: targetOwner, zone: targetZone, index: targetIndex });
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -40417,6 +40534,7 @@
 
     function fuseRulersForSide(side, renderAfter = true, sourceInstanceId = null, targetInstanceId = null) {
       if (side === "player" && isOnlineSpectator()) return false;
+      if (side === "player" && isTutorialActive() && currentTutorialStep()?.action !== "fusion") return false;
       const player = state.players[side];
       const rulers = player.hand.filter((card) => card.baseId === "ruler");
       const source = sourceInstanceId
@@ -40438,6 +40556,7 @@
         return true;
       }
       const materials = [source, target];
+      if (side === "player") pushTutorialHistoryBeforeAction("fusion");
       player.hand = player.hand.filter((card) => !materials.some((material) => material.instanceId === card.instanceId));
       moveToTrash(side, source);
       moveToTrash(side, target);
@@ -40454,6 +40573,7 @@
         }
       });
       addLog(`${SIDES[side]}は定規2枚を融合し、ダブルダイヤモンドクロスを生成しました。`);
+      if (side === "player") completeTutorialAction("fusion");
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -42697,6 +42817,8 @@
     function syncBattleLayout() {
       const shell = elements.battleScreen?.querySelector(".game-shell");
       if (!shell) return;
+      // 融合などの選択ウィンドウでフォーカスした後も、練習盤面の基準位置を保つ。
+      if (state.screen === "battle" && state.tutorial?.chapterId && !state.pendingCardChoice) shell.scrollLeft = 0;
       if (window.innerWidth <= 760) {
         shell.style.removeProperty("--battle-shell-scale");
         shell.style.removeProperty("--battle-shell-top");
@@ -43368,6 +43490,7 @@
       }
       const snapshot = history[history.length - 1];
       restoreTutorialSnapshot(snapshot, history.slice(0, -1));
+      clearSelections();
       const step = currentTutorialStep();
       state.message = step ? `チュートリアル：${step.title}` : "チュートリアルを一つ戻しました。";
       render();
@@ -43535,11 +43658,18 @@
         && targetSide === step.targetSide;
     }
 
+    function tutorialAllowsItemCard(item, owner, zone, index) {
+      if (!isTutorialActive()) return true;
+      const step = currentTutorialStep();
+      return step?.action === "itemCard" && item?.baseId === step.allowedBaseId
+        && tutorialRefMatches(step.target, owner, zone, index);
+    }
+
     function tutorialAllowsAttacker(owner, zone, index) {
       const step = currentTutorialStep();
       if (!step) return true;
       const card = getBoardCard(owner, zone, index);
-      return ["attackCard", "attackLife"].includes(step.action)
+      return ["attackCard", "attackLife", "lecture"].includes(step.action)
         && owner === "player"
         && card?.baseId === step.attackerBaseId;
     }
@@ -43587,6 +43717,12 @@
       if (action === "itemLife") {
         return payload.item?.baseId === step.allowedBaseId && payload.targetSide === step.targetSide;
       }
+      if (action === "itemCard") {
+        return payload.item?.baseId === step.allowedBaseId
+          && tutorialRefMatches(step.target, payload.owner, payload.zone, payload.index);
+      }
+      if (action === "lecture") return payload.teacher?.baseId === step.attackerBaseId;
+      if (action === "fusion") return true;
       if (action === "attackLife") {
         return payload.attacker?.baseId === step.attackerBaseId && payload.targetSide === step.targetSide;
       }
@@ -43620,7 +43756,8 @@
         state.players.player.maxWill = 10;
         state.players.player.will = 10;
         state.message = "ここからは自由にプレイして、勝利を目指そう！";
-        addLog("基本編：自由にプレイできます。");
+        const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === state.tutorial.chapterId);
+        addLog(`${chapter?.title || "チュートリアル"}：自由にプレイできます。`);
         showCenterAnnouncement("自由にプレイしよう！");
         render();
         return;
@@ -43702,6 +43839,7 @@
     }
 
     function canPlayerFuseRulers(sourceCard = null) {
+      if (isTutorialActive() && currentTutorialStep()?.action !== "fusion") return false;
       const canAct = state.phase === "battle"
         && state.currentSide === "player"
         && !state.gameOver
@@ -43872,6 +44010,7 @@
     }
 
     function canUseItemOnBoardTarget(item, owner, zone, index) {
+      if (!tutorialAllowsItemCard(item, owner, zone, index)) return false;
       const target = getBoardCard(owner, zone, index);
       if (!item || item.type !== "item" || !target) return false;
       if (isAibenNyoteiEffectImmune(target)) return false;
@@ -45841,6 +45980,8 @@
       button.classList.toggle("click-ready", itemReady || raptorReady);
       button.classList.toggle("tutorial-allowed-target", isTutorialActive() && (
         tutorialAllowsAttacker(owner, zone, index) || tutorialAllowsAttackTarget(owner, zone, index)
+        || (["itemCard", "playCard"].includes(currentTutorialStep()?.action)
+          && tutorialRefMatches(currentTutorialStep().target, owner, zone, index))
       ));
       attachCardDetailEvents(button, card);
       button.addEventListener("click", (event) => {
@@ -49164,6 +49305,48 @@
       return true;
     }
 
+    function setupAbilityTutorialChapter(chapterId) {
+      const setups = {
+        placement: { hand: ["diligent_student", "general_teacher", "cafeteria"] },
+        lecture: { board: [["player", "general_teacher", "teacher", null], ["opponent", "aggro_student", "seat", 0], ["opponent", "general_student", "seat", 1]] },
+        cheerful: { hand: ["zombie", "aggro_princess"], opponentLife: 3, board: [["opponent", "aggro_student", "seat", 0]] },
+        attention: { hand: ["ruler", "ruler"], board: [["player", "strong_student", "seat", 4], ["opponent", "ae_student", "seat", 0], ["opponent", "super_ae_student", "seat", 1]] },
+        late: { hand: ["hurried_student"], board: [["opponent", "aggro_student", "seat", 0]] },
+        sleepy: { board: [["player", "strong_student", "seat", 4, { keyword: "眠気" }], ["opponent", "general_student", "seat", 0]] },
+        composure: { board: [["player", "yuta", "seat", 4, { damage: 2 }]] },
+        equipment: { hand: ["earphones"], board: [["player", "yuta", "seat", 4, { justAttended: true }], ["opponent", "aggro_student", "seat", 0]] },
+        drain: { board: [["player", "apprentice_vampire", "seat", 4, { damage: 1 }], ["opponent", "super_ae_student", "seat", 0]] },
+        evolution: { hand: ["dark_yuta", "single_cell"], board: [["player", "yuta", "seat", 4, { damage: 1 }], ["player", "single_cell", "seat", 0]] },
+        fusion: { hand: ["ruler", "ruler"], board: [["opponent", "strong_student", "seat", 0]] },
+        load: { hand: ["white_student", "ruler", "cafeteria"], opponentLife: 4 }
+      };
+      const setup = setups[chapterId];
+      if (!setup) return;
+      const player = state.players.player;
+      const opponent = state.players.opponent;
+      player.maxWill = player.will = 10;
+      player.life = setup.playerLife ?? 20;
+      opponent.life = setup.opponentLife ?? 2;
+      player.hand = (setup.hand || ["general_student", "ruler"]).map((baseId) => createCardFromBase(baseId, "player"));
+      // 待機中の相手は通常のカードテストと同じくターンを返す。
+      // 自由プレイ時にも、行動できる一般学生を残して簡単な勝利を狙えるようにする。
+      opponent.board.seats = Array(9).fill(null);
+      (setup.board || []).forEach(([owner, baseId, zone, index, options = {}]) => {
+        const card = makeBoardCard(createCardFromBase(baseId, owner));
+        card.playedOnTurn = options.justAttended ? state.actionTurn : 0;
+        if (options.damage) card.currentHp -= options.damage;
+        if (options.keyword) addKeyword(card, options.keyword);
+        setBoardCard(owner, zone, index, card);
+      });
+      if (chapterId === "load") {
+        addHandLoad(player.hand[1]);
+        addHandLoad(player.hand[2]);
+        addHandLoad(player.hand[2]);
+        opponent.hand = [createCardFromBase("ruler", "opponent")];
+        addHandLoad(opponent.hand[0]);
+      }
+    }
+
     function startTutorialBattle(chapterId = "basic") {
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === chapterId);
       if (!chapter?.steps) return;
@@ -49261,6 +49444,7 @@
       const spareStudent = makeBoardCard(createCardFromBase("general_student", "player"));
       spareStudent.playedOnTurn = 0;
       player.board.seats[8] = spareStudent;
+      if (chapterId !== "basic") setupAbilityTutorialChapter(chapterId);
       analyticsStartGame();
       analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       applyBoardAuras();
@@ -49302,7 +49486,8 @@
       if (state.screen !== "battle" || !elements.turnOverlay) return;
       elements.turnOverlay.classList.remove("bingo-announcement");
       elements.turnOverlay.classList.add("tutorial-title");
-      elements.turnOverlay.textContent = "チュートリアル 基本編";
+      const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === state.tutorial.chapterId);
+      elements.turnOverlay.textContent = `チュートリアル ${chapter?.title || ""}`;
       elements.turnOverlay.classList.remove("show");
       void elements.turnOverlay.offsetWidth;
       elements.turnOverlay.classList.add("show");
