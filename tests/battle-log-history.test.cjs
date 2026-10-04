@@ -30,17 +30,21 @@ test("対戦ログを40件で切らず、試合開始時の記録まで保持す
   assert.equal(context.state.log[0], "ログ60");
 });
 
-test("負荷・高負荷のターン終了時ダメージは処理するがカード名を対戦ログへ残さない", () => {
+test("負荷・高負荷のダメージと対象は対戦ログへ残し、非公開のカード名は残さない", () => {
   const dealt = [];
   const logs = [];
   const context = {
     state: {
       players: {
-        player: { hand: [{ name: "負荷カード", handLoadLevel: 1 }, { name: "高負荷カード", handLoadLevel: 2 }, { name: "通常カード", handLoadLevel: 0 }] },
-        opponent: { hand: [{ name: "相手の負荷カード", handLoadLevel: 1 }, { name: "相手の高負荷カード", handLoadLevel: 2 }] }
+        player: { life: 20, hand: [{ name: "負荷カード", handLoadLevel: 1 }, { name: "高負荷カード", handLoadLevel: 2 }, { name: "通常カード", handLoadLevel: 0 }] },
+        opponent: { life: 20, hand: [{ name: "相手の負荷カード", handLoadLevel: 1 }, { name: "相手の高負荷カード", handLoadLevel: 2 }] }
       }
     },
-    damagePlayer: (side, damage) => dealt.push({ side, damage }),
+    SIDES: { player: "あなた", opponent: "相手" },
+    damagePlayer: (side, damage) => {
+      dealt.push({ side, damage });
+      context.state.players[side].life -= damage;
+    },
     addLog: (message) => logs.push(message)
   };
   vm.createContext(context);
@@ -55,7 +59,18 @@ test("負荷・高負荷のターン終了時ダメージは処理するがカ�
     { side: "opponent", damage: 1 },
     { side: "opponent", damage: 2 }
   ]);
-  assert.deepEqual(logs, []);
+  assert.deepEqual(logs, [
+    "[負荷]：あなた本体に1ダメージ。",
+    "[高負荷]：あなた本体に2ダメージ。",
+    "[負荷]：相手本体に1ダメージ。",
+    "[高負荷]：相手本体に2ダメージ。"
+  ]);
+  assert.ok(logs.every((message) => !message.includes("カード")));
+  // ダメージ無効化時は、受けなかったダメージを受けたと記録しない。
+  logs.length = 0;
+  context.damagePlayer = () => {};
+  context.resolveHandLoadEndTurn("player");
+  assert.deepEqual(logs, ["[負荷]：あなた本体に0ダメージ。", "[高負荷]：あなた本体に0ダメージ。"]);
 });
 
 test("過去ログを読んでいる間は位置を保ち、末尾では最新ログを追従する", () => {
