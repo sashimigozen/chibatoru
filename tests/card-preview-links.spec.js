@@ -4,6 +4,65 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
+test("デッキ編成のカード詳細から能力説明を確認でき、関連カード・テスト開始も使える", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto(gameUrl);
+  await page.locator("#homeNavDeckButton").click();
+  await page.locator("#deckLibraryGrid .new-deck").click();
+  const countsBefore = await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.counts));
+  const cases = [
+    ["absolute_woman", "陽気"],
+    ["aggro_princess", "超陽気"],
+    ["ae_student", "注目"],
+    ["super_ae_student", "超注目"],
+    ["president", "眠気"],
+    ["yuta", "余裕"],
+    ["hurried_student", "遅刻"],
+    ["oni_shima_ai", "進化"],
+    ["single_cell", "特殊進化"],
+    ["white_student", "負荷"],
+    ["earphones", "装備"]
+  ];
+  const modal = page.locator("#cardTestModal");
+  const description = modal.locator("[data-preview-term-description]");
+  for (const [baseId, term] of cases) {
+    await page.locator(`[data-card-test="${baseId}"]`).click();
+    await expect(modal).toBeVisible();
+    await expect(description).toBeHidden();
+    const link = modal.locator(`[data-preview-term="${term}"]`).first();
+    await link.click();
+    const expected = await page.evaluate((name) => window.__chibattle.BATTLE_CARD_TERM_DESCRIPTIONS[name], term);
+    await expect(description).toHaveText(`［${term}］ ${expected}`);
+    await expect(modal).toBeVisible();
+    expect(await page.evaluate(() => window.__chibattle.state.screen)).toBe("deck");
+    expect(await page.evaluate(() => window.__chibattle.state.pendingTestCardId)).toBe(baseId);
+    if (baseId === "yuta") {
+      await modal.locator('[data-preview-term="陽気"]').first().focus();
+      await page.keyboard.press("Enter");
+      await expect(description).toContainText("相手本体は攻撃できない");
+      await expect(description).not.toContainText("体力を1回復");
+      await page.screenshot({ path: test.info().outputPath("deck-ability-description.png") });
+    }
+    await page.locator("#cardTestCancelButton").click();
+    await expect(modal).toBeHidden();
+  }
+  expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.counts))).toBe(countsBefore);
+  await page.locator('[data-card-test="padlock"]').click();
+  await modal.locator('[data-related-card="key"]').click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("鍵");
+  await expect(description).toBeHidden();
+  await page.locator("#cardTestCancelButton").click();
+  await page.locator('[data-card-test="general_student"]').click();
+  await expect(modal.locator("[data-preview-term]")).toHaveCount(0);
+  await expect(description).toBeHidden();
+  await page.locator("#cardTestStartButton").click();
+  await expect(modal).toBeHidden();
+  expect(await page.evaluate(() => window.__chibattle.state.testCardBaseId)).toBe("general_student");
+  expect(await page.evaluate(() => window.__chibattle.state.screen)).toBe("battle");
+  expect(errors).toEqual([]);
+});
+
 test("カード確認の効果文でカード名・能力・タイプを直接確認できる", async ({ page }) => {
   await page.goto(gameUrl);
 
