@@ -54,6 +54,25 @@ const coachLayout = (page) => page.evaluate(() =>
     return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
   }));
 
+test("ソロ画面のチュートリアルは最後に表示し、一覧を開ける", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeNavSoloButton").click();
+  await expect(page.locator("#soloMenuScreen .solo-mode-main")).toHaveText(["AIバトル", "魔の1号館", "トレーニング", "チュートリアル"]);
+  await expect(page.locator("#soloMenuScreen .solo-mode-button").last()).toHaveAttribute("id", "soloTutorialButton");
+  await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
+  const positions = await page.locator("#soloMenuScreen .solo-mode-button").evaluateAll((buttons) => buttons.map((button) => {
+    const rect = button.getBoundingClientRect();
+    return { x: rect.x, y: rect.y };
+  }));
+  for (const position of positions.slice(0, -1)) {
+    const last = positions.at(-1);
+    expect(last.y > position.y || (last.y === position.y && last.x > position.x)).toBe(true);
+  }
+  await page.screenshot({ path: test.info().outputPath("solo-menu-order.png") });
+  await page.locator("#soloTutorialButton").click();
+  await expect(page.locator("#tutorialScreen")).toBeVisible();
+});
+
 test("13編を合意した順番で表示し、全編を開始できる", async ({ page }) => {
   await openList(page);
   await expect(page.locator("#tutorialChapterList .solo-mode-main")).toHaveText(chapterNames.map((name, index) => `${index + 1}. ${name}`));
