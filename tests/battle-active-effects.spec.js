@@ -54,6 +54,7 @@ test("自分と相手の継続効果を分けて表示し、詳細と残り回�
   await expect(page.locator("#battleDrawerInspector")).toContainText("残り2回");
   await expect(page.locator("#battleDrawerInspector")).toContainText("インターン");
 
+  await page.locator("#battleLogCloseButton").click();
   await opponentEffects.click();
   await expect(page.locator("#battleDrawerTitle")).toHaveText("相手の継続効果");
   await expect(page.locator("#battleDrawerInspector")).toContainText("煩わしいなぁ");
@@ -74,6 +75,95 @@ test("継続効果が終了すると件数と詳細がすぐに空表示へ戻�
   await expect(page.locator("#playerActiveEffectsSummary")).toHaveText("現在なし");
   await expect(page.locator("#playerActiveEffectsCount")).toHaveText("0");
   await expect(page.locator("#battleDrawerInspector")).toContainText("継続中の効果はありません");
+});
+
+test("効果のある環境を両者の継続効果へ表示し、上書きすると入れ替わる", async ({ page }) => {
+  test.setTimeout(60000);
+  await prepareEffectState(page);
+  const environments = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.abyssTurns = 0;
+    api.state.players.player.internTurnsRemaining = 0;
+    api.state.players.opponent.effectUseLockTurnsRemaining = 0;
+    api.state.fullLockSeatBlocks = ["player", "opponent"].flatMap((owner) => [0, 1, 2].map((index) => ({ owner, index })));
+    return Object.entries(api.CARD_BASES).filter(([, card]) => card.type === "environment" && card.name !== "一般教室")
+      .map(([id, card]) => ({ id, name: card.name }));
+  });
+  for (const environment of environments) {
+    await page.evaluate((id) => {
+      const api = window.__chibattle;
+      api.state.environment = api.makeBoardCard(api.createCardFromBase(id, "player"));
+      api.render();
+    }, environment.id);
+    for (const side of ["player", "opponent"]) {
+      await expect(page.locator(`#${side}ActiveEffectsSummary`)).toContainText(environment.name);
+      await expect(page.locator(`#${side}ActiveEffectsCount`)).toHaveText("1");
+      await page.locator(`#${side}ActiveEffectsButton`).click();
+      await expect(page.locator("#battleDrawerInspector")).toContainText(environment.name);
+      if (environment.id === "academic_move" && side === "player") {
+        await page.screenshot({ path: test.info().outputPath("academic-move-effects.png") });
+      }
+      await page.locator("#battleLogCloseButton").click();
+    }
+  }
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.environment = api.makeBoardCard(api.createCardFromBase("classroom", "player"));
+    api.render();
+  });
+  await expect(page.locator("#playerActiveEffectsCount")).toHaveText("0");
+  await expect(page.locator("#opponentActiveEffectsCount")).toHaveText("0");
+  await page.locator("#playerActiveEffectsButton").click();
+  await expect(page.locator("#battleDrawerInspector")).toContainText("継続中の効果はありません");
+});
+
+test("アカデミックムーブの退場は環境変更後も対象の側だけに表示する", async ({ page }) => {
+  await prepareEffectState(page);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.abyssTurns = 0;
+    api.state.players.player.internTurnsRemaining = 0;
+    api.state.players.opponent.effectUseLockTurnsRemaining = 0;
+    api.state.players.player.board.seats = Array(9).fill(null);
+    api.state.players.player.board.teacher = null;
+    const card = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    card.academicMoveMarked = true;
+    api.state.players.player.board.seats[0] = card;
+    api.render();
+  });
+  await expect(page.locator("#playerActiveEffectsSummary")).toContainText("アカデミックムーブ");
+  await expect(page.locator("#opponentActiveEffectsCount")).toHaveText("0");
+  await page.locator("#playerActiveEffectsButton").click();
+  await expect(page.locator("#battleDrawerInspector")).toContainText("出席者1人");
+  await expect(page.locator("#battleDrawerInspector")).toContainText("自分のターン終了時");
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.board.seats[0] = null;
+    api.render();
+  });
+  await expect(page.locator("#playerActiveEffectsCount")).toHaveText("0");
+});
+
+test("図書館の手札を送る効果は設置した側だけ、学友会は残り回数も表示する", async ({ page }) => {
+  await prepareEffectState(page);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.environment = api.makeBoardCard(api.createCardFromBase("meguro_library", "opponent"));
+    api.render();
+  });
+  await page.locator("#playerActiveEffectsButton").click();
+  await expect(page.locator("#battleDrawerInspector")).toContainText("環境を設置した相手だけ");
+  await page.locator("#battleLogCloseButton").click();
+  await page.locator("#opponentActiveEffectsButton").click();
+  await expect(page.locator("#battleDrawerInspector")).toContainText("自分のターン終了時、手札1枚");
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.environment = api.makeBoardCard(api.createCardFromBase("student_council", "player"));
+    api.state.environment.councilTurnsUntilTransform = 1;
+    api.render();
+  });
+  await expect(page.locator("#battleDrawerInspector")).toContainText("あと1回");
+  await expect(page.locator("#battleDrawerInspector")).toContainText("体力を+2");
 });
 
 test("継続効果ボタンはデスクトップとスマートフォンの盤面内に収まる", async ({ page }) => {

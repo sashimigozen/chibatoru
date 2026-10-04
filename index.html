@@ -330,6 +330,20 @@
       box-shadow: 0 12px 26px rgba(15, 23, 42, 0.22);
     }
 
+    .tutorial-layer .tutorial-toggle-button {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: auto;
+      z-index: 2;
+    }
+
+    .tutorial-layer .button.tutorial-toggle-button:hover,
+    .tutorial-layer .button.tutorial-toggle-button:active { transform: translateX(-50%); }
+
+    .tutorial-layer.coach-hidden .tutorial-spotlight { visibility: hidden; }
+
     .tutorial-step-counter {
       position: absolute;
       right: 14px;
@@ -14164,7 +14178,7 @@
     .battle-screen .battle-inspector-effect.self { border-left-color: #6caeff; }
     .battle-screen .battle-inspector-effect.opponent { border-left-color: #ee7880; }
     .battle-screen .battle-inspector-effect-name { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 1000; }
-    .battle-screen .battle-inspector-effect-detail { margin: 0; color: #d7e2ec; font-size: 11px; font-weight: 700; line-height: 1.5; }
+    .battle-screen .battle-inspector-effect-detail { margin: 0; color: #d7e2ec; font-size: 11px; font-weight: 700; line-height: 1.5; white-space: pre-line; }
 
     /* Detail panel rests in the unused left margin, never above the opponent's vital area. */
     .battle-screen .side { position:static !important; }
@@ -18117,6 +18131,7 @@
       <div class="tutorial-dim"></div>
       <div class="tutorial-spotlight" id="tutorialSpotlight"></div>
       <button class="button secondary tutorial-exit-button" id="tutorialExitButton" type="button">終了</button>
+      <button class="button secondary tutorial-toggle-button" id="tutorialToggleButton" type="button" aria-controls="tutorialCoach" aria-expanded="true">説明を隠す</button>
       <section class="tutorial-coach" id="tutorialCoach">
         <span class="tutorial-step-counter" id="tutorialStepCounter"></span>
         <h2 id="tutorialCoachTitle">チュートリアル</h2>
@@ -19497,7 +19512,7 @@
       {
         version: "ver.0.23.12",
         date: "2026年10月4日",
-        summary: "ソロに13編のチュートリアルを追加しました。専用の手札と盤面で、画面の見方・基本操作・各能力を体験できます。",
+        summary: "ソロに13編のチュートリアルを追加しました。専用の手札と盤面で、画面の見方・基本操作・各能力を体験できます。説明を隠す機能、環境の継続効果表示、負荷・高負荷のダメージログも追加しました。",
         changes: [
           {
             title: "チュートリアル一覧",
@@ -19509,7 +19524,11 @@
           },
           {
             title: "各能力のチュートリアル",
-            after: "残りの12編にも専用の手札と盤面を用意しました。通常の対戦と同じ処理で「説明 → 操作 → 結果確認」を行い、超陽気・超注目・特殊進化・高負荷も学べます。説明パネルと「次へ」は基本編と同じ位置に固定し、「一つ戻る」で操作前へ戻れます。最後は自由にプレイして勝利を目指し、結果画面の「戻る」で一覧へ戻れます。"
+            after: "残りの12編にも専用の手札と盤面を用意しました。通常の対戦と同じ処理で「説明 → 操作 → 結果確認」を行い、超陽気・超注目・特殊進化・高負荷も学べます。説明パネルと「次へ」は基本編と同じ位置に固定し、「一つ戻る」で操作前へ戻れます。最後は自由にプレイして勝利を目指し、結果画面の「戻る」で一覧へ戻れます。進化編のトークンの補足と、特殊進化のつながりの説明を削除しました。"
+          },
+          {
+            title: "説明の表示切替・環境の継続効果・負荷のログ",
+            after: "チュートリアルに「説明を隠す／説明を表示」を追加し、カード確認を遮らず、同じ手順に戻れるようにしました。アカデミックムーブなどの環境効果を自分・相手の継続効果へ表示し、環境変更後も残る退場効果を確認できます。負荷・高負荷による本体のダメージをログに記録しますが、非公開の手札のカード名は記録しません。"
           }
         ]
       },
@@ -21481,8 +21500,7 @@
         tutorialPlayStep("dark_yuta", "U太を進化させよう", "手札の裏U太を選び、U太がいる席マスを押してください。"),
         { id: "evolutionResult", title: "進化の結果", body: "U太が裏U太へ進化しました。\n通常の進化は、出席したターンには行えません。必要な戦意や進化元はカード本文を確認しましょう。", focus: "#playerSeatGrid [data-base-id='dark_yuta']" },
         tutorialPlayStep("single_cell", "特殊進化の条件を満たそう", "単細胞生物を選び、光っている空き席マスへ出席させてください。", "seat", 1),
-        { id: "specialEvolutionResult", title: "特殊進化の結果", body: "先に出席していた単細胞生物がミジンコへ特殊進化し、もう1人は破壊されました。\n特殊進化は効果の条件を満たすと戦意を払わずに行われ、ダメージと行動済みの状態を引き継ぎます。", focus: "#playerSeatGrid [data-base-id='midge']" },
-        { id: "specialEvolutionChain", title: "特殊進化のつながり", body: "ミジンコ2人なら生物へ、生物・ミジンコ・単細胞生物がそろうと完全変異体へ特殊進化します。\nトークンも[進化]のカードですが、デッキへ登録するカードではありません。", focus: "#playerSeatGrid [data-base-id='midge']" }
+        { id: "specialEvolutionResult", title: "特殊進化の結果", body: "先に出席していた単細胞生物がミジンコへ特殊進化し、もう1人は破壊されました。\n特殊進化は効果の条件を満たすと戦意を払わずに行われ、ダメージと行動済みの状態を引き継ぎます。", focus: "#playerSeatGrid [data-base-id='midge']" }
       ]),
       fusion: abilityTutorialSteps("融合編", "融合は、指定されたカードを組み合わせて別のカードを作る仕組みです。\n定規2枚を融合すると、ダブルダイヤモンドクロスが手札に加わります。", [
         { id: "fusion", title: "定規を融合しよう", body: "手札の定規を押し、カード確認の「融合する」を押してください。\nもう1枚の定規を選び、確定してください。", action: "fusion", allowedBaseId: "ruler", focus: "#playerHand" },
@@ -21813,6 +21831,7 @@
       tutorialBackStepButton: document.getElementById("tutorialBackStepButton"),
       tutorialNextButton: document.getElementById("tutorialNextButton"),
       tutorialExitButton: document.getElementById("tutorialExitButton"),
+      tutorialToggleButton: document.getElementById("tutorialToggleButton"),
       playRevealOverlay: document.getElementById("playRevealOverlay"),
       playRevealCard: document.getElementById("playRevealCard"),
       deckText: document.getElementById("deckText"),
@@ -37759,7 +37778,10 @@
       state.players[side].hand.forEach((card) => {
         const damage = Math.min(2, Number(card.handLoadLevel) || 0);
         if (damage <= 0) return;
+        const before = state.players[side].life;
         damagePlayer(side, damage);
+        const dealt = Math.max(0, before - state.players[side].life);
+        addLog(`[${damage === 2 ? "高負荷" : "負荷"}]：${SIDES[side]}本体に${dealt}ダメージ。`);
       });
     }
 
@@ -43468,6 +43490,7 @@
       state.players = cloneTutorialValue(snapshot.players);
       state.tutorial = {
         active: true,
+        coachHidden: state.tutorial.coachHidden === true,
         chapterId: snapshot.tutorial.chapterId,
         stepIndex: snapshot.tutorial.stepIndex,
         intro: snapshot.tutorial.intro,
@@ -43797,6 +43820,11 @@
       const step = currentTutorialStep();
       const active = Boolean(step);
       elements.tutorialLayer.classList.toggle("hidden", !active);
+      const coachHidden = state.tutorial?.coachHidden === true;
+      elements.tutorialLayer.classList.toggle("coach-hidden", coachHidden);
+      elements.tutorialCoach.classList.toggle("hidden", coachHidden);
+      elements.tutorialToggleButton.textContent = coachHidden ? "説明を表示" : "説明を隠す";
+      elements.tutorialToggleButton.setAttribute("aria-expanded", String(!coachHidden));
       elements.tutorialBackStepButton.disabled = !(state.tutorial?.history || []).length;
       if (!active) return;
       elements.tutorialCoachTitle.textContent = step.title;
@@ -45608,6 +45636,53 @@
       });
     }
 
+    function environmentActiveEffectLines(side) {
+      const environment = state.environment;
+      const lines = [];
+      // 環境を上書きした後も、すでに付与された退場効果は残る。
+      const academicMarked = listBoardRefs(side).filter((ref) => getBoardCardFromRef(ref)?.academicMoveMarked).length;
+      if (environment?.baseId !== "academic_move" && academicMarked > 0) {
+        lines.push(`アカデミックムーブ：効果を受けた自分の出席者${academicMarked}人は、自分のターン終了時に校外エリアへ送られます。`);
+      }
+      // 食堂・無法の食堂・図書館・遅刻無効は、残存期間や所有者も含めて既存処理で表示する。
+      if (!environment || ["classroom", "cafeteria", "illegal_cafeteria", "meguro_library", "no_late_time"].includes(environment.baseId)) return lines;
+      let detail;
+      switch (environment.baseId) {
+        case "academic_move":
+          detail = "このターンに講義室へ出席した出席者は[超陽気]を持ち、自分のターン終了時に校外エリアへ送られます。";
+          break;
+        case "seat_rules":
+          detail = "自分の講義室の2列目には出席できません。";
+          break;
+        case "full_lock": {
+          const blocked = (state.fullLockSeatBlocks || []).filter((block) => block.owner === side).length;
+          if (!blocked) return lines;
+          detail = `環境を置いたときに空いていた席マス${blocked}か所へ出席できません。それ以外の席マスには影響しません。`;
+          break;
+        }
+        case "design_domain":
+          detail = "ヴァンパイアは「デザイン」とつく教師を攻撃できません。";
+          break;
+        case "shogi_duel_field":
+          detail = "自分本体の最大気力は10になります。";
+          break;
+        case "chaos_world":
+          detail = "各ターン開始時、お互いの手札の戦意を0〜10、講義室の出席者の攻撃力を0〜10、体力を1〜10のランダムな値にします。";
+          break;
+        case "student_council":
+        case "dark_student_council": {
+          const isDark = environment.baseId === "dark_student_council";
+          detail = `講義室にいる出席者すべての${isDark ? "攻撃力" : "体力"}を+2します。あと${environment.councilTurnsUntilTransform ?? 2}回ターンが終了すると「${CARD_BASES[isDark ? "student_council" : "dark_student_council"].name}」へ変化します。`;
+          break;
+        }
+        default:
+          // 継続中のカード本文を再利用し、表示用に効果テキストを複製しない。
+          detail = cardRulesText(environment);
+      }
+      if (detail && detail !== "効果なし。") lines.push(`${environment.name}：${detail}`);
+      return lines;
+    }
+
     function playerActiveEffectLines(side) {
       const player = state.players[side];
       if (!player) return [];
@@ -45665,11 +45740,12 @@
         lines.push(`無法の食堂：${remaining}、自分のターン終了時にヴァンパイアを1回復し、食堂として扱います。`);
       }
       if (state.environment?.baseId === "meguro_library") {
-        lines.push("目黒区図書館：プレイヤー本体を攻撃できません。設置した側はターン終了時に手札1枚を校外エリアへ送ります。");
+        lines.push(`目黒区図書館：プレイヤー本体を攻撃できません。${state.environment.owner === side ? "自分のターン終了時、手札1枚を校外エリアへ送ります。" : "手札を校外エリアへ送る効果は、環境を設置した相手だけが受けます。"}`);
       }
       if (state.environment?.baseId === "no_late_time") {
         lines.push("遅刻じゃない時間：遅刻の効果がなくなっています。");
       }
+      lines.push(...environmentActiveEffectLines(side));
       return lines;
     }
 
@@ -51204,6 +51280,11 @@
     elements.tutorialBackStepButton.addEventListener("click", goBackTutorialStep);
     elements.tutorialNextButton.addEventListener("click", advanceTutorialTextStep);
     elements.tutorialExitButton.addEventListener("click", exitTutorialMode);
+    elements.tutorialToggleButton.addEventListener("click", () => {
+      if (!isTutorialActive()) return;
+      state.tutorial.coachHidden = !state.tutorial.coachHidden;
+      renderTutorialCoach();
+    });
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
     elements.onlineBackMenuButton.addEventListener("click", onlineReturnToMenu);
     elements.onlineRandomBackButton.addEventListener("click", onlineReturnToMenu);

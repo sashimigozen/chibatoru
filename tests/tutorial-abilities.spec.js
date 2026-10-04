@@ -137,6 +137,7 @@ for (const chapter of chapters) {
       const title = await page.locator("#tutorialCoachTitle").textContent();
       await expect.poll(() => layout(page)).toEqual(fixed);
       await expect(page.locator("#tutorialCoachText")).not.toContainText(/今回は|練習用|気力が2/);
+      if (chapter.id === "evolution") await expect(page.locator("#tutorialCoachTitle")).not.toHaveText("特殊進化のつながり");
       if (title === "自由にプレイしよう") break;
       const action = chapter.actions[title];
       if (!action) {
@@ -167,6 +168,13 @@ for (const chapter of chapters) {
     await expect.poll(async () => chapter.check(await page.evaluate(() => ({
       players: window.__chibattle.state.players, environment: window.__chibattle.state.environment
     })))).toBe(true);
+    if (chapter.id === "load") {
+      const damageLogs = await page.evaluate(() => window.__chibattle.state.log.filter((line) => /^\[(高負荷|負荷)\]/.test(line)));
+      expect(damageLogs).toHaveLength(3);
+      expect(damageLogs.some((line) => line.includes("[負荷]") && line.includes("1ダメージ"))).toBe(true);
+      expect(damageLogs.filter((line) => line.includes("[高負荷]") && line.includes("2ダメージ"))).toHaveLength(2);
+      expect(damageLogs.join("\n")).not.toMatch(/定規|食堂/);
+    }
     await expect(page.locator("#tutorialCoachText")).toContainText("ここからは自由にプレイして、勝利を目指そう！");
     await page.screenshot({ path: test.info().outputPath(`${chapter.id}.png`) });
     await page.locator("#tutorialNextButton").click();

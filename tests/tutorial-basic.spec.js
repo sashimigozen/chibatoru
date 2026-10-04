@@ -109,7 +109,7 @@ test("5タイプを紹介し、出席・ターン終了・反撃を体験して�
   expect(await page.evaluate(() => window.__chibattle.state.message)).toBe("ここからは自由にプレイして、勝利を目指そう！");
   await expect(page.locator('#playerHand [data-base-id="ruler"]')).toBeEnabled();
   await seat(page, "player", 8).click();
-  await page.locator("#opponentLifeTarget").click();
+  await page.locator("#opponentLifeTarget").click({ force: true });
   await expect(page.locator("#resultOverlay")).toBeVisible();
   await expect(page.locator("#resultOverlay")).toContainText("勝利");
   expect(await page.evaluate(() => window.__chibattle.state.screen)).toBe("battle");
@@ -118,6 +118,45 @@ test("5タイプを紹介し、出席・ターン終了・反撃を体験して�
   await expect(page.locator("#tutorialScreen")).toBeVisible();
   await expect(page.locator("#tutorialChapterList button")).toHaveCount(13);
   expect(errors).toEqual([]);
+});
+
+test("説明を隠してカード確認でき、同じ位置・同じ手順へ戻して再開できる", async ({ page }) => {
+  await startBasic(page);
+  await advanceTo(page, "画面の見方：カード確認");
+  const fixed = await coachLayout(page);
+  const step = await page.evaluate(() => window.__chibattle.state.tutorial.stepIndex);
+  const toggle = page.locator("#tutorialToggleButton");
+  await page.mouse.move(0, 0);
+  const toggleBox = await toggle.boundingBox();
+  await toggle.hover();
+  await expect.poll(() => toggle.boundingBox()).toEqual(toggleBox);
+  await toggle.click();
+  await expect(toggle).toHaveText("説明を表示");
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator("#tutorialCoach")).toBeHidden();
+  await expect(page.locator("#tutorialSpotlight")).toBeHidden();
+  const overlapsLog = await page.evaluate(() => {
+    const toggle = document.getElementById("tutorialToggleButton").getBoundingClientRect();
+    const log = document.getElementById("battleLogButton").getBoundingClientRect();
+    return toggle.left < log.right && toggle.right > log.left && toggle.top < log.bottom && toggle.bottom > log.top;
+  });
+  expect(overlapsLog).toBe(false);
+  await page.locator("#opponentSeatGrid .board-card").first().click();
+  await expect(page.locator("#battleCardPreview")).toBeVisible();
+  await expect(page.locator("#battleCardPreview")).toContainText("アグロ大学生");
+  await page.screenshot({ path: test.info().outputPath("hidden-coach-card-preview.png") });
+  expect(await page.evaluate(() => window.__chibattle.state.tutorial.stepIndex)).toBe(step);
+  await toggle.click();
+  await expect(page.locator("#tutorialCoach")).toBeVisible();
+  await expect(page.locator("#tutorialCoachTitle")).toHaveText("画面の見方：カード確認");
+  await expect.poll(() => coachLayout(page)).toEqual(fixed);
+  await page.locator("#tutorialNextButton").click();
+  await expect(page.locator("#tutorialCoachTitle")).toHaveText("画面の見方：ログ");
+  await toggle.click();
+  await page.locator("#tutorialExitButton").click();
+  await page.locator('[data-tutorial-chapter="basic"]').click();
+  await expect(page.locator("#tutorialCoach")).toBeVisible();
+  await expect(toggle).toHaveText("説明を隠す");
 });
 
 test("一つ戻るで出席前の手札と戦意を復元し、終了から一覧へ戻って再開できる", async ({ page }) => {
