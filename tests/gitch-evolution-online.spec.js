@@ -49,6 +49,50 @@ async function openBattle(host, guest) {
   await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
 }
 
+test("ハンディジェットエンジンの自分1枚・相手2枚の校外送りをホストとゲストで同期する", async ({ browser }) => {
+  test.setTimeout(60000);
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const [host, guest] = await Promise.all(contexts.map(c => c.newPage()));
+  const errors = [];
+  try {
+    for (const page of [host, guest]) page.on("pageerror", e => errors.push(e.message));
+    await openBattle(host, guest);
+    for (const side of ["player", "opponent"]) {
+      const actor = side === "player" ? host : guest;
+      const setup = await host.evaluate(side => {
+        const api = window.__chibattle;
+        api.startCardTest("handy_jet_engine");
+        api.state.testMode = false; api.state.currentSide = side;
+        for (const owner of ["player", "opponent"]) {
+          const own = api.state.players[owner];
+          own.hand = (owner === side ? ["handy_jet_engine", "ruler", "bento"] : ["general_student", "general_teacher", "cafeteria"])
+            .map(id => api.createCardFromBase(id, owner));
+          own.trash = []; own.will = 10;
+        }
+        const id = api.state.players[side].hand[0].instanceId;
+        api.render();
+        return { id, seq: api.state.online.lastSnapshotSeq };
+      }, side);
+      await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
+      await actor.evaluate(id => {
+        const api = window.__chibattle;
+        api.beginItemUse(api.state.players.player.hand.find(c => c.instanceId === id));
+      }, setup.id);
+      for (const page of [host, guest]) {
+        const viewSide = page === host ? side : side === "player" ? "opponent" : "player";
+        await expect.poll(() => page.evaluate(({ viewSide, id }) => {
+          const api = window.__chibattle, own = api.state.players[viewSide], other = api.state.players[viewSide === "player" ? "opponent" : "player"];
+          return { ownHand: own.hand.length, otherHand: other.hand.length, ownTrash: own.trash.length,
+            otherTrash: other.trash.length, sourceCount: own.trash.filter(c => c.instanceId === id).length, will: own.will };
+        }, { viewSide, id: setup.id })).toEqual({ ownHand: 1, otherHand: 1, ownTrash: 2, otherTrash: 2, sourceCount: 1, will: 7 });
+      }
+      const hostTrash = await host.evaluate(() => ["player", "opponent"].map(side => window.__chibattle.state.players[side].trash.map(c => c.instanceId)));
+      expect(await guest.evaluate(() => ["opponent", "player"].map(side => window.__chibattle.state.players[side].trash.map(c => c.instanceId)))).toEqual(hostTrash);
+    }
+    expect(errors).toEqual([]);
+  } finally { await Promise.all(contexts.map(c => c.close())); }
+});
+
 
 test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲストの両視点で同期する", async ({ browser }) => {
   test.setTimeout(60000);

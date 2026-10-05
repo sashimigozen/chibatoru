@@ -19065,6 +19065,7 @@
       gitch: ["gigi_blood"],
       gigi_blood: ["wood_gitch", "general_student", "ruler"],
       grudge: [],
+      handy_jet_engine: ["general_student", "ruler", "bento"],
       academic_move: ["general_student"],
       aggro_walk: ["aggro_student"],
       illness: ["illness"],
@@ -19514,12 +19515,13 @@
       {
         version: "ver.0.23.13",
         date: "2026年10月5日",
-        summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。",
+        summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。ハンディジェットエンジンに自分の手札を送る効果を追加しました。",
         changes: [
           { title: "木っち（ぎっち）", before: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。", after: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札に効果を持たない「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。" },
           { title: "技議っち", before: "戦意0、攻撃力1、体力2。進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。", after: "戦意0、攻撃力1、体力4。進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに効果を持たない「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。" },
           { title: "偽魏義ッ血", before: "戦意7、攻撃力3、体力10。進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。", after: "戦意8、攻撃力2、体力4。進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。" },
           { title: "怨念", after: "戦意1、トークン。相手本体に2ダメージを与える。" },
+          { title: "ハンディジェットエンジン", before: "相手の手札をランダムに2枚、校外エリアへ送る。", after: "自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。" },
           { title: "効果処理・カードテスト", after: "技議っちの追加出席は空いている席マス・教卓マスからランダムに選びます。木っちと技議っちの効果で生成した木っちは「効果なし。」と表示し、講義も持ちません。オンラインや校外からの回収後も維持し、技議っちへは進化できます。旧効果の手札選択、攻撃力強化、破壊の肩代わり、復活を削除しました。AI、オンライン、カードテストを新しい効果に揃えました。" }
         ]
       },
@@ -28460,8 +28462,12 @@
         return 28 + Math.min(24, millCount) + Math.min(8, turn);
       }
       if (item.baseId === "handy_jet_engine") {
-        const targetHandCount = state.players[oppositeSide(side)]?.hand.length || 0;
-        return targetHandCount > 0 ? 5 + Math.min(5, targetHandCount) : 0;
+        const targetHandCount = state.players[oppositeSide(side)].hand.filter((card) => !isHighLoadHandCard(card)).length;
+        const ownCandidates = state.players[side].hand.filter((card) => card.instanceId !== item.instanceId && !isHighLoadHandCard(card));
+        const discardLoss = ownCandidates.length > 0
+          ? ownCandidates.reduce((total, card) => total + scoreAiFriendlySacrifice(side, card), 0) / ownCandidates.length * 0.25
+          : 0;
+        return targetHandCount > 0 ? Math.max(0, 5 + Math.min(5, targetHandCount) - discardLoss) : 0;
       }
       return 0;
     }
@@ -37690,11 +37696,11 @@
       return moved;
     }
 
-    function moveRandomHandCardsToTrash(side, count) {
+    function moveRandomHandCardsToTrash(side, count, excludedInstanceId = null) {
       const player = state.players[side];
       const moved = [];
       for (let i = 0; i < count; i += 1) {
-        const candidates = player.hand.filter((card) => !isHighLoadHandCard(card));
+        const candidates = player.hand.filter((card) => card.instanceId !== excludedInstanceId && !isHighLoadHandCard(card));
         if (candidates.length === 0) break;
         const card = candidates[Math.floor(Math.random() * candidates.length)];
         player.hand = player.hand.filter((entry) => entry.instanceId !== card.instanceId);
@@ -39667,10 +39673,12 @@
         resultText = `相手の手札が4枚になるよう、${moved.length}枚をデッキへ戻してシャッフルしました。`;
       }
       if (item.baseId === "handy_jet_engine") {
+        const ownMoved = moveRandomHandCardsToTrash(side, 1, item.instanceId);
+        const ownMovedText = trashDetailCountText(side, ownMoved, "ハンディジェットエンジンで校外へ送られたカード");
         const targetSide = oppositeSide(side);
         const moved = moveRandomHandCardsToTrash(targetSide, 2);
         const movedText = trashDetailCountText(targetSide, moved, "ハンディジェットエンジンで校外へ送られたカード");
-        resultText = `相手の手札からランダムに${movedText}を校外エリアへ送りました。`;
+        resultText = `自分の手札からランダムに${ownMovedText}を校外エリアへ送り、その後、相手の手札からランダムに${movedText}を校外エリアへ送りました。`;
       }
       if (item.baseId === "dos_attack") {
         const targetSide = oppositeSide(side);
@@ -48425,7 +48433,7 @@
       if (baseId === "proliferating_enemy") {
         opponent.hand = [createCardFromBase("general_student", "opponent")];
       }
-      if (["chigauyo", "sniper", "cynical_student", "thin_item"].includes(baseId)) {
+      if (["chigauyo", "sniper", "cynical_student", "thin_item", "handy_jet_engine"].includes(baseId)) {
         opponent.hand = [
           createCardFromBase("general_student", "opponent"),
           createCardFromBase("ruler", "opponent"),
@@ -50577,7 +50585,7 @@
         sock_block: "相手の場の3行目を1ターン出席不可にする。すでに3行目にいる出席者は校外エリアへ送る。",
         go_home: "自分の学生1人を指名し、そのカードを手札に戻す。",
         deck_without: "自分のデッキを上から2枚引く。その後、自分の手札を2枚選び、校外エリアへ送る。",
-        handy_jet_engine: "相手の手札をランダムに2枚、校外エリアへ送る。",
+        handy_jet_engine: "自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。",
         dos_attack: "相手のデッキの上から3枚を校外エリアへ送る。",
         destroy_dos_attack: "自分の校外エリアにある「Dos攻撃」の枚数+1を数え、その数×3枚、相手のデッキの上から校外エリアへ送る。",
         absolute_woman: "陽気を持つ。このカードが出席者を攻撃したとき、その出席者を破壊する。このカードは1ターンに3回まで攻撃できる。",
