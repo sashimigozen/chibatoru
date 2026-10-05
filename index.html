@@ -19515,13 +19515,14 @@
       {
         version: "ver.0.23.13",
         date: "2026年10月5日",
-        summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。ハンディジェットエンジンに自分の手札を送る効果を追加しました。",
+        summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。ハンディジェットエンジンに自分の手札を送る効果を追加しました。学生お笑いを使うAIの判断を改善しました。",
         changes: [
           { title: "木っち（ぎっち）", before: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。", after: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札に効果を持たない「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。" },
           { title: "技議っち", before: "戦意0、攻撃力1、体力2。進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。", after: "戦意0、攻撃力1、体力4。進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに効果を持たない「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。" },
           { title: "偽魏義ッ血", before: "戦意7、攻撃力3、体力10。進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。", after: "戦意8、攻撃力2、体力4。進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。" },
           { title: "怨念", after: "戦意1、トークン。相手本体に2ダメージを与える。" },
           { title: "ハンディジェットエンジン", before: "相手の手札をランダムに2枚、校外エリアへ送る。", after: "自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。" },
+          { title: "学生お笑いのAI判断", after: "通常は周囲の学生を多く強化できる2行2列を優先し、戦意に余裕があれば先に学生を増やします。攻撃可能な学生への強化でリーサル・大ダメージを狙える場合や、相手の高打点の出席者を倒してリーサルを回避できる場合は、人数だけにこだわらず出席させます。左右のAIに同じ評価を使用します。カードのテキスト・効果は変更していません。" },
           { title: "効果処理・カードテスト", after: "技議っちの追加出席は空いている席マス・教卓マスからランダムに選びます。木っちと技議っちの効果で生成した木っちは「効果なし。」と表示し、講義も持ちません。オンラインや校外からの回収後も維持し、技議っちへは進化できます。旧効果の手札選択、攻撃力強化、破壊の肩代わり、復活を削除しました。AI、オンライン、カードテストを新しい効果に揃えました。" }
         ]
       },
@@ -28994,6 +28995,11 @@
       const offensiveEffectPriority = scoreAiAttendanceRemoval(side, card, effectZone, effectIndex)
         + scoreAiAttackReductionAttendance(side, card);
       if (card.evolutionFrom) return 40 + scoreAiEvolutionEffect(side, card);
+      if (card.baseId === "student_comedy") {
+        return Math.max(0, ...AI_SEAT_PRIORITY
+          .filter((index) => canPlaceCard(side, card, "seat", side, index))
+          .map((index) => scoreAiStudentComedyPlacement(side, card, index).score)) * 10;
+      }
       if (["white_student", "overfitting_student", "tiny_rhythm_student", "signal_professor_m"].includes(card.baseId)) {
         const zone = card.baseId === "signal_professor_m" && canPlaceCard(side, card, "teacher", side, null) ? "teacher" : "seat";
         return scoreAiHandLoadPlacement(side, card, zone) * 10;
@@ -29061,6 +29067,14 @@
         }
         if (card.type === "teacher" && canPlaceCard(side, card, "teacher", side, null)) {
           return { card, zone: "teacher", owner: side, index: null };
+        }
+        if (card.baseId === "student_comedy") {
+          const seats = AI_SEAT_PRIORITY
+            .filter((index) => canPlaceCard(side, card, "seat", side, index))
+            .map((index) => ({ card, zone: "seat", owner: side, index,
+              ...scoreAiStudentComedyPlacement(side, card, index) }))
+            .sort((a, b) => b.score - a.score);
+          if (seats[0]) return aiStudentComedySetupMove(side, seats[0]) || seats[0];
         }
         const seatPriority = card.baseId === "back_question_student" ? [6, 7, 8] : AI_SEAT_PRIORITY;
         const seatIndex = seatPriority.find((index) => canPlaceCard(side, card, "seat", side, index));
@@ -30054,7 +30068,101 @@
         }
       });
       moves.sort((a, b) => b.score - a.score || effectiveCardCost(b.card) - effectiveCardCost(a.card));
-      return moves[0]?.score > 0 ? moves[0] : null;
+      if (!(moves[0]?.score > 0)) return null;
+      return aiStudentComedySetupMove("opponent", moves[0]) || moves[0];
+    }
+
+    function scoreAiStudentComedyPlacement(side, card, index) {
+      if (!canUsePrintedCardEffects(card) || arePlayedEffectsSuppressed(side)) {
+        return { score: 0, tactical: false };
+      }
+      const targetSide = oppositeSide(side);
+      const neighbors = new Set(surroundingIndexes(index));
+      const entries = listBoardRefs(side).map((ref) => {
+        const original = getBoardCardFromRef(ref);
+        const buffed = ref.zone === "seat" && neighbors.has(ref.index)
+          && original?.type === "student" && !isAibenNyoteiEffectImmune(original);
+        // Read-only previews: do not queue real buffs or modify the live board.
+        const preview = buffed ? { ...original, attack: (original.attack || 0) + 1,
+          currentHp: original.currentHp + 1, maxHp: original.maxHp + 1 } : original;
+        return { ref, original, preview, buffed };
+      });
+      const ready = entries.filter(({ original }) => canAttackSilently(original)
+        && !isSameNameAttackLocked(original));
+      const faceDamage = (field, guaranteed = false) => ready.reduce((total, entry) => {
+        const attacker = entry[field];
+        if (guaranteed && hasKeyword(attacker, "眠気")) return total;
+        if (!aiCanCardTargetLife(attacker, side) || !canAiLethalAttackerHitLife(attacker, targetSide)) return total;
+        return total + Math.max(0, attacker.attack || 0)
+          * (cardAttackLimit(attacker) - cardAttacksUsedThisTurn(attacker)) * aiAttackHitFactor(attacker);
+      }, 0);
+      const beforeFace = faceDamage("original");
+      const afterFace = faceDamage("preview");
+      const direct = aiAffordableDirectLifeDamage(side, state.players[side].will - effectiveCardCost(card));
+      const lethal = afterFace > beforeFace
+        && faceDamage("preview", true) + direct >= state.players[targetSide].life;
+      const priorityIds = new Set(listAttackPriorityCards(targetSide).map((target) => target.instanceId));
+      const effectKills = planAiGuaranteedEndTurnEffectKills(side).targetIds;
+      const enemies = listBoardRefs(targetSide)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter((entry) => entry.card && !effectKills.has(entry.card.instanceId))
+        .sort((a, b) => (b.card.attack || 0) - (a.card.attack || 0));
+      const canDefeat = (attacker, target) => !hasKeyword(attacker, "眠気")
+        && (attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(target.instanceId))
+        && canAiLethalAttackerDefeatCard(attacker, target);
+      let newRemovalValue = 0;
+      enemies.forEach(({ card: target }) => {
+        if (aiShouldPreserveEnemyTrpg(side, target)) return;
+        if (ready.some((entry) => entry.buffed && canDefeat(entry.preview, target)
+          && (!canDefeat(entry.original, target)
+            || (aiAttackCounterDamage(entry.original, target) >= entry.original.currentHp
+              && aiAttackCounterDamage(entry.preview, target) < entry.preview.currentHp)))) {
+          newRemovalValue += 12 + Math.max(0, target.attack || 0) * 3;
+        }
+      });
+      const incoming = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 }).expected;
+      const removableDamage = (field) => {
+        const available = ready.map((entry) => ({ card: { ...entry[field] },
+          attacks: cardAttackLimit(entry[field]) - cardAttacksUsedThisTurn(entry[field]) }));
+        let removed = 0;
+        for (const { card: target } of enemies) {
+          if (!aiCanCardTargetLife(target, targetSide) || isAttackLocked(target, state.actionTurn + 1)
+            || isSameNameAttackLocked(target)) continue;
+          const attacker = available.filter((entry) => entry.attacks > 0 && canDefeat(entry.card, target))
+            .sort((a, b) => (a.card.attack || 0) - (b.card.attack || 0))[0];
+          if (!attacker) continue;
+          removed += Math.max(0, target.attack || 0) * aiAttackHitFactor(target);
+          attacker.attacks -= 1;
+          attacker.card.currentHp -= aiAttackCounterDamage(attacker.card, target);
+          if (attacker.card.currentHp <= 0) attacker.attacks = 0;
+        }
+        return removed;
+      };
+      const escape = incoming >= state.players[side].life
+        && incoming - removableDamage("original") >= state.players[side].life
+        && incoming - removableDamage("preview") < state.players[side].life;
+      const addedFace = afterFace - beforeFace;
+      return {
+        score: entries.filter((entry) => entry.buffed).length * 14 + (index === 4 ? 3 : 0)
+          + addedFace * 60 + newRemovalValue + (lethal ? 1200 : 0) + (escape ? 900 : 0),
+        tactical: lethal || escape || addedFace > 0 || newRemovalValue > 0
+      };
+    }
+
+    function aiStudentComedySetupMove(side, move) {
+      if (move.card.baseId !== "student_comedy" || move.zone !== "seat"
+        || !canUsePrintedCardEffects(move.card) || arePlayedEffectsSuppressed(side)
+        || scoreAiStudentComedyPlacement(side, move.card, move.index).tactical) return null;
+      // Fill another neighboring seat first only when the comedy's cost remains reserved.
+      const remainingWill = state.players[side].will - effectiveCardCost(move.card);
+      for (const student of state.players[side].hand) {
+        if (student.instanceId === move.card.instanceId || student.baseId === "student_comedy"
+          || student.type !== "student" || student.evolutionFrom || effectiveCardCost(student) > remainingWill) continue;
+        const index = surroundingIndexes(move.index)
+          .find((seatIndex) => canPlaceCard(side, student, "seat", side, seatIndex));
+        if (index !== undefined) return { card: student, zone: "seat", owner: side, index };
+      }
+      return null;
     }
 
     function findAiSeatForCard(card) {
@@ -30166,8 +30274,7 @@
         score += state.players.player.hand.length * 0.8;
       }
       if (zone === "seat" && card.baseId === "student_comedy") {
-        score += surroundingIndexes(index)
-          .filter((seatIndex) => state.players.opponent.board.seats[seatIndex]?.type === "student").length * 40;
+        score += scoreAiStudentComedyPlacement("opponent", card, index).score;
       }
       if (zone === "seat" && card.baseId === "lone_wolf") {
         const hasNeighbor = surroundingIndexes(index).some((seatIndex) => state.players.opponent.board.seats[seatIndex]);
@@ -51558,6 +51665,7 @@
       aiGreenCurryBoardAssessment,
       chooseAiMulliganReturnIds,
       scoreAiPlacement,
+      scoreAiStudentComedyPlacement,
       scoreAiItem,
       shouldAiUseItemAtTiming,
       findAiPlayMove,
