@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
 
 test("進化2枚と怨念の数値・表示文・台帳を揃える", async ({ page }) => {
   const expected = {
-    gitch: { cost: 0, attack: 1, hp: 4, text: '[進化]：「木っち（ぎっち）」\n進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに「木っち（ぎっち）」を2人までランダムに出席させる。\nこのカードは[講義]を持たない。' },
+    gitch: { cost: 0, attack: 1, hp: 4, text: '[進化]：「木っち（ぎっち）」\n進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに効果を持たない「木っち（ぎっち）」を2人までランダムに出席させる。\nこのカードは[講義]を持たない。' },
     gigi_blood: { cost: 8, attack: 2, hp: 4, text: '[進化]：「技議っち」\n進化したとき、自分の手札すべてを「怨念」に変化させる。' },
     grudge: { cost: 1, attack: null, hp: null, text: '相手本体に2ダメージを与える。' }
   };
@@ -53,6 +53,7 @@ for (const side of ["player", "opponent"]) {
         const generated = [...own.board.seats, own.board.teacher].filter(c => c?.baseId === "wood_gitch");
         return { hand: own.hand.map(c => c.baseId), deck: own.deck.map(c => c.baseId),
           generated: generated.length, stats: generated.map(c => [c.attack, c.currentHp, c.noLecture]),
+          effectless: generated.every(c => api.cardRulesText(c) === "効果なし。" && !api.canUsePrintedCardEffects(c)),
           teacher: own.board.teacher?.baseId, sourceAttack: evolved.attack,
           foeUnchanged: foeBefore === JSON.stringify(api.state.players[side === "player" ? "opponent" : "player"]),
           pending: api.state.pendingCopiedCard };
@@ -61,6 +62,7 @@ for (const side of ["player", "opponent"]) {
       expect(result.deck).toEqual(["cafeteria"]);
       expect(result.generated).toBe(Math.min(2, open));
       expect(result.stats).toEqual(Array.from({ length: Math.min(2, open) }, () => [1, 1, true]));
+      expect(result.effectless).toBe(true);
       if (open <= 2 && open > 0) expect(result.teacher).toBe("wood_gitch");
       expect(result.sourceAttack).toBe(1);
       expect(result.foeUnchanged).toBe(true);
