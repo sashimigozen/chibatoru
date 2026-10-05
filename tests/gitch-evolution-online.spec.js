@@ -96,6 +96,12 @@ test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲス�
           await expect.poll(() => page.evaluate(viewSide => window.__chibattle.state.players[viewSide].hand.length, viewSide)).toBe(expectedHand.length);
           if (page === host || page === actor) {
             await expect.poll(() => page.evaluate(viewSide => window.__chibattle.state.players[viewSide].hand.map(c => c.baseId), viewSide)).toEqual(expectedHand);
+            if (baseId === "wood_gitch") {
+              expect(await page.evaluate(viewSide => {
+                const api = window.__chibattle, generated = api.state.players[viewSide].hand.at(-1);
+                return [api.cardRulesText(generated), api.canUsePrintedCardEffects(generated), generated.noLecture];
+              }, viewSide)).toEqual(["効果なし。", false, true]);
+            }
           } else {
             expect(await page.evaluate(viewSide => window.__chibattle.state.players[viewSide].hand.every(c => !c.baseId), viewSide)).toBe(true);
           }
@@ -109,10 +115,32 @@ test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲス�
           }, { viewSide, baseId })).toEqual({ will: 10 - { wood_gitch: 3, gitch: 0, gigi_blood: 8, grudge: 1 }[baseId],
             deck: baseId === "gitch" ? 6 : 8, generated: baseId === "wood_gitch" ? 1 : baseId === "gitch" ? 2 : 0,
             life: baseId === "grudge" ? 18 : 20, pending: false });
+          if (baseId === "gitch") {
+            expect(await page.evaluate(viewSide => {
+              const api = window.__chibattle, board = api.state.players[viewSide].board;
+              return [...board.seats, board.teacher].filter(c => c?.baseId === "wood_gitch")
+                .map(c => [api.cardRulesText(c), api.canUsePrintedCardEffects(c), c.noLecture]);
+            }, viewSide)).toEqual([["効果なし。", false, true], ["効果なし。", false, true]]);
+          }
         }
         const positions = await host.evaluate(side => [...window.__chibattle.state.players[side].board.seats, window.__chibattle.state.players[side].board.teacher].map(c => c?.instanceId || null), side);
         const guestSide = side === "player" ? "opponent" : "player";
         expect(await guest.evaluate(side => [...window.__chibattle.state.players[side].board.seats, window.__chibattle.state.players[side].board.teacher].map(c => c?.instanceId || null), guestSide)).toEqual(positions);
+        if (baseId === "wood_gitch") {
+          // A synchronized generated Wood must not generate another copy when played.
+          await actor.evaluate(() => {
+            const api = window.__chibattle, generated = api.state.players.player.hand.at(-1);
+            api.playCard(generated.instanceId, "seat", "player", 5);
+          });
+          for (const page of [host, guest]) {
+            const viewSide = page === host ? side : guestSide;
+            await expect.poll(() => page.evaluate(viewSide => {
+              const api = window.__chibattle, own = api.state.players[viewSide];
+              return { hand: own.hand.length, text: own.board.seats[5] ? api.cardRulesText(own.board.seats[5]) : null,
+                effects: api.canUsePrintedCardEffects(own.board.seats[5]) };
+            }, viewSide)).toEqual({ hand: 1, text: "効果なし。", effects: false });
+          }
+        }
       }
     }
     expect(errors).toEqual([]);

@@ -19516,11 +19516,11 @@
         date: "2026年10月5日",
         summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。",
         changes: [
-          { title: "木っち（ぎっち）", before: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。", after: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。" },
-          { title: "技議っち", before: "戦意0、攻撃力1、体力2。進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。", after: "戦意0、攻撃力1、体力4。進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。" },
+          { title: "木っち（ぎっち）", before: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札1枚を選び、「木っち（ぎっち）」に変化させる。このカードは講義を持たない。", after: "戦意3、攻撃力1、体力1。このカードを手札から出席させたとき、自分の手札に効果を持たない「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。" },
+          { title: "技議っち", before: "戦意0、攻撃力1、体力2。進化：「木っち（ぎっち）」から進化する。このカードを手札から出席させたとき、自分の講義室に「木っち（ぎっち）」1人を出席させる。その後、自分の講義室にいる「木っち（ぎっち）」と「技議っち」の数だけ、それらの攻撃力を+1する。「偽魏義ッ血」が破壊される場合、代わりにこのカードを破壊してよい。このカードは講義を持たない。", after: "戦意0、攻撃力1、体力4。進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに効果を持たない「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。" },
           { title: "偽魏義ッ血", before: "戦意7、攻撃力3、体力10。進化：「技議っち」から進化する。このカードを手札から出席させたとき、相手の講義室にいる「デザインデーモンスレイヤー」以外の出席者すべてを破壊する。その後、自分の校外エリアにある「木っち（ぎっち）」と「技議っち」を、可能な限り自分の講義室にヴァンパイアとして出席させる。", after: "戦意8、攻撃力2、体力4。進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。" },
           { title: "怨念", after: "戦意1、トークン。相手本体に2ダメージを与える。" },
-          { title: "効果処理・カードテスト", after: "技議っちの追加出席は空いている席マス・教卓マスからランダムに選びます。旧効果の手札選択、攻撃力強化、破壊の肩代わり、復活を削除しました。AI、オンライン、カードテストを新しい効果に揃えました。" }
+          { title: "効果処理・カードテスト", after: "技議っちの追加出席は空いている席マス・教卓マスからランダムに選びます。木っちと技議っちの効果で生成した木っちは「効果なし。」と表示し、講義も持ちません。オンラインや校外からの回収後も維持し、技議っちへは進化できます。旧効果の手札選択、攻撃力強化、破壊の肩代わり、復活を削除しました。AI、オンライン、カードテストを新しい効果に揃えました。" }
         ]
       },
       {
@@ -22676,6 +22676,10 @@
 
     function isTokenCard(card) {
       return Boolean(card && (card.token === true || CARD_BASES[card.baseId]?.token === true));
+    }
+
+    function createGeneratedWoodGitch(owner) {
+      return { ...createCardFromBase("wood_gitch", owner), generatedWithoutEffects: true };
     }
 
     function canRecoverTrashCard(card) {
@@ -35140,7 +35144,7 @@
     // effect system, so this gate cannot turn off the lock, its protections,
     // or the later 「鍵」 removal path.
     function canUsePrintedCardEffects(card) {
-      return Boolean(card) && !isPadlocked(card);
+      return Boolean(card) && !card.generatedWithoutEffects && !isPadlocked(card);
     }
 
     function attachPadlock(card, item) {
@@ -36160,7 +36164,7 @@
       const drawn = drawUpTo(side, 2);
       let summoned = 0;
       for (let count = 0; count < 2; count += 1) {
-        const card = makeBoardCard(createCardFromBase("wood_gitch", side));
+        const card = makeBoardCard(createGeneratedWoodGitch(side));
         const slots = state.players[side].board.seats
           .map((_entry, index) => ({ zone: "seat", index }))
           .concat({ zone: "teacher", index: null })
@@ -36700,7 +36704,7 @@
         });
       }
       if (card.baseId === "wood_gitch") {
-        state.players[side].hand.push(createCardFromBase("wood_gitch", side));
+        state.players[side].hand.push(createGeneratedWoodGitch(side));
         addLog(`${card.name}の効果：自分の手札に「木っち（ぎっち）」1枚を生成しました。`);
       }
       if (card.baseId === "small_omata") {
@@ -42083,6 +42087,8 @@
       const transformedType = card.transformedType || "";
       const reset = createCardFromBase(card.baseId, owner);
       reset.instanceId = instanceId || reset.instanceId;
+      // Generated effectless variants remain effectless after recovery from 校外.
+      if (card.generatedWithoutEffects) reset.generatedWithoutEffects = true;
       if (isDarkPresident) {
         reset.name = "闇学長";
         reset.cost = 7;
@@ -50393,6 +50399,7 @@
     }
 
     function cardRulesText(card) {
+      if (card.generatedWithoutEffects) return "効果なし。";
       if (card.darkPresident) {
         const text = "このカードが出席したとき、この対戦中、環境「食堂」の効果を得る。このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。";
         return formatCardRulesDisplayText(card, normalizeLectureRoomText(attendanceRuleText(card, text)));
@@ -50582,8 +50589,8 @@
         loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
         small_omata: "このカードは教卓マスにのみ出席できる。このカードを手札から出席させたとき、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。このカードを戦意10で手札から出席させたとき、このカードと自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
         big_omata: "注目と陽気を持つ。自分の席マスすべてを占有し、1人の出席者として扱う。出席した時、相手の講義室の出席者すべては1ターン攻撃できない。",
-        wood_gitch: "このカードを手札から出席させたとき、自分の手札に「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
-        gitch: "進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。",
+        wood_gitch: "このカードを手札から出席させたとき、自分の手札に効果を持たない「木っち（ぎっち）」1枚を生成する。このカードは講義を持たない。",
+        gitch: "進化：「木っち（ぎっち）」。進化したとき、自分のデッキからカードを2枚引く。その後、自分の講義室の空いているマスに効果を持たない「木っち（ぎっち）」を2人までランダムに出席させる。このカードは講義を持たない。",
         gigi_blood: "進化：「技議っち」。進化したとき、自分の手札すべてを「怨念」に変化させる。",
         grudge: "相手本体に2ダメージを与える。",
         green_curry: "環境が「食堂」であり、自分の場にヴァンパイアの出席者がいる場合、このカードの戦意を-3する。相手の出席者すべてを破壊する。",
