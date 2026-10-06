@@ -4,7 +4,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const thinText = "お互いの手札がそれぞれ10枚以下の場合にのみ使用できる。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。";
+const thinText = "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低0。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。";
 const displayText = thinText.replaceAll("。", "。\n").trim();
 
 test.beforeEach(async ({ page }) => page.goto(gameUrl));
@@ -28,7 +28,7 @@ test("細いの本文・台帳・更新情報を合意した文面に揃え、�
   await page.screenshot({ path: test.info().outputPath("thin-item-detail.png") });
 });
 
-test("お互い10枚なら細い自身を含めて使用でき、相手が選んだ4枚を残す", async ({ page }) => {
+test("相手の手札が10枚なら6戦意で使用でき、選んだ4枚を残す", async ({ page }) => {
   for (const side of ["player", "opponent"]) {
     const result = await page.evaluate((side) => {
       const api = window.__chibattle;
@@ -60,13 +60,13 @@ test("お互い10枚なら細い自身を含めて使用でき、相手が選ん
       };
     }, side);
     expect(result).toEqual({
-      playerUsable: true, used: true, choiceOpened: side === "opponent", ownHand: 9, will: 6,
+      playerUsable: true, used: true, choiceOpened: side === "opponent", ownHand: 9, will: 4,
       targetHand: 4, targetDeck: 6, targetTrash: 0, itemInTrash: true, keptChosenCards: true
     });
   }
 });
 
-test("片方でも11枚以上なら双方の使用経路で戦意・手札・デッキを消費しない", async ({ page }) => {
+test("11枚以上でも双方の使用経路で使用できる", async ({ page }) => {
   const results = await page.evaluate(() => {
     const api = window.__chibattle;
     const results = [];
@@ -91,11 +91,12 @@ test("片方でも11枚以上なら双方の使用経路で戦意・手札・デ
     return results;
   });
   for (const result of results) {
-    expect(result, JSON.stringify(result)).toMatchObject({ usable: false, used: false, unchanged: true, pending: false });
+    expect(result, JSON.stringify(result)).toMatchObject({ used: true, unchanged: false });
+    if (result.side === "player") expect(result.usable).toBe(true);
   }
 });
 
-test("使用時効果が封じられていても手札枚数条件を無視できない", async ({ page }) => {
+test("使用時効果が封じられていても動的戦意を支払う", async ({ page }) => {
   const results = await page.evaluate(() => {
     const api = window.__chibattle;
     return [10, 11].map((count) => {
@@ -112,12 +113,12 @@ test("使用時効果が封じられていても手札枚数条件を無視で�
     });
   });
   expect(results).toEqual([
-    { usable: true, used: true, will: 6, hand: 9, targetHand: 10 },
-    { usable: false, used: false, will: 10, hand: 11, targetHand: 10 }
+    { usable: true, used: true, will: 4, hand: 9, targetHand: 10 },
+    { usable: true, used: true, will: 4, hand: 10, targetHand: 10 }
   ]);
 });
 
-test("通常AIとトレーニングAIも11枚以上では選ばず使用できない", async ({ page }) => {
+test("通常AIとトレーニングAIも動的戦意を使う", async ({ page }) => {
   const results = await page.evaluate(() => {
     const api = window.__chibattle;
     return [[11, 10], [10, 11], [10, 10]].map(([ownCount, targetCount]) => {
@@ -133,9 +134,9 @@ test("通常AIとトレーニングAIも11枚以上では選ばず使用でき�
       return { score, leftRejected: leftScore === -Infinity, used, remaining: own.hand.length };
     });
   });
-  expect(results[0]).toEqual({ score: 0, leftRejected: true, used: false, remaining: 11 });
-  expect(results[1]).toEqual({ score: 0, leftRejected: true, used: false, remaining: 10 });
-  expect(results[2].score).toBeGreaterThan(0);
-  expect(results[2].used).toBe(true);
-  expect(results[2].remaining).toBe(9);
+  for (const [index, result] of results.entries()) {
+    expect(result.score).toBeGreaterThan(0);
+    expect(result.used).toBe(true);
+    expect(result.remaining).toBe([10, 9, 9][index]);
+  }
 });
