@@ -107,6 +107,7 @@ async function openChapter(page, chapter) {
   await page.locator("#homeNavSoloButton").click();
   await page.locator("#soloTutorialButton").click();
   await page.locator(`[data-tutorial-chapter="${chapter.id}"]`).click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText(`${chapter.title}：練習を始めよう`);
 }
 
@@ -215,6 +216,7 @@ test("負荷の初期表示と戦意、別の編へ切り替えたときのリ�
   })).toBe(1);
   await page.locator("#tutorialExitButton").click();
   await page.locator('[data-tutorial-chapter="lecture"]').click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("講義編：練習を始めよう");
   expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.map((card) => card.baseId))).toEqual(["general_student", "ruler"]);
 });

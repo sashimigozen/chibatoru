@@ -35,6 +35,7 @@ async function openList(page) {
 async function startBasic(page) {
   await openList(page);
   await page.locator('[data-tutorial-chapter="basic"]').click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("基本編：練習を始めよう");
 }
 
@@ -174,6 +175,7 @@ test("説明を隠してカード確認でき、同じ位置・同じ手順へ�
   await toggle.click();
   await page.locator("#tutorialExitButton").click();
   await page.locator('[data-tutorial-chapter="basic"]').click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#tutorialCoach")).toBeVisible();
   await expect(toggle).toHaveText("説明を隠す");
 });
@@ -193,6 +195,7 @@ test("一つ戻るで出席前の手札と戦意を復元し、終了から一�
   await page.locator("#tutorialExitButton").click();
   await expect(page.locator("#tutorialScreen")).toBeVisible();
   await page.locator('[data-tutorial-chapter="basic"]').click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("基本編：練習を始めよう");
 });
 

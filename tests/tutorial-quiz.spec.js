@@ -234,6 +234,7 @@ test("クイズの説明切替・再挑戦ボタンの固定・終了・基本�
   expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(2);
   await page.locator("#tutorialExitButton").click();
   await page.locator('[data-tutorial-chapter="basic"]').click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("基本編：練習を始めよう");
   expect(await page.evaluate(() => window.__chibattle.state.tutorial.stage)).toBe("practice");
 });

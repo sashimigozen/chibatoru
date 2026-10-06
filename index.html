@@ -206,17 +206,114 @@
       gap: 10px;
     }
 
+    .tutorial-picker {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(32px, 6vw, 80px);
+      height: calc(100dvh - 160px - var(--home-desk-nav-height, 84px));
+      min-height: 390px;
+      padding: 0 14px;
+    }
+
     .tutorial-chapter-list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+      padding: 0 8px 8px 38px;
+      scrollbar-gutter: stable;
     }
 
     .tutorial-chapter-list .solo-mode-button {
-      min-height: 150px;
-      padding: 20px;
+      position: relative;
+      flex: 0 0 auto;
+      min-height: 68px;
+      padding: 14px 12px;
+      align-items: center;
+      justify-items: center;
+      text-align: center;
+      box-shadow: none;
     }
 
-    .tutorial-chapter-list .solo-mode-main {
+    .tutorial-chapter-list .solo-mode-button:hover,
+    .tutorial-chapter-list .solo-mode-button:active {
+      transform: none;
+      box-shadow: none;
+    }
+
+    .tutorial-chapter-list .solo-mode-button.selected {
+      background: #ecfeff;
+      border-color: #0e7490;
+    }
+
+    .tutorial-chapter-marker {
+      position: absolute;
+      left: -36px;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      transform: translateY(-50%);
+      visibility: hidden;
+    }
+
+    .tutorial-chapter-list .selected .tutorial-chapter-marker { visibility: visible; }
+    .tutorial-chapter-list .solo-mode-main { font-size: 22px; }
+
+    .tutorial-detail {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) 64px;
+      min-width: 0;
+      min-height: 0;
+      border: 2px solid #1f2937;
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .tutorial-detail h2 {
+      margin: 0;
+      padding: 14px 20px;
+      border-bottom: 2px solid #1f2937;
       font-size: 22px;
+    }
+
+    .tutorial-detail-main { position: relative; min-height: 0; }
+    .tutorial-overview {
+      height: 100%;
+      overflow-y: auto;
+      padding: 20px 62px 20px 20px;
+    }
+
+    .tutorial-overview-card { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+    #tutorialOverviewCard > .card { width: 126px; height: 192px; flex: none; }
+    .tutorial-overview h3 { margin: 0 0 12px; font-size: 20px; }
+    .tutorial-overview p { margin: 0; color: #475569; font-weight: 800; line-height: 1.8; white-space: pre-line; }
+    .tutorial-stage-switch {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 48px;
+      height: 64px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .tutorial-stage-switch:hover { background: #ecfeff; }
+    .tutorial-stage-switch img { width: 32px; height: 32px; }
+    .tutorial-stage-switch.previous img { transform: rotate(180deg); }
+    .tutorial-detail-footer { display: grid; grid-template-columns: 1fr 40%; border-top: 2px solid #1f2937; }
+    .tutorial-detail-footer .button { grid-column: 2; border: 0; border-left: 2px solid #1f2937; border-radius: 0; box-shadow: none; font-size: 20px; }
+    .tutorial-detail-footer .button:hover, .tutorial-detail-footer .button:active { transform: none; }
+    #tutorialScreen .tutorial-picker button:focus-visible { outline: 3px solid #0e7490; outline-offset: -5px; transform: none; }
+
+    @media (max-width: 1100px) {
+      #tutorialOverviewCard > .card { width: 84px; height: 128px; }
+      .tutorial-overview { padding-top: 12px; padding-bottom: 12px; }
+      .tutorial-overview-card { margin-bottom: 12px; }
+      .tutorial-overview h3 { margin-bottom: 8px; }
     }
 
     @media (min-width: 761px) {
@@ -17750,11 +17847,25 @@
       <div class="screen-head">
         <div>
           <h1>チュートリアル</h1>
-          <p class="subtitle">好きな編を選んでください。基本編以外は、練習のあとにリーサルクイズへ挑戦できます。</p>
+          <p class="subtitle">好きな編とステージを選んでください。</p>
         </div>
         <button class="button secondary" id="tutorialBackHomeButton" type="button">ソロに戻る</button>
       </div>
-      <div class="solo-mode-actions tutorial-chapter-list" id="tutorialChapterList" aria-label="チュートリアル一覧"></div>
+      <div class="tutorial-picker">
+        <div class="tutorial-chapter-list" id="tutorialChapterList" aria-label="チュートリアル一覧"></div>
+        <section class="tutorial-detail" aria-labelledby="tutorialDetailTitle">
+          <h2 id="tutorialDetailTitle" aria-live="polite"></h2>
+          <div class="tutorial-detail-main">
+            <div class="tutorial-overview">
+              <div class="tutorial-overview-card" id="tutorialOverviewCard"></div>
+              <h3 id="tutorialStageTitle"></h3>
+              <p id="tutorialOverviewText"></p>
+            </div>
+            <button class="tutorial-stage-switch" id="tutorialStageSwitch" type="button" aria-label="リーサルクイズへ切り替える"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
+          </div>
+          <div class="tutorial-detail-footer"><button class="button" id="tutorialStartButton" type="button">始める</button></div>
+        </section>
+      </div>
     </section>
 
     <section class="screen deck-screen hidden" id="deckScreen">
@@ -19484,12 +19595,13 @@
       {
         version: "ver.0.23.14",
         date: "2026年10月6日",
-        summary: "AIの出席位置と持ち物の使用判断を改善しました。スターターデッキの削除、講義の仕様変更通知の終了、チュートリアルのリーサルクイズを追加しました。",
+        summary: "AIの出席位置と持ち物の使用判断を改善しました。スターターデッキの削除、講義の仕様変更通知の終了、チュートリアルのリーサルクイズと選択画面を追加しました。",
         changes: [
           { title: "AIの行動判断", after: "環境や場の出席者による継続効果を配置判断へ反映し、持ち物の使用判断を改善しました。左右のAIに適用しています。カードのテキスト・効果は変更していません。" },
           { title: "スターターデッキの削除", after: "保存デッキ一覧からスターターデッキを削除できるようにしました。削除確認後に一覧から除き、再読み込み後も自動で戻りません。所持カードは削除しません。" },
           { title: "講義の仕様変更通知", after: "初回起動時の講義の仕様変更ポップアップを終了しました。教師の攻撃・講義の操作は変更していません。" },
-          { title: "チュートリアルの2ステージ化", after: "基本編はそのままにし、ほかの12編を「練習」と「リーサルクイズ」に分けました。練習の後は専用の手札・盤面からクイズを開始し、各能力を活かして自分のターン中に勝利を目指します。相手のターンへ移ったら失敗となり、「もう一度」で同じ初期状態から再挑戦できます。負荷編も同じ判定です。カードの効果は変更していません。" }
+          { title: "チュートリアルの2ステージ化", after: "基本編はそのままにし、ほかの12編を「練習」と「リーサルクイズ」に分けました。練習の後は専用の手札・盤面からクイズを開始し、各能力を活かして自分のターン中に勝利を目指します。相手のターンへ移ったら失敗となり、「もう一度」で同じ初期状態から再挑戦できます。負荷編も同じ判定です。カードの効果は変更していません。" },
+          { title: "チュートリアルの選択画面", after: "左の一覧で編を選ぶと三角の選択マークが移動し、右側に概要と関連カードを表示します。右の矢印で練習とリーサルクイズを切り替え、「始める」で選んだステージを開始できます。基本編は1ステージです。既存の練習・クイズの内容は変更していません。" }
         ]
       },
       {
@@ -21118,6 +21230,7 @@
       testMode: false,
       testCardBaseId: null,
       testHistory: [],
+      tutorialMenu: { selectedChapterId: "basic", stage: "practice" },
       tutorial: {
         active: false,
         stepIndex: 0,
@@ -21549,6 +21662,22 @@
       { id: "load", title: "負荷編", description: "負荷・高負荷" }
     ].map((chapter) => ({ ...chapter, steps: chapter.steps || TUTORIAL_ABILITY_STEPS[chapter.id] }));
 
+    const TUTORIAL_OVERVIEWS = {
+      basic: { card: "general_student", text: "画面の見方とカードのタイプを確認し、出席や攻撃などの基本操作を練習します。" },
+      placement: { card: "student_comedy", text: "席マス・教卓マスの配置を確認し、出席させる場所による違いを練習します。" },
+      lecture: { card: "general_teacher", text: "教師の[講義]を使い、講義と攻撃の操作を練習します。" },
+      cheerful: { card: "aggro_princess", text: "[陽気]・[超陽気]を持つ出席者で、出席したターンの攻撃を練習します。" },
+      attention: { card: "super_ae_student", text: "[注目]・[超注目]による攻撃対象の違いを練習します。" },
+      late: { card: "eaten_student", text: "[遅刻]を持つカードを使い、遅刻ゾーンから出席するまでを確認します。" },
+      sleepy: { card: "president", text: "[眠気]による行動制限と、その解除を練習します。" },
+      composure: { card: "yuta", text: "[余裕]の条件と、発動したときの効果を確認します。" },
+      equipment: { card: "earphones", text: "出席者に装備カードをつけ、装備の効果を確認します。" },
+      drain: { card: "apprentice_vampire", text: "[吸血]によるダメージと体力の回復を練習します。" },
+      evolution: { card: "dark_yuta", text: "[進化]・[特殊進化]の操作と、進化前から引き継ぐ状態を確認します。" },
+      fusion: { card: "double_diamond", text: "手札のカードを[融合]し、生成されたカードを使う操作を練習します。" },
+      load: { card: "white_student", text: "手札の[負荷]・[高負荷]と、ターン開始時に受けるダメージを確認します。" }
+    };
+
     const elements = {
       appRoot: document.getElementById("appRoot"),
       dungeonInteriorBackdrop: document.getElementById("dungeonInteriorBackdrop"),
@@ -21641,6 +21770,12 @@
       homeTutorialButton: document.getElementById("homeTutorialButton"),
       tutorialBackHomeButton: document.getElementById("tutorialBackHomeButton"),
       tutorialChapterList: document.getElementById("tutorialChapterList"),
+      tutorialDetailTitle: document.getElementById("tutorialDetailTitle"),
+      tutorialStageTitle: document.getElementById("tutorialStageTitle"),
+      tutorialOverviewText: document.getElementById("tutorialOverviewText"),
+      tutorialOverviewCard: document.getElementById("tutorialOverviewCard"),
+      tutorialStageSwitch: document.getElementById("tutorialStageSwitch"),
+      tutorialStartButton: document.getElementById("tutorialStartButton"),
       onlineMenuHead: document.getElementById("onlineMenuHead"),
       onlineBackHomeButton: document.getElementById("onlineBackHomeButton"),
       onlineMatchActions: document.getElementById("onlineMatchActions"),
@@ -42974,12 +43109,38 @@
 
     function renderTutorial() {
       if (state.screen !== "tutorial" || !elements.tutorialChapterList) return;
-      elements.tutorialChapterList.innerHTML = TUTORIAL_CHAPTERS.map((chapter, index) => `
-        <button class="solo-mode-button${chapter.steps ? "" : " coming-soon"}" type="button" data-tutorial-chapter="${escapeHtml(chapter.id)}" ${chapter.steps ? "" : "disabled"}>
-          <span class="solo-mode-title"><span class="solo-mode-main">${index + 1}. ${escapeHtml(chapter.title)}</span></span>
-          <span class="solo-mode-sub">${escapeHtml(chapter.description)}${chapter.id === "basic" ? "" : "／ステージ1：練習・ステージ2：リーサルクイズ"}${chapter.steps ? "" : "（準備中）"}</span>
-        </button>
-      `).join("");
+      // 行を保持し、選択しても一覧のスクロール位置とキーボードフォーカスを動かさない。
+      if (!elements.tutorialChapterList.children.length) {
+        elements.tutorialChapterList.innerHTML = TUTORIAL_CHAPTERS.map((chapter, index) => `
+          <button class="solo-mode-button" type="button" data-tutorial-chapter="${escapeHtml(chapter.id)}" aria-pressed="false" ${chapter.steps ? "" : "disabled"}>
+            <img class="tutorial-chapter-marker" src="assets/tutorial/caret-right.svg" alt="">
+            <span class="solo-mode-title"><span class="solo-mode-main">${index + 1}. ${escapeHtml(chapter.title)}</span></span>
+          </button>
+        `).join("");
+      }
+      const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === state.tutorialMenu.selectedChapterId) || TUTORIAL_CHAPTERS[0];
+      const quiz = chapter.id !== "basic" && state.tutorialMenu.stage === "quiz";
+      elements.tutorialChapterList.querySelectorAll("[data-tutorial-chapter]").forEach((button) => {
+        const selected = button.dataset.tutorialChapter === chapter.id;
+        button.classList.toggle("selected", selected);
+        button.setAttribute("aria-pressed", String(selected));
+      });
+      elements.tutorialDetailTitle.textContent = `${chapter.title} ${quiz ? 2 : 1}/${chapter.id === "basic" ? 1 : 2}`;
+      elements.tutorialStageTitle.textContent = quiz ? "リーサルクイズ" : "練習";
+      const overview = TUTORIAL_OVERVIEWS[chapter.id];
+      elements.tutorialOverviewText.textContent = quiz
+        ? `${chapter.description}を活かして、勝利を目指そう！\n相手のターンになったら失敗です。`
+        : overview.text;
+      elements.tutorialStageSwitch.classList.toggle("hidden", chapter.id === "basic");
+      elements.tutorialStageSwitch.classList.toggle("previous", quiz);
+      elements.tutorialStageSwitch.setAttribute("aria-label", quiz ? "練習へ切り替える" : "リーサルクイズへ切り替える");
+      elements.tutorialStartButton.disabled = !chapter.steps;
+      if (elements.tutorialOverviewCard.dataset.card !== overview.card) {
+        const card = makePreviewCard(overview.card, "player");
+        elements.tutorialOverviewCard.innerHTML = `<div class="card deck-window-card ${card.type}" data-tutorial-card="${overview.card}" aria-label="${escapeHtml(card.name)}">${cardTemplate(card, false)}</div>`;
+        elements.tutorialOverviewCard.dataset.card = overview.card;
+        scheduleCardTemplateScaleSync();
+      }
     }
 
     function onlineRandomDeckDisplayName(descriptor = onlineLocalDeckDescriptor()) {
@@ -49607,6 +49768,7 @@
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === chapterId);
       if (!chapter?.steps) return;
       const quiz = chapterId !== "basic" && options.stage === "quiz";
+      state.tutorialMenu = { selectedChapterId: chapterId, stage: quiz ? "quiz" : "practice" };
       if (state.online.role || state.online.started) onlineCloseConnection(false);
       resetBattleDrawers();
       closeTeacherActionChoice();
@@ -51461,7 +51623,21 @@
     elements.tutorialBackHomeButton.addEventListener("click", showSoloMenu);
     elements.tutorialChapterList.addEventListener("click", (event) => {
       const button = event.target.closest("[data-tutorial-chapter]");
-      if (button && !button.disabled) startTutorialBattle(button.dataset.tutorialChapter);
+      if (!button || button.disabled) return;
+      if (state.tutorialMenu.selectedChapterId !== button.dataset.tutorialChapter) {
+        state.tutorialMenu = { selectedChapterId: button.dataset.tutorialChapter, stage: "practice" };
+      }
+      hideBattleCardPreview();
+      renderTutorial();
+    });
+    elements.tutorialStageSwitch.addEventListener("click", () => {
+      if (state.tutorialMenu.selectedChapterId === "basic") return;
+      state.tutorialMenu.stage = state.tutorialMenu.stage === "quiz" ? "practice" : "quiz";
+      hideBattleCardPreview();
+      renderTutorial();
+    });
+    elements.tutorialStartButton.addEventListener("click", () => {
+      startTutorialBattle(state.tutorialMenu.selectedChapterId, { stage: state.tutorialMenu.stage });
     });
     elements.tutorialBackStepButton.addEventListener("click", goBackTutorialStep);
     elements.tutorialNextButton.addEventListener("click", advanceTutorialTextStep);
