@@ -15896,6 +15896,13 @@
       box-shadow: 0 5px 12px rgba(18, 54, 82, 0.26), inset 0 0 0 2px rgba(255, 255, 255, 0.32) !important;
     }
 
+    .battle-screen .seat-grid > .multi-seat-layer > .field-card.board-card.multi-seat-board-card.click-ready,
+    .battle-screen .seat-grid > .multi-seat-layer > .field-card.board-card.multi-seat-board-card.drop-ready,
+    .battle-screen .seat-grid > .multi-seat-layer > .field-card.board-card.multi-seat-board-card.drag-over {
+      border-color: #2379c8 !important;
+      box-shadow: 0 0 0 3px rgba(68, 151, 226, .7), 0 0 16px rgba(74, 159, 234, .45) !important;
+    }
+
     .battle-screen .seat-grid > .multi-seat-layer > .multi-seat-board-card .field-card-art-name {
       inset: 28px 15px 30px !important;
       font-size: clamp(15px, 1.4vw, 27px) !important;
@@ -19595,14 +19602,15 @@
       {
         version: "ver.0.23.14",
         date: "2026年10月6日",
-        summary: "AIの出席位置と持ち物の使用判断を改善しました。スターターデッキの削除、講義の仕様変更通知の終了、チュートリアルのリーサルクイズと選択画面を追加しました。",
+        summary: "AIの出席位置と持ち物の使用判断を改善しました。スターターデッキの削除、講義の仕様変更通知の終了、チュートリアルのリーサルクイズと選択画面を追加しました。複数マスの出席者への持ち物の対象選択を修正しました。",
         changes: [
           { title: "AIの行動判断", after: "環境や場の出席者による継続効果を配置判断へ反映し、持ち物の使用判断を改善しました。左右のAIに適用しています。カードのテキスト・効果は変更していません。" },
           { title: "スターターデッキの削除", after: "保存デッキ一覧からスターターデッキを削除できるようにしました。削除確認後に一覧から除き、再読み込み後も自動で戻りません。所持カードは削除しません。" },
           { title: "講義の仕様変更通知", after: "初回起動時の講義の仕様変更ポップアップを終了しました。教師の攻撃・講義の操作は変更していません。" },
           { title: "チュートリアルの2ステージ化", after: "基本編はそのままにし、ほかの12編を「練習」と「リーサルクイズ」に分けました。練習の後は専用の手札・盤面からクイズを開始し、各能力を活かして自分のターン中に勝利を目指します。相手のターンへ移ったら失敗となり、「もう一度」で同じ初期状態から再挑戦できます。負荷編も同じ判定です。カードの効果は変更していません。" },
           { title: "チュートリアルの選択画面", after: "左の一覧で編を選ぶと三角の選択マークが移動し、右側に概要と関連カードを表示します。右の矢印で練習とリーサルクイズを切り替え、「始める」で選んだステージを開始できます。基本編は1ステージです。" },
-          { title: "リーサルクイズの手札", after: "12編のリーサルクイズに、そのターンの勝利には不要な引っ掛けのカードを各1枚追加しました。正解に必要な手札・戦意・盤面は維持し、基本編と練習、カード自体のテキスト・効果は変更していません。" }
+          { title: "リーサルクイズの手札", after: "12編のリーサルクイズに、そのターンの勝利には不要な引っ掛けのカードを各1枚追加しました。正解に必要な手札・戦意・盤面は維持し、基本編と練習、カード自体のテキスト・効果は変更していません。" },
+          { title: "複数マスの出席者", after: "複数マスを使う出席者も、持ち物をドラッグして対象にできるよう修正しました。ダブルダイヤモンドクロスの追加ダメージが同じ出席者へ重複しないようにし、単体の変化・移動効果で占有マスが残る問題を解消しました。カード本文は変更していません。" }
         ]
       },
       {
@@ -39092,6 +39100,7 @@
         const previousName = target.name;
         const transformed = transformToSuitStudent(target);
         if (!transformed) return false;
+        clearBoardCardFromField(targetOwner, targetZone, targetIndex, target);
         setBoardCard(targetOwner, targetZone, targetIndex, transformed);
         recordSuitStudentAttendance(transformed);
         moveHandCardToTrash(side, item);
@@ -39103,7 +39112,7 @@
       }
       if (item.baseId === "vampirization") {
         const movedCard = prepareVampirizedCard(target, side);
-        setBoardCard(targetOwner, targetZone, targetIndex, null);
+        clearBoardCardFromField(targetOwner, targetZone, targetIndex, target);
         moveHandCardToTrash(side, item);
         // The local player (and an online guest represented as "opponent" on
         // the host) chooses the destination.  Only the offline AI should
@@ -39124,7 +39133,7 @@
       }
       if (item.baseId === "go_home") {
         const returnedBaseId = target.baseId;
-        setBoardCard(targetOwner, targetZone, targetIndex, null);
+        clearBoardCardFromField(targetOwner, targetZone, targetIndex, target);
         state.players[side].hand.push(createCardFromBase(returnedBaseId, side));
         moveHandCardToTrash(side, item);
         addLog(`${SIDES[side]}は帰っていいぞを使い、${target.name}を手札に戻しました。`);
@@ -39183,10 +39192,12 @@
         addLog(`${SIDES[side]}はお手製C to Cを使い、${target.name}は相手の場に同名の出席者がいるかぎり攻撃できなくなりました。`);
       }
       if (item.baseId === "double_diamond") {
-        const adjacent = adjacentBoardTargets(targetOwner, targetZone, targetIndex)
+        const occupiedIndexes = targetZone === "seat" ? (target.occupiedSeatIndexes || [targetIndex]) : [];
+        const adjacent = occupiedIndexes.flatMap((index) => adjacentBoardTargets(targetOwner, targetZone, index))
           .find((ref) => {
             const adjacentTarget = getBoardCardFromRef(ref);
-            return adjacentTarget && isAllowedEffectTarget(side, adjacentTarget);
+            return adjacentTarget && adjacentTarget.instanceId !== target.instanceId
+              && isAllowedEffectTarget(side, adjacentTarget);
           });
         const hits = [{ ref: { owner: targetOwner, zone: targetZone, index: targetIndex }, card: target, amount: 4 }];
         if (adjacent) hits.push({ ref: adjacent, card: getBoardCardFromRef(adjacent), amount: 2 });
@@ -44483,6 +44494,11 @@
           slot.classList.toggle("placement-invalid", !valid);
         }
       });
+      document.querySelectorAll(".multi-seat-board-card[data-owner][data-index]").forEach((boardCard) => {
+        if (canDropHandCardOnSlot(card, "seat", boardCard.dataset.owner, Number(boardCard.dataset.index))) {
+          boardCard.classList.add("drop-ready");
+        }
+      });
       document.querySelectorAll("[data-life-target]").forEach((target) => {
         if (canDropHandCardOnLife(card, target.dataset.lifeTarget)) target.classList.add("drop-ready");
       });
@@ -45101,6 +45117,22 @@
           firstCandidate ||= candidate;
           continue;
         }
+        const multiSeatCard = element.closest?.(".multi-seat-board-card[data-owner][data-index]");
+        if (multiSeatCard) {
+          const owner = multiSeatCard.dataset.owner;
+          const index = Number(multiSeatCard.dataset.index);
+          const candidate = {
+            type: "slot",
+            element: multiSeatCard,
+            owner,
+            zone: "seat",
+            index,
+            valid: canDropHandCardOnSlot(card, "seat", owner, index)
+          };
+          if (candidate.valid) return candidate;
+          firstCandidate ||= candidate;
+          continue;
+        }
         const slot = element.closest?.(".slot");
         if (slot) {
           const index = slot.dataset.index === "" ? null : Number(slot.dataset.index);
@@ -45506,6 +45538,8 @@
         const cols = positions.map((position) => (position % 3) + 1);
         const boardCard = createBoardCard(card, owner, "seat", anchor);
         boardCard.classList.add("multi-seat-board-card", `multi-seat-${card.occupiedSeatSize.rows}x${card.occupiedSeatSize.cols}`);
+        boardCard.dataset.owner = owner;
+        boardCard.dataset.index = String(anchor);
         boardCard.dataset.occupiedSeats = occupiedIndexes.join(",");
         boardCard.style.gridRow = `${Math.min(...rows)} / ${Math.max(...rows) + 1}`;
         boardCard.style.gridColumn = `${Math.min(...cols)} / ${Math.max(...cols) + 1}`;
@@ -46210,19 +46244,7 @@
         if (!activeHandDrag?.instanceId) return;
         const card = getDraggedHandCard();
         if (!card) return;
-        const target = document.elementFromPoint(event.clientX, event.clientY);
-        if (!target) return;
-        const slot = target.closest(".slot");
-        const life = target.closest("[data-life-target]");
-        const hand = target.closest(".player-hand");
-        const valid = slot
-          ? canDropHandCardOnSlot(card, slot.dataset.zone, slot.dataset.owner || null, slot.dataset.index === "" ? null : Number(slot.dataset.index))
-          : life
-            ? canDropHandCardOnLife(card, life.dataset.lifeTarget)
-            : hand
-              ? true
-              : Boolean(target.closest(".playmat") && canDropHandCardOnPlaymat(card));
-        if (valid) event.preventDefault();
+        if (findHandDropTargetAtPoint(event.clientX, event.clientY, card)?.valid) event.preventDefault();
       };
       document.ondrop = (event) => {
         if (!activeHandDrag?.instanceId) return;
