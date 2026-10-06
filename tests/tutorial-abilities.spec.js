@@ -125,7 +125,7 @@ const snapshot = (page) => page.evaluate(() => {
 });
 
 for (const chapter of chapters) {
-  test(`${chapter.title}：通常操作・結果・一つ戻る・自由な勝利・一覧へ戻る`, async ({ page }) => {
+  test(`${chapter.title}：練習・結果・一つ戻る・クイズへの遷移・失敗と再挑戦`, async ({ page }) => {
     test.setTimeout(60000);
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
@@ -138,7 +138,7 @@ for (const chapter of chapters) {
       await expect.poll(() => layout(page)).toEqual(fixed);
       await expect(page.locator("#tutorialCoachText")).not.toContainText(/今回は|練習用|気力が2/);
       if (chapter.id === "evolution") await expect(page.locator("#tutorialCoachTitle")).not.toHaveText("特殊進化のつながり");
-      if (title === "自由にプレイしよう") break;
+      if (title === "リーサルクイズに挑戦しよう") break;
       const action = chapter.actions[title];
       if (!action) {
         await expect(page.locator("#tutorialNextButton")).toBeVisible();
@@ -164,7 +164,7 @@ for (const chapter of chapters) {
       completedActions += 1;
     }
     expect(completedActions).toBe(Object.keys(chapter.actions).length);
-    await expect(page.locator("#tutorialCoachTitle")).toHaveText("自由にプレイしよう");
+    await expect(page.locator("#tutorialCoachTitle")).toHaveText("リーサルクイズに挑戦しよう");
     await expect.poll(async () => chapter.check(await page.evaluate(() => ({
       players: window.__chibattle.state.players, environment: window.__chibattle.state.environment
     })))).toBe(true);
@@ -175,13 +175,19 @@ for (const chapter of chapters) {
       expect(damageLogs.filter((line) => line.includes("[高負荷]") && line.includes("2ダメージ"))).toHaveLength(2);
       expect(damageLogs.join("\n")).not.toMatch(/定規|食堂/);
     }
-    await expect(page.locator("#tutorialCoachText")).toContainText("ここからは自由にプレイして、勝利を目指そう！");
+    await expect(page.locator("#tutorialCoachText")).toContainText("相手のターンになったら失敗");
     await page.screenshot({ path: test.info().outputPath(`${chapter.id}.png`) });
     await page.locator("#tutorialNextButton").click();
-    await expect(page.locator("#tutorialLayer")).toBeHidden();
-    await slot(page, "player", "seat", 8).click();
-    await page.locator("#opponentLifeTarget").click({ force: true });
-    await expect(page.locator("#resultOverlay")).toContainText("勝利");
+    await expect(page.locator("#tutorialCoachTitle")).toHaveText(`${chapter.title}：リーサルクイズ`);
+    await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
+    const initial = await snapshot(page);
+    await page.locator("#endTurnButton").click();
+    await expect(page.locator("#resultOverlay")).toContainText("失敗");
+    expect(await page.evaluate(() => window.__chibattle.state.players.opponent.turnsTaken)).toBe(0);
+    await page.locator("[data-result-tutorial-retry]").click();
+    await expect(page.locator("#tutorialCoachTitle")).toHaveText(`${chapter.title}：リーサルクイズ`);
+    expect(await snapshot(page)).toEqual(initial);
+    await page.locator("#endTurnButton").click();
     await page.locator("[data-result-tutorial-back]").click();
     await expect(page.locator("#tutorialScreen")).toBeVisible();
     expect(errors).toEqual([]);
