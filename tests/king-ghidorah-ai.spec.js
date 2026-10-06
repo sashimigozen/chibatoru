@@ -9,22 +9,24 @@ async function chooseAndUse(page, scenario) {
     const api = window.__chibattle;
     api.startCardTest("king_ghidorah_bed");
     const { state } = api;
-    state.currentSide = "opponent";
+    const owner = scenario.side || "opponent";
+    const foe = owner === "opponent" ? "player" : "opponent";
+    state.currentSide = owner;
     state.actionTurn = 10;
     state.environment = null;
     state.noAttackUntilActionTurn = 0;
     state.gameOver = false;
     state.battleRuleId = scenario.chaos ? "chaos" : "normal";
     for (const side of ["player", "opponent"]) {
-      Object.assign(state.players[side], { life: 20, will: 4, maxWill: 4, hand: [], deck: [], trash: [], late: [], turnsTaken: 5 });
+      Object.assign(state.players[side], { life: 20, will: 4, maxWill: 4, hand: [], deck: [], trash: [], late: [], turnsTaken: scenario.turn ?? 5 });
       state.players[side].board = { teacher: null, seats: Array(9).fill(null) };
     }
-    state.players.player.life = scenario.enemyLife ?? 20;
-    state.players.opponent.life = scenario.aiLife ?? 20;
-    state.players.opponent.will = scenario.will ?? 4;
-    state.players.opponent.deck = Array.from({ length: scenario.deckCount ?? 5 }, () => api.createCardFromBase("general_student", "opponent"));
-    const item = api.createCardFromBase("king_ghidorah_bed", "opponent");
-    state.players.opponent.hand = [item, ...(scenario.discards ?? ["key"]).map(id => api.createCardFromBase(id, "opponent"))];
+    state.players[foe].life = scenario.enemyLife ?? 20;
+    state.players[owner].life = scenario.aiLife ?? 20;
+    state.players[owner].will = scenario.will ?? 4;
+    state.players[owner].deck = Array.from({ length: scenario.deckCount ?? 5 }, () => api.createCardFromBase("general_student", owner));
+    const item = api.createCardFromBase("king_ghidorah_bed", owner);
+    state.players[owner].hand = [item, ...(scenario.discards ?? ["key"]).map(id => api.createCardFromBase(id, owner))];
     function place(entries, side) {
       entries.forEach((entry, index) => {
         const card = api.makeBoardCard(api.createCardFromBase(entry.id || "general_student", side));
@@ -38,18 +40,18 @@ async function chooseAndUse(page, scenario) {
         state.players[side].board.seats[index] = card;
       });
     }
-    place(scenario.enemies || [], "player");
-    place(scenario.friends || [], "opponent");
+    place(scenario.enemies || [], foe);
+    place(scenario.friends || [], owner);
     const before = JSON.stringify(state.players);
     const plan = api.planAiKingGhidorahBed(item);
     const planDoesNotMutate = before === JSON.stringify(state.players);
-    const used = api.useAiItem(item);
+    const used = owner === "opponent" ? api.useAiItem(item) : api.useTrainingYocchanItem(owner, item);
     return {
       mode: plan.effectMode, target: plan.targetRef?.index ?? null, discard: plan.discard?.baseId ?? null,
-      used, planDoesNotMutate, life: state.players.player.life,
-      remaining: state.players.player.board.seats.filter(Boolean).length,
-      enemyTrash: state.players.player.trash.map(c => c.baseId),
-      will: state.players.opponent.will, gameOver: state.gameOver
+      used, score: plan.score, planDoesNotMutate, life: state.players[foe].life,
+      remaining: state.players[foe].board.seats.filter(Boolean).length,
+      enemyTrash: state.players[foe].trash.map(c => c.baseId),
+      will: state.players[owner].will, gameOver: state.gameOver
     };
   }, scenario);
 }
@@ -92,7 +94,8 @@ test("次のドローでデッキ切れになる場合は次ターンのリー�
 
 test("注目や本体攻撃不可をリーサルの打点に含めない", async ({ page }) => {
   const blocked = await chooseAndUse(page, { enemyLife: 6, enemies: [{ hp: 7, attack: 0, attention: true }], friends: [{ hp: 7, attack: 8 }] });
-  expect(blocked.mode).toBe("2");
+  // The ready attacker can safely remove this lone blocker without spending the item.
+  expect(blocked.used).toBe(false);
   const bird = await chooseAndUse(page, { enemyLife: 6, enemies: [{ id: "protein_drinker", hp: 7, attack: 2 }], friends: [{ id: "happy_blue_bird", used: true }] });
   expect(bird.mode).toBe("2");
 });
@@ -102,9 +105,9 @@ test("防御で倒せない出席者の数だけで効果1を選ばず、南京�
   expect(result).toMatchObject({ mode: "2", target: 2 });
 });
 
-test("捨てる手札がなければ効果2を選ばない", async ({ page }) => {
+test("捨てる手札がなく、2ダメージで危険な1人を処理できないなら温存する", async ({ page }) => {
   const result = await chooseAndUse(page, { discards: [], enemies: [{ id: "protein_drinker", hp: 7, attack: 5 }] });
-  expect(result).toMatchObject({ mode: "1", used: true });
+  expect(result).toMatchObject({ mode: "1", used: false });
 });
 
 test("戦意8以上は全効果を使い、全体ダメージで残る対象を破壊する", async ({ page }) => {
@@ -116,3 +119,53 @@ test("カオスの戦意0でも盤面評価を使う", async ({ page }) => {
   const result = await chooseAndUse(page, { chaos: true, will: 0, enemies: Array(3).fill({ hp: 2, attack: 1 }) });
   expect(result).toMatchObject({ mode: "1", used: true, remaining: 0, will: 0 });
 });
+
+for (const side of ["player", "opponent"]) {
+  for (const will of [4, 8]) {
+    test(`${side}: 戦意${will}でも普通の弱い1人には温存する`, async ({ page }) => {
+      const result = await chooseAndUse(page, { side, will, enemies: [{ hp: 2, attack: 1 }] });
+      expect(result).toMatchObject({ used: false, score: 0, life: 20, will, planDoesNotMutate: true });
+    });
+  }
+  test(`${side}: 出席者がいなければ本体への小削りに浪費しない`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side })).toMatchObject({ used: false, score: 0 });
+  });
+  test(`${side}: 強い1人を他に処理できなければ破壊する`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, enemies: [{ hp: 5, attack: 6 }] }))
+      .toMatchObject({ mode: "2", used: true, remaining: 0, planDoesNotMutate: true });
+  });
+  test(`${side}: 安い処理札があればキングギドラベッドを残す`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, discards: ["double_diamond"], enemies: [{ hp: 4, attack: 6 }] }))
+      .toMatchObject({ used: false, remaining: 1 });
+  });
+  test(`${side}: 1人でも進化元のミジンコは全体ダメージで処理する`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, enemies: [{ id: "midge", hp: 2, attack: 0 }] }))
+      .toMatchObject({ mode: "1", used: true, remaining: 0 });
+  });
+  test(`${side}: 高体力の進化元は破壊を優先する`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, enemies: [{ id: "bird_a", hp: 4, attack: 0 }] }))
+      .toMatchObject({ mode: "2", used: true, remaining: 0 });
+  });
+  test(`${side}: 終盤の攻撃力3・体力3の1人も放置しない`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, turn: 8, enemies: [{ hp: 3, attack: 3 }] }))
+      .toMatchObject({ mode: "2", used: true, remaining: 0 });
+  });
+  test(`${side}: 次ターンの敗北を防ぐなら小さな1人でも処理する`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, aiLife: 1, enemies: [{ hp: 2, attack: 1 }] }))
+      .toMatchObject({ mode: "1", used: true, remaining: 0 });
+  });
+  test(`${side}: 本体ダメージで今勝てるなら温存しない`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, enemyLife: 4 }))
+      .toMatchObject({ mode: "3", used: true, life: 0, gameOver: true });
+  });
+  test(`${side}: 並んだ3人は全体ダメージで処理する`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, enemies: Array(3).fill({ hp: 2, attack: 1 }) }))
+      .toMatchObject({ mode: "1", used: true, remaining: 0 });
+  });
+  test(`${side}: 全効果でTRPGを失うなら敵の強化をリーサルに数えない`, async ({ page }) => {
+    expect(await chooseAndUse(page, { side, will: 8, enemyLife: 8,
+      enemies: Array(2).fill({ id: "trpg_member", hp: 1, attack: 0 }),
+      friends: [{ id: "enemy_student", hp: 3, attack: 6 }] }))
+      .toMatchObject({ used: false, life: 8, remaining: 2 });
+  });
+}

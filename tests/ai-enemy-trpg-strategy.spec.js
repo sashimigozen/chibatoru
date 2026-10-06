@@ -244,7 +244,7 @@ test("TRPGが次ターンの敗北原因になる場合は最後の1人でも処
   ]);
 });
 
-test("キングギドラベッドは全TRPGを倒して敵を弱くする全体ダメージより本体ダメージを選ぶ", async ({ page }) => {
+test("キングギドラベッドはリーサルでなければ温存し、TRPGと敵の強化を維持する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const fixture = window.__aiEnemyTest;
@@ -269,8 +269,8 @@ test("キングギドラベッドは全TRPGを倒して敵を弱くする全体�
     });
   });
   expect(result).toEqual([
-    { side: "player", used: true, life: 16, trpgCount: 2, attack: 6 },
-    { side: "opponent", used: true, life: 16, trpgCount: 2, attack: 6 }
+    { side: "player", used: false, life: 20, trpgCount: 2, attack: 6 },
+    { side: "opponent", used: false, life: 20, trpgCount: 2, attack: 6 }
   ]);
 });
 

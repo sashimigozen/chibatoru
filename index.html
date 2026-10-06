@@ -19513,6 +19513,14 @@
     const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.14",
+        date: "2026年10月6日",
+        summary: "AIの出席位置と持ち物の使用判断を改善しました。",
+        changes: [
+          { title: "AIの行動判断", after: "環境や場の出席者による継続効果を配置判断へ反映し、持ち物の使用判断を改善しました。左右のAIに適用しています。カードのテキスト・効果は変更していません。" }
+        ]
+      },
+      {
         version: "ver.0.23.13",
         date: "2026年10月5日",
         summary: "木っち（ぎっち）・技議っち・偽魏義ッ血の効果を変更し、トークンの怨念を追加しました。ハンディジェットエンジンに自分の手札を送る効果を追加しました。学生お笑いを使うAIの判断を改善しました。",
@@ -29066,18 +29074,27 @@
           return { card, zone: "environment", owner: null, index: null };
         }
         if (card.type === "teacher" && canPlaceCard(side, card, "teacher", side, null)) {
-          return { card, zone: "teacher", owner: side, index: null };
+          const placements = [{ card, zone: "teacher", owner: side, index: null,
+            score: 20 + scoreAiPlacementAuras(side, card, "teacher", null) }];
+          for (const index of AI_SEAT_PRIORITY.filter((index) => canPlaceCard(side, card, "seat", side, index))) {
+            placements.push({ card, zone: "seat", owner: side, index,
+              score: scoreAiPlacementAuras(side, card, "seat", index) });
+          }
+          return placements.sort((a, b) => b.score - a.score)[0];
         }
         if (card.baseId === "student_comedy") {
           const seats = AI_SEAT_PRIORITY
             .filter((index) => canPlaceCard(side, card, "seat", side, index))
             .map((index) => ({ card, zone: "seat", owner: side, index,
-              ...scoreAiStudentComedyPlacement(side, card, index) }))
+              score: scoreAiStudentComedyPlacement(side, card, index).score
+                + scoreAiPlacementAuras(side, card, "seat", index) }))
             .sort((a, b) => b.score - a.score);
           if (seats[0]) return aiStudentComedySetupMove(side, seats[0]) || seats[0];
         }
         const seatPriority = card.baseId === "back_question_student" ? [6, 7, 8] : AI_SEAT_PRIORITY;
-        const seatIndex = seatPriority.find((index) => canPlaceCard(side, card, "seat", side, index));
+        const seatIndex = seatPriority.filter((index) => canPlaceCard(side, card, "seat", side, index))
+          .map((index) => ({ index, score: scoreAiPlacementAuras(side, card, "seat", index) }))
+          .sort((a, b) => b.score - a.score)[0]?.index;
         if (seatIndex !== undefined) return { card, zone: "seat", owner: side, index: seatIndex };
         if (card.baseId === "back_question_student") continue;
         if (canPlaceCard(side, card, "teacher", side, null)) return { card, zone: "teacher", owner: side, index: null };
@@ -29143,14 +29160,7 @@
       if (item.baseId === "panpan") {
         return planAiPanpan(side, item).score || -Infinity;
       }
-      if (item.baseId === "king_ghidorah_bed") {
-        const removed = targets.filter(({ card }) => previewFinalDamageToCard(card, 2, item) >= card.currentHp).map(({ card }) => card);
-        if (ai.will >= 8 && aiEnemyTrpgRemovalPenalty(side, removed) > 0
-          && aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 }).expected < ai.life) return -Infinity;
-        const dangerous = targets.length >= 4
-          || targets.some(({ card }) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3);
-        return ai.turnsTaken >= 8 || dangerous ? 50 + crabDefenseBonus + deckOutDefenseBonus : -Infinity;
-      }
+      if (item.baseId === "king_ghidorah_bed") return planAiKingGhidorahBed(item, side).score || -Infinity;
       if (item.baseId === "yabe") {
         if (!targets.length) return -Infinity;
         const damage = yabeDamageAmount();
@@ -29196,34 +29206,9 @@
     }
 
     function useTrainingYocchanKingGhidorah(side, item) {
-      const ai = state.players[side];
-      const targetSide = oppositeSide(side);
-      const forcedAll = ai.will >= 8;
-      const targetEntries = kingGhidorahBedPreselectionTargets(side, item, forcedAll ? "all" : "2")
-        .filter(({ card }) => !aiShouldPreserveEnemyTrpg(side, card))
-        .sort((a, b) => ((b.card.attack || 0) * 2 + (b.card.currentHp || 0))
-          - ((a.card.attack || 0) * 2 + (a.card.currentHp || 0)));
-      const target = targetEntries[0] || null;
-      const discard = kingGhidorahBedDiscardCandidates(side, item)
-        .filter((card) => card.baseId !== "yocchan" && !isAiProtectedCrabCard(side, card))
-        .sort((a, b) => {
-          const aUsedTrpg = a.baseId === "trpg_member" && aiHasUsedTrpgMember(side) ? -100 : 0;
-          const bUsedTrpg = b.baseId === "trpg_member" && aiHasUsedTrpgMember(side) ? -100 : 0;
-          const aUnusable = a.unusable ? -50 : 0;
-          const bUnusable = b.unusable ? -50 : 0;
-          return aUsedTrpg + aUnusable + effectiveCardCost(a)
-            - (bUsedTrpg + bUnusable + effectiveCardCost(b));
-        })[0] || null;
-      let mode = forcedAll ? "all" : "3";
-      if (!forcedAll) {
-        const defeated = kingGhidorahBedTargetEntries(side)
-          .filter(({ card }) => previewFinalDamageToCard(card, 2, item) >= card.currentHp).map(({ card }) => card);
-        const lowHpTargets = aiEnemyTrpgRemovalPenalty(side, defeated) > 0 ? 0 : defeated.length;
-        if (state.players[targetSide].life <= 4) mode = "3";
-        else if (lowHpTargets >= 2) mode = "1";
-        else if (target && discard) mode = "2";
-      }
-      return resolveKingGhidorahBed(side, item, mode, discard?.instanceId || null, target?.ref || null, false);
+      const plan = planAiKingGhidorahBed(item, side);
+      return plan.score > 0 && resolveKingGhidorahBed(side, item, plan.effectMode,
+        plan.discard?.instanceId || null, plan.targetRef, false);
     }
 
     function useTrainingYocchanItem(side, item) {
@@ -29720,39 +29705,40 @@
       return Math.max(0.48, 0.9 - Math.min(4, defenders) * 0.055 - Math.min(3, removalCards) * 0.09);
     }
 
-    function getAiLethalForecast() {
-      const ai = state.players.opponent;
-      const player = state.players.player;
+    function getAiLethalForecast(side = "opponent") {
+      const targetSide = oppositeSide(side);
+      const ai = state.players[side];
+      const player = state.players[targetSide];
       const aiNextWill = Math.min(10, ai.maxWill + 1);
       const playerNextWill = Math.min(10, player.maxWill + 1);
-      const currentBoard = aiBoardFaceDamage("opponent", { readyOnly: true });
-      const immediateDirectDamage = aiAffordableDirectLifeDamage("opponent", ai.will);
+      const currentBoard = aiBoardFaceDamage(side, { readyOnly: true });
+      const immediateDirectDamage = aiAffordableDirectLifeDamage(side, ai.will);
       const immediateMaxDamage = currentBoard.max + immediateDirectDamage;
       const immediateExpectedDamage = currentBoard.expected + immediateDirectDamage;
 
-      const aiFutureBoard = aiBoardFaceDamage("opponent", { futureActionTurn: state.actionTurn + 2 });
-      const playerFutureBoard = aiBoardFaceDamage("player", { futureActionTurn: state.actionTurn + 1 });
-      const aiSurvival = aiBoardSurvivalFactor("opponent");
+      const aiFutureBoard = aiBoardFaceDamage(side, { futureActionTurn: state.actionTurn + 2 });
+      const playerFutureBoard = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 });
+      const aiSurvival = aiBoardSurvivalFactor(side);
       const projectedNextTurnDamage = aiFutureBoard.expected * aiSurvival
-        + aiAffordableHandFaceBurst("opponent", aiNextWill)
-        + aiExpectedDeckFaceBurst("opponent", 1);
+        + aiAffordableHandFaceBurst(side, aiNextWill)
+        + aiExpectedDeckFaceBurst(side, 1);
       const projectedFollowingTurnDamage = aiFutureBoard.expected * aiSurvival * 0.75
-        + aiExpectedDeckFaceBurst("opponent", 2);
+        + aiExpectedDeckFaceBurst(side, 2);
       const ownNextTurnDamage = immediateExpectedDamage + projectedNextTurnDamage;
       const ownTwoTurnDamage = ownNextTurnDamage
         + projectedFollowingTurnDamage;
       // Counter-lethal is evaluated from the board that is actually left alive.
       // Discounting it by a generic removal chance made the AI race into visible lethal.
       const opponentNextTurnDamage = playerFutureBoard.expected
-        + aiAffordableHandFaceBurst("player", playerNextWill)
-        + aiExpectedDeckFaceBurst("player", 1);
+        + aiAffordableHandFaceBurst(targetSide, playerNextWill)
+        + aiExpectedDeckFaceBurst(targetSide, 1);
 
-      const opponentHealingRisk = aiAffordableLifeHealing("player", playerNextWill)
-        + aiExpectedDeckHealing("player", 1)
-        + aiEndTurnHealing("player");
-      const ownEmergencyHealing = aiAffordableLifeHealing("opponent", ai.will) + aiEndTurnHealing("opponent");
-      const protectionAvailable = aiHasAffordableFaceProtection("opponent", ai.will);
-      const protectionActive = listAttentionCards("opponent").length > 0;
+      const opponentHealingRisk = aiAffordableLifeHealing(targetSide, playerNextWill)
+        + aiExpectedDeckHealing(targetSide, 1)
+        + aiEndTurnHealing(targetSide);
+      const ownEmergencyHealing = aiAffordableLifeHealing(side, ai.will) + aiEndTurnHealing(side);
+      const protectionAvailable = aiHasAffordableFaceProtection(side, ai.will);
+      const protectionActive = listAttentionCards(side).length > 0;
       // Healing and Attention in hand only count after the AI actually commits them.
       const opponentCounterLethal = opponentNextTurnDamage >= ai.life;
       const effectiveEnemyLife = player.life + opponentHealingRisk;
@@ -29929,6 +29915,7 @@
     }
 
     function adjustAiItemScoreForContext(item, score, timing) {
+      if (item.baseId === "king_ghidorah_bed" && score <= 0) return 0;
       const crabPlan = getAiCrabVictoryPlan("opponent");
       if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return 0;
       if (score <= 0 && !isAiYocchanHyperCarryStrategyActive()) return 0;
@@ -30004,14 +29991,6 @@
         const yocchans = aiYocchanCardsInHand();
         const turn = Number(state.players.opponent.turnsTaken) || 0;
         const enemyCards = context.enemyCards;
-        if (item.baseId === "king_ghidorah_bed") {
-          const dangerousBoard = enemyCards.length >= 4
-            || context.enemyAttackTotal >= Math.max(6, context.ownLife * 0.6)
-            || enemyCards.some((card) => (card.currentHp || 0) >= 6 && (card.attack || 0) >= 3)
-            || lethalForecast.opponentCounterLethal;
-          if (turn < 8 && !dangerousBoard) return 0;
-          if (turn >= 8) adjusted += 18;
-        }
         if (yocchans.length === 0) {
           if (isAiDrawItem(item)) adjusted += timing === "beforeBoard" ? 24 : 16;
           return Math.max(0, adjusted);
@@ -30159,7 +30138,9 @@
         if (student.instanceId === move.card.instanceId || student.baseId === "student_comedy"
           || student.type !== "student" || student.evolutionFrom || effectiveCardCost(student) > remainingWill) continue;
         const index = surroundingIndexes(move.index)
-          .find((seatIndex) => canPlaceCard(side, student, "seat", side, seatIndex));
+          .filter((seatIndex) => canPlaceCard(side, student, "seat", side, seatIndex))
+          .map((seatIndex) => ({ index: seatIndex, score: scoreAiPlacementAuras(side, student, "seat", seatIndex) }))
+          .sort((a, b) => b.score - a.score)[0]?.index;
         if (index !== undefined) return { card: student, zone: "seat", owner: side, index };
       }
       return null;
@@ -30180,6 +30161,7 @@
       const friendlyRefs = context.friendlyRefs;
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
       let score = bodyScore + (zone === "seat" ? 2 : 0);
+      score += scoreAiPlacementAuras("opponent", card, zone, index);
       if (["student", "teacher", "vampire"].includes(card.type)) {
         const boardNeed = aiBoardNeedScore(context);
         score += boardNeed;
@@ -30377,6 +30359,79 @@
         president: enemyRefs.length * 2.5
       };
       return score + (teacherBonuses[card.baseId] || 0);
+    }
+
+    function scoreAiPlacementAuras(side, card, zone, index) {
+      if (!["seat", "teacher"].includes(zone) || !["student", "teacher", "vampire"].includes(card.type)) return 0;
+      const livePlayers = state.players;
+      const clones = new Map();
+      const cloneCard = (fieldCard) => {
+        if (!fieldCard) return null;
+        if (!clones.has(fieldCard)) clones.set(fieldCard, { ...fieldCard });
+        return clones.get(fieldCard);
+      };
+      // Reuse the game's actual aura calculation on temporary boards. No
+      // attendance triggers, cleanup, animations, logs or live stat changes.
+      state.players = Object.fromEntries(["player", "opponent"].map((owner) => [owner, {
+        ...livePlayers[owner], board: {
+          teacher: cloneCard(livePlayers[owner].board.teacher),
+          seats: livePlayers[owner].board.seats.map(cloneCard)
+        }
+      }]));
+      try {
+        recalculateBoardAuras();
+        const value = (fieldCard) => Math.max(0, fieldCard.attack || 0) * 3
+          + Math.max(0, fieldCard.currentHp || 0) * 2 + Math.max(0, fieldCard.defense || 0);
+        const before = new Map(["player", "opponent"].flatMap((owner) => listBoardRefs(owner)
+          .map((ref) => {
+            const fieldCard = getBoardCardFromRef(ref);
+            return [fieldCard.instanceId, { value: value(fieldCard), hp: fieldCard.currentHp,
+              drowsy: hasKeyword(fieldCard, "眠気"), ready: canAttackSilently(fieldCard)
+                && !hasKeyword(fieldCard, "眠気") && !isSameNameAttackLocked(fieldCard) }];
+          })));
+        const preview = makeBoardCard({ ...card, owner: side });
+        const baseValue = value(preview);
+        if (state.environment?.baseId === "academic_move") {
+          preview.keywords = [...(preview.keywords || []), "超陽気"];
+          preview.academicMoveMarked = true;
+        }
+        if (zone === "seat") {
+          if (preview.occupiedSeatSize) placeMultiSeatCard(side, index, preview);
+          else state.players[side].board.seats[index] = preview;
+        } else state.players[side].board.teacher = preview;
+        recalculateBoardAuras();
+        let score = value(preview) - baseValue;
+        if (preview.currentHp <= 0) score -= 100;
+        if (hasKeyword(preview, "眠気")) score -= Math.max(2, preview.attack || 0);
+        const ready = canAttackSilently(preview) && !isSameNameAttackLocked(preview);
+        if (ready && aiCanCardTargetLife(preview, side) && canAiLethalAttackerHitLife(preview, oppositeSide(side))) {
+          const damage = Math.max(0, preview.attack || 0) * aiAttackHitFactor(preview);
+          score += damage * 3;
+          if (!hasKeyword(preview, "眠気")
+            && aiBoardFaceDamage(side, { readyOnly: true }).guaranteed >= state.players[oppositeSide(side)].life) score += 1000;
+        }
+        if (preview.academicMoveMarked && !ready) score -= 40 + baseValue;
+        if (state.environment?.baseId === "door_war" && preview.currentHp <= previewFinalDamageToCard(preview, 1, state.environment)) score -= 18;
+        for (const owner of ["player", "opponent"]) {
+          for (const ref of listBoardRefs(owner)) {
+            const fieldCard = getBoardCardFromRef(ref);
+            const old = before.get(fieldCard.instanceId);
+            if (!old || fieldCard.instanceId === preview.instanceId) continue;
+            let delta = value(fieldCard) - old.value;
+            if (old.hp > 0 && fieldCard.currentHp <= 0) delta -= 60;
+            if (old.drowsy !== hasKeyword(fieldCard, "眠気")) {
+              delta += (old.drowsy ? 1 : -1) * Math.max(0, fieldCard.attack || 0) * (old.ready ? 3 : 1);
+            }
+            const nowReady = canAttackSilently(fieldCard) && !hasKeyword(fieldCard, "眠気")
+              && !isSameNameAttackLocked(fieldCard);
+            if (old.ready !== nowReady) delta += (nowReady ? 1 : -1) * Math.max(0, fieldCard.attack || 0) * 3;
+            score += owner === side ? delta : -delta;
+          }
+        }
+        return score;
+      } finally {
+        state.players = livePlayers;
+      }
     }
 
     function scoreAiPreferredPlacement(card, zone, index, context) {
@@ -30942,28 +30997,83 @@
       return 0;
     }
 
-    function planAiKingGhidorahBed(item) {
-      const ai = state.players.opponent;
-      const enemy = state.players.player;
+    function aiHasAlternativeKingGhidorahRemoval(side, item, entry) {
+      const { card: target, ref } = entry;
+      const targetSide = oppositeSide(side);
+      if (planAiGuaranteedEndTurnEffectKills(side).targetIds.has(target.instanceId)) return true;
+      const priorityIds = new Set(listAttackPriorityCards(targetSide).map((card) => card.instanceId));
+      if (listBoardRefs(side).some((ownRef) => {
+        const attacker = getBoardCardFromRef(ownRef);
+        if (!canAttackSilently(attacker) || isSameNameAttackLocked(attacker) || hasKeyword(attacker, "眠気")) return false;
+        if (canTeacherChooseLecture(ownRef) && lectureTargetEntries(side, attacker)
+          .some((targetEntry) => targetEntry.card.instanceId === target.instanceId)
+          && previewFinalDamageToCard(target, 1, attacker, {
+            ignoreWeakness: attacker.baseId === "lightning_n", damageKind: "lecture"
+          }) >= target.currentHp) return true;
+        return (attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(target.instanceId))
+          && canAiLethalAttackerDefeatCard(attacker, target)
+          && (aiAttackCounterDamage(attacker, target) < attacker.currentHp || effectiveCardCost(attacker) <= effectiveCardCost(item));
+      })) return true;
+      if (arePlayedEffectsSuppressed(side)) return false;
+      return state.players[side].hand.some((other) => {
+        if (other.instanceId === item.instanceId || other.baseId === "king_ghidorah_bed" || other.unusable
+          || effectiveCardCost(other) > Math.min(state.players[side].will, effectiveCardCost(item))) return false;
+        const plan = planAiNonCombatItem(side, other);
+        if (plan?.target?.card.instanceId === target.instanceId) {
+          if (TARGETED_DESTROY_ITEM_IDS.has(other.baseId)) return true;
+          const damage = { ruler: 1, double_diamond: 4, laser_beam: 5 }[other.baseId] || 0;
+          return aiCanPredictEffectRemoval(target)
+            && previewFinalDamageToCard(target, damage, other) + (other.baseId === "illness" ? 1 : 0) >= target.currentHp;
+        }
+        if (other.baseId === "green_curry") return aiCanPredictEffectRemoval(target, { destroy: true });
+        if (other.baseId === "panpan") return planAiPanpan(side, other).enemy?.card.instanceId === target.instanceId;
+        if (!canUsePrintedCardEffects(other)) return false;
+        // Only count a random attendance removal when the target is certain.
+        const legalTargets = effectTargetEntries(side, targetSide,
+          (card, targetRef) => other.baseId !== "chen_san" || targetRef.zone === "seat");
+        if (["chen_san", "bird_a"].includes(other.baseId) && legalTargets.length === 1
+          && legalTargets[0].card.instanceId === target.instanceId && aiCanPredictEffectRemoval(target, { destroy: true })) {
+          return AI_SEAT_PRIORITY.some((index) => canPlaceCard(side, other, "seat", side, index));
+        }
+        if (other.baseId === "back_question_student" && ref.zone === "teacher"
+          && previewFinalDamageToCard(target, 4, other) >= target.currentHp) {
+          return [6, 7, 8].some((index) => canPlaceCard(side, other, "seat", side, index));
+        }
+        const teacherDamage = other.baseId === "president" ? 3
+          : ["kyoto_sound_i", "bird_a"].includes(other.baseId) ? 2 : 0;
+        if (teacherDamage && (other.baseId !== "kyoto_sound_i" || target.type === "student")
+          && (other.baseId !== "bird_a" || (ref.zone === "seat" && seatRow(ref.index) === 1))
+          && aiCanPredictEffectRemoval(target) && previewFinalDamageToCard(target, teacherDamage, other) >= target.currentHp
+          && canPlaceCard(side, other, "teacher", side, null)) return true;
+        return false;
+      });
+    }
+
+    function planAiKingGhidorahBed(item, side = item?.owner || "opponent") {
+      const targetSide = oppositeSide(side);
+      const ai = state.players[side];
+      const enemy = state.players[targetSide];
       const forcedAll = ai.will >= 8;
-      const forecast = getAiLethalForecast();
+      const hold = { effectMode: forcedAll ? "all" : "1", discard: null, targetRef: null, score: 0 };
+      if (item.unusable || effectiveCardCost(item) > ai.will || arePlayedEffectsSuppressed(side)) return hold;
+      const forecast = getAiLethalForecast(side);
       const discardValue = (card) => 1 + effectiveCardCost(card) * 0.5
         + Math.max(0, card.attack || 0) * 0.3
         + Math.max(0, card.hp || 0) * 0.15
         + (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) ? 8 : 0)
         + (card.baseId === "ultimate_yuta" ? 100 : 0)
-        + (isAiProtectedCrabCard("opponent", card) ? 200 : 0)
-        + (isAiYocchanHyperCarryStrategyActive() && card.baseId === "yocchan" ? 100 : 0)
-        + (isAiYocchanHyperCarryStrategyActive() && aiHasUsedTrpgMember() && card.baseId === "trpg_member" ? -30 : 0);
-      const discard = kingGhidorahBedDiscardCandidates("opponent", item)
-        .filter((card) => !isAiProtectedCrabCard("opponent", card))
+        + (isAiProtectedCrabCard(side, card) ? 200 : 0)
+        + (isAiYocchanHyperCarryStrategyActive(side) && card.baseId === "yocchan" ? 100 : 0)
+        + (isAiYocchanHyperCarryStrategyActive(side) && aiHasUsedTrpgMember(side) && card.baseId === "trpg_member" ? -30 : 0);
+      const discard = kingGhidorahBedDiscardCandidates(side, item)
+        .filter((card) => !isAiProtectedCrabCard(side, card))
         .sort((a, b) => discardValue(a) - discardValue(b))[0] || null;
       const damageKills = (card) => previewFinalDamageToCard(card, 2, item) >= card.currentHp
         && !(card.baseId === "rebirth_student" && !card.rebirthUsed && canUsePrintedCardEffects(card));
       const threatValue = (card, ref) => Math.max(0, scoreAiEnemyAttendeeThreat(card, ref))
         + (card.baseId === "protein_drinker" && canUsePrintedCardEffects(card) ? 6 : 0);
-      const enemyEntries = listBoardRefs("player").map(ref => ({ ref, card: getBoardCardFromRef(ref) })).filter(entry => entry.card);
-      const destroyTargets = kingGhidorahBedTargetEntries("opponent")
+      const enemyEntries = listBoardRefs(targetSide).map(ref => ({ ref, card: getBoardCardFromRef(ref) })).filter(entry => entry.card);
+      const destroyTargets = kingGhidorahBedTargetEntries(side)
         .filter(({ card }) => !isPadlocked(card))
         .filter(({ card }) => !forcedAll || !damageKills(card));
       // 本体へ攻撃できないカードや攻撃不可は、次手番の打点に数えない。
@@ -30973,52 +31083,76 @@
           || (state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= turn)) return 0;
         return Math.max(0, card.attack || 0) * aiAttackHitFactor(card);
       };
-      const incomingDamage = enemyEntries.reduce((total, { card }) => total + futureFaceDamage(card, "player", state.actionTurn + 1), 0);
-      const removesCounterLethal = (removedDamage) => incomingDamage >= ai.life
+      const scheduledKills = planAiGuaranteedEndTurnEffectKills(side).targetIds;
+      const incomingDamage = enemyEntries.filter(({ card }) => !scheduledKills.has(card.instanceId))
+        .reduce((total, { card }) => total + futureFaceDamage(card, targetSide, state.actionTurn + 1), 0);
+      const removesCounterLethal = (removedDamage) => forecast.opponentCounterLethal && incomingDamage >= ai.life
         && incomingDamage - removedDamage < ai.life;
-      const targetChoices = discard ? destroyTargets.map(({ ref, card }) => ({
+      const urgent = ({ ref, card }) => removesCounterLethal(futureFaceDamage(card, targetSide, state.actionTurn + 1))
+        || (canUsePrintedCardEffects(card) && (
+          Object.values(CARD_BASES).some((base) => base.evolutionFrom === card.baseId)
+          || ["ttb", "proliferating_enemy", "cynical_student", "tissue_distributor", "pro_k", "protein_drinker", "aggro_queen", "rear_queen"].includes(card.baseId)
+        ))
+        || (card.currentHp >= 3 && card.attack >= (ai.turnsTaken >= 7 ? 3 : 4))
+        || (ref.zone === "teacher" && card.type === "teacher" && card.attack >= 3);
+      const needsRemoval = (entry) => !scheduledKills.has(entry.card.instanceId)
+        && !aiShouldPreserveEnemyTrpg(side, entry.card)
+        && urgent(entry) && !aiHasAlternativeKingGhidorahRemoval(side, item, entry);
+      const targetChoices = discard ? destroyTargets.filter(needsRemoval).map(({ ref, card }) => ({
         ref, card,
         score: 4 + scoreAiDestroyTarget(card, ref) * 0.35 - discardValue(discard)
-          + (removesCounterLethal(futureFaceDamage(card, "player", state.actionTurn + 1)) ? 60 : 0)
+          + (removesCounterLethal(futureFaceDamage(card, targetSide, state.actionTurn + 1)) ? 60 : 0)
       })).sort((a, b) => b.score - a.score) : [];
       const target = targetChoices[0] || null;
       let removedAttack = 0;
       let aoeScore = enemyEntries.reduce((total, { ref, card }) => {
         const damage = Math.min(Math.max(0, card.currentHp), previewFinalDamageToCard(card, 2, item));
-        if (damage <= 0) return total;
+        if (damage <= 0 || scheduledKills.has(card.instanceId)) return total;
         const killed = damageKills(card);
-        if (killed) removedAttack += futureFaceDamage(card, "player", state.actionTurn + 1);
+        if (killed) removedAttack += futureFaceDamage(card, targetSide, state.actionTurn + 1);
         return total + damage * 0.65 + (killed ? 4 + threatValue(card, ref) : 0);
       }, 0);
-      aoeScore -= aiEnemyTrpgRemovalPenalty("opponent", enemyEntries.filter(({ card }) => damageKills(card)).map(({ card }) => card));
+      aoeScore -= aiEnemyTrpgRemovalPenalty(side, enemyEntries.filter(({ card }) => damageKills(card)).map(({ card }) => card));
       if (removesCounterLethal(removedAttack)) aoeScore += 60;
-      if (forcedAll) return { effectMode: "all", discard, targetRef: target?.ref || null, score: 18 + aoeScore + Math.max(0, target?.score || 0) };
+      const affected = enemyEntries.filter(({ card }) => !scheduledKills.has(card.instanceId) && previewFinalDamageToCard(card, 2, item) > 0);
+      const valuableAoe = affected.length >= 2 || affected.some((entry) => damageKills(entry.card) && needsRemoval(entry));
 
-      const readyFaceDamage = aiReadyAttackersForLethal()
-        .filter(({ card }) => aiCanCardTargetLife(card, "opponent") && canAiLethalAttackerHitLife(card))
-        .reduce((total, { card }) => total + Math.max(0, card.attack || 0), 0);
+      const forcedAllLosesTrpgAura = forcedAll && enemyEntries.some(({ card }) => card.baseId === "trpg_member")
+        && enemyEntries.filter(({ card }) => card.baseId === "trpg_member")
+          .every(({ card }) => damageKills(card) || target?.card.instanceId === card.instanceId);
+      const attackAfterEffects = (card) => Math.max(0, (card.attack || 0)
+        - (forcedAllLosesTrpgAura && enemyStudentTrpgAuraActive(card) ? 5 : 0));
+      const readyFaceDamage = listBoardRefs(side).map(getBoardCardFromRef)
+        .filter((card) => canAttackSilently(card) && !hasKeyword(card, "眠気") && !isSameNameAttackLocked(card)
+          && aiCanCardTargetLife(card, side) && canAiLethalAttackerHitLife(card, targetSide))
+        .reduce((total, card) => total + attackAfterEffects(card), 0);
       const remainingHand = ai.hand.filter(card => card.instanceId !== item.instanceId);
       const remainingWill = Math.max(0, ai.will - effectiveCardCost(item));
-      const otherDirectDamage = aiMaximizeHandValue(remainingHand, remainingWill, card => aiDirectLifeDamageValue(card, "opponent"));
+      const otherDirectDamage = aiMaximizeHandValue(remainingHand, remainingWill, card => aiDirectLifeDamageValue(card, side));
       const immediateLethal = 4 + readyFaceDamage + otherDirectDamage >= enemy.life;
-      const nextBoardDamage = listBoardRefs("opponent")
+      const nextBoardDamage = listBoardRefs(side)
         .map(ref => getBoardCardFromRef(ref)).filter(Boolean)
-        .reduce((total, card) => total + futureFaceDamage(card, "opponent", state.actionTurn + 2), 0)
-        * aiBoardSurvivalFactor("opponent");
+        .reduce((total, card) => total + (futureFaceDamage(card, side, state.actionTurn + 2) > 0
+          ? attackAfterEffects(card) * aiAttackHitFactor(card) : 0), 0)
+        * aiBoardSurvivalFactor(side);
       // 手札の直接ダメージは現在・次ターンで二重計上せず、未確定のトップドローにも頼らない。
-      const nextDirectDamage = aiMaximizeHandValue(remainingHand, Math.min(10, ai.maxWill + 1), card => aiDirectLifeDamageValue(card, "opponent"));
+      const nextDirectDamage = aiMaximizeHandValue(remainingHand, Math.min(10, ai.maxWill + 1), card => aiDirectLifeDamageValue(card, side));
       const nextDrawCount = isChaosBattle() ? Math.max(0, 5 - remainingHand.length) : 1;
-      const canReachNextTurn = ai.deck.length >= nextDrawCount || courseRegistrationRemainingTurns("opponent") > 0;
+      const canReachNextTurn = ai.deck.length >= nextDrawCount || courseRegistrationRemainingTurns(side) > 0;
       const nextTurnLethal = canReachNextTurn && !forecast.opponentCounterLethal
         && 4 + readyFaceDamage + nextBoardDamage + nextDirectDamage >= enemy.life + forecast.opponentHealingRisk;
+      if (forcedAll) return { effectMode: "all", discard, targetRef: target?.ref || null,
+        score: immediateLethal ? 1000 : (valuableAoe || target || nextTurnLethal)
+          ? 18 + aoeScore + Math.max(0, target?.score || 0) : 0 };
       if (immediateLethal || nextTurnLethal) return {
         effectMode: "3", discard: null, targetRef: null,
         score: immediateLethal ? 1000 : 60
       };
       const choices = [
-        { effectMode: "1", score: aoeScore, targetRef: null, discard: null },
-        ...(target ? [{ effectMode: "2", score: target.score, targetRef: target.ref, discard }] : []),
-        { effectMode: "3", score: enemyEntries.length > 0 ? 0.5 : 6, targetRef: null, discard: null }
+        { effectMode: "1", score: valuableAoe ? aoeScore : 0, targetRef: null, discard: null },
+        ...(target ? [{ effectMode: "2", score: damageKills(target.card) && valuableAoe && aoeScore > 0
+          ? Math.min(target.score, aoeScore - 1) : target.score, targetRef: target.ref, discard }] : []),
+        hold
       ];
       return choices.sort((a, b) => b.score - a.score)[0];
     }
@@ -31069,7 +31203,7 @@
       }
       if (item.baseId === "king_ghidorah_bed") {
         const plan = planAiKingGhidorahBed(item);
-        return resolveKingGhidorahBed("opponent", item, plan.effectMode, plan.discard?.instanceId || null, plan.targetRef, false);
+        return plan.score > 0 && resolveKingGhidorahBed("opponent", item, plan.effectMode, plan.discard?.instanceId || null, plan.targetRef, false);
       }
       if (item.baseId === "full_throttle") {
         const discardable = state.players.opponent.hand
@@ -51665,6 +51799,7 @@
       aiGreenCurryBoardAssessment,
       chooseAiMulliganReturnIds,
       scoreAiPlacement,
+      scoreAiPlacementAuras,
       scoreAiStudentComedyPlacement,
       scoreAiItem,
       shouldAiUseItemAtTiming,
