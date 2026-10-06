@@ -19601,7 +19601,8 @@
           { title: "スターターデッキの削除", after: "保存デッキ一覧からスターターデッキを削除できるようにしました。削除確認後に一覧から除き、再読み込み後も自動で戻りません。所持カードは削除しません。" },
           { title: "講義の仕様変更通知", after: "初回起動時の講義の仕様変更ポップアップを終了しました。教師の攻撃・講義の操作は変更していません。" },
           { title: "チュートリアルの2ステージ化", after: "基本編はそのままにし、ほかの12編を「練習」と「リーサルクイズ」に分けました。練習の後は専用の手札・盤面からクイズを開始し、各能力を活かして自分のターン中に勝利を目指します。相手のターンへ移ったら失敗となり、「もう一度」で同じ初期状態から再挑戦できます。負荷編も同じ判定です。カードの効果は変更していません。" },
-          { title: "チュートリアルの選択画面", after: "左の一覧で編を選ぶと三角の選択マークが移動し、右側に概要と関連カードを表示します。右の矢印で練習とリーサルクイズを切り替え、「始める」で選んだステージを開始できます。基本編は1ステージです。既存の練習・クイズの内容は変更していません。" }
+          { title: "チュートリアルの選択画面", after: "左の一覧で編を選ぶと三角の選択マークが移動し、右側に概要と関連カードを表示します。右の矢印で練習とリーサルクイズを切り替え、「始める」で選んだステージを開始できます。基本編は1ステージです。" },
+          { title: "リーサルクイズの手札", after: "12編のリーサルクイズに、そのターンの勝利には不要な引っ掛けのカードを各1枚追加しました。正解に必要な手札・戦意・盤面は維持し、基本編と練習、カード自体のテキスト・効果は変更していません。" }
         ]
       },
       {
@@ -49701,37 +49702,38 @@
     }
 
     function setupTutorialQuiz(chapterId) {
-      // 既存カードだけで解ける固定問題。配列の先頭がデッキの一番上。
+      // 既存カードだけで解ける固定問題。手札の末尾は、このターンの勝利に不要な引っ掛け1枚。
+      // 正解の手札・戦意・盤面は維持する。配列の先頭がデッキの一番上。
       const quizzes = {
-        placement: { will: 5, life: 6, hand: ["student_comedy", "general_teacher"],
+        placement: { will: 5, life: 6, hand: ["student_comedy", "general_teacher", "general_student"],
           board: [["player", "general_student", "seat", 3], ["player", "general_student", "seat", 5]] },
-        lecture: { will: 3, life: 7, hand: ["general_teacher", "general_student"],
+        lecture: { will: 3, life: 7, hand: ["general_teacher", "general_student", "diligent_student"],
           board: [["player", "strong_student", "seat", 4],
             ["opponent", "ae_student", "seat", 0, { damage: 3 }], ["opponent", "ae_student", "seat", 2, { damage: 3 }]] },
-        cheerful: { will: 4, life: 3, hand: ["zombie", "aggro_princess"],
+        cheerful: { will: 4, life: 3, hand: ["zombie", "aggro_princess", "general_student"],
           board: [["player", "general_student", "seat", 8], ["opponent", "ae_student", "seat", 0, { damage: 2 }]] },
-        attention: { will: 2, life: 7, hand: ["ruler", "ruler"],
+        attention: { will: 2, life: 7, hand: ["ruler", "ruler", "general_student"],
           board: [["player", "strong_student", "seat", 4], ["player", "general_student", "seat", 8],
             ["opponent", "super_ae_student", "seat", 0], ["opponent", "ae_student", "seat", 2, { damage: 2 }]] },
-        late: { will: 10, life: 3, hand: ["eaten_student", "no_late_time"],
+        late: { will: 10, life: 3, hand: ["eaten_student", "no_late_time", "hurried_student"],
           board: [["opponent", "general_student", "seat", 0], ["opponent", "general_teacher", "teacher", null]] },
-        sleepy: { will: 5, life: 7, hand: ["seriously_hit", "general_student"],
+        sleepy: { will: 5, life: 7, hand: ["seriously_hit", "general_student", "diligent_student"],
           board: [["player", "strong_student", "seat", 4], ["opponent", "president", "teacher", null]] },
         // 前の自分ターン終了時に余裕で回復したU太。回復した1点で反撃を耐えられる。
-        composure: { will: 4, life: 2, hand: ["destructive_lie", "bento"], deck: ["ruler", "ruler"],
+        composure: { will: 4, life: 2, hand: ["destructive_lie", "bento", "general_student"], deck: ["ruler", "ruler"],
           board: [["player", "yuta", "seat", 4, { damage: 2, composureRecovery: true }],
             ["opponent", "college_student_vibe", "seat", 0]] },
-        equipment: { will: 2, life: 2, hand: ["earphones", "red_happi"],
+        equipment: { will: 2, life: 2, hand: ["earphones", "red_happi", "general_student"],
           board: [["player", "yuta", "seat", 4, { justAttended: true }], ["player", "general_student", "seat", 8],
             ["opponent", "college_student_vibe", "seat", 0]] },
-        drain: { will: 4, life: 2, hand: ["destructive_lie", "bento"], deck: ["ruler", "ruler"],
+        drain: { will: 4, life: 2, hand: ["destructive_lie", "bento", "general_student"], deck: ["ruler", "ruler"],
           board: [["player", "apprentice_vampire", "seat", 4, { damage: 1 }],
             ["opponent", "college_student_vibe", "seat", 0, { damage: 1 }]] },
-        evolution: { will: 1, life: 5, hand: ["dark_yuta", "single_cell"],
+        evolution: { will: 1, life: 5, hand: ["dark_yuta", "single_cell", "aggro_student"],
           board: [["player", "yuta", "seat", 4], ["player", "single_cell", "seat", 0],
             ["opponent", "super_ae_student", "seat", 2, { damage: 1 }]] },
-        fusion: { will: 2, life: 4, hand: ["ruler", "ruler"] },
-        load: { will: 9, life: 4, hand: ["grudge", "ruler", "full_throttle", "yocchan"], loads: [2, 1, 0, 0],
+        fusion: { will: 2, life: 4, hand: ["ruler", "ruler", "general_student"] },
+        load: { will: 9, life: 4, hand: ["grudge", "ruler", "full_throttle", "yocchan", "general_student"], loads: [2, 1, 0, 0, 0],
           board: [["opponent", "super_ae_student", "seat", 0, { damage: 1 }]] }
       };
       const quiz = quizzes[chapterId];
