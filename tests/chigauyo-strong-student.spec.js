@@ -4,8 +4,8 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const chigauyoText = "お互いの最大戦意がそれぞれ10の場合にのみ使用できる。お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、それぞれデッキからカードを4枚引く。";
-const chigauyoDisplay = chigauyoText.replace("使用できる。", "使用できる。\n");
+const chigauyoText = "お互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。";
+const chigauyoDisplay = chigauyoText;
 
 test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
@@ -47,12 +47,13 @@ test("デッキ詳細の本文・戦意表示と同日ver.0.23.12の更新情報
   await expect(entry).toHaveCount(1);
   await expect(entry.locator("summary")).toContainText("ver.0.23.12");
   await entry.locator("summary").click();
-  for (const card of cards) {
+  for (const card of cards.filter((entry) => entry.id === "annoying_na")) {
     await expect(entry.locator(".update-change", { hasText: card.title })).toContainText(card.text.replaceAll("\n", ""));
   }
+  await expect(page.locator(".update-entry", { hasText: "2026年10月6日" })).toContainText("ちがうよのドロー枚数");
 });
 
-test("ちがうよは両者の最大戦意が10のときだけ使え、残り戦意では判定しない", async ({ page }) => {
+test("ちがうよは最大戦意に関係なく使える", async ({ page }) => {
   const results = await page.evaluate(() => {
     const api = window.__chibattle;
     return ["player", "opponent"].flatMap((side) => [[9, 10], [10, 9], [11, 10], [10, 11], [10, 10]].map(([ownMax, otherMax]) => {
@@ -66,9 +67,9 @@ test("ちがうよは両者の最大戦意が10のときだけ使え、残り戦
       own.will = 3;
       target.will = 0;
       own.hand = [item];
-      const usable = side === "player" ? api.canUseHandCardNow(item) : ownMax === 10 && otherMax === 10;
+      target.hand = [api.createCardFromBase("general_student", other), api.createCardFromBase("ruler", other)];
+      const usable = side === "player" ? api.canUseHandCardNow(item) : true;
       const before = JSON.stringify(api.state.players);
-      if (side === "player" && (ownMax !== 10 || otherMax !== 10)) api.beginItemUse(item);
       const used = api.castImmediateItem(side, item, false);
       return { ownMax, otherMax, usable, used, will: own.will,
         unchanged: before === JSON.stringify(api.state.players),
@@ -76,13 +77,12 @@ test("ちがうよは両者の最大戦意が10のときだけ使え、残り戦
     }));
   });
   for (const result of results) {
-    const allowed = result.ownMax === 10 && result.otherMax === 10;
-    expect(result).toMatchObject({ usable: allowed, used: allowed, will: allowed ? 0 : 3, unchanged: !allowed });
-    if (allowed) expect(result.hands).toEqual([4, 4]);
+    expect(result).toMatchObject({ usable: true, used: true, will: 0, unchanged: false });
+    expect(result.hands).toEqual([1, 1]);
   }
 });
 
-test("ちがうよの最大戦意条件は効果封印中・通常AI・トレーニングAIでも有効", async ({ page }) => {
+test("ちがうよは効果封印中・通常AI・トレーニングAIでも最大戦意を条件にしない", async ({ page }) => {
   const results = await page.evaluate(() => {
     const api = window.__chibattle;
     return [false, true].flatMap((suppressed) => [[9, 10], [10, 9], [10, 10]].map(([ownMax, otherMax]) => {
@@ -105,14 +105,12 @@ test("ちがうよの最大戦意条件は効果封印中・通常AI・トレー
     }));
   });
   for (const result of results) {
-    const allowed = result.ownMax === 10 && result.otherMax === 10;
-    expect(result).toMatchObject({ used: allowed, unchanged: !allowed, will: allowed ? 0 : 3 });
-    if (!allowed) expect(result).toMatchObject({ score: 0, trainingRejected: true });
-    if (allowed && result.suppressed) expect(result.otherHand).toBe(6);
+    expect(result).toMatchObject({ used: true, unchanged: false, will: 0 });
+    if (result.suppressed) expect(result.otherHand).toBe(6);
   }
 });
 
-test("ちがうよは両者の手札を戻してそれぞれ4枚引く", async ({ page }) => {
+test("ちがうよは戻した手札の合計枚数の半分を切り上げて引く", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     api.startCardTest("chigauyo");
@@ -138,10 +136,10 @@ test("ちがうよは両者の手札を戻してそれぞれ4枚引く", async (
   });
 
   expect(result).toEqual({
-    playerHand: 4,
-    opponentHand: 4,
-    playerDeck: 5,
-    opponentDeck: 5,
+    playerHand: 1,
+    opponentHand: 1,
+    playerDeck: 8,
+    opponentDeck: 8,
     itemInTrash: true
   });
 });

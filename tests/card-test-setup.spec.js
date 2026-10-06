@@ -20,6 +20,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
       "one_eyed_peek",
       "aggro_army",
       "aggro_kingdom",
+      "aggro_dome",
       "absent_student",
       "strict_lateness_teacher",
       "scout_student",
@@ -100,7 +101,9 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
     "aggro_kingdom", "aggro_student", "aggro_king", "aggro_queen"
   ]));
   expect(result.aggro_kingdom.playerBoard.some((card) => card.baseId === "aggro_student")).toBe(true);
-  expect(result.aggro_kingdom.opponentBoard.some((card) => card.baseId === "aggro_king")).toBe(true);
+  expect(result.aggro_kingdom.playerBoard.some((card) => card.baseId === "aggro_king")).toBe(true);
+  expect(result.aggro_kingdom.playerBoard.some((card) => card.baseId === "aggro_queen")).toBe(true);
+  expect(result.aggro_dome.opponentBoard.some((card) => card.baseId === "aggro_king")).toBe(true);
   expect(result.absent_student.playerBoard.some((card) => card.baseId === "absent_student")).toBe(true);
   expect(result.absent_student.opponentBoard.some((card) => card.type === "teacher")).toBe(true);
   expect(result.strict_lateness_teacher.hand).toEqual(expect.arrayContaining([

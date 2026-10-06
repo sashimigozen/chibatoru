@@ -24,7 +24,7 @@ test.beforeAll(async () => {
 });
 test.afterAll(() => server?.kill("SIGTERM"));
 
-test("オンライン双方で10枚なら使用・相手の4枚選択を同期し、11枚なら使用も消費も拒否する", async ({ browser }) => {
+test("オンライン双方で手札が11枚以上でも動的戦意で使用し、相手の4枚選択を同期する", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   const errors = [];
@@ -78,25 +78,10 @@ test("オンライン双方で10枚なら使用・相手の4枚選択を同期�
           return { id: item.instanceId, seq: api.state.online.lastSnapshotSeq };
         }, { side, ownCount, targetCount });
         await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
-        const allowed = ownCount <= 10 && targetCount <= 10;
         expect(await actor.evaluate((id) => {
           const api = window.__chibattle;
           return api.canUseHandCardNow(api.state.players.player.hand.find((card) => card.instanceId === id));
-        }, setup.id)).toBe(allowed);
-        if (!allowed) {
-          await actor.evaluate((id) => {
-            const api = window.__chibattle;
-            api.beginItemUse(api.state.players.player.hand.find((card) => card.instanceId === id));
-          }, setup.id);
-          const rejected = await host.evaluate(({ side, id }) => {
-            const api = window.__chibattle;
-            const before = JSON.stringify(api.state.players);
-            const used = api.castImmediateItem(side, api.state.players[side].hand.find((card) => card.instanceId === id), false);
-            return { used, unchanged: before === JSON.stringify(api.state.players), pending: Boolean(api.state.pendingCardChoice || api.state.pendingRemoteHandTrim) };
-          }, { side, id: setup.id });
-          expect(rejected).toEqual({ used: false, unchanged: true, pending: false });
-          continue;
-        }
+        }, setup.id)).toBe(true);
         await actor.evaluate((id) => {
           const api = window.__chibattle;
           api.beginItemUse(api.state.players.player.hand.find((card) => card.instanceId === id));
@@ -120,7 +105,7 @@ test("オンライン双方で10枚なら使用・相手の4枚選択を同期�
             return { ownHand: api.state.players[sourceSide].hand.length, will: api.state.players[sourceSide].will,
               targetDeck: api.state.players[other].deck.length };
           }, sourceSide);
-          expect(result).toEqual({ ownHand: 9, will: 6, targetDeck: 6 });
+          expect(result).toEqual({ ownHand: ownCount - 1, will: 10 - Math.max(0, targetCount - 4), targetDeck: targetCount - 4 });
         }
       }
     }
