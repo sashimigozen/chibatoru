@@ -49,7 +49,7 @@ async function openBattle(host, guest) {
   await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
 }
 
-test("ホスト・ゲストのちがうよは最大戦意条件を共有し、3戦意で両者4枚へ引き直す", async ({ browser }) => {
+test("ホスト・ゲストのちがうよは最大戦意に関係なく、戻した手札の半分を引く", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   const errors = [];
@@ -79,31 +79,21 @@ test("ホスト・ゲストのちがうよは最大戦意条件を共有し、3�
           return { id: item.instanceId, seq: api.state.online.lastSnapshotSeq };
         }, { side, ownMax, otherMax });
         await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
-        const allowed = ownMax === 10 && otherMax === 10;
         expect(await actor.evaluate((id) => {
           const api = window.__chibattle;
           return api.canUseHandCardNow(api.state.players.player.hand.find((card) => card.instanceId === id));
-        }, setup.id)).toBe(allowed);
+        }, setup.id)).toBe(true);
         await actor.evaluate((id) => {
           const api = window.__chibattle;
           api.beginItemUse(api.state.players.player.hand.find((card) => card.instanceId === id));
         }, setup.id);
-        if (!allowed) {
-          expect(await host.evaluate(({ side, id }) => {
-            const api = window.__chibattle;
-            const before = JSON.stringify(api.state.players);
-            const used = api.castImmediateItem(side, api.state.players[side].hand.find((card) => card.instanceId === id), false);
-            return { used, unchanged: before === JSON.stringify(api.state.players) };
-          }, { side, id: setup.id })).toEqual({ used: false, unchanged: true });
-          continue;
-        }
         for (const page of [host, guest]) {
-          await expect.poll(() => page.evaluate(() => ["player", "opponent"].map((owner) => window.__chibattle.state.players[owner].hand.length))).toEqual([4, 4]);
+          await expect.poll(() => page.evaluate(() => ["player", "opponent"].map((owner) => window.__chibattle.state.players[owner].hand.length))).toEqual([1, 1]);
           const actorSide = page === actor ? "player" : "opponent";
           expect(await page.evaluate((actorSide) => {
             const own = window.__chibattle.state.players[actorSide];
             return { will: own.will, deck: own.deck.length, used: own.trash.some((card) => card.baseId === "chigauyo") };
-          }, actorSide)).toEqual({ will: 0, deck: 5, used: true });
+          }, actorSide)).toEqual({ will: 0, deck: 8, used: true });
         }
       }
     }
