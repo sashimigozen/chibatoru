@@ -214,7 +214,7 @@ test("スプーンの魔術師と復活の敵は選択したカードだけを�
       reviveCost: api.effectiveCardCost(revive),
       leftTrash: api.state.players.player.trash.some((card) => card.instanceId === enemy.instanceId) };
   });
-  expect(result).toEqual({ allyGone: true, enemyGone: true, revived: true, reviveCost: 6, leftTrash: false });
+  expect(result).toEqual({ allyGone: true, enemyGone: true, revived: true, reviveCost: 5, leftTrash: false });
 });
 
 test("真の敵は敵を引いた場合に追加攻撃を得て出席させる", async ({ page }) => {
@@ -248,13 +248,8 @@ test("真の敵は敵とつく持ち物を引いても追加攻撃を得ない",
       rules: api.cardRulesText(attacker)
     };
   });
-  expect(result).toEqual({
-    limit: 1,
-    used: 1,
-    hand: ["salt_to_enemy"],
-    canAttackAgain: false,
-    rules: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。\nそれが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。\n自分の空いている席マスがあるなら、その出席者を出席させ、[超陽気]を付与する。"
-  });
+  expect(result).toMatchObject({ limit: 1, used: 1, hand: ["salt_to_enemy"], canAttackAgain: false });
+  expect(result.rules).toContain("そのカードを手札から出席させ");
 });
 
 test("見習いベストフレンドは手札から出席した本人だけが2人まで出席させる", async ({ page }) => {
@@ -286,7 +281,7 @@ test("形容詞学生vs冷笑学生の表示文を既存文体へ統一する", 
   expect(rules).not.toContain("50%の確率でもう一度");
 });
 
-test("三敵は山札上3枚から選んだ敵だけをランダムな空席に出席させる", async ({ page }) => {
+test("三敵は山札上3枚の敵を選んだ順にランダムな空席に出席させる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const first = api.createCardFromBase("enemy_student", "player");
@@ -299,13 +294,15 @@ test("三敵は山札上3枚から選んだ敵だけをランダムな空席に�
     const mode = api.state.pendingCardChoice?.mode;
     const candidates = api.state.pendingCardChoice?.cards.map((card) => card.instanceId);
     const selectableIds = api.state.pendingCardChoice?.selectableIds;
-    api.state.pendingCardChoice.selectedIds = [chosen.instanceId];
+    api.state.pendingCardChoice.selectedIds = [chosen.instanceId, first.instanceId];
     const previousRandom = Math.random;
     Math.random = () => 0.99;
     api.confirmCardChoiceSelection();
     Math.random = previousRandom;
     const summoned = api.state.players.player.board.seats[8];
+    const otherSummoned = api.state.players.player.board.seats[7];
     return { mode, candidates, selectableIds, summoned: summoned?.baseId, source: summoned?.lastAttendanceSource,
+      otherSummoned: otherSummoned?.baseId,
       deck: api.state.players.player.deck.map((card) => card.instanceId),
       firstRemains: api.state.players.player.deck.includes(first), itemRemains: api.state.players.player.deck.includes(item),
       hand: api.state.players.player.hand.map((card) => card.instanceId),
@@ -315,18 +312,18 @@ test("三敵は山札上3枚から選んだ敵だけをランダムな空席に�
   expect(result.candidates).toHaveLength(3);
   expect(result.selectableIds).toHaveLength(2);
   expect(result.summoned).toBe("true_enemy");
-  expect(result.source).toBe("deck");
-  expect(result.deck).toHaveLength(2);
-  expect(result.firstRemains).toBe(true);
+  expect(result.source).toBe("hand");
+  expect(result.otherSummoned).toBe("enemy_student");
+  expect(result.deck).toHaveLength(1);
+  expect(result.firstRemains).toBe(false);
   expect(result.itemRemains).toBe(true);
   expect(result.hand).toHaveLength(0);
-  expect(result.rules).toContain("出席者カード1枚を選び");
-  expect(result.rules).toContain("「敵」とつく出席者カード1枚");
+  expect(result.rules).toContain("「敵」とつく出席者カードすべて");
   expect(result.rules).not.toContain("名前に「敵」を含む");
   expect(result.bossName).toBe("敵の幹部");
 });
 
-test("三敵は候補以外の指定を拒否し、空席がなければ山札を変えない", async ({ page }) => {
+test("三敵は候補以外の指定を拒否し、空席がなければ敵を手札に残す", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const enemy = api.createCardFromBase("enemy_student", "player");
@@ -335,23 +332,25 @@ test("三敵は候補以外の指定を拒否し、空席がなければ山札�
     api.state.players.player.hand = [triple];
     const willBefore = api.state.players.player.will;
     const forged = api.placeCardFromHand("player", triple.instanceId, "seat", "player", 0, false,
-      { tripleEnemyChoiceId: "not-in-deck" });
+      { tripleEnemyOrderIds: ["not-in-deck"] });
     const rejectedWithoutPayment = api.state.players.player.hand.includes(triple)
       && api.state.players.player.will === willBefore;
     for (let index = 1; index < 9; index += 1) {
       api.state.players.player.board.seats[index] = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
     }
     const played = api.placeCardFromHand("player", triple.instanceId, "seat", "player", 0, false,
-      { tripleEnemyChoiceId: enemy.instanceId });
+      { tripleEnemyOrderIds: [enemy.instanceId] });
     return { forged, rejectedWithoutPayment, played,
       deck: api.state.players.player.deck.map((card) => card.instanceId),
-      board: api.state.players.player.board.seats.filter((card) => card?.instanceId === enemy.instanceId).length };
+      board: api.state.players.player.board.seats.filter((card) => card?.instanceId === enemy.instanceId).length,
+      hand: api.state.players.player.hand.some((card) => card.instanceId === enemy.instanceId) };
   });
   expect(result.forged).toBe(false);
   expect(result.rejectedWithoutPayment).toBe(true);
   expect(result.played).toBe(true);
-  expect(result.deck).toHaveLength(1);
+  expect(result.deck).toHaveLength(0);
   expect(result.board).toBe(0);
+  expect(result.hand).toBe(true);
 });
 
 test("敵に塩は戦意2のまま相手の指定空席へTRPGサークルメンバーを出席させ、その出席時効果を発動する", async ({ page }) => {

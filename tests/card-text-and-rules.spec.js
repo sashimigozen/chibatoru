@@ -489,7 +489,7 @@ test("パッドプレゼンクリエイターをver.0.21.0の更新情報に新�
   await expect(newCard).toContainText("相手の最大戦意の差だけ上がる");
 });
 
-test("アグロキングダムは両者のアグロ出席者へ常在の超陽気を与える", async ({ page }) => {
+test("アグロドームは両者のアグロ出席者へ常在の超陽気を与える", async ({ page }) => {
   await page.goto(gameUrl);
 
   const result = await page.evaluate(() => {
@@ -513,7 +513,7 @@ test("アグロキングダムは両者のアグロ出席者へ常在の超陽�
 
     const beforePlacement = !api.hasKeyword(ownAggro, "超陽気")
       && !api.hasKeyword(enemyAggro, "超陽気");
-    const environment = api.createCardFromBase("aggro_kingdom", "player");
+    const environment = api.createCardFromBase("aggro_dome", "player");
     state.players.player.hand = [environment];
     const placed = api.placeCardFromHand("player", environment.instanceId, "environment", "player", null, false);
     const bothPlayersBuffed = api.hasKeyword(ownAggro, "超陽気")
@@ -536,12 +536,12 @@ test("アグロキングダムは両者のアグロ出席者へ常在の超陽�
       nonAggroExcluded,
       laterAttendanceBuffed,
       removedWithEnvironment,
-      name: api.CARD_BASES.aggro_kingdom.name,
-      type: api.CARD_BASES.aggro_kingdom.type,
-      cost: api.CARD_BASES.aggro_kingdom.cost,
-      category: api.CARD_BASES.aggro_kingdom.category,
-      common: api.SPECIALTY_CARD_IDS.common.includes("aggro_kingdom"),
-      rules: api.cardRulesText(api.createCardFromBase("aggro_kingdom", "player"))
+      name: api.CARD_BASES.aggro_dome.name,
+      type: api.CARD_BASES.aggro_dome.type,
+      cost: api.CARD_BASES.aggro_dome.cost,
+      category: api.CARD_BASES.aggro_dome.category,
+      common: api.SPECIALTY_CARD_IDS.common.includes("aggro_dome"),
+      rules: api.cardRulesText(api.createCardFromBase("aggro_dome", "player"))
     };
   });
 
@@ -552,12 +552,12 @@ test("アグロキングダムは両者のアグロ出席者へ常在の超陽�
     nonAggroExcluded: true,
     laterAttendanceBuffed: true,
     removedWithEnvironment: true,
-    name: "アグロキングダム",
+    name: "アグロドーム",
     type: "environment",
     cost: 2,
     category: "common",
     common: true,
-    rules: "このカードが環境マスにあるかぎり、お互いの「アグロ」と名のつく出席者は[超陽気]を持つ。"
+    rules: "このカードが環境マスにあるかぎり、お互いの「アグロ」とつく出席者は[超陽気]を持つ。"
   });
 });
 
