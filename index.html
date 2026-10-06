@@ -5500,13 +5500,11 @@
       gap: 10px;
     }
 
-    .teacher-action-copy h2,
-    .lecture-experiment-dialog h2 {
+    .teacher-action-copy h2 {
       margin: 0;
     }
 
-    .teacher-action-copy p,
-    .lecture-experiment-dialog p {
+    .teacher-action-copy p {
       margin: 0;
       line-height: 1.7;
     }
@@ -5519,28 +5517,6 @@
 
     .teacher-action-buttons .teacher-action-cancel {
       grid-column: 1 / -1;
-    }
-
-    .lecture-experiment-dialog {
-      width: min(460px, calc(100vw - 28px));
-      display: grid;
-      gap: 14px;
-      border: 2px solid #22aee8;
-      border-radius: 14px;
-      padding: 22px;
-      background: #ffffff;
-      box-shadow: 0 24px 54px rgba(15, 23, 42, .34);
-    }
-
-    .lecture-experiment-badge {
-      width: fit-content;
-      border-radius: 999px;
-      padding: 4px 10px;
-      color: #ffffff;
-      background: #ef4444;
-      font-size: 12px;
-      font-weight: 1000;
-      letter-spacing: .08em;
     }
 
     .card-test-style-frame {
@@ -18217,14 +18193,6 @@
       </div>
     </section>
   </div>
-  <div class="modal-backdrop hidden" id="lectureExperimentNoticeModal" role="dialog" aria-modal="true" aria-labelledby="lectureExperimentNoticeTitle">
-    <section class="lecture-experiment-dialog">
-      <span class="lecture-experiment-badge">テスト中</span>
-      <h2 id="lectureExperimentNoticeTitle">教師の「講義」操作を試験変更しました</h2>
-      <p>教師マスにいる攻撃可能な教師をタップすると、「攻撃する」か「講義を行う」かを選べます。選んだ行動を行うと、その教師は行動済みになります。</p>
-      <button class="button" id="lectureExperimentNoticeCloseButton" type="button">確認しました</button>
-    </section>
-  </div>
   <div class="item-confirm-backdrop hidden" id="cardTestModal">
     <section class="item-confirm-dialog" aria-modal="true" role="dialog" aria-labelledby="cardTestTitle">
       <div class="item-confirm-card" id="cardTestCard"></div>
@@ -18515,6 +18483,7 @@
     const DUNGEON_CLEAR_BACKUP_ITERATIONS = 250000;
     const STARTER_DECK_SEED_STORAGE_KEY = "chibattle-starter-decks-seeded-v1";
     const STARTER_DECK_SEED_VERSION = "2026-07-03-starter-v4";
+    const DELETED_STARTER_DECK_STORAGE_KEY = "chibattle-deleted-starter-decks-v1";
     const PLAYER_PROFILE_STORAGE_KEY = "chibattle-player-profile-v1";
     const PLAYER_PROFILE_USERNAME_MAX = 20;
     const PLAYER_PROFILE_AVATARS = Object.freeze([
@@ -19510,14 +19479,15 @@
     ]);
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
-    const LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY = "chibattle-lecture-experiment-notice-v1";
     const UPDATE_HISTORY = [
       {
         version: "ver.0.23.14",
         date: "2026年10月6日",
-        summary: "AIの出席位置と持ち物の使用判断を改善しました。",
+        summary: "AIの出席位置と持ち物の使用判断を改善しました。スターターデッキを削除できるようにし、講義の仕様変更通知を終了しました。",
         changes: [
-          { title: "AIの行動判断", after: "環境や場の出席者による継続効果を配置判断へ反映し、持ち物の使用判断を改善しました。左右のAIに適用しています。カードのテキスト・効果は変更していません。" }
+          { title: "AIの行動判断", after: "環境や場の出席者による継続効果を配置判断へ反映し、持ち物の使用判断を改善しました。左右のAIに適用しています。カードのテキスト・効果は変更していません。" },
+          { title: "スターターデッキの削除", after: "保存デッキ一覧からスターターデッキを削除できるようにしました。削除確認後に一覧から除き、再読み込み後も自動で戻りません。所持カードは削除しません。" },
+          { title: "講義の仕様変更通知", after: "初回起動時の講義の仕様変更ポップアップを終了しました。教師の攻撃・講義の操作は変更していません。" }
         ]
       },
       {
@@ -21992,8 +21962,6 @@
       teacherAttackChoiceButton: document.getElementById("teacherAttackChoiceButton"),
       teacherLectureChoiceButton: document.getElementById("teacherLectureChoiceButton"),
       teacherActionCancelButton: document.getElementById("teacherActionCancelButton"),
-      lectureExperimentNoticeModal: document.getElementById("lectureExperimentNoticeModal"),
-      lectureExperimentNoticeCloseButton: document.getElementById("lectureExperimentNoticeCloseButton"),
       cardTestModal: document.getElementById("cardTestModal"),
       cardTestCard: document.getElementById("cardTestCard"),
       cardTestText: document.getElementById("cardTestText"),
@@ -22767,8 +22735,18 @@
       return Object.prototype.hasOwnProperty.call(STARTER_DECK_RECIPES, name);
     }
 
+    function loadDeletedStarterDeckNames() {
+      try {
+        const names = JSON.parse(localStorage.getItem(DELETED_STARTER_DECK_STORAGE_KEY) || "[]");
+        return new Set(Array.isArray(names) ? names.filter((name) => typeof name === "string" && isStarterDeckName(name)) : []);
+      } catch {
+        return new Set();
+      }
+    }
+
     function seedStarterDecks(savedDecks) {
       const starterDecks = createStarterSavedDecks();
+      const deletedNames = loadDeletedStarterDeckNames();
       let changed = false;
       Object.keys(savedDecks).forEach((name) => {
         if (!savedDecks[name]?.starterDeck || isStarterDeckName(name)) return;
@@ -22776,6 +22754,13 @@
         changed = true;
       });
       Object.entries(starterDecks).forEach(([name, deck]) => {
+        if (deletedNames.has(name)) {
+          if (Object.prototype.hasOwnProperty.call(savedDecks, name)) {
+            delete savedDecks[name];
+            changed = true;
+          }
+          return;
+        }
         if (JSON.stringify(savedDecks[name]) === JSON.stringify(deck)) return;
         savedDecks[name] = deck;
         changed = true;
@@ -47075,25 +47060,6 @@
       elements.homeUpdatesDot.classList.toggle("hidden", !LATEST_UPDATE_READ_ID || read.has(LATEST_UPDATE_READ_ID));
     }
 
-    function maybeShowLectureExperimentNotice() {
-      if (!elements.lectureExperimentNoticeModal || state.screen !== "home") return false;
-      if (navigator.webdriver && window.__forceLectureExperimentNotice !== true) return false;
-      try {
-        if (localStorage.getItem(LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY) === "shown") return false;
-        localStorage.setItem(LECTURE_EXPERIMENT_NOTICE_STORAGE_KEY, "shown");
-      } catch {
-        // 保存できない環境でも、その起動中は一度だけ表示する。
-        if (elements.lectureExperimentNoticeModal.dataset.shown === "true") return false;
-      }
-      elements.lectureExperimentNoticeModal.dataset.shown = "true";
-      elements.lectureExperimentNoticeModal.classList.remove("hidden");
-      return true;
-    }
-
-    function closeLectureExperimentNotice() {
-      elements.lectureExperimentNoticeModal?.classList.add("hidden");
-    }
-
     function renderUpdateHistory() {
       if (state.screen !== "updates" || !elements.updateList) return;
       const read = loadReadUpdateVersions();
@@ -47334,7 +47300,7 @@
         <div class="deck-library-detail-actions">
           <button class="button" type="button" data-deck-edit>変更する</button>
           <button class="button secondary" type="button" data-deck-view>${state.deckBuilder.detailExpanded ? "内容を閉じる" : "内容を見る"}</button>
-          <button class="button warning" type="button" data-deck-remove ${!isSpecialtyDeckFormat() && !isChaosDeckFormat() && isStarterDeckName(name) ? "disabled" : ""}>削除する</button>
+          <button class="button warning" type="button" data-deck-remove>削除する</button>
           <button class="button secondary" type="button" data-deck-close>閉じる</button>
         </div>`;
       elements.deckLibraryDetail.querySelector("[data-deck-edit]").addEventListener("click", () => beginExistingDeckEditor(name));
@@ -48246,7 +48212,7 @@
       });
       if (names.includes(previousValue)) elements.savedDeckSelect.value = previousValue;
       elements.loadDeckButton.disabled = names.length === 0 || !elements.savedDeckSelect.value;
-      elements.deleteDeckButton.disabled = names.length === 0 || !elements.savedDeckSelect.value || isStarterDeckName(elements.savedDeckSelect.value);
+      elements.deleteDeckButton.disabled = names.length === 0 || !elements.savedDeckSelect.value;
     }
 
     function cardMiniMeta(card) {
@@ -48532,13 +48498,19 @@
     function deleteSavedDeckByName(name) {
       const collection = activeDeckCollection();
       if (!name || !collection[name]) return;
-      if (!isSpecialtyDeckFormat() && isStarterDeckName(name)) {
-        state.message = "スターターデッキは固定のため削除できません。";
-        render();
-        return;
-      }
       const label = isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "保存デッキ";
       if (!window.confirm(`${label}「${name}」を削除しますか？`)) return;
+      if (!isSpecialtyDeckFormat() && !isChaosDeckFormat() && isStarterDeckName(name)) {
+        try {
+          const deletedNames = loadDeletedStarterDeckNames();
+          deletedNames.add(name);
+          localStorage.setItem(DELETED_STARTER_DECK_STORAGE_KEY, JSON.stringify([...deletedNames]));
+        } catch {
+          state.message = "スターターデッキの削除をブラウザへ保存できませんでした。";
+          render();
+          return;
+        }
+      }
       delete collection[name];
       isSpecialtyDeckFormat()
         ? persistSpecialtyDecks()
@@ -51589,7 +51561,6 @@
     elements.teacherActionModal.addEventListener("click", (event) => {
       if (event.target === elements.teacherActionModal) closeTeacherActionChoice();
     });
-    elements.lectureExperimentNoticeCloseButton.addEventListener("click", closeLectureExperimentNotice);
     elements.cardTestStartButton.addEventListener("click", confirmCardTest);
     elements.cardTestCancelButton.addEventListener("click", closeCardTestConfirm);
     elements.courseRegistrationAcceptButton.addEventListener("click", acceptCourseRegistrationConsent);
@@ -51949,7 +51920,6 @@
 
     removeRetiredPrismUnlocks();
     initializeGame();
-    window.setTimeout(maybeShowLectureExperimentNotice, 0);
 
   </script>
   <script src="four-mode.js"></script>

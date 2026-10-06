@@ -90,22 +90,18 @@ test("講義を持たない教師には行動選択を表示しない", async ({
   await expect(page.locator("#teacherActionModal")).toBeHidden();
 });
 
-test("講義の試験変更ポップアップはホームで一度だけ表示する", async ({ page }) => {
+test("初回起動・再読み込みでも講義の仕様変更ポップアップを表示しない", async ({ page }) => {
   await page.addInitScript(() => {
     window.__forceLectureExperimentNotice = true;
   });
   await page.goto(gameUrl);
 
   const notice = page.locator("#lectureExperimentNoticeModal");
-  await expect(notice).toBeVisible();
-  await expect(notice).toContainText("教師の「講義」操作を試験変更しました");
-  await expect(notice).not.toContainText("これは一旦試しの仕様です");
-  await expect(notice).not.toContainText("操作感を確認するためのテストとして実装しています");
-  await page.locator("#lectureExperimentNoticeCloseButton").click();
-  await expect(notice).toBeHidden();
-
+  await expect(page.locator("#homeScreen")).toBeVisible();
+  await expect(notice).toHaveCount(0);
   await page.reload();
-  await expect(notice).toBeHidden();
+  await expect(page.locator("#homeScreen")).toBeVisible();
+  await expect(notice).toHaveCount(0);
 });
 
 test("更新情報に講義操作の試験変更を表示する", async ({ page }) => {
