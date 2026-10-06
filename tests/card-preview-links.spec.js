@@ -49,7 +49,7 @@ test("デッキ編成のカード詳細から能力説明を確認でき、関�
   }
   expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.counts))).toBe(countsBefore);
   await page.locator('[data-card-test="padlock"]').click();
-  await modal.locator('[data-related-card="key"]').click();
+  await modal.locator('.tooltip-effect [data-related-card="key"]').click();
   await expect(modal.locator(".tooltip-title")).toHaveText("鍵");
   await expect(description).toBeHidden();
   await page.locator("#cardTestCancelButton").click();
@@ -61,6 +61,89 @@ test("デッキ編成のカード詳細から能力説明を確認でき、関�
   expect(await page.evaluate(() => window.__chibattle.state.testCardBaseId)).toBe("general_student");
   expect(await page.evaluate(() => window.__chibattle.state.screen)).toBe("battle");
   expect(errors).toEqual([]);
+});
+
+test("説明文からトークン・進化元をたどり、戻ってもデッキや能力説明を維持する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.locator("#homeNavDeckButton").click();
+  await page.locator("#deckLibraryGrid .new-deck").click();
+  const deckBefore = await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder));
+  const modal = page.locator("#cardTestModal");
+  const rules = modal.locator(".tooltip-effect");
+  await page.locator('[data-card-test="gigi_blood"]').click();
+  await modal.locator('[data-preview-term="進化"]').click();
+  const explanation = await modal.locator('[data-preview-term-description]').innerText();
+  await rules.locator('[data-related-card="grudge"]').click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("怨念");
+  await modal.locator('[data-related-card-back]').click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("偽魏義ッ血");
+  await expect(modal.locator('[data-preview-term-description]')).toHaveText(explanation);
+  await rules.locator('[data-related-card="gitch"]').click();
+  await rules.locator('[data-related-card="wood_gitch"]').first().click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("木っち（ぎっち）");
+  await rules.locator('[data-related-card="wood_gitch"]').click();
+  await modal.locator('[data-related-card-back]').click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("技議っち");
+  await modal.locator('[data-related-card-back]').click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("偽魏義ッ血");
+  await expect(modal.locator('[data-related-card-back]')).toHaveCount(0);
+  expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder))).toBe(deckBefore);
+  await page.locator("#cardTestCancelButton").click();
+  await page.locator('[data-card-test="cornering_lecturer"]').click();
+  await rules.locator('[data-related-card="scary_question"]').first().focus();
+  await page.keyboard.press("Enter");
+  await expect(modal.locator(".tooltip-title")).toHaveText("怖い質問");
+  await modal.locator('[data-related-card-back]').click();
+  await expect(modal.locator(".tooltip-title")).toHaveText("ガン詰め講師");
+  await page.screenshot({ path: test.info().outputPath("related-card-description.png") });
+});
+
+test("関連カードを参照しても対戦カードの実体と盤面・手札を変えない", async ({ page }) => {
+  await page.goto(gameUrl);
+  const before = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("gigi_blood");
+    const source = api.state.players.player.hand.find(card => card.baseId === "gigi_blood");
+    api.showBattleCardPreview(source);
+    return { id: source.instanceId, players: JSON.stringify(api.state.players) };
+  });
+  const preview = page.locator("#battleCardPreview");
+  await preview.locator('[data-preview-term="進化"]').click();
+  await preview.locator('[data-related-card="grudge"]').click();
+  const bounds = await preview.evaluate((element) => {
+    const outer = element.getBoundingClientRect(), back = element.querySelector('[data-related-card-back]').getBoundingClientRect();
+    return { inside: back.left >= outer.left && back.right <= outer.right && back.top >= outer.top && back.bottom <= outer.bottom,
+      correctColumn: Boolean(element.querySelector('.battle-card-preview-detail [data-related-card-back]')) };
+  });
+  expect(bounds).toEqual({ inside: true, correctColumn: true });
+  await preview.locator('[data-related-card-back]').click();
+  expect(await page.evaluate(() => document.getElementById("battleCardPreview")._previewCard.instanceId)).toBe(before.id);
+  await expect(preview.locator('[data-preview-term-description]')).toContainText("同じマス");
+  expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.players))).toBe(before.players);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.showBattleCardPreview(api.createCardFromBase("general_student", "player"));
+  });
+  await expect(preview.locator('[data-related-card-back]')).toHaveCount(0);
+});
+
+test("カード詳細でも関連カードを開いて戻れ、閉じた後に履歴を残さない", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.evaluate(() => {
+    window.__chibattle.state.screen = "battle";
+    window.__chibattle.render();
+    openDungeonCardInfo("gigi_blood");
+  });
+  const modal = page.locator("#dungeonCardInfoModal");
+  await modal.locator('.tooltip-effect [data-related-card="grudge"]').click();
+  await expect(page.locator("#dungeonCardInfoTitle")).toHaveText("怨念");
+  await modal.locator('[data-related-card-back]').click();
+  await expect(page.locator("#dungeonCardInfoTitle")).toHaveText("偽魏義ッ血");
+  await modal.locator('[data-preview-term="進化"]').click();
+  await expect(modal.locator('[data-preview-term-description]')).toContainText("同じマス");
+  await page.locator("#dungeonCardInfoCloseButton").click();
+  await page.evaluate(() => openDungeonCardInfo("general_student"));
+  await expect(modal.locator('[data-related-card-back]')).toHaveCount(0);
 });
 
 test("カード確認の効果文でカード名・能力・タイプを直接確認できる", async ({ page }) => {
