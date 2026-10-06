@@ -127,23 +127,69 @@ const solutions = {
   }
 };
 
+const decoys = {
+  placement: "general_student", lecture: "diligent_student", cheerful: "general_student",
+  attention: "general_student", late: "hurried_student", sleepy: "diligent_student",
+  composure: "general_student", equipment: "general_student", drain: "general_student",
+  evolution: "aggro_student", fusion: "general_student", load: "general_student"
+};
+
 for (const [chapter, solve] of Object.entries(solutions)) {
   test(`${chapter}：初期手札・盤面を変更せず通常操作で自分のターン中に解ける`, async ({ page }) => {
     test.setTimeout(45000);
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await openQuiz(page, chapter);
+    expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.map(c => c.baseId)))
+      .toHaveLength(chapter === "load" ? 5 : 3);
+    await expect(hand(page, decoys[chapter])).toBeVisible();
     await solve(page);
     await expect(page.locator("#resultOverlay")).toContainText("勝利");
     expect(await page.evaluate(() => {
       const s = window.__chibattle.state;
       return { winner: s.gameWinner, side: s.currentSide, turn: s.actionTurn, stage: s.tutorial.stage };
     })).toEqual({ winner: "player", side: "player", turn: 1, stage: "quiz" });
+    expect(await page.evaluate((id) => window.__chibattle.state.players.player.hand.some(c => c.baseId === id), decoys[chapter])).toBe(true);
     await page.locator("[data-result-tutorial-back]").click();
     await expect(page.locator("#tutorialScreen")).toBeVisible();
     expect(errors).toEqual([]);
   });
 }
+
+test("引っ掛けの学生を出席させても即攻撃できず、再挑戦で手札が戻る", async ({ page }) => {
+  await openQuiz(page, "fusion");
+  await play(page, "general_student");
+  expect(await page.evaluate(() => {
+    const s = window.__chibattle.state;
+    return { will: s.players.player.will, life: s.players.opponent.life, over: s.gameOver };
+  })).toEqual({ will: 0, life: 4, over: false });
+  await attack(page, "general_student");
+  expect(await page.evaluate(() => window.__chibattle.state.players.opponent.life)).toBe(4);
+  await page.locator("#endTurnButton").click();
+  await expect(page.locator("#resultOverlay")).toContainText("失敗");
+  await page.locator("[data-result-tutorial-retry]").click();
+  expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.map(c => c.baseId)))
+    .toEqual(["ruler", "ruler", "general_student"]);
+});
+
+test("基本編と全12編の練習の初期手札は変えない", async ({ page }) => {
+  await page.goto(gameUrl);
+  const expected = {
+    basic: ["general_student", "general_teacher", "vampire", "ruler", "cafeteria"],
+    placement: ["diligent_student", "general_teacher", "cafeteria"],
+    lecture: ["general_student", "ruler"], cheerful: ["zombie", "aggro_princess"],
+    attention: ["ruler", "ruler"], late: ["hurried_student"], sleepy: ["general_student", "ruler"],
+    composure: ["general_student", "ruler"], equipment: ["earphones"], drain: ["general_student", "ruler"],
+    evolution: ["dark_yuta", "single_cell"], fusion: ["ruler", "ruler"], load: ["white_student", "ruler", "cafeteria"]
+  };
+  for (const [chapter, cards] of Object.entries(expected)) {
+    const handIds = await page.evaluate((id) => {
+      window.__chibattle.startTutorialBattle(id);
+      return window.__chibattle.state.players.player.hand.map(c => c.baseId);
+    }, chapter);
+    expect(handIds).toEqual(cards);
+  }
+});
 
 test("融合を使わず定規を単独使用しても勝てず、失敗から状態をリセットできる", async ({ page }) => {
   await openQuiz(page, "fusion");
@@ -157,7 +203,7 @@ test("融合を使わず定規を単独使用しても勝てず、失敗から�
   expect(await page.evaluate(() => {
     const p = window.__chibattle.state.players.player;
     return { hand: p.hand.map((c) => c.baseId), will: p.will, trash: p.trash.length };
-  })).toEqual({ hand: ["ruler", "ruler"], will: 2, trash: 0 });
+  })).toEqual({ hand: ["ruler", "ruler", "general_student"], will: 2, trash: 0 });
   await page.locator("#tutorialToggleButton").click();
   await solutions.fusion(page);
   await expect(page.locator("#resultOverlay")).toContainText("勝利");
@@ -231,7 +277,7 @@ test("クイズの説明切替・再挑戦ボタンの固定・終了・基本�
   await page.locator("#tutorialNextButton").click();
   await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
   await expect(hand(page, "ruler")).toHaveCount(1);
-  expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(2);
+  expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(3);
   await page.locator("#tutorialExitButton").click();
   await page.locator('[data-tutorial-chapter="basic"]').click();
   await page.locator("#tutorialStartButton").click();
