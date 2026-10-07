@@ -83,6 +83,45 @@ test("保存デッキを12件ずつ表示し最初と最後が循環・内容と
   expect(await page.evaluate(() => window.__chibattle.state.deckBuilder.chaosDecks["保存テスト"].counts.general_student)).toBe(41);
 });
 
+test("デッキ詳細は実際のカードと枚数を表示し、スクロールと説明の確認で内容を変えない", async ({ page }, testInfo) => {
+  await enter(page);
+  await page.locator("#chaosDeckFormatButton").click();
+  const ids = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const ids = getDeckEditorIds().slice(0, 14);
+    api.state.deckBuilder.chaosDecks = { "カード表示テスト": { counts: Object.fromEntries(ids.map((id, index) => [id, index % 3 + 1])), createdOrder: 1 } };
+    api.render();
+    return ids;
+  });
+  await page.locator("#deckLibraryGrid .case-deck-tile").click();
+  const contents = page.locator(".case-deck-contents");
+  await expect(contents.locator(".case-deck-content > .card")).toHaveCount(ids.length);
+  for (let index = 0; index < ids.length; index++) {
+    const button = contents.locator(`[data-library-card="${ids[index]}"]`);
+    await expect(button.locator(".card-name")).toHaveText(await page.evaluate(id => CARD_BASES[id].name, ids[index]));
+    await expect(button.locator(".case-deck-copy-count")).toHaveText(`×${index % 3 + 1}`);
+  }
+  const before = await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.chaosDecks));
+  for (const size of [{ width: 1280, height: 720 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }]) {
+    await page.setViewportSize(size);
+    const card = await contents.locator(".card").first().boundingBox();
+    expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
+    expect(card.width).toBeGreaterThan(100);
+    const dialog = await page.locator(".case-deck-dialog").boundingBox();
+    expect(dialog.y + dialog.height).toBeLessThanOrEqual(size.height);
+    expect(await contents.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+    await contents.locator(".case-deck-content").last().click();
+    await expect(page.locator("#cardTestModal")).toBeVisible();
+    await expect(page.locator("#cardTestText .tooltip-title")).toHaveText(await page.evaluate(id => CARD_BASES[id].name, ids.at(-1)));
+    await expect(page.locator("#cardTestStartButton")).toBeHidden();
+    await page.locator("#cardTestCancelButton").click();
+    await expect(page.locator("#caseDeckDetailModal")).toBeVisible();
+    await contents.locator(".case-deck-content").first().scrollIntoViewIfNeeded();
+    await page.screenshot({ path: testInfo.outputPath(`deck-card-contents-${size.width}.png`) });
+  }
+  expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.chaosDecks))).toBe(before);
+});
+
 test("新規作成は保存デッキの最後の1枠だけ・空一覧とページ境界でも左上から続く", async ({ page }, testInfo) => {
   await enter(page);
   await page.locator("#chaosDeckFormatButton").click();
