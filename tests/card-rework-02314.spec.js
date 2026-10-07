@@ -307,6 +307,66 @@ test("アグロキングダムは三種がそろった間だけ強化し、ド�
   expect(result.dome).toBe(true);
 });
 
+test("アグロキングは出席ターンから2回数えて1度だけ強化する", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const king = api.makeBoardCard(api.createCardFromBase("aggro_king", "player"));
+    king.playedOnTurn = state.actionTurn;
+    state.players.player.board.seats[6] = king;
+    const initial = { attack: king.attack, hp: king.currentHp, maxHp: king.maxHp };
+    const text = api.cardRulesText(king);
+    api.resolveStudentEndTurnEffects("player");
+    const first = { count: king.aggroKingTurns, attack: king.attack, hp: king.currentHp };
+    state.actionTurn += 2;
+    api.resolveStudentEndTurnEffects("player");
+    const second = { count: king.aggroKingTurns, attack: king.attack, hp: king.currentHp, maxHp: king.maxHp };
+    state.actionTurn += 2;
+    api.resolveStudentEndTurnEffects("player");
+    return { initial, text, first, second, third: { attack: king.attack, maxHp: king.maxHp } };
+  });
+  expect(result).toEqual({
+    initial: { attack: 1, hp: 1, maxHp: 1 },
+    text: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、1度だけこのカードの攻撃力を+2、体力を+1する。",
+    first: { count: 1, attack: 1, hp: 1 },
+    second: { count: 2, attack: 3, hp: 2, maxHp: 2 },
+    third: { attack: 3, maxHp: 2 }
+  });
+});
+
+test("アグロキングは席を離れると数え直し、キングダム中は自己強化しない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const king = api.makeBoardCard(api.createCardFromBase("aggro_king", "player"));
+    state.players.player.board.seats[6] = king;
+    api.resolveStudentEndTurnEffects("player");
+    const first = king.aggroKingTurns;
+    const red = api.createCardFromBase("red_ideology", "player");
+    state.players.player.hand.push(red);
+    api.castImmediateItem("player", red, false);
+    const stayed = king.aggroKingTurns;
+    const portal = api.createCardFromBase("contrarian_portal", "player");
+    state.players.player.hand.push(portal);
+    api.castImmediateItem("player", portal, false);
+    const left = { index: state.players.player.board.seats.indexOf(king), count: king.aggroKingTurns };
+    const returnPortal = api.createCardFromBase("contrarian_portal", "player");
+    state.players.player.hand.push(returnPortal);
+    api.castImmediateItem("player", returnPortal, false);
+    api.resolveStudentEndTurnEffects("player");
+    const returned = { count: king.aggroKingTurns, attack: king.attack };
+    state.players.player.board.seats[5] = api.makeBoardCard(api.createCardFromBase("aggro_queen", "player"));
+    state.players.player.board.seats[4] = api.makeBoardCard(api.createCardFromBase("aggro_student", "player"));
+    state.environment = api.createCardFromBase("aggro_kingdom", "player");
+    api.resolveStudentEndTurnEffects("player");
+    return { first, stayed, left, returned, kingdom: { count: king.aggroKingTurns, attack: king.attack } };
+  });
+  expect(result).toEqual({
+    first: 1, stayed: 1, left: { index: 0, count: 0 },
+    returned: { count: 1, attack: 1 }, kingdom: { count: 0, attack: 1 }
+  });
+});
+
 test("アグロキングダム中のクイーンは学生がいなければ相手本体に2ダメージ", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;

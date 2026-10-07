@@ -91,22 +91,147 @@ test("敵はTRPGサークルメンバーがいても戦意2のまま攻撃力+5�
   expect(result).toEqual({ before: 2, active: { cost: 2, attack: 6, cheerful: true }, after: 2, limit: 60 });
 });
 
-test("アクティングアウトマンは相手の2回目の出席を止め、場を離れると解除する", async ({ page }) => {
+test("アクティングアウトマンは相手の出席を制限しない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const actor = api.makeBoardCard(api.createCardFromBase("acting_out_man", "opponent"));
     api.state.players.opponent.board.seats[0] = actor;
     const first = api.attendCard("player", api.makeBoardCard(api.createCardFromBase("general_student", "player")), "seat", 0);
     const secondCard = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
-    const blocked = api.canPlaceCard("player", secondCard, "seat", "player", 1);
-    const forced = api.attendCard("player", secondCard, "seat", 1);
-    api.state.players.opponent.board.seats[0] = null;
     const available = api.canPlaceCard("player", secondCard, "seat", "player", 1);
-    const afterRemoval = api.attendCard("player", secondCard, "seat", 1);
-    return { first: Boolean(first), blocked, forced: Boolean(forced), available, afterRemoval: Boolean(afterRemoval) };
+    const second = api.attendCard("player", secondCard, "seat", 1);
+    return { first: Boolean(first), available, second: Boolean(second) };
   });
 
-  expect(result).toEqual({ first: true, blocked: false, forced: false, available: true, afterRemoval: true });
+  expect(result).toEqual({ first: true, available: true, second: true });
+});
+
+test("アクティングアウトマンは環境を戦意なしで上書きし、環境の出したときの効果を使う", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const actor = api.createCardFromBase("acting_out_man", "player");
+    const environment = api.createCardFromBase("shogi_duel_field", "player");
+    const previous = api.makeBoardCard(api.createCardFromBase("classroom", "opponent"));
+    state.players.player.hand = [actor, environment];
+    state.players.player.will = 6;
+    state.players.player.life = 20;
+    state.players.opponent.life = 20;
+    state.environment = previous;
+    const text = api.cardRulesText(actor);
+    const placed = api.placeCardFromHand("player", actor.instanceId, "seat", "player", 0, false,
+      { actingOutEnvironmentId: environment.instanceId });
+    return {
+      text, placed, will: state.players.player.will,
+      actor: { attack: state.players.player.board.seats[0]?.attack, hp: state.players.player.board.seats[0]?.currentHp },
+      environment: state.environment?.baseId,
+      previousTrashed: state.players.opponent.trash.some((card) => card.instanceId === previous.instanceId),
+      remainingHand: state.players.player.hand.length,
+      life: [state.players.player.life, state.players.opponent.life]
+    };
+  });
+  expect(result).toEqual({
+    text: "このカードを手札から出席させたとき、自分の手札にある環境カード1枚を、戦意を払わずに環境マスへ出してよい。",
+    placed: true, will: 0, actor: { attack: 2, hp: 2 }, environment: "shogi_duel_field",
+    previousTrashed: true, remainingHand: 0, life: [10, 10]
+  });
+});
+
+test("アクティングアウトマンは環境を選ばずに出席でき、不正な環境は選べない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const actor = api.createCardFromBase("acting_out_man", "player");
+    const environment = api.createCardFromBase("cafeteria", "player");
+    const opponentEnvironment = api.createCardFromBase("classroom", "opponent");
+    state.players.player.hand = [actor, environment];
+    state.players.opponent.hand = [opponentEnvironment];
+    api.playCard(actor.instanceId, "seat", "player", 0);
+    const choice = { mode: state.pendingCardChoice?.mode, min: state.pendingCardChoice?.min,
+      max: state.pendingCardChoice?.max, cards: state.pendingCardChoice?.cards.map((card) => card.baseId) };
+    state.pendingCardChoice.selectedIds = [];
+    api.confirmCardChoiceSelection();
+    const skipped = { actor: state.players.player.board.seats[0]?.baseId,
+      environment: state.environment?.baseId || null, hand: state.players.player.hand.map((card) => card.baseId) };
+    const secondActor = api.createCardFromBase("acting_out_man", "player");
+    state.players.player.hand.push(secondActor);
+    const invalid = api.placeCardFromHand("player", secondActor.instanceId, "seat", "player", 1, false,
+      { actingOutEnvironmentId: opponentEnvironment.instanceId });
+    return { choice, skipped, invalid, secondStillInHand: state.players.player.hand.includes(secondActor) };
+  });
+  expect(result).toEqual({
+    choice: { mode: "acting_out_environment", min: 0, max: 1, cards: ["cafeteria"] },
+    skipped: { actor: "acting_out_man", environment: null, hand: ["cafeteria"] },
+    invalid: false, secondStillInHand: true
+  });
+});
+
+test("アクティングアウトマンは効果出席では環境を出さず、AIは使える環境を選ぶ", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const generated = api.makeBoardCard(api.createCardFromBase("acting_out_man", "player"));
+    const held = api.createCardFromBase("cafeteria", "player");
+    generated.actingOutEnvironmentId = held.instanceId;
+    state.players.player.hand = [held];
+    api.attendCard("player", generated, "seat", 0, { attendanceSource: "generated" });
+    const generatedResult = { environment: state.environment?.baseId || null, hand: state.players.player.hand.length };
+    state.currentSide = "opponent";
+    const actor = api.createCardFromBase("acting_out_man", "opponent");
+    const environment = api.createCardFromBase("cafeteria", "opponent");
+    state.players.opponent.hand = [actor, environment];
+    state.players.opponent.will = 6;
+    const aiPlaced = api.placeCardFromHand("opponent", actor.instanceId, "seat", "opponent", 0, false);
+    return { generatedResult, aiPlaced, aiEnvironment: state.environment?.baseId || null,
+      aiWill: state.players.opponent.will };
+  });
+  expect(result).toEqual({
+    generatedResult: { environment: null, hand: 1 },
+    aiPlaced: true, aiEnvironment: "cafeteria", aiWill: 0
+  });
+});
+
+test("手札から出席させた扱いなら相手ターン中でも環境を無料で出す", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    state.currentSide = "opponent";
+    const actor = api.makeBoardCard(api.createCardFromBase("acting_out_man", "player"));
+    const environment = api.createCardFromBase("cafeteria", "player");
+    actor.actingOutEnvironmentId = environment.instanceId;
+    state.players.player.hand = [environment];
+    state.players.player.will = 0;
+    const placed = api.attendCard("player", actor, "seat", 0, { attendanceSource: "hand" });
+    return { placed: Boolean(placed), environment: state.environment?.baseId,
+      will: state.players.player.will, hand: state.players.player.hand.length };
+  });
+  expect(result).toEqual({ placed: true, environment: "cafeteria", will: 0, hand: 0 });
+});
+
+test("アクティングアウトマンのカードテストには上書き元と環境の選択肢がある", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest("acting_out_man");
+    return { hand: api.state.players.player.hand.map((card) => card.baseId),
+      environment: api.state.environment?.baseId };
+  });
+  expect(result.hand).toEqual(expect.arrayContaining(["acting_out_man", "cafeteria", "aggro_dome"]));
+  expect(result.environment).toBe("classroom");
+});
+
+test("スマホ幅でもアクティングアウトマンの環境選択を表示して確定できる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    const actor = api.createCardFromBase("acting_out_man", "player");
+    const environment = api.createCardFromBase("cafeteria", "player");
+    api.state.players.player.hand = [actor, environment];
+    api.playCard(actor.instanceId, "seat", "player", 0);
+  });
+  const stage = page.locator("#threeGesturesStage");
+  await expect(stage).toBeVisible();
+  await expect(stage.locator(".mulligan-card")).toHaveCount(1);
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeEnabled();
 });
 
 test("バカでかい声の学生は他の出席者へ1ダメージを与え、ベストフレンドと隣接すると超陽気を持つ", async ({ page }) => {

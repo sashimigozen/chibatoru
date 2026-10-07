@@ -25,6 +25,88 @@ test.beforeAll(async () => {
 
 test.afterAll(() => server?.kill("SIGTERM"));
 
+test("ゲストのアクティングアウトマンは選んだ環境を無料で上書きして同期する", async ({ browser }) => {
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
+  try {
+    for (const page of [host, guest]) {
+      await page.goto(gameUrl.href);
+      await page.locator("#homeNavBattleButton").click();
+      await page.locator("#onlinePrivateMatchButton").click();
+    }
+    await host.locator("#onlineCreateRoomButton").click();
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.role)).toBe("host");
+    const room = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+    await guest.locator("#onlineRoomInput").fill(room);
+    await guest.locator("#onlineJoinRoomButton").click();
+    for (const page of [host, guest]) {
+      await expect.poll(() => page.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
+      await page.evaluate(() => {
+        const api = window.__chibattle;
+        api.state.deckBuilder.counts.player = api.createAutoDeckCounts();
+        document.getElementById("onlineDeckSelect").dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await page.locator("#onlineReadyButton").click();
+    }
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.remoteReady)).toBe(true);
+    await host.locator("#onlineStartButton").click();
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
+
+    const setup = await host.evaluate(() => {
+      const api = window.__chibattle;
+      api.startCardTest("acting_out_man");
+      const { state } = api;
+      state.testMode = false;
+      state.currentSide = "opponent";
+      for (const side of ["player", "opponent"]) {
+        const player = state.players[side];
+        player.board = { teacher: null, seats: Array(9).fill(null) };
+        player.hand = [];
+        player.trash = [];
+        player.life = 20;
+        player.will = 6;
+      }
+      const actor = api.createCardFromBase("acting_out_man", "opponent");
+      const environment = api.createCardFromBase("shogi_duel_field", "opponent");
+      state.players.opponent.hand = [actor, environment];
+      state.environment = api.makeBoardCard(api.createCardFromBase("classroom", "player"));
+      api.onlineBroadcastState(true);
+      return { actorId: actor.instanceId, environmentId: environment.instanceId,
+        seq: state.online.lastSnapshotSeq };
+    });
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq))
+      .toBeGreaterThanOrEqual(setup.seq);
+    await expect.poll(() => guest.evaluate(() => {
+      const { state } = window.__chibattle;
+      return { phase: state.phase, currentSide: state.currentSide,
+        hand: state.players.player.hand.map((card) => card.baseId), environment: state.environment?.baseId };
+    })).toEqual({ phase: "battle", currentSide: "player",
+      hand: ["acting_out_man", "shogi_duel_field"], environment: "classroom" });
+    await guest.evaluate((id) => window.__chibattle.playCard(id, "seat", "player", 0), setup.actorId);
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+      .toBe("acting_out_environment");
+    await guest.evaluate((id) => {
+      const api = window.__chibattle;
+      api.state.pendingCardChoice.selectedIds = [id];
+      api.confirmCardChoiceSelection();
+    }, setup.environmentId);
+    for (const page of [host, guest]) {
+      await expect.poll(() => page.evaluate(() => {
+        const api = window.__chibattle;
+        const side = api.state.online.role === "host" ? "opponent" : "player";
+        return {
+          actor: api.state.players[side].board.seats[0]?.baseId,
+          environment: api.state.environment?.baseId,
+          will: api.state.players[side].will,
+          life: [api.state.players.player.life, api.state.players.opponent.life]
+        };
+      })).toEqual({ actor: "acting_out_man", environment: "shogi_duel_field", will: 0, life: [10, 10] });
+    }
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
 test("ゲストの敵の敵で選んだ山札上の順番をホストが検証して同期する", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));

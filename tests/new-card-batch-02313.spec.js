@@ -729,14 +729,20 @@ test("スタバ学生は自分の学生へ1ダメージ後に校外の教師を�
     const student = api.makeBoardCard(api.createCardFromBase("loud_student", "player"));
     api.state.players.player.board.seats[2] = student;
     const starbucks = api.createCardFromBase("starbucks_student", "player");
+    const cost = api.effectiveCardCost(starbucks);
+    const rules = api.cardRulesText(starbucks);
     api.state.players.player.hand.push(starbucks);
     api.placeCardFromHand("player", starbucks.instanceId, "seat", "player", 0, false,
       { starbucksTeacherId: teacher.instanceId });
-    return { studentHp: student.currentHp, teacher: api.state.players.player.board.teacher?.baseId,
+    return { cost, rules, studentHp: student.currentHp, teacher: api.state.players.player.board.teacher?.baseId,
       source: api.state.players.player.board.teacher?.lastAttendanceSource,
       teacherRemovedFromTrash: !api.state.players.player.trash.some((card) => card.instanceId === teacher.instanceId) };
   });
-  expect(result).toEqual({ studentHp: 8, teacher: "general_teacher", source: "hand", teacherRemovedFromTrash: true });
+  expect(result).toEqual({
+    cost: 8,
+    rules: "このカードを手札から出席させたとき、自分の講義室にいる学生すべてに1ダメージを与える。その後、自分の校外エリアにある教師1人を指名し、手札から出席させたものとして自分の教卓マスへ出席させる。",
+    studentHp: 8, teacher: "general_teacher", source: "hand", teacherRemovedFromTrash: true
+  });
 });
 
 test("任意枚数と校外カードの選択UIから出席を確定できる", async ({ page }) => {
