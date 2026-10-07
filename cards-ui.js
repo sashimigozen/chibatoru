@@ -250,20 +250,20 @@
     state.deckBuilder.selectedName = ""; renderLibrary(); ui.opener?.focus();
   }
 
-  // Choose the largest card size that keeps every kind inside the contents area.
+  // Match the compact used-deck cards, shrinking only to keep every kind visible.
   // Observe the area rather than the viewport so the footer and dialog still fit.
   const deckContentsObserver = new ResizeObserver(([entry]) => fitDeckContents(entry.target));
   function fitDeckContents(contents) {
     const count = contents.children.length;
     if (!count || !contents.clientWidth || !contents.clientHeight) return;
     const width = contents.clientWidth - 24, height = contents.clientHeight - 24;
-    const gap = 12, tileOverhead = 38;
+    const gap = 6;
     let best = { columns: 1, rows: count, cardWidth: 0 };
     for (let columns = 1; columns <= count; columns++) {
       const rows = Math.ceil(count / columns);
-      const cardWidth = Math.min(170,
-        (width - gap * (columns - 1)) / columns - 8,
-        ((height - gap * (rows - 1)) / rows - tileOverhead) * 21 / 32);
+      const cardWidth = Math.min(74,
+        (width - gap * (columns - 1)) / columns,
+        ((height - gap * (rows - 1)) / rows) * 21 / 32);
       if (cardWidth > best.cardWidth || (cardWidth === best.cardWidth && rows < best.rows)) {
         best = { columns, rows, cardWidth };
       }
@@ -283,7 +283,7 @@
     const ids = getDeckEditorIds(isSpecialtyDeckFormat() ? saved.specialtyId : "").filter((id) => saved.counts[id] > 0);
     elements.deckLibraryDetail.innerHTML = `<header class="case-modal-head"><h2 id="caseDeckDetailTitle">デッキ詳細</h2><button class="case-close" type="button" data-deck-close aria-label="閉じる">×</button></header>
       <div class="case-deck-detail-tools"><h2>${escapeHtml(name)}</h2><button class="button secondary" data-deck-export type="button">ファイル書き出し</button><span>${deckSize(saved.counts)}枚</span></div>
-      <div class="case-deck-detail-body">${arrow("前のデッキ", true)}<div class="case-deck-contents">${ids.map((id) => `<button class="case-deck-content" type="button" data-library-card="${id}" aria-label="${escapeHtml(CARD_BASES[id].name)}、${saved.counts[id]}枚、カード詳細を表示">${shell(id)}<span class="case-deck-copy-count">×${saved.counts[id]}</span></button>`).join("")}</div><div class="case-reserved-space" aria-hidden="true"></div>${arrow("次のデッキ")}</div>
+      <div class="case-deck-detail-body">${arrow("前のデッキ", true)}<div class="case-deck-contents">${ids.map((id) => `<button class="case-deck-content" type="button" data-library-card="${id}" aria-label="${escapeHtml(CARD_BASES[id].name)}、${saved.counts[id]}枚、カード詳細を表示">${cardShellTemplate(makePreviewCard(id, "player"), "deck-window-card")}<span class="deck-copy-badge case-deck-copy-count">x${saved.counts[id]}</span></button>`).join("")}</div><div class="case-reserved-space" aria-hidden="true"></div>${arrow("次のデッキ")}</div>
       <footer class="case-deck-detail-footer">${deckCurveHtml(saved.counts)}<div><button class="button warning" type="button" data-deck-remove>削除する</button><button class="button" type="button" data-deck-edit>編成する</button></div></footer>`;
     const contents = elements.deckLibraryDetail.querySelector(".case-deck-contents");
     fitDeckContents(contents);

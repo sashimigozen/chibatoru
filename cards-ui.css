@@ -90,11 +90,10 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
 .case-deck-detail-tools { display: flex; gap: 16px; align-items: center; }
 .case-deck-detail-tools h2 { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .case-deck-detail-body { display: grid; grid-template-columns: 28px minmax(0,1fr) 25% 28px; gap: 14px; flex: 1; min-height: 0; }
-.case-deck-contents { display: grid; grid-template-columns: repeat(var(--deck-content-columns,1),minmax(0,1fr)); grid-template-rows: repeat(var(--deck-content-rows,1),minmax(0,1fr)); gap: 12px; min-width: 0; min-height: 0; overflow: hidden; align-items: start; justify-items: center; padding: 12px; border: 1px solid #9fb7c6; }
-.case-deck-content { display: flex; flex-direction: column; align-items: center; gap: 6px; width: min(100%,calc(var(--deck-content-card-width,120px) + 8px)); min-width: 0; border: 0; border-radius: 5px; padding: 4px; color: #173246; background: transparent; cursor: pointer; }
+.case-deck-contents { display: grid; grid-template-columns: repeat(var(--deck-content-columns,1),var(--deck-content-card-width,74px)); grid-auto-rows: min-content; gap: 6px; min-width: 0; min-height: 0; overflow: hidden; align-content: start; justify-content: start; padding: 12px; border: 1px solid #9fb7c6; }
+.case-deck-content { position: relative; display: block; width: 100%; min-width: 0; border: 0; border-radius: 5px; padding: 0; color: #173246; background: transparent; cursor: pointer; }
 .case-deck-content > .card { flex: none; width: 100%; height: auto; min-width: 0; min-height: 0; aspect-ratio: 21 / 32; transform: none; }
 .case-deck-content:hover { background: #dce8ee; transform: none; }
-.case-deck-copy-count { flex: none; height: 24px; line-height: 18px; padding: 2px 6px; border: 1px solid #9fb7c6; border-radius: 4px; background: #fff; font-size: 14px; font-weight: 900; }
 .case-reserved-space { border: 1px solid #9fb7c6; background: #edf3f7; }
 .case-deck-detail-footer { display: flex; align-items: end; gap: 20px; padding: 0 42px; }
 .case-deck-detail-footer > div { display: flex; gap: 12px; margin-left: auto; flex: 0 0 auto; }

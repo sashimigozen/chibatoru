@@ -72,7 +72,7 @@ test("保存デッキを12件ずつ表示し最初と最後が循環・内容と
   await expect(page.locator("#deckLibraryGrid > button").last()).toHaveText("＋ 新規作成");
   await page.locator("#deckLibraryGrid .case-deck-tile").last().click();
   await expect(page.locator("#caseDeckDetailModal")).toBeVisible();
-  await expect(page.locator(".case-deck-content")).toContainText("×40");
+  await expect(page.locator(".case-deck-content")).toContainText("x40");
   await page.locator("[data-deck-edit]").click();
   await expect(page.locator("#deckSaveNameInput")).toHaveValue("実デッキ1");
   await expect(page.locator("#caseDeckDetailModal")).toBeHidden();
@@ -99,7 +99,7 @@ test("デッキ詳細は実際のカードと枚数を1画面に表示し、説�
   for (let index = 0; index < ids.length; index++) {
     const button = contents.locator(`[data-library-card="${ids[index]}"]`);
     await expect(button.locator(".card-name")).toHaveText(await page.evaluate(id => CARD_BASES[id].name, ids[index]));
-    await expect(button.locator(".case-deck-copy-count")).toHaveText(`×${index % 3 + 1}`);
+    await expect(button.locator(".case-deck-copy-count")).toHaveText(`x${index % 3 + 1}`);
   }
   const before = await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.chaosDecks));
   for (const size of [{ width: 1280, height: 720 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }]) {
@@ -107,6 +107,7 @@ test("デッキ詳細は実際のカードと枚数を1画面に表示し、説�
     const card = await contents.locator(".card").first().boundingBox();
     expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
     expect(card.width).toBeGreaterThan(50);
+    expect(card.width).toBeLessThanOrEqual(74);
     const dialog = await page.locator(".case-deck-dialog").boundingBox();
     expect(dialog.y + dialog.height).toBeLessThanOrEqual(size.height);
     await expect.poll(() => contents.evaluate(node => node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight)).toBe(true);
@@ -146,6 +147,22 @@ test("デッキの種類数と画面サイズに合わせ全カードを重な�
       if (count > 0) {
         const card = await contents.locator(".card").first().boundingBox();
         expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
+        const badge = contents.locator(".deck-copy-badge").first();
+        await expect(badge).toHaveCSS("background-color", "rgb(23, 32, 51)");
+        const badgeBounds = await badge.boundingBox();
+        expect(badgeBounds.x).toBeGreaterThan(card.x);
+        expect(badgeBounds.y).toBeGreaterThan(card.y + card.height / 2);
+        expect(badgeBounds.x + badgeBounds.width).toBeLessThanOrEqual(card.x + card.width);
+        expect(badgeBounds.y + badgeBounds.height).toBeLessThanOrEqual(card.y + card.height);
+        const grid = await contents.boundingBox();
+        expect(card.x - grid.x).toBeCloseTo(13, 0);
+        expect(card.y - grid.y).toBeCloseTo(13, 0);
+        if (count > 1) {
+          await expect.poll(() => contents.evaluate(node => {
+            const [first, second] = [...node.querySelectorAll(".card")].slice(0, 2).map(card => card.getBoundingClientRect());
+            return Math.round(second.x - first.right);
+          })).toBe(6);
+        }
         if (count <= 4) expect(await contents.evaluate(node => node.style.getPropertyValue("--deck-content-rows"))).toBe("1");
       }
       if (size.width === 1440 && [4, 30, 40].includes(count)) await page.screenshot({ path: testInfo.outputPath(`deck-fit-${count}-kinds.png`) });
