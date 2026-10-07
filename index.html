@@ -19049,7 +19049,7 @@
       curry_treater: ["cafeteria"],
       chen_san: ["cafeteria"],
       green_curry: ["cafeteria_lady"],
-      acting_out_man: ["general_teacher"],
+      acting_out_man: ["cafeteria", "aggro_dome"],
       seat_taking_group: [],
       predator: ["general_student"],
       ttb: ["suspicious_document"],
@@ -19224,7 +19224,7 @@
       cursed_students: { name: "呪われた学生たち", type: "student", cost: 3, attack: 0, hp: 0, allowedZones: ["seat", "teacher"] },
       pad_present_creator: { name: "パッドプレゼンクリエイター", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
-      aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
+      aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       scout_student: { name: "斥候学生", type: "student", cost: 2, attack: 2, hp: 1, allowedZones: ["seat"] },
       single_cell: { name: "単細胞生物", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       midge: { name: "ミジンコ", type: "student", cost: 0, noCost: true, attack: 2, hp: 2, evolutionFrom: "single_cell", token: true, allowedZones: ["evolution"] },
@@ -19319,7 +19319,7 @@
       zombie: { name: "ゾンビ", type: "vampire", cost: 3, attack: 2, hp: 1, keywords: ["陽気"], allowedZones: ["teacher", "seat"] },
       impossible_high_note: { name: "ありえない高音", type: "vampire", cost: 8, attack: 3, hp: 3, allowedZones: ["teacher", "seat"] },
       back_question_student: { name: "後ろから質問する学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
-      acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 6, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
+      acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 6, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       hat_man: { name: "帽子男", type: "student", cost: 5, attack: 3, hp: 3, allowedZones: ["seat"], category: "common" },
       gesture_student: { name: "ジェスチャー学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "common" },
       diligent_student: { name: "熱心な学生", type: "student", cost: 3, attack: 2, hp: 3, rowOnly: 1, allowedZones: ["seat"], category: "common" },
@@ -19330,7 +19330,7 @@
       variable_student: { name: "変数学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "design" },
       spoon_wizard: { name: "スプーンの魔術師", type: "student", cost: 7, attack: 2, hp: 3, allowedZones: ["seat"], category: "common" },
       adjective_vs_cynical: { name: "形容詞学生vs冷笑学生", type: "student", cost: 6, attack: 5, hp: 5, occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "common" },
-      starbucks_student: { name: "片手にスタバ学生", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat"], category: "design" },
+      starbucks_student: { name: "片手にスタバ学生", type: "student", cost: 8, attack: 3, hp: 3, allowedZones: ["seat"], category: "design" },
       overfitting_student: { name: "過学習学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "interference" },
       loud_typing_student: { name: "バカでかいタイピング音の学生", type: "student", cost: 8, attack: 4, hp: 4, allowedZones: ["seat"], category: "big" },
       tiny_rhythm_student: { name: "小刻みリズム学生", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat"], category: "interference" },
@@ -19606,12 +19606,16 @@
       {
         version: "ver.0.23.15",
         date: "2026年10月7日",
-        summary: "カード画面をデッキケースの中をイメージしたUIに変更し、カード一覧・詳細と保存デッキ・編成を整理しました。三敵で手札に加えた敵を出席させずに残せるようにしました。",
+        summary: "カード画面をデッキケースの中をイメージしたUIに変更し、カード一覧・詳細と保存デッキ・編成を整理しました。三敵で手札に加えた敵を出席させずに残せるようにしました。先攻1ターン目のドローをなくし、片手にスタバ学生・アグロキング・アクティングアウトマンを調整しました。",
         changes: [
           { title: "カード画面", after: "ホームの「カード」から「カード一覧」「デッキ編成」を選べます。紺色を基調に、カード一覧・詳細、保存デッキ一覧・内容確認・編成の画面を変更しました。カード一覧・デッキ編成・デッキ編集でも机色の外枠を表示します。デッキ詳細のカードを左上から詰めて並べ、枚数をカード右下に重ねて表示します。カードの大きさは固定せず、種類数・行数・表示領域に合わせて拡大・縮小し、スクロールせず1画面に収めます。カードを押すと説明を確認できます。既存のカード表示、レアリティ、保存デッキ、カードテストを引き続き利用できます。" },
           { title: "デッキ操作とページ送り", after: "ファイル読み込み・ファイル書き出しを配置し、編集を破棄する確認を「キャンセル」「はい」に揃えました。一覧と詳細の左右の矢印は、最初と最後のページを循環します。カード一覧・保存デッキ一覧・カード詳細・デッキ詳細・チュートリアルのステージ切替は、2本指スクロールでも操作できます。慣性で複数ページが飛ぶことを防ぎ、説明文や一覧の通常スクロールを維持します。すべての画面でスクロールバーは非表示にしました。保存デッキは左上から順に並び、「新規作成」は最後のデッキに続けて、最後のページにだけ表示します。" },
           { title: "関連カードの詳細表示", after: "デッキ編成・対戦中・カード詳細の説明文にある「カード名」を押すと、そのカードを表示します。トークン・生成カードも確認でき、元のカードへ戻れます。編集中のデッキや対戦状態、カードのテキスト・効果は変更しません。" },
-          { title: "三敵", after: "デッキの上から見つけた「敵」とつく出席者カードはすべて手札に加えます。その中から出席させるカードを0枚から選べるようにし、選ばなかったカードは手札に残します。" }
+          { title: "三敵", after: "デッキの上から見つけた「敵」とつく出席者カードはすべて手札に加えます。その中から出席させるカードを0枚から選べるようにし、選ばなかったカードは手札に残します。" },
+          { title: "先攻の初回ドロー", after: "先攻は1ターン目のターン開始ドローを行いません。後攻の1ターン目と、先攻の2ターン目以降は通常どおりドローします。" },
+          { title: "片手にスタバ学生", before: "戦意6。", after: "戦意8。効果は変更しません。" },
+          { title: "アグロキング", before: "体力2。出席したターンの終了は自己強化の回数に含まれていませんでした。", after: "体力1。3行1列で自分のターンを終了した回数は出席したターンから数え、2回目に1度だけ攻撃力+2、体力+1します。席を離れたら数え直します。アグロキングダム中は従来どおり環境の効果に置き換わります。" },
+          { title: "アクティングアウトマン", before: "戦意6、攻撃力2、体力3。場にいる間、相手は1ターンに1回しか出席できませんでした。", after: "戦意6、攻撃力2、体力2。手札から出席させたとき、手札の環境カード1枚を選び、戦意を払わず環境マスに出せます。既存の環境は通常どおり上書きします。" }
         ]
       },
       {
@@ -26348,6 +26352,7 @@
 
     function isCourseRegistrationOnlineChoice(choice) {
       return Boolean(choice && [
+        "acting_out_environment",
         "enemy_enemy_order",
         "triple_enemy",
         "triple_enemy_online_response",
@@ -26373,6 +26378,8 @@
       if (!choice || !isOnlineGuest() || state.phase !== "battle" || state.gameOver) return;
       const sourceCards = choice.mode === "course_registration_draw_online_response"
         ? state.players.player.trash
+        : choice.mode === "acting_out_environment"
+          ? state.players.player.hand
         : choice.mode === "enemy_enemy_order"
           ? listBoardRefs("player").map(getBoardCardFromRef)
         : choice.mode === "triple_enemy_online_response"
@@ -26776,6 +26783,7 @@
             spoonDestroyIds: payload.spoonDestroyIds || [],
             enemyReviveIds: payload.enemyReviveIds || [],
             starbucksTeacherId: payload.starbucksTeacherId || null,
+            actingOutEnvironmentId: payload.actingOutEnvironmentId || null,
             tripleEnemyOrderIds: payload.tripleEnemyOrderIds || [],
             enemyEnemyTopOrderIds: payload.enemyEnemyTopOrderIds || [],
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
@@ -27880,7 +27888,7 @@
       state.aiThinking = true;
       clearSelections();
       state.message = "マリガン完了。バトルを開始します。";
-      addLog("バトル開始。ターン開始時に1枚引きます。");
+      addLog("バトル開始。先攻1ターン目はドローしません。");
       analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       onlineSubmitAnalyticsLog("battle_start");
       render();
@@ -27956,6 +27964,10 @@
       return hpBonus;
     }
 
+    function isFirstPlayerOpeningTurn(side) {
+      return side === state.firstSide && state.players[side].turnsTaken === 1;
+    }
+
     function startTurn(side) {
       if (side === "opponent" && isTutorialQuiz() && !state.gameOver) {
         failTutorialQuiz();
@@ -27994,7 +28006,9 @@
       if (state.gameOver) return;
       resolveDungeonFloorStartTurnEffects(side);
       if (state.gameOver) return;
-      const courseDraw = drawCourseRegistrationCard(side);
+      const courseDraw = isFirstPlayerOpeningTurn(side)
+        ? { handled: false, drawn: null }
+        : drawCourseRegistrationCard(side);
       if (courseDraw.pending) {
         render();
         return;
@@ -28004,7 +28018,8 @@
 
     function completeTurnStartAfterDraw(side, courseDraw) {
       const player = state.players[side];
-      const drawCount = isChaosBattle() ? Math.max(0, 5 - player.hand.length) : 1;
+      const skipOpeningDraw = isFirstPlayerOpeningTurn(side);
+      const drawCount = skipOpeningDraw ? 0 : isChaosBattle() ? Math.max(0, 5 - player.hand.length) : 1;
       const drawWasBlocked = !courseDraw.handled && drawCount > 0 && isDeckToHandLocked();
       let drawnCount = 0;
       if (!courseDraw.handled && !drawWasBlocked) {
@@ -28014,7 +28029,9 @@
         }
       }
       resolveChaosWorldAtTurnStart();
-      const drawText = courseDraw.handled
+      const drawText = skipOpeningDraw
+        ? "先攻1ターン目はドローしません。"
+        : courseDraw.handled
         ? (courseDraw.drawn ? `履修登録結論パで選んだ順番どおり「${courseDraw.drawn.name}」を手札に加えました。` : "履修登録結論パで引くカードがありませんでした。")
         : drawWasBlocked
         ? "山梨最低賃金2円の効果によりドローできません。"
@@ -32744,7 +32761,7 @@
           if (card.baseId === "aggro_king") {
             if (kingdomActive) {
               card.aggroKingTurns = 0;
-            } else if (ref.zone === "seat" && ref.index === 6 && card.playedOnTurn < state.actionTurn && !card.aggroKingBuffed) {
+            } else if (ref.zone === "seat" && ref.index === 6 && !card.aggroKingBuffed) {
               card.aggroKingTurns = (card.aggroKingTurns || 0) + 1;
               if (card.aggroKingTurns >= 2) {
                 applyPermanentStatBuff(card, 2, 1, 0, card.name);
@@ -34115,13 +34132,14 @@
         } else resolveConfuciusSays("player", item, pending.context?.declaredType, selectedIds, true);
         return;
       }
-      if (["spoon_destroy", "enemy_revive", "starbucks_teacher"].includes(mode)) {
+      if (["spoon_destroy", "enemy_revive", "starbucks_teacher", "acting_out_environment"].includes(mode)) {
         const card = getHandCard("player", pending.playCardId);
         const target = pending.playTarget;
         if (!card || !target) return;
         const choices = mode === "spoon_destroy" ? { spoonDestroyIds: selectedIds }
           : mode === "enemy_revive" ? { enemyReviveIds: selectedIds }
-            : { starbucksTeacherId: selectedIds[0] || null };
+            : mode === "starbucks_teacher" ? { starbucksTeacherId: selectedIds[0] || null }
+              : { actingOutEnvironmentId: selectedIds[0] || null };
         if (onlineCanSendCommand()) {
           onlineSendCommand("playCard", { instanceId: card.instanceId, ...target, ...choices });
           render();
@@ -35755,6 +35773,11 @@
       return expired;
     }
 
+    function actingOutEnvironmentCandidates(side) {
+      return state.players[side].hand.filter((card) => card.type === "environment"
+        && canPlaceCard(side, card, "environment", side, null));
+    }
+
     function playCard(instanceId, zone, owner, index = null) {
       if (state.pendingCardPlay) {
         state.message = "カード演出が終わるまでお待ちください。";
@@ -35766,6 +35789,16 @@
         return;
       }
       const localCard = getHandCard("player", instanceId);
+      if (localCard?.baseId === "acting_out_man") {
+        const cards = actingOutEnvironmentCandidates("player");
+        if (cards.length) {
+          openCardChoice({ mode: "acting_out_environment", title: localCard.name,
+            message: "戦意を払わずに環境マスへ出す環境を選んでください。選ばずに出席することもできます。",
+            cards, min: 0, max: 1, confirmLabel: "出席して解決",
+            playCardId: instanceId, playTarget: { zone, owner, index } });
+          return;
+        }
+      }
       if (localCard?.baseId === "spoon_wizard") {
         openCardChoice({ mode: "spoon_destroy", title: localCard.name,
           message: "破壊する自分の出席者を選んでください。0人でも確定できます。",
@@ -36025,15 +36058,30 @@
     }
 
     function placeCardFromHand(side, instanceId, zone, owner, index = null, renderAfter = true, options = {}) {
-      if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
-      if (state.resolvingOrderedAttendance) return false;
-      if (state.pendingCardPlay && !options.revealAlreadyShown) return false;
+      if (state.phase !== "battle" || state.gameOver) return false;
       const player = state.players[side];
       const card = getHandCard(side, instanceId);
       if (!card) return false;
+      const fromActingOutEffect = card.type === "environment" && Boolean(options.actingOutSourceId)
+        && listBoardRefs(side).some((ref) => {
+          const source = getBoardCardFromRef(ref);
+          return source?.instanceId === options.actingOutSourceId && source.baseId === "acting_out_man";
+        });
+      if (!fromActingOutEffect && state.currentSide !== side) return false;
+      if (state.resolvingOrderedAttendance && !fromActingOutEffect) return false;
+      if (state.pendingCardPlay && !options.revealAlreadyShown && !fromActingOutEffect) return false;
       card.spoonDestroyIds = Array.isArray(options.spoonDestroyIds) ? options.spoonDestroyIds : [];
       card.enemyReviveIds = Array.isArray(options.enemyReviveIds) ? options.enemyReviveIds : [];
       card.starbucksTeacherId = options.starbucksTeacherId || null;
+      if (card.baseId === "acting_out_man") {
+        const candidates = actingOutEnvironmentCandidates(side);
+        if (options.actingOutEnvironmentId && !candidates.some((entry) => entry.instanceId === options.actingOutEnvironmentId)) return false;
+        const aiChoice = isCpuControlledBattleSide(side) && !options.actingOutEnvironmentId
+          ? candidates.sort((a, b) => scoreAiEnvironment(b, side) - scoreAiEnvironment(a, side))[0]
+          : null;
+        card.actingOutEnvironmentId = options.actingOutEnvironmentId
+          || (aiChoice && scoreAiEnvironment(aiChoice, side) > 0 ? aiChoice.instanceId : null);
+      }
       if (card.baseId === "triple_enemy") {
         const candidates = tripleEnemyCandidates(side);
         const ids = options.tripleEnemyOrderIds;
@@ -36102,16 +36150,14 @@
         }
         card.corneringLecturerChoiceId = choiceId;
       }
-      if (side === "player" && !tutorialAllowsPlacement(card, zone, owner, index)) {
+      if (side === "player" && !fromActingOutEffect && !tutorialAllowsPlacement(card, zone, owner, index)) {
         addLog("チュートリアル中は、光っているマスにだけ出席できます。");
         clearSelections();
         if (renderAfter) render();
         return false;
       }
       if (!canPlaceCard(side, card, zone, owner, index)) {
-        addLog(zone !== "environment" && isAttendanceLimited(side)
-          ? "アクティングアウトマンの効果で、このターンはこれ以上出席できません。"
-          : `${card.name}はそのマスには出席できません。`);
+        addLog(`${card.name}はそのマスには出席できません。`);
         clearSelections();
         if (renderAfter) render();
         return false;
@@ -36125,21 +36171,21 @@
       }
       // 戦意10以上で出席するスモール小俣は、必ず大型化する。
       const isForcedBigOmata = card.baseId === "small_omata" && player.will >= 10;
-      const playCost = effectiveCardCost(card, zone, index);
+      const playCost = fromActingOutEffect ? 0 : effectiveCardCost(card, zone, index);
       if (player.will < playCost) {
         state.message = `戦意が足りません。${card.name}のコストは${playCost}です。`;
         clearSelections();
         if (renderAfter) render();
         return false;
       }
-      if (isRewardFoilCard(card) && !card.evolutionFrom && !options.revealAlreadyShown) {
+      if (isRewardFoilCard(card) && !card.evolutionFrom && !options.revealAlreadyShown && !fromActingOutEffect) {
         return deferCardAttendanceUntilReveal(side, instanceId, zone, owner, index, renderAfter, options, card);
       }
       const analyticsCandidates = analyticsLegalPlacementCandidates(side, card);
       const analyticsEnvironmentBefore = state.environment ? analyticsCardInfo(state.environment) : null;
       const analyticsPlacement = analyticsPlacementCandidate(side, card, zone, owner, index);
-      if (side === "player") pushTutorialHistoryBeforeAction("playCard", { card, owner, zone, index });
-      if (side === "player") pushTestHistoryBeforeAction();
+      if (side === "player" && !fromActingOutEffect) pushTutorialHistoryBeforeAction("playCard", { card, owner, zone, index });
+      if (side === "player" && !fromActingOutEffect) pushTestHistoryBeforeAction();
       player.will -= playCost;
       player.hand = player.hand.filter((handCard) => handCard.instanceId !== instanceId);
       if (card.evolutionFrom) {
@@ -36202,7 +36248,7 @@
         placedCard.forcedBigOmata = isForcedBigOmata;
         if ((zone === "seat" || zone === "teacher") && !options.revealAlreadyShown) showCardPlayAnimation(card, "board");
         if (zone === "environment") {
-          if (!options.revealAlreadyShown) showCardPlayAnimation(card, "environment");
+          if (!options.revealAlreadyShown || fromActingOutEffect) showCardPlayAnimation(card, "environment");
           if (state.environment) {
             const overwrittenEnvironment = state.environment;
             moveToTrash(overwrittenEnvironment.owner, overwrittenEnvironment, {
@@ -36225,7 +36271,7 @@
           commandId: options.commandId || "",
           badStudentDiscardIds: options.badStudentDiscardIds || []
         });
-        const costLog = card.noCost && !isChaosBattle() ? "戦意なし" : `戦意-${playCost}`;
+        const costLog = fromActingOutEffect || (card.noCost && !isChaosBattle()) ? "戦意なし" : `戦意-${playCost}`;
         addLog(`${SIDES[side]}は${card.name}を出席させました。${costLog}。`);
         analyticsMarkPlayed(side, card);
         analyticsRecordAction({
@@ -36248,7 +36294,7 @@
       }
       cleanupDestroyedCards();
       applyBoardAuras();
-      if (side === "player") completeTutorialAction("playCard", { card, owner, zone, index });
+      if (side === "player" && !fromActingOutEffect) completeTutorialAction("playCard", { card, owner, zone, index });
       clearSelections();
       if (renderAfter) render();
       return true;
@@ -36392,18 +36438,8 @@
       return cursedStudentsOpenSeatIndexes(side, sourceZone, sourceIndex).length >= 3;
     }
 
-    function isAttendanceLimited(side) {
-      return state.currentSide === side
-        && (state.players[side]?.attendancesThisTurn || 0) >= 1
-        && listBoardRefs(oppositeSide(side)).some((ref) => {
-          const card = getBoardCardFromRef(ref);
-          return card?.baseId === "acting_out_man" && canUsePrintedCardEffects(card);
-        });
-    }
-
     function canPlaceCard(side, card, zone, owner, index, options = {}) {
       if (!card || state.phase !== "battle" || state.gameOver) return false;
-      if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return false;
       if (zone !== "environment" && owner !== side) return false;
       if (card.type === "environment") {
         if (zone !== "environment") return false;
@@ -36480,7 +36516,6 @@
     }
 
     function evolveCard(side, card, owner, zone, index, options = {}) {
-      if (isAttendanceLimited(side) && options.ignoreAttendanceLimit !== true) return false;
       const target = findEvolveTarget(side, card, owner, zone, index, options);
       if (!target) return false;
       const previous = getBoardCardFromRef(target);
@@ -36933,7 +36968,6 @@
 
     function attendCard(side, card, zone, index = null, options = {}) {
       if (!card || !["seat", "teacher", "environment"].includes(zone)) return null;
-      if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return null;
       const owner = options.owner || side;
       const attendanceSource = attendanceSourceForEffect({
         attendanceSource: options.attendanceSource || card.pendingAttendanceSource,
@@ -37704,8 +37738,18 @@
           addLog(`${card.name}の手札出席時効果：相手の教師${target.name}をランダムに指名し、1ダメージを与えました。`);
         }
       }
-      if (card.baseId === "acting_out_man") {
-        addLog(`${card.name}がいる間、相手は1ターンに1回しか出席できません。`);
+      if (card.baseId === "acting_out_man" && card.actingOutEnvironmentId) {
+        const environmentId = card.actingOutEnvironmentId;
+        delete card.actingOutEnvironmentId;
+        const environment = getHandCard(side, environmentId);
+        if (environment?.type === "environment" && canPlaceCard(side, environment, "environment", side, null)
+          && placeCardFromHand(side, environmentId, "environment", side, null, false, {
+            actingOutSourceId: card.instanceId,
+            revealAlreadyShown: true,
+            commandId: options.commandId || ""
+          })) {
+          addLog(`${card.name}の効果：${environment.name}を戦意を払わずに環境マスへ出しました。`);
+        }
       }
       if (card.baseId === "pro_k" && zone === "teacher") {
         const seatIndexes = [0, 2].filter((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex));
@@ -38213,6 +38257,7 @@
         if (!card || card.type !== "student" || isAibenNyoteiEffectImmune(card)) return;
         const targetIndex = [0, 1, 2].find((i) => isBoardSlotOpen(owner, "seat", i));
         if (targetIndex === undefined) return;
+        if (card.baseId === "aggro_king" && fromIndex === 6) card.aggroKingTurns = 0;
         state.players[owner].board.seats[targetIndex] = card;
         state.players[owner].board.seats[fromIndex] = null;
         addLog(`${card.name}は妖精効果で1行目へ移動しました。`);
@@ -40017,6 +40062,7 @@
           refs.forEach((ref) => {
             const card = getBoardCardFromRef(ref);
             if (!card) return;
+            const aggroKingTurns = card.baseId === "aggro_king" && ref.index === 6 ? card.aggroKingTurns : null;
             clearBoardCardFromField(owner, "seat", ref.index, card);
             const firstInRow = Math.floor(ref.index / 3) * 3;
             let destination = ref.index;
@@ -40027,6 +40073,7 @@
             }
             if (card.occupiedSeatSize) placeMultiSeatCard(owner, destination, card);
             else setBoardCard(owner, "seat", destination, card);
+            if (aggroKingTurns !== null && destination === ref.index) card.aggroKingTurns = aggroKingTurns;
           });
         });
         resultText = "お互いの出席者を各行の左側へ詰めました。";
@@ -40034,6 +40081,7 @@
       if (item.baseId === "contrarian_portal") {
         const board = state.players[side].board.seats;
         if (![...new Set(board)].some((card) => card?.occupiedSeatSize?.rows > 1)) {
+          if (board[6]?.baseId === "aggro_king") board[6].aggroKingTurns = 0;
           for (let col = 0; col < 3; col += 1) {
             [board[col], board[6 + col]] = [board[6 + col], board[col]];
           }
@@ -42427,6 +42475,7 @@
 
     function clearBoardCardFromField(owner, zone, index, card = null) {
       const current = card || getBoardCard(owner, zone, index);
+      if (zone === "seat" && index === 6 && current?.baseId === "aggro_king") current.aggroKingTurns = 0;
       if (zone === "seat" && isMultiSeatCard(current)) {
         (current.occupiedSeatIndexes || occupiedSeatIndexesFor(current, current.seatAnchorIndex ?? index))
           .forEach((seatIndex) => {
@@ -49160,6 +49209,9 @@
         player.board.seats[5] = makeBoardCard(createCardFromBase("aggro_queen", "player"));
         player.board.seats[6] = makeBoardCard(createCardFromBase("aggro_king", "player"));
       }
+      if (baseId === "acting_out_man") {
+        state.environment = makeBoardCard(createCardFromBase("classroom", "opponent"));
+      }
       if (baseId === "green_curry") {
         state.environment = makeBoardCard(createCardFromBase("cafeteria", "player"));
         const vampireTarget = makeBoardCard(createCardFromBase("cafeteria_lady", "player"));
@@ -51242,7 +51294,7 @@
         cursed_students: "このカードが出席したとき、自分の講義室の空いている席マスを3つ選ぶ。それぞれに「アグロ大学生」1人を出席させる。",
         earphones: "装備\n装備者は講義の効果を受けない。",
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
-        aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
+        aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、1度だけこのカードの攻撃力を+2、体力を+1する。",
         scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
         ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。",
         happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
@@ -51333,7 +51385,7 @@
         impossible_high_note: "このカードを手札から出席させたとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
         dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを1枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
-        acting_out_man: "このカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。",
+        acting_out_man: "このカードを手札から出席させたとき、自分の手札にある環境カード1枚を、戦意を払わずに環境マスへ出してよい。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
         academic_move: "お互いの講義室にこのターン出席した出席者すべては超陽気を持つ。それらは自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
