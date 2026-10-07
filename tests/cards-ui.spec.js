@@ -107,7 +107,7 @@ test("デッキ詳細は実際のカードと枚数を1画面に表示し、説�
     const card = await contents.locator(".card").first().boundingBox();
     expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
     expect(card.width).toBeGreaterThan(50);
-    expect(card.width).toBeLessThanOrEqual(74);
+    expect(card.width).toBeGreaterThan(74);
     const dialog = await page.locator(".case-deck-dialog").boundingBox();
     expect(dialog.y + dialog.height).toBeLessThanOrEqual(size.height);
     await expect.poll(() => contents.evaluate(node => node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight)).toBe(true);
@@ -145,16 +145,23 @@ test("デッキの種類数と画面サイズに合わせ全カードを重な�
           && tiles.every((tile, index) => tiles.slice(index + 1).every(other => tile.right <= other.x || other.right <= tile.x || tile.bottom <= other.y || other.bottom <= tile.y));
       })).toBe(true);
       if (count > 0) {
-        const card = await contents.locator(".card").first().boundingBox();
+        const bounds = await contents.evaluate(node => {
+          const rect = target => {
+            const { x, y, width, height } = target.getBoundingClientRect();
+            return { x, y, width, height };
+          };
+          return { card: rect(node.querySelector(".card")), badge: rect(node.querySelector(".deck-copy-badge")), grid: rect(node) };
+        });
+        const card = bounds.card;
         expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
         const badge = contents.locator(".deck-copy-badge").first();
         await expect(badge).toHaveCSS("background-color", "rgb(23, 32, 51)");
-        const badgeBounds = await badge.boundingBox();
+        const badgeBounds = bounds.badge;
         expect(badgeBounds.x).toBeGreaterThan(card.x);
         expect(badgeBounds.y).toBeGreaterThan(card.y + card.height / 2);
         expect(badgeBounds.x + badgeBounds.width).toBeLessThanOrEqual(card.x + card.width);
         expect(badgeBounds.y + badgeBounds.height).toBeLessThanOrEqual(card.y + card.height);
-        const grid = await contents.boundingBox();
+        const grid = bounds.grid;
         expect(card.x - grid.x).toBeCloseTo(13, 0);
         expect(card.y - grid.y).toBeCloseTo(13, 0);
         if (count > 1) {
@@ -212,6 +219,138 @@ test("新規作成は保存デッキの最後の1枠だけ・空一覧とペー�
       await expect(next).toBeDisabled();
     }
   }
+});
+
+test("少ない行数では大きく表示し、種類数が増えると自動で縮小する", async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await enter(page);
+  await page.locator("#chaosDeckFormatButton").click();
+  const layouts = [];
+  for (const count of [4, 14, 30, 60]) {
+    await page.evaluate(count => {
+      const api = window.__chibattle;
+      api.state.deckBuilder.chaosDecks = { "可変サイズ": { counts: Object.fromEntries(getDeckEditorIds().slice(0, count).map(id => [id, 1])) } };
+      api.state.deckBuilder.selectedName = "可変サイズ";
+      api.render();
+    }, count);
+    const contents = page.locator(".case-deck-contents");
+    await expect.poll(() => contents.evaluate(node => Number.parseFloat(node.style.getPropertyValue("--deck-content-card-width")))).toBeGreaterThan(0);
+    layouts.push(await contents.evaluate(node => ({
+      rows: Number(node.style.getPropertyValue("--deck-content-rows")),
+      width: node.querySelector(".card").getBoundingClientRect().width
+    })));
+    await page.screenshot({ path: testInfo.outputPath(`adaptive-deck-${count}.png`) });
+  }
+  expect(layouts[0].rows).toBe(1);
+  expect(layouts[1].rows).toBe(2);
+  expect(layouts[2].rows).toBeGreaterThanOrEqual(3);
+  expect(layouts[3].rows).toBeGreaterThanOrEqual(4);
+  for (let index = 1; index < layouts.length; index++) expect(layouts[index].width).toBeLessThan(layouts[index - 1].width);
+  expect(layouts[0].width).toBeGreaterThan(150);
+});
+
+test("2本指スクロール相当の操作で一覧・詳細を送り、慣性でページを飛ばさない", async ({ page }) => {
+  await enter(page, "cards");
+  const catalogPage = page.locator("#cardsCatalogPage");
+  await page.locator("#cardsCatalogGrid").hover();
+  await page.mouse.wheel(90, 0);
+  await expect(catalogPage).toContainText("Page 2 / ");
+  await page.locator("#cardsCatalogGrid").evaluate(node => {
+    for (let i = 0; i < 12; i++) node.dispatchEvent(new WheelEvent("wheel", { deltaX: 80, bubbles: true, cancelable: true }));
+  });
+  await expect(catalogPage).toContainText("Page 2 / ");
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(0, -90);
+  await expect(catalogPage).toContainText("Page 1 / ");
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(-90, 0);
+  await expect(catalogPage).toContainText("Page 13 / 13");
+  await page.locator("#cardsCatalogSearch").dispatchEvent("wheel", { deltaY: 100 });
+  await expect(catalogPage).toContainText("Page 13 / 13");
+  await page.locator("#cardsCatalogGrid").dispatchEvent("wheel", { deltaY: 100, ctrlKey: true });
+  await expect(catalogPage).toContainText("Page 13 / 13");
+
+  await page.locator("[data-catalog-card]").first().click();
+  const title = page.locator("#cardTestText .tooltip-title");
+  const previousCard = await title.innerText();
+  await page.locator("#cardTestCard").hover();
+  await page.mouse.wheel(90, 0);
+  await expect(title).not.toHaveText(previousCard);
+  await expect(catalogPage).toContainText("Page 13 / 13");
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(-90, 0);
+  await expect(title).toHaveText(previousCard);
+  // A long explanation must scroll as text, not switch to another card.
+  await page.locator("#cardTestText").evaluate(node => {
+    const text = document.createElement("p");
+    text.textContent = "詳細な説明。".repeat(2000);
+    node.append(text);
+  });
+  await page.locator("#cardTestText").hover();
+  await page.mouse.wheel(0, 160);
+  await expect.poll(() => page.locator("#cardTestText").evaluate(node => node.scrollTop)).toBeGreaterThan(0);
+  await expect(title).toHaveText(previousCard);
+  await page.locator("#cardTestCancelButton").click();
+  await page.locator(".case-back").click();
+  await page.locator('[data-case-view="library"]').click();
+  await page.locator("#chaosDeckFormatButton").click();
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.deckBuilder.chaosDecks = Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`スクロールデッキ${i + 1}`, { counts: { general_student: 40 }, createdOrder: i + 1 }]));
+    api.render();
+  });
+  await page.locator("#deckLibraryGrid").hover();
+  await page.mouse.wheel(0, 90);
+  await expect(page.locator("#caseDeckPage")).toContainText("Page 2 / 2");
+  await page.locator("#deckLibraryGrid .case-deck-tile").click();
+  const deckTitle = page.locator(".case-deck-detail-tools h2");
+  const originalDeck = await deckTitle.innerText();
+  await page.locator(".case-deck-contents").hover();
+  await page.mouse.wheel(90, 0);
+  await expect(deckTitle).not.toHaveText(originalDeck);
+  await page.locator(".case-deck-contents").evaluate(node => {
+    for (let i = 0; i < 12; i++) node.dispatchEvent(new WheelEvent("wheel", { deltaX: 80, bubbles: true, cancelable: true }));
+  });
+  const afterGesture = await deckTitle.innerText();
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(-90, 0);
+  await expect(deckTitle).toHaveText(originalDeck);
+  expect(afterGesture).not.toBe(originalDeck);
+  await expect(page.locator("#caseDeckPage")).toContainText("Page 2 / 2");
+});
+
+test("スクロールバーを全画面で隠し、編集一覧とチュートリアル一覧のスクロールを保つ", async ({ page }) => {
+  await enter(page);
+  const expectHiddenBars = async () => {
+    expect(await page.evaluate(() => [...document.querySelectorAll("html, body, body *")].every(node =>
+      getComputedStyle(node).scrollbarWidth === "none"
+      && getComputedStyle(node, "::-webkit-scrollbar").display === "none"))).toBe(true);
+  };
+  await page.locator("#deckLibraryGrid .case-deck-tile").first().dblclick();
+  await page.locator("#deckEditorList").hover();
+  await page.mouse.wheel(0, 180);
+  await expect.poll(() => page.locator("#deckEditorList").evaluate(node => node.scrollTop)).toBeGreaterThan(0);
+  await expectHiddenBars();
+  await page.locator("#homeNavSoloButton").click();
+  await page.locator("#soloTutorialButton").click();
+  await page.locator('[data-tutorial-chapter="cheerful"]').click();
+  await page.locator(".tutorial-detail h2").hover();
+  await page.mouse.wheel(90, 0);
+  await expect(page.locator("#tutorialDetailTitle")).toHaveText("陽気編 2/2");
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(90, 0);
+  await expect(page.locator("#tutorialDetailTitle")).toHaveText("陽気編 2/2");
+  await page.waitForTimeout(250);
+  await page.mouse.wheel(-90, 0);
+  await expect(page.locator("#tutorialDetailTitle")).toHaveText("陽気編 1/2");
+  await page.locator("#tutorialChapterList").hover();
+  await page.mouse.wheel(0, 200);
+  await expect.poll(() => page.locator("#tutorialChapterList").evaluate(node => node.scrollTop)).toBeGreaterThan(0);
+  await expect(page.locator("#tutorialDetailTitle")).toHaveText("陽気編 1/2");
+  await expectHiddenBars();
+  await page.locator("#tutorialStartButton").click();
+  await expect(page.locator("#battleScreen")).toBeVisible();
+  await expectHiddenBars();
 });
 
 test("デッキのダブルクリック、カードテストと戻る、破棄確認のキャンセルとはい", async ({ page }) => {
