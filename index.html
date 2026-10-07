@@ -19603,6 +19603,14 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.15",
+        date: "2026年10月7日",
+        summary: "三敵で手札に加えた敵を、出席させず手札に残せるようにしました。",
+        changes: [
+          { title: "三敵", after: "デッキの上から見つけた「敵」とつく出席者カードはすべて手札に加えます。その中から出席させるカードを0枚から選べるようにし、選ばなかったカードは手札に残します。" }
+        ]
+      },
+      {
         version: "ver.0.23.14",
         date: "2026年10月6日",
         summary: "AIの行動判断、スターターデッキ、チュートリアル、複数マスの対象選択を改善しました。敵系統などのカード効果を改装し、アグロドームを追加しました。",
@@ -25519,24 +25527,24 @@
       if (!isOnlineGuest() || !state.online.started) return;
       const cards = Array.isArray(message.cards) ? message.cards : [];
       const selectableIds = Array.isArray(message.selectableIds) ? message.selectableIds : [];
-      if (selectableIds.length < 2) return;
+      if (!selectableIds.length) return;
       openCardChoice({ mode: "triple_enemy_online_response", title: "三敵",
-        message: "出席時効果を処理したい順に、該当するカードをすべて選んでください。",
-        cards, selectableIds, min: selectableIds.length, max: selectableIds.length,
-        confirmLabel: "この順番で出席", requestId: message.requestId });
+        message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。",
+        cards, selectableIds, min: 0, max: selectableIds.length,
+        confirmLabel: "決定", requestId: message.requestId });
     }
 
     function onlineResolveTripleEnemyOrderResponse(requestId, selectedIds) {
       const pending = state.pendingRemoteHandTrim;
       if (!pending || pending.mode !== "triple_enemy_order" || pending.requestId !== requestId) return;
       const candidates = tripleEnemyCandidates(pending.sourceSide);
-      const valid = selectedIds.length === candidates.length && new Set(selectedIds).size === selectedIds.length
+      const valid = Array.isArray(selectedIds) && selectedIds.length <= candidates.length
+        && new Set(selectedIds).size === selectedIds.length
         && selectedIds.every((id) => candidates.some((entry) => entry.instanceId === id));
       const source = listBoardRefs(pending.sourceSide).map(getBoardCardFromRef)
         .find((entry) => entry?.instanceId === pending.sourceCardId);
       state.pendingRemoteHandTrim = null;
-      if (source) resolveTripleEnemyEffect(pending.sourceSide, source,
-        valid ? selectedIds : candidates.map((entry) => entry.instanceId));
+      if (source) resolveTripleEnemyEffect(pending.sourceSide, source, valid ? selectedIds : []);
       const wasHandlingRemote = state.online.isHandlingRemoteCommand;
       if (pending.commandId) state.online.isHandlingRemoteCommand = true;
       render();
@@ -28996,6 +29004,9 @@
         const selectedChoiceId = chooseCorneringLecturerEffectForAi(side);
         const selected = selectable.find((card) => card.baseId === selectedChoiceId) || selectable[0];
         return selected ? [selected.instanceId] : [];
+      }
+      if (["triple_enemy", "triple_enemy_resolution"].includes(choice.mode)) {
+        return selectable.map((card) => card.instanceId);
       }
       const keepOrGainModes = new Set([
         "course_registration", "course_registration_draw", "go_away", "happy_experience",
@@ -35796,9 +35807,9 @@
         const cards = tripleEnemyCandidates("player");
         if (cards.length > 0) {
           openCardChoice({ mode: "triple_enemy", title: localCard.name,
-            message: "出席時効果を処理したい順に、該当するカードをすべて選んでください。席はランダムに決まります。",
+            message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。席はランダムに決まります。",
             cards: state.players.player.deck.slice(0, 3), selectableIds: cards.map((card) => card.instanceId),
-            min: cards.length, max: cards.length, confirmLabel: "この順番で出席",
+            min: 0, max: cards.length, confirmLabel: "決定",
             playCardId: instanceId, playTarget: { zone, owner, index } });
           return;
         }
@@ -36021,10 +36032,11 @@
       card.starbucksTeacherId = options.starbucksTeacherId || null;
       if (card.baseId === "triple_enemy") {
         const candidates = tripleEnemyCandidates(side);
-        const ids = options.tripleEnemyOrderIds || [];
-        if (ids.length && (ids.length !== candidates.length || new Set(ids).size !== ids.length
+        const ids = options.tripleEnemyOrderIds;
+        if (ids !== undefined && (!Array.isArray(ids) || ids.length > candidates.length
+          || new Set(ids).size !== ids.length
           || ids.some((id) => !candidates.some((entry) => entry.instanceId === id)))) return false;
-        card.tripleEnemyOrderIds = ids.length ? ids : candidates.map((entry) => entry.instanceId);
+        card.tripleEnemyOrderIds = ids === undefined ? candidates.map((entry) => entry.instanceId) : ids;
       }
       if (card.baseId === "enemy_enemy") {
         const candidates = listBoardRefs(side).map(getBoardCardFromRef).filter(isEnemyNamedAttendee);
@@ -37079,9 +37091,9 @@
       }
       const matches = revealed.filter(isEnemyNamedAttendee);
       deck.push(...revealed.filter((entry) => !isEnemyNamedAttendee(entry)));
-      const order = orderIds || matches.map((entry) => entry.instanceId);
-      const ordered = [...matches].sort((a, b) => order.indexOf(a.instanceId) - order.indexOf(b.instanceId));
-      state.players[side].hand.push(...ordered);
+      const order = Array.isArray(orderIds) ? orderIds : matches.map((entry) => entry.instanceId);
+      const ordered = order.map((id) => matches.find((entry) => entry.instanceId === id)).filter(Boolean);
+      state.players[side].hand.push(...matches);
       continueTripleEnemyAttendance({ side, name: card.name, matchCount: matches.length,
         summoned: 0, remaining: ordered });
       resumeTripleEnemySequences();
@@ -37251,14 +37263,14 @@
       }
       if (card.baseId === "triple_enemy") {
         const candidates = tripleEnemyCandidates(side);
-        if (!card.tripleEnemyOrderIds && candidates.length > 1 && !isCpuControlledBattleSide(side)) {
+        if (!card.tripleEnemyOrderIds && candidates.length > 0 && !isCpuControlledBattleSide(side)) {
           if (side === "player") {
             openCardChoice({ mode: "triple_enemy_resolution", title: card.name,
-              message: "出席時効果を処理したい順に、該当するカードをすべて選んでください。",
+              message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。",
               cards: state.players[side].deck.slice(0, 3),
               selectableIds: candidates.map((entry) => entry.instanceId),
-              min: candidates.length, max: candidates.length,
-              confirmLabel: "この順番で出席", context: { sourceCardId: card.instanceId } });
+              min: 0, max: candidates.length,
+              confirmLabel: "決定", context: { sourceCardId: card.instanceId } });
             return;
           }
           if (requestRemoteTripleEnemyOrder(side, card)) return;
@@ -51273,7 +51285,7 @@
         rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
         enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の「敵」とつく出席者すべてを、好きな順番で自分のデッキの上に戻す。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
-        triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、出席時効果の順番を選んで、ランダムな空き席マスに手札から出席させる。出席できなかったカードは手札に残す。残りをデッキの下に置く。",
+        triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。出席させなかったカードは手札に残す。",
         salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。その出席時効果は発動する。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
