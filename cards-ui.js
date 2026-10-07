@@ -250,7 +250,7 @@
     state.deckBuilder.selectedName = ""; renderLibrary(); ui.opener?.focus();
   }
 
-  // Match the compact used-deck cards, shrinking only to keep every kind visible.
+  // Use the largest cards that fit all kinds, reducing their size as rows increase.
   // Observe the area rather than the viewport so the footer and dialog still fit.
   const deckContentsObserver = new ResizeObserver(([entry]) => fitDeckContents(entry.target));
   function fitDeckContents(contents) {
@@ -259,9 +259,9 @@
     const width = contents.clientWidth - 24, height = contents.clientHeight - 24;
     const gap = 6;
     let best = { columns: 1, rows: count, cardWidth: 0 };
-    for (let columns = 1; columns <= count; columns++) {
+    for (let columns = count <= 4 ? count : 1; columns <= count; columns++) {
       const rows = Math.ceil(count / columns);
-      const cardWidth = Math.min(74,
+      const cardWidth = Math.min(
         (width - gap * (columns - 1)) / columns,
         ((height - gap * (rows - 1)) / rows) * 21 / 32);
       if (cardWidth > best.cardWidth || (cardWidth === best.cardWidth && rows < best.rows)) {
@@ -356,6 +356,55 @@
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
     else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
   });
+
+  // All paged views share the same trackpad/wheel gesture. One gesture advances
+  // one page; its inertial tail must not skip several pages or reach a lower modal.
+  const pageViews = "#cardsCatalogView, #deckLibraryView, .case-deck-dialog, .case-card-dialog, .tutorial-detail";
+  let gesture = { root: null, lastEvent: 0, distance: 0, direction: 0, moved: false };
+  document.addEventListener("wheel", (event) => {
+    const target = event.target instanceof Element ? event.target : null;
+    const root = target?.closest(pageViews);
+    if (!root || !root.getClientRects().length || event.ctrlKey || event.defaultPrevented
+      || target.closest('input, select, textarea, [contenteditable="true"]')
+      || document.querySelector("dialog[open]")) return;
+    const horizontal = Math.abs(event.deltaX) > Math.abs(event.deltaY);
+    const delta = horizontal ? event.deltaX : event.deltaY;
+    if (!delta) return;
+    // Keep native scrolling in long descriptions/lists, including at their ends.
+    for (let node = target; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (horizontal
+        ? /auto|scroll/.test(style.overflowX) && node.scrollWidth > node.clientWidth + 1
+        : /auto|scroll/.test(style.overflowY) && node.scrollHeight > node.clientHeight + 1) {
+        gesture.root = null;
+        return;
+      }
+      if (node === root) break;
+    }
+    const direction = Math.sign(delta);
+    const tutorial = root.matches(".tutorial-detail");
+    const button = tutorial ? elements.tutorialStageSwitch
+      : root.querySelector(direction < 0 ? ".case-arrow.previous" : ".case-arrow:not(.previous)");
+    if (!button || button.disabled || !button.getClientRects().length) return;
+    const now = performance.now();
+    // The deck dialog is rebuilt on each page, so identify gestures by the stable
+    // backdrop rather than by the replaced dialog contents.
+    const gestureRoot = root.closest("#caseDeckDetailModal") || root;
+    if (gesture.root !== gestureRoot || now - gesture.lastEvent > 220) {
+      gesture = { root: gestureRoot, lastEvent: now, distance: 0, direction, moved: false };
+    }
+    gesture.lastEvent = now;
+    event.preventDefault();
+    if (gesture.moved) return;
+    if (gesture.direction !== direction) { gesture.distance = 0; gesture.direction = direction; }
+    const unit = event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? root.clientHeight : 1;
+    gesture.distance += Math.abs(delta) * unit;
+    if (gesture.distance < 48) return;
+    gesture.moved = true;
+    if (tutorial && ((direction > 0 && state.tutorialMenu.stage === "quiz")
+      || (direction < 0 && state.tutorialMenu.stage !== "quiz"))) return;
+    button.click();
+  }, { passive: false });
 
   window.ChibattleCards = { renderLibrary, renderEditor, renderCardDetail, confirmDiscard, isDirty,
     restoreCardFocus: () => { if (ui.opener?.isConnected) ui.opener.focus(); } };
