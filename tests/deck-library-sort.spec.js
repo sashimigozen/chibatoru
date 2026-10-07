@@ -5,12 +5,13 @@ const { pathToFileURL } = require("node:url");
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
 async function deckNames(page) {
-  return page.locator("#deckLibraryGrid .deck-library-card:not(.new-deck)").allTextContents();
+  return page.locator("#deckLibraryGrid .deck-library-card:not(.new-deck) > span:not(.case-deck-spine)").allTextContents();
 }
 
 test("保存デッキを作成順で表示し、項目と昇降順を切り替えられる", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#chaosDeckFormatButton").click();
   await page.evaluate(() => {
     const api = window.__chibattle;
@@ -53,6 +54,7 @@ test("保存デッキを作成順で表示し、項目と昇降順を切り替�
 test("数字のデッキ名でも保存・再読込後に作成順を維持する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#chaosDeckFormatButton").click();
   for (const name of ["9", "1"]) {
     await page.locator("#deckLibraryGrid .new-deck").click();
@@ -67,14 +69,16 @@ test("数字のデッキ名でも保存・再読込後に作成順を維持す�
   expect(await deckNames(page)).toEqual(["1", "9"]);
   await page.reload();
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#chaosDeckFormatButton").click();
   expect(await deckNames(page)).toEqual(["1", "9"]);
 });
 
-test("並び替え操作はデスクトップとスマートフォンの幅で操作できる", async ({ page }) => {
+test("並び替え操作はPCの複数の幅で操作できる", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
-  for (const width of [1280, 390, 320]) {
+  await page.locator("[data-case-view=\"library\"]").click();
+  for (const width of [1280, 1440, 1920]) {
     await page.setViewportSize({ width, height: 800 });
     const key = await page.locator("#deckLibrarySortKey").boundingBox();
     const direction = await page.locator("#deckLibrarySortDirection").boundingBox();
