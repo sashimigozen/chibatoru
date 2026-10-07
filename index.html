@@ -17262,7 +17262,7 @@
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
   <link rel="stylesheet" href="cards-ui.css?v=0.23.15" />
-  <link rel="stylesheet" href="desktop-ui.css?v=0.23.15" />
+  <link rel="stylesheet" href="desktop-ui.css?v=0.23.16" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -18504,6 +18504,7 @@
     const COURSE_REGISTRATION_RELAY_KIND = "course_registration";
     const TRIPLE_ENEMY_RELAY_KIND = "triple_enemy_order";
     const COURSE_REGISTRATION_DRAW_RELAY_KIND = "course_registration_draw";
+    const STARBUCKS_CORNERING_RELAY_KIND = "starbucks_cornering_teacher";
     const PLAYER_SEAT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
     const OPPONENT_SEAT_ORDER = [8, 7, 6, 5, 4, 3, 2, 1, 0];
     const AI_SEAT_PRIORITY = [4, 0, 2, 6, 8, 1, 3, 5, 7];
@@ -19225,7 +19226,7 @@
       cursed_students: { name: "呪われた学生たち", type: "student", cost: 3, attack: 0, hp: 0, allowedZones: ["seat", "teacher"] },
       pad_present_creator: { name: "パッドプレゼンクリエイター", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
-      aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 2, allowedZones: ["seat"] },
+      aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       scout_student: { name: "斥候学生", type: "student", cost: 2, attack: 2, hp: 1, allowedZones: ["seat"] },
       single_cell: { name: "単細胞生物", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       midge: { name: "ミジンコ", type: "student", cost: 0, noCost: true, attack: 2, hp: 2, evolutionFrom: "single_cell", token: true, allowedZones: ["evolution"] },
@@ -19331,7 +19332,7 @@
       variable_student: { name: "変数学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "design" },
       spoon_wizard: { name: "スプーンの魔術師", type: "student", cost: 7, attack: 2, hp: 3, allowedZones: ["seat"], category: "common" },
       adjective_vs_cynical: { name: "形容詞学生vs冷笑学生", type: "student", cost: 6, attack: 5, hp: 5, occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "common" },
-      starbucks_student: { name: "片手にスタバ学生", type: "student", cost: 6, attack: 3, hp: 3, allowedZones: ["seat"], category: "design" },
+      starbucks_student: { name: "片手にスタバ学生", type: "student", cost: 7, attack: 3, hp: 3, allowedZones: ["seat"], category: "design" },
       overfitting_student: { name: "過学習学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "interference" },
       loud_typing_student: { name: "バカでかいタイピング音の学生", type: "student", cost: 8, attack: 4, hp: 4, allowedZones: ["seat"], category: "big" },
       tiny_rhythm_student: { name: "小刻みリズム学生", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat"], category: "interference" },
@@ -19605,14 +19606,27 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.16",
+        date: "2026年10月8日",
+        summary: "バトル・ソロプレイのパソコンを画面いっぱいに拡大し、下枠を細くしました。",
+        changes: [
+          { title: "PC画面の外観", after: "パソコン本体を画面の上端・左右端まで拡大し、縁の外側の背景が見えない構図にしました。MacBook Airの見た目を参考に、画面とキーボードの間の下枠を細くしています。キーボードが画面外へ続く構図と、ホームバーの位置は維持しています。背景を無地で隠す変更は戻し、ホーム画面の背景は変更していません。" }
+        ]
+      },
+      {
         version: "ver.0.23.15",
         date: "2026年10月7日",
-        summary: "カード画面をデッキケースの中をイメージしたUIに変更しました。バトル・ソロプレイは同じPCの画面内に従来のメニューを表示します。フォルダ形式の比較案も残しています。",
+        summary: "カード画面をデッキケースの中をイメージしたUIに変更し、カード一覧・詳細と保存デッキ・編成を整理しました。バトル・ソロプレイは同じPCの画面内に従来のメニューを表示します。フォルダ形式の比較案も残しています。三敵で手札に加えた敵を出席させずに残せるようにしました。先攻1ターン目のドローをなくし、片手にスタバ学生・アグロキングを調整しました。アクティングアウトマンは元の効果に戻しました。",
         changes: [
-          { title: "バトル・ソロプレイのPC画面", after: "同じPCの枠内で、左右の三角や2本指スクロールでバトルとソロプレイを切り替えます。ホーム右側のPCに合わせた濃い青灰色の本体・キーボードと、外周の教室の背景を維持し、画面内には従来のメニューボタンと説明文を表示します。PCに寄った構図と外枠の大きさは変えず、キーボードの見える範囲を減らして画面を広げ、メニューの高さを画面内へ収めます。Mac風の水色フォルダ・長押し移動・配置保存の案は比較用に残します。対戦準備・チュートリアル選択などもPCの枠内に表示し、対戦開始後は従来の対戦画面に移ります。ショートカット欄は空欄とし、観戦は従来のボタンから開けます。AIバトルとチバトルふぉーは準備中のままです。ホームの背景画像やゲームのルールは変更していません。" },
+          { title: "バトル・ソロプレイのPC画面", after: "同じPCの枠内で、左右の三角や2本指スクロールでバトルとソロプレイを切り替えます。ホーム右側のPCに合わせた濃い青灰色の本体・キーボードと、外周の教室の背景を維持し、画面内には従来のメニューボタンと説明文を表示します。PCに寄った構図と画面の大きさを保ち、キーボードの手前側は画面外へ続く形でホームバーまで表示します。キーボードの下や左右には背景を露出させず、メニューの高さを画面内へ収めます。Mac風の水色フォルダ・長押し移動・配置保存の案は比較用に残します。対戦準備・チュートリアル選択などもPCの枠内に表示し、対戦開始後は従来の対戦画面に移ります。ショートカット欄は削除し、画面とキーボードの間にPC本体の下枠を表示します。観戦は従来のボタンから開けます。AIバトルとチバトルふぉーは準備中のままです。ホームの背景画像やゲームのルールは変更していません。" },
           { title: "カード画面", after: "ホームの「カード」から「カード一覧」「デッキ編成」を選べます。紺色を基調に、カード一覧・詳細、保存デッキ一覧・内容確認・編成の画面を変更しました。カード一覧・デッキ編成・デッキ編集でも机色の外枠を表示します。デッキ詳細のカードを左上から詰めて並べ、枚数をカード右下に重ねて表示します。カードの大きさは固定せず、種類数・行数・表示領域に合わせて拡大・縮小し、スクロールせず1画面に収めます。カードを押すと説明を確認できます。既存のカード表示、レアリティ、保存デッキ、カードテストを引き続き利用できます。" },
           { title: "デッキ操作とページ送り", after: "ファイル読み込み・ファイル書き出しを配置し、編集を破棄する確認を「キャンセル」「はい」に揃えました。一覧と詳細の左右の矢印は、最初と最後のページを循環します。カード一覧・保存デッキ一覧・カード詳細・デッキ詳細・チュートリアルのステージ切替は、2本指スクロールでも操作できます。慣性で複数ページが飛ぶことを防ぎ、説明文や一覧の通常スクロールを維持します。すべての画面でスクロールバーは非表示にしました。保存デッキは左上から順に並び、「新規作成」は最後のデッキに続けて、最後のページにだけ表示します。" },
-          { title: "関連カードの詳細表示", after: "デッキ編成・対戦中・カード詳細の説明文にある「カード名」を押すと、そのカードを表示します。トークン・生成カードも確認でき、元のカードへ戻れます。編集中のデッキや対戦状態、カードのテキスト・効果は変更しません。" }
+          { title: "関連カードの詳細表示", after: "デッキ編成・対戦中・カード詳細の説明文にある「カード名」を押すと、そのカードを表示します。トークン・生成カードも確認でき、元のカードへ戻れます。編集中のデッキや対戦状態、カードのテキスト・効果は変更しません。" },
+          { title: "三敵", after: "デッキの上から見つけた「敵」とつく出席者カードはすべて手札に加えます。その中から出席させるカードを0枚から選べるようにし、選ばなかったカードは手札に残します。" },
+          { title: "先攻の初回ドロー", after: "先攻は1ターン目のターン開始ドローを行いません。後攻の1ターン目と、先攻の2ターン目以降は通常どおりドローします。" },
+          { title: "片手にスタバ学生", before: "戦意6。校外エリアの教師を1人選んで教卓へ出席させました。", after: "戦意7。自分の学生すべてに1ダメージを与えた後、校外エリアから戦意が固定で4以下の教師をランダムに1人、手札出席扱いで教卓へ出席させます。" },
+          { title: "アグロキング", before: "体力2。出席したターンの終了は自己強化の回数に含まれていませんでした。", after: "体力1。3行1列で自分のターンを終了した回数は出席したターンから数え、2回目に1度だけ攻撃力+2、体力+1します。席を離れたら数え直します。アグロキングダム中は従来どおり環境の効果に置き換わります。" },
+          { title: "アクティングアウトマン", before: "体力2。手札から出席させたとき、手札の環境カード1枚を戦意なしで出せました。", after: "体力3。講義室にいるかぎり、相手は1ターンに1回しか出席できない元の効果に戻しました。" }
         ]
       },
       {
@@ -25175,6 +25189,12 @@
         onlineOpenCourseRegistrationDrawRequest(message);
         return;
       }
+      if (message.type === "thinItemChoiceRequest"
+        && message.privateChoiceKind === STARBUCKS_CORNERING_RELAY_KIND
+        && isOnlineGuest()) {
+        onlineOpenStarbucksCorneringChoiceRequest(message);
+        return;
+      }
       if (message.type === "thinItemChoiceResponse"
         && message.privateChoiceKind === COURSE_REGISTRATION_RELAY_KIND
         && isOnlineHost()) {
@@ -25191,6 +25211,12 @@
         && message.privateChoiceKind === COURSE_REGISTRATION_DRAW_RELAY_KIND
         && isOnlineHost()) {
         onlineResolveCourseRegistrationDrawResponse(message.requestId, message.selectedId || null);
+        return;
+      }
+      if (message.type === "thinItemChoiceResponse"
+        && message.privateChoiceKind === STARBUCKS_CORNERING_RELAY_KIND
+        && isOnlineHost()) {
+        onlineResolveStarbucksCorneringChoiceResponse(message.requestId, message.choiceId || null);
         return;
       }
       if (message.type === "thinItemChoiceRequest" && isOnlineGuest()) {
@@ -25443,6 +25469,7 @@
         || type === "jailbreak"
         || type === "crotchFebreze"
         || (type === "playCard" && isRewardFoilCard(commandCard))
+        || (type === "playCard" && commandCard?.baseId === "starbucks_student")
         || Boolean(commandCard?.evolutionFrom)
         || (type === "itemImmediate" && commandCard?.baseId === "thin_item");
     }
@@ -25532,24 +25559,24 @@
       if (!isOnlineGuest() || !state.online.started) return;
       const cards = Array.isArray(message.cards) ? message.cards : [];
       const selectableIds = Array.isArray(message.selectableIds) ? message.selectableIds : [];
-      if (selectableIds.length < 2) return;
+      if (!selectableIds.length) return;
       openCardChoice({ mode: "triple_enemy_online_response", title: "三敵",
-        message: "出席時効果を処理したい順に、該当するカードをすべて選んでください。",
-        cards, selectableIds, min: selectableIds.length, max: selectableIds.length,
-        confirmLabel: "この順番で出席", requestId: message.requestId });
+        message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。",
+        cards, selectableIds, min: 0, max: selectableIds.length,
+        confirmLabel: "決定", requestId: message.requestId });
     }
 
     function onlineResolveTripleEnemyOrderResponse(requestId, selectedIds) {
       const pending = state.pendingRemoteHandTrim;
       if (!pending || pending.mode !== "triple_enemy_order" || pending.requestId !== requestId) return;
       const candidates = tripleEnemyCandidates(pending.sourceSide);
-      const valid = selectedIds.length === candidates.length && new Set(selectedIds).size === selectedIds.length
+      const valid = Array.isArray(selectedIds) && selectedIds.length <= candidates.length
+        && new Set(selectedIds).size === selectedIds.length
         && selectedIds.every((id) => candidates.some((entry) => entry.instanceId === id));
       const source = listBoardRefs(pending.sourceSide).map(getBoardCardFromRef)
         .find((entry) => entry?.instanceId === pending.sourceCardId);
       state.pendingRemoteHandTrim = null;
-      if (source) resolveTripleEnemyEffect(pending.sourceSide, source,
-        valid ? selectedIds : candidates.map((entry) => entry.instanceId));
+      if (source) resolveTripleEnemyEffect(pending.sourceSide, source, valid ? selectedIds : []);
       const wasHandlingRemote = state.online.isHandlingRemoteCommand;
       if (pending.commandId) state.online.isHandlingRemoteCommand = true;
       render();
@@ -25605,6 +25632,29 @@
         cards: cards.map(cardRevealPayload)
       }, { track: true });
       return true;
+    }
+
+    function requestRemoteStarbucksCorneringChoice(side, teacher, commandId = "") {
+      if (!isOnlineHost() || !state.online.started || !state.online.connected || side !== "opponent") return false;
+      const requestId = onlineNextMessageId("starbucks-cornering");
+      state.pendingRemoteHandTrim = {
+        mode: "starbucks_cornering_choice", requestId, sourceSide: side,
+        teacherInstanceId: teacher.instanceId, commandId
+      };
+      state.message = `${teacher.name}の効果を相手が選んでいます。`;
+      if (!onlineSend({ type: "thinItemChoiceRequest", privateChoiceKind: STARBUCKS_CORNERING_RELAY_KIND,
+        requestId, sourceName: teacher.name }, { track: true })) {
+        state.pendingRemoteHandTrim = null;
+        return false;
+      }
+      return true;
+    }
+
+    function onlineOpenStarbucksCorneringChoiceRequest(message) {
+      if (!isOnlineGuest() || !state.online.started) return;
+      openCardChoice({ mode: "starbucks_cornering_online_response", title: message.sourceName || "ガン詰め講師",
+        message: "ガン詰め講師の効果を選んでください。", cards: corneringLecturerChoiceCards(),
+        min: 1, max: 1, confirmLabel: "この効果で出席", requestId: message.requestId });
     }
 
     function onlineOpenThinItemChoiceRequest(message) {
@@ -25705,6 +25755,22 @@
       discardOpponentHandCardById(pending.sourceSide, discardId, source, false);
       state.pendingRemoteHandTrim = null;
       clearSelections();
+      cleanupDestroyedCards();
+      applyBoardAuras();
+      const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+      if (pending.commandId) state.online.isHandlingRemoteCommand = true;
+      render();
+      state.online.isHandlingRemoteCommand = wasHandlingRemote;
+      onlineBroadcastState(true, onlineIsCommandAwaitingResolution(pending.commandId) ? "" : pending.commandId || "");
+    }
+
+    function onlineResolveStarbucksCorneringChoiceResponse(requestId, choiceId) {
+      const pending = state.pendingRemoteHandTrim;
+      if (!pending || pending.mode !== "starbucks_cornering_choice" || pending.requestId !== requestId) return;
+      const selectedChoice = CORNERING_LECTURER_CHOICES[choiceId]
+        ? choiceId : chooseCorneringLecturerEffectForAi(pending.sourceSide);
+      state.pendingRemoteHandTrim = null;
+      summonStarbucksTeacher(pending.sourceSide, pending.teacherInstanceId, selectedChoice);
       cleanupDestroyedCards();
       applyBoardAuras();
       const wasHandlingRemote = state.online.isHandlingRemoteCommand;
@@ -26349,6 +26415,7 @@
 
     function isCourseRegistrationOnlineChoice(choice) {
       return Boolean(choice && [
+        "starbucks_cornering_online_response",
         "enemy_enemy_order",
         "triple_enemy",
         "triple_enemy_online_response",
@@ -26374,6 +26441,8 @@
       if (!choice || !isOnlineGuest() || state.phase !== "battle" || state.gameOver) return;
       const sourceCards = choice.mode === "course_registration_draw_online_response"
         ? state.players.player.trash
+        : choice.mode === "starbucks_cornering_online_response"
+          ? choice.cards
         : choice.mode === "enemy_enemy_order"
           ? listBoardRefs("player").map(getBoardCardFromRef)
         : choice.mode === "triple_enemy_online_response"
@@ -26776,7 +26845,6 @@
             adjectiveChoice: payload.adjectiveChoice || null,
             spoonDestroyIds: payload.spoonDestroyIds || [],
             enemyReviveIds: payload.enemyReviveIds || [],
-            starbucksTeacherId: payload.starbucksTeacherId || null,
             tripleEnemyOrderIds: payload.tripleEnemyOrderIds || [],
             enemyEnemyTopOrderIds: payload.enemyEnemyTopOrderIds || [],
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
@@ -27881,7 +27949,7 @@
       state.aiThinking = true;
       clearSelections();
       state.message = "マリガン完了。バトルを開始します。";
-      addLog("バトル開始。ターン開始時に1枚引きます。");
+      addLog("バトル開始。先攻1ターン目はドローしません。");
       analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       onlineSubmitAnalyticsLog("battle_start");
       render();
@@ -27957,6 +28025,10 @@
       return hpBonus;
     }
 
+    function isFirstPlayerOpeningTurn(side) {
+      return side === state.firstSide && state.players[side].turnsTaken === 1;
+    }
+
     function startTurn(side) {
       if (side === "opponent" && isTutorialQuiz() && !state.gameOver) {
         failTutorialQuiz();
@@ -27995,7 +28067,9 @@
       if (state.gameOver) return;
       resolveDungeonFloorStartTurnEffects(side);
       if (state.gameOver) return;
-      const courseDraw = drawCourseRegistrationCard(side);
+      const courseDraw = isFirstPlayerOpeningTurn(side)
+        ? { handled: false, drawn: null }
+        : drawCourseRegistrationCard(side);
       if (courseDraw.pending) {
         render();
         return;
@@ -28005,7 +28079,8 @@
 
     function completeTurnStartAfterDraw(side, courseDraw) {
       const player = state.players[side];
-      const drawCount = isChaosBattle() ? Math.max(0, 5 - player.hand.length) : 1;
+      const skipOpeningDraw = isFirstPlayerOpeningTurn(side);
+      const drawCount = skipOpeningDraw ? 0 : isChaosBattle() ? Math.max(0, 5 - player.hand.length) : 1;
       const drawWasBlocked = !courseDraw.handled && drawCount > 0 && isDeckToHandLocked();
       let drawnCount = 0;
       if (!courseDraw.handled && !drawWasBlocked) {
@@ -28015,7 +28090,9 @@
         }
       }
       resolveChaosWorldAtTurnStart();
-      const drawText = courseDraw.handled
+      const drawText = skipOpeningDraw
+        ? "先攻1ターン目はドローしません。"
+        : courseDraw.handled
         ? (courseDraw.drawn ? `履修登録結論パで選んだ順番どおり「${courseDraw.drawn.name}」を手札に加えました。` : "履修登録結論パで引くカードがありませんでした。")
         : drawWasBlocked
         ? "山梨最低賃金2円の効果によりドローできません。"
@@ -29009,6 +29086,9 @@
         const selectedChoiceId = chooseCorneringLecturerEffectForAi(side);
         const selected = selectable.find((card) => card.baseId === selectedChoiceId) || selectable[0];
         return selected ? [selected.instanceId] : [];
+      }
+      if (["triple_enemy", "triple_enemy_resolution"].includes(choice.mode)) {
+        return selectable.map((card) => card.instanceId);
       }
       const keepOrGainModes = new Set([
         "course_registration", "course_registration_draw", "go_away", "happy_experience",
@@ -32742,7 +32822,7 @@
           if (card.baseId === "aggro_king") {
             if (kingdomActive) {
               card.aggroKingTurns = 0;
-            } else if (ref.zone === "seat" && ref.index === 6 && card.playedOnTurn < state.actionTurn && !card.aggroKingBuffed) {
+            } else if (ref.zone === "seat" && ref.index === 6 && !card.aggroKingBuffed) {
               card.aggroKingTurns = (card.aggroKingTurns || 0) + 1;
               if (card.aggroKingTurns >= 2) {
                 applyPermanentStatBuff(card, 2, 1, 0, card.name);
@@ -34113,13 +34193,12 @@
         } else resolveConfuciusSays("player", item, pending.context?.declaredType, selectedIds, true);
         return;
       }
-      if (["spoon_destroy", "enemy_revive", "starbucks_teacher"].includes(mode)) {
+      if (["spoon_destroy", "enemy_revive"].includes(mode)) {
         const card = getHandCard("player", pending.playCardId);
         const target = pending.playTarget;
         if (!card || !target) return;
         const choices = mode === "spoon_destroy" ? { spoonDestroyIds: selectedIds }
-          : mode === "enemy_revive" ? { enemyReviveIds: selectedIds }
-            : { starbucksTeacherId: selectedIds[0] || null };
+          : { enemyReviveIds: selectedIds };
         if (onlineCanSendCommand()) {
           onlineSendCommand("playCard", { instanceId: card.instanceId, ...target, ...choices });
           render();
@@ -34607,6 +34686,20 @@
         placeCardFromHand("player", lecturer.instanceId, target.zone, target.owner, target.index ?? null, true, {
           corneringLecturerChoiceId: choiceId
         });
+        return;
+      }
+      if (mode === "starbucks_cornering_teacher") {
+        summonStarbucksTeacher("player", pending.context?.teacherInstanceId, selectedCards[0]?.baseId);
+        cleanupDestroyedCards();
+        applyBoardAuras();
+        render();
+        return;
+      }
+      if (mode === "starbucks_cornering_online_response") {
+        onlineSend({ type: "thinItemChoiceResponse", privateChoiceKind: STARBUCKS_CORNERING_RELAY_KIND,
+          requestId: pending.requestId, choiceId: selectedCards[0]?.baseId }, { track: true });
+        state.message = "ガン詰め講師の効果を送信しました。";
+        render();
         return;
       }
       if (mode === "bad_student_online_play") {
@@ -35753,6 +35846,17 @@
       return expired;
     }
 
+    function starbucksTeacherCandidates(side) {
+      return state.players[side].trash.filter((card) => {
+        const base = CARD_BASES[card.baseId];
+        return card.type === "teacher" && base?.type === "teacher"
+          && Number.isFinite(base.cost) && base.cost <= 4
+          && !base.variableCost && card.baseId !== "small_omata"
+          && !base.evolutionFrom && base.allowedZones?.includes("teacher")
+          && canPlaceCard(side, card, "teacher", side, null);
+      });
+    }
+
     function playCard(instanceId, zone, owner, index = null) {
       if (state.pendingCardPlay) {
         state.message = "カード演出が終わるまでお待ちください。";
@@ -35782,16 +35886,6 @@
           return;
         }
       }
-      if (localCard?.baseId === "starbucks_student") {
-        const cards = state.players.player.trash.filter((card) => card.type === "teacher");
-        if (cards.length && !state.players.player.board.teacher) {
-          openCardChoice({ mode: "starbucks_teacher", title: localCard.name,
-            message: "校外エリアから教卓に出席させる教師を選んでください。",
-            cards, min: 1, max: 1, confirmLabel: "選んで出席",
-            playCardId: instanceId, playTarget: { zone, owner, index } });
-          return;
-        }
-      }
       if (localCard?.baseId === "adjective_vs_cynical") {
         openCardChoice({
           mode: "adjective_choice", title: localCard.name,
@@ -35809,9 +35903,9 @@
         const cards = tripleEnemyCandidates("player");
         if (cards.length > 0) {
           openCardChoice({ mode: "triple_enemy", title: localCard.name,
-            message: "出席時効果を処理したい順に、該当するカードをすべて選んでください。席はランダムに決まります。",
+            message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。席はランダムに決まります。",
             cards: state.players.player.deck.slice(0, 3), selectableIds: cards.map((card) => card.instanceId),
-            min: cards.length, max: cards.length, confirmLabel: "この順番で出席",
+            min: 0, max: cards.length, confirmLabel: "決定",
             playCardId: instanceId, playTarget: { zone, owner, index } });
           return;
         }
@@ -36031,13 +36125,13 @@
       if (!card) return false;
       card.spoonDestroyIds = Array.isArray(options.spoonDestroyIds) ? options.spoonDestroyIds : [];
       card.enemyReviveIds = Array.isArray(options.enemyReviveIds) ? options.enemyReviveIds : [];
-      card.starbucksTeacherId = options.starbucksTeacherId || null;
       if (card.baseId === "triple_enemy") {
         const candidates = tripleEnemyCandidates(side);
-        const ids = options.tripleEnemyOrderIds || [];
-        if (ids.length && (ids.length !== candidates.length || new Set(ids).size !== ids.length
+        const ids = options.tripleEnemyOrderIds;
+        if (ids !== undefined && (!Array.isArray(ids) || ids.length > candidates.length
+          || new Set(ids).size !== ids.length
           || ids.some((id) => !candidates.some((entry) => entry.instanceId === id)))) return false;
-        card.tripleEnemyOrderIds = ids.length ? ids : candidates.map((entry) => entry.instanceId);
+        card.tripleEnemyOrderIds = ids === undefined ? candidates.map((entry) => entry.instanceId) : ids;
       }
       if (card.baseId === "enemy_enemy") {
         const candidates = listBoardRefs(side).map(getBoardCardFromRef).filter(isEnemyNamedAttendee);
@@ -36052,8 +36146,6 @@
           .map((ref) => getBoardCardFromRef(ref)?.instanceId).filter(Boolean);
         if (card.baseId === "enemy_revive") card.enemyReviveIds = state.players[side].trash
           .filter((entry) => entry.baseId === "enemy_student").map((entry) => entry.instanceId);
-        if (card.baseId === "starbucks_student") card.starbucksTeacherId = state.players[side].trash
-          .find((entry) => entry.type === "teacher")?.instanceId || null;
       }
       if (card.baseId === "adjective_vs_cynical") {
         card.adjectiveChoice = ["destroy", "weaken"].includes(options.adjectiveChoice)
@@ -37092,12 +37184,29 @@
       }
       const matches = revealed.filter(isEnemyNamedAttendee);
       deck.push(...revealed.filter((entry) => !isEnemyNamedAttendee(entry)));
-      const order = orderIds || matches.map((entry) => entry.instanceId);
-      const ordered = [...matches].sort((a, b) => order.indexOf(a.instanceId) - order.indexOf(b.instanceId));
-      state.players[side].hand.push(...ordered);
+      const order = Array.isArray(orderIds) ? orderIds : matches.map((entry) => entry.instanceId);
+      const ordered = order.map((id) => matches.find((entry) => entry.instanceId === id)).filter(Boolean);
+      state.players[side].hand.push(...matches);
       continueTripleEnemyAttendance({ side, name: card.name, matchCount: matches.length,
         summoned: 0, remaining: ordered });
       resumeTripleEnemySequences();
+    }
+
+    function summonStarbucksTeacher(side, instanceId, corneringChoiceId = null) {
+      const teacher = starbucksTeacherCandidates(side).find((entry) => entry.instanceId === instanceId);
+      if (!teacher || (teacher.baseId === "cornering_lecturer" && !CORNERING_LECTURER_CHOICES[corneringChoiceId])) return false;
+      const trash = state.players[side].trash;
+      const teacherIndex = trash.findIndex((entry) => entry.instanceId === instanceId);
+      if (teacherIndex < 0) return false;
+      trash.splice(teacherIndex, 1);
+      const summoned = makeBoardCard(teacher);
+      if (corneringChoiceId) summoned.corneringLecturerChoiceId = corneringChoiceId;
+      if (!attendCard(side, summoned, "teacher", null, { attendanceSource: ATTENDANCE_SOURCE.HAND })) {
+        trash.splice(teacherIndex, 0, teacher);
+        return false;
+      }
+      addLog(`片手にスタバ学生の効果：${teacher.name}を手札から出席させたものとして教卓マスへ出席させました。`);
+      return true;
     }
 
     function resolveAttendEffects(side, card, zone, index, options = {}) {
@@ -37182,13 +37291,25 @@
           affected += 1;
         });
         cleanupDestroyedCards();
-        const trash = state.players[side].trash;
-        const teacherIndex = trash.findIndex((entry) => entry.instanceId === card.starbucksTeacherId && entry.type === "teacher");
-        if (teacherIndex >= 0 && !state.players[side].board.teacher) {
-          const [teacher] = trash.splice(teacherIndex, 1);
-          attendCard(side, makeBoardCard(teacher), "teacher", null, { attendanceSource: ATTENDANCE_SOURCE.HAND });
+        addLog(`${card.name}の効果：自分の学生${affected}人に1ダメージを与えました。`);
+        const candidates = starbucksTeacherCandidates(side);
+        const teacher = candidates[Math.floor(Math.random() * candidates.length)] || null;
+        if (teacher?.baseId === "cornering_lecturer") {
+          if (isCpuControlledBattleSide(side)) {
+            summonStarbucksTeacher(side, teacher.instanceId, chooseCorneringLecturerEffectForAi(side));
+          } else if (isOnlineHost() && side === "opponent") {
+            if (!requestRemoteStarbucksCorneringChoice(side, teacher, options.commandId || "")) {
+              summonStarbucksTeacher(side, teacher.instanceId, chooseCorneringLecturerEffectForAi(side));
+            }
+          } else {
+            openCardChoice({ mode: "starbucks_cornering_teacher", title: teacher.name,
+              message: "ガン詰め講師の効果を選んでください。", cards: corneringLecturerChoiceCards(),
+              min: 1, max: 1, confirmLabel: "この効果で出席",
+              context: { teacherInstanceId: teacher.instanceId } });
+          }
+        } else if (teacher) {
+          summonStarbucksTeacher(side, teacher.instanceId);
         }
-        addLog(`${card.name}の効果：自分の学生${affected}人に1ダメージを与え、選んだ教師を教卓に出席させました。`);
       }
       if (card.baseId === "adjective_vs_cynical") {
         if (card.adjectiveChoice === "weaken") {
@@ -37264,14 +37385,14 @@
       }
       if (card.baseId === "triple_enemy") {
         const candidates = tripleEnemyCandidates(side);
-        if (!card.tripleEnemyOrderIds && candidates.length > 1 && !isCpuControlledBattleSide(side)) {
+        if (!card.tripleEnemyOrderIds && candidates.length > 0 && !isCpuControlledBattleSide(side)) {
           if (side === "player") {
             openCardChoice({ mode: "triple_enemy_resolution", title: card.name,
-              message: "出席時効果を処理したい順に、該当するカードをすべて選んでください。",
+              message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。",
               cards: state.players[side].deck.slice(0, 3),
               selectableIds: candidates.map((entry) => entry.instanceId),
-              min: candidates.length, max: candidates.length,
-              confirmLabel: "この順番で出席", context: { sourceCardId: card.instanceId } });
+              min: 0, max: candidates.length,
+              confirmLabel: "決定", context: { sourceCardId: card.instanceId } });
             return;
           }
           if (requestRemoteTripleEnemyOrder(side, card)) return;
@@ -38210,6 +38331,7 @@
         if (!card || card.type !== "student" || isAibenNyoteiEffectImmune(card)) return;
         const targetIndex = [0, 1, 2].find((i) => isBoardSlotOpen(owner, "seat", i));
         if (targetIndex === undefined) return;
+        if (card.baseId === "aggro_king" && fromIndex === 6) card.aggroKingTurns = 0;
         state.players[owner].board.seats[targetIndex] = card;
         state.players[owner].board.seats[fromIndex] = null;
         addLog(`${card.name}は妖精効果で1行目へ移動しました。`);
@@ -40014,6 +40136,7 @@
           refs.forEach((ref) => {
             const card = getBoardCardFromRef(ref);
             if (!card) return;
+            const aggroKingTurns = card.baseId === "aggro_king" && ref.index === 6 ? card.aggroKingTurns : null;
             clearBoardCardFromField(owner, "seat", ref.index, card);
             const firstInRow = Math.floor(ref.index / 3) * 3;
             let destination = ref.index;
@@ -40024,6 +40147,7 @@
             }
             if (card.occupiedSeatSize) placeMultiSeatCard(owner, destination, card);
             else setBoardCard(owner, "seat", destination, card);
+            if (aggroKingTurns !== null && destination === ref.index) card.aggroKingTurns = aggroKingTurns;
           });
         });
         resultText = "お互いの出席者を各行の左側へ詰めました。";
@@ -40031,6 +40155,7 @@
       if (item.baseId === "contrarian_portal") {
         const board = state.players[side].board.seats;
         if (![...new Set(board)].some((card) => card?.occupiedSeatSize?.rows > 1)) {
+          if (board[6]?.baseId === "aggro_king") board[6].aggroKingTurns = 0;
           for (let col = 0; col < 3; col += 1) {
             [board[col], board[6 + col]] = [board[6 + col], board[col]];
           }
@@ -42424,6 +42549,7 @@
 
     function clearBoardCardFromField(owner, zone, index, card = null) {
       const current = card || getBoardCard(owner, zone, index);
+      if (zone === "seat" && index === 6 && current?.baseId === "aggro_king") current.aggroKingTurns = 0;
       if (zone === "seat" && isMultiSeatCard(current)) {
         (current.occupiedSeatIndexes || occupiedSeatIndexesFor(current, current.seatAnchorIndex ?? index))
           .forEach((seatIndex) => {
@@ -49493,6 +49619,9 @@
         player.board.seats[0] = firstStudent;
         player.board.seats[8] = secondStudent;
         player.trash.push(createCardFromBase("general_teacher", "player"));
+        player.trash.push(createCardFromBase("strict_lateness_teacher", "player"));
+        player.trash.push(createCardFromBase("summer_teacher", "player"));
+        player.trash.push(createCardFromBase("small_omata", "player"));
       }
       if (baseId === "loud_typing_student") {
         player.board.seats.fill(null);
@@ -51240,7 +51369,7 @@
         cursed_students: "このカードが出席したとき、自分の講義室の空いている席マスを3つ選ぶ。それぞれに「アグロ大学生」1人を出席させる。",
         earphones: "装備\n装備者は講義の効果を受けない。",
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
-        aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、このカードの攻撃力を+2、体力を+1する。",
+        aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、1度だけこのカードの攻撃力を+2、体力を+1する。",
         scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
         ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。",
         happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
@@ -51356,7 +51485,7 @@
         adjective_vs_cynical: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させるとき、次の効果から1つを選ぶ。\n1. 相手の出席者1人をランダムに破壊する。50%の確率で、この効果を繰り返す。\n2. 相手の手札と講義室にある出席者カードすべての攻撃力を-2する。",
         suffix_sugi: "お互いの手札から、それぞれカードをランダムに3枚まで選び、負荷を付与する。",
         yakitori_harassment: "自分の講義室にいる学生1人を指名し、体力を5回復する。回復しきれなかった分だけ自分の戦意を回復する。",
-        starbucks_student: "このカードを手札から出席させたとき、自分の講義室にいる学生すべてに1ダメージを与える。その後、自分の校外エリアにある教師1人を指名し、手札から出席させたものとして自分の教卓マスへ出席させる。",
+        starbucks_student: "このカードを手札から出席させたとき、自分の講義室にいる学生すべてに1ダメージを与える。その後、自分の校外エリアにある戦意が固定で4以下の教師1人をランダムに選び、手札から出席させたものとして自分の教卓マスへ出席させる。",
         overfitting_student: "このカードを手札から出席させたとき、相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         loud_typing_student: "このカードを手札から出席させたとき、周囲1マスにいる学生すべてに1ダメージを与える。その後、相手の講義室にいる学生すべてに5ダメージを与える。",
         tiny_rhythm_student: "このカードが攻撃するとき、相手の手札からカード1枚をランダムに選び、負荷を付与する。",
@@ -51367,7 +51496,7 @@
         rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
         enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の「敵」とつく出席者すべてを、好きな順番で自分のデッキの上に戻す。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
-        triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、出席時効果の順番を選んで、ランダムな空き席マスに手札から出席させる。出席できなかったカードは手札に残す。残りをデッキの下に置く。",
+        triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。出席させなかったカードは手札に残す。",
         salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。その出席時効果は発動する。",
         ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
