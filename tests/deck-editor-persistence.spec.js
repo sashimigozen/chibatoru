@@ -12,6 +12,7 @@ async function openSavedChaosDeck(page, name) {
 test("保存デッキをダブルクリックすると直接デッキ編成を開く", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.state.deckBuilder.savedDecks["ダブルクリックテスト"] = {
@@ -34,6 +35,7 @@ test("カオスデッキの4枚以上を保存・再編集・再保存・再起�
   page.on("dialog", dialog => dialog.accept());
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#chaosDeckFormatButton").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   await page.evaluate(() => {
@@ -59,6 +61,7 @@ test("カオスデッキの4枚以上を保存・再編集・再保存・再起�
   expect(await counts()).toEqual([5, 32, 4]);
   await page.reload();
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#chaosDeckFormatButton").click();
   await openSavedChaosDeck(page, "枚数保持テスト");
   expect(await counts()).toEqual([5, 32, 4]);
@@ -67,6 +70,7 @@ test("カオスデッキの4枚以上を保存・再編集・再保存・再起�
 test("通常・専攻デッキでは既存の同名枚数制限を維持する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   for (const format of ["normal", "specialty"]) {
     await page.evaluate((format) => {
       const api = window.__chibattle;
@@ -88,6 +92,7 @@ test("通常・専攻デッキでは既存の同名枚数制限を維持する",
 test("分類を削除し、カード名・テキスト検索とタイプ・戦意の絞り込みは維持する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   await page.locator("#deckFilterPanel > summary").click();
   await expect(page.locator("#deckCategoryFilters")).toHaveCount(0);

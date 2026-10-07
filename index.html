@@ -17261,6 +17261,7 @@
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
+  <link rel="stylesheet" href="cards-ui.css?v=0.23.15" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -19605,8 +19606,11 @@
       {
         version: "ver.0.23.15",
         date: "2026年10月7日",
-        summary: "三敵で手札に加えた敵を、出席させず手札に残せるようにしました。",
+        summary: "カード画面をデッキケースの中をイメージしたUIに変更し、カード一覧・詳細と保存デッキ・編成を整理しました。三敵で手札に加えた敵を出席させずに残せるようにしました。",
         changes: [
+          { title: "カード画面", after: "ホームの「カード」から「カード一覧」「デッキ編成」を選べます。紺色を基調に、カード一覧・詳細、保存デッキ一覧・内容確認・編成の画面を変更しました。カード一覧・デッキ編成・デッキ編集でも机色の外枠を表示します。デッキ詳細のカードを左上から詰めて並べ、枚数をカード右下に重ねて表示します。カードの大きさは固定せず、種類数・行数・表示領域に合わせて拡大・縮小し、スクロールせず1画面に収めます。カードを押すと説明を確認できます。既存のカード表示、レアリティ、保存デッキ、カードテストを引き続き利用できます。" },
+          { title: "デッキ操作とページ送り", after: "ファイル読み込み・ファイル書き出しを配置し、編集を破棄する確認を「キャンセル」「はい」に揃えました。一覧と詳細の左右の矢印は、最初と最後のページを循環します。カード一覧・保存デッキ一覧・カード詳細・デッキ詳細・チュートリアルのステージ切替は、2本指スクロールでも操作できます。慣性で複数ページが飛ぶことを防ぎ、説明文や一覧の通常スクロールを維持します。すべての画面でスクロールバーは非表示にしました。保存デッキは左上から順に並び、「新規作成」は最後のデッキに続けて、最後のページにだけ表示します。" },
+          { title: "関連カードの詳細表示", after: "デッキ編成・対戦中・カード詳細の説明文にある「カード名」を押すと、そのカードを表示します。トークン・生成カードも確認でき、元のカードへ戻れます。編集中のデッキや対戦状態、カードのテキスト・効果は変更しません。" },
           { title: "三敵", after: "デッキの上から見つけた「敵」とつく出席者カードはすべて手札に加えます。その中から出席させるカードを0枚から選べるようにし、選ばなかったカードは手札に残します。" }
         ]
       },
@@ -43321,8 +43325,7 @@
 
     function renderHomeNavigation() {
       if (!elements.homeNavigation) return;
-      const hidden = ["battle", "fourBattle"].includes(state.screen)
-        || (state.screen === "deck" && state.deckBuilder.view === "editor");
+      const hidden = ["battle", "fourBattle"].includes(state.screen);
       elements.homeNavigation.classList.toggle("hidden", hidden);
       elements.appRoot?.classList.toggle("home-navigation-visible", !hidden);
       const currentSection = homeNavigationSection();
@@ -47668,6 +47671,10 @@
     }
 
     function renderDeckLibrary() {
+      if (window.ChibattleCards) {
+        window.ChibattleCards.renderLibrary();
+        return;
+      }
       if (!elements.deckLibraryView || !elements.deckEditorView) return;
       const editing = state.deckBuilder.view === "editor";
       elements.deckLibraryView.classList.toggle("hidden", editing);
@@ -47796,9 +47803,12 @@
       render();
     }
 
-    function returnToDeckLibrary() {
+    async function returnToDeckLibrary() {
       const current = deckCountsFingerprint(state.deckBuilder.counts.player);
-      if (current !== state.deckBuilder.originalFingerprint && !window.confirm("保存していない変更を破棄して、デッキ一覧へ戻りますか？")) return;
+      const nameChanged = elements.deckSaveNameInput.value.trim() !== state.deckBuilder.editingName;
+      if ((current !== state.deckBuilder.originalFingerprint || nameChanged)
+        && !(await (window.ChibattleCards?.confirmDiscard()
+          ?? window.confirm("編集中の内容を破棄して戻りますか？")))) return;
       state.deckBuilder.view = "library";
       state.deckBuilder.editingName = "";
       state.deckBuilder.selectedName = "";
@@ -48310,14 +48320,16 @@
     function openDungeonCardInfo(baseId, options = {}) {
       if (!CARD_BASES[baseId] || !elements.dungeonCardInfoModal) return;
       const card = makeDungeonFloorFeaturedCard({ baseId, darkPresident: options.darkPresident === true });
+      if (!prepareRelatedCardView(elements.dungeonCardInfoText, card, options)) return;
       elements.dungeonCardInfoCard.innerHTML = cardShellTemplate(card);
       elements.dungeonCardInfoTitle.textContent = card.name;
-      elements.dungeonCardInfoText.innerHTML = cardDetailTemplate(card);
+      elements.dungeonCardInfoText.innerHTML = relatedCardReturnMarkup(elements.dungeonCardInfoText) + cardDetailTemplate(card, { interactiveTerms: true });
       hideCardTooltip();
       elements.dungeonCardInfoModal.classList.remove("hidden");
     }
 
     function closeDungeonCardInfo() {
+      clearRelatedCardView(elements.dungeonCardInfoText);
       elements.dungeonCardInfoModal?.classList.add("hidden");
     }
 
@@ -48518,9 +48530,8 @@
         row.className = `deck-row ${card.type}`;
         row.innerHTML = `
           <button class="deck-card-test" type="button" data-card-test="${baseId}" aria-label="${escapeHtml(card.name)}をテスト">
-            <div class="deck-row-name">${escapeHtml(card.name)}${aceDeckMark(card)}</div>
-            <div class="deck-row-meta">${cardMiniMeta(card)}</div>
-            <div class="deck-row-effect">効果：${escapeHtml(cardRulesText(card))}</div>
+            ${cardShellTemplate(card)}
+            <span class="deck-row-name">${escapeHtml(card.name)}${aceDeckMark(card)}</span>
           </button>
           <div class="deck-row-controls">
             <button class="mini-button" data-deck-minus="${baseId}" ${count <= 0 ? "disabled" : ""}>-</button>
@@ -48544,6 +48555,7 @@
       renderDeckCostCurve();
       renderCurrentDeckList();
       renderUsedDeckList();
+      window.ChibattleCards?.renderEditor();
     }
 
     function getDeckEditorIds(specialtyId = isSpecialtyDeckFormat() ? state.deckBuilder.specialtyId : "") {
@@ -48807,7 +48819,7 @@
       }
       state.deckBuilder.editingName = name;
       state.deckBuilder.originalFingerprint = currentFingerprint;
-      state.deckBuilder.selectedName = name;
+      state.deckBuilder.selectedName = window.ChibattleCards ? "" : name;
       state.deckBuilder.view = "library";
       state.message = `${isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "デッキ"}「${name}」を保存しました。`;
       render();
@@ -48903,14 +48915,28 @@
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    function importDeckFile(file) {
+    async function importDeckFile(file) {
       if (!file) return;
+      if (window.ChibattleCards?.isDirty() && !(await window.ChibattleCards.confirmDiscard())) return;
       const reader = new FileReader();
       reader.addEventListener("load", () => {
         try {
           const parsed = JSON.parse(String(reader.result || "{}"));
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid deck");
+          const formats = { "chibattle-deck": "normal", "chibattle-specialty-deck": "specialty", "chibattle-chaos-deck": "chaos" };
+          if (parsed.kind && !formats[parsed.kind]) throw new Error("invalid deck format");
+          const format = formats[parsed.kind] || state.deckBuilder.format;
           const counts = parsed.counts || parsed;
-          if (isSpecialtyDeckFormat() && parsed.specialtyId) state.deckBuilder.specialtyId = parsed.specialtyId;
+          if (!counts || typeof counts !== "object" || Array.isArray(counts)
+            || Object.entries(counts).some(([id, count]) => !Object.hasOwn(CARD_BASES, id) || !Number.isInteger(count) || count < 0)) throw new Error("invalid counts");
+          if (format === "specialty" && !specialtyDefinition(parsed.specialtyId || state.deckBuilder.specialtyId)) throw new Error("invalid specialty");
+          state.deckBuilder.format = format;
+          state.deckBuilder.specialtyId = format === "specialty" ? (parsed.specialtyId || state.deckBuilder.specialtyId) : "";
+          state.deckBuilder.activeSide = "player";
+          state.deckBuilder.view = "editor";
+          state.deckBuilder.editingName = "";
+          state.deckBuilder.selectedName = "";
+          state.deckBuilder.pendingSpecialtyChoice = false;
           const validation = activeDeckValidation(counts);
           if (!validation.valid) {
             state.message = isSpecialtyDeckFormat()
@@ -48922,6 +48948,8 @@
           state.deckBuilder.counts[state.deckBuilder.activeSide] = copyDeckCounts(counts, {
             unlimited: isChaosDeckFormat()
           });
+          state.deckBuilder.originalFingerprint = deckCountsFingerprint(createEmptyDeckCounts());
+          resetDeckFilters();
           elements.deckSaveNameInput.value = parsed.name || file.name.replace(/\.json$/i, "");
           render();
         } catch (error) {
@@ -48981,11 +49009,13 @@
         </button>
       ` : "";
       elements.cardTestCard.innerHTML = `<div class="card-test-style-frame">${cardShellTemplate(card)}${control}</div>${unlocked ? `<div class="card-rarity-label">${cardStyleModeLabel(mode)}</div>` : ""}`;
-      elements.cardTestText.innerHTML = cardDetailTemplate(card, { interactiveTerms: true });
+      elements.cardTestText.innerHTML = relatedCardReturnMarkup(elements.cardTestText) + cardDetailTemplate(card, { interactiveTerms: true });
+      window.ChibattleCards?.renderCardDetail(baseId);
     }
 
-    function openCardTestConfirm(baseId) {
-      if (!CARD_BASES[baseId] || state.screen !== "deck" || state.deckBuilder.view !== "editor") return;
+    function openCardTestConfirm(baseId, options = {}) {
+      if (!CARD_BASES[baseId] || state.screen !== "deck") return;
+      if (!prepareRelatedCardView(elements.cardTestText, makePreviewCard(baseId, "player"), options)) return;
       state.pendingTestCardId = baseId;
       renderCardTestConfirm(baseId);
       hideCardTooltip();
@@ -48993,8 +49023,10 @@
     }
 
     function closeCardTestConfirm() {
+      clearRelatedCardView(elements.cardTestText);
       state.pendingTestCardId = null;
       elements.cardTestModal?.classList.add("hidden");
+      window.ChibattleCards?.restoreCardFocus();
     }
 
     function confirmCardTest() {
@@ -49732,7 +49764,7 @@
       state.deckBuilder.specialtyId = "";
       state.deckBuilder.pendingSpecialtyChoice = false;
       state.deckBuilder.returnScreen = "";
-      state.deckBuilder.view = "library";
+      state.deckBuilder.view = "entry";
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
       hideCardTooltip();
@@ -50329,8 +50361,9 @@
       if (elements.battleCardPreview) elements.battleCardPreview._oneEyedPeekRevealToken = null;
     }
 
-    function showBattleCardPreview(card) {
+    function showBattleCardPreview(card, options = {}) {
       if (!card || state.screen !== "battle" || !elements.battleCardPreview) return;
+      if (!prepareRelatedCardView(elements.battleCardPreview, card, options)) return;
       clearOneEyedPeekRevealTimer();
       const isOwnedRuler = card.baseId === "ruler"
         && state.players.player.hand.some((handCard) => handCard.instanceId === card.instanceId);
@@ -50351,7 +50384,7 @@
       const actionMarkup = previewActions.length > 0
         ? `<div class="battle-card-preview-actions${previewActions.length === 1 ? " single" : ""}">${previewActions.join("")}</div>`
         : "";
-      const previewDetail = battleCardPreviewDetailTemplate(card);
+      const previewDetail = battleCardPreviewDetailTemplate(card, { navigation: relatedCardReturnMarkup(elements.battleCardPreview) });
       elements.battleCardPreview.innerHTML = `
         ${cardShellTemplate(card)}
         ${previewDetail.markup}
@@ -50375,6 +50408,7 @@
       if (!event || state.screen !== "battle" || !elements.battleCardPreview) return;
       const cards = Array.isArray(event.cards) ? event.cards.filter(Boolean) : [];
       if (cards.length === 0) return;
+      clearRelatedCardView(elements.battleCardPreview);
       clearOneEyedPeekRevealTimer();
       const unit = event.unit || "枚";
       elements.battleCardPreview.innerHTML = `
@@ -50418,6 +50452,7 @@
 
     function hideBattleCardPreview() {
       if (!elements.battleCardPreview) return;
+      clearRelatedCardView(elements.battleCardPreview);
       clearOneEyedPeekRevealTimer();
       elements.battleCardPreview.classList.add("hidden");
       elements.battleCardPreview.classList.remove("preview-card-collection");
@@ -50512,12 +50547,13 @@
       "出席者", "デッキ", "手札", "出席", "装備", "進化"
     ]);
 
-    function battleCardPreviewDetailTemplate(card) {
+    function battleCardPreviewDetailTemplate(card, { navigation = "" } = {}) {
       const currentEffects = battleCardCurrentEffectsTemplate(card);
       return {
         effectDetails: currentEffects.details,
         markup: `
           <div class="battle-card-preview-detail">
+            ${navigation}
             <div class="battle-card-preview-detail-title">効果</div>
             <div class="battle-card-preview-rules">${battleCardRulesMarkup(card)}</div>
             ${currentEffects.markup}
@@ -50544,7 +50580,7 @@
         const evolutionHeading = text.slice(index).match(/^\[進化\]：「([^」]+)」/);
         if (evolutionHeading) {
           const evolutionSource = references.find((entry) => entry.kind === "card" && entry.label === evolutionHeading[1]);
-          const sourceMarkup = evolutionSource && !abilitiesOnly
+          const sourceMarkup = evolutionSource
             ? `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(evolutionSource.value)}">${escapeHtml(evolutionSource.label)}</button>`
             : escapeHtml(evolutionHeading[1]);
           markup += `${battleCardTermButtonMarkup("進化", "", "", "[進化]")}：「${sourceMarkup}」`;
@@ -50559,6 +50595,15 @@
             ? battleCardTermButtonMarkup(term, "", "", displayLabel)
             : escapeHtml(displayLabel);
           index += bracketedAbility[0].length;
+          continue;
+        }
+        const quotedCard = text.slice(index).match(/^「([^」]+)」/);
+        if (quotedCard) {
+          const reference = references.find((entry) => entry.kind === "card" && entry.label === quotedCard[1]);
+          markup += reference
+            ? `<button class="battle-card-preview-term-link card-link" type="button" data-related-card="${escapeHtml(reference.value)}" aria-label="${escapeHtml(reference.label)}のカード詳細を表示">${escapeHtml(quotedCard[0])}</button>`
+            : escapeHtml(quotedCard[0]);
+          index += quotedCard[0].length;
           continue;
         }
         const reference = references.find((entry) => text.startsWith(entry.label, index));
@@ -50585,6 +50630,45 @@
       const toneClass = className ? ` ${className}` : "";
       const label = displayLabel || `［${term}${suffix ? `：${suffix}` : ""}］`;
       return `<button class="battle-card-preview-term-link${toneClass}" type="button" data-preview-term="${escapeHtml(term)}">${escapeHtml(label)}</button>`;
+    }
+
+    function prepareRelatedCardView(container, card, { related = false, returning = false } = {}) {
+      if (related && container._previewCard?.baseId === card.baseId) return false;
+      if (related && container._previewCard) {
+        const panels = [...container.querySelectorAll("[data-preview-term-description], [data-preview-effect-description]")]
+          .map((panel) => ({ selector: panel.hasAttribute("data-preview-term-description") ? "[data-preview-term-description]" : "[data-preview-effect-description]", html: panel.innerHTML, visible: panel.classList.contains("visible") }));
+        container._relatedCardTrail ||= [];
+        container._relatedCardTrail.push({ card: container._previewCard, panels, scrollTop: container.scrollTop, detailScrollTop: container.querySelector(".battle-card-preview-detail")?.scrollTop || 0 });
+      } else if (!returning) {
+        container._relatedCardTrail = [];
+      }
+      container._previewCard = card;
+      return true;
+    }
+
+    function relatedCardReturnMarkup(container) {
+      const previous = container?._relatedCardTrail?.at(-1);
+      return previous ? `<div class="related-card-panel"><button class="button secondary" type="button" data-related-card-back>「${escapeHtml(previous.card.name)}」へ戻る</button></div>` : "";
+    }
+
+    function returnToRelatedCard(container, showCard) {
+      const previous = container?._relatedCardTrail?.pop();
+      if (!previous) return;
+      showCard(previous.card, { returning: true });
+      previous.panels.forEach(({ selector, html, visible }) => {
+        const panel = container.querySelector(selector);
+        if (panel) { panel.innerHTML = html; panel.classList.toggle("visible", visible); }
+      });
+      container.scrollTop = previous.scrollTop;
+      const detail = container.querySelector(".battle-card-preview-detail");
+      if (detail) detail.scrollTop = previous.detailScrollTop;
+      container.querySelector("[data-related-card-back], [data-related-card]")?.focus({ preventScroll: true });
+    }
+
+    function clearRelatedCardView(container) {
+      if (!container) return;
+      container._relatedCardTrail = [];
+      container._previewCard = null;
     }
 
     function battleCardCurrentEffectsTemplate(card) {
@@ -51826,10 +51910,21 @@
     });
     elements.dungeonCardInfoCloseButton.addEventListener("click", closeDungeonCardInfo);
     elements.dungeonCardInfoModal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-related-card-back]")) {
+        event.stopPropagation();
+        returnToRelatedCard(elements.dungeonCardInfoText, (card, options) => openDungeonCardInfo(card.baseId, { ...options, darkPresident: card.darkPresident }));
+        return;
+      }
+      const term = event.target.closest("[data-preview-term]");
+      if (term) {
+        event.stopPropagation();
+        showBattleCardTermDescription(term.dataset.previewTerm, elements.dungeonCardInfoText);
+        return;
+      }
       const related = event.target.closest("[data-related-card]");
       if (related) {
         event.stopPropagation();
-        openDungeonCardInfo(related.dataset.relatedCard);
+        openDungeonCardInfo(related.dataset.relatedCard, { related: true });
         return;
       }
       if (event.target === elements.dungeonCardInfoModal) closeDungeonCardInfo();
@@ -52105,6 +52200,11 @@
     elements.courseRegistrationAcceptButton.addEventListener("click", acceptCourseRegistrationConsent);
     elements.courseRegistrationRejectButton.addEventListener("click", rejectCourseRegistrationConsent);
     elements.cardTestModal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-related-card-back]")) {
+        event.stopPropagation();
+        returnToRelatedCard(elements.cardTestText, (card, options) => openCardTestConfirm(card.baseId, options));
+        return;
+      }
       const term = event.target.closest("[data-preview-term]");
       if (term) {
         event.stopPropagation();
@@ -52124,7 +52224,7 @@
       const related = event.target.closest("[data-related-card]");
       if (related) {
         event.stopPropagation();
-        openCardTestConfirm(related.dataset.relatedCard);
+        openCardTestConfirm(related.dataset.relatedCard, { related: true });
         return;
       }
       if (event.target === elements.cardTestModal) closeCardTestConfirm();
@@ -52134,10 +52234,15 @@
       if (event.target === elements.deckModal) closeDeckWindow();
     });
     elements.battleCardPreview.addEventListener("click", (event) => {
+      if (event.target.closest("[data-related-card-back]")) {
+        event.stopPropagation();
+        returnToRelatedCard(elements.battleCardPreview, showBattleCardPreview);
+        return;
+      }
       if (event.target.closest("[data-preview-return-card-detail]")) {
         event.stopPropagation();
         const card = elements.battleCardPreview._previewCard;
-        if (card) showBattleCardPreview(card);
+        if (card) showBattleCardPreview(card, { returning: true });
         return;
       }
       const typeHelp = event.target.closest("[data-preview-type-help]");
@@ -52169,7 +52274,7 @@
       const related = event.target.closest("[data-related-card]");
       if (related) {
         event.stopPropagation();
-        showBattleCardPreview(makePreviewCard(related.dataset.relatedCard, "player"));
+        showBattleCardPreview(makePreviewCard(related.dataset.relatedCard, "player"), { related: true });
         return;
       }
       if (event.target.closest("[data-preview-ruler-fuse]")) {
@@ -52467,6 +52572,7 @@
     initializeGame();
 
   </script>
+  <script src="cards-ui.js?v=0.23.15"></script>
   <script src="four-mode.js"></script>
 </body>
 </html>
