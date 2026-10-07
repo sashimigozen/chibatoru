@@ -48,6 +48,7 @@ for (const count of [0, 2, 4, 5, 7]) {
     const result = await page.evaluate((handCount) => {
       const api = window.__chibattle;
       const player = api.state.players.player;
+      player.turnsTaken = 1;
       player.hand = Array.from({ length: handCount }, () => api.createCardFromBase("general_student", "player"));
       player.deck = Array.from({ length: 10 }, () => api.createCardFromBase("general_student", "player"));
       api.startTurn("player");
@@ -98,6 +99,7 @@ test("通常・専攻は1枚ドローのままで、カオスでもドロー禁�
     return ["normal", "specialty", "blocked", "registration"].map(mode => {
       state.battleRuleId = ["normal", "specialty"].includes(mode) ? mode : "chaos";
       state.players.player.hand = [];
+      state.players.player.turnsTaken = 1;
       state.players.player.deck = Array.from({ length: 10 }, () => api.createCardFromBase("general_student", "player"));
       state.deckToHandLocks = mode === "blocked" ? [{ owner: "opponent", releaseAtActionTurn: 999 }] : [];
       state.courseRegistration = mode === "registration" ? {
@@ -112,6 +114,82 @@ test("通常・専攻は1枚ドローのままで、カオスでもドロー禁�
     { hand: ["general_student"], deck: 9 }, { hand: ["general_student"], deck: 9 },
     { hand: [], deck: 10 }, { hand: ["protein_drinker"], deck: 10 }
   ]);
+});
+
+test("先攻は初回だけ引かず、後攻の初回と先攻の次のターンは引く", async ({ page }) => {
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    return ["normal", "chaos"].flatMap((rule) => ["player", "opponent"].map((firstSide) => {
+      state.battleRuleId = rule;
+      state.firstSide = firstSide;
+      state.gameOver = false;
+      state.courseRegistration = null;
+      for (const side of ["player", "opponent"]) {
+        const owner = state.players[side];
+        owner.turnsTaken = 0;
+        owner.hand = Array.from({ length: 2 }, () => api.createCardFromBase("general_student", side));
+        owner.deck = Array.from({ length: 10 }, () => api.createCardFromBase("general_student", side));
+      }
+      const secondSide = firstSide === "player" ? "opponent" : "player";
+      state.currentSide = firstSide;
+      api.startTurn(firstSide);
+      const first = { hand: state.players[firstSide].hand.length, deck: state.players[firstSide].deck.length };
+      state.currentSide = secondSide;
+      api.startTurn(secondSide);
+      const second = { hand: state.players[secondSide].hand.length, deck: state.players[secondSide].deck.length };
+      state.currentSide = firstSide;
+      api.startTurn(firstSide);
+      const next = { hand: state.players[firstSide].hand.length, deck: state.players[firstSide].deck.length };
+      return { rule, firstSide, first, second, next };
+    }));
+  });
+  for (const { rule, firstSide, first, second, next } of results) {
+    const expectedDrawnHand = rule === "chaos" ? 5 : 3;
+    const expectedDeck = rule === "chaos" ? 7 : 9;
+    expect({ rule, firstSide, first, second, next }).toEqual({
+      rule, firstSide,
+      first: { hand: 2, deck: 10 },
+      second: { hand: expectedDrawnHand, deck: expectedDeck },
+      next: { hand: expectedDrawnHand, deck: expectedDeck }
+    });
+  }
+});
+
+test("先攻初回は履修登録の代替ドローを消費せず、山札切れでも敗北しない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const { state } = api;
+    const player = state.players.player;
+    state.battleRuleId = "normal";
+    state.firstSide = "player";
+    player.hand = [];
+    player.deck = [];
+    const reserved = api.createCardFromBase("protein_drinker", "player");
+    state.courseRegistration = {
+      remainingTurns: { player: 5, opponent: 5 },
+      drawQueues: { player: [reserved], opponent: [] }
+    };
+    api.startTurn("player");
+    const first = {
+      hand: player.hand.length,
+      reserved: state.courseRegistration.drawQueues.player.length,
+      gameOver: state.gameOver
+    };
+    api.startTurn("player");
+    return {
+      first,
+      second: {
+        hand: player.hand.map((card) => card.baseId),
+        reserved: state.courseRegistration.drawQueues.player.length,
+        gameOver: state.gameOver
+      }
+    };
+  });
+  expect(result).toEqual({
+    first: { hand: 0, reserved: 1, gameOver: false },
+    second: { hand: ["protein_drinker"], reserved: 0, gameOver: false }
+  });
 });
 
 test("補充できずデッキ切れなら敗北、手札5枚以上で引かないなら敗北しない", async ({ page }) => {

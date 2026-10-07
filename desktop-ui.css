@@ -3,18 +3,18 @@ body.computer-active {
   background: linear-gradient(#e8edf450, #e8edf450), url("assets/tutorial/classroom-laptop-view.webp") center / cover fixed;
 }
 .mode-computer {
-  position: fixed; z-index: 1; inset: 8px 12px calc(var(--home-desk-nav-height, 84px) + 4px);
-  display: flex; flex-direction: column; margin: 0 auto; min-height: 0; overflow: clip;
+  position: fixed; z-index: 1; inset: 0 0 var(--home-desk-nav-height, 84px);
+  display: flex; flex-direction: column; margin: 0 auto; min-height: 0; overflow: visible;
   color: #173246; font-family: inherit;
 }
 .computer-display {
   position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
   width: 100%; align-self: center;
-  padding: 12px 12px 0; border: 2px solid #566276; border-radius: 9px 9px 2px 2px;
+  padding: 12px 12px clamp(10px, 1vw, 14px); border: 2px solid #566276; border-radius: 0;
   background: linear-gradient(110deg, #4b5669, #2b3545 40%, #222d3c);
   box-shadow: inset 0 1px 0 #a4b4c740, 0 8px 22px #101c3055;
 }
-.computer-content { position: relative; flex: 1; min-height: 0; overflow: auto; border: 1px solid #182536; border-bottom: 0; background: #edf2f6; }
+.computer-content { position: relative; flex: 1; min-height: 0; overflow: auto; border: 1px solid #182536; background: #edf2f6; }
 .desktop-open .computer-content { background: linear-gradient(135deg, #e5ecf2, #cfdbe6); }
 .computer-content > .screen:not(.hidden) { width: 100%; min-height: 100%; margin: 0; padding: 18px 24px; }
 .computer-content > .screen > .screen-head { margin-bottom: 18px; }
@@ -69,12 +69,11 @@ body.computer-active {
 .computer-switch img { width: 20px; height: 34px; }
 .computer-switch.previous img { transform: rotate(180deg); }
 .computer-switch:hover { background: #52b9dc20; transform: none; }
-.computer-taskbar { flex: 0 0 38px; border: 1px solid #182536; background: #c4d1df; }
 /* Generated graphite keyboard matches the laptop at the right of the home image. */
-/* Move closer to the screen: keep the keyboard's native proportions while
-   cropping its foreground, rather than stretching or reserving a large base. */
-.computer-base { flex: 0 0 clamp(32px, 4vw, 56px); min-height: 0; width: calc(100% / .87); align-self: center; overflow: clip; }
-.computer-base img { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 8px #18243640); pointer-events: none; }
+/* The foreground continues beyond the viewport: only its visible band is
+   cropped, with no exposed room below or beside the keyboard. */
+.computer-base { flex: 0 0 clamp(32px, 4vw, 56px); min-height: 0; width: 100vw; align-self: center; overflow: clip; background: linear-gradient(110deg, #4b5669, #2b3545 40%, #222d3c); }
+.computer-base img { position: relative; left: 50%; transform: translateX(-50%); display: block; width: calc(100% / .87); max-width: none; height: auto; pointer-events: none; }
 .computer-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
 /* Preserve the controls inside the laptop, with scrolling confined to its screen. */
 .computer-content > #tutorialScreen:not(.hidden) { display: flex; flex-direction: column; height: 100%; min-height: 0; }
@@ -105,8 +104,7 @@ body.computer-active {
   .computer-content .training-observer-note { margin-top: 2px; font-size: 10px; }
 }
 @media (max-height: 680px) {
-  .computer-display { padding: 8px 8px 0; }
-  .computer-taskbar { flex-basis: 28px; }
+  .computer-display { padding: 8px 8px clamp(10px, 1vw, 14px); }
   .desktop-open .computer-content > .screen:not(.hidden) { padding-top: 10px; padding-bottom: 10px; }
 }
 @media (max-width: 1100px) and (max-height: 850px) {

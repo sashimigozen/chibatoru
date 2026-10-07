@@ -721,7 +721,7 @@ test("ア↑ティ↓テュードは相手学生を空の教卓へ移し、甘�
   expect(result).toEqual({ cost: 2, moved: true, teacher: true, seatEmpty: true, vampireGone: true });
 });
 
-test("スタバ学生は自分の学生へ1ダメージ後に校外の教師を手札出席扱いで教卓へ戻す", async ({ page }) => {
+test("スタバ学生は自分の学生へ1ダメージ後に戦意4以下の教師を手札出席扱いで教卓へ戻す", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const teacher = api.createCardFromBase("general_teacher", "player");
@@ -729,17 +729,130 @@ test("スタバ学生は自分の学生へ1ダメージ後に校外の教師を�
     const student = api.makeBoardCard(api.createCardFromBase("loud_student", "player"));
     api.state.players.player.board.seats[2] = student;
     const starbucks = api.createCardFromBase("starbucks_student", "player");
+    const cost = api.effectiveCardCost(starbucks);
+    const rules = api.cardRulesText(starbucks);
     api.state.players.player.hand.push(starbucks);
-    api.placeCardFromHand("player", starbucks.instanceId, "seat", "player", 0, false,
-      { starbucksTeacherId: teacher.instanceId });
-    return { studentHp: student.currentHp, teacher: api.state.players.player.board.teacher?.baseId,
+    api.placeCardFromHand("player", starbucks.instanceId, "seat", "player", 0, false);
+    return { cost, rules, studentHp: student.currentHp,
+      selfHp: api.state.players.player.board.seats[0]?.currentHp,
+      teacher: api.state.players.player.board.teacher?.baseId,
       source: api.state.players.player.board.teacher?.lastAttendanceSource,
       teacherRemovedFromTrash: !api.state.players.player.trash.some((card) => card.instanceId === teacher.instanceId) };
   });
-  expect(result).toEqual({ studentHp: 8, teacher: "general_teacher", source: "hand", teacherRemovedFromTrash: true });
+  expect(result).toEqual({
+    cost: 7,
+    rules: "このカードを手札から出席させたとき、自分の講義室にいる学生すべてに1ダメージを与える。その後、自分の校外エリアにある戦意が固定で4以下の教師1人をランダムに選び、手札から出席させたものとして自分の教卓マスへ出席させる。",
+    studentHp: 8, selfHp: 2, teacher: "general_teacher", source: "hand", teacherRemovedFromTrash: true
+  });
 });
 
-test("任意枚数と校外カードの選択UIから出席を確定できる", async ({ page }) => {
+test("スタバ学生は固定戦意の出席可能な教師からランダムに選ぶ", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const ids = ["summer_teacher", "small_omata", "popular_c", "suzaku", "general_teacher", "strict_lateness_teacher"];
+    api.state.players.player.trash = ids.map((id) => api.createCardFromBase(id, "player"));
+    const starbucks = api.createCardFromBase("starbucks_student", "player");
+    api.state.players.player.hand = [starbucks];
+    const originalRandom = Math.random;
+    Math.random = () => 0.99;
+    try {
+      api.placeCardFromHand("player", starbucks.instanceId, "seat", "player", 0, false);
+    } finally {
+      Math.random = originalRandom;
+    }
+    return { chosen: api.state.players.player.board.teacher?.baseId,
+      remaining: api.state.players.player.trash.map((card) => card.baseId),
+      choice: api.state.pendingCardChoice?.mode || null };
+  });
+  expect(result).toEqual({ chosen: "strict_lateness_teacher",
+    remaining: ["summer_teacher", "small_omata", "popular_c", "suzaku", "general_teacher"],
+    choice: null });
+});
+
+test("スタバ学生は教師の候補がないか教卓が埋まっていてもダメージを与える", async ({ page }) => {
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const run = (occupied) => {
+      const player = api.state.players.player;
+      player.board = { teacher: occupied ? api.makeBoardCard(api.createCardFromBase("general_teacher", "player")) : null,
+        seats: Array(9).fill(null) };
+      player.hand = [];
+      player.trash = ["summer_teacher", "small_omata", "popular_c", ...(occupied ? ["general_teacher"] : [])]
+        .map((id) => api.createCardFromBase(id, "player"));
+      player.will = 20;
+      player.attendancesThisTurn = 0;
+      const starbucks = api.createCardFromBase("starbucks_student", "player");
+      player.hand.push(starbucks);
+      api.placeCardFromHand("player", starbucks.instanceId, "seat", "player", 0, false);
+      return { selfHp: player.board.seats[0]?.currentHp, teacher: player.board.teacher?.baseId || null,
+        trash: player.trash.map((card) => card.baseId) };
+    };
+    return { empty: run(false), occupied: run(true) };
+  });
+  expect(results).toEqual({
+    empty: { selfHp: 2, teacher: null, trash: ["summer_teacher", "small_omata", "popular_c"] },
+    occupied: { selfHp: 2, teacher: "general_teacher",
+      trash: ["summer_teacher", "small_omata", "popular_c", "general_teacher"] }
+  });
+});
+
+test("スタバ学生は手札以外からの出席ではダメージも教師の出席も起こさない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const teacher = api.createCardFromBase("general_teacher", "player");
+    api.state.players.player.trash = [teacher];
+    const student = api.makeBoardCard(api.createCardFromBase("starbucks_student", "player"));
+    api.attendCard("player", student, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.GENERATED });
+    return { selfHp: student.currentHp, teacher: api.state.players.player.board.teacher?.baseId || null,
+      teacherInTrash: api.state.players.player.trash.includes(teacher) };
+  });
+  expect(result).toEqual({ selfHp: 3, teacher: null, teacherInTrash: true });
+});
+
+test("スタバ学生がガン詰め講師を引いたときは、その二択を選んで発動する", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const lecturer = api.createCardFromBase("cornering_lecturer", "player");
+    api.state.players.player.trash = [lecturer];
+    const starbucks = api.createCardFromBase("starbucks_student", "player");
+    api.state.players.player.hand = [starbucks];
+    api.playCard(starbucks.instanceId, "seat", "player", 0);
+    const choice = { mode: api.state.pendingCardChoice?.mode,
+      options: api.state.pendingCardChoice?.cards.map((card) => card.baseId) };
+    api.state.pendingCardChoice.selectedIds = ["cornering_lecturer_generate"];
+    api.confirmCardChoiceSelection();
+    return { choice, teacher: api.state.players.player.board.teacher?.baseId,
+      source: api.state.players.player.board.teacher?.lastAttendanceSource,
+      generated: api.state.players.player.deck.filter((card) => card.baseId === "scary_question").length,
+      inTrash: api.state.players.player.trash.some((card) => card.instanceId === lecturer.instanceId) };
+  });
+  expect(result).toEqual({
+    choice: { mode: "starbucks_cornering_teacher", options: ["generate", "activate"] },
+    teacher: "cornering_lecturer", source: "hand", generated: 10, inTrash: false
+  });
+});
+
+test("スマホ幅でもスタバ学生から出たガン詰め講師の二択を操作できる", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.trash = [api.createCardFromBase("cornering_lecturer", "player")];
+    const starbucks = api.createCardFromBase("starbucks_student", "player");
+    api.state.players.player.hand = [starbucks];
+    api.playCard(starbucks.instanceId, "seat", "player", 0);
+  });
+  const stage = page.locator("#threeGesturesStage");
+  await expect(stage).toBeVisible();
+  const choices = stage.locator(".mulligan-card");
+  await expect(choices).toHaveCount(2);
+  await choices.first().click();
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeEnabled();
+  await page.locator("#threeGesturesConfirmButton").click();
+  await expect.poll(() => page.evaluate(() => window.__chibattle.state.players.player.board.teacher?.baseId))
+    .toBe("cornering_lecturer");
+});
+
+test("任意枚数の選択UIから出席を確定できる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const spoon = api.createCardFromBase("spoon_wizard", "player");
@@ -759,19 +872,10 @@ test("任意枚数と校外カードの選択UIから出席を確定できる", 
     api.confirmCardChoiceSelection();
     const revived = api.state.players.player.board.seats.some((card) => card?.instanceId === enemy.instanceId);
 
-    const teacher = api.createCardFromBase("general_teacher", "player");
-    api.state.players.player.trash.push(teacher);
-    const starbucks = api.createCardFromBase("starbucks_student", "player");
-    api.state.players.player.hand.push(starbucks);
-    api.playCard(starbucks.instanceId, "seat", "player", 6);
-    const teacherMode = api.state.pendingCardChoice?.mode;
-    api.state.pendingCardChoice.selectedIds = [teacher.instanceId];
-    api.confirmCardChoiceSelection();
-    return { spoonMode, spoonPlaced, reviveMode, revived, teacherMode,
-      teacherPlaced: api.state.players.player.board.teacher?.instanceId === teacher.instanceId };
+    return { spoonMode, spoonPlaced, reviveMode, revived };
   });
   expect(result).toEqual({ spoonMode: "spoon_destroy", spoonPlaced: true,
-    reviveMode: "enemy_revive", revived: true, teacherMode: "starbucks_teacher", teacherPlaced: true });
+    reviveMode: "enemy_revive", revived: true });
 });
 
 test("裏U太の進化で相手全員に病を付与し、後ろにいるクイーンは終了時に4ダメージ", async ({ page }) => {

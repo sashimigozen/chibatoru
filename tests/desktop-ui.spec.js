@@ -12,8 +12,23 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
     await page.locator("#homeNavBattleButton").click();
     await expect(page.locator("#modeComputer")).toHaveClass(/native-menu/);
     const frame = await page.locator("#modeComputer").boundingBox();
+    expect(frame.x).toBe(0);
+    expect(frame.y).toBe(0);
+    expect(frame.width).toBe(viewport.width);
+    await expect(page.locator(".computer-display")).toHaveCSS("border-radius", "0px");
+    await expect(page.locator(".computer-taskbar")).toHaveCount(0);
+    const lowerBezel = await page.locator(".computer-display").evaluate(el => parseFloat(getComputedStyle(el).paddingBottom));
+    expect(lowerBezel).toBeCloseTo(Math.max(10, Math.min(viewport.width * .01, 14)), 1);
     const keyboard = await page.locator(".computer-base").boundingBox();
     expect(keyboard.height).toBeCloseTo(Math.max(32, Math.min(viewport.width * .04, 56)), 1);
+    const navigation = await page.locator("#homeNavigation").boundingBox();
+    expect(keyboard.x).toBeCloseTo(0, 1);
+    expect(keyboard.width).toBeCloseTo(viewport.width, 1);
+    expect(keyboard.y + keyboard.height).toBeCloseTo(navigation.y, 1);
+    const keyboardImage = await page.locator(".computer-base img").boundingBox();
+    expect(keyboardImage.x).toBeLessThan(0);
+    expect(keyboardImage.x + keyboardImage.width).toBeGreaterThan(viewport.width);
+    expect(keyboardImage.y + keyboardImage.height).toBeGreaterThan(navigation.y);
     await expect(page.locator(".computer-folder-icon")).toHaveCount(0);
     await expect(page.locator("#onlineMenuHead h1")).toHaveText("オンラインバトル");
     await expect(page.locator("#onlinePrivateMatchButton")).toContainText("プライベートマッチ");
@@ -49,6 +64,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
     await page.locator("#onlineBackHomeButton").click();
     await expect(page.locator("#homeDeskStage")).toBeVisible();
     await expect(page.locator("#modeComputer")).toBeHidden();
+    await expect(page.locator("body")).not.toHaveClass(/computer-active/);
   });
 }
 
@@ -65,21 +81,21 @@ async function dragFolder(page, selector, x, y) {
   await page.mouse.up();
 }
 
-test("同じPCの三角でバトルとソロを切り替え、ショートカットは空欄", async ({ page }) => {
+test("同じPCの三角でバトルとソロを切り替え、ショートカット欄は表示しない", async ({ page }) => {
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await open(page);
   const frame = await page.locator("#modeComputer").boundingBox();
   await expect(page.locator("#onlineMenuHead h1")).toHaveText("バトル");
-  await expect(page.locator(".computer-taskbar")).toBeEmpty();
+  await expect(page.locator(".computer-taskbar")).toHaveCount(0);
   const display = await page.locator(".computer-display").boundingBox();
   const base = await page.locator(".computer-base").boundingBox();
   const viewport = page.viewportSize();
-  expect(display.width).toBeGreaterThanOrEqual(viewport.width * .97);
-  expect(display.x).toBeLessThanOrEqual(12);
-  expect(display.y).toBeLessThanOrEqual(8);
+  expect(display.width).toBe(viewport.width);
+  expect(display.x).toBe(0);
+  expect(display.y).toBe(0);
   expect(display.height).toBeGreaterThan(viewport.height * .7);
-  expect(base.width).toBeGreaterThan(display.width + 30);
+  expect(base.width).toBe(viewport.width);
   expect(base.height).toBeGreaterThanOrEqual(32);
   expect(base.height).toBeLessThanOrEqual(56);
   expect(Math.abs(display.y + display.height - base.y)).toBeLessThan(1);
