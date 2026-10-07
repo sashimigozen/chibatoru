@@ -1,0 +1,116 @@
+/* Native PC frame and mode controls, using the current Chibattle palette. */
+body.computer-active {
+  background: linear-gradient(#e8edf450, #e8edf450), url("assets/tutorial/classroom-laptop-view.webp") center / cover fixed;
+}
+.mode-computer {
+  position: fixed; z-index: 1; inset: 8px 12px calc(var(--home-desk-nav-height, 84px) + 4px);
+  display: flex; flex-direction: column; margin: 0 auto; min-height: 0; overflow: clip;
+  color: #173246; font-family: inherit;
+}
+.computer-display {
+  position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;
+  width: 100%; align-self: center;
+  padding: 12px 12px 0; border: 2px solid #566276; border-radius: 9px 9px 2px 2px;
+  background: linear-gradient(110deg, #4b5669, #2b3545 40%, #222d3c);
+  box-shadow: inset 0 1px 0 #a4b4c740, 0 8px 22px #101c3055;
+}
+.computer-content { position: relative; flex: 1; min-height: 0; overflow: auto; border: 1px solid #182536; border-bottom: 0; background: #edf2f6; }
+.desktop-open .computer-content { background: linear-gradient(135deg, #e5ecf2, #cfdbe6); }
+.computer-content > .screen:not(.hidden) { width: 100%; min-height: 100%; margin: 0; padding: 18px 24px; }
+.computer-content > .screen > .screen-head { margin-bottom: 18px; }
+.computer-content > .screen > .screen-head h1 { color: #173246; font-size: clamp(22px, 2.1vw, 30px); }
+.computer-content > #soloMenuScreen:not(.hidden), .computer-content > #onlineScreen:not(.hidden) { min-height: 100%; }
+/* Keep the established white menu controls inside the same laptop. Only their
+   available height and outer margins change, not their content or actions. */
+.native-menu .computer-content > .screen:not(.hidden) { display: flex; flex-direction: column; height: 100%; min-height: 0; padding: 18px 54px; }
+.native-menu .screen-head { flex: 0 0 auto; }
+.native-menu .solo-mode-actions, .native-menu .online-match-actions { flex: 1; min-height: 0; }
+.native-menu .solo-mode-actions { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+.native-menu .online-match-actions { grid-template-rows: repeat(2, minmax(0, 1fr)) minmax(70px, .5fr); }
+.native-menu .online-match-button, .native-menu .online-match-button.random, .native-menu .solo-mode-button { min-height: 0; }
+.native-menu #onlineSpectateButton { grid-column: 1 / -1; }
+.desktop-open .computer-content { overflow: hidden; }
+.desktop-open .computer-content > .screen:not(.hidden) { display: flex; height: 100%; min-height: 0; flex-direction: column; padding: 18px 6%; }
+.desktop-open .computer-content > .screen > .screen-head { flex: 0 0 auto; min-height: 38px; margin-bottom: 10px; }
+.desktop-open .screen-head { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.desktop-open .screen-head .subtitle, .desktop-open #soloMenuBackHomeButton, .desktop-open #onlineBackHomeButton { display: none; }
+.computer-desktop { position: relative; flex: 1; display: block; min-height: 0; width: 100%; margin: 0; }
+.computer-desktop .computer-folder {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  width: 23%; height: 43%; min-width: 0; min-height: 0; padding: 0;
+  border: 0; border-radius: 5px; background: transparent; color: #173246;
+  box-shadow: none; cursor: pointer; touch-action: none; user-select: none;
+  transform: none; transition: background-color .12s, box-shadow .12s;
+}
+.computer-desktop .computer-folder:hover, .computer-desktop .computer-folder:focus-visible {
+  background: #52b9dc16; box-shadow: none; border-color: transparent; transform: none;
+}
+.computer-folder-icon { position: absolute; width: 100%; height: 100%; object-fit: fill; pointer-events: none; filter: drop-shadow(0 3px 3px #17324624); }
+.computer-desktop .computer-folder .solo-mode-main, .computer-desktop .computer-folder .online-match-main {
+  position: relative; display: block; width: 90%; margin-top: 9%; padding: 0 10px;
+  text-align: center; color: #173246; font-size: clamp(16px, 1.6vw, 24px); font-weight: 700; line-height: 1.3;
+}
+.computer-folder .solo-mode-sub, .computer-folder .online-match-sub { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.computer-desktop .computer-folder.coming-soon { background: transparent; box-shadow: none; }
+.computer-folder[aria-disabled="true"] { opacity: .55; cursor: default; }
+.computer-folder .solo-mode-coming-soon, .computer-folder .online-match-coming-soon {
+  position: absolute; bottom: 20%; left: 0; width: 100%; padding: 0; border: 0; background: transparent;
+  color: #526e80; font-size: clamp(9px, .85vw, 12px); font-weight: 800; letter-spacing: .06em;
+  display: block; text-align: center;
+}
+.computer-folder .online-match-coming-soon { top: calc(100% + 7px); bottom: auto; }
+.computer-desktop .computer-folder.is-moving { z-index: 5; background: #52b9dc20; box-shadow: 0 0 0 2px #52b9dc; cursor: grabbing; }
+.computer-folder:focus-visible, .computer-switch:focus-visible { outline: 3px solid #52b9dc; outline-offset: 2px; }
+.computer-switch {
+  position: absolute; z-index: 6; top: 46%; right: 15px; width: 36px; height: 56px;
+  display: grid; place-items: center; padding: 0; border: 0; border-radius: 4px; background: transparent;
+}
+.computer-switch.previous { right: auto; left: 15px; }
+.computer-switch img { width: 20px; height: 34px; }
+.computer-switch.previous img { transform: rotate(180deg); }
+.computer-switch:hover { background: #52b9dc20; transform: none; }
+.computer-taskbar { flex: 0 0 38px; border: 1px solid #182536; background: #c4d1df; }
+/* Generated graphite keyboard matches the laptop at the right of the home image. */
+/* Move closer to the screen: keep the keyboard's native proportions while
+   cropping its foreground, rather than stretching or reserving a large base. */
+.computer-base { flex: 0 0 clamp(32px, 4vw, 56px); min-height: 0; width: calc(100% / .87); align-self: center; overflow: clip; }
+.computer-base img { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 8px #18243640); pointer-events: none; }
+.computer-status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+/* Preserve the controls inside the laptop, with scrolling confined to its screen. */
+.computer-content > #tutorialScreen:not(.hidden) { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.computer-content .tutorial-picker { flex: 1; min-height: 0; height: auto; gap: clamp(24px, 4vw, 60px); }
+.computer-content .tutorial-detail { min-height: 0; }
+.computer-content .tutorial-overview-card { max-height: 30vh; }
+.computer-content #tutorialOverviewCard > .card { width: 105px; height: 160px; }
+.computer-content > #soloDeckScreen { min-height: 100%; }
+.computer-content .training-setup-layout { grid-template-columns: minmax(0, 1fr) minmax(220px, .9fr) minmax(0, 1fr); }
+.computer-content > #dungeonEntranceScreen { height: 100%; padding: 0; }
+.computer-content .dungeon-entrance-stage { min-height: 100%; height: 100%; }
+@media (max-height: 850px) {
+  .computer-content #tutorialOverviewCard > .card { width: 63px; height: 96px; }
+  .computer-content .tutorial-overview-card { margin-bottom: 8px; }
+  .computer-content .tutorial-overview { padding: 8px 52px 8px 14px; }
+  .computer-content .tutorial-overview h3 { margin-bottom: 6px; font-size: 18px; }
+  .computer-content .tutorial-overview p { font-size: 14px; line-height: 1.45; }
+  .computer-content .training-player-panel, .computer-content .training-center-panel { min-height: 0; padding: 14px 18px; }
+  .computer-content .training-center-panel h2 { margin-bottom: 8px; }
+  .computer-content .training-setting-label { margin-top: 4px; }
+  .computer-content .training-cycle-button { min-height: 34px; padding: 4px 12px; }
+  .computer-content .training-rule-description { min-height: 24px; }
+  .computer-content .training-versus { margin: 4px 0; font-size: 24px; }
+  .computer-content .training-battle-button { height: 56px; min-height: 0; }
+  .computer-content .training-avatar { margin-top: 25px; }
+  .computer-content .training-data-button { margin-top: 4px; padding: 4px 12px; }
+  .computer-content .training-deck-select { min-height: 38px; margin-top: 10px; }
+  .computer-content .training-observer-note { margin-top: 2px; font-size: 10px; }
+}
+@media (max-height: 680px) {
+  .computer-display { padding: 8px 8px 0; }
+  .computer-taskbar { flex-basis: 28px; }
+  .desktop-open .computer-content > .screen:not(.hidden) { padding-top: 10px; padding-bottom: 10px; }
+}
+@media (max-width: 1100px) and (max-height: 850px) {
+  .computer-content .tutorial-detail { grid-template-rows: auto minmax(0, 1fr) 52px; }
+  .computer-content .tutorial-detail h2 { padding: 10px 14px; font-size: 20px; }
+  .computer-content #tutorialOverviewCard > .card { width: 42px; height: 64px; }
+}
