@@ -174,3 +174,30 @@ test("PCの複数サイズで一覧・詳細・編成とホームバーが画面
   expect(work.y + work.height).toBeLessThanOrEqual(nav.y);
   await page.screenshot({ path: test.info().outputPath("production-deck-editor.png") });
 });
+
+test("カードの選択・一覧・デッキ編成・編集で同じ机色の外枠を保つ", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto(url);
+  await page.locator("#homeNavDeckButton").click();
+  const frame = page.locator("#deckScreen");
+  const expectFrame = async (view) => {
+    await expect(frame).toHaveAttribute("data-case-view", view);
+    for (const side of ["top", "right", "bottom", "left"]) {
+      await expect(frame).toHaveCSS(`border-${side}-color`, "rgb(189, 165, 142)");
+      await expect(frame).toHaveCSS(`border-${side}-width`, "20px");
+    }
+    await expect(frame).toHaveCSS("background-color", "rgb(23, 46, 64)");
+  };
+  await expectFrame("entry");
+  await page.locator('[data-case-view="cards"]').click();
+  await expectFrame("cards");
+  await page.locator(".case-back").click();
+  await page.locator('[data-case-view="library"]').click();
+  await expectFrame("library");
+  await page.screenshot({ path: test.info().outputPath("desk-frame-decks.png") });
+  await page.locator("#deckLibraryGrid .new-deck").click();
+  await expectFrame("editor");
+  const bottom = await page.locator(".case-file-tools").last().boundingBox();
+  const nav = await page.locator("#homeNavigation").boundingBox();
+  expect(bottom.y + bottom.height).toBeLessThanOrEqual(nav.y - 20);
+});
