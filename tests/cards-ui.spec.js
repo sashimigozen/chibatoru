@@ -83,7 +83,7 @@ test("保存デッキを12件ずつ表示し最初と最後が循環・内容と
   expect(await page.evaluate(() => window.__chibattle.state.deckBuilder.chaosDecks["保存テスト"].counts.general_student)).toBe(41);
 });
 
-test("デッキ詳細は実際のカードと枚数を表示し、スクロールと説明の確認で内容を変えない", async ({ page }, testInfo) => {
+test("デッキ詳細は実際のカードと枚数を1画面に表示し、説明の確認で内容を変えない", async ({ page }, testInfo) => {
   await enter(page);
   await page.locator("#chaosDeckFormatButton").click();
   const ids = await page.evaluate(() => {
@@ -106,20 +106,51 @@ test("デッキ詳細は実際のカードと枚数を表示し、スクロー�
     await page.setViewportSize(size);
     const card = await contents.locator(".card").first().boundingBox();
     expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
-    expect(card.width).toBeGreaterThan(100);
+    expect(card.width).toBeGreaterThan(50);
     const dialog = await page.locator(".case-deck-dialog").boundingBox();
     expect(dialog.y + dialog.height).toBeLessThanOrEqual(size.height);
-    expect(await contents.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+    await expect.poll(() => contents.evaluate(node => node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight)).toBe(true);
     await contents.locator(".case-deck-content").last().click();
     await expect(page.locator("#cardTestModal")).toBeVisible();
     await expect(page.locator("#cardTestText .tooltip-title")).toHaveText(await page.evaluate(id => CARD_BASES[id].name, ids.at(-1)));
     await expect(page.locator("#cardTestStartButton")).toBeHidden();
     await page.locator("#cardTestCancelButton").click();
     await expect(page.locator("#caseDeckDetailModal")).toBeVisible();
-    await contents.locator(".case-deck-content").first().scrollIntoViewIfNeeded();
     await page.screenshot({ path: testInfo.outputPath(`deck-card-contents-${size.width}.png`) });
   }
   expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.chaosDecks))).toBe(before);
+});
+
+test("デッキの種類数と画面サイズに合わせ全カードを重なりやスクロールなしで収める", async ({ page }, testInfo) => {
+  await enter(page);
+  await page.locator("#chaosDeckFormatButton").click();
+  for (const count of [0, 1, 4, 14, 30, 40, 60]) {
+    await page.evaluate(count => {
+      const api = window.__chibattle;
+      const ids = getDeckEditorIds().slice(0, count);
+      api.state.deckBuilder.chaosDecks = { "全体表示テスト": { counts: Object.fromEntries(ids.map(id => [id, 1])), createdOrder: 1 } };
+      api.state.deckBuilder.selectedName = "全体表示テスト";
+      api.render();
+    }, count);
+    const contents = page.locator(".case-deck-contents");
+    await expect(contents.locator(".case-deck-content")).toHaveCount(count);
+    for (const size of [{ width: 1280, height: 720 }, { width: 1440, height: 900 }, { width: 1920, height: 1080 }]) {
+      await page.setViewportSize(size);
+      await expect.poll(() => contents.evaluate(node => {
+        const area = node.getBoundingClientRect();
+        const tiles = [...node.children].map(child => child.getBoundingClientRect());
+        return node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight
+          && tiles.every(tile => tile.x >= area.x && tile.y >= area.y && tile.right <= area.right && tile.bottom <= area.bottom)
+          && tiles.every((tile, index) => tiles.slice(index + 1).every(other => tile.right <= other.x || other.right <= tile.x || tile.bottom <= other.y || other.bottom <= tile.y));
+      })).toBe(true);
+      if (count > 0) {
+        const card = await contents.locator(".card").first().boundingBox();
+        expect(card.width / card.height).toBeCloseTo(21 / 32, 2);
+        if (count <= 4) expect(await contents.evaluate(node => node.style.getPropertyValue("--deck-content-rows"))).toBe("1");
+      }
+      if (size.width === 1440 && [4, 30, 40].includes(count)) await page.screenshot({ path: testInfo.outputPath(`deck-fit-${count}-kinds.png`) });
+    }
+  }
 });
 
 test("新規作成は保存デッキの最後の1枠だけ・空一覧とページ境界でも左上から続く", async ({ page }, testInfo) => {
