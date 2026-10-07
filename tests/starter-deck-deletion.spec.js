@@ -8,6 +8,7 @@ const savedKey = "chibattle-saved-decks-v1";
 
 async function openLibrary(page) {
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
 }
 
 function deck(page, name) {

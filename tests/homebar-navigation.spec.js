@@ -32,13 +32,15 @@ test("下部ホームバーだけを既存画面へ追加し、素材どおり�
     .toContain("nav-battle-glow.png");
 
   await deckButton.click();
+  await expect(page.locator("#cardsEntryView")).toBeVisible();
+  await page.locator('[data-case-view="library"]').click();
   await expect(page.locator("#deckLibraryView")).toBeVisible();
   await expect(navigation).toBeVisible();
   await expect(deckButton).toHaveAttribute("aria-current", "page");
 
   await page.locator("#deckLibraryGrid .new-deck").click();
   await expect(page.locator("#deckEditorView")).toBeVisible();
-  await expect(navigation).toBeHidden();
+  await expect(navigation).toBeVisible();
 
   await page.locator("#deckFilterPanel > summary").click();
   const cardSearch = page.locator("#deckSearchInput");
@@ -68,6 +70,7 @@ test("下部ホームバーだけを既存画面へ追加し、素材どおり�
   await expect(page.locator("#tutorialScreen")).toBeVisible();
   await expect(navigation).toBeVisible();
   await page.locator('[data-tutorial-chapter="basic"]').click();
+  await page.locator("#tutorialStartButton").click();
   await expect(page.locator("#battleScreen")).toBeVisible();
   await expect(navigation).toBeHidden();
 });

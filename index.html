@@ -17261,6 +17261,7 @@
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
+  <link rel="stylesheet" href="cards-ui.css?v=0.23.15" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -19605,8 +19606,10 @@
       {
         version: "ver.0.23.15",
         date: "2026年10月7日",
-        summary: "カード説明の関連カード名から、そのカードの詳細を確認できるようにしました。元のカードへ戻るボタンも追加しました。",
+        summary: "カード画面をデッキケースの中をイメージしたUIに変更しました。カード一覧・詳細と保存デッキ・編成を整理し、関連カードの確認もできるようにしました。",
         changes: [
+          { title: "カード画面", after: "ホームの「カード」から「カード一覧」「デッキ編成」を選べます。紺色を基調に、カード一覧・詳細、保存デッキ一覧・内容確認・編成の画面を変更しました。既存のカード表示、レアリティ、保存デッキ、カードテストを引き続き利用できます。" },
+          { title: "デッキ操作とページ送り", after: "ファイル読み込み・ファイル書き出しを配置し、編集を破棄する確認を「キャンセル」「はい」に揃えました。一覧と詳細の左右の矢印は、最初と最後のページを循環します。" },
           { title: "関連カードの詳細表示", after: "デッキ編成・対戦中・カード詳細の説明文にある「カード名」を押すと、そのカードを表示します。トークン・生成カードも確認でき、元のカードへ戻れます。編集中のデッキや対戦状態、カードのテキスト・効果は変更しません。" }
         ]
       },
@@ -43317,8 +43320,7 @@
 
     function renderHomeNavigation() {
       if (!elements.homeNavigation) return;
-      const hidden = ["battle", "fourBattle"].includes(state.screen)
-        || (state.screen === "deck" && state.deckBuilder.view === "editor");
+      const hidden = ["battle", "fourBattle"].includes(state.screen);
       elements.homeNavigation.classList.toggle("hidden", hidden);
       elements.appRoot?.classList.toggle("home-navigation-visible", !hidden);
       const currentSection = homeNavigationSection();
@@ -47664,6 +47666,10 @@
     }
 
     function renderDeckLibrary() {
+      if (window.ChibattleCards) {
+        window.ChibattleCards.renderLibrary();
+        return;
+      }
       if (!elements.deckLibraryView || !elements.deckEditorView) return;
       const editing = state.deckBuilder.view === "editor";
       elements.deckLibraryView.classList.toggle("hidden", editing);
@@ -47792,9 +47798,12 @@
       render();
     }
 
-    function returnToDeckLibrary() {
+    async function returnToDeckLibrary() {
       const current = deckCountsFingerprint(state.deckBuilder.counts.player);
-      if (current !== state.deckBuilder.originalFingerprint && !window.confirm("保存していない変更を破棄して、デッキ一覧へ戻りますか？")) return;
+      const nameChanged = elements.deckSaveNameInput.value.trim() !== state.deckBuilder.editingName;
+      if ((current !== state.deckBuilder.originalFingerprint || nameChanged)
+        && !(await (window.ChibattleCards?.confirmDiscard()
+          ?? window.confirm("編集中の内容を破棄して戻りますか？")))) return;
       state.deckBuilder.view = "library";
       state.deckBuilder.editingName = "";
       state.deckBuilder.selectedName = "";
@@ -48516,9 +48525,8 @@
         row.className = `deck-row ${card.type}`;
         row.innerHTML = `
           <button class="deck-card-test" type="button" data-card-test="${baseId}" aria-label="${escapeHtml(card.name)}をテスト">
-            <div class="deck-row-name">${escapeHtml(card.name)}${aceDeckMark(card)}</div>
-            <div class="deck-row-meta">${cardMiniMeta(card)}</div>
-            <div class="deck-row-effect">効果：${escapeHtml(cardRulesText(card))}</div>
+            ${cardShellTemplate(card)}
+            <span class="deck-row-name">${escapeHtml(card.name)}${aceDeckMark(card)}</span>
           </button>
           <div class="deck-row-controls">
             <button class="mini-button" data-deck-minus="${baseId}" ${count <= 0 ? "disabled" : ""}>-</button>
@@ -48542,6 +48550,7 @@
       renderDeckCostCurve();
       renderCurrentDeckList();
       renderUsedDeckList();
+      window.ChibattleCards?.renderEditor();
     }
 
     function getDeckEditorIds(specialtyId = isSpecialtyDeckFormat() ? state.deckBuilder.specialtyId : "") {
@@ -48805,7 +48814,7 @@
       }
       state.deckBuilder.editingName = name;
       state.deckBuilder.originalFingerprint = currentFingerprint;
-      state.deckBuilder.selectedName = name;
+      state.deckBuilder.selectedName = window.ChibattleCards ? "" : name;
       state.deckBuilder.view = "library";
       state.message = `${isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "デッキ"}「${name}」を保存しました。`;
       render();
@@ -48901,14 +48910,28 @@
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
 
-    function importDeckFile(file) {
+    async function importDeckFile(file) {
       if (!file) return;
+      if (window.ChibattleCards?.isDirty() && !(await window.ChibattleCards.confirmDiscard())) return;
       const reader = new FileReader();
       reader.addEventListener("load", () => {
         try {
           const parsed = JSON.parse(String(reader.result || "{}"));
+          if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid deck");
+          const formats = { "chibattle-deck": "normal", "chibattle-specialty-deck": "specialty", "chibattle-chaos-deck": "chaos" };
+          if (parsed.kind && !formats[parsed.kind]) throw new Error("invalid deck format");
+          const format = formats[parsed.kind] || state.deckBuilder.format;
           const counts = parsed.counts || parsed;
-          if (isSpecialtyDeckFormat() && parsed.specialtyId) state.deckBuilder.specialtyId = parsed.specialtyId;
+          if (!counts || typeof counts !== "object" || Array.isArray(counts)
+            || Object.entries(counts).some(([id, count]) => !Object.hasOwn(CARD_BASES, id) || !Number.isInteger(count) || count < 0)) throw new Error("invalid counts");
+          if (format === "specialty" && !specialtyDefinition(parsed.specialtyId || state.deckBuilder.specialtyId)) throw new Error("invalid specialty");
+          state.deckBuilder.format = format;
+          state.deckBuilder.specialtyId = format === "specialty" ? (parsed.specialtyId || state.deckBuilder.specialtyId) : "";
+          state.deckBuilder.activeSide = "player";
+          state.deckBuilder.view = "editor";
+          state.deckBuilder.editingName = "";
+          state.deckBuilder.selectedName = "";
+          state.deckBuilder.pendingSpecialtyChoice = false;
           const validation = activeDeckValidation(counts);
           if (!validation.valid) {
             state.message = isSpecialtyDeckFormat()
@@ -48920,6 +48943,8 @@
           state.deckBuilder.counts[state.deckBuilder.activeSide] = copyDeckCounts(counts, {
             unlimited: isChaosDeckFormat()
           });
+          state.deckBuilder.originalFingerprint = deckCountsFingerprint(createEmptyDeckCounts());
+          resetDeckFilters();
           elements.deckSaveNameInput.value = parsed.name || file.name.replace(/\.json$/i, "");
           render();
         } catch (error) {
@@ -48980,10 +49005,11 @@
       ` : "";
       elements.cardTestCard.innerHTML = `<div class="card-test-style-frame">${cardShellTemplate(card)}${control}</div>${unlocked ? `<div class="card-rarity-label">${cardStyleModeLabel(mode)}</div>` : ""}`;
       elements.cardTestText.innerHTML = relatedCardReturnMarkup(elements.cardTestText) + cardDetailTemplate(card, { interactiveTerms: true });
+      window.ChibattleCards?.renderCardDetail(baseId);
     }
 
     function openCardTestConfirm(baseId, options = {}) {
-      if (!CARD_BASES[baseId] || state.screen !== "deck" || state.deckBuilder.view !== "editor") return;
+      if (!CARD_BASES[baseId] || state.screen !== "deck") return;
       if (!prepareRelatedCardView(elements.cardTestText, makePreviewCard(baseId, "player"), options)) return;
       state.pendingTestCardId = baseId;
       renderCardTestConfirm(baseId);
@@ -48995,6 +49021,7 @@
       clearRelatedCardView(elements.cardTestText);
       state.pendingTestCardId = null;
       elements.cardTestModal?.classList.add("hidden");
+      window.ChibattleCards?.restoreCardFocus();
     }
 
     function confirmCardTest() {
@@ -49732,7 +49759,7 @@
       state.deckBuilder.specialtyId = "";
       state.deckBuilder.pendingSpecialtyChoice = false;
       state.deckBuilder.returnScreen = "";
-      state.deckBuilder.view = "library";
+      state.deckBuilder.view = "entry";
       state.deckBuilder.selectedName = "";
       state.deckBuilder.detailExpanded = false;
       hideCardTooltip();
@@ -52540,6 +52567,7 @@
     initializeGame();
 
   </script>
+  <script src="cards-ui.js?v=0.23.15"></script>
   <script src="four-mode.js"></script>
 </body>
 </html>
