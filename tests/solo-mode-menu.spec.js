@@ -9,11 +9,11 @@ test.beforeEach(async ({ page }) => {
   await page.locator("#homeNavSoloButton").click();
 });
 
-test("ソロモードをチュートリアル、AIバトル、魔の1号館、トレーニングの順に表示する", async ({ page }) => {
+test("ソロの既存モードと準備中の状態を維持する", async ({ page }) => {
   const order = await page.locator("#soloMenuScreen .solo-mode-button").evaluateAll((buttons) =>
     buttons.map((button) => button.id));
 
-  expect(order).toEqual(["soloTutorialButton", "soloAiBattleButton", "soloDungeonButton", "soloTrainingButton"]);
+  expect(order).toEqual(["soloAiBattleButton", "soloDungeonButton", "soloTrainingButton", "soloTutorialButton"]);
   await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
   await expect(page.locator("#soloAiBattleButton")).toContainText("COMING SOON");
   await expect(page.locator("#soloAiBattleButton")).toContainText("ランダムなAIデッキ");
@@ -45,7 +45,7 @@ test("魔の1号館は3番目のボタンから開く", async ({ page }) => {
 });
 
 test("9月6日の更新情報にソロモードの変更を記載する", async ({ page }) => {
-  await page.locator("#soloMenuBackHomeButton").click();
+  await page.locator("#homeNavHomeButton").click();
   await page.locator("#homeUpdatesButton").click();
   const latest = page.locator(".update-entry").filter({ hasText: "ver.0.22.3" });
 
