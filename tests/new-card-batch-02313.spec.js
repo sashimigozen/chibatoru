@@ -125,8 +125,9 @@ test("アカデミックムーブの戦意は5で、対戦とデッキ編成に�
 
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
-  await expect(page.locator('#deckEditorList [data-card-test="academic_move"] .deck-row-meta')).toContainText("C5");
+  await expect(page.locator('#deckEditorList [data-card-test="academic_move"] [aria-label="戦意5"]').first()).toHaveText("5");
 });
 
 test("病はU太を変化させ、別の学生へ新しい病を拡散する", async ({ page }) => {

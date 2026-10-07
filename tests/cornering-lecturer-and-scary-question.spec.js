@@ -53,6 +53,7 @@ test("2枚を共通カードとして登録し、確定したカードテキス�
 test("怖い質問は生成専用で、どのデッキ形式の編成欄にも表示しない", async ({ page }) => {
   expect(await page.evaluate(() => window.__chibattle.CARD_BASES.scary_question.generated)).toBe(true);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   for (const [format, button] of [
     ["normal", "#normalDeckFormatButton"],
     ["specialty", "#specialtyDeckFormatButton"],
@@ -69,6 +70,7 @@ test("怖い質問は生成専用で、どのデッキ形式の編成欄にも�
 
 test("古いJSONに怖い質問があってもデッキへ取り込まない", async ({ page }) => {
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#chaosDeckFormatButton").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   await page.locator("#deckFileInput").setInputFiles({

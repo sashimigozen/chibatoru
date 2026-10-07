@@ -9,6 +9,7 @@ test("デッキ編成のカード詳細から能力説明を確認でき、関�
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   const countsBefore = await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.counts));
   const cases = [
@@ -66,6 +67,7 @@ test("デッキ編成のカード詳細から能力説明を確認でき、関�
 test("説明文からトークン・進化元をたどり、戻ってもデッキや能力説明を維持する", async ({ page }) => {
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   const deckBefore = await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder));
   const modal = page.locator("#cardTestModal");

@@ -22,6 +22,7 @@ test("細いの本文・台帳・更新情報を合意した文面に揃え、�
   expect(setup).toEqual({ text: displayText, cost: 4, usable: true });
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
+  await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   await page.locator('[data-card-test="thin_item"]').click();
   await expect(page.locator("#cardTestText .tooltip-effect")).toHaveText(`効果：${displayText}`);
