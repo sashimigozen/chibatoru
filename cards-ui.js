@@ -2,6 +2,7 @@
    No sample decks or separate storage are introduced here. */
 (() => {
   const screen = elements.deckScreen;
+  const DECKS_PER_PAGE = 12;
   const ui = { cardPage: 0, deckPage: 0, query: "", type: "", cost: "", category: "", cardContext: [], opener: null };
   const arrow = (label, previous = false) => `<button type="button" class="case-arrow${previous ? " previous" : ""}" aria-label="${label}"><img src="assets/tutorial/chevron-right.svg" alt=""></button>`;
   const categories = [{ id: "common", name: "共通カード" }, ...SPECIALTY_DEFINITIONS];
@@ -78,7 +79,7 @@
   library.insertAdjacentHTML("beforeend", `<footer id="caseDeckPage" class="case-pagination"></footer><div class="case-file-tools"><button class="button secondary" id="caseLibraryImport" type="button">ファイル読み込み</button></div>`);
   document.getElementById("caseLibraryImport").addEventListener("click", openDeckFilePicker);
   paged.querySelectorAll(".case-arrow").forEach((button, index) => button.addEventListener("click", () => {
-    const pages = Math.max(1, Math.ceil(sortedDeckLibraryNames(activeDeckCollection()).length / 11));
+    const pages = Math.ceil((sortedDeckLibraryNames(activeDeckCollection()).length + 1) / DECKS_PER_PAGE);
     ui.deckPage = paginate(ui.deckPage, index ? 1 : -1, pages); renderLibrary();
   }));
   [elements.deckLibrarySortKey, elements.deckLibrarySortDirection, elements.normalDeckFormatButton,
@@ -200,7 +201,7 @@
     if (!listing) return;
     const specialty = isSpecialtyDeckFormat(), chaos = isChaosDeckFormat();
     const names = sortedDeckLibraryNames(activeDeckCollection());
-    const pages = Math.max(1, Math.ceil(names.length / 11));
+    const pages = Math.ceil((names.length + 1) / DECKS_PER_PAGE);
     ui.deckPage = Math.min(ui.deckPage, pages - 1);
     elements.deckLibrarySortKey.value = state.deckBuilder.librarySort.key;
     elements.deckLibrarySortDirection.value = state.deckBuilder.librarySort.direction;
@@ -213,7 +214,7 @@
     elements.deckLibraryCount.textContent = `${names.length}個`;
     elements.deckBackHomeButton.textContent = state.deckBuilder.returnScreen === "dungeonDeck" ? "戻る" : "ホーム";
     elements.deckLibraryGrid.innerHTML = "";
-    names.slice(ui.deckPage * 11, ui.deckPage * 11 + 11).forEach((name) => {
+    names.slice(ui.deckPage * DECKS_PER_PAGE, (ui.deckPage + 1) * DECKS_PER_PAGE).forEach((name) => {
       const saved = activeDeckCollection()[name];
       const button = document.createElement("button");
       button.type = "button"; button.className = "deck-library-card case-deck-tile";
@@ -229,14 +230,16 @@
       button.addEventListener("dblclick", (event) => { event.preventDefault(); clearTimeout(timer); beginExistingDeckEditor(name); });
       elements.deckLibraryGrid.append(button);
     });
-    const newButton = document.createElement("button");
-    newButton.type = "button"; newButton.className = "deck-library-card new-deck"; newButton.textContent = "＋ 新規作成";
-    newButton.addEventListener("click", () => {
-      state.deckBuilder.selectedName = "";
-      if (specialty) { state.deckBuilder.pendingSpecialtyChoice = true; render(); }
-      else beginNewDeckEditor();
-    });
-    elements.deckLibraryGrid.append(newButton);
+    if (ui.deckPage === pages - 1) {
+      const newButton = document.createElement("button");
+      newButton.type = "button"; newButton.className = "deck-library-card new-deck"; newButton.textContent = "＋ 新規作成";
+      newButton.addEventListener("click", () => {
+        state.deckBuilder.selectedName = "";
+        if (specialty) { state.deckBuilder.pendingSpecialtyChoice = true; render(); }
+        else beginNewDeckEditor();
+      });
+      elements.deckLibraryGrid.append(newButton);
+    }
     document.getElementById("caseDeckPage").textContent = `— Page ${ui.deckPage + 1} / ${pages} —`;
     paged.querySelectorAll(".case-arrow").forEach((button) => { button.disabled = pages <= 1; });
     renderSpecialtyChoice();

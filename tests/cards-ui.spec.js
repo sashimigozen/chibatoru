@@ -55,7 +55,7 @@ test("カード一覧の絞り込みと空状態はデッキ・カード効果�
   expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.counts))).toBe(before);
 });
 
-test("保存デッキを11件ずつ表示し最初と最後が循環・内容と編成が実データへ接続", async ({ page }) => {
+test("保存デッキを12件ずつ表示し最初と最後が循環・内容と編成が実データへ接続", async ({ page }) => {
   await enter(page);
   await page.locator("#chaosDeckFormatButton").click();
   await page.evaluate(() => {
@@ -63,10 +63,13 @@ test("保存デッキを11件ずつ表示し最初と最後が循環・内容と
     api.state.deckBuilder.chaosDecks = Object.fromEntries(Array.from({ length: 13 }, (_, i) => [`実デッキ${i+1}`, { counts: { general_student: 40 }, createdOrder: i+1 }]));
     api.render();
   });
-  await expect(page.locator("#deckLibraryGrid .case-deck-tile")).toHaveCount(11);
+  await expect(page.locator("#deckLibraryGrid .case-deck-tile")).toHaveCount(12);
+  await expect(page.locator("#deckLibraryGrid .new-deck")).toHaveCount(0);
   await expect(page.locator("#deckLibraryGrid .case-deck-tile").first()).toContainText("実デッキ13");
   await page.getByRole("button", { name: "前のデッキページ", exact: true }).click();
   await expect(page.locator("#caseDeckPage")).toContainText("Page 2 / 2");
+  await expect(page.locator("#deckLibraryGrid > button")).toHaveCount(2);
+  await expect(page.locator("#deckLibraryGrid > button").last()).toHaveText("＋ 新規作成");
   await page.locator("#deckLibraryGrid .case-deck-tile").last().click();
   await expect(page.locator("#caseDeckDetailModal")).toBeVisible();
   await expect(page.locator(".case-deck-content")).toContainText("×40");
@@ -78,6 +81,50 @@ test("保存デッキを11件ずつ表示し最初と最後が循環・内容と
   await page.locator("#saveDeckButton").click();
   await page.reload();
   expect(await page.evaluate(() => window.__chibattle.state.deckBuilder.chaosDecks["保存テスト"].counts.general_student)).toBe(41);
+});
+
+test("新規作成は保存デッキの最後の1枠だけ・空一覧とページ境界でも左上から続く", async ({ page }, testInfo) => {
+  await enter(page);
+  await page.locator("#chaosDeckFormatButton").click();
+  const grid = page.locator("#deckLibraryGrid");
+  const previous = page.getByRole("button", { name: "前のデッキページ", exact: true });
+  const next = page.getByRole("button", { name: "次のデッキページ", exact: true });
+  for (const count of [0, 2, 11, 12, 13, 24]) {
+    // Switching formats resets the page, as it does in normal navigation.
+    await page.locator("#normalDeckFormatButton").click();
+    await page.locator("#chaosDeckFormatButton").click();
+    await page.evaluate(count => {
+      const api = window.__chibattle;
+      api.state.deckBuilder.chaosDecks = Object.fromEntries(Array.from({ length: count }, (_, i) => [`実デッキ${i + 1}`, { counts: { general_student: 40 }, createdOrder: i + 1 }]));
+      api.render();
+    }, count);
+    const pages = Math.ceil((count + 1) / 12);
+    for (let index = 0; index < pages; index++) {
+      await expect(page.locator("#caseDeckPage")).toContainText(`Page ${index + 1} / ${pages}`);
+      await expect(grid.locator(".case-deck-tile")).toHaveCount(Math.min(12, Math.max(0, count - index * 12)));
+      await expect(grid.locator(".new-deck")).toHaveCount(index === pages - 1 ? 1 : 0);
+      if (index === pages - 1) {
+        await expect(grid.locator("> button").last()).toHaveText("＋ 新規作成");
+        const first = await grid.locator("> button").first().boundingBox();
+        const last = await grid.locator(".new-deck").boundingBox();
+        const position = count % 12;
+        if (position < 4) expect(Math.abs(last.y - first.y)).toBeLessThan(1);
+        if (position === 0) expect(Math.abs(last.x - first.x)).toBeLessThan(1);
+        if (position === 2) expect(last.x).toBeGreaterThan(first.x);
+        if (count === 2 || count === 13) await page.screenshot({ path: testInfo.outputPath(`deck-new-after-${count}-saved.png`) });
+      }
+      if (pages > 1) await next.click();
+    }
+    if (pages > 1) {
+      await expect(page.locator("#caseDeckPage")).toContainText(`Page 1 / ${pages}`);
+      await previous.click();
+      await expect(page.locator("#caseDeckPage")).toContainText(`Page ${pages} / ${pages}`);
+      await expect(grid.locator(".new-deck")).toHaveCount(1);
+    } else {
+      await expect(previous).toBeDisabled();
+      await expect(next).toBeDisabled();
+    }
+  }
 });
 
 test("デッキのダブルクリック、カードテストと戻る、破棄確認のキャンセルとはい", async ({ page }) => {
