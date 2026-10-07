@@ -158,6 +158,56 @@ test("三敵は上3枚の敵を選択順で手札から出席させ、残りを�
   expect(result.enemyInHand).toBe(1);
 });
 
+test("三敵は0人を選んで敵をすべて手札に残せる", async ({ page }) => {
+  const ids = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const enemy = api.createCardFromBase("enemy_student", "player");
+    const horde = api.createCardFromBase("enemy_horde", "player");
+    const other = api.createCardFromBase("general_student", "player");
+    api.state.players.player.deck = [enemy, horde, other];
+    const triple = api.createCardFromBase("triple_enemy", "player");
+    api.state.players.player.hand = [triple];
+    api.playCard(triple.instanceId, "seat", "player", 4);
+    return { enemy: enemy.instanceId, horde: horde.instanceId };
+  });
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeEnabled();
+  await page.locator("#threeGesturesConfirmButton").click();
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return { board: api.state.players.player.board.seats.filter(Boolean).map((card) => card.baseId),
+      hand: api.state.players.player.hand.map((card) => card.instanceId),
+      deck: api.state.players.player.deck.map((card) => card.baseId),
+      rules: api.cardRulesText(api.createCardFromBase("triple_enemy", "player")) };
+  });
+  expect(result.board).toEqual(["triple_enemy"]);
+  expect(result.hand).toEqual([ids.enemy, ids.horde]);
+  expect(result.deck).toEqual(["general_student"]);
+  expect(result.rules).toBe("このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。\nその中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。\n出席させなかったカードは手札に残す。");
+});
+
+test("三敵は選んだ敵だけ出席させ、残りを手札に残せる", async ({ page }) => {
+  const ids = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const enemy = api.createCardFromBase("enemy_student", "player");
+    const horde = api.createCardFromBase("enemy_horde", "player");
+    api.state.players.player.deck = [enemy, horde];
+    const triple = api.createCardFromBase("triple_enemy", "player");
+    api.state.players.player.hand = [triple];
+    api.playCard(triple.instanceId, "seat", "player", 4);
+    return { enemy: enemy.instanceId, horde: horde.instanceId };
+  });
+  await page.locator(`#threeGesturesHand [data-card-id="${ids.enemy}"]`).click();
+  await page.locator("#threeGesturesConfirmButton").click();
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return { board: api.state.players.player.board.seats.filter(Boolean).map((card) => card.baseId),
+      hand: api.state.players.player.hand.map((card) => card.instanceId) };
+  });
+  expect(result.board).toContain("enemy_student");
+  expect(result.board).not.toContain("enemy_horde");
+  expect(result.hand).toEqual([ids.horde]);
+});
+
 test("真の敵が引いた敵の群れは手札からの出席時効果を発動する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -199,6 +249,31 @@ test("真の敵が出した三敵でも複数の敵の発動順を選べる", as
   expect(result.board).toContain("enemy_horde");
   expect(result.board.filter((id) => id === "enemy_student").length).toBe(2);
   expect(result.hordeInHand).toBe(false);
+});
+
+test("真の敵から出た三敵も0人を選んで全員を手札に残せる", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const state = api.state;
+    const attacker = api.makeBoardCard(api.createCardFromBase("true_enemy", "player"));
+    state.players.player.board.seats[0] = attacker;
+    const horde = api.createCardFromBase("enemy_horde", "player");
+    const enemy = api.createCardFromBase("enemy_student", "player");
+    state.players.player.deck = [api.createCardFromBase("triple_enemy", "player"), horde, enemy];
+    api.markCardAttackUsed(attacker);
+    const choice = state.pendingCardChoice;
+    const mode = choice?.mode;
+    const min = choice?.min;
+    api.confirmCardChoiceSelection();
+    return { mode, min, board: state.players.player.board.seats.filter(Boolean).map((card) => card.baseId),
+      hand: state.players.player.hand.map((card) => card.instanceId), pending: state.pendingCardChoice };
+  });
+  expect(result.mode).toBe("triple_enemy_resolution");
+  expect(result.min).toBe(0);
+  expect(result.board).toContain("triple_enemy");
+  expect(result.board).not.toContain("enemy_horde");
+  expect(result.hand).toHaveLength(2);
+  expect(result.pending).toBeNull();
 });
 
 test("アグロキングダムは三種がそろった間だけ強化し、ドームは超陽気を与える", async ({ page }) => {
