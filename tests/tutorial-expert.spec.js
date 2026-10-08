@@ -254,7 +254,7 @@ for (const [chapter, solve] of Object.entries(solutions)) {
     await page.locator("[data-result-tutorial-retry]").click();
     expect(await snapshot()).toEqual(initial);
     await expect(page.locator("#tutorialStepCounter")).toHaveText("3/3");
-    await page.locator("#tutorialNextButton").click();
+    await page.locator("#tutorialRetryButton").click();
     expect(await snapshot()).toEqual(initial);
   });
 }

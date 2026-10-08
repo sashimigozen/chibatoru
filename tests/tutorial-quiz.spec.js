@@ -291,11 +291,11 @@ test("負荷による自分の敗北も失敗と表示され、再挑戦で気�
 test("クイズの説明切替・再挑戦ボタンの固定・終了・基本編の再開", async ({ page }) => {
   await openQuiz(page, "fusion");
   await page.locator("#tutorialToggleButton").click();
-  const box = await page.locator("#tutorialNextButton").boundingBox();
+  const box = await page.locator("#tutorialRetryButton").boundingBox();
   await itemBody(page, "ruler");
-  expect(await page.locator("#tutorialNextButton").boundingBox()).toEqual(box);
+  expect(await page.locator("#tutorialRetryButton").boundingBox()).toEqual(box);
   await page.screenshot({ path: test.info().outputPath("quiz.png") });
-  await page.locator("#tutorialNextButton").click();
+  await page.locator("#tutorialRetryButton").click();
   await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
   await expect(hand(page, "ruler")).toHaveCount(1);
   expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(3);
