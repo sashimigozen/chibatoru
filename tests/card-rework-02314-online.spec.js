@@ -235,7 +235,7 @@ test("双方のスタバ学生が引いたガン詰め講師の効果選択を�
   }
 });
 
-test("ゲストの敵の敵で選んだ山札上の順番をホストが検証して同期する", async ({ browser }) => {
+test("ゲストの敵の敵は順番選択なしで山札へ戻して両者に同期する", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   try {
@@ -288,18 +288,93 @@ test("ゲストの敵の敵で選んだ山札上の順番をホストが検証�
     });
     await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
     await guest.evaluate((cardId) => window.__chibattle.playCard(cardId, "seat", "player", 4), setup.cardId);
-    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode)).toBe("enemy_enemy_order");
-    await guest.evaluate(([first, second]) => {
-      const api = window.__chibattle;
-      api.state.pendingCardChoice.selectedIds = [first, second];
-      api.confirmCardChoiceSelection();
-    }, [setup.trueEnemyId, setup.enemyId]);
     for (const page of [host, guest]) {
       await expect.poll(() => page.evaluate(() => {
         const api = window.__chibattle;
         const side = api.state.online.role === "host" ? "opponent" : "player";
-        return api.state.players[side].deck.slice(0, 2).map((card) => card.baseId);
-      })).toEqual(["true_enemy", "enemy_student"]);
+        const player = api.state.players[side];
+        return ["enemy_student", "true_enemy"].every((baseId) => player.deck.some((card) => card.baseId === baseId))
+          && player.board.seats[4]?.baseId === "enemy_enemy"
+          && !player.board.seats[0] && !player.board.seats[1];
+      })).toBe(true);
+    }
+  } finally {
+    await Promise.all(contexts.map((context) => context.close()));
+  }
+});
+
+test("ゲストの三敵から出た復活の敵は校外の敵を選んで同期できる", async ({ browser }) => {
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
+  try {
+    for (const page of [host, guest]) {
+      await page.goto(gameUrl.href);
+      await page.locator("#homeNavBattleButton").click();
+      await page.locator("#onlinePrivateMatchButton").click();
+    }
+    await host.locator("#onlineCreateRoomButton").click();
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.role)).toBe("host");
+    const room = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+    await guest.locator("#onlineRoomInput").fill(room);
+    await guest.locator("#onlineJoinRoomButton").click();
+    for (const page of [host, guest]) {
+      await expect.poll(() => page.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
+      await page.evaluate(() => {
+        const api = window.__chibattle;
+        api.state.deckBuilder.counts.player = api.createAutoDeckCounts();
+        document.getElementById("onlineDeckSelect").dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      await page.locator("#onlineReadyButton").click();
+    }
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.remoteReady)).toBe(true);
+    await host.locator("#onlineStartButton").click();
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
+
+    const setup = await host.evaluate(() => {
+      const api = window.__chibattle;
+      api.startCardTest("triple_enemy");
+      api.state.testMode = false;
+      api.state.currentSide = "opponent";
+      for (const side of ["player", "opponent"]) {
+        const player = api.state.players[side];
+        player.board = { teacher: null, seats: Array(9).fill(null) };
+        player.hand = [];
+        player.deck = [];
+        player.trash = [];
+        player.will = 10;
+      }
+      const player = api.state.players.opponent;
+      const triple = api.createCardFromBase("triple_enemy", "opponent");
+      const revive = api.createCardFromBase("enemy_revive", "opponent");
+      const enemy = api.createCardFromBase("enemy_student", "opponent");
+      player.hand = [triple];
+      player.deck = [revive];
+      player.trash = [enemy];
+      api.render();
+      api.onlineBroadcastState(true);
+      return { tripleId: triple.instanceId, reviveId: revive.instanceId, enemyId: enemy.instanceId };
+    });
+    await expect.poll(() => guest.evaluate((id) => window.__chibattle.state.players.player.hand
+      .some((card) => card.instanceId === id), setup.tripleId)).toBe(true);
+    await guest.evaluate((id) => window.__chibattle.playCard(id, "seat", "player", 4), setup.tripleId);
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+      .toBe("triple_enemy");
+    await guest.locator(`#threeGesturesHand [data-card-id="${setup.reviveId}"]`).click();
+    await guest.locator("#threeGesturesConfirmButton").click();
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+      .toBe("enemy_revive_online_response");
+    await expect(guest.locator("#threeGesturesConfirmButton")).toBeEnabled();
+    await guest.locator(`#threeGesturesHand [data-card-id="${setup.enemyId}"]`).click();
+    await guest.locator("#threeGesturesConfirmButton").click();
+    for (const page of [host, guest]) {
+      await expect.poll(() => page.evaluate((ids) => {
+        const api = window.__chibattle;
+        const side = api.state.online.role === "host" ? "opponent" : "player";
+        const player = api.state.players[side];
+        return [ids.tripleId, ids.reviveId, ids.enemyId]
+          .every((id) => player.board.seats.some((card) => card?.instanceId === id))
+          && !player.trash.some((card) => card.instanceId === ids.enemyId);
+      }, setup)).toBe(true);
     }
   } finally {
     await Promise.all(contexts.map((context) => context.close()));

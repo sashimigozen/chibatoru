@@ -50,7 +50,44 @@ test("カード定義と表示文を更新し、アグロドームをデッキ�
   expect(result.reviveCost).toBe(5);
   expect(result.dome).toEqual([2, "common", "このカードが環境マスにあるかぎり、お互いの「アグロ」とつく出席者は[超陽気]を持つ。", true]);
   expect(result.scaredText).toContain("体力が最も高い1人");
-  expect(result.enemyText).toContain("デッキの上に戻す");
+  expect(result.enemyText).toContain("デッキに戻してシャッフルする");
+});
+
+test("敵系統7枚の数値と表示文が改装内容に一致する", async ({ page }) => {
+  const cards = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return Object.fromEntries(["enemy_boss", "proliferating_enemy", "true_enemy", "enemy_horde",
+      "enemy_enemy", "enemy_revive", "triple_enemy"].map((id) => {
+      const card = api.createCardFromBase(id, "player");
+      return [id, { stats: [card.cost, card.attack, card.hp], text: api.cardRulesText(card) }];
+    }));
+  });
+  expect(Object.fromEntries(Object.entries(cards).map(([id, card]) => [id, card.stats]))).toEqual({
+    enemy_boss: [4, 1, 2], proliferating_enemy: [5, 1, 2], true_enemy: [6, 1, 2],
+    enemy_horde: [4, 1, 2], enemy_enemy: [2, 1, 2], enemy_revive: [5, 1, 2],
+    triple_enemy: [3, 1, 2]
+  });
+  expect(cards.enemy_boss.text).toBe("このカードを手札から出席させたとき、自分の講義室に「敵」とつく出席者が2人以上いる場合、自分の空いている席マスに「敵」を2人出席させる。");
+  expect(cards.proliferating_enemy.text).toBe("このカードが自分の講義室にいるかぎり、相手の講義室に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。");
+  expect(cards.true_enemy.text).toBe("[超陽気]\nこのカードが攻撃するとき、自分のデッキからカードを1枚引く。\nそれが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。\n自分の空いている席マスがあるなら、そのカードを手札から出席させ、[超陽気]を付与する。");
+  expect(cards.enemy_horde.text).toBe("このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。");
+  expect(cards.enemy_enemy.text).toBe("このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の自分の講義室にいる「敵」とつく出席者すべてをデッキに戻してシャッフルする。");
+  expect(cards.enemy_revive.text).toBe("このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。");
+  expect(cards.triple_enemy.text).toBe("このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。\nその中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。\n出席させなかったカードは手札に残す。");
+});
+
+test("増殖する敵は相手の出席に反応して空席に敵を出す", async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const source = api.makeBoardCard(api.createCardFromBase("proliferating_enemy", "player"));
+    api.state.players.player.board.seats[0] = source;
+    const attendee = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+    api.attendCard("opponent", attendee, "seat", 0, { attendanceSource: api.ATTENDANCE_SOURCE.GENERATED });
+    await api.waitForOrderedAttendance();
+    return { source: api.state.players.player.board.seats[0]?.baseId,
+      summoned: api.state.players.player.board.seats.filter((card) => card?.baseId === "enemy_student").length };
+  });
+  expect(result).toEqual({ source: "proliferating_enemy", summoned: 1 });
 });
 
 test("ケっ！びびらせやがっては最高体力の教師も破壊できる", async ({ page }) => {
@@ -91,7 +128,7 @@ test("細いの戦意とちがうよのドロー枚数は手札枚数で決ま�
   expect(result).toEqual({ cost7: 3, cost3: 0, own: 3, opponent: 3, itemInTrash: true });
 });
 
-test("敵の敵は自分を含めて引き、指定順で山札の上に戻す", async ({ page }) => {
+test("敵の敵は自分を含めて引き、他の敵を山札へ戻してシャッフルする", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const state = api.state;
@@ -102,16 +139,16 @@ test("敵の敵は自分を含めて引き、指定順で山札の上に戻す",
     state.players.player.deck = Array.from({ length: 5 }, () => api.createCardFromBase("general_student", "player"));
     const card = api.createCardFromBase("enemy_enemy", "player");
     state.players.player.hand = [card];
-    const played = api.placeCardFromHand("player", card.instanceId, "seat", "player", 4, false,
-      { enemyEnemyTopOrderIds: [trueEnemy.instanceId, enemy.instanceId] });
-    return { played, hand: state.players.player.hand.length, deckTop: state.players.player.deck.slice(0, 2).map((entry) => entry.baseId),
+    const played = api.placeCardFromHand("player", card.instanceId, "seat", "player", 4, false);
+    return { played, hand: state.players.player.hand.length, deckSize: state.players.player.deck.length,
+      returned: [enemy, trueEnemy].every((entry) => state.players.player.deck.some((card) => card.instanceId === entry.instanceId)),
       ownBoard: state.players.player.board.seats[4]?.baseId, otherSlotsEmpty: !state.players.player.board.seats[0] && !state.players.player.board.seats[1] };
   });
-  expect(result).toEqual({ played: true, hand: 3, deckTop: ["true_enemy", "enemy_student"],
+  expect(result).toEqual({ played: true, hand: 3, deckSize: 4, returned: true,
     ownBoard: "enemy_enemy", otherSlotsEmpty: true });
 });
 
-test("敵の敵はプレイ前の選択画面で山札上の順番を指定できる", async ({ page }) => {
+test("敵の敵は順番選択なしで出席できる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const state = api.state;
@@ -123,14 +160,11 @@ test("敵の敵はプレイ前の選択画面で山札上の順番を指定で�
     const card = api.createCardFromBase("enemy_enemy", "player");
     state.players.player.hand = [card];
     api.playCard(card.instanceId, "seat", "player", 4);
-    const choice = state.pendingCardChoice;
-    const mode = choice?.mode;
-    const count = choice?.max;
-    choice.selectedIds = [second.instanceId, first.instanceId];
-    api.confirmCardChoiceSelection();
-    return { mode, count, top: state.players.player.deck.slice(0, 2).map((entry) => entry.baseId) };
+    return { choice: state.pendingCardChoice?.mode || null,
+      board: state.players.player.board.seats[4]?.baseId,
+      returned: [first, second].every((entry) => state.players.player.deck.some((card) => card.instanceId === entry.instanceId)) };
   });
-  expect(result).toEqual({ mode: "enemy_enemy_order", count: 2, top: ["true_enemy", "enemy_student"] });
+  expect(result).toEqual({ choice: null, board: "enemy_enemy", returned: true });
 });
 
 test("三敵は上3枚の敵を選択順で手札から出席させ、残りを山札の下へ置く", async ({ page }) => {
@@ -206,6 +240,43 @@ test("三敵は選んだ敵だけ出席させ、残りを手札に残せる", as
   expect(result.board).toContain("enemy_student");
   expect(result.board).not.toContain("enemy_horde");
   expect(result.hand).toEqual([ids.horde]);
+});
+
+test("三敵から復活の敵を出席させても校外の敵を選べて残りの出席が続く", async ({ page }) => {
+  const ids = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const player = api.state.players.player;
+    const revive = api.createCardFromBase("enemy_revive", "player");
+    const horde = api.createCardFromBase("enemy_horde", "player");
+    const trashEnemy = api.createCardFromBase("enemy_student", "player");
+    player.deck = [revive, horde, api.createCardFromBase("general_student", "player")];
+    player.trash = [trashEnemy];
+    const triple = api.createCardFromBase("triple_enemy", "player");
+    player.hand = [triple];
+    api.playCard(triple.instanceId, "seat", "player", 4);
+    return { revive: revive.instanceId, horde: horde.instanceId, trashEnemy: trashEnemy.instanceId };
+  });
+  await page.locator(`#threeGesturesHand [data-card-id="${ids.revive}"]`).click();
+  await page.locator(`#threeGesturesHand [data-card-id="${ids.horde}"]`).click();
+  await page.locator("#threeGesturesConfirmButton").click();
+  await expect.poll(() => page.evaluate(() => window.__chibattle.state.pendingCardChoice?.mode))
+    .toBe("enemy_revive_resolution");
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeEnabled();
+  await page.locator(`#threeGesturesHand [data-card-id="${ids.trashEnemy}"]`).click();
+  await page.locator("#threeGesturesConfirmButton").click();
+  const result = await page.evaluate((trashId) => {
+    const api = window.__chibattle;
+    const player = api.state.players.player;
+    return { board: player.board.seats.filter(Boolean).map((card) => card.baseId),
+      revived: player.board.seats.some((card) => card?.instanceId === trashId),
+      inTrash: player.trash.some((card) => card.instanceId === trashId),
+      pending: api.state.pendingCardChoice?.mode || null };
+  }, ids.trashEnemy);
+  expect(result.board).toContain("enemy_revive");
+  expect(result.board).toContain("enemy_horde");
+  expect(result.revived).toBe(true);
+  expect(result.inTrash).toBe(false);
+  expect(result.pending).toBeNull();
 });
 
 test("真の敵が引いた敵の群れは手札からの出席時効果を発動する", async ({ page }) => {
