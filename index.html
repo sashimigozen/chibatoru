@@ -19608,9 +19608,10 @@
       {
         version: "ver.0.23.16",
         date: "2026年10月8日",
-        summary: "バトル・ソロプレイのパソコンを画面いっぱいに拡大し、下枠を細くしました。",
+        summary: "バトル・ソロプレイのパソコンを画面いっぱいに拡大し、下枠を細くしました。基本編以外のチュートリアル12編に、リーサルクイズ・超難問を追加しました。",
         changes: [
-          { title: "PC画面の外観", after: "パソコン本体を画面の上端・左右端まで拡大し、縁の外側の背景が見えない構図にしました。MacBook Airの見た目を参考に、画面とキーボードの間の下枠を細くしています。キーボードが画面外へ続く構図と、ホームバーの位置は維持しています。背景を無地で隠す変更は戻し、ホーム画面の背景は変更していません。" }
+          { title: "PC画面の外観", after: "パソコン本体を画面の上端・左右端まで拡大し、縁の外側の背景が見えない構図にしました。MacBook Airの見た目を参考に、画面とキーボードの間の下枠を細くしています。キーボードが画面外へ続く構図と、ホームバーの位置は維持しています。背景を無地で隠す変更は戻し、ホーム画面の背景は変更していません。" },
+          { title: "リーサルクイズ・超難問", after: "基本編以外の12編に3つ目のステージを追加しました。専用の盤面・手札・残された戦意から、配置、効果を使う順番、対象選び、進化や融合を組み合わせて勝利を目指します。開始時にヒントや解答は表示しません。相手のターンになったら失敗となり、同じ超難問を初期状態から再挑戦できます。選択画面の矢印で練習・通常クイズ・超難問を切り替えます。基本編と既存の練習・通常クイズ、カードのテキスト・効果は変更していません。" }
         ]
       },
       {
@@ -43467,6 +43468,15 @@
       syncHomeDeskLayout();
     }
 
+    function cycleTutorialStage(direction = 1) {
+      if (state.tutorialMenu.selectedChapterId === "basic") return;
+      const stages = ["practice", "quiz", "expert"];
+      const index = Math.max(0, stages.indexOf(state.tutorialMenu.stage));
+      state.tutorialMenu.stage = stages[(index + Math.sign(direction) + stages.length) % stages.length];
+      hideBattleCardPreview();
+      renderTutorial();
+    }
+
     function renderTutorial() {
       if (state.screen !== "tutorial" || !elements.tutorialChapterList) return;
       // 行を保持し、選択しても一覧のスクロール位置とキーボードフォーカスを動かさない。
@@ -43479,21 +43489,24 @@
         `).join("");
       }
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === state.tutorialMenu.selectedChapterId) || TUTORIAL_CHAPTERS[0];
-      const quiz = chapter.id !== "basic" && state.tutorialMenu.stage === "quiz";
+      const stage = chapter.id === "basic" ? "practice" : state.tutorialMenu.stage;
+      const quiz = ["quiz", "expert"].includes(stage);
+      const expert = stage === "expert";
       elements.tutorialChapterList.querySelectorAll("[data-tutorial-chapter]").forEach((button) => {
         const selected = button.dataset.tutorialChapter === chapter.id;
         button.classList.toggle("selected", selected);
         button.setAttribute("aria-pressed", String(selected));
       });
-      elements.tutorialDetailTitle.textContent = `${chapter.title} ${quiz ? 2 : 1}/${chapter.id === "basic" ? 1 : 2}`;
-      elements.tutorialStageTitle.textContent = quiz ? "リーサルクイズ" : "練習";
+      elements.tutorialDetailTitle.textContent = `${chapter.title} ${expert ? 3 : quiz ? 2 : 1}/${chapter.id === "basic" ? 1 : 3}`;
+      elements.tutorialStageTitle.textContent = expert ? "リーサルクイズ・超難問" : quiz ? "リーサルクイズ" : "練習";
       const overview = TUTORIAL_OVERVIEWS[chapter.id];
       elements.tutorialOverviewText.textContent = quiz
-        ? `${chapter.description}を活かして、勝利を目指そう！\n相手のターンになったら失敗です。`
+        ? expert ? "盤面・手札・残された戦意を駆使して、このターン中に勝利を目指そう！\n相手のターンになったら失敗です。"
+          : `${chapter.description}を活かして、勝利を目指そう！\n相手のターンになったら失敗です。`
         : overview.text;
       elements.tutorialStageSwitch.classList.toggle("hidden", chapter.id === "basic");
-      elements.tutorialStageSwitch.classList.toggle("previous", quiz);
-      elements.tutorialStageSwitch.setAttribute("aria-label", quiz ? "練習へ切り替える" : "リーサルクイズへ切り替える");
+      elements.tutorialStageSwitch.classList.toggle("previous", expert);
+      elements.tutorialStageSwitch.setAttribute("aria-label", expert ? "練習へ切り替える" : quiz ? "超難問へ切り替える" : "リーサルクイズへ切り替える");
       elements.tutorialStartButton.disabled = !chapter.steps;
       if (elements.tutorialOverviewCard.dataset.card !== overview.card) {
         const card = makePreviewCard(overview.card, "player");
@@ -43998,7 +44011,7 @@
 
     // クイズは通常対戦の操作・カード効果をそのまま使い、ターンの期限だけを設ける。
     function isTutorialQuiz() {
-      return state.screen === "battle" && state.tutorial?.stage === "quiz";
+      return state.screen === "battle" && ["quiz", "expert"].includes(state.tutorial?.stage);
     }
 
     function failTutorialQuiz() {
@@ -44403,7 +44416,7 @@
 
     function advanceTutorialTextStep() {
       if (isTutorialQuiz()) {
-        startTutorialBattle(state.tutorial.chapterId, { stage: "quiz" });
+        startTutorialBattle(state.tutorial.chapterId, { stage: state.tutorial.stage });
         return;
       }
       const step = currentTutorialStep();
@@ -44460,7 +44473,7 @@
       const quiz = isTutorialQuiz();
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === state.tutorial.chapterId);
       const step = quiz && !state.gameOver && !state.tutorial.intro
-        ? { id: "quiz", title: `${chapter.title}：リーサルクイズ`, body: "手札のカードを駆使して、このターン中に勝利を目指そう！\n相手のターンになったら失敗です。", focus: "" }
+        ? { id: "quiz", title: `${chapter.title}：リーサルクイズ${state.tutorial.stage === "expert" ? "・超難問" : ""}`, body: "盤面・手札・残された戦意を駆使して、このターン中に勝利を目指そう！\n相手のターンになったら失敗です。", focus: "" }
         : currentTutorialStep();
       const active = Boolean(step);
       elements.tutorialLayer.classList.toggle("hidden", !active);
@@ -44476,7 +44489,7 @@
       elements.tutorialCoachText.textContent = step.id === "turnStartResult" && state.currentSide !== "player"
         ? "相手のターンです。相手がターンを終了するまで少し待ってください。"
         : step.body;
-      elements.tutorialStepCounter.textContent = quiz ? "2/2" : state.tutorial.chapterId === "basic"
+      elements.tutorialStepCounter.textContent = quiz ? state.tutorial.stage === "expert" ? "3/3" : "2/3" : state.tutorial.chapterId === "basic"
         ? `${state.tutorial.stepIndex + 1}/${chapter.steps.length}` : `練習 ${state.tutorial.stepIndex + 1}/${chapter.steps.length}`;
       elements.tutorialNextButton.classList.toggle("tutorial-next-inactive", Boolean(step.action));
       elements.tutorialNextButton.disabled = state.currentSide !== "player" || state.aiThinking;
@@ -50111,7 +50124,49 @@
       }
     }
 
-    function setupTutorialQuiz(chapterId) {
+    // 超難問の解答は表示データへ入れず、通常操作の回帰テスト側で管理する。
+    // 傷・出席したターン・遅刻待機は通常対戦でも起きる状態。カード固有の効果は変更しない。
+    const TUTORIAL_EXPERT_QUIZZES = {
+      placement: { will: 8, life: 13, hand: ["destructive_lie", "student_comedy", "bento"], deck: ["ruler", "general_teacher"],
+        board: [["player", "yuta", "seat", 4], ...[0, 2, 6, 8].map(i => ["player", "general_student", "seat", i]),
+          ...[1, 3, 5, 7].map(i => ["player", "wood_gitch", "seat", i, { justAttended: true }]),
+          ["opponent", "college_student_vibe", "seat", 0]] },
+      lecture: { will: 9, life: 7, hand: ["destructive_lie", "general_teacher", "ruler", "ruler", "seriously_hit"], deck: ["ruler", "ruler"],
+        board: [["player", "strong_student", "seat", 4], ["player", "wood_gitch", "teacher", null],
+          ["opponent", "ae_student", "seat", 0], ["opponent", "ae_student", "seat", 1, { damage: 1 }],
+          ["opponent", "super_ae_student", "seat", 8]] },
+      cheerful: { will: 8, life: 9, hand: ["zombie", "go_home", "aggro_princess", "general_student"],
+        board: [["player", "zombie", "seat", 4], ["player", "strong_student", "seat", 8], ["opponent", "ae_student", "seat", 0], ["opponent", "ae_student", "seat", 2]] },
+      attention: { will: 4, life: 9, hand: ["ruler", "ruler", "ruler", "ruler", "general_student"],
+        board: [["player", "trendy_student", "seat", 4], ["player", "strong_student", "seat", 8],
+          ["opponent", "super_ae_student", "seat", 0], ["opponent", "ae_student", "seat", 1], ["opponent", "ae_student", "seat", 2],
+          ["opponent", "ae_student", "seat", 8, { damage: 2 }]] },
+      late: { will: 10, life: 6, hand: ["eaten_student", "tokyo_tech_bro", "no_late_time", "bento"], environment: "meguro_library",
+        late: [["hurried_student", "seat", 3, 1]],
+        board: [["player", "yuta", "seat", 4], ["player", "general_student", "seat", 8],
+          ["opponent", "ae_student", "seat", 0], ["opponent", "general_student", "seat", 2], ["opponent", "general_teacher", "teacher", null]] },
+      sleepy: { will: 10, life: 6, hand: ["destructive_lie", "seriously_hit", "aggro_princess", "bento"], deck: ["red_happi", "ruler"],
+        board: [["player", "president", "teacher", null], ["player", "yuta", "seat", 4], ["player", "general_student", "seat", 8],
+          ["opponent", "president", "teacher", null], ["opponent", "college_student_vibe", "seat", 0]] },
+      composure: { will: 8, life: 8, hand: ["ruler", "destructive_lie", "yocchan", "bento"], deck: ["ruler", "earphones"],
+        board: [["player", "yuta", "seat", 4, { damage: 2, composureRecovery: true }], ["player", "general_student", "seat", 8],
+          ["opponent", "college_student_vibe", "seat", 0]] },
+      equipment: { will: 8, life: 6, hand: ["earphones", "ruler", "ruler", "red_happi", "destructive_lie", "aggro_princess", "general_student"], deck: ["ruler", "ruler"],
+        board: [["player", "yuta", "seat", 4, { justAttended: true }], ["player", "yuta", "seat", 8], ["player", "wood_gitch", "teacher", null],
+          ["opponent", "super_ae_student", "seat", 0], ["opponent", "ae_student", "seat", 1], ["opponent", "college_student_vibe", "seat", 2]] },
+      drain: { will: 8, life: 7, hand: ["ruler", "destructive_lie", "yocchan", "bento"], deck: ["ruler", "earphones"],
+        board: [["player", "apprentice_vampire", "seat", 4, { damage: 1 }], ["player", "general_student", "seat", 8],
+          ["opponent", "college_student_vibe", "seat", 0]] },
+      evolution: { will: 7, life: 20, hand: ["single_cell", "single_cell", "single_cell", "single_cell", "single_cell", "single_cell", "red_happi", "dark_yuta", "general_student"],
+        board: [["player", "single_cell", "seat", 0], ["player", "yuta", "seat", 8], ["opponent", "big_omata", "seat", 0]] },
+      fusion: { will: 9, life: 7, hand: ["ruler", "ruler", "ruler", "ruler", "earphones", "grudge", "yocchan", "general_student"],
+        board: [["player", "wood_gitch", "teacher", null], ["opponent", "super_ae_student", "seat", 0],
+          ["opponent", "ae_student", "seat", 1], ["opponent", "ae_student", "seat", 2, { damage: 1 }]] },
+      load: { will: 10, life: 7, hand: ["grudge", "ruler", "ruler", "ruler", "full_throttle", "earphones", "yocchan", "general_student"], loads: [2, 1, 1, 1],
+        board: [["player", "yuta", "seat", 4, { justAttended: true }], ["opponent", "college_student_vibe", "seat", 0]] }
+    };
+
+    function setupTutorialQuiz(chapterId, stage = "quiz") {
       // 既存カードだけで解ける固定問題。手札の末尾は、このターンの勝利に不要な引っ掛け1枚。
       // 正解の手札・戦意・盤面は維持する。配列の先頭がデッキの一番上。
       const quizzes = {
@@ -50146,12 +50201,14 @@
         load: { will: 9, life: 4, hand: ["grudge", "ruler", "full_throttle", "yocchan", "general_student"], loads: [2, 1, 0, 0, 0],
           board: [["opponent", "super_ae_student", "seat", 0, { damage: 1 }]] }
       };
-      const quiz = quizzes[chapterId];
+      const quiz = stage === "expert" ? TUTORIAL_EXPERT_QUIZZES[chapterId] : quizzes[chapterId];
       if (!quiz) return;
       const player = state.players.player;
       const opponent = state.players.opponent;
-      player.maxWill = player.will = quiz.will;
+      player.maxWill = stage === "expert" ? 10 : quiz.will;
+      player.will = quiz.will;
       opponent.life = quiz.life;
+      if (quiz.environment) state.environment = makeBoardCard(createCardFromBase(quiz.environment, "player"));
       player.board = { seats: Array(9).fill(null), teacher: null };
       opponent.board = { seats: Array(9).fill(null), teacher: null };
       player.hand = quiz.hand.map((baseId) => createCardFromBase(baseId, "player"));
@@ -50163,11 +50220,15 @@
       player.hand.forEach((card, index) => {
         for (let load = 0; load < (quiz.loads?.[index] || 0); load += 1) addHandLoad(card);
       });
+      (quiz.late || []).forEach(([baseId, zone, index, remaining]) => {
+        player.late.push({ card: makeBoardCard(createCardFromBase(baseId, "player")), owner: "player", zone, index, remaining });
+      });
       (quiz.board || []).forEach(([owner, baseId, zone, index, options = {}]) => {
         const card = makeBoardCard(createCardFromBase(baseId, owner));
         card.playedOnTurn = options.justAttended ? state.actionTurn : 0;
         if (options.damage) card.currentHp -= options.damage;
-        setBoardCard(owner, zone, index, card);
+        if (zone === "seat" && isMultiSeatCard(card)) placeMultiSeatCard(owner, index, card);
+        else setBoardCard(owner, zone, index, card);
         if (options.composureRecovery && hasKeyword(card, "余裕")) {
           // 回復を偽の能力で再現せず、通常と同じ量・上限で初期状態を作る。
           healCard(card, 1);
@@ -50179,8 +50240,9 @@
     function startTutorialBattle(chapterId = "basic", options = {}) {
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === chapterId);
       if (!chapter?.steps) return;
-      const quiz = chapterId !== "basic" && options.stage === "quiz";
-      state.tutorialMenu = { selectedChapterId: chapterId, stage: quiz ? "quiz" : "practice" };
+      const stage = chapterId !== "basic" && ["quiz", "expert"].includes(options.stage) ? options.stage : "practice";
+      const quiz = stage !== "practice";
+      state.tutorialMenu = { selectedChapterId: chapterId, stage };
       if (state.online.role || state.online.started) onlineCloseConnection(false);
       resetBattleDrawers();
       closeTeacherActionChoice();
@@ -50244,7 +50306,7 @@
       state.aiThinking = false;
       state.testMode = true;
       state.testCardBaseId = null;
-      state.tutorial = { active: true, chapterId, stage: quiz ? "quiz" : "practice", stepIndex: 0, intro: true, history: [] };
+      state.tutorial = { active: true, chapterId, stage, stepIndex: 0, intro: true, history: [] };
       state.log = [];
       closeItemConfirm();
       hideResultOverlay();
@@ -50275,21 +50337,21 @@
       const spareStudent = makeBoardCard(createCardFromBase("general_student", "player"));
       spareStudent.playedOnTurn = 0;
       player.board.seats[8] = spareStudent;
-      if (quiz) setupTutorialQuiz(chapterId);
+      if (quiz) setupTutorialQuiz(chapterId, stage);
       else if (chapterId !== "basic") setupAbilityTutorialChapter(chapterId);
       analyticsStartGame();
       analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       applyBoardAuras();
       state.message = quiz ? "このターン中に勝利を目指そう！相手のターンになったら失敗です。"
         : "チュートリアル開始。説明を読みながら光っている場所を操作してください。";
-      addLog(quiz ? `${chapter.title}：リーサルクイズ開始。` : "チュートリアル開始。光っている場所だけ操作できます。");
+      addLog(quiz ? `${chapter.title}：リーサルクイズ${stage === "expert" ? "・超難問" : ""}開始。` : "チュートリアル開始。光っている場所だけ操作できます。");
       render();
       showTutorialTitleAnnouncement();
       const token = state.preBattleToken;
       window.setTimeout(() => {
         if (state.preBattleToken !== token || state.screen !== "battle" || state.gameOver || !state.tutorial.active || !state.tutorial.intro) return;
         state.tutorial.intro = false;
-        state.message = quiz ? `${chapter.title}：リーサルクイズ` : `チュートリアル：${currentTutorialStep()?.title || "基本ルール"}`;
+        state.message = quiz ? `${chapter.title}：リーサルクイズ${stage === "expert" ? "・超難問" : ""}` : `チュートリアル：${currentTutorialStep()?.title || "基本ルール"}`;
         render();
       }, 1350);
     }
@@ -52115,10 +52177,7 @@
       renderTutorial();
     });
     elements.tutorialStageSwitch.addEventListener("click", () => {
-      if (state.tutorialMenu.selectedChapterId === "basic") return;
-      state.tutorialMenu.stage = state.tutorialMenu.stage === "quiz" ? "practice" : "quiz";
-      hideBattleCardPreview();
-      renderTutorial();
+      cycleTutorialStage();
     });
     elements.tutorialStartButton.addEventListener("click", () => {
       startTutorialBattle(state.tutorialMenu.selectedChapterId, { stage: state.tutorialMenu.stage });
@@ -52435,7 +52494,7 @@
     elements.resultOverlay.addEventListener("click", (event) => {
       if (event.target.closest("[data-result-tutorial-retry]")) {
         event.stopPropagation();
-        startTutorialBattle(state.tutorial.chapterId, { stage: "quiz" });
+        startTutorialBattle(state.tutorial.chapterId, { stage: state.tutorial.stage });
         return;
       }
       if (event.target.closest("[data-result-tutorial-back]")) {
@@ -52699,7 +52758,7 @@
     initializeGame();
 
   </script>
-  <script src="cards-ui.js?v=0.23.15"></script>
+  <script src="cards-ui.js?v=0.23.16"></script>
   <script src="desktop-ui.js?v=0.23.15"></script>
   <script src="four-mode.js"></script>
 </body>

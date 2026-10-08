@@ -11,7 +11,7 @@ async function openQuiz(page, chapter) {
   await page.goto(gameUrl);
   // 本番と同じ初期化入口。練習からのUI遷移はtutorial-abilities.spec.jsで全編を検証する。
   await page.evaluate((id) => window.__chibattle.startTutorialBattle(id, { stage: "quiz" }), chapter);
-  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
+  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
   await page.locator("#tutorialToggleButton").click();
 }
 
@@ -196,10 +196,11 @@ test("融合を使わず定規を単独使用しても勝てず、失敗から�
   await itemBody(page, "ruler");
   await itemBody(page, "ruler");
   expect(await page.evaluate(() => window.__chibattle.state.players.opponent.life)).toBe(2);
-  await page.locator("#endTurnButton").click();
+  // 攻撃・使用可能カードがなくなった際の推奨パルスで、安定待ちが続かないようにする。
+  await page.locator("#endTurnButton").click({ force: true });
   await expect(page.locator("#resultOverlay")).toContainText("失敗");
   await page.locator("[data-result-tutorial-retry]").click();
-  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
+  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
   expect(await page.evaluate(() => {
     const p = window.__chibattle.state.players.player;
     return { hand: p.hand.map((c) => c.baseId), will: p.will, trash: p.trash.length };
@@ -263,7 +264,7 @@ test("負荷による自分の敗北も失敗と表示され、再挑戦で気�
   await page.locator("#endTurnButton").click();
   await expect(page.locator("#resultOverlay")).toContainText("失敗");
   await page.locator("[data-result-tutorial-retry]").click();
-  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
+  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
   expect(await page.evaluate(() => window.__chibattle.state.players.player.life)).toBe(20);
 });
 
@@ -275,7 +276,7 @@ test("クイズの説明切替・再挑戦ボタンの固定・終了・基本�
   expect(await page.locator("#tutorialNextButton").boundingBox()).toEqual(box);
   await page.screenshot({ path: test.info().outputPath("quiz.png") });
   await page.locator("#tutorialNextButton").click();
-  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
+  await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
   await expect(hand(page, "ruler")).toHaveCount(1);
   expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(3);
   await page.locator("#tutorialExitButton").click();
