@@ -18530,6 +18530,7 @@
     const ONLINE_SYNC_REQUEST_MS = 4200;
     const COURSE_REGISTRATION_RELAY_KIND = "course_registration";
     const TRIPLE_ENEMY_RELAY_KIND = "triple_enemy_order";
+    const ENEMY_REVIVE_RELAY_KIND = "enemy_revive_attendance";
     const COURSE_REGISTRATION_DRAW_RELAY_KIND = "course_registration_draw";
     const STARBUCKS_CORNERING_RELAY_KIND = "starbucks_cornering_teacher";
     const PLAYER_SEAT_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -19290,12 +19291,12 @@
       trpg_member: { name: "TRPGサークルメンバー", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
       college_student_vibe: { name: "大学生って感じの学生", type: "student", cost: 4, attack: 1, hp: 3, keywords: ["注目"], allowedZones: ["seat"] },
       enemy_student: { name: "敵", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
-      enemy_boss: { name: "敵の幹部", type: "student", cost: 4, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
+      enemy_boss: { name: "敵の幹部", type: "student", cost: 4, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
       live_person: { name: "ライブ人", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       dobby: { name: "ドービィ", type: "student", cost: 6, attack: 2, hp: 2, allowedZones: ["seat", "teacher"] },
       pachin_uni: { name: "パチンウニー", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       protein_drinker: { name: "プロテインドリンカー", type: "student", cost: 4, attack: 0, hp: 7, allowedZones: ["seat", "teacher"] },
-      proliferating_enemy: { name: "増殖する敵", type: "student", cost: 5, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
+      proliferating_enemy: { name: "増殖する敵", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat", "teacher"] },
       delayed_student: { name: "遅延する学生", type: "student", cost: 4, attack: 1, hp: 2, rowOnly: 3, allowedZones: ["seat"] },
       infight_shogi: { name: "インファイト将棋部", type: "student", cost: 10, attack: 9, hp: 5, keywords: ["超陽気"], allowedZones: ["seat", "teacher"] },
       aiben: { name: "アイベン", type: "student", cost: 3, attack: 2, hp: 8, allowedZones: ["seat", "teacher"] },
@@ -19365,11 +19366,11 @@
       tiny_rhythm_student: { name: "小刻みリズム学生", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat"], category: "interference" },
       apprentice_best_friend: { name: "見習いベストフレンド", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "big" },
       white_student: { name: "白い学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"], category: "interference" },
-      true_enemy: { name: "真の敵", type: "student", cost: 6, attack: 2, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "expansion" },
-      enemy_horde: { name: "敵の群れ", type: "student", cost: 4, attack: 2, hp: 2, allowedZones: ["seat"], category: "expansion" },
+      true_enemy: { name: "真の敵", type: "student", cost: 6, attack: 1, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "expansion" },
+      enemy_horde: { name: "敵の群れ", type: "student", cost: 4, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       rear_queen: { name: "後ろにいるクイーン", type: "student", cost: 7, attack: 2, hp: 2, allowedZones: ["seat"], category: "design" },
       enemy_enemy: { name: "敵の敵", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
-      enemy_revive: { name: "復活の敵", type: "student", cost: 5, attack: 2, hp: 2, allowedZones: ["seat"], category: "expansion" },
+      enemy_revive: { name: "復活の敵", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       triple_enemy: { name: "三敵", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       ruler: { name: "定規", type: "item", cost: 1, target: "enemy" },
       confucius_says: { name: "子曰く", type: "item", cost: 2, target: "self", category: "common" },
@@ -19635,12 +19636,15 @@
       {
         version: "ver.0.23.16",
         date: "2026年10月8日",
-        summary: "バトル・ソロプレイのパソコンを画面いっぱいに拡大し、下枠を細くしました。基本編以外のチュートリアル12編に、リーサルクイズ・超難問を追加し、ドローに頼らず相手の盤面を処理して解く問題に調整しました。",
+        summary: "バトル・ソロプレイのPC画面とチュートリアルのリーサルクイズを改善しました。敵系統7枚を調整し、三敵から出た復活の敵でも校外エリアの敵を選べるようにしました。",
         changes: [
           { title: "PC画面の外観", after: "パソコン本体を画面の上端・左右端まで拡大し、縁の外側の背景が見えない構図にしました。MacBook Airの見た目を参考に、画面とキーボードの間の下枠を細くしています。キーボードが画面外へ続く構図と、ホームバーの位置は維持しています。背景を無地で隠す変更は戻し、ホーム画面の背景は変更していません。" },
           { title: "リーサルクイズの説明表示", after: "通常クイズ・超難問の説明は開始時に表示し、約3秒後にフェードアウトします。やり直しボタンは説明から分離し、左上の終了ボタンの隣に固定しました。再挑戦時も説明を最初だけ表示し、練習の説明は変更していません。" },
           { title: "デッキ編成の通知", after: "カードを追加・削除するたびに画面下へ出ていた枚数変更の通知をなくしました。編成中の枚数表示はそのまま更新し、保存結果やファイル読み込みのエラー通知は維持しています。" },
-          { title: "リーサルクイズ・超難問", after: "基本編以外の12編に3つ目のステージを追加しました。専用の盤面・手札・残された戦意から、配置、効果を使う順番、対象選び、進化や融合を組み合わせて勝利を目指します。相手の盤面には注目・超注目を持つ出席者を配置し、攻撃に使う出席者を残しながら処理する問題にしました。通常クイズも含めて、デッキの中身はすべて使用できない「怪しげな文書」です。解答に必要なカードは初期手札・盤面にあり、ドロー先を推測する必要はありません。開始時にヒントや解答は表示しません。相手のターンになったら失敗となり、同じ超難問を初期状態から再挑戦できます。選択画面の矢印で練習・通常クイズ・超難問を切り替えます。基本編と既存の練習、カードのテキスト・効果は変更していません。" }
+          { title: "リーサルクイズ・超難問", after: "基本編以外の12編に3つ目のステージを追加しました。専用の盤面・手札・残された戦意から、配置、効果を使う順番、対象選び、進化や融合を組み合わせて勝利を目指します。相手の盤面には注目・超注目を持つ出席者を配置し、攻撃に使う出席者を残しながら処理する問題にしました。通常クイズも含めて、デッキの中身はすべて使用できない「怪しげな文書」です。解答に必要なカードは初期手札・盤面にあり、ドロー先を推測する必要はありません。開始時にヒントや解答は表示しません。相手のターンになったら失敗となり、同じ超難問を初期状態から再挑戦できます。選択画面の矢印で練習・通常クイズ・超難問を切り替えます。基本編と既存の練習、カードのテキスト・効果は変更していません。" },
+          { title: "敵系統の数値", after: "敵の幹部は体力2、増殖する敵は攻撃力1・体力2、真の敵と敵の群れと復活の敵は攻撃力1になりました。敵の敵と三敵は従来の攻撃力1・体力2を維持します。" },
+          { title: "敵の敵", after: "手札から出席したとき、自分を含む「敵」とつく出席者の人数だけ引き、自分以外の「敵」とつく出席者をデッキへ戻してシャッフルします。山札の上へ戻す順番の選択はなくなりました。" },
+          { title: "三敵と復活の敵", after: "三敵で見つけた「敵」とつく出席者は手札に加え、出席させる人数と順番を任意に選べます。三敵から復活の敵を出席させた場合も、校外エリアから出席させる「敵」を選べるようにしました。" }
         ]
       },
       {
@@ -25215,6 +25219,12 @@
         return;
       }
       if (message.type === "thinItemChoiceRequest"
+        && message.privateChoiceKind === ENEMY_REVIVE_RELAY_KIND
+        && isOnlineGuest()) {
+        onlineOpenEnemyReviveChoiceRequest(message);
+        return;
+      }
+      if (message.type === "thinItemChoiceRequest"
         && message.privateChoiceKind === COURSE_REGISTRATION_DRAW_RELAY_KIND
         && isOnlineGuest()) {
         onlineOpenCourseRegistrationDrawRequest(message);
@@ -25236,6 +25246,12 @@
         && message.privateChoiceKind === TRIPLE_ENEMY_RELAY_KIND
         && isOnlineHost()) {
         onlineResolveTripleEnemyOrderResponse(message.requestId, message.selectedIds || []);
+        return;
+      }
+      if (message.type === "thinItemChoiceResponse"
+        && message.privateChoiceKind === ENEMY_REVIVE_RELAY_KIND
+        && isOnlineHost()) {
+        onlineResolveEnemyReviveChoiceResponse(message.requestId, message.selectedIds || []);
         return;
       }
       if (message.type === "thinItemChoiceResponse"
@@ -25608,6 +25624,43 @@
         .find((entry) => entry?.instanceId === pending.sourceCardId);
       state.pendingRemoteHandTrim = null;
       if (source) resolveTripleEnemyEffect(pending.sourceSide, source, valid ? selectedIds : []);
+      const wasHandlingRemote = state.online.isHandlingRemoteCommand;
+      if (pending.commandId) state.online.isHandlingRemoteCommand = true;
+      render();
+      state.online.isHandlingRemoteCommand = wasHandlingRemote;
+      onlineBroadcastState(true, onlineIsCommandAwaitingResolution(pending.commandId) ? "" : pending.commandId || "");
+    }
+
+    function requestRemoteEnemyReviveChoice(side, card, commandId = "") {
+      if (!isOnlineHost() || !state.online.started || !state.online.connected || side !== "opponent") return false;
+      const candidates = enemyReviveCandidates(side);
+      if (!candidates.length) return false;
+      const requestId = onlineNextMessageId("enemy-revive");
+      state.pendingRemoteHandTrim = { mode: "enemy_revive_choice", requestId, sourceSide: side,
+        sourceCardId: card.instanceId, commandId };
+      const sent = onlineSend({ type: "thinItemChoiceRequest", privateChoiceKind: ENEMY_REVIVE_RELAY_KIND,
+        requestId, cards: candidates.map(cardRevealPayload) }, { track: true });
+      if (!sent) state.pendingRemoteHandTrim = null;
+      return sent;
+    }
+
+    function onlineOpenEnemyReviveChoiceRequest(message) {
+      if (!isOnlineGuest() || !state.online.started) return;
+      openCardChoice({ mode: "enemy_revive_online_response", title: "復活の敵",
+        message: "校外エリアから出席させる「敵」を選んでください。0人でも確定できます。",
+        cards: Array.isArray(message.cards) ? message.cards : [], min: 0,
+        max: Math.min(message.cards?.length || 0, 9), confirmLabel: "復活させる",
+        requestId: message.requestId });
+    }
+
+    function onlineResolveEnemyReviveChoiceResponse(requestId, selectedIds) {
+      const pending = state.pendingRemoteHandTrim;
+      if (!pending || pending.mode !== "enemy_revive_choice" || pending.requestId !== requestId) return;
+      const source = listBoardRefs(pending.sourceSide).map(getBoardCardFromRef)
+        .find((card) => card?.instanceId === pending.sourceCardId);
+      state.pendingRemoteHandTrim = null;
+      if (source?.baseId === "enemy_revive") resolveEnemyReviveEffect(pending.sourceSide, source, selectedIds);
+      resumeTripleEnemySequences();
       const wasHandlingRemote = state.online.isHandlingRemoteCommand;
       if (pending.commandId) state.online.isHandlingRemoteCommand = true;
       render();
@@ -26447,7 +26500,7 @@
     function isCourseRegistrationOnlineChoice(choice) {
       return Boolean(choice && [
         "starbucks_cornering_online_response",
-        "enemy_enemy_order",
+        "enemy_revive_online_response",
         "triple_enemy",
         "triple_enemy_online_response",
         "course_registration_online_response",
@@ -26462,7 +26515,7 @@
       return {
         ...choice,
         selectionOverlayPeek: state.selectionOverlayPeek,
-        cards: choice.cards.map((card) => choice.mode === "triple_enemy_online_response"
+        cards: choice.cards.map((card) => ["triple_enemy_online_response", "enemy_revive_online_response"].includes(choice.mode)
           ? card : { instanceId: card.instanceId }),
         selectedIds: [...choice.selectedIds]
       };
@@ -26474,8 +26527,8 @@
         ? state.players.player.trash
         : choice.mode === "starbucks_cornering_online_response"
           ? choice.cards
-        : choice.mode === "enemy_enemy_order"
-          ? listBoardRefs("player").map(getBoardCardFromRef)
+        : choice.mode === "enemy_revive_online_response"
+          ? choice.cards
         : choice.mode === "triple_enemy_online_response"
           ? choice.cards
         : state.players.player.deck;
@@ -26877,7 +26930,6 @@
             spoonDestroyIds: payload.spoonDestroyIds || [],
             enemyReviveIds: payload.enemyReviveIds || [],
             tripleEnemyOrderIds: payload.tripleEnemyOrderIds || [],
-            enemyEnemyTopOrderIds: payload.enemyEnemyTopOrderIds || [],
             badStudentDiscardIds: payload.badStudentDiscardIds || [],
             summerTeacherChoiceId: payload.summerTeacherChoiceId || null,
             summerTeacherChoiceBaseId: payload.summerTeacherChoiceBaseId || null,
@@ -34156,7 +34208,6 @@
 
     function cardChoiceShowsSelectionOrder(choice) {
       return Boolean(choice && [
-        "enemy_enemy_order",
         "triple_enemy",
         "triple_enemy_resolution",
         "triple_enemy_online_response",
@@ -34236,6 +34287,21 @@
         } else placeCardFromHand("player", card.instanceId, target.zone, target.owner, target.index, true, choices);
         return;
       }
+      if (mode === "enemy_revive_resolution") {
+        const source = listBoardRefs("player").map(getBoardCardFromRef)
+          .find((card) => card?.instanceId === pending.context?.sourceCardId);
+        if (source?.baseId === "enemy_revive") resolveEnemyReviveEffect("player", source, selectedIds);
+        resumeTripleEnemySequences();
+        render();
+        return;
+      }
+      if (mode === "enemy_revive_online_response") {
+        onlineSend({ type: "thinItemChoiceResponse", privateChoiceKind: ENEMY_REVIVE_RELAY_KIND,
+          requestId: pending.requestId, selectedIds }, { track: true });
+        state.message = "復活の敵の選択を送信しました。";
+        render();
+        return;
+      }
       if (mode === "triple_enemy") {
         const card = getHandCard("player", pending.playCardId);
         const target = pending.playTarget;
@@ -34259,17 +34325,6 @@
           requestId: pending.requestId, selectedIds }, { track: true });
         state.message = "三敵の出席順を送信しました。";
         render();
-        return;
-      }
-      if (mode === "enemy_enemy_order") {
-        const card = getHandCard("player", pending.playCardId);
-        const target = pending.playTarget;
-        if (!card || !target) return;
-        if (onlineCanSendCommand()) {
-          onlineSendCommand("playCard", { instanceId: card.instanceId, ...target, enemyEnemyTopOrderIds: selectedIds });
-          render();
-        } else placeCardFromHand("player", card.instanceId, target.zone, target.owner, target.index, true,
-          { enemyEnemyTopOrderIds: selectedIds });
         return;
       }
       if (mode === "jailbreak_source") {
@@ -35908,7 +35963,7 @@
         return;
       }
       if (localCard?.baseId === "enemy_revive") {
-        const cards = state.players.player.trash.filter((card) => card.baseId === "enemy_student");
+        const cards = enemyReviveCandidates("player");
         if (cards.length) {
           openCardChoice({ mode: "enemy_revive", title: localCard.name,
             message: "校外エリアから出席させる「敵」を選んでください。",
@@ -35937,16 +35992,6 @@
             message: "出席させたいカードだけ、出席する順番に選んでください。選ばないカードは手札に残ります。席はランダムに決まります。",
             cards: state.players.player.deck.slice(0, 3), selectableIds: cards.map((card) => card.instanceId),
             min: 0, max: cards.length, confirmLabel: "決定",
-            playCardId: instanceId, playTarget: { zone, owner, index } });
-          return;
-        }
-      }
-      if (localCard?.baseId === "enemy_enemy") {
-        const cards = listBoardRefs("player").map(getBoardCardFromRef).filter(isEnemyNamedAttendee);
-        if (cards.length > 0) {
-          openCardChoice({ mode: "enemy_enemy_order", title: localCard.name,
-            message: "山札の上から置く順に、戻す出席者をすべて選んでください。",
-            cards, min: cards.length, max: cards.length, confirmLabel: "この順番で出席",
             playCardId: instanceId, playTarget: { zone, owner, index } });
           return;
         }
@@ -36163,13 +36208,6 @@
           || new Set(ids).size !== ids.length
           || ids.some((id) => !candidates.some((entry) => entry.instanceId === id)))) return false;
         card.tripleEnemyOrderIds = ids === undefined ? candidates.map((entry) => entry.instanceId) : ids;
-      }
-      if (card.baseId === "enemy_enemy") {
-        const candidates = listBoardRefs(side).map(getBoardCardFromRef).filter(isEnemyNamedAttendee);
-        const ids = options.enemyEnemyTopOrderIds || [];
-        if (ids.length && (ids.length !== candidates.length || new Set(ids).size !== ids.length
-          || ids.some((id) => !candidates.some((entry) => entry.instanceId === id)))) return false;
-        card.enemyEnemyTopOrderIds = ids.length ? ids : candidates.map((entry) => entry.instanceId);
       }
       if (side === "opponent" && !isOnlineBattle()) {
         if (card.baseId === "spoon_wizard") card.spoonDestroyIds = listBoardRefs(side)
@@ -37170,6 +37208,31 @@
       return Boolean(card?.name?.includes("敵") && ["student", "teacher", "vampire"].includes(card.type));
     }
 
+    function enemyReviveCandidates(side) {
+      return state.players[side].trash.filter((card) => card.baseId === "enemy_student");
+    }
+
+    function resolveEnemyReviveEffect(side, card, selectedIds) {
+      const candidates = enemyReviveCandidates(side);
+      const ids = Array.isArray(selectedIds) && selectedIds.length <= 9
+        && new Set(selectedIds).size === selectedIds.length
+        && selectedIds.every((id) => candidates.some((entry) => entry.instanceId === id))
+        ? selectedIds : [];
+      let revived = 0;
+      ids.forEach((instanceId) => {
+        const trash = state.players[side].trash;
+        const targetIndex = trash.findIndex((entry) => entry.instanceId === instanceId && entry.baseId === "enemy_student");
+        const seatIndex = PLAYER_SEAT_ORDER.find((seat) => isBoardSlotOpen(side, "seat", seat));
+        if (targetIndex < 0 || seatIndex === undefined) return;
+        const [target] = trash.splice(targetIndex, 1);
+        const summoned = makeBoardCard(target);
+        if (attendCard(side, summoned, "seat", seatIndex, { attendanceSource: ATTENDANCE_SOURCE.TRASH })) revived += 1;
+        else trash.push(target);
+      });
+      addLog(`${card.name}の効果：校外エリアから敵${revived}人を出席させました。`);
+      return revived;
+    }
+
     function tripleEnemyCandidates(side) {
       return state.players[side].deck.slice(0, 3).filter(isEnemyNamedAttendee);
     }
@@ -37192,7 +37255,8 @@
         player.hand = player.hand.filter((handCard) => handCard.instanceId !== entry.instanceId);
         const placed = makeBoardCard(entry);
         if (attendCard(sequence.side, placed, "seat", seatIndex,
-          { attendanceSource: ATTENDANCE_SOURCE.HAND, ignoreAttendanceLimit: true })) {
+          { attendanceSource: ATTENDANCE_SOURCE.HAND, ignoreAttendanceLimit: true,
+            commandId: sequence.commandId || "" })) {
           sequence.summoned += 1;
           showCardPlayAnimation(placed, "board");
         } else player.hand.push(entry);
@@ -37219,6 +37283,7 @@
       const ordered = order.map((id) => matches.find((entry) => entry.instanceId === id)).filter(Boolean);
       state.players[side].hand.push(...matches);
       continueTripleEnemyAttendance({ side, name: card.name, matchCount: matches.length,
+        commandId: card.tripleEnemyCommandId || "",
         summoned: 0, remaining: ordered });
       resumeTripleEnemySequences();
     }
@@ -37300,18 +37365,17 @@
         addLog(`${card.name}の効果：自分の出席者${destroyedOwn.length}人、相手の出席者${destroyedEnemy.length}人を破壊しました。`);
       }
       if (card.baseId === "enemy_revive") {
-        let revived = 0;
-        [...new Set(card.enemyReviveIds || [])].forEach((instanceId) => {
-          const trash = state.players[side].trash;
-          const targetIndex = trash.findIndex((entry) => entry.instanceId === instanceId && entry.baseId === "enemy_student");
-          const seatIndex = PLAYER_SEAT_ORDER.find((seat) => isBoardSlotOpen(side, "seat", seat));
-          if (targetIndex < 0 || seatIndex === undefined) return;
-          const [target] = trash.splice(targetIndex, 1);
-          const summoned = makeBoardCard(target);
-          if (attendCard(side, summoned, "seat", seatIndex, { attendanceSource: ATTENDANCE_SOURCE.TRASH })) revived += 1;
-          else trash.push(target);
-        });
-        addLog(`${card.name}の効果：校外エリアから敵${revived}人を出席させました。`);
+        const candidates = enemyReviveCandidates(side);
+        if (card.enemyReviveIds === undefined && candidates.length && !isCpuControlledBattleSide(side)) {
+          if (side === "opponent" && requestRemoteEnemyReviveChoice(side, card,
+            options.commandId || state.online.activeRemoteCommandId || "")) return;
+          if (side === "player" && openCardChoice({ mode: "enemy_revive_resolution", title: card.name,
+            message: "校外エリアから出席させる「敵」を選んでください。0人でも確定できます。",
+            cards: candidates, min: 0, max: Math.min(candidates.length, 9),
+            confirmLabel: "復活させる", context: { sourceCardId: card.instanceId } })) return;
+        }
+        resolveEnemyReviveEffect(side, card,
+          card.enemyReviveIds === undefined ? candidates.map((entry) => entry.instanceId) : card.enemyReviveIds);
       }
       if (card.baseId === "starbucks_student") {
         let affected = 0;
@@ -37398,23 +37462,20 @@
         const refs = listBoardRefs(side).filter((ref) => isEnemyNamedAttendee(getBoardCardFromRef(ref)));
         const drawn = drawUpTo(side, refs.length);
         const returnRefs = refs.filter((ref) => getBoardCardFromRef(ref)?.instanceId !== card.instanceId);
-        const ordered = (card.enemyEnemyTopOrderIds || []).map((id) =>
-          returnRefs.find((ref) => getBoardCardFromRef(ref)?.instanceId === id)).filter(Boolean);
-        returnRefs.forEach((ref) => {
-          if (!ordered.includes(ref)) ordered.push(ref);
-        });
         const returned = [];
-        ordered.forEach((ref) => {
+        returnRefs.forEach((ref) => {
           const target = getBoardCardFromRef(ref);
           if (!target) return;
           clearBoardCardFromField(ref.owner, ref.zone, ref.index, target);
           resetCardEffectsForTrash(target, side);
           returned.push(target);
         });
-        state.players[side].deck.unshift(...returned);
-        addLog(`${card.name}の効果：${drawn}枚引き、他の「敵」とつく出席者${returned.length}人を選んだ順にデッキの上へ戻しました。`);
+        state.players[side].deck.push(...returned);
+        shuffleDeckAfterSearch(side);
+        addLog(`${card.name}の効果：${drawn}枚引き、他の「敵」とつく出席者${returned.length}人をデッキに戻してシャッフルしました。`);
       }
       if (card.baseId === "triple_enemy") {
+        card.tripleEnemyCommandId = options.commandId || state.online.activeRemoteCommandId || "";
         const candidates = tripleEnemyCandidates(side);
         if (!card.tripleEnemyOrderIds && candidates.length > 0 && !isCpuControlledBattleSide(side)) {
           if (side === "player") {
@@ -51530,7 +51591,7 @@
         dobby: "このカードが出席したとき、攻撃力3以上の相手の出席者すべての攻撃力を-2する。",
         pachin_uni: "このカードを手札から出席させたとき、相手の3行目の空いている席マスすべてに「一般学生」を1人ずつ出席させる。それらは攻撃できない。",
         protein_drinker: "自分のターン終了時、このカードの攻撃力を+1する。",
-        proliferating_enemy: "このカードが自分の場にいるかぎり、相手の場に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
+        proliferating_enemy: "このカードが自分の講義室にいるかぎり、相手の講義室に出席者が出席するたび、自分の空いている席マス1つをランダムに選び、「敵」1人を出席させる。",
         delayed_student: "このカードは自分の3行目の席マスにのみ出席できる。このカードが出席したとき、お互いのカウントダウン中の効果すべての残りカウントを2増やす。",
         infight_shogi: "超陽気を持つ。このカードが出席したとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         aiben: "手札からこのカードを出席させたとき、相手の講義室の空いている席マス1つに「にょてい」1人をランダムに出席させる。この効果で出席した「にょてい」は、相手の次のターン終了時まで攻撃できない。相手講義室に「にょてい」がいるかぎり、相手はこのカードを「にょてい」以外で攻撃対象にできず、このカードは「にょてい」以外を攻撃対象に選択できない。このカードが「アイベン」「にょてい」のどちらかの効果で出席しているなら、自分講義室に存在する出席者の攻撃力の合計だけ攻撃力が上がり、このカードは他のカードの効果を受けない。",
@@ -51617,7 +51678,7 @@
         true_enemy: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。それが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。自分の空いている席マスがあるなら、そのカードを手札から出席させ、超陽気を付与する。",
         enemy_horde: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
         rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
-        enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の「敵」とつく出席者すべてを、好きな順番で自分のデッキの上に戻す。",
+        enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の自分の講義室にいる「敵」とつく出席者すべてをデッキに戻してシャッフルする。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
         triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。出席させなかったカードは手札に残す。",
         salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。その出席時効果は発動する。",
