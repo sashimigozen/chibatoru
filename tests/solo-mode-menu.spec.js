@@ -36,7 +36,44 @@ test("左側をCPUへ切り替えてCPU同士の観戦設定にできる", async
 
   await expect(page.locator("#soloLeftControllerLabel")).toHaveText("CPU");
   await expect(page.locator("#soloLeftRoleTitle")).toHaveText("CPU");
-  await expect(page.locator("#soloObserverNote")).toContainText("両方の手札を公開");
+  await expect(page.locator("#soloObserverNote")).toHaveCount(0);
+});
+
+test("トレーニングの補足説明を表示せず、選択とデッキ確認は維持する", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.locator("#soloTrainingButton").click();
+  await expect(page.locator("#soloRuleDescription, #soloObserverNote, #soloDeckPickerSubtitle")).toHaveCount(0);
+  await expect(page.locator("#soloDeckScreen")).not.toContainText("使用デッキと手番を選んでください");
+  await expect(page.locator("#soloRuleCycleButton")).toBeVisible();
+  await expect(page.locator("#soloInitiativeCycleButton")).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath("training-setup.png") });
+
+  await page.evaluate(() => {
+    window.__chibattle.state.deckBuilder.chaosDecks = {
+      "説明なし確認用": { counts: { general_student: 40 } }
+    };
+  });
+  await page.selectOption("#soloRuleSelect", "chaos");
+  await page.locator("#soloLeftControllerButton").click();
+  await expect(page.locator("#soloDeckScreen")).not.toContainText("操作せずに観戦できます");
+  await page.locator("#soloInitiativeCycleButton").click();
+  await expect(page.locator("#soloInitiativeLabel")).toHaveText("左が先攻");
+  for (const selector of ["#soloPlayerSlot", "#soloAiSlot"]) {
+    await page.locator(selector).click();
+    await expect(page.locator("#soloDeckPicker")).not.toContainText("選んでください");
+    await page.locator("#soloDeckGrid .deck-library-card", { hasText: "説明なし確認用" }).click();
+  }
+  await expect(page.locator("#soloBattleStartButton")).toBeEnabled();
+  await page.locator("#soloPlayerDeckConfirmButton").click();
+  await expect(page.locator("#soloDeckDetail .card").first()).toBeVisible();
+  await expect(page.locator("#soloDeckPicker")).not.toContainText("現在選択しているデッキの内容です");
+  await page.screenshot({ path: test.info().outputPath("training-deck-confirm.png") });
+  await page.locator("#soloDeckPickerCloseButton").click();
+  await page.locator("#soloBattleStartButton").click();
+  await expect(page.locator("#battleScreen")).toBeVisible();
+  expect(errors).toEqual([]);
 });
 
 test("魔の1号館は3番目のボタンから開く", async ({ page }) => {
