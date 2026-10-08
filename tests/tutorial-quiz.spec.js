@@ -87,8 +87,10 @@ const solutions = {
   composure: async (p) => {
     await attack(p, "yuta", "college_student_vibe");
     await itemOn(p, "destructive_lie", "player", "seat", 4);
-    await itemBody(p, "ruler");
-    await itemBody(p, "ruler");
+    await itemOn(p, "earphones", "player", "seat", 8);
+    await play(p, "yocchan", "seat", 4);
+    await attack(p, "yocchan");
+    await attack(p, "general_student");
   },
   equipment: async (p) => {
     await itemOn(p, "earphones", "player", "seat", 4);
@@ -99,8 +101,10 @@ const solutions = {
     await attack(p, "apprentice_vampire", "college_student_vibe");
     await expect(board(p, "player", "apprentice_vampire")).toBeVisible();
     await itemOn(p, "destructive_lie", "player", "seat", 4);
-    await itemBody(p, "ruler");
-    await itemBody(p, "ruler");
+    await itemOn(p, "earphones", "player", "seat", 8);
+    await play(p, "yocchan", "seat", 4);
+    await attack(p, "yocchan");
+    await attack(p, "general_student");
   },
   evolution: async (p) => {
     await play(p, "dark_yuta");
@@ -140,8 +144,10 @@ for (const [chapter, solve] of Object.entries(solutions)) {
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await openQuiz(page, chapter);
+    expect(await page.evaluate(() => window.__chibattle.state.players.player.deck
+      .every(c => c.baseId === "suspicious_document" && c.unusable))).toBe(true);
     expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.map(c => c.baseId)))
-      .toHaveLength(chapter === "load" ? 5 : 3);
+      .toHaveLength(["load", "composure", "drain"].includes(chapter) ? 5 : 3);
     await expect(hand(page, decoys[chapter])).toBeVisible();
     await solve(page);
     await expect(page.locator("#resultOverlay")).toContainText("勝利");
@@ -216,6 +222,20 @@ test("眠気の原因を除去した正解は、眠気の乱数が必ず失敗�
   await solutions.sleepy(page);
   await expect(page.locator("#resultOverlay")).toContainText("勝利");
 });
+
+for (const chapter of ["composure", "drain"]) {
+  test(`${chapter}：吸血・余裕で反撃を耐える手順を飛ばすと、文書を引いても勝てない`, async ({ page }) => {
+    await openQuiz(page, chapter);
+    await itemOn(page, "destructive_lie", "player", "seat", 4);
+    await itemOn(page, "earphones", "player", "seat", 8);
+    await play(page, "yocchan", "seat", 4);
+    await attack(page, "yocchan", "college_student_vibe");
+    await attack(page, "general_student", await board(page, "opponent", "college_student_vibe").count() ? "college_student_vibe" : null);
+    expect(await page.evaluate(() => window.__chibattle.state.gameWinner)).not.toBe("player");
+    await page.locator("#endTurnButton").click({ force: true });
+    await expect(page.locator("#resultOverlay")).toContainText("失敗");
+  });
+}
 
 test("負荷編も相手のターンに移ったら失敗し、相手の負荷ダメージまで待たない", async ({ page }) => {
   await openQuiz(page, "load");
