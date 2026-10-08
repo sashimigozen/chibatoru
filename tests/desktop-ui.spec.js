@@ -133,7 +133,7 @@ test("1回クリックで開き、準備・選択はPC内、実際の対戦で�
   await page.locator("#soloTrainingButton").click();
   await expect(page.locator("#modeComputer #soloDeckScreen")).toBeVisible();
   const contentBox = await page.locator(".computer-content").boundingBox();
-  for (const selector of ["#soloPlayerSlot", "#soloAiSlot", "#soloTrainingDataButton", "#soloObserverNote"]) {
+  for (const selector of ["#soloPlayerSlot", "#soloAiSlot", "#soloTrainingDataButton"]) {
     const box = await page.locator(selector).boundingBox();
     expect(box.y + box.height).toBeLessThanOrEqual(contentBox.y + contentBox.height);
   }

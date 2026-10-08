@@ -8412,7 +8412,6 @@
     .training-battle-button strong { font-size: 21px; font-style: italic; }
     .training-data-button { margin-top: 12px; border: 1px solid #738995; border-radius: 4px; padding: 6px 18px; color: #17384b; background: #fff; font-weight: 1000; cursor: pointer; }
     .training-data-button:disabled { color: #a0adb5; background: #edf1f3; cursor: default; }
-    .training-observer-note { width: min(620px, calc(100% - 40px)); margin: 12px auto 0; color: #647886; font-size: 11px; text-align: center; }
 
     .online-random-setup {
       position: relative;
@@ -17573,7 +17572,6 @@
           <label class="training-setting-label">ルール</label>
           <button class="training-cycle-button" id="soloRuleCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloRuleCycleLabel">通常ルール</strong></button>
           <select class="control training-native-select" id="soloRuleSelect" aria-label="ソロバトルの対戦ルール"></select>
-          <p class="training-rule-description" id="soloRuleDescription"></p>
           <label class="training-setting-label">手番</label>
           <button class="training-cycle-button" id="soloInitiativeCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloInitiativeLabel">ランダム</strong></button>
           <div class="training-versus">VS</div>
@@ -17588,10 +17586,9 @@
           <button class="training-deck-select" id="soloAiSlot" type="button">デッキ選択</button>
         </article>
       </section>
-      <p class="training-observer-note" id="soloObserverNote">CPU同士の対戦では両方の手札を公開します</p>
       <section class="training-picker hidden" id="soloDeckPicker" aria-label="デッキ選択">
         <div class="training-picker-dialog">
-          <div class="training-picker-head"><div><h2 id="soloDeckPickerTitle">デッキ選択</h2><p id="soloDeckPickerSubtitle">使用するデッキを選んでください</p></div><button class="button secondary" id="soloDeckPickerCloseButton" type="button">閉じる</button></div>
+          <div class="training-picker-head"><div><h2 id="soloDeckPickerTitle">デッキ選択</h2></div><button class="button secondary" id="soloDeckPickerCloseButton" type="button">閉じる</button></div>
           <div class="deck-library-grid" id="soloDeckGrid"></div>
           <div class="deck-library-detail hidden" id="soloDeckDetail"></div>
         </div>
@@ -19641,6 +19638,7 @@
           { title: "PC画面の外観", after: "パソコン本体を画面の上端・左右端まで拡大し、縁の外側の背景が見えない構図にしました。MacBook Airの見た目を参考に、画面とキーボードの間の下枠を細くしています。キーボードが画面外へ続く構図と、ホームバーの位置は維持しています。背景を無地で隠す変更は戻し、ホーム画面の背景は変更していません。" },
           { title: "リーサルクイズの説明表示", after: "通常クイズ・超難問の説明は開始時に表示し、約3秒後にフェードアウトします。やり直しボタンは説明から分離し、左上の終了ボタンの隣に固定しました。再挑戦時も説明を最初だけ表示し、練習の説明は変更していません。" },
           { title: "デッキ編成の通知", after: "カードを追加・削除するたびに画面下へ出ていた枚数変更の通知をなくしました。編成中の枚数表示はそのまま更新し、保存結果やファイル読み込みのエラー通知は維持しています。" },
+          { title: "トレーニングの対戦準備", after: "対戦準備画面とデッキ選択内の補足説明文を削除しました。ルール・手番・操作側・使用デッキの選択、デッキ確認、必要なエラー表示は維持しています。" },
           { title: "リーサルクイズ・超難問", after: "基本編以外の12編に3つ目のステージを追加しました。専用の盤面・手札・残された戦意から、配置、効果を使う順番、対象選び、進化や融合を組み合わせて勝利を目指します。相手の盤面には注目・超注目を持つ出席者を配置し、攻撃に使う出席者を残しながら処理する問題にしました。通常クイズも含めて、デッキの中身はすべて使用できない「怪しげな文書」です。解答に必要なカードは初期手札・盤面にあり、ドロー先を推測する必要はありません。開始時にヒントや解答は表示しません。相手のターンになったら失敗となり、同じ超難問を初期状態から再挑戦できます。選択画面の矢印で練習・通常クイズ・超難問を切り替えます。基本編と既存の練習、カードのテキスト・効果は変更していません。" },
           { title: "敵系統の数値", after: "敵の幹部は体力2、増殖する敵は攻撃力1・体力2、真の敵と敵の群れと復活の敵は攻撃力1になりました。敵の敵と三敵は従来の攻撃力1・体力2を維持します。" },
           { title: "敵の敵", after: "手札から出席したとき、自分を含む「敵」とつく出席者の人数だけ引き、自分以外の「敵」とつく出席者をデッキへ戻してシャッフルします。山札の上へ戻す順番の選択はなくなりました。" },
@@ -21930,7 +21928,6 @@
       soloTrainingButton: document.getElementById("soloTrainingButton"),
       soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
       soloRuleSelect: document.getElementById("soloRuleSelect"),
-      soloRuleDescription: document.getElementById("soloRuleDescription"),
       soloRuleCycleButton: document.getElementById("soloRuleCycleButton"),
       soloRuleCycleLabel: document.getElementById("soloRuleCycleLabel"),
       soloInitiativeCycleButton: document.getElementById("soloInitiativeCycleButton"),
@@ -21949,10 +21946,8 @@
       soloDeckDetail: document.getElementById("soloDeckDetail"),
       soloDeckPicker: document.getElementById("soloDeckPicker"),
       soloDeckPickerTitle: document.getElementById("soloDeckPickerTitle"),
-      soloDeckPickerSubtitle: document.getElementById("soloDeckPickerSubtitle"),
       soloDeckPickerCloseButton: document.getElementById("soloDeckPickerCloseButton"),
       soloBattleStartButton: document.getElementById("soloBattleStartButton"),
-      soloObserverNote: document.getElementById("soloObserverNote"),
       soloTrainingDataButton: document.getElementById("soloTrainingDataButton"),
       soloTrainingDataOverlay: document.getElementById("soloTrainingDataOverlay"),
       soloTrainingDataSummary: document.getElementById("soloTrainingDataSummary"),
@@ -48117,7 +48112,6 @@
         .join("");
       if (elements.soloRuleSelect.innerHTML !== ruleOptions) elements.soloRuleSelect.innerHTML = ruleOptions;
       elements.soloRuleSelect.value = ruleId;
-      elements.soloRuleDescription.textContent = ruleDescriptionText(ruleId);
       elements.soloRuleCycleLabel.textContent = rule.name;
       const initiativeLabels = { random: "ランダム", player: "左が先攻", opponent: "右が先攻" };
       elements.soloInitiativeLabel.textContent = initiativeLabels[selection.initiative] || initiativeLabels.random;
@@ -48125,9 +48119,6 @@
       elements.soloLeftControllerLabel.textContent = leftIsAi ? "CPU" : "ユーザー";
       elements.soloLeftRoleTitle.textContent = leftIsAi ? "CPU" : state.profile.username;
       applyPlayerProfileAvatar(elements.soloLeftAvatar, leftIsAi ? "cpu" : state.profile.avatarId);
-      elements.soloObserverNote.textContent = leftIsAi
-        ? "CPU同士の対戦では両方の手札を公開し、操作せずに観戦できます"
-        : "ユーザーとCPUの使用デッキと手番を選んでください";
       elements.soloPlayerDeckName.textContent = selection.playerDeckName || "未選択";
       elements.soloAiDeckName.textContent = selection.opponentDeckName || "未選択";
       elements.soloPlayerDeckConfirmButton.disabled = !selection.playerDeckName;
@@ -48165,9 +48156,6 @@
       elements.soloDeckPickerTitle.textContent = showingSelectedDeck
         ? (selection.activeSide === "player" ? "左側の使用デッキ" : "右側CPUの使用デッキ")
         : (selection.activeSide === "player" ? "左側のデッキ選択" : "右側CPUのデッキ選択");
-      elements.soloDeckPickerSubtitle.textContent = showingSelectedDeck
-        ? "現在選択しているデッキの内容です。"
-        : `${onlineDeckFormatDefinition(format).groupLabel}から使用するデッキを選んでください。同じデッキ同士でも対戦できます。`;
       elements.soloDeckGrid.classList.toggle("hidden", showingSelectedDeck);
       elements.soloDeckDetail.classList.toggle("hidden", !preview);
       elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded, showCurve: false })}
