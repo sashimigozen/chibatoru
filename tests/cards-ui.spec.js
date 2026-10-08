@@ -10,6 +10,38 @@ async function enter(page, view = "library") {
   await page.locator(`[data-case-view="${view}"]`).click();
 }
 
+test("デッキへの追加・削除は下の通知を出さず、必要なエラーは維持する", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await enter(page);
+  await page.locator("#deckLibraryGrid .new-deck").click();
+  const notice = page.locator("#cardsNotice");
+  const count = () => page.evaluate(() => window.__chibattle.state.deckBuilder.counts.player.general_student || 0);
+  await page.locator('[data-deck-plus="general_student"]').click();
+  expect(await count()).toBe(1);
+  await expect(notice).toBeHidden();
+  await page.locator('[data-current-plus="general_student"]').click();
+  expect(await count()).toBe(2);
+  await expect(notice).toBeHidden();
+  await page.locator('[data-deck-minus="general_student"]').click();
+  expect(await count()).toBe(1);
+  await expect(notice).toBeHidden();
+  // 保存に必要なデッキ名のエラーは通知を維持する。
+  await page.locator("#saveDeckButton").click();
+  await expect(notice).toContainText("保存するデッキ名を入力してください");
+  await expect(notice).toBeVisible();
+  await page.locator('[data-current-minus="general_student"]').click();
+  expect(await count()).toBe(0);
+  await expect(notice).toBeEmpty();
+  await expect(notice).toBeHidden();
+  // 再描画でも古いお知らせが復活しない。
+  await page.evaluate(() => window.__chibattle.render());
+  await expect(notice).toBeHidden();
+  await page.locator('[data-deck-plus="general_student"]').click();
+  expect(await count()).toBe(1);
+  await expect(notice).toBeHidden();
+  await page.screenshot({ path: test.info().outputPath("deck-editor-without-count-notice.png") });
+});
+
 test("カードの二択・一覧・能力と関連カードの詳細・好きなカードを本体へ保存", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
