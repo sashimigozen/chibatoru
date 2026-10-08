@@ -180,7 +180,7 @@ for (const chapter of chapters) {
     await page.screenshot({ path: test.info().outputPath(`${chapter.id}.png`) });
     await page.locator("#tutorialNextButton").click();
     await expect(page.locator("#tutorialCoachTitle")).toHaveText(`${chapter.title}：リーサルクイズ`);
-    await expect(page.locator("#tutorialStepCounter")).toHaveText("2/2");
+    await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
     const initial = await snapshot(page);
     await page.locator("#endTurnButton").click();
     await expect(page.locator("#resultOverlay")).toContainText("失敗");
