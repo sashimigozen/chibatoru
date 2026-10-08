@@ -55,9 +55,11 @@ async function end(p) {
 // 解答はテスト側のみ。問題開始後は状態へ手を加えず、すべて通常UIから操作する。
 const solutions = {
   placement: async (p, mistake = false) => {
-    await attack(p, "yuta", { index: 0 });
+    await attack(p, "yuta", { index: 8 });
     await item(p, "destructive_lie", "player", mistake ? 0 : 4);
     await play(p, "student_comedy", mistake ? 0 : 4);
+    await fuse(p);
+    await item(p, "double_diamond", "opponent", 0);
     await face(p, "ruler");
     for (let i = 0; i < (mistake ? 3 : 4); i++) await attack(p, "general_student", null, i);
   },
@@ -72,9 +74,10 @@ const solutions = {
     await attack(p, "strong_student");
   },
   cheerful: async (p, mistake = false) => {
-    await attack(p, "zombie", { index: 0 });
+    await attack(p, "zombie", { index: 8 });
+    await attack(p, "zombie", { index: 0 }, 1);
     await play(p, "zombie", 5);
-    await attack(p, "zombie", { index: 2 }, 1);
+    await attack(p, "zombie", { index: 2 }, 2);
     await play(p, "aggro_princess", 6);
     if (!mistake) await attack(p, "aggro_princess");
     await item(p, "go_home", "player", 6);
@@ -95,6 +98,8 @@ const solutions = {
   late: async p => {
     await play(p, "eaten_student", 5);
     await play(p, "no_late_time", null, "environment");
+    await attack(p, "yuta", { index: 8 }, 1);
+    await attack(p, "strong_student", { index: 1 });
     await attack(p, "hurried_student", { index: 0 });
     await attack(p, "general_student", { index: 0 });
     await attack(p, "yuta");
@@ -102,8 +107,9 @@ const solutions = {
   },
   sleepy: async p => {
     await item(p, "destructive_lie", "player", null, "teacher");
+    await item(p, "ruler", "opponent", 8);
     await item(p, "seriously_hit", "opponent", null, "teacher");
-    await item(p, "ruler", "opponent", 0);
+    await attack(p, "strong_student", { index: 2 });
     await attack(p, "general_student", { index: 0 });
     await item(p, "red_happi", "player", 4);
     await attack(p, "yuta");
@@ -111,10 +117,12 @@ const solutions = {
     await attack(p, "aggro_princess");
   },
   composure: async (p, mistake = false) => {
-    if (!mistake) await attack(p, "yuta", { index: 0 });
+    await item(p, "ruler", "opponent", 8);
+    await item(p, "ruler", "opponent", 8);
+    await fuse(p);
+    await item(p, "double_diamond", "opponent", 0);
+    if (!mistake) await attack(p, "yuta", { index: 1 });
     await item(p, "destructive_lie", "player", 4);
-    await face(p, "ruler");
-    await face(p, "ruler");
     await item(p, "earphones", "player", 8);
     await play(p, "yocchan", 4);
     await attack(p, "yocchan");
@@ -122,24 +130,25 @@ const solutions = {
   },
   equipment: async (p, mistake = false) => {
     await item(p, "ruler", "opponent", 0);
-    await item(p, "ruler", "opponent", 0);
-    await item(p, "destructive_lie", "player", null, "teacher");
+    await attack(p, "wood_gitch", { index: 0 });
     await fuse(p);
     await item(p, "double_diamond", "opponent", 1);
     await item(p, "earphones", "player", 4);
     await attack(p, "yuta", { index: 2 });
     await item(p, "red_happi", "player", mistake ? 4 : 8);
-    await attack(p, "yuta", null, 1);
-    await play(p, "aggro_princess", 5);
-    await attack(p, "aggro_princess");
+    await item(p, "destructive_lie", "player", 4);
+    await attack(p, "yuta");
+    await play(p, "yocchan", 4);
+    await attack(p, "yocchan");
   },
   drain: async (p, mistake = false) => {
-    if (mistake) await face(p, "ruler");
-    else await item(p, "ruler", "opponent", 0);
-    await attack(p, "apprentice_vampire", { index: 0 });
+    await item(p, "ruler", "opponent", 8);
+    await item(p, "ruler", "opponent", 8);
+    await fuse(p);
+    await item(p, "double_diamond", "opponent", 0);
+    if (!mistake) await attack(p, "apprentice_vampire", { index: 1 });
     await expect(p.locator('#playerBoardPanel [data-base-id="apprentice_vampire"]')).toBeVisible();
     await item(p, "destructive_lie", "player", 4);
-    await face(p, "ruler");
     await item(p, "earphones", "player", 8);
     await play(p, "yocchan", 4);
     await attack(p, "yocchan");
@@ -176,8 +185,9 @@ const solutions = {
     if (mistake) await p.locator('#threeGesturesHand button').nth(2).click();
     await p.locator("#threeGesturesConfirmButton").click();
     await item(p, "earphones", "player", 4);
+    await attack(p, "yuta", { index: 2 });
+    await attack(p, "general_student", { index: 8 });
     if (!mistake) {
-      await attack(p, "yuta", { index: 0 });
       await face(p, "ruler");
     }
     await immediate(p, "grudge");
@@ -191,6 +201,22 @@ for (const [chapter, solve] of Object.entries(solutions)) {
     const errors = [];
     page.on("pageerror", e => errors.push(e.message));
     await open(page, chapter);
+    const initialBoard = await page.evaluate(() => {
+      const a = window.__chibattle;
+      const enemy = a.state.players.opponent.board;
+      const attendees = [...new Map([...enemy.seats, enemy.teacher].filter(Boolean).map(c => [c.instanceId, c])).values()];
+      return {
+        deck: [a.state.players.player, a.state.players.opponent].every(p => p.deck.length === 40
+          && p.deck.every(c => c.baseId === "suspicious_document" && c.unusable)),
+        guards: attendees.filter(c => a.hasKeyword(c, "注目")).length,
+        superGuard: attendees.some(c => a.hasKeyword(c, "超注目")),
+        occupiedSeats: enemy.seats.filter(Boolean).length
+      };
+    });
+    expect(initialBoard).toMatchObject({ deck: true, superGuard: true });
+    expect(initialBoard.occupiedSeats).toBeGreaterThanOrEqual(chapter === "evolution" ? 9 : 3);
+    expect(initialBoard.guards).toBeGreaterThanOrEqual(chapter === "evolution" ? 2 : 3);
+    if (["placement", "load"].includes(chapter)) await page.screenshot({ path: test.info().outputPath(`${chapter}-guarding-board.png`) });
     // ランダム対象がある問題も、極端な乱数で正解が変わらない。
     await page.evaluate(() => { Math.random = () => .99999; });
     await solve(page);
@@ -206,7 +232,13 @@ for (const [chapter, solve] of Object.entries(solutions)) {
       const s = window.__chibattle.state;
       return { winner: s.gameWinner, side: s.currentSide, turn: s.actionTurn, stage: s.tutorial.stage, will: s.players.player.will };
     })).toEqual({ winner: "player", side: "player", turn: 1, stage: "expert", will: 0 });
-    const decoy = ({ placement: "bento", lecture: "seriously_hit", late: "bento", sleepy: "bento", composure: "bento", drain: "bento" })[chapter] || "general_student";
+    expect(await page.evaluate(() => window.__chibattle.state.players.player.deck
+      .every(c => c.baseId === "suspicious_document" && c.unusable))).toBe(true);
+    expect(await page.evaluate(() => {
+      const a = window.__chibattle, b = a.state.players.opponent.board;
+      return [...b.seats, b.teacher].some(c => c && a.hasKeyword(c, "注目"));
+    })).toBe(false);
+    const decoy = ({ placement: "bento", lecture: "seriously_hit", late: "bento", sleepy: "bento", composure: "bento", equipment: "bento", drain: "bento" })[chapter] || "general_student";
     expect(await page.evaluate(id => window.__chibattle.state.players.player.hand.some(c => c.baseId === id), decoy)).toBe(true);
     expect(errors).toEqual([]);
   });
@@ -238,10 +270,10 @@ const mistakes = {
   equipment: p => solutions.equipment(p, true),
   drain: p => solutions.drain(p, true),
   evolution: async p => {
-    await attack(p, "single_cell", { index: 0 });
+    await play(p, "general_student", 1);
     await item(p, "red_happi", "player", 8);
     await play(p, "dark_yuta", 8);
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 4; i++) {
       const index = await p.evaluate(() => window.__chibattle.state.players.player.board.seats.findIndex(c => !c));
       await play(p, "single_cell", index);
     }
@@ -280,3 +312,25 @@ test("乱数の反対端でも進化・負荷の解答が成立する", async ({
     await expect(page.locator("#resultOverlay")).toContainText("勝利");
   }
 });
+
+for (const [stage, chapters] of [["quiz", ["composure", "drain"]],
+  ["expert", ["placement", "lecture", "sleepy", "composure", "equipment", "drain"]]]) {
+  for (const chapter of chapters) {
+    test(`${chapter}/${stage}：実際に引く2枚は使用できない文書だけで、本体へのダメージに使えない`, async ({ page }) => {
+      await page.goto(gameUrl);
+      await page.evaluate(({ chapter, stage }) => window.__chibattle.startTutorialBattle(chapter, { stage }), { chapter, stage });
+      await page.locator("#tutorialToggleButton").click();
+      const teacher = ["lecture", "sleepy"].includes(chapter);
+      await item(page, "destructive_lie", "player", teacher ? null : 4, teacher ? "teacher" : "seat");
+      expect(await page.evaluate(() => {
+        const a = window.__chibattle, player = a.state.players.player;
+        const drawn = player.hand.filter(c => c.baseId === "suspicious_document");
+        return { count: drawn.length, deckSize: player.deck.length,
+          cannotUse: drawn.every(c => c.unusable && !a.canUseHandCardNow(c)) };
+      })).toEqual({ count: 2, deckSize: 38, cannotUse: true });
+      const before = await page.evaluate(() => ({ life: window.__chibattle.state.players.opponent.life, will: window.__chibattle.state.players.player.will }));
+      await face(page, "suspicious_document");
+      expect(await page.evaluate(() => ({ life: window.__chibattle.state.players.opponent.life, will: window.__chibattle.state.players.player.will }))).toEqual(before);
+    });
+  }
+}
