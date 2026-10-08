@@ -335,10 +335,11 @@
   let noticeTimer, lastMessage = state.message;
   function showNotice() {
     const notice = document.getElementById("cardsNotice");
-    if (!state.message || state.message === lastMessage) return;
+    if (state.message === lastMessage) return;
     lastMessage = state.message;
-    notice.textContent = state.message;
-    clearTimeout(noticeTimer); noticeTimer = setTimeout(() => { notice.textContent = ""; }, 4500);
+    clearTimeout(noticeTimer);
+    notice.textContent = state.message || "";
+    if (state.message) noticeTimer = setTimeout(() => { notice.textContent = ""; }, 4500);
   }
 
   document.addEventListener("keydown", (event) => {
