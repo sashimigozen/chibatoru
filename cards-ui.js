@@ -401,9 +401,8 @@
     gesture.distance += Math.abs(delta) * unit;
     if (gesture.distance < 48) return;
     gesture.moved = true;
-    if (tutorial && ((direction > 0 && state.tutorialMenu.stage === "quiz")
-      || (direction < 0 && state.tutorialMenu.stage !== "quiz"))) return;
-    button.click();
+    if (tutorial) cycleTutorialStage(direction);
+    else button.click();
   }, { passive: false });
 
   window.ChibattleCards = { renderLibrary, renderEditor, renderCardDetail, confirmDiscard, isDirty,
