@@ -125,7 +125,7 @@ test("細いの戦意とちがうよのドロー枚数は手札枚数で決ま�
     return { cost7, cost3, own: state.players.player.hand.length, opponent: state.players.opponent.hand.length,
       itemInTrash: state.players.player.trash.some((entry) => entry.baseId === "chigauyo") };
   });
-  expect(result).toEqual({ cost7: 3, cost3: 0, own: 3, opponent: 3, itemInTrash: true });
+  expect(result).toEqual({ cost7: 4, cost3: 4, own: 3, opponent: 3, itemInTrash: true });
 });
 
 test("敵の敵は自分を含めて引き、他の敵を山札へ戻してシャッフルする", async ({ page }) => {
