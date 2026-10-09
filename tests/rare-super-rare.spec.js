@@ -22,7 +22,7 @@ test('レアは通常の面に共通ミラー光、スーパーレアは銀枠�
   await page.evaluate(() => window.__chibattle.startCardTest('yuta'));
   for (const baseId of ['general_student', 'yuta', 'vampire', 'ruler', 'classroom', 'tokyo_tech_bro']) {
     const results = {};
-    for (const mode of ['normal', 'rare', 'superRare', 'reward']) {
+    for (const mode of ['normal', 'rare', 'superRare', 'ultraRare']) {
       await page.evaluate(({ baseId, mode }) => {
         const api = window.__chibattle;
         const card = api.createCardFromBase(baseId, 'player');
@@ -34,7 +34,7 @@ test('レアは通常の面に共通ミラー光、スーパーレアは銀枠�
       }, { baseId, mode });
       const hand = page.locator(`#playerHand [data-base-id="${baseId}"]`);
       results[mode] = await hand.evaluate(materials);
-      if (mode === 'rare' || mode === 'superRare') {
+      if (mode === 'rare' || mode === 'superRare' || mode === 'ultraRare') {
         await expect(hand).not.toHaveClass(/reward-foil|reward-prism/);
         expect(results[mode].animations.some(name => /reward-foil|reward-prism/.test(name))).toBe(false);
         await expect(hand.locator('.rarity-mirror-surface')).toHaveCount(1);
@@ -63,15 +63,29 @@ test('レアは通常の面に共通ミラー光、スーパーレアは銀枠�
           await page.screenshot({ path: test.info().outputPath('silver-frame.png') });
         }
       }
-      if (mode === 'reward') await expect(hand).toHaveClass(/reward-foil/);
+      if (mode === 'ultraRare') {
+        await expect(hand).toHaveClass(/rarity-ultra-rare/);
+        if (baseId === 'yuta') {
+          await page.locator('.rarity-mirror-surface').evaluateAll(elements => {
+            for (const el of elements) for (const animation of el.getAnimations({ subtree: true })) {
+              animation.pause();
+              animation.currentTime = 2200;
+            }
+          });
+          await page.screenshot({ path: test.info().outputPath('ultra-gold.png') });
+        }
+      }
     }
     expect(results.rare).toEqual(results.normal);
     expect(results.superRare.face).toEqual(results.rare.face);
     expect(results.superRare.panels).toEqual(results.rare.panels);
     expect(results.superRare.text).toBe(results.rare.text);
-    expect(results.superRare.stage.borderWidth).toBe(results.reward.stage.borderWidth);
-    expect(results.superRare.stage.borderRadius).toBe(results.reward.stage.borderRadius);
-    expect(results.superRare.stage.backgroundImage).not.toBe(results.reward.stage.backgroundImage);
+    expect(results.superRare.stage.borderWidth).toBe(results.ultraRare.stage.borderWidth);
+    expect(results.superRare.stage.borderRadius).toBe(results.ultraRare.stage.borderRadius);
+    expect(results.superRare.stage.backgroundImage).not.toBe(results.ultraRare.stage.backgroundImage);
+    expect(results.superRare.face).toEqual(results.ultraRare.face);
+    expect(results.superRare.panels).toEqual(results.ultraRare.panels);
+    expect(results.superRare.text).toBe(results.ultraRare.text);
   }
 });
 
@@ -84,13 +98,14 @@ test('全カードに未対応ウルトラレアの描画を用意し、新し�
     api.startCardTest('yuta');
     api.state.players.player.hand = Object.keys(api.CARD_BASES).map(id => {
       const card = api.createCardFromBase(id, 'player');
-      card.profileStyleMode = 'reward';
+      card.profileStyleMode = 'ultraRare';
       return card;
     });
     api.render();
   });
   const total = await page.evaluate(() => Object.keys(window.__chibattle.CARD_BASES).length);
-  await expect(page.locator('#playerHand .hand-card.reward-foil')).toHaveCount(total);
+  await expect(page.locator('#playerHand .hand-card.rarity-ultra-rare')).toHaveCount(total);
+  await expect(page.locator('#playerHand .rarity-mirror-surface')).toHaveCount(total);
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.state.players.player.hand = ['general_student', 'yuta', 'king_ghidorah_bed'].map(id => api.createCardFromBase(id, 'player'));
@@ -142,7 +157,7 @@ test('銀枠は講義室・出席演出にも共通し、オンラインでは�
   });
   await expect(page.locator('.board-card[data-base-id="general_student"].rarity-super-rare')).toHaveCount(1);
   await expect(page.locator('.board-card[data-base-id="general_student"].rarity-rare')).toHaveCount(1);
-  expect(await page.evaluate(() => window.__chibattle.state.online.remoteCardStyles)).toEqual({ general_student: 'superRare', classroom: 'reward' });
+  expect(await page.evaluate(() => window.__chibattle.state.online.remoteCardStyles)).toEqual({ general_student: 'superRare', classroom: 'ultraRare' });
 });
 
 test('ミラー光は移動し、動きを減らす設定では停止する', async ({ page }) => {
@@ -167,4 +182,20 @@ test('ミラー光は移動し、動きを減らす設定では停止する', as
   expect(transforms[0]).not.toBe(transforms[1]);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await surface.evaluate(el => getComputedStyle(el, '::before').animationName)).toBe('none');
+});
+
+test('古い汎用金枠のスナップショットも新しいウルトラとして表示する', async ({ page }) => {
+  await page.goto(url);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('general_student');
+    const card = api.createCardFromBase('general_student', 'player');
+    card.rewardFoilStyle = 'generic';
+    api.state.players.player.hand = [card];
+    api.render();
+    api.showCardPlayAnimation(card, 'trash');
+  });
+  await expect(page.locator('#playerHand .hand-card')).toHaveClass(/rarity-ultra-rare/);
+  await expect(page.locator('#playerHand .hand-card')).not.toHaveClass(/rarity-secret-rare|reward-foil/);
+  await expect(page.locator('#playRevealCard .rarity-ultra-rare .rarity-mirror-surface')).toHaveCount(1);
 });

@@ -31,7 +31,7 @@ test("金枠の追加解放は既存の解放と通常表示設定を保持し�
   expect(await page.evaluate(() => window.__chibattle.createCardFromBase("king_ghidorah_bed", "player").rewardFoilStyle)).toBe("");
   await importFile(page, { unlocked: { king_ghidorah_bed: true }, selected: { king_ghidorah_bed: "reward" }, mergeUnlocks: true });
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({
-    unlocked: { design: true, king_ghidorah_bed: true }, selected: { bird_a: "normal", king_ghidorah_bed: "reward" }
+    unlocked: { design: true, king_ghidorah_bed: true }, selected: { bird_a: "normal", king_ghidorah_bed: "secretRare" }
   });
   await page.reload();
   await page.evaluate(() => {
@@ -52,7 +52,7 @@ test("従来のクリアデータの復元方式は変わらない", async ({ pa
   await page.goto(gameUrl);
   await importFile(page, { unlocked: { king_ghidorah_bed: true }, selected: { king_ghidorah_bed: "reward" }, mergeUnlocks: true });
   await importFile(page, { unlocked: { design: true }, selected: { bird_a: "reward" } });
-  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({ unlocked: { design: true }, selected: { bird_a: "reward" } });
+  expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({ unlocked: { design: true }, selected: { bird_a: "secretRare" } });
 });
 
 test("オンラインの金枠表示は所持者の選択だけに従う", async ({ page }) => {
@@ -100,7 +100,7 @@ test("キラキラ金枠を別解放して通常・金枠と切り替え、保�
   await expect(styleButton).toContainText("レギュラー");
   await expect(modal.locator(".reward-foil")).toHaveCount(0);
   await styleButton.click();
-  await expect(styleButton).toContainText("ウルトラレア");
+  await expect(styleButton).toContainText("シークレットレア");
   await expect(modal.locator(".reward-foil")).toHaveCount(1);
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(0);
   await styleButton.click();
@@ -163,7 +163,7 @@ test("旧全解放ファイルの対象外プリズムを除去し、既存金�
     selected: { bird_a: "prism", king_ghidorah_bed: "prism" }, mergeUnlocks: true
   });
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual({
-    unlocked: { design: true }, prismUnlocked: { king_ghidorah_bed: true }, selected: { bird_a: "reward", king_ghidorah_bed: "prism" }
+    unlocked: { design: true }, prismUnlocked: { king_ghidorah_bed: true }, selected: { bird_a: "secretRare", king_ghidorah_bed: "prism" }
   });
   await page.evaluate(() => {
     const api = window.__chibattle;
@@ -191,7 +191,7 @@ test("起動時に他カードのキラキラ解放を保存データから削�
   const expected = {
     unlocked: { design: true, gakuyukai_item: true },
     prismUnlocked: { king_ghidorah_bed: true },
-    selected: { yuta: "reward", bird_a: "normal", king_ghidorah_bed: "prism" }
+    selected: { yuta: "secretRare", bird_a: "normal", king_ghidorah_bed: "prism" }
   };
   expect(await page.evaluate((key) => JSON.parse(localStorage.getItem(key)), storageKey)).toEqual(expected);
   expect(await page.evaluate(() => localStorage.getItem("unrelated-prism-migration-test"))).toBe("keep");

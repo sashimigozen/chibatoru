@@ -631,7 +631,8 @@ test("reward card styles are shared with the opponent and spectators", async (t)
     type: "deckUpdate",
     ...normalDeckDescriptor(deckCounts),
     ready: true,
-    cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal", general_student: "rare", yuta: "superRare", classroom: "reward" }
+    cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal", general_student: "rare", yuta: "superRare", classroom: "reward", ruler: "ultraRare", bird_a: "secretRare" },
+    profile: { username: "Secret", favoriteCardId: "bird_a", favoriteCardStyle: "secretRare" }
   });
   const sharedGuestStyles = await waitFor(host, (message) =>
     message.type === "playerJoined"
@@ -643,12 +644,16 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(guestPublicState.cardStyles.general_student, "rare");
   assert.equal(guestPublicState.cardStyles.yuta, "superRare");
   assert.equal(guestPublicState.cardStyles.classroom, "reward");
+  assert.equal(guestPublicState.cardStyles.ruler, "ultraRare");
+  assert.equal(guestPublicState.cardStyles.bird_a, "secretRare");
+  assert.equal(guestPublicState.profile.favoriteCardStyle, "secretRare");
 
   send(host, {
     type: "deckUpdate",
     ...normalDeckDescriptor(deckCounts),
     ready: true,
-    cardStyles: { bird_a: "prism", king_ghidorah_bed: "prism" }
+    cardStyles: { bird_a: "prism", king_ghidorah_bed: "prism" },
+    profile: { username: "Ultra", favoriteCardId: "ruler", favoriteCardStyle: "ultraRare" }
   });
   await waitFor(guest, (message) =>
     message.type === "playerJoined"
@@ -671,6 +676,9 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(spectatorGuestState.cardStyles.general_student, "rare");
   assert.equal(spectatorGuestState.cardStyles.yuta, "superRare");
   assert.equal(spectatorGuestState.cardStyles.classroom, "reward");
+  assert.equal(spectatorGuestState.cardStyles.ruler, "ultraRare");
+  assert.equal(spectatorGuestState.cardStyles.bird_a, "secretRare");
+  assert.equal(hostState.profile.favoriteCardStyle, "ultraRare");
 });
 
 test("private card choice requests and responses relay between host and guest", async (t) => {

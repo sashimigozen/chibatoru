@@ -52,12 +52,16 @@ test("オンライン対戦では両プレイヤーが選んだ高レアリテ�
   const pageErrors = [];
   for (const page of [host, guest]) page.on("pageerror", (error) => pageErrors.push(error.message));
   const hostProfile = { username: "ホスト本人", avatarId: "cap", favoriteCardId: "king_ghidorah_bed", favoriteCardStyle: "prism", commentParts: ["U太", "最強", "だぞ"] };
-  const guestProfile = { username: "ゲスト本人", avatarId: "smile", favoriteCardId: "vampire", favoriteCardStyle: "reward", commentParts: ["カニ", "しか勝たん", "で草"] };
+  const guestProfile = { username: "ゲスト本人", avatarId: "smile", favoriteCardId: "vampire", favoriteCardStyle: "secretRare", commentParts: ["カニ", "しか勝たん", "で草"] };
   try {
     await host.addInitScript(({ save, profile }) => {
       localStorage.setItem("chibattle-dungeon-card-styles-v1", JSON.stringify(save));
       localStorage.setItem("chibattle-player-profile-v1", JSON.stringify(profile));
-    }, { save: cardStyleSave({ specialtyId: "king_ghidorah_bed", cardId: "king_ghidorah_bed", mode: "prism", prism: true }), profile: hostProfile });
+    }, { save: {
+      ...cardStyleSave({ specialtyId: "king_ghidorah_bed", cardId: "king_ghidorah_bed", mode: "prism", prism: true }),
+      cardUnlocks: { general_student: { ultraRare: true } },
+      selected: { king_ghidorah_bed: 'prism', general_student: 'ultraRare' }
+    }, profile: hostProfile });
     await guest.addInitScript(({ save, profile }) => {
       localStorage.setItem("chibattle-dungeon-card-styles-v1", JSON.stringify(save));
       localStorage.setItem("chibattle-player-profile-v1", JSON.stringify(profile));
@@ -81,7 +85,8 @@ test("オンライン対戦では両プレイヤーが選んだ高レアリテ�
     }
     await host.locator("#onlineReadyButton").click();
     await guest.locator("#onlineReadyButton").click();
-    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.remoteCardStyles.vampire)).toBe("reward");
+    await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.remoteCardStyles.vampire)).toBe("secretRare");
+    await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.remoteCardStyles.general_student)).toBe("ultraRare");
     await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.remoteCardStyles.king_ghidorah_bed)).toBe("prism");
     await expect.poll(() => host.evaluate(() => (
       window.__chibattle.state.online.localReady && window.__chibattle.state.online.remoteReady
@@ -108,7 +113,7 @@ test("オンライン対戦では両プレイヤーが選んだ高レアリテ�
       online.conn.send({ type: "playReveal", protocol: 1, profileSync: true, profileRole: "host", profile });
     }, hostProfile);
     await expect.poll(() => guest.evaluate(() => window.__profileSyncAck?.profile)).toEqual(guestProfile);
-    expect(await guest.evaluate(() => window.__profileSyncAck.cardStyles)).toEqual({ vampire: "reward" });
+    expect(await guest.evaluate(() => window.__profileSyncAck.cardStyles)).toEqual({ vampire: "secretRare" });
     await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.remoteProfile)).toEqual(guestProfile);
 
     // A reconnect or a missed lobby update must not make the battle depend on
@@ -128,6 +133,7 @@ test("オンライン対戦では両プレイヤーが選んだ高レアリテ�
       api.state.players.player.board.seats = Array(9).fill(null);
       api.state.players.opponent.board.seats = Array(9).fill(null);
       api.state.players.player.board.seats[0] = api.makeBoardCard(api.createCardFromBase("king_ghidorah_bed", "player"));
+      api.state.players.player.board.seats[1] = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
       api.state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase("vampire", "opponent"));
       api.render();
       api.onlineBroadcastState(true);
@@ -145,13 +151,16 @@ test("オンライン対戦では両プレイヤーが選んだ高レアリテ�
       local: window.__chibattle.state.online.localCardStyles,
       remote: window.__chibattle.state.online.remoteCardStyles
     }))).toEqual({
-      local: { vampire: "reward" },
-      remote: { king_ghidorah_bed: "prism" }
+      local: { vampire: "secretRare" },
+      remote: { king_ghidorah_bed: "prism", general_student: "ultraRare" }
     });
 
     for (const page of [host, guest]) {
       await expect(page.locator('.board-card[data-base-id="king_ghidorah_bed"]')).toHaveClass(/reward-prism/);
       await expect(page.locator('.board-card[data-base-id="vampire"]')).toHaveClass(/reward-foil/);
+      await expect(page.locator('.board-card[data-base-id="vampire"]')).toHaveClass(/rarity-secret-rare/);
+      await expect(page.locator('.board-card[data-base-id="general_student"]')).toHaveClass(/rarity-ultra-rare/);
+      await expect(page.locator('.board-card[data-base-id="general_student"] .rarity-mirror-surface')).toHaveCount(1);
     }
 
     await host.evaluate(() => {
@@ -270,7 +279,7 @@ test("プロフィール再同期でレアリティも復元し、省略され�
     return { retained, cleared: online.remoteCardStyles, favoriteStyle: online.remoteProfile.favoriteCardStyle };
   });
   expect(result).toEqual({
-    retained: { remoteName: "相手本人", remote: { king_ghidorah_bed: "prism" }, local: { vampire: "reward" } },
+    retained: { remoteName: "相手本人", remote: { king_ghidorah_bed: "prism" }, local: { vampire: "secretRare" } },
     cleared: {}, favoriteStyle: "normal"
   });
 });

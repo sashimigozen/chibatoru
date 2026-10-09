@@ -1010,7 +1010,7 @@ function sendError(ws, message, code = "bad_request") {
 function normalizeCardStyles(cardStyles) {
   if (!cardStyles || typeof cardStyles !== "object" || Array.isArray(cardStyles)) return {};
   return Object.fromEntries(Object.entries(cardStyles)
-    .filter(([baseId, mode]) => /^[a-z0-9_]{1,80}$/i.test(baseId) && ["rare", "superRare", "reward", "prism"].includes(mode))
+    .filter(([baseId, mode]) => /^[a-z0-9_]{1,80}$/i.test(baseId) && ["rare", "superRare", "ultraRare", "secretRare", "reward", "prism"].includes(mode))
     .map(([baseId, mode]) => [baseId, mode === "prism" && baseId !== "king_ghidorah_bed" ? "reward" : mode])
     .slice(0, 64));
 }
@@ -1031,7 +1031,7 @@ function normalizePlayerProfile(profile, previous = null) {
     && /^[a-z0-9_]{1,80}$/i.test(source.favoriteCardId)
     ? source.favoriteCardId
     : "";
-  const requestedFavoriteCardStyle = ["normal", "rare", "superRare", "reward", "prism"].includes(source.favoriteCardStyle)
+  const requestedFavoriteCardStyle = ["normal", "rare", "superRare", "ultraRare", "secretRare", "reward", "prism"].includes(source.favoriteCardStyle)
     ? source.favoriteCardStyle
     : "normal";
   const favoriteCardStyle = !favoriteCardId

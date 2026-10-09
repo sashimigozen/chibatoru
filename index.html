@@ -17228,7 +17228,7 @@
       box-shadow: inset 0 0 0 4px rgba(164, 24, 36, .78);
     }
 
-    /* Rare / Super Rare share a restrained mirror finish. Keep the surface
+    /* Rare / Super Rare / Ultra Rare share a restrained mirror finish. Keep the surface
        separate so clipping the reflection never clips protruding stat badges. */
     .rarity-mirror-surface {
       position: absolute;
@@ -17251,10 +17251,12 @@
       .rarity-mirror-surface::before { animation: none; opacity: 0; }
     }
 
-    /* Super Rare uses the Ultra frame geometry in silver, without importing
-       Ultra's gold finish or its additional animations. */
+    /* Silver / gold variants share geometry; dungeon Secret Rare retains
+       the original reward-foil artwork and animations independently. */
     .card.rarity-super-rare:has(> .card-scale-stage) > .card-scale-stage,
-    .battle-screen .player-hand .hand-card.rarity-super-rare > .card-scale-stage {
+    .battle-screen .player-hand .hand-card.rarity-super-rare > .card-scale-stage,
+    .card.rarity-ultra-rare:has(> .card-scale-stage) > .card-scale-stage,
+    .battle-screen .player-hand .hand-card.rarity-ultra-rare > .card-scale-stage {
       isolation: isolate;
       border: 20px solid transparent !important;
       border-radius: 14px !important;
@@ -17264,11 +17266,23 @@
         linear-gradient(112deg, #596575, #f8fbff 18%, #a1adba 35%, #ffffff 52%, #75808f 69%, #dce4ec 86%, #596575) border-box !important;
       box-shadow: 0 0 0 1px #586575, 0 5px 11px rgba(15,23,42,.18) !important;
     }
-    .card.rarity-super-rare:has(> .card-scale-stage) .card-face {
+    .card.rarity-ultra-rare:has(> .card-scale-stage) > .card-scale-stage,
+    .battle-screen .player-hand .hand-card.rarity-ultra-rare > .card-scale-stage {
+      background:
+        linear-gradient(#fff4c6, #b88c38) padding-box,
+        linear-gradient(112deg, #79601f, #fff5b5 18%, #c69b3c 35%, #fffbdc 52%, #aa7b25 69%, #f5db83 86%, #79601f) border-box !important;
+      box-shadow: 0 0 0 1px #806223, 0 5px 11px rgba(15,23,42,.18) !important;
+    }
+    .card.rarity-super-rare:has(> .card-scale-stage) .card-face,
+    .card.rarity-ultra-rare:has(> .card-scale-stage) .card-face {
       border-radius: 4px !important;
     }
     .battle-screen .field-card.board-card.rarity-super-rare {
       border: 4px solid #b8c3cf !important;
+      border-radius: 6px !important;
+    }
+    .battle-screen .field-card.board-card.rarity-ultra-rare {
+      border: 4px solid #d5ad4f !important;
       border-radius: 6px !important;
     }
 
@@ -23178,8 +23192,8 @@
       const selected = source?.selected;
       if (!selected || typeof selected !== "object" || Array.isArray(selected)) return {};
       return Object.fromEntries(Object.entries(selected)
-        .filter(([baseId, mode]) => CARD_BASES[baseId] && ["normal", "rare", "superRare", "reward", "prism"].includes(mode))
-        .map(([baseId, mode]) => [baseId, mode === "prism" && !isPrismCard(baseId) ? "reward" : mode]));
+        .filter(([baseId, mode]) => CARD_BASES[baseId] && ["normal", "rare", "superRare", "ultraRare", "secretRare", "reward", "prism"].includes(mode))
+        .map(([baseId, mode]) => [baseId, normalizeProfileCardStyle(baseId, mode)]));
     }
 
     function normalizeExtraCardStyleUnlocks(source) {
@@ -23187,8 +23201,14 @@
       if (!cards || typeof cards !== "object" || Array.isArray(cards)) return {};
       return Object.fromEntries(Object.entries(cards)
         .filter(([baseId]) => CARD_BASES[baseId])
-        .map(([baseId, modes]) => [baseId, Object.fromEntries(["rare", "superRare", "reward"]
-          .filter((mode) => modes?.[mode] === true).map((mode) => [mode, true]))])
+        .map(([baseId, modes]) => {
+          const normalized = Object.fromEntries(["rare", "superRare", "ultraRare", "secretRare"]
+            .filter((mode) => modes?.[mode] === true && (mode !== "secretRare" || rewardForCardBaseId(baseId)))
+            .map((mode) => [mode, true]));
+          // Old per-card reward unlocks keep the old look, not a new dungeon entitlement.
+          if (modes?.reward === true) normalized[rewardForCardBaseId(baseId) ? "secretRare" : "ultraRare"] = true;
+          return [baseId, normalized];
+        })
         .filter(([, modes]) => Object.keys(modes).length));
     }
 
@@ -23221,7 +23241,7 @@
         for (const [baseId, mode] of Object.entries(saved.selected)) {
           if (mode !== "prism" || isPrismCard(baseId)) continue;
           // Restore an already-owned gold style; never grant a new gold unlock.
-          if (hasUnlockedCardRewardStyle(baseId)) saved.selected[baseId] = "reward";
+          if (hasUnlockedCardRewardStyle(baseId)) saved.selected[baseId] = "secretRare";
           else delete saved.selected[baseId];
           changed = true;
         }
@@ -23270,14 +23290,14 @@
 
     function hasUnlockedCardRewardStyle(baseId) {
       const reward = rewardForCardBaseId(baseId);
-      return Boolean(unlockedExtraCardStyles[baseId]?.reward || (reward && unlockedDungeonCardStyles[reward.specialtyId]));
+      return Boolean(reward && (unlockedExtraCardStyles[baseId]?.secretRare || unlockedDungeonCardStyles[reward.specialtyId]));
     }
 
     function localRewardFoilStyle(baseId) {
       const reward = rewardForCardBaseId(baseId);
       if (!CARD_BASES[baseId]) return "";
       const selected = selectedDungeonCardStyles[baseId];
-      if (["rare", "superRare"].includes(selected)) return unlockedExtraCardStyles[baseId]?.[selected] ? selected : "";
+      if (["rare", "superRare", "ultraRare"].includes(selected)) return unlockedExtraCardStyles[baseId]?.[selected] ? selected : "";
       if (isPrismCard(baseId) && selectedDungeonCardStyles[baseId] === "prism" && unlockedPrismCardStyles[baseId]) return `${reward.style}-prism`;
       if (!hasUnlockedCardRewardStyle(baseId)) return "";
       return selected === "normal" ? "" : (reward?.style || "generic");
@@ -23292,24 +23312,27 @@
     function normalizeOnlineCardStyles(source) {
       if (!source || typeof source !== "object" || Array.isArray(source)) return {};
       return Object.fromEntries(Object.entries(source)
-        .filter(([baseId, mode]) => CARD_BASES[baseId] && ["rare", "superRare", "reward", "prism"].includes(mode))
-        .map(([baseId, mode]) => [baseId, mode === "prism" && !isPrismCard(baseId) ? "reward" : mode]));
+        .filter(([baseId, mode]) => CARD_BASES[baseId] && ["rare", "superRare", "ultraRare", "secretRare", "reward", "prism"].includes(mode))
+        .map(([baseId, mode]) => [baseId, normalizeProfileCardStyle(baseId, mode)])
+        .filter(([, mode]) => mode !== "normal"));
     }
 
     function rewardFoilStyleForSelection(baseId, selections) {
       const reward = rewardForCardBaseId(baseId);
       if (!CARD_BASES[baseId]) return "";
       const style = reward?.style || "generic";
-      if (["rare", "superRare"].includes(selections?.[baseId])) return selections[baseId];
+      if (["rare", "superRare", "ultraRare"].includes(selections?.[baseId])) return selections[baseId];
       if (selections?.[baseId] === "prism") return isPrismCard(baseId) ? `${style}-prism` : style;
-      return selections?.[baseId] === "reward" ? style : "";
+      if (selections?.[baseId] === "reward") return reward ? style : "ultraRare";
+      return selections?.[baseId] === "secretRare" && reward ? style : "";
     }
 
     function normalizeProfileCardStyle(baseId, mode) {
       if (!baseId || !CARD_BASES[baseId]) return "normal";
-      if (["rare", "superRare"].includes(mode)) return mode;
-      if (mode === "prism") return isPrismCard(baseId) ? "prism" : "reward";
-      return mode === "reward" ? "reward" : "normal";
+      if (["rare", "superRare", "ultraRare"].includes(mode)) return mode;
+      if (mode === "prism" && isPrismCard(baseId)) return "prism";
+      if (mode === "reward" || mode === "prism") return rewardForCardBaseId(baseId) ? "secretRare" : "ultraRare";
+      return mode === "secretRare" && rewardForCardBaseId(baseId) ? "secretRare" : "normal";
     }
 
     function makeProfilePreviewCard(baseId, mode = "normal") {
@@ -23387,13 +23410,13 @@
 
     function availableCardStyleModes(baseId) {
       const extra = unlockedExtraCardStyles[baseId];
-      return ["normal", ...(extra?.rare ? ["rare"] : []), ...(extra?.superRare ? ["superRare"] : []), ...(hasUnlockedCardRewardStyle(baseId) ? ["reward"] : []), ...(isPrismCard(baseId) && unlockedPrismCardStyles[baseId] ? ["prism"] : [])];
+      return ["normal", ...(extra?.rare ? ["rare"] : []), ...(extra?.superRare ? ["superRare"] : []), ...(extra?.ultraRare ? ["ultraRare"] : []), ...(hasUnlockedCardRewardStyle(baseId) ? ["secretRare"] : []), ...(isPrismCard(baseId) && unlockedPrismCardStyles[baseId] ? ["prism"] : [])];
     }
 
     function localCardStyleMode(baseId) {
       const style = localRewardFoilStyle(baseId);
-      if (["rare", "superRare"].includes(style)) return style;
-      return style.endsWith("-prism") ? "prism" : style ? "reward" : "normal";
+      if (["rare", "superRare", "ultraRare"].includes(style)) return style;
+      return style.endsWith("-prism") ? "prism" : style ? "secretRare" : "normal";
     }
 
     const CARD_RARITY_LABELS = Object.freeze({
@@ -23401,6 +23424,7 @@
       rare: "レア",
       superRare: "スーパーレア",
       ultraRare: "ウルトラレア",
+      secretRare: "シークレットレア",
       prismaRare: "プリズマレア"
     });
 
@@ -23409,7 +23433,9 @@
         normal: CARD_RARITY_LABELS.regular,
         rare: CARD_RARITY_LABELS.rare,
         superRare: CARD_RARITY_LABELS.superRare,
-        reward: CARD_RARITY_LABELS.ultraRare,
+        ultraRare: CARD_RARITY_LABELS.ultraRare,
+        secretRare: CARD_RARITY_LABELS.secretRare,
+        reward: CARD_RARITY_LABELS.secretRare,
         prism: CARD_RARITY_LABELS.prismaRare
       }[mode] || CARD_RARITY_LABELS.regular;
     }
@@ -23420,7 +23446,7 @@
       const newlyUnlocked = unlockedDungeonCardStyles[specialtyId] !== true;
       unlockedDungeonCardStyles[specialtyId] = true;
       reward.cardIds.forEach((baseId) => {
-        if (!selectedDungeonCardStyles[baseId]) selectedDungeonCardStyles[baseId] = "reward";
+        if (!selectedDungeonCardStyles[baseId]) selectedDungeonCardStyles[baseId] = "secretRare";
       });
       persistDungeonCardStyles();
       return { ...reward, specialtyId, newlyUnlocked };
@@ -23681,9 +23707,10 @@
       const rewardStyle = reward?.style || "generic";
       const classes = (style) => style === "rare" ? " rarity-rare"
         : style === "superRare" ? " rarity-super-rare"
-        : style ? ` reward-foil reward-foil-${rewardStyle}${isPrismCard(card.baseId) && style.endsWith("-prism") ? " reward-prism" : ""}` : "";
+        : style === "ultraRare" || (style === "generic" && !reward) ? " rarity-ultra-rare"
+        : style ? ` reward-foil reward-foil-${rewardStyle}${isPrismCard(card.baseId) && style.endsWith("-prism") ? " reward-prism" : " rarity-secret-rare"}` : "";
 
-      if (["normal", "rare", "superRare", "reward", "prism"].includes(card?.profileStyleMode)) {
+      if (["normal", "rare", "superRare", "ultraRare", "secretRare", "reward", "prism"].includes(card?.profileStyleMode)) {
         return classes(rewardFoilStyleForSelection(card.baseId, { [card.baseId]: card.profileStyleMode }));
       }
 
@@ -23696,7 +23723,7 @@
         return classes(ownerStyle);
       }
 
-      const syncedStyle = ["rare", "superRare", rewardStyle, `${rewardStyle}-prism`].includes(card?.rewardFoilStyle) ? card.rewardFoilStyle : "";
+      const syncedStyle = ["rare", "superRare", "ultraRare", rewardStyle, `${rewardStyle}-prism`].includes(card?.rewardFoilStyle) ? card.rewardFoilStyle : "";
       if (syncedStyle) return classes(syncedStyle);
       if (isOnlineSpectator()) return "";
       const localStyle = card?.owner === "player" || !card?.owner ? localRewardFoilStyle(card?.baseId) : "";
@@ -23726,7 +23753,7 @@
     }
 
     function rarityMirrorSurfaceHtml(card) {
-      return /\brarity-(?:rare|super-rare)\b/.test(cardRewardStyleClass(card))
+      return /\brarity-(?:rare|super-rare|ultra-rare)\b/.test(cardRewardStyleClass(card))
         ? '<span class="rarity-mirror-surface" aria-hidden="true"></span>'
         : "";
     }
@@ -48823,7 +48850,7 @@
       elements.dungeonRewardTitle.textContent = phase === "closed" || phase === "opening" ? "報酬の宝箱" : "カードスタイル獲得";
       elements.dungeonRewardCopy.textContent = phase === "closed"
         ? "宝箱を開けて、専攻の代表カードスタイルを受け取ろう。"
-        : `${cardNames}のウルトラレアカードスタイルを獲得しました。`;
+        : `${cardNames}のシークレットレアカードスタイルを獲得しました。`;
       elements.dungeonRewardChest.className = `dungeon-treasure-chest${phase === "opening" ? " opening" : ""}${["revealed", "homeReady"].includes(phase) ? " opened" : ""}`;
       elements.dungeonRewardChest.disabled = phase !== "closed";
       elements.dungeonRewardChest.setAttribute("aria-label", phase === "closed" ? "報酬の宝箱を開ける" : "報酬の宝箱を開封済み");
@@ -48866,7 +48893,7 @@
         }
         state.dungeon.rewardAward = reward;
         state.dungeon.rewardPhase = "revealed";
-        state.message = `${reward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・")}のウルトラレアカードスタイルを獲得しました。`;
+        state.message = `${reward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・")}のシークレットレアカードスタイルを獲得しました。`;
         render();
         dungeonRewardTimer = window.setTimeout(() => {
           dungeonRewardTimer = null;
