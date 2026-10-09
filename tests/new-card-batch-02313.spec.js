@@ -178,7 +178,7 @@ test("ぃぎだかったぁ...は病1枚ごとにダメージか回復を抽選�
   expect(result).toEqual({ enemyLife: 28, equipment: 0, ownTrash: 1, enemyTrash: 1 });
 });
 
-test("子曰くは宣言タイプだけを手札へ加え、残りを山札へ戻す", async ({ page }) => {
+test("子曰くは戦意3を消費し、宣言タイプだけを手札へ加え、残りを山札へ戻す", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const first = api.createCardFromBase("general_student", "player");
@@ -188,12 +188,39 @@ test("子曰くは宣言タイプだけを手札へ加え、残りを山札へ�
     const item = api.createCardFromBase("confucius_says", "player");
     api.state.players.player.hand = [item];
     const used = api.resolveConfuciusSays("player", item, "student", [first.instanceId, third.instanceId], false);
-    return { used, hand: api.state.players.player.hand.map((card) => card.baseId).sort(),
+    return { used, cost: item.cost, will: api.state.players.player.will,
+      text: api.cardRulesText(item), hand: api.state.players.player.hand.map((card) => card.baseId).sort(),
       deck: api.state.players.player.deck.map((card) => card.baseId),
       trash: api.state.players.player.trash.map((card) => card.baseId) };
   });
-  expect(result).toEqual({ used: true, hand: ["general_student", "hat_man"], deck: ["ruler"], trash: ["confucius_says"] });
+  expect(result).toEqual({ used: true, cost: 3, will: 17,
+    text: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。\n残りをデッキに戻してシャッフルする。",
+    hand: ["general_student", "hat_man"], deck: ["ruler"], trash: ["confucius_says"] });
 });
+
+for (const side of ["player", "opponent"]) {
+  test(`子曰く（${side}側）は戦意2では使えず、戦意3で使える`, async ({ page }) => {
+    const result = await page.evaluate((owner) => {
+      const api = window.__chibattle;
+      const player = api.state.players[owner];
+      const item = api.createCardFromBase("confucius_says", owner);
+      const student = api.createCardFromBase("general_student", owner);
+      player.hand = [item];
+      player.deck = [student];
+      player.will = 2;
+      const blocked = api.resolveConfuciusSays(owner, item, "student", [student.instanceId], false);
+      const afterBlocked = { will: player.will, hand: player.hand.map((card) => card.baseId),
+        deck: player.deck.map((card) => card.baseId), trash: player.trash.length };
+      player.will = 3;
+      const used = api.resolveConfuciusSays(owner, item, "student", [student.instanceId], false);
+      return { blocked, afterBlocked, used, will: player.will,
+        hand: player.hand.map((card) => card.baseId), trash: player.trash.map((card) => card.baseId) };
+    }, side);
+    expect(result).toEqual({ blocked: false,
+      afterBlocked: { will: 2, hand: ["confucius_says"], deck: ["general_student"], trash: 0 },
+      used: true, will: 0, hand: ["general_student"], trash: ["confucius_says"] });
+  });
+}
 
 test("スプーンの魔術師と復活の敵は選択したカードだけを処理する", async ({ page }) => {
   const result = await page.evaluate(() => {
