@@ -1,0 +1,126 @@
+const { test, expect } = require('@playwright/test');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+
+function materials(el) {
+  const stage = el.querySelector('.card-scale-stage');
+  const face = el.querySelector('.card-face');
+  const fields = ['backgroundImage', 'backgroundColor', 'color', 'borderRadius', 'borderWidth', 'padding'];
+  const style = node => Object.fromEntries(fields.map(key => [key, getComputedStyle(node)[key]]));
+  return {
+    stage: style(stage), face: style(face),
+    panels: [...face.querySelectorAll('.card-header,.card-art-panel,.card-effect-panel')].map(style),
+    text: el.innerText,
+    animations: [stage, face].flatMap(node => [null, '::before', '::after'].map(pseudo => getComputedStyle(node, pseudo).animationName))
+  };
+}
+
+test('レアは通常のまま、スーパーレアは銀枠のみで中身・演出を変えない', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(url);
+  await page.evaluate(() => window.__chibattle.startCardTest('yuta'));
+  for (const baseId of ['general_student', 'yuta', 'vampire', 'ruler', 'classroom', 'tokyo_tech_bro']) {
+    const results = {};
+    for (const mode of ['normal', 'rare', 'superRare', 'reward']) {
+      await page.evaluate(({ baseId, mode }) => {
+        const api = window.__chibattle;
+        const card = api.createCardFromBase(baseId, 'player');
+        // Explicit display fixture; it never grants ownership or modifies saves.
+        card.profileStyleMode = mode;
+        api.state.players.player.hand = [card];
+        api.render();
+        api.showBattleCardPreview(card);
+      }, { baseId, mode });
+      const hand = page.locator(`#playerHand [data-base-id="${baseId}"]`);
+      results[mode] = await hand.evaluate(materials);
+      if (mode === 'rare' || mode === 'superRare') {
+        await expect(hand).not.toHaveClass(/reward-foil|reward-prism/);
+        expect(results[mode].animations.some(name => /reward-foil|reward-prism/.test(name))).toBe(false);
+      }
+      if (mode === 'superRare') {
+        await expect(hand).toHaveClass(/rarity-super-rare/);
+        const preview = await page.locator('#battleCardPreview > .card').evaluate(materials);
+        expect(preview.stage.backgroundImage).toBe(results[mode].stage.backgroundImage);
+        expect(parseFloat(preview.stage.borderWidth)).toBeCloseTo(20, 0);
+        if (baseId === 'yuta') await page.screenshot({ path: test.info().outputPath('silver-frame.png') });
+      }
+      if (mode === 'reward') await expect(hand).toHaveClass(/reward-foil/);
+    }
+    expect(results.rare).toEqual(results.normal);
+    expect(results.superRare.face).toEqual(results.rare.face);
+    expect(results.superRare.panels).toEqual(results.rare.panels);
+    expect(results.superRare.text).toBe(results.rare.text);
+    expect(results.superRare.stage.borderWidth).toBe(results.reward.stage.borderWidth);
+    expect(results.superRare.stage.borderRadius).toBe(results.reward.stage.borderRadius);
+    expect(results.superRare.stage.backgroundImage).not.toBe(results.reward.stage.backgroundImage);
+  }
+});
+
+test('全カードに未対応ウルトラレアの描画を用意し、新しいレアリティは解放しない', async ({ page }) => {
+  const save = { unlocked: { gakuyukai_item: true, king_ghidorah_bed: true }, selected: { yuta: 'reward', king_ghidorah_bed: 'prism' }, prismUnlocked: { king_ghidorah_bed: true } };
+  await page.addInitScript(save => localStorage.setItem('chibattle-dungeon-card-styles-v1', JSON.stringify(save)), save);
+  await page.goto(url);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('yuta');
+    api.state.players.player.hand = Object.keys(api.CARD_BASES).map(id => {
+      const card = api.createCardFromBase(id, 'player');
+      card.profileStyleMode = 'reward';
+      return card;
+    });
+    api.render();
+  });
+  const total = await page.evaluate(() => Object.keys(window.__chibattle.CARD_BASES).length);
+  await expect(page.locator('#playerHand .hand-card.reward-foil')).toHaveCount(total);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.state.players.player.hand = ['general_student', 'yuta', 'king_ghidorah_bed'].map(id => api.createCardFromBase(id, 'player'));
+    api.render();
+  });
+  await expect(page.locator('#playerHand [data-base-id="general_student"]')).not.toHaveClass(/reward-foil|rarity-/);
+  await expect(page.locator('#playerHand [data-base-id="yuta"]')).toHaveClass(/reward-foil/);
+  await expect(page.locator('#playerHand [data-base-id="king_ghidorah_bed"]')).toHaveClass(/reward-prism/);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('chibattle-dungeon-card-styles-v1')))).toEqual(save);
+});
+
+test('銀枠は講義室・出席演出にも共通し、オンラインでは持ち主の設定を参照する', async ({ page }) => {
+  await page.goto(url);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('yuta');
+    api.state.players.player.board.seats = Array(9).fill(null);
+    api.state.players.opponent.board.seats = Array(9).fill(null);
+    const silver = api.makeBoardCard(api.createCardFromBase('general_student', 'player'));
+    silver.profileStyleMode = 'superRare';
+    api.state.players.player.board.seats[0] = silver;
+    api.render();
+    api.showCardPlayAnimation(silver, 'trash');
+  });
+  const silver = page.locator('.board-card[data-base-id="general_student"]');
+  await expect(silver).toHaveClass(/rarity-super-rare/);
+  expect(await silver.evaluate(el => getComputedStyle(el).borderColor)).toBe('rgb(184, 195, 207)');
+  await expect(page.locator('#playRevealCard .card')).toHaveClass(/rarity-super-rare/);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.hidePlayReveal();
+    const online = api.state.online;
+    online.role = 'guest';
+    online.started = true;
+    online.connected = true;
+    online.clientId = 'guest-fixture';
+    online.remoteClientId = 'host-fixture';
+    api.onlineHandleMessage({ type: 'roomState', protocol: 1, roomStateSeq: 1, players: [
+      { role: 'host', clientId: 'host-fixture', cardStyles: { general_student: 'superRare', classroom: 'reward' } },
+      { role: 'guest', clientId: 'guest-fixture', cardStyles: {} }
+    ] });
+    // Simulate a published local selection without granting real ownership.
+    online.localCardStyles = { general_student: 'rare' };
+    api.state.players.player.board.seats[0] = api.makeBoardCard(api.createCardFromBase('general_student', 'player'));
+    api.state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase('general_student', 'opponent'));
+    api.render();
+  });
+  await expect(page.locator('.board-card[data-base-id="general_student"].rarity-super-rare')).toHaveCount(1);
+  await expect(page.locator('.board-card[data-base-id="general_student"].rarity-rare')).toHaveCount(1);
+  expect(await page.evaluate(() => window.__chibattle.state.online.remoteCardStyles)).toEqual({ general_student: 'superRare', classroom: 'reward' });
+});

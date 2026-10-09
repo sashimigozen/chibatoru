@@ -631,7 +631,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
     type: "deckUpdate",
     ...normalDeckDescriptor(deckCounts),
     ready: true,
-    cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal" }
+    cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal", general_student: "rare", yuta: "superRare", classroom: "reward" }
   });
   const sharedGuestStyles = await waitFor(host, (message) =>
     message.type === "playerJoined"
@@ -640,6 +640,9 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(guestPublicState.cardStyles.vampire, "reward");
   assert.equal(guestPublicState.cardStyles.unexpected, "reward");
   assert.equal(guestPublicState.cardStyles.lazy_student, undefined);
+  assert.equal(guestPublicState.cardStyles.general_student, "rare");
+  assert.equal(guestPublicState.cardStyles.yuta, "superRare");
+  assert.equal(guestPublicState.cardStyles.classroom, "reward");
 
   send(host, {
     type: "deckUpdate",
@@ -665,6 +668,9 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(hostState.cardStyles.bird_a, "reward");
   assert.equal(hostState.cardStyles.king_ghidorah_bed, "prism");
   assert.equal(spectatorGuestState.cardStyles.vampire, "reward");
+  assert.equal(spectatorGuestState.cardStyles.general_student, "rare");
+  assert.equal(spectatorGuestState.cardStyles.yuta, "superRare");
+  assert.equal(spectatorGuestState.cardStyles.classroom, "reward");
 });
 
 test("private card choice requests and responses relay between host and guest", async (t) => {
