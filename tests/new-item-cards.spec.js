@@ -45,17 +45,18 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").text)
     .toBe("お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。\n相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。");
   expect(result.find((entry) => entry.baseId === "classroom_change").text)
-    .toBe("相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻2]を付与する。");
+    .toBe("相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻1]を付与する。");
 
   const sources = ["index.html", "card_rules.txt", "カード管理台帳.html"]
     .map((file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
   for (const source of sources) {
+    expect(source).toContain("相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに遅刻1を付与する。");
     expect(source).toContain("ジェイルブレイクソフト-⚪︎u⚪︎uApp");
     expect(source).not.toContain("ジェイルブレイクソフト-TuTuApp");
   }
 });
 
-test("教室変更は相手の出席者を遅刻2にし、戻れない出席者を校外へ送る", async ({ page }) => {
+test("教室変更は相手の出席者を遅刻1にし、次のターン開始に戻れない出席者を校外へ送る", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -70,6 +71,7 @@ test("教室変更は相手の出席者を遅刻2にし、戻れない出席者�
     state.players.opponent.trash = [];
 
     const returning = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
+    returning.baseAttack = 4;
     returning.attack = 4;
     returning.currentHp = 1;
     const blocked = api.makeBoardCard(api.createCardFromBase("strong_student", "opponent"));
@@ -84,10 +86,9 @@ test("教室変更は相手の出席者を遅刻2にし、戻れない出席者�
       remaining: entry.remaining,
       preserve: entry.preserveBoardState
     }));
-    api.resolveLateZone("opponent");
-    const lateAfterFirstTurn = state.players.opponent.late.map((entry) => entry.remaining);
     state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase("aggro_student", "opponent"));
-    api.resolveLateZone("opponent");
+    api.startTurn("opponent");
+    const lateAfterFirstTurn = state.players.opponent.late.map((entry) => entry.remaining);
     return {
       lateBefore,
       lateAfterFirstTurn,
@@ -98,12 +99,60 @@ test("教室変更は相手の出席者を遅刻2にし、戻れない出席者�
   });
 
   expect(result.lateBefore).toHaveLength(2);
-  expect(result.lateBefore.every((entry) => entry.remaining === 2 && entry.preserve)).toBe(true);
-  expect(result.lateAfterFirstTurn).toEqual([1, 1]);
+  expect(result.lateBefore.every((entry) => entry.remaining === 1 && entry.preserve)).toBe(true);
+  expect(result.lateAfterFirstTurn).toEqual([]);
   expect(result.returnedAttack).toBe(4);
   expect(result.returnedHp).toBe(1);
   expect(result.blockedSentToTrash).toBe(true);
 });
+
+for (const side of ["player", "opponent"]) {
+  test(`教室変更（${side}側）は席・教卓を遅刻1で同期し、相手の次のターン開始に戻す`, async ({ page }) => {
+    const result = await page.evaluate((owner) => {
+      const api = window.__chibattle;
+      const { state } = api;
+      const targetSide = owner === "player" ? "opponent" : "player";
+      api.startCardTest("classroom_change");
+      state.phase = "battle";
+      state.currentSide = owner;
+      state.players[owner].will = 10;
+      state.environment = null;
+      for (const player of Object.values(state.players)) {
+        player.board.seats.fill(null);
+        player.board.teacher = null;
+        player.late = [];
+      }
+      const student = api.makeBoardCard(api.createCardFromBase("general_student", targetSide));
+      const teacher = api.makeBoardCard(api.createCardFromBase("gitch", targetSide));
+      state.players[targetSide].board.seats[4] = student;
+      state.players[targetSide].board.teacher = teacher;
+      const item = api.createCardFromBase("classroom_change", owner);
+      state.players[owner].hand = [item];
+      const used = api.castImmediateItem(owner, item, false);
+      const snapshot = api.onlineCreateSnapshot();
+      const synchronizedLate = snapshot.state.players[targetSide].late.map((entry) => ({
+        remaining: entry.remaining, zone: entry.zone, index: entry.index, owner: entry.owner
+      }));
+      const boardEmpty = !state.players[targetSide].board.seats[4] && !state.players[targetSide].board.teacher;
+      api.startTurn(targetSide);
+      return {
+        used, synchronizedLate, boardEmpty,
+        remaining: state.players[targetSide].late.length,
+        studentReturned: state.players[targetSide].board.seats[4]?.instanceId === student.instanceId,
+        teacherReturned: state.players[targetSide].board.teacher?.instanceId === teacher.instanceId
+      };
+    }, side);
+    expect(result.used).toBe(true);
+    expect(result.boardEmpty).toBe(true);
+    expect(result.synchronizedLate).toEqual([
+      { remaining: 1, zone: "teacher", index: null, owner: side === "player" ? "opponent" : "player" },
+      { remaining: 1, zone: "seat", index: 4, owner: side === "player" ? "opponent" : "player" }
+    ]);
+    expect(result.remaining).toBe(0);
+    expect(result.studentReturned).toBe(true);
+    expect(result.teacherReturned).toBe(true);
+  });
+}
 
 test("煩わしいなぁは開始時だけ使え、指定された使用時効果だけを止める", async ({ page }) => {
   const result = await page.evaluate(() => {
