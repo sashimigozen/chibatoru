@@ -5,6 +5,32 @@ const nativeGameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).hr
 const gameUrl = `${nativeGameUrl}?menu=folders`;
 const storageKey = "chibattle-desktop-folders-v1";
 
+test("MacBook Airの参考配列は6段・12個のFキー・幅の異なる修飾キー・逆T字矢印を持つ", async ({ page }) => {
+  const svg = require("node:fs").readFileSync(path.join(__dirname, "../assets/tutorial/laptop-keyboard-graphite-us.svg"), "utf8");
+  await page.goto(nativeGameUrl);
+  const layout = await page.evaluate(svg => {
+    const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
+    const key = name => [...doc.querySelectorAll("[data-key]")].find(node => node.getAttribute("data-key") === name);
+    const width = name => Number(key(name).querySelector("rect").getAttribute("width"));
+    const x = name => Number(key(name).getAttribute("transform").match(/translate\(([^ ]+)/)[1]);
+    return {
+      parseErrors: doc.querySelectorAll("parsererror").length,
+      rowCounts: [...doc.querySelectorAll("[data-row]")].map(row => row.querySelectorAll("[data-key]").length),
+      functionKeys: [...doc.querySelector('[data-row="0"]').querySelectorAll("[data-key]")].map(node => node.getAttribute("data-key")),
+      stagger: [x("A") - x("Q"), x("Z") - x("A")],
+      widths: ["Q", "tab", "caps lock", "shift-left", "shift-right", "return", "space"].map(width),
+      arrows: ["arrow-left", "arrow-up-down", "arrow-right"].map(name =>
+        [...key(name).querySelectorAll("rect")].map(rect => [Number(rect.getAttribute("y")), Number(rect.getAttribute("height"))]))
+    };
+  }, svg);
+  expect(layout.parseErrors).toBe(0);
+  expect(layout.rowCounts).toEqual([14, 14, 14, 13, 12, 10]);
+  expect(layout.functionKeys).toEqual(["esc", ...Array.from({ length: 12 }, (_, i) => `F${i + 1}`), "Touch ID"]);
+  expect(layout.stagger).toEqual([29, 58]);
+  expect(layout.widths).toEqual([107, 165, 194, 252, 252, 194, 571]);
+  expect(layout.arrows).toEqual([[[6.9, 5.6]], [[0, 5.6], [6.9, 5.6]], [[6.9, 5.6]]]);
+});
+
 for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900 }, { width: 1024, height: 768 }]) {
   test(`従来のメニューを同じPC内に表示する ${viewport.width}×${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport);
@@ -101,7 +127,7 @@ test("同じPCの三角でバトルとソロを切り替え、ショートカッ
   expect(Math.abs(display.y + display.height - base.y)).toBeLessThan(1);
   await expect.poll(() => page.locator(".computer-base img").evaluate(img => img.naturalWidth)).toBe(2123);
   await expect(page.locator("body")).toHaveCSS("background-image", /classroom-laptop-view.webp/);
-  await expect(page.locator(".computer-base img")).toHaveAttribute("src", "assets/tutorial/laptop-keyboard-graphite-v2.webp");
+  await expect(page.locator(".computer-base img")).toHaveAttribute("src", "assets/tutorial/laptop-keyboard-graphite-us.svg");
   await expect(page.locator("#onlinePrivateMatchButton .computer-folder-icon")).toHaveAttribute("src", "assets/tutorial/folder-closed.svg");
   await expect(page.locator("#onlinePrivateMatchButton .computer-folder-icon")).toHaveCSS("filter", /drop-shadow/);
   const folderBox = await page.locator("#onlinePrivateMatchButton").boundingBox();
