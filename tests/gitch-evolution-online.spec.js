@@ -161,6 +161,12 @@ test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲス�
             life: baseId === "grudge" ? 18 : 20, pending: false });
           if (baseId === "gitch") {
             expect(await page.evaluate(viewSide => {
+              const api = window.__chibattle, own = api.state.players[viewSide];
+              return { turn: own.board.seats[4].evolvedOnTurn,
+                allowed: api.canPlaceCard(viewSide, api.createCardFromBase("gigi_blood", viewSide), "seat", viewSide, 4),
+                current: api.state.actionTurn };
+            }, viewSide)).toMatchObject({ turn: await page.evaluate(() => window.__chibattle.state.actionTurn), allowed: false });
+            expect(await page.evaluate(viewSide => {
               const api = window.__chibattle, board = api.state.players[viewSide].board;
               return [...board.seats, board.teacher].filter(c => c?.baseId === "wood_gitch")
                 .map(c => [api.cardRulesText(c), api.canUsePrintedCardEffects(c), c.noLecture]);
