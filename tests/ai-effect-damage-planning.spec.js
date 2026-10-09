@@ -86,7 +86,7 @@ test("アグロクイーンのターン終了時ダメージで確定して倒�
   });
 });
 
-test("アグロクイーンのランダム対象が複数いるときは、倒す対象を確定扱いしない", async ({ page }) => {
+test("アグロクイーンのランダム対象は撃破予約せず、反撃でクイーンを失う攻撃は避ける", async ({ page }) => {
   await setup(page);
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -100,12 +100,16 @@ test("アグロクイーンのランダム対象が複数いるときは、倒�
       api.state.players.player.board.seats[index] = target;
     }
     const plan = api.planAiGuaranteedEndTurnEffectKills("opponent");
+    const unsafeAttack = Boolean(api.findAiAttackTarget(queen));
+    queen.attack = queen.baseAttack = 2;
     return {
       reservedTargets: plan.targetIds.size,
+      unsafeAttack,
+      // A guaranteed kill remains available; a random end-turn hit must not reserve it.
       hasAttackTarget: Boolean(api.findAiAttackTarget(queen))
     };
   });
-  expect(result).toEqual({ reservedTargets: 0, hasAttackTarget: true });
+  expect(result).toEqual({ reservedTargets: 0, unsafeAttack: false, hasAttackTarget: true });
 });
 
 test("後ろにいるクイーンが全学生を確実に倒せるときも攻撃を控える", async ({ page }) => {

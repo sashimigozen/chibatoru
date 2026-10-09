@@ -19631,6 +19631,15 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.23.17",
+        date: "2026年10月9日",
+        summary: "進化直後の再進化を修正し、本体の継続効果と反撃を考慮するAIの攻撃判断を改善しました。",
+        changes: [
+          { title: "進化の待機判定", after: "進化したターンを攻撃状態とは別に記録し、技議っちへ進化した同じターンに偽魏義ッ血へ再進化できないようにしました。進化前からの攻撃状態の引き継ぎと、特殊進化・フロア規則による例外は維持しています。" },
+          { title: "AIの攻撃判断", after: "双方の本体にかかっているダメージ無効・踏みとどまる効果を確認し、無効な本体攻撃や誤ったリーサル判断を避けます。安全な盤面処理を優先し、倒せず反撃で損をする攻撃は見送ります。攻撃力0でも有効な攻撃時効果がある場合は判断に残し、効果もない無意味な攻撃は行いません。左右のCPUに適用し、カード本文と効果は変更していません。" }
+        ]
+      },
+      {
         version: "ver.0.23.16",
         date: "2026年10月8日",
         summary: "バトル・ソロプレイのPC画面とチュートリアルのリーサルクイズを改善しました。敵系統7枚を調整し、三敵から出た復活の敵でも校外エリアの敵を選べるようにしました。",
@@ -28534,6 +28543,48 @@
       return previewFinalDamageToCard(attacker, target.attack || 0, target, { combat: true });
     }
 
+    function aiLifeDamagePrevented(side, actionTurn = state.actionTurn, attackingSide = state.currentSide) {
+      const player = state.players[side];
+      return Boolean(player?.lifeShieldUntilTurn && player.lifeShieldUntilTurn >= actionTurn
+        && player.lifeShieldUntilSide === attackingSide);
+    }
+
+    function aiAttackTriggerHasValue(side, attacker, target = null) {
+      if (!canUsePrintedCardEffects(attacker)) return false;
+      if (attacker.baseId === "tiny_rhythm_student") {
+        return state.players[oppositeSide(side)].hand.some(card => (Number(card.handLoadLevel) || 0) < 2);
+      }
+      if (attacker.baseId === "true_enemy") return state.players[side].deck.length > 0 && !isDeckToHandLocked();
+      if (!target || target.yutaUmbrellaShield) return false;
+      if (attacker.baseId === "absolute_woman" || attacker.baseId === "bounce_day") {
+        return aiCanPredictEffectRemoval(target, { destroy: attacker.baseId === "absolute_woman" });
+      }
+      return attacker.baseId === "zombie" && target.type !== "vampire" && !isAibenNyoteiEffectImmune(target);
+    }
+
+    function aiShouldAttackLife(side, attacker) {
+      const targetSide = oppositeSide(side);
+      if (!canAiLethalAttackerHitLife(attacker, targetSide)
+        || (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student")) return false;
+      // A floor shield at 1 life can still be consumed by positive damage.
+      return Math.max(0, attacker.attack || 0) > 0 || aiAttackTriggerHasValue(side, attacker);
+    }
+
+    function aiShouldAttackCard(side, attacker, target) {
+      const damage = previewFinalDamageToCard(target, Math.max(0, attacker.attack || 0), attacker, { combat: true });
+      const triggerValue = aiAttackTriggerHasValue(side, attacker, target);
+      if (damage <= 0 && !triggerValue) return false;
+      const counter = aiAttackCounterDamage(attacker, target);
+      const removes = !target.yutaUmbrellaShield && (damage >= target.currentHp
+        || (triggerValue && ["absolute_woman", "bounce_day"].includes(attacker.baseId)));
+      if (removes) return true;
+      // Preserve the attendee instead of spending its health on a losing trade.
+      if (counter >= attacker.currentHp && !triggerValue) return false;
+      const healing = attacker.type === "vampire" ? Math.min(damage, attacker.maxHp - attacker.currentHp) : 0;
+      if (!triggerValue && counter - healing >= damage && counter > 0) return false;
+      return true;
+    }
+
     function scoreAiDamageEffectTargets(side, source, entries, options = {}) {
       const values = (entries || []).map((entry) => {
         const value = scoreAiNonCombatEffectTarget(side, source, entry, options);
@@ -29650,6 +29701,7 @@
         .filter(({ card }) => !effectKillPlan.targetIds.has(card.instanceId))
         .filter(({ card }) => !preserveEffectSource || aiAttackCounterDamage(attacker, card) < attacker.currentHp)
         .filter(({ card }) => !aiShouldPreserveEnemyTrpg(side, card))
+        .filter(({ card }) => aiShouldAttackCard(side, attacker, card))
         .map((entry) => {
           const defeats = attacker.baseId === "absolute_woman"
             || previewFinalDamageToCard(entry.card, attacker.attack || 0, attacker, { combat: true }) >= entry.card.currentHp;
@@ -29711,7 +29763,8 @@
             break;
           }
           const target = findTrainingAiAttackTarget("player", attacker);
-          const lifeBlocked = !target && (listAttentionCards("opponent").length > 0
+          const lifeBlocked = !target && (!aiShouldAttackLife("player", attacker)
+            || listAttentionCards("opponent").length > 0
             || state.environment?.baseId === "meguro_library"
             || isAibenNyoteiAttackLifeBlocked(attacker, "opponent")
             || attacker.baseId === "happy_blue_bird"
@@ -29767,6 +29820,7 @@
     function aiCanCardTargetLife(card, side, options = {}) {
       if (!card || state.environment?.baseId === "meguro_library") return false;
       const targetSide = oppositeSide(side);
+      if (aiLifeDamagePrevented(targetSide, options.actionTurn ?? state.actionTurn, side)) return false;
       if (isAibenNyoteiAttackLifeBlocked(card, targetSide)) return false;
       if (listAttentionCards(targetSide).length > 0 && card.baseId !== "loud_student") return false;
       if (options.onAttendance && !aiCardCanAttackLifeOnAttendance(card, side, options.zone, options.index)) return false;
@@ -29780,9 +29834,22 @@
     function aiBoardFaceDamage(side, options = {}) {
       const readyOnly = options.readyOnly === true;
       const futureActionTurn = options.futureActionTurn ?? state.actionTurn;
-      const cards = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
+      const cards = listBoardRefs(side).map((ref) => getBoardCardFromRef(ref))
+        .filter(card => card && card.instanceId !== options.excludedInstanceId);
+      const defender = state.players[oppositeSide(side)];
+      const shieldCount = (defender.lifeFloorShields || []).filter(shield =>
+        shield.untilActionTurn >= futureActionTurn && shield.againstSide === side).length;
+      const shields = { max: shieldCount, expected: shieldCount, guaranteed: shieldCount };
+      const addDamage = (total, key, amount) => {
+        if (amount <= 0) return;
+        const remainingLife = defender.life - total[key];
+        if (shields[key] > 0 && amount >= remainingLife) {
+          total[key] += Math.max(0, remainingLife - 1);
+          shields[key] -= 1;
+        } else total[key] += amount;
+      };
       return cards.reduce((total, card) => {
-        if (!aiCanCardTargetLife(card, side)) return total;
+        if (!aiCanCardTargetLife(card, side, { actionTurn: futureActionTurn })) return total;
         if (readyOnly) {
           if (side !== state.currentSide || !canAttackSilently(card)) return total;
           if (card.playedOnTurn === state.actionTurn && hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) return total;
@@ -29793,9 +29860,9 @@
         }
         const attack = Math.max(0, card.attack || 0);
         const drowsy = hasKeyword(card, "眠気");
-        total.max += attack;
-        total.expected += attack * aiAttackHitFactor(card);
-        if (!drowsy) total.guaranteed += attack;
+        addDamage(total, "max", attack);
+        addDamage(total, "expected", attack * aiAttackHitFactor(card));
+        if (!drowsy) addDamage(total, "guaranteed", attack);
         return total;
       }, { max: 0, expected: 0, guaranteed: 0 });
     }
@@ -29805,11 +29872,12 @@
       const futureTurn = state.actionTurn + 1;
       const incoming = aiBoardFaceDamage(targetSide, { futureActionTurn: futureTurn }).expected;
       if (incoming < state.players[side].life || isAttackLocked(targetCard, futureTurn)
-        || isSameNameAttackLocked(targetCard) || !aiCanCardTargetLife(targetCard, targetSide)) return false;
-      const targetDamage = Math.max(0, targetCard.attack || 0) * aiAttackHitFactor(targetCard);
+        || isSameNameAttackLocked(targetCard) || !aiCanCardTargetLife(targetCard, targetSide, { actionTurn: futureTurn })) return false;
       const defeats = attacker.baseId === "absolute_woman"
         || previewFinalDamageToCard(targetCard, attacker.attack || 0, attacker, { combat: true }) >= targetCard.currentHp;
-      return defeats && incoming - targetDamage < state.players[side].life;
+      return defeats && aiBoardFaceDamage(targetSide, {
+        futureActionTurn: futureTurn, excludedInstanceId: targetCard.instanceId
+      }).expected < state.players[side].life;
     }
 
     function aiReadyAttackersForLethal(options = {}) {
@@ -29837,6 +29905,7 @@
 
     function canAiLethalAttackerHitLife(card, targetSide = "player") {
       return state.environment?.baseId !== "meguro_library"
+        && !aiLifeDamagePrevented(targetSide, state.actionTurn, card?.owner)
         && !isAibenNyoteiAttackLifeBlocked(card, targetSide)
         && card?.baseId !== "happy_blue_bird"
         && !(card.playedOnTurn === state.actionTurn && hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
@@ -30020,9 +30089,9 @@
       return Math.max(...dp);
     }
 
-    function aiAffordableHandFaceBurst(side, will) {
+    function aiAffordableHandFaceBurst(side, will, actionTurn = state.actionTurn) {
       const targetSide = oppositeSide(side);
-      if (state.environment?.baseId === "meguro_library") return 0;
+      if (state.environment?.baseId === "meguro_library" || aiLifeDamagePrevented(targetSide, actionTurn, side)) return 0;
       return aiMaximizeHandValue(state.players[side].hand, will, (card) => {
         if (!aiCardCanAttackLifeOnAttendance(card, side)) return 0;
         if (listAttentionCards(targetSide).length > 0 && card.baseId !== "loud_student") return 0;
@@ -30031,6 +30100,7 @@
     }
 
     function aiAffordableDirectLifeDamage(side, will) {
+      if (aiLifeDamagePrevented(oppositeSide(side), state.actionTurn, side)) return 0;
       return aiMaximizeHandValue(state.players[side].hand, will, (card) => aiDirectLifeDamageValue(card, side));
     }
 
@@ -30047,9 +30117,10 @@
       return Math.max(...values) * chance;
     }
 
-    function aiExpectedDeckFaceBurst(side, draws) {
+    function aiExpectedDeckFaceBurst(side, draws, actionTurn = state.actionTurn) {
       if (state.environment?.baseId === "meguro_library") return 0;
       const targetSide = oppositeSide(side);
+      if (aiLifeDamagePrevented(targetSide, actionTurn, side)) return 0;
       return aiExpectedDeckValue(side, draws, (card) => {
         if (!aiCardCanAttackLifeOnAttendance(card, side)) return 0;
         if (listAttentionCards(targetSide).length > 0 && card.baseId !== "loud_student") return 0;
@@ -30099,18 +30170,18 @@
       const playerFutureBoard = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 });
       const aiSurvival = aiBoardSurvivalFactor(side);
       const projectedNextTurnDamage = aiFutureBoard.expected * aiSurvival
-        + aiAffordableHandFaceBurst(side, aiNextWill)
-        + aiExpectedDeckFaceBurst(side, 1);
+        + aiAffordableHandFaceBurst(side, aiNextWill, state.actionTurn + 2)
+        + aiExpectedDeckFaceBurst(side, 1, state.actionTurn + 2);
       const projectedFollowingTurnDamage = aiFutureBoard.expected * aiSurvival * 0.75
-        + aiExpectedDeckFaceBurst(side, 2);
+        + aiExpectedDeckFaceBurst(side, 2, state.actionTurn + 4);
       const ownNextTurnDamage = immediateExpectedDamage + projectedNextTurnDamage;
       const ownTwoTurnDamage = ownNextTurnDamage
         + projectedFollowingTurnDamage;
       // Counter-lethal is evaluated from the board that is actually left alive.
       // Discounting it by a generic removal chance made the AI race into visible lethal.
       const opponentNextTurnDamage = playerFutureBoard.expected
-        + aiAffordableHandFaceBurst(targetSide, playerNextWill)
-        + aiExpectedDeckFaceBurst(targetSide, 1);
+        + aiAffordableHandFaceBurst(targetSide, playerNextWill, state.actionTurn + 1)
+        + aiExpectedDeckFaceBurst(targetSide, 1, state.actionTurn + 1);
 
       const opponentHealingRisk = aiAffordableLifeHealing(targetSide, playerNextWill)
         + aiExpectedDeckHealing(targetSide, 1)
@@ -30127,7 +30198,8 @@
         immediateMaxDamage,
         immediateExpectedDamage,
         immediateGuaranteedDamage: currentBoard.guaranteed + immediateDirectDamage,
-        immediateLethal: immediateMaxDamage >= player.life,
+        immediateLethal: immediateMaxDamage >= player.life
+          && !(player.lifeFloorShields || []).some(shield => shield.untilActionTurn >= state.actionTurn && shield.againstSide === side),
         ownNextTurnDamage,
         ownTwoTurnDamage,
         nextTurnLethal: ownNextTurnDamage >= effectiveEnemyLife,
@@ -31774,10 +31846,17 @@
               addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
               showFloatingTextForCard(targetCard, "ミス", "miss");
             } else {
-              resolveCardAttackWithBoardCleanup(resolvingAttacker, target);
+              if (resolvingAttacker.baseId === "bounce_day") {
+                resolveBounceDayCardAttack(ref, target, resolvingAttacker, targetCard);
+                cleanupDestroyedCards();
+                applyBoardAuras();
+              } else {
+                resolveCardAttackWithBoardCleanup(resolvingAttacker, target);
+              }
             }
           } else {
-            if (listAttentionCards("player").length > 0
+            if (!aiShouldAttackLife("opponent", attacker)
+              || listAttentionCards("player").length > 0
               || state.environment?.baseId === "meguro_library"
               || isAibenNyoteiAttackLifeBlocked(attacker, "player")
               || attacker.baseId === "happy_blue_bird"
@@ -31797,7 +31876,9 @@
               addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
               showFloatingTextForLife("player", "ミス", "miss");
             } else {
-              const dealtDamage = resolveLifeAttack(resolvingAttacker, "player");
+              const dealtDamage = resolvingAttacker.baseId === "bounce_day"
+                ? resolveBounceDayLifeAttack(ref, resolvingAttacker, "player")
+                : resolveLifeAttack(resolvingAttacker, "player");
               addLog(`${resolvingAttacker.name}があなた本体に${dealtDamage}ダメージ。`);
             }
           }
@@ -31836,7 +31917,8 @@
 
     function findAiAttackTarget(attacker) {
       const attentionIds = new Set(listAttackPriorityCards("player").map((card) => card.instanceId));
-      const cannotAttackLife = (attentionIds.size > 0 && attacker.baseId !== "loud_student")
+      const cannotAttackLife = !aiShouldAttackLife("opponent", attacker)
+        || (attentionIds.size > 0 && attacker.baseId !== "loud_student")
         || state.environment?.baseId === "meguro_library"
         || isAibenNyoteiAttackLifeBlocked(attacker, "player")
         || attacker.baseId === "happy_blue_bird"
@@ -31856,6 +31938,7 @@
         .filter((target) => !effectKillPlan.targetIds.has(target.card.instanceId))
         .filter((target) => !preserveEffectSource || aiAttackCounterDamage(attacker, target.card) < attacker.currentHp)
         .filter((target) => !aiShouldPreserveEnemyTrpg("opponent", target.card))
+        .filter((target) => aiShouldAttackCard("opponent", attacker, target.card))
         .map((target) => {
           const canDefeat = attacker.baseId === "absolute_woman"
             || previewFinalDamageToCard(target.card, attacker.attack || 0, attacker, { combat: true }) >= target.card.currentHp;
@@ -36628,7 +36711,7 @@
         const target = getBoardCardFromRef(ref);
         return target?.baseId === card.evolutionFrom
           && !isPadlocked(target)
-          && (allowSameTurnEvolution || target.playedOnTurn < state.actionTurn);
+          && (allowSameTurnEvolution || Math.max(target.playedOnTurn, target.evolvedOnTurn ?? 0) < state.actionTurn);
       }) || null;
     }
 
@@ -36638,6 +36721,7 @@
       if (!target) return false;
       const previous = getBoardCardFromRef(target);
       const evolved = makeBoardCard(card);
+      evolved.evolvedOnTurn = state.actionTurn;
       evolved.evolvedFrom = previous;
       const inheritedDamage = previous && previous.currentHp !== null
         ? Math.max(0, (previous.maxHp || 0) - (previous.currentHp || 0))
