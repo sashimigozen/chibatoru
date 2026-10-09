@@ -39,6 +39,7 @@ test("アグロプリンセスは先攻1ターン目でも相手本体を攻撃�
   expect(result).toEqual({ canAttack: true, canAttackLife: true });
   await page.evaluate(() => document.querySelector("#opponentLifeTarget").click());
   await expect.poll(() => page.evaluate(() => window.__chibattle.state.players.opponent.life)).toBe(19);
+  expect(await page.evaluate(() => window.__chibattle.state.players.player.life)).toBe(19);
 });
 
 test("先攻1ターン目の陽気は出席者を攻撃でき、後攻1ターン目の超陽気は本体を攻撃できる", async ({ page }) => {

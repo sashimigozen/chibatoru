@@ -19633,8 +19633,11 @@
       {
         version: "ver.0.23.17",
         date: "2026年10月9日",
-        summary: "進化直後の再進化とAIの攻撃判断を修正しました。デッキ確認の枚数表示と「行かれてはいかがですか」を変更し、PC画面のキーボード配列を整えました。",
+        summary: "進化直後の再進化とAIの攻撃判断を修正しました。デッキ確認の枚数表示と「行かれてはいかがですか」を変更し、PC画面のキーボード配列を整えました。「アグロ散歩」「アグロプリンセス」の効果を変更しました。",
         changes: [
+          { title: "アグロ散歩", before: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力と体力を+2する。", after: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分本体に2ダメージを与える。" },
+          { title: "アグロプリンセス", before: "[超陽気]", after: "[超陽気]\nこのカードが相手本体を攻撃したとき、自分本体に1ダメージを与える。" },
+          { title: "アグロプリンセスの処理順", after: "自分本体へのダメージを先に処理し、気力が0になった場合は相手本体への攻撃ダメージを与える前に敗北します。出席者への攻撃では自分本体へのダメージは発生しません。" },
           { title: "進化の待機判定", after: "進化したターンを攻撃状態とは別に記録し、技議っちへ進化した同じターンに偽魏義ッ血へ再進化できないようにしました。進化前からの攻撃状態の引き継ぎと、特殊進化・フロア規則による例外は維持しています。" },
           { title: "AIの攻撃判断", after: "双方の本体にかかっているダメージ無効・踏みとどまる効果を確認し、無効な本体攻撃や誤ったリーサル判断を避けます。安全な盤面処理を優先し、倒せず反撃で損をする攻撃は見送ります。攻撃力0でも有効な攻撃時効果がある場合は判断に残し、効果もない無意味な攻撃は行いません。左右のCPUに適用し、対象カードの本文と効果は変更していません。" },
           { title: "デッキ確認の枚数表示", after: "各デッキ確認画面のカード枚数表示を右下から右上へ移し、体力表示を隠さないようにしました。" },
@@ -28552,6 +28555,13 @@
         && player.lifeShieldUntilSide === attackingSide);
     }
 
+    function aiCanSurviveSelfDamage(side, amount) {
+      return state.players[side].life > amount || aiLifeDamagePrevented(side)
+        || (state.players[side].lifeFloorShields || []).some(shield => (
+          shield?.untilActionTurn >= state.actionTurn && shield.againstSide === state.currentSide
+        ));
+    }
+
     function aiAttackTriggerHasValue(side, attacker, target = null) {
       if (!canUsePrintedCardEffects(attacker)) return false;
       if (attacker.baseId === "tiny_rhythm_student") {
@@ -29537,6 +29547,7 @@
 
     function scoreTrainingYocchanItem(side, item) {
       if (item?.type !== "item" || item.unusable) return -Infinity;
+      if (item.baseId === "aggro_walk" && !aiCanSurviveSelfDamage(side, 2)) return -Infinity;
       if (item.baseId === "thin_item" && !canUseThinItem()) return -Infinity;
       if (item.baseId === "chigauyo" && !canUseChigauyo()) return -Infinity;
       if (item.baseId === "go_away" && goAwayCandidates(side).length < 5) return -Infinity;
@@ -29909,6 +29920,8 @@
 
     function canAiLethalAttackerHitLife(card, targetSide = "player") {
       return state.environment?.baseId !== "meguro_library"
+        && !(card?.baseId === "aggro_princess" && canUsePrintedCardEffects(card)
+          && !aiCanSurviveSelfDamage(card.owner, 1))
         && !aiLifeDamagePrevented(targetSide, state.actionTurn, card?.owner)
         && !isAibenNyoteiAttackLifeBlocked(card, targetSide)
         && card?.baseId !== "happy_blue_bird"
@@ -31064,6 +31077,7 @@
     }
 
     function scoreAiItem(item, options = {}) {
+      if (item?.baseId === "aggro_walk" && !aiCanSurviveSelfDamage("opponent", 2)) return 0;
       if (item?.baseId === "thin_item" && !canUseThinItem()) return 0;
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) return 0;
       if (item?.baseId === "go_away" && goAwayCandidates("opponent").length < 5) return 0;
@@ -31433,7 +31447,8 @@
           || opponent.hand.some((card) => card.baseId === "enemy_student");
         return hasEnemy && PLAYER_SEAT_ORDER.some((index) => !state.players.player.board.seats[index]) ? 10 : 0;
       }
-      if (item.baseId === "aggro_walk") return friendlyCards.some((card) => card.name.includes("アグロ")) ? 8 : 0;
+      if (item.baseId === "aggro_walk") return aiCanSurviveSelfDamage("opponent", 2)
+        && friendlyCards.some((card) => card.name.includes("アグロ")) ? 8 : 0;
       if (item.baseId === "stress_hair") return friendlyCards.some((card) => ["yuta", "dark_yuta"].includes(card.baseId)) ? 7 : 0;
       if (item.baseId === "attitude") return !state.players.player.board.teacher && enemyCards.some((card) => card.type === "student") ? 6 : 0;
       if (item.baseId === "yakitori_harassment") return friendlyCards.some((card) => card.type === "student") ? 5 : 0;
@@ -31765,6 +31780,7 @@
         return index !== undefined ? castCaptureOnSlot("opponent", item, "player", "seat", index, false) : false;
       }
       if (["aggro_walk", "stress_hair", "yakitori_harassment"].includes(item.baseId)) {
+        if (item.baseId === "aggro_walk" && !aiCanSurviveSelfDamage("opponent", 2)) return false;
         const ref = listBoardRefs("opponent").find((entry) => {
           const target = getBoardCardFromRef(entry);
           return item.baseId === "aggro_walk" ? target?.name.includes("アグロ")
@@ -31876,7 +31892,12 @@
               finishAttackResolution();
               return;
             }
-            markCardAttackUsed(resolvingAttacker);
+            markCardAttackUsed(resolvingAttacker, "player");
+            if (state.gameOver) {
+              finishAttackResolution();
+              render();
+              return;
+            }
             if (attackMissesFromDrowsiness(resolvingAttacker)) {
               addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
               showFloatingTextForLife("player", "ミス", "miss");
@@ -39193,7 +39214,13 @@
         render();
         return;
       }
-      markCardAttackUsed(resolvingAttacker);
+      markCardAttackUsed(resolvingAttacker, targetSide);
+      if (state.gameOver) {
+        clearSelections();
+        finishAttackResolution();
+        render();
+        return;
+      }
       if (attackMissesFromDrowsiness(resolvingAttacker)) {
         addLog(`${resolvingAttacker.name}は眠気で攻撃を外しました。`);
         showFloatingTextForLife(targetSide, "ミス", "miss");
@@ -39556,7 +39583,11 @@
         if (renderAfter) render();
         return true;
       }
-      if (item.baseId === "aggro_walk") applyPermanentStatBuff(target, 2, 2, 0, item.name);
+      if (item.baseId === "aggro_walk") {
+        applyPermanentStatBuff(target, 2, 0, 0, item.name);
+        damagePlayer(side, 2);
+        addLog(`${item.name}の効果：${SIDES[side]}本体に2ダメージ。`);
+      }
       if (item.baseId === "laser_beam") dealDamageToCard(target, 5, item);
       if (item.baseId === "yakitori_harassment") {
         const missing = Math.max(0, target.maxHp - target.currentHp);
@@ -39722,6 +39753,7 @@
       addLog(`${SIDES[side]}は${item.name}を使いました。`);
       cleanupDestroyedCards();
       applyBoardAuras();
+      if (item.baseId === "aggro_walk") checkLifeVictory();
       if (side === "player") completeTutorialAction("itemCard", { item, owner: targetOwner, zone: targetZone, index: targetIndex });
       clearSelections();
       if (renderAfter) render();
@@ -41390,7 +41422,13 @@
       return 0;
     }
 
-    function markCardAttackUsed(card) {
+    function markCardAttackUsed(card, targetSide = null) {
+      if (card?.baseId === "aggro_princess" && targetSide === oppositeSide(card.owner)
+        && canUsePrintedCardEffects(card)) {
+        damagePlayer(card.owner, 1);
+        addLog(`${card.name}の攻撃時効果：${SIDES[card.owner]}本体に1ダメージ。`);
+        checkLifeVictory();
+      }
       if (card?.baseId === "tiny_rhythm_student" && canUsePrintedCardEffects(card)) {
         const target = shuffle(state.players[oppositeSide(card.owner)].hand)[0];
         if (target) addHandLoad(target);
@@ -51731,8 +51769,8 @@
         gesture_student: "このカードを手札から出席させたとき、「３つジェスチャー」2枚を手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",
         plump_student: "陽気を持つ。このカードを出席させるには、横に連続した席マスを2つ使用する。",
-        aggro_princess: "超陽気を持つ。",
-        aggro_walk: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力と体力を+2する。",
+        aggro_princess: "超陽気を持つ。このカードが相手本体を攻撃したとき、自分本体に1ダメージを与える。",
+        aggro_walk: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分本体に2ダメージを与える。",
         red_ideology: "お互いの講義室にいる出席者を、各行の左側の席マスへ詰める。",
         illness: "装備カード。お互いの講義室にいる出席者1人に装備する。装備者の攻撃力と体力を-1する。装備者の持ち主のターン開始時、その講義室にいる学生1人をランダムに指名し、新しい「病」1枚を装備する。",
         sick_yuta: "「U太」に「病」を装備したとき、それらを校外エリアへ送り、同じマスにこのカードを出席させる。このカードに「病」が装備されたとき、その「病」を校外エリアへ送り、このカードを「病に打ち勝った裏U太」に特殊進化させる。自分のターン終了時、このカードが講義室にいるなら、相手の出席者1人をランダムに指名し、新しい「病」1枚を装備する。",
