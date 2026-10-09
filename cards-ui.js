@@ -3,7 +3,8 @@
 (() => {
   const screen = elements.deckScreen;
   const DECKS_PER_PAGE = 12;
-  const ui = { cardPage: 0, deckPage: 0, query: "", type: "", cost: "", category: "", cardContext: [], opener: null };
+  const ui = { cardPage: 0, deckPage: 0, query: "", type: "", cost: "", category: "", cardContext: [], opener: null,
+    editorCardId: null, editorHistory: [], editorScroll: 0, drag: null };
   const arrow = (label, previous = false) => `<button type="button" class="case-arrow${previous ? " previous" : ""}" aria-label="${label}"><img src="assets/tutorial/chevron-right.svg" alt=""></button>`;
   const categories = [{ id: "common", name: "共通カード" }, ...SPECIALTY_DEFINITIONS];
   const categoryName = (id) => categories.find((entry) => entry.id === id)?.name || "共通カード";
@@ -69,6 +70,64 @@
   fileTools.append(elements.importDeckButton, elements.exportDeckButton, elements.autoDeckButton, elements.clearDeckButton);
   elements.deckEditorView.append(fileTools);
   elements.deckEditorView.querySelector(".current-deck-panel").append(elements.deckCostCurve);
+  const workspace = elements.deckEditorView.querySelector(".deck-workspace");
+  const editorDetail = document.createElement("aside");
+  editorDetail.className = "case-editor-detail";
+  editorDetail.setAttribute("aria-label", "選択中のカード詳細");
+  editorDetail.innerHTML = '<div id="caseEditorCard"></div><div id="caseEditorText"></div><div class="case-editor-detail-actions"><button class="button secondary" id="caseEditorTest" type="button">カードテスト</button><div class="case-editor-adjust"><button class="button" id="caseEditorMinus" type="button" aria-label="選択中のカードを1枚削除">−</button><span id="caseEditorCopies"></span><button class="button" id="caseEditorPlus" type="button" aria-label="選択中のカードを1枚追加">＋</button></div></div>';
+  workspace.prepend(editorDetail);
+  const editorCatalog = document.createElement("section");
+  editorCatalog.className = "case-editor-catalog";
+  editorCatalog.setAttribute("aria-label", "編成可能なカード一覧");
+  editorCatalog.innerHTML = '<h3>カード一覧</h3>';
+  workspace.append(editorCatalog);
+  editorCatalog.append(document.getElementById("deckFilterPanel"), elements.deckEditorList);
+  elements.deckEditorList.addEventListener("scroll", () => { ui.editorScroll = elements.deckEditorList.scrollTop; });
+  const editorSearchRow = elements.deckSearchInput.closest(".deck-filter-row");
+  editorCatalog.insertBefore(editorSearchRow, document.getElementById("deckFilterPanel"));
+  document.getElementById("deckFilterPanel").querySelector("summary").textContent = "絞り込み";
+  document.getElementById("caseEditorTest").addEventListener("click", () => openCard(ui.editorCardId, ui.cardContext));
+  document.getElementById("caseEditorPlus").addEventListener("click", () => changeDeckCount(state.deckBuilder.activeSide, ui.editorCardId, 1));
+  document.getElementById("caseEditorMinus").addEventListener("click", () => changeDeckCount(state.deckBuilder.activeSide, ui.editorCardId, -1));
+  editorDetail.addEventListener("click", (event) => {
+    const term = event.target.closest("[data-preview-term]");
+    if (term) { showBattleCardTermDescription(term.dataset.previewTerm, document.getElementById("caseEditorText")); return; }
+    const related = event.target.closest("[data-related-card]");
+    if (related) { ui.editorHistory.push(ui.editorCardId); selectEditorCard(related.dataset.relatedCard, true); return; }
+    if (event.target.closest("[data-editor-card-back]")) { selectEditorCard(ui.editorHistory.pop(), true); return; }
+    if (event.target.closest("[data-editor-style]")) { toggleDungeonCardStyle(ui.editorCardId); render(); }
+  });
+  for (const [zone, source] of [[elements.currentDeckList, "deck"], [elements.deckEditorList, "catalog"]]) {
+    zone.addEventListener("dragstart", (event) => {
+      const button = event.target.closest(source === "deck" ? "[data-current-detail]" : "[data-card-test]");
+      if (!button) return;
+      ui.drag = { id: button.dataset.currentDetail || button.dataset.cardTest, source };
+      event.dataTransfer.effectAllowed = "copyMove";
+      event.dataTransfer.setData("application/x-chibattle-card", JSON.stringify(ui.drag));
+      hideCardTooltip();
+    });
+    zone.addEventListener("dragover", (event) => {
+      if (!ui.drag || ui.drag.source === source) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = source === "deck" ? "copy" : "move";
+      zone.classList.add("case-drop-target");
+    });
+    zone.addEventListener("dragleave", (event) => { if (!zone.contains(event.relatedTarget)) zone.classList.remove("case-drop-target"); });
+    zone.addEventListener("drop", (event) => {
+      event.preventDefault();
+      zone.classList.remove("case-drop-target");
+      const drag = ui.drag;
+      ui.drag = null;
+      if (!drag || drag.source === source || !getDeckEditorIds().includes(drag.id)) return;
+      selectEditorCard(drag.id);
+      changeDeckCount(state.deckBuilder.activeSide, drag.id, source === "deck" ? 1 : -1);
+    });
+    zone.addEventListener("dragend", () => {
+      ui.drag = null;
+      elements.currentDeckList.classList.remove("case-drop-target");
+      elements.deckEditorList.classList.remove("case-drop-target");
+    });
+  }
 
   const library = elements.deckLibraryView;
   const paged = document.createElement("div");
@@ -309,10 +368,61 @@
 
   function renderEditor() {
     ui.cardContext = getDeckEditorIds().filter(deckCardMatchesFilters);
-    elements.deckCostCurve.innerHTML = deckCurveHtml(state.deckBuilder.counts.player);
-    // The native editor card buttons still open rarity controls and card tests.
-    elements.deckEditorList.querySelectorAll("[data-card-test]").forEach((button) => button.addEventListener("click", () => { ui.opener = button; }));
+    const side = state.deckBuilder.activeSide, counts = state.deckBuilder.counts[side];
+    elements.deckEditorList.querySelectorAll("[data-card-test]").forEach((button) => {
+      button.draggable = true;
+      button.setAttribute("aria-label", `${CARD_BASES[button.dataset.cardTest].name}の詳細を見る`);
+      button.classList.toggle("selected", button.dataset.cardTest === ui.editorCardId);
+    });
+    const ids = getDeckEditorIds().filter((id) => counts[id] > 0);
+    elements.currentDeckList.innerHTML = ids.map((id) => `<button class="case-editor-deck-card" type="button" draggable="true" data-current-detail="${id}" aria-label="${escapeHtml(CARD_BASES[id].name)}、${counts[id]}枚、詳細を見る">${cardShellTemplate(makePreviewCard(id, side), "deck-window-card")}<span class="deck-copy-badge">x${counts[id]}</span></button>`).join("") || '<p class="current-deck-empty">まだカードがありません</p>';
+    elements.currentDeckList.querySelectorAll("[data-current-detail]").forEach((button) => button.addEventListener("click", () => selectEditorCard(button.dataset.currentDetail)));
+    const allowed = getDeckEditorIds();
+    if (!ui.editorCardId || (!allowed.includes(ui.editorCardId) && !ui.editorHistory.length)) ui.editorCardId = ui.cardContext[0] || allowed[0];
+    renderEditorDetail();
+    elements.currentDeckList.querySelectorAll("[data-current-detail]").forEach((button) => button.classList.toggle("selected", button.dataset.currentDetail === ui.editorCardId));
+    elements.deckEditorList.scrollTop = ui.editorScroll;
+    fitEditorDeck();
     showNotice();
+  }
+
+  const editorDeckObserver = new ResizeObserver(() => fitEditorDeck());
+  editorDeckObserver.observe(elements.currentDeckList);
+  function fitEditorDeck() {
+    const count = elements.currentDeckList.querySelectorAll("[data-current-detail]").length;
+    const width = elements.currentDeckList.clientWidth - 16, height = elements.currentDeckList.clientHeight - 16;
+    if (!count || width <= 0 || height <= 0) return;
+    let best = { width: 0, columns: 1 };
+    for (let columns = 1; columns <= count; columns++) {
+      const rows = Math.ceil(count / columns);
+      const cardWidth = Math.min(116, (width - 6 * (columns - 1)) / columns, (height - 6 * (rows - 1)) / rows * 21 / 32);
+      if (cardWidth > best.width) best = { width: cardWidth, columns };
+    }
+    elements.currentDeckList.style.setProperty("--editor-deck-columns", best.columns);
+    elements.currentDeckList.style.setProperty("--editor-deck-width", `${Math.max(1, Math.floor(best.width))}px`);
+    scheduleCardTemplateScaleSync();
+  }
+  function selectEditorCard(id, related = false) {
+    if (!CARD_BASES[id]) return;
+    if (!related) ui.editorHistory = [];
+    ui.editorCardId = id;
+    hideCardTooltip();
+    renderEditorDetail();
+    elements.deckEditorList.querySelectorAll("[data-card-test]").forEach((button) => button.classList.toggle("selected", button.dataset.cardTest === id));
+    elements.currentDeckList.querySelectorAll("[data-current-detail]").forEach((button) => button.classList.toggle("selected", button.dataset.currentDetail === id));
+  }
+  function renderEditorDetail() {
+    const id = ui.editorCardId;
+    if (!CARD_BASES[id]) return;
+    const side = state.deckBuilder.activeSide, counts = state.deckBuilder.counts[side], count = counts[id] || 0;
+    const card = makePreviewCard(id, side), modes = availableCardStyleModes(id);
+    document.getElementById("caseEditorCard").innerHTML = `${cardShellTemplate(card)}${modes.length > 1 ? `<button class="button secondary" type="button" data-editor-style>${cardStyleModeLabel(localCardStyleMode(id))} · 切り替え</button>` : ""}`;
+    document.getElementById("caseEditorText").innerHTML = `${ui.editorHistory.length ? '<button class="button secondary" type="button" data-editor-card-back>元のカードへ戻る</button>' : ""}${cardDetailTemplate(card, { interactiveTerms: true })}`;
+    document.getElementById("caseEditorCopies").textContent = `${count}枚`;
+    const eligible = getDeckEditorIds().includes(id);
+    document.getElementById("caseEditorMinus").disabled = !eligible || count <= 0;
+    document.getElementById("caseEditorPlus").disabled = !eligible || (!isChaosDeckFormat() && count >= maxCopiesForCard(id)) || !canAddAceCard(counts, id) || deckSize(counts) >= activeDeckMaxSize();
+    scheduleCardTemplateScaleSync();
   }
 
   function renderCardDetail(baseId) {
@@ -406,7 +516,7 @@
     else button.click();
   }, { passive: false });
 
-  window.ChibattleCards = { renderLibrary, renderEditor, renderCardDetail, confirmDiscard, isDirty,
+  window.ChibattleCards = { renderLibrary, renderEditor, renderCardDetail, selectEditorCard, confirmDiscard, isDirty,
     restoreCardFocus: () => { if (ui.opener?.isConnected) ui.opener.focus(); } };
   render();
 })();

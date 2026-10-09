@@ -17286,7 +17286,7 @@
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
-  <link rel="stylesheet" href="cards-ui.css?v=0.23.15" />
+  <link rel="stylesheet" href="cards-ui.css?v=0.23.17" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.23.16" />
 </head>
 <body>
@@ -19633,8 +19633,9 @@
       {
         version: "ver.0.23.17",
         date: "2026年10月9日",
-        summary: "進化直後の再進化とAIの攻撃判断を修正しました。デッキ確認の枚数表示と「行かれてはいかがですか」を変更し、PC画面のキーボード配列を整えました。「アグロ散歩」「アグロプリンセス」の効果を変更し、「教室変更」の遅刻を1、「子曰く」の戦意を3、「細い」の最低戦意を4にしました。",
+        summary: "進化直後の再進化とAIの攻撃判断を修正しました。デッキ確認の枚数表示と「行かれてはいかがですか」を変更し、PC画面のキーボード配列を整えました。「アグロ散歩」「アグロプリンセス」の効果を変更し、「教室変更」の遅刻を1、「子曰く」の戦意を3、「細い」の最低戦意を4にしました。デッキ編集をカード詳細・編成中デッキ・カード一覧の3列配置にし、ドラッグで追加・削除できるようにしました。",
         changes: [
+          { title: "デッキ編集の配置と操作", after: "左に選択中のカード詳細、中央に編成中のデッキ全体、右に検索・絞り込み付きカード一覧を配置しました。左下の＋・−で1枚ずつ追加・削除でき、右のカードを中央へドラッグして追加、中央のカードを右へドラッグして削除できます。カード画像・枚数・能力説明・関連カードを確認でき、保存・ファイル読み込み／書き出し・カードテストと既存の編成制限を維持しています。机色の外枠、紺色の背景、既存のカード素材・フォントは変更していません。" },
           { title: "細い", before: "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低0。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。", after: "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低4。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。" },
           { title: "子曰く", before: "戦意2。", after: "戦意3。カードの本文と効果は変更していません。" },
           { title: "教室変更", before: "相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻2]を付与する。", after: "相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻1]を付与する。" },
@@ -48912,8 +48913,8 @@
           </div>
         `;
         const testButton = row.querySelector("[data-card-test]");
-        attachCardDetailEvents(testButton, card);
-        testButton.addEventListener("click", () => openCardTestConfirm(baseId));
+        testButton.addEventListener("click", () => window.ChibattleCards?.selectEditorCard
+          ? window.ChibattleCards.selectEditorCard(baseId) : openCardTestConfirm(baseId));
         row.querySelector("[data-deck-minus]").addEventListener("click", (event) => {
           event.stopPropagation();
           changeDeckCount(activeSide, baseId, -1);
@@ -53006,7 +53007,7 @@
     initializeGame();
 
   </script>
-  <script src="cards-ui.js?v=0.23.16"></script>
+  <script src="cards-ui.js?v=0.23.17"></script>
   <script src="desktop-ui.js?v=0.23.15"></script>
   <script src="four-mode.js"></script>
 </body>

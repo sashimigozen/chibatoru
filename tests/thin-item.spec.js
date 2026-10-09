@@ -25,6 +25,7 @@ test("細いの本文・台帳・更新情報を合意した文面に揃え、�
   await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
   await page.locator('[data-card-test="thin_item"]').click();
+  await page.locator('#caseEditorTest').click();
   await expect(page.locator("#cardTestText .tooltip-effect")).toHaveText(`効果：${displayText}`);
   await page.screenshot({ path: test.info().outputPath("thin-item-detail.png") });
 });

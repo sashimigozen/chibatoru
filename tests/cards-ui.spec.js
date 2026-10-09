@@ -16,27 +16,28 @@ test("デッキへの追加・削除は下の通知を出さず、必要なエ�
   await page.locator("#deckLibraryGrid .new-deck").click();
   const notice = page.locator("#cardsNotice");
   const count = () => page.evaluate(() => window.__chibattle.state.deckBuilder.counts.player.general_student || 0);
-  await page.locator('[data-deck-plus="general_student"]').click();
+  await page.locator('[data-card-test="general_student"]').click();
+  await page.locator('#caseEditorPlus').click();
   expect(await count()).toBe(1);
   await expect(notice).toBeHidden();
-  await page.locator('[data-current-plus="general_student"]').click();
+  await page.locator('#caseEditorPlus').click();
   expect(await count()).toBe(2);
   await expect(notice).toBeHidden();
-  await page.locator('[data-deck-minus="general_student"]').click();
+  await page.locator('#caseEditorMinus').click();
   expect(await count()).toBe(1);
   await expect(notice).toBeHidden();
   // 保存に必要なデッキ名のエラーは通知を維持する。
   await page.locator("#saveDeckButton").click();
   await expect(notice).toContainText("保存するデッキ名を入力してください");
   await expect(notice).toBeVisible();
-  await page.locator('[data-current-minus="general_student"]').click();
+  await page.locator('#caseEditorMinus').click();
   expect(await count()).toBe(0);
   await expect(notice).toBeEmpty();
   await expect(notice).toBeHidden();
   // 再描画でも古いお知らせが復活しない。
   await page.evaluate(() => window.__chibattle.render());
   await expect(notice).toBeHidden();
-  await page.locator('[data-deck-plus="general_student"]').click();
+  await page.locator('#caseEditorPlus').click();
   expect(await count()).toBe(1);
   await expect(notice).toBeHidden();
   await page.screenshot({ path: test.info().outputPath("deck-editor-without-count-notice.png") });
@@ -108,7 +109,8 @@ test("保存デッキを12件ずつ表示し最初と最後が循環・内容と
   await page.locator("[data-deck-edit]").click();
   await expect(page.locator("#deckSaveNameInput")).toHaveValue("実デッキ1");
   await expect(page.locator("#caseDeckDetailModal")).toBeHidden();
-  await page.locator('[data-deck-plus="general_student"]').click();
+  await page.locator('[data-current-detail="general_student"]').click();
+  await page.locator('#caseEditorPlus').click();
   await page.locator("#deckSaveNameInput").fill("保存テスト");
   await page.locator("#saveDeckButton").click();
   await page.reload();
@@ -409,6 +411,7 @@ test("デッキのダブルクリック、カードテストと戻る、破棄�
   await expect(page.locator("#deckEditorView")).toBeVisible();
   await expect(page.locator("#deckSaveNameInput")).toHaveValue(name);
   await page.locator('[data-card-test="yuta"]').click();
+  await page.locator('#caseEditorTest').click();
   await expect(page.locator("#cardTestStartButton")).toBeVisible();
   await page.locator("#cardTestStartButton").click();
   expect(await page.evaluate(() => window.__chibattle.state.screen)).toBe("battle");
@@ -460,6 +463,7 @@ test("専攻デッキの選択・登録制限とレアリティ切替を維持",
   });
   const rewardId = await page.evaluate(() => DUNGEON_CARD_STYLE_REWARDS.cafeteria.cardIds.find(id => getDeckEditorIds().includes(id)));
   await page.locator(`[data-card-test="${rewardId}"]`).click();
+  await page.locator('#caseEditorTest').click();
   await expect(page.locator("#cardTestModal")).toBeVisible();
   const modeBefore = await page.evaluate(id => localCardStyleMode(id), rewardId);
   await page.locator(`[data-card-style-cycle="${rewardId}"]`).click();

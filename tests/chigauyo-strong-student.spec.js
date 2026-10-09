@@ -37,6 +37,7 @@ test("デッキ詳細の本文・戦意表示と同日ver.0.23.12の更新情報
   await page.locator("#deckLibraryGrid .new-deck").click();
   for (const card of cards) {
     await page.locator(`[data-card-test="${card.id}"]`).click();
+    await page.locator("#caseEditorTest").click();
     await expect(page.locator("#cardTestText .tooltip-effect")).toHaveText(`効果：${card.text}`);
     await expect(page.locator("#cardTestCard .card-header .stat-cost")).toHaveText(card.cost);
     await page.screenshot({ path: test.info().outputPath(`${card.id}-detail.png`) });
