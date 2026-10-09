@@ -5758,7 +5758,7 @@
     .deck-copy-badge {
       position: absolute;
       right: 4px;
-      bottom: 4px;
+      top: 4px;
       border-radius: 999px;
       padding: 1px 5px;
       background: #172033;
@@ -19633,10 +19633,12 @@
       {
         version: "ver.0.23.17",
         date: "2026年10月9日",
-        summary: "進化直後の再進化を修正し、本体の継続効果と反撃を考慮するAIの攻撃判断を改善しました。",
+        summary: "進化直後の再進化とAIの攻撃判断を修正しました。デッキ確認の枚数表示を右上に移し、「行かれてはいかがですか」を5枚指名する効果に変更しました。",
         changes: [
           { title: "進化の待機判定", after: "進化したターンを攻撃状態とは別に記録し、技議っちへ進化した同じターンに偽魏義ッ血へ再進化できないようにしました。進化前からの攻撃状態の引き継ぎと、特殊進化・フロア規則による例外は維持しています。" },
-          { title: "AIの攻撃判断", after: "双方の本体にかかっているダメージ無効・踏みとどまる効果を確認し、無効な本体攻撃や誤ったリーサル判断を避けます。安全な盤面処理を優先し、倒せず反撃で損をする攻撃は見送ります。攻撃力0でも有効な攻撃時効果がある場合は判断に残し、効果もない無意味な攻撃は行いません。左右のCPUに適用し、カード本文と効果は変更していません。" }
+          { title: "AIの攻撃判断", after: "双方の本体にかかっているダメージ無効・踏みとどまる効果を確認し、無効な本体攻撃や誤ったリーサル判断を避けます。安全な盤面処理を優先し、倒せず反撃で損をする攻撃は見送ります。攻撃力0でも有効な攻撃時効果がある場合は判断に残し、効果もない無意味な攻撃は行いません。左右のCPUに適用し、対象カードの本文と効果は変更していません。" },
+          { title: "デッキ確認の枚数表示", after: "各デッキ確認画面のカード枚数表示を右下から右上へ移し、体力表示を隠さないようにしました。" },
+          { title: "行かれてはいかがですか", before: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚まで指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。", after: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。" }
         ]
       },
       {
@@ -29536,6 +29538,7 @@
       if (item?.type !== "item" || item.unusable) return -Infinity;
       if (item.baseId === "thin_item" && !canUseThinItem()) return -Infinity;
       if (item.baseId === "chigauyo" && !canUseChigauyo()) return -Infinity;
+      if (item.baseId === "go_away" && goAwayCandidates(side).length < 5) return -Infinity;
       const ai = state.players[side];
       const targetSide = oppositeSide(side);
       const cost = effectiveCardCost(item);
@@ -31062,6 +31065,7 @@
     function scoreAiItem(item, options = {}) {
       if (item?.baseId === "thin_item" && !canUseThinItem()) return 0;
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) return 0;
+      if (item?.baseId === "go_away" && goAwayCandidates("opponent").length < 5) return 0;
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (getAiLethalEnablingItemPlan(item)) return 1000;
       const baseScore = baseScoreAiItem(item);
@@ -33802,6 +33806,11 @@
       return true;
     }
 
+    function goAwayCandidates(side) {
+      return state.players[side].trash.filter(card => canRecoverTrashCard(card)
+        && ["student", "teacher", "vampire"].includes(card.type));
+    }
+
     function openGoAwayChoice(item) {
       if (!item || item.baseId !== "go_away") return false;
       if (effectiveCardCost(item) > state.players.player.will) {
@@ -33809,9 +33818,9 @@
         render();
         return true;
       }
-      const candidates = state.players.player.trash.filter((card) => canRecoverTrashCard(card) && ["student", "teacher", "vampire"].includes(card.type));
-      if (candidates.length === 0) {
-        addLog(`${item.name}は校外エリアに学生・教師・ヴァンパイアがないため使えません。`);
+      const candidates = goAwayCandidates("player");
+      if (candidates.length < 5) {
+        addLog(`${item.name}は校外エリアの学生・教師・ヴァンパイアが合計5枚未満のため使えません。`);
         render();
         return true;
       }
@@ -33819,9 +33828,9 @@
         mode: "go_away",
         itemId: item.instanceId,
         title: item.name,
-        message: "デッキに戻すカードを1〜5枚選んでください。",
+        message: "デッキに戻すカードを5枚選んでください。",
         cards: candidates,
-        min: 1,
+        min: 5,
         max: 5,
         confirmLabel: "選んだカードをデッキへ戻す"
       });
@@ -33830,10 +33839,8 @@
     function resolveGoAwayChoice(side, item, selectedIds, renderAfter = true) {
       if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
       const selected = new Set(selectedIds || []);
-      const cards = state.players[side].trash.filter((card) => (
-        canRecoverTrashCard(card) && selected.has(card.instanceId) && ["student", "teacher", "vampire"].includes(card.type)
-      ));
-      if (cards.length < 1 || cards.length > 5 || !payForItem(side, item)) return false;
+      const cards = goAwayCandidates(side).filter(card => selected.has(card.instanceId));
+      if (cards.length !== 5 || !payForItem(side, item)) return false;
       const cardIds = new Set(cards.map((card) => card.instanceId));
       state.players[side].trash = state.players[side].trash.filter((card) => !cardIds.has(card.instanceId));
       state.players[side].deck = shuffle([...state.players[side].deck, ...cards]);
@@ -40153,8 +40160,7 @@
         return resolveEnvironmentSetupChoice(side, item, choiceId, renderAfter);
       }
       if (item.baseId === "go_away") {
-        const selectedIds = options.selectedIds || state.players[side].trash
-          .filter((card) => canRecoverTrashCard(card) && ["student", "teacher", "vampire"].includes(card.type))
+        const selectedIds = options.selectedIds || goAwayCandidates(side)
           .slice(0, 5)
           .map((card) => card.instanceId);
         return resolveGoAwayChoice(side, item, selectedIds, renderAfter);
@@ -44774,6 +44780,7 @@
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) return false;
       if (item?.baseId === "obon_mac" && !canUseObonMac("player")) return false;
       if (arePlayedEffectsSuppressed("player")) return true;
+      if (item.baseId === "go_away") return goAwayCandidates("player").length >= 5;
       if (item.baseId === "annoying_na" && state.players.player.turnActionTaken) return false;
       if (item.baseId === "scary_question") return effectTargetEntries("player", "opponent").length > 0;
       if (item.baseId === "yabe") return effectTargetEntries("player", "opponent").length > 0;
@@ -51797,7 +51804,7 @@
         environment_setup: "次の2つから1つを選ぶ。1. 自分のデッキから環境カードをランダムに1枚手札に加える。2. 自分の校外エリアから環境カードをランダムに1枚手札に戻す。",
         diamond_dust: "自分の校外エリアに「ダブルダイヤモンドクロス」が2枚以上あり、自分の教卓マスに「デザインデーモンスレイヤー」がいる場合に使用できる。お互いの講義室の出席者すべてと環境を破壊する。校外エリアにあるこのカードは、手札を2枚校外エリアへ送ることで手札に戻せる。",
         happy_experience: "自分の出席者1人を指名する。手札にその進化先がある場合、そのカードに進化させる。この効果で進化したカードの出席時・進化時の能力は使用しない。",
-        go_away: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚まで指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。",
+        go_away: "自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚指名する。それらを自分のデッキに戻してシャッフルし、カードを2枚引く。",
         loud_members: "連続する2行×2列の席マス4つを占有し、1人の出席者として扱う。出席した時、お互いの席マスにいるこのカード以外の出席者すべてに1ダメージを与える。お互いの教卓マスにいる出席者には2ダメージを与える。",
         small_omata: "このカードは教卓マスにのみ出席できる。このカードを手札から出席させたとき、相手の出席者1人を指名する。その出席者は1ターン攻撃できない。このカードを戦意10で手札から出席させたとき、このカードと自分の席マスにいる出席者すべてを破壊する。その後、自分の席マスすべてを使って「ビッグ小俣」を出席させる。",
         big_omata: "注目と陽気を持つ。自分の席マスすべてを占有し、1人の出席者として扱う。出席した時、相手の講義室の出席者すべては1ターン攻撃できない。",
