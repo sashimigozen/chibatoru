@@ -16,7 +16,7 @@ function materials(el) {
   };
 }
 
-test('レアは通常のまま、スーパーレアは銀枠のみで中身・演出を変えない', async ({ page }) => {
+test('レアは通常の面に共通ミラー光、スーパーレアは銀枠を加え中身を変えない', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(url);
   await page.evaluate(() => window.__chibattle.startCardTest('yuta'));
@@ -37,13 +37,31 @@ test('レアは通常のまま、スーパーレアは銀枠のみで中身・�
       if (mode === 'rare' || mode === 'superRare') {
         await expect(hand).not.toHaveClass(/reward-foil|reward-prism/);
         expect(results[mode].animations.some(name => /reward-foil|reward-prism/.test(name))).toBe(false);
+        await expect(hand.locator('.rarity-mirror-surface')).toHaveCount(1);
+        const mirror = await hand.locator('.rarity-mirror-surface').evaluate(el => ({
+          overflow: getComputedStyle(el).overflow, pointer: getComputedStyle(el).pointerEvents,
+          animation: getComputedStyle(el, '::before').animationName,
+          duration: getComputedStyle(el, '::before').animationDuration
+        }));
+        expect(mirror).toEqual({ overflow: 'hidden', pointer: 'none', animation: 'reward-foil-shine', duration: '4.8s' });
+        await expect(page.locator('#battleCardPreview .rarity-mirror-surface')).toHaveCount(1);
+      } else {
+        await expect(hand.locator('.rarity-mirror-surface')).toHaveCount(0);
       }
       if (mode === 'superRare') {
         await expect(hand).toHaveClass(/rarity-super-rare/);
         const preview = await page.locator('#battleCardPreview > .card').evaluate(materials);
         expect(preview.stage.backgroundImage).toBe(results[mode].stage.backgroundImage);
         expect(parseFloat(preview.stage.borderWidth)).toBeCloseTo(20, 0);
-        if (baseId === 'yuta') await page.screenshot({ path: test.info().outputPath('silver-frame.png') });
+        if (baseId === 'yuta') {
+          await page.locator('.rarity-mirror-surface').evaluateAll(elements => {
+            for (const el of elements) for (const animation of el.getAnimations({ subtree: true })) {
+              animation.pause();
+              animation.currentTime = 2200;
+            }
+          });
+          await page.screenshot({ path: test.info().outputPath('silver-frame.png') });
+        }
       }
       if (mode === 'reward') await expect(hand).toHaveClass(/reward-foil/);
     }
@@ -99,8 +117,10 @@ test('銀枠は講義室・出席演出にも共通し、オンラインでは�
   });
   const silver = page.locator('.board-card[data-base-id="general_student"]');
   await expect(silver).toHaveClass(/rarity-super-rare/);
+  await expect(silver.locator('.rarity-mirror-surface')).toHaveCount(1);
   expect(await silver.evaluate(el => getComputedStyle(el).borderColor)).toBe('rgb(184, 195, 207)');
   await expect(page.locator('#playRevealCard .card')).toHaveClass(/rarity-super-rare/);
+  await expect(page.locator('#playRevealCard .rarity-mirror-surface')).toHaveCount(1);
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.hidePlayReveal();
@@ -123,4 +143,28 @@ test('銀枠は講義室・出席演出にも共通し、オンラインでは�
   await expect(page.locator('.board-card[data-base-id="general_student"].rarity-super-rare')).toHaveCount(1);
   await expect(page.locator('.board-card[data-base-id="general_student"].rarity-rare')).toHaveCount(1);
   expect(await page.evaluate(() => window.__chibattle.state.online.remoteCardStyles)).toEqual({ general_student: 'superRare', classroom: 'reward' });
+});
+
+test('ミラー光は移動し、動きを減らす設定では停止する', async ({ page }) => {
+  await page.goto(url);
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('yuta');
+    const card = api.createCardFromBase('yuta', 'player');
+    card.profileStyleMode = 'rare';
+    api.state.players.player.hand = [card];
+    api.render();
+  });
+  const surface = page.locator('#playerHand .rarity-mirror-surface');
+  const transforms = await surface.evaluate(el => {
+    const animation = el.getAnimations({ subtree: true })[0];
+    animation.pause();
+    animation.currentTime = 1500;
+    const first = getComputedStyle(el, '::before').transform;
+    animation.currentTime = 2800;
+    return [first, getComputedStyle(el, '::before').transform];
+  });
+  expect(transforms[0]).not.toBe(transforms[1]);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await surface.evaluate(el => getComputedStyle(el, '::before').animationName)).toBe('none');
 });
