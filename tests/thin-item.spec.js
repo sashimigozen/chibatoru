@@ -4,7 +4,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const thinText = "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低0。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。";
+const thinText = "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低4。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。";
 const displayText = thinText.replaceAll("。", "。\n").trim();
 
 test.beforeEach(async ({ page }) => page.goto(gameUrl));
@@ -27,6 +27,64 @@ test("細いの本文・台帳・更新情報を合意した文面に揃え、�
   await page.locator('[data-card-test="thin_item"]').click();
   await expect(page.locator("#cardTestText .tooltip-effect")).toHaveText(`効果：${displayText}`);
   await page.screenshot({ path: test.info().outputPath("thin-item-detail.png") });
+});
+
+test("双方の動的戦意は相手の手札が8枚以下なら4、9枚以上なら手札枚数から4を引く", async ({ page }) => {
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const results = [];
+    for (const side of ["player", "opponent"]) {
+      for (const count of [0, 3, 4, 7, 8, 9, 10, 11]) {
+        api.startCardTest("thin_item");
+        const targetSide = side === "player" ? "opponent" : "player";
+        const item = api.createCardFromBase("thin_item", side);
+        api.state.players[side].hand = [item];
+        api.state.players[targetSide].hand = Array.from({ length: count }, () => api.createCardFromBase("general_student", targetSide));
+        const cost = api.effectiveCardCost(item);
+        item.handLoadLevel = 2;
+        results.push({ side, count, cost, highLoadCost: api.effectiveCardCost(item) });
+      }
+    }
+    return results;
+  });
+  for (const result of results) {
+    expect(result.cost, JSON.stringify(result)).toBe(Math.max(4, result.count - 4));
+    expect(result.highLoadCost, JSON.stringify(result)).toBe(result.cost + 1);
+  }
+});
+
+test("双方とも戦意3では状態を変えず使用できず、戦意4で最低戦意を支払う", async ({ page }) => {
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    return ["player", "opponent"].map((side) => {
+      api.startCardTest("thin_item");
+      const targetSide = side === "player" ? "opponent" : "player";
+      const item = api.createCardFromBase("thin_item", side);
+      const own = api.state.players[side];
+      const target = api.state.players[targetSide];
+      own.hand = [item];
+      target.hand = Array.from({ length: 8 }, () => api.createCardFromBase("general_student", targetSide));
+      own.deck = [];
+      target.deck = [];
+      own.trash = [];
+      target.trash = [];
+      own.will = 3;
+      const before = JSON.stringify({ own, target });
+      const unusable = side === "player" ? !api.canUseHandCardNow(item) : true;
+      const rejected = !api.castImmediateItem(side, item, false);
+      const unchanged = before === JSON.stringify({ own, target });
+      own.will = 4;
+      const used = api.castImmediateItem(side, item, false);
+      if (api.state.pendingCardChoice?.mode === "thin_item_keep") {
+        api.state.pendingCardChoice.selectedIds = target.hand.slice(0, 4).map((card) => card.instanceId);
+        api.confirmCardChoiceSelection();
+      }
+      return { unusable, rejected, unchanged, used, will: own.will, ownHand: own.hand.length,
+        targetHand: target.hand.length, targetDeck: target.deck.length, itemInTrash: own.trash.includes(item) };
+    });
+  });
+  expect(results).toEqual(Array.from({ length: 2 }, () => ({ unusable: true, rejected: true, unchanged: true,
+    used: true, will: 0, ownHand: 0, targetHand: 4, targetDeck: 4, itemInTrash: true })));
 });
 
 test("相手の手札が10枚なら6戦意で使用でき、選んだ4枚を残す", async ({ page }) => {
@@ -83,8 +141,13 @@ test("11枚以上でも双方の使用経路で使用できる", async ({ page }
         own.will = 10;
         const before = JSON.stringify({ own, target });
         const usable = side === "player" ? api.canUseHandCardNow(item) : false;
-        if (side === "player") api.beginItemUse(item);
-        const used = api.castImmediateItem(side, item, false);
+        let used;
+        if (side === "player") {
+          api.beginItemUse(item);
+          used = own.trash.some((card) => card.instanceId === item.instanceId);
+        } else {
+          used = api.castImmediateItem(side, item, false);
+        }
         results.push({ side, ownCount, targetCount, usable, used,
           unchanged: before === JSON.stringify({ own, target }), pending: Boolean(api.state.pendingCardChoice || api.state.pendingRemoteHandTrim) });
       }

@@ -57,7 +57,7 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
       const actor = role === "host" ? host : guest;
       const target = role === "host" ? guest : host;
       const side = role === "host" ? "player" : "opponent";
-      for (const [ownCount, targetCount] of [[11, 10], [10, 11], [10, 10]]) {
+      for (const [ownCount, targetCount] of [[11, 10], [10, 11], [10, 10], [10, 8]]) {
         const setup = await host.evaluate(({ side, ownCount, targetCount }) => {
           const api = window.__chibattle;
           api.startCardTest("thin_item");
@@ -105,7 +105,7 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
             return { ownHand: api.state.players[sourceSide].hand.length, will: api.state.players[sourceSide].will,
               targetDeck: api.state.players[other].deck.length };
           }, sourceSide);
-          expect(result).toEqual({ ownHand: ownCount - 1, will: 10 - Math.max(0, targetCount - 4), targetDeck: targetCount - 4 });
+          expect(result).toEqual({ ownHand: ownCount - 1, will: 10 - Math.max(4, targetCount - 4), targetDeck: targetCount - 4 });
         }
       }
     }
