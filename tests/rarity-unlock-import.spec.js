@@ -68,3 +68,40 @@ test('追加ウルトラレアは明示的なファイル読み込み後だけ�
   await expect(page.locator('#playerHand [data-base-id="general_student"]')).toHaveClass(/reward-foil-generic/);
   await expect(page.locator('#playerHand [data-base-id="classroom"]')).not.toHaveClass(/reward-foil/);
 });
+
+test('全解放だけでは表示を変えず、選択指定付きの修正ファイルは解放を残して通常表示へ戻す', async ({ page }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('chibattle-dungeon-card-styles-v1')) {
+      localStorage.setItem('chibattle-dungeon-card-styles-v1', JSON.stringify({
+        unlocked: { gakuyukai_item: true }, selected: { yuta: 'reward' }
+      }));
+    }
+  });
+  await page.goto(url);
+  const unlocks = { general_student: { rare: true, superRare: true, reward: true }, yuta: { rare: true, superRare: true, reward: true } };
+  await importFile(page, { cardUnlocks: unlocks, selected: {}, mergeUnlocks: true });
+  let saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), storageKey);
+  expect(saved.selected.general_student).toBe('normal');
+  expect(saved.selected.yuta).toBe('reward');
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('general_student');
+    api.state.players.player.hand = ['general_student', 'yuta'].map(id => api.createCardFromBase(id, 'player'));
+    api.render();
+  });
+  await expect(page.locator('#playerHand [data-base-id="general_student"]')).not.toHaveClass(/reward-foil|rarity-/);
+  await expect(page.locator('#playerHand [data-base-id="yuta"]')).toHaveClass(/reward-foil/);
+  await importFile(page, { cardUnlocks: unlocks, selected: { general_student: 'normal', yuta: 'normal' }, mergeUnlocks: true });
+  saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), storageKey);
+  expect(saved.cardUnlocks).toEqual(unlocks);
+  expect(saved.unlocked).toEqual({ gakuyukai_item: true });
+  expect(saved.selected).toEqual({ general_student: 'normal', yuta: 'normal' });
+  await page.reload();
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('yuta');
+    api.state.players.player.hand = [api.createCardFromBase('yuta', 'player')];
+    api.render();
+  });
+  await expect(page.locator('#playerHand [data-base-id="yuta"]')).not.toHaveClass(/reward-foil/);
+});
