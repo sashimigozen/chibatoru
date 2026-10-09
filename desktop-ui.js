@@ -18,7 +18,7 @@
   shell.innerHTML = `<div class="computer-display"><div class="computer-content"></div>
     <button type="button" class="computer-switch previous" aria-label="ソロプレイへ切り替える"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
     <button type="button" class="computer-switch" aria-label="ソロプレイへ切り替える"><img src="assets/tutorial/chevron-right.svg" alt=""></button></div>
-    <div class="computer-base" aria-hidden="true"><img src="assets/tutorial/laptop-keyboard-graphite-v2.webp" alt="" draggable="false"></div><p class="computer-status" role="status" aria-live="polite"></p>`;
+    <div class="computer-base" aria-hidden="true"><img src="assets/tutorial/laptop-keyboard-graphite-us.svg" alt="" draggable="false"></div><p class="computer-status" role="status" aria-live="polite"></p>`;
   elements.appRoot.append(shell);
   const content = shell.querySelector(".computer-content");
   for (const id of Object.values(screenIds)) content.append(document.getElementById(id));
