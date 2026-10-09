@@ -17228,8 +17228,31 @@
       box-shadow: inset 0 0 0 4px rgba(164, 24, 36, .78);
     }
 
-    /* Super Rare adds only a silver frame to the unchanged Rare / Regular
-       face. Animated rarity effects remain exclusive to Ultra and Prisma. */
+    /* Rare / Super Rare share a restrained mirror finish. Keep the surface
+       separate so clipping the reflection never clips protruding stat badges. */
+    .rarity-mirror-surface {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      overflow: hidden;
+      border-radius: inherit;
+      pointer-events: none;
+      background: linear-gradient(125deg, rgba(255,255,255,.09), transparent 32%, rgba(53,72,94,.045) 48%, rgba(255,255,255,.12) 68%, transparent);
+    }
+    .rarity-mirror-surface::before {
+      position: absolute;
+      inset: -50% -90%;
+      content: "";
+      background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.08) 44%, rgba(255,255,255,.38) 49%, rgba(255,255,255,.14) 52%, transparent 57%);
+      animation: reward-foil-shine 4.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .rarity-mirror-surface::before { animation: none; opacity: 0; }
+    }
+
+    /* Super Rare uses the Ultra frame geometry in silver, without importing
+       Ultra's gold finish or its additional animations. */
     .card.rarity-super-rare:has(> .card-scale-stage) > .card-scale-stage,
     .battle-screen .player-hand .hand-card.rarity-super-rare > .card-scale-stage {
       isolation: isolate;
@@ -23601,6 +23624,10 @@
           await exportDungeonClearData(password);
         } else if (dungeonClearDataModalMode === "import" && pendingEncryptedDungeonClearImport) {
           const imported = await decryptDungeonClearData(pendingEncryptedDungeonClearImport, password);
+          // Unlocking a new style must not implicitly select its Ultra variant.
+          // Keep the current appearance when this file only adds ownership.
+          const previousCardModes = Object.fromEntries(Object.keys(imported.cardUnlocks)
+            .map((baseId) => [baseId, localCardStyleMode(baseId)]));
           unlockedDungeonCardStyles = imported.mergeUnlocks
             ? { ...unlockedDungeonCardStyles, ...imported.unlocks } : imported.unlocks;
           unlockedPrismCardStyles = imported.mergeUnlocks
@@ -23609,6 +23636,11 @@
             ? mergeExtraCardStyleUnlocks(unlockedExtraCardStyles, imported.cardUnlocks) : imported.cardUnlocks;
           selectedDungeonCardStyles = imported.mergeUnlocks
             ? { ...selectedDungeonCardStyles, ...imported.selected } : imported.selected;
+          for (const baseId of Object.keys(imported.cardUnlocks)) {
+            if (!Object.hasOwn(selectedDungeonCardStyles, baseId)) {
+              selectedDungeonCardStyles[baseId] = imported.mergeUnlocks ? previousCardModes[baseId] : "normal";
+            }
+          }
           persistDungeonCardStyles();
           state.message = "魔の1号館のクリアデータを読み込みました。";
         } else {
@@ -23690,6 +23722,12 @@
     function rewardPrismSurfaceHtml(card) {
       return cardRewardStyleClass(card).split(" ").includes("reward-prism")
         ? '<span class="reward-prism-surface" aria-hidden="true"></span>'
+        : "";
+    }
+
+    function rarityMirrorSurfaceHtml(card) {
+      return /\brarity-(?:rare|super-rare)\b/.test(cardRewardStyleClass(card))
+        ? '<span class="rarity-mirror-surface" aria-hidden="true"></span>'
         : "";
     }
 
@@ -47292,6 +47330,7 @@
       if (!boardCard) {
         return `
           <div class="card-scale-stage">
+            ${rarityMirrorSurfaceHtml(card)}
             <div class="card-face">
               ${rewardPrismSurfaceHtml(card)}
               <div class="card-header">
@@ -47378,6 +47417,7 @@
       const typeLabel = isAceCard(card) ? `${labelForType(card.type)} / エースぺ` : labelForType(card.type);
       return `
         ${rewardPrismSurfaceHtml(card)}
+        ${rarityMirrorSurfaceHtml(card)}
         <span class="field-card-title">
           ${cost}
           <span class="field-card-name">${escapeHtml(card.name)}</span>
