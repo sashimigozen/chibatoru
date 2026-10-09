@@ -15059,9 +15059,9 @@
       position: relative;
       isolation: isolate;
       box-sizing: border-box !important;
-      /* The gold arch and its sides use one continuous, equally thick frame. */
+      /* Reward materials share the ordinary card's straight-sided outline. */
       border: 20px solid transparent !important;
-      border-radius: 50% 50% 14px 14px / 15% 15% 14px 14px !important;
+      border-radius: 14px !important;
       padding: 0 !important;
       background:
         linear-gradient(180deg, rgba(255, 241, 157, .98), rgba(164, 116, 13, .98)) padding-box,
@@ -15076,7 +15076,7 @@
       position: absolute;
       z-index: 6;
       inset: 3px;
-      border-radius: 50% 50% 8px 8px / 15% 15% 8px 8px;
+      border-radius: 8px;
       background: linear-gradient(116deg, transparent 43%, rgba(255,255,255,.46) 49%, transparent 55%);
       content: "";
       pointer-events: none;
@@ -15085,9 +15085,7 @@
     }
 
     .card.reward-foil:has(> .card-scale-stage) .card-face {
-      /* Match the inner curve to the outer arch so the gold border keeps a
-         consistent width across the top instead of becoming a thick band. */
-      border-radius: 50% 50% 8px 8px / 13% 13% 8px 8px !important;
+      border-radius: 4px !important;
       background: var(--reward-foil-face) !important;
     }
 
@@ -15129,11 +15127,11 @@
       color: var(--card-template-ink) !important;
     }
 
-    /* Board cards use the same gold arch without changing their footprint in a seat. */
+    /* Board cards keep their rectangular footprint regardless of rarity. */
     .battle-screen .field-card.reward-foil {
       overflow: visible;
       border: 4px solid transparent !important;
-      border-radius: 50% 50% 6px 6px / 13% 13% 6px 6px !important;
+      border-radius: 6px !important;
       background:
         var(--reward-foil-face) padding-box,
         linear-gradient(112deg, var(--foil-gold-dark) 0%, var(--foil-gold-light) 18%, var(--foil-gold-mid) 35%, #fff1ab 52%, #9a6f13 69%, #f4cf61 86%, var(--foil-gold-dark) 100%) border-box !important;
@@ -15144,13 +15142,13 @@
     }
 
     .battle-screen .field-card.reward-foil::before {
-      border-radius: 50% 50% 3px 3px / 13% 13% 3px 3px;
+      border-radius: 3px;
       background: linear-gradient(145deg, rgba(255,246,180,.27), rgba(255,255,255,0)) !important;
     }
 
     .battle-screen .field-card.reward-foil::after {
       inset: 3px !important;
-      border-radius: 50% 50% 3px 3px / 13% 13% 3px 3px !important;
+      border-radius: 3px !important;
       background: linear-gradient(116deg, transparent 43%, rgba(255,255,255,.42) 49%, transparent 55%) !important;
       animation: reward-foil-shine 4.8s ease-in-out infinite !important;
     }
@@ -16791,6 +16789,19 @@
     .card.ace-card::before {
       border-color: #c2410c !important;
       background: #ffedd5 !important;
+    }
+
+    /* Only the scaled face paints the ace frame. An unscaled outer diamond
+       and background otherwise spill beyond small catalog/deck cards. */
+    .card.ace-card:has(> .card-scale-stage) {
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .card.ace-card:has(> .card-scale-stage)::before,
+    .card.ace-card:has(> .card-scale-stage)::after {
+      display: none !important;
     }
 
     .card.ace-card .card-face {
@@ -19635,6 +19646,7 @@
         date: "2026年10月9日",
         summary: "進化直後の再進化とAIの攻撃判断を修正しました。デッキ確認の枚数表示と「行かれてはいかがですか」を変更し、PC画面のキーボード配列を整えました。「アグロ散歩」「アグロプリンセス」の効果を変更し、「教室変更」の遅刻を1、「子曰く」の戦意を3、「細い」の最低戦意を4にしました。デッキ編集をカード詳細・編成中デッキ・カード一覧の3列配置にし、ドラッグで追加・削除できるようにしました。",
         changes: [
+          { title: "カード枠の表示", after: "高レアリティのカード上部を通常カードと同じ直線的な輪郭に揃えました。エースぺのカード枠からはみ出していた装飾を修正しました。配色、レアリティの質感、カードの本文と効果は変更していません。" },
           { title: "デッキ編集の配置と操作", after: "左に選択中のカード詳細、中央に編成中のデッキ全体、右に検索・絞り込み付きカード一覧を配置しました。左下の＋・−で1枚ずつ追加・削除でき、右のカードを中央へドラッグして追加、中央のカードを右へドラッグして削除できます。カード画像・枚数・能力説明・関連カードを確認でき、保存・ファイル読み込み／書き出し・カードテストと既存の編成制限を維持しています。机色の外枠、紺色の背景、既存のカード素材・フォントは変更していません。" },
           { title: "細い", before: "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低0。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。", after: "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低4。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。" },
           { title: "子曰く", before: "戦意2。", after: "戦意3。カードの本文と効果は変更していません。" },
