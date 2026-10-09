@@ -79,7 +79,7 @@ test("旧データのトークンも回収・デッキ戻し・逆行の対象�
     const { state } = api;
     const token = api.createCardFromBase("extra_student", "player");
     delete token.token; // 古いデータでもカード定義から判定する。
-    const ordinary = Array.from({ length: 4 }, () => api.createCardFromBase("general_student", "player"));
+    const ordinary = Array.from({ length: 5 }, () => api.createCardFromBase("general_student", "player"));
     state.players.player.trash = [token, ...ordinary];
     const item = api.createCardFromBase("go_away", "player");
     state.players.player.hand = [item];
@@ -132,10 +132,10 @@ test("通常カード5枚のデッキ戻しとドローは引き続き使える"
   expect(result).toEqual({ success: true, deck: 3, hand: 2, trash: ["go_away"] });
 });
 
-test("行かれてはいかがですかは通常カードを1枚から5枚まで選べる", async ({ page }) => {
+test("行かれてはいかがですかは通常カードを必ず5枚選ぶ", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
-    const cases = [1, 3, 5, 6].map((count) => {
+    const cases = [0, 1, 3, 4, 5, 6].map((count) => {
       const player = api.state.players.player;
       player.deck = [];
       player.trash = Array.from({ length: count }, () => api.createCardFromBase("general_student", "player"));
@@ -158,13 +158,88 @@ test("行かれてはいかがですかは通常カードを1枚から5枚まで
     };
   });
 
-  expect(result.text).toBe("自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚まで指名する。\nそれらを自分のデッキに戻してシャッフルし、カードを2枚引く。");
+  expect(result.text).toBe("自分の校外エリアにある学生・教師・ヴァンパイアを合計5枚指名する。\nそれらを自分のデッキに戻してシャッフルし、カードを2枚引く。");
   expect(result.cases).toEqual([
-      { count: 1, success: true, will: 8, deck: 0, hand: 1, trash: 1 },
-      { count: 3, success: true, will: 8, deck: 1, hand: 2, trash: 1 },
+      { count: 0, success: false, will: 10, deck: 0, hand: 1, trash: 0 },
+      { count: 1, success: false, will: 10, deck: 0, hand: 1, trash: 1 },
+      { count: 3, success: false, will: 10, deck: 0, hand: 1, trash: 3 },
+      { count: 4, success: false, will: 10, deck: 0, hand: 1, trash: 4 },
       { count: 5, success: true, will: 8, deck: 3, hand: 2, trash: 1 },
       { count: 6, success: false, will: 10, deck: 0, hand: 1, trash: 6 }
     ]);
+});
+
+test("5枚未満なら使用不可、選択UIは5枚を選ぶまで確定不可", async ({ page }) => {
+  const prepare = count => page.evaluate(count => {
+    const api = window.__chibattle;
+    const player = api.state.players.player;
+    player.trash = Array.from({ length: count }, () => api.createCardFromBase("general_student", "player"));
+    // 持ち物は必要な5枚に含めない。
+    player.trash.push(api.createCardFromBase("ruler", "player"));
+    const item = api.createCardFromBase("go_away", "player");
+    player.hand = [item];
+    const usable = canUseItemNow(item);
+    api.beginItemUse(item);
+    return { usable, choice: Boolean(api.state.pendingCardChoice), will: player.will, hand: player.hand.length };
+  }, count);
+  expect(await prepare(4)).toEqual({ usable: false, choice: false, will: 10, hand: 1 });
+  expect(await prepare(6)).toEqual({ usable: true, choice: true, will: 10, hand: 1 });
+  await expect(page.locator("#threeGesturesMessage")).toContainText("5枚選んでください");
+  await expect(page.locator("#threeGesturesHand .card")).toHaveCount(6);
+  const select = index => page.locator("#threeGesturesHand .card").nth(index).click();
+  for (let index = 0; index < 4; index++) await select(index);
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeDisabled();
+  await select(4);
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeEnabled();
+  await select(5);
+  expect(await page.evaluate(() => window.__chibattle.state.pendingCardChoice.selectedIds.length)).toBe(5);
+  await page.locator("#threeGesturesConfirmButton").click();
+  expect(await page.evaluate(() => {
+    const player = window.__chibattle.state.players.player;
+    return { will: player.will, deck: player.deck.length, hand: player.hand.length,
+      trash: player.trash.map(card => card.baseId) };
+  })).toEqual({ will: 8, deck: 3, hand: 2, trash: ["general_student", "ruler", "go_away"] });
+});
+
+test("AIの自動選択とオンライン用の相手側処理も必ず5枚に揃う", async ({ page }) => {
+  const results = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const results = [];
+    for (const side of ["player", "opponent"]) {
+      for (const count of [4, 5, 6]) {
+        const player = api.state.players[side];
+        player.will = 10;
+        player.deck = [];
+        player.trash = Array.from({ length: count }, () => api.createCardFromBase("general_student", side));
+        const item = api.createCardFromBase("go_away", side);
+        player.hand = [item];
+        const score = side === "player" ? scoreTrainingYocchanItem(side, item) : scoreAiItem(item);
+        const success = castImmediateItem(side, item, false);
+        results.push({ side, count, success, will: player.will, deck: player.deck.length,
+          hand: player.hand.length, remaining: player.trash.filter(card => card.baseId !== "go_away").length,
+          unavailableScore: count === 4 ? score <= 0 : true });
+      }
+      const player = api.state.players[side];
+      player.will = 10;
+      player.deck = [];
+      player.trash = Array.from({ length: 6 }, () => api.createCardFromBase("general_student", side));
+      const item = api.createCardFromBase("go_away", side);
+      player.hand = [item];
+      const ids = player.trash.map(card => card.instanceId);
+      results.push({ side, rejectedFour: !api.resolveGoAwayChoice(side, item, ids.slice(0, 4), false),
+        rejectedSix: !api.resolveGoAwayChoice(side, item, ids, false),
+        acceptedFive: api.resolveGoAwayChoice(side, item, ids.slice(0, 5), false) });
+    }
+    return results;
+  });
+  for (const side of ["player", "opponent"]) {
+    expect(results.filter(result => result.side === side)).toEqual([
+      { side, count: 4, success: false, will: 10, deck: 0, hand: 1, remaining: 4, unavailableScore: true },
+      { side, count: 5, success: true, will: 8, deck: 3, hand: 2, remaining: 0, unavailableScore: true },
+      { side, count: 6, success: true, will: 8, deck: 3, hand: 2, remaining: 1, unavailableScore: true },
+      { side, rejectedFour: true, rejectedSix: true, acceptedFive: true }
+    ]);
+  }
 });
 
 test("今回の更新情報を表示し、一度読んだら未読表示が消える", async ({ page }) => {

@@ -143,6 +143,12 @@ test("デッキ詳細は実際のカードと枚数を1画面に表示し、説�
     const dialog = await page.locator(".case-deck-dialog").boundingBox();
     expect(dialog.y + dialog.height).toBeLessThanOrEqual(size.height);
     await expect.poll(() => contents.evaluate(node => node.scrollWidth <= node.clientWidth && node.scrollHeight <= node.clientHeight)).toBe(true);
+    expect(await contents.evaluate(node => [...node.querySelectorAll(".case-deck-content")].every(tile => {
+      const hp = tile.querySelector(".stat-hp");
+      if (!hp) return true;
+      const badge = tile.querySelector(".deck-copy-badge").getBoundingClientRect();
+      return badge.bottom < hp.getBoundingClientRect().top;
+    }))).toBe(true);
     await contents.locator(".case-deck-content").last().click();
     await expect(page.locator("#cardTestModal")).toBeVisible();
     await expect(page.locator("#cardTestText .tooltip-title")).toHaveText(await page.evaluate(id => CARD_BASES[id].name, ids.at(-1)));
@@ -190,7 +196,8 @@ test("デッキの種類数と画面サイズに合わせ全カードを重な�
         await expect(badge).toHaveCSS("background-color", "rgb(23, 32, 51)");
         const badgeBounds = bounds.badge;
         expect(badgeBounds.x).toBeGreaterThan(card.x);
-        expect(badgeBounds.y).toBeGreaterThan(card.y + card.height / 2);
+        expect(badgeBounds.y).toBeGreaterThanOrEqual(card.y);
+        expect(badgeBounds.y + badgeBounds.height).toBeLessThan(card.y + card.height / 2);
         expect(badgeBounds.x + badgeBounds.width).toBeLessThanOrEqual(card.x + card.width);
         expect(badgeBounds.y + badgeBounds.height).toBeLessThanOrEqual(card.y + card.height);
         const grid = bounds.grid;
@@ -514,4 +521,41 @@ test("カードの選択・一覧・デッキ編成・編集で同じ机色の�
   const bottom = await page.locator(".case-file-tools").last().boundingBox();
   const nav = await page.locator("#homeNavigation").boundingBox();
   expect(bottom.y + bottom.height).toBeLessThanOrEqual(nav.y - 20);
+});
+
+test("対戦準備・トレーニング・ダンジョン・オンライン・対戦中の枚数も右上で体力を隠さない", async ({ page }, testInfo) => {
+  await page.goto(url);
+  for (const screen of ["soloDeck", "training", "dungeonDeck", "online", "battle"]) {
+    await page.evaluate(screen => {
+      const { state, render } = window.__chibattle;
+      const counts = { general_student: 3, general_teacher: 2 };
+      state.screen = screen === "training" ? "soloDeck" : screen;
+      state.deckBuilder.savedDecks = { "枚数テスト": { counts } };
+      state.deckBuilder.specialtyDecks = { "枚数テスト": { counts, specialtyId: "cafeteria" } };
+      state.deckBuilder.counts.player = counts;
+      Object.assign(state.soloSelection, { ruleId: "normal", previewName: "枚数テスト", previewExpanded: true,
+        pickerOpen: true, leftController: screen === "training" ? "ai" : "player" });
+      Object.assign(state.dungeon, { previewName: "枚数テスト", previewExpanded: true });
+      Object.assign(state.online, { matchMode: "random", localDeckName: "__current", deckPreviewOpen: screen === "online" });
+      state.players.player.originalDeckCounts = counts;
+      render();
+      if (screen === "battle") openDeckWindow();
+    }, screen);
+    const selector = { soloDeck: "#soloDeckDetail", training: "#soloDeckDetail", dungeonDeck: "#dungeonDeckDetail",
+      online: "#onlineRandomDeckPreviewContent", battle: "#deckWindowGrid" }[screen];
+    const grid = page.locator(selector);
+    await expect(grid).toBeVisible();
+    await expect(grid.locator(".deck-copy-badge")).toHaveCount(2);
+    for (const size of [{ width: 1280, height: 720 }, { width: 1920, height: 1080 }]) {
+      await page.setViewportSize(size);
+      expect(await grid.evaluate(node => [...node.querySelectorAll(".card")].every(card => {
+        const area = card.getBoundingClientRect();
+        const badge = card.querySelector(".deck-copy-badge").getBoundingClientRect();
+        const hp = card.querySelector(".stat-hp").getBoundingClientRect();
+        return badge.top >= area.top && badge.bottom < area.top + area.height / 2
+          && badge.right <= area.right && badge.left > area.left && badge.bottom < hp.top;
+      }))).toBe(true);
+    }
+    await page.screenshot({ path: testInfo.outputPath(`deck-count-${screen}.png`) });
+  }
 });
