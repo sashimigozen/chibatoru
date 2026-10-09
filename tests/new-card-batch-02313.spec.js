@@ -521,7 +521,7 @@ test("負荷カード、敵の群れ、ジェスチャー学生の手札・山�
   });
 });
 
-test("レーザービーム、アグロ散歩、焼き鳥ハラスメントは対象にだけ作用する", async ({ page }) => {
+test("レーザービームと焼き鳥ハラスメントの対象処理、アグロ散歩の強化と自傷", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const aggro = api.makeBoardCard(api.createCardFromBase("aggro_princess", "player"));
@@ -529,7 +529,7 @@ test("レーザービーム、アグロ散歩、焼き鳥ハラスメントは�
     const walk = api.createCardFromBase("aggro_walk", "player");
     api.state.players.player.hand.push(walk);
     api.castItemOnCard("player", walk, "player", "seat", 0, false);
-    const buff = { attack: aggro.attack, hp: aggro.maxHp };
+    const buff = { attack: aggro.attack, hp: aggro.maxHp, life: api.state.players.player.life };
     aggro.currentHp = 1;
     const yakitori = api.createCardFromBase("yakitori_harassment", "player");
     api.state.players.player.hand.push(yakitori);
@@ -544,8 +544,8 @@ test("レーザービーム、アグロ散歩、焼き鳥ハラスメントは�
     return { buff, healedHp: aggro.currentHp, willGain: api.state.players.player.will - beforeWill,
       hit, enemyBefore, enemyHp: enemy.currentHp };
   });
-  expect(result.buff).toEqual({ attack: 3, hp: 3 });
-  expect(result.healedHp).toBe(3);
+  expect(result.buff).toEqual({ attack: 3, hp: 1, life: 28 });
+  expect(result.healedHp).toBe(1);
   expect(result.willGain).toBeGreaterThanOrEqual(-3);
   expect(result.hit).toBe(true);
   expect(result.enemyHp).toBe(result.enemyBefore - 5);
