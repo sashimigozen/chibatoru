@@ -104,7 +104,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-15');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-16');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -286,7 +286,7 @@ test('cut strip separates before cards appear', async ({page}) => {
   expect((await saved(page)).pending.revealed).toBe(0);
 });
 test('tear accepts a held pointer approaching from outside the pack, in both directions', async ({page}) => {
-  let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'tear-wide');
+  let s=C.initial();s.cp=10;s=C.purchase(s,'endless',1,()=>0,'tear-wide');
   await boot(page,s);await page.locator('#homeNavGachaButton').click();
   await page.locator('[data-gacha-receive]').click();
   for (const direction of [1,-1]) {
@@ -301,6 +301,9 @@ test('tear accepts a held pointer approaching from outside the pack, in both dir
     if(direction===1) {
       for(let i=0;i<5;i++) await page.locator(`[data-gacha-reveal="${i}"]`).click();
       await page.locator('#gachaScreen').click({position:{x:15,y:100}});
+      await page.locator('[data-gacha-finish]').click();
+      await page.locator('[data-gacha-buy="1"]').click();
+      await page.locator('[data-gacha-receive]').click();
     }
   }
 });
@@ -310,7 +313,8 @@ test('completed pack advances only on empty space; buttons keep their functions 
   await boot(page,s);await page.locator('#homeNavGachaButton').click();
   await page.locator('[data-gacha-receive]').click();
   for(let pack=0;pack<2;pack++) {
-    await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
+    if(pack===0) { await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter'); }
+    await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
     await page.locator('#gachaScreen').click({position:{x:15,y:100}});
     expect((await saved(page)).pending.index).toBe(pack);
     for(let i=0;i<5;i++) await page.locator(`[data-gacha-reveal="${i}"]`).click();
@@ -329,10 +333,39 @@ test('completed pack advances only on empty space; buttons keep their functions 
       await page.locator('[data-gacha-close]').click();
     }
     await page.locator('#gachaScreen').click({position:{x:15,y:100}});
-    await expect(page.locator('[data-gacha-tear]')).toBeVisible();
-    expect((await saved(page)).pending.index).toBe(pack+1);
+    await expect(page.locator('[data-gacha-tear]')).toHaveCount(0);
+    await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
+    await expect.poll(async()=>(await saved(page)).pending.index).toBe(pack+1);
   }
   await page.screenshot({path:test.info().outputPath('next-pack.png')});
+});
+test('one drag cuts ten stacked packs in sequence and all ten reveal without another cut', async ({page}) => {
+  let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'ten-cuts');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-receive]').click();
+  await expect(page.locator('.gacha-cut-pack')).toHaveCount(10);
+  const r=await page.locator('[data-gacha-tear]').boundingBox();
+  await page.mouse.move(r.x,r.y+r.height/2);await page.mouse.down();
+  await page.mouse.move(r.x+r.width,r.y+r.height/2,{steps:10});await page.mouse.up();
+  await expect(page.locator('.gacha-cut-strip')).toHaveCount(10);
+  const delays=await page.locator('.gacha-cut-strip').evaluateAll(elements=>elements.map(el=>el.getAnimations()[0].effect.getTiming().delay));
+  expect(delays).toEqual(Array.from({length:10},(_,i)=>i*180));
+  await page.screenshot({path:test.info().outputPath('ten-pack-cut.png')});
+  for(let pack=0;pack<10;pack++) {
+    await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
+    await expect(page.locator('[data-gacha-tear]')).toHaveCount(0);
+    expect((await saved(page)).pending.index).toBe(pack);
+    for(let i=0;i<5;i++) await page.locator(`[data-gacha-reveal="${i}"]`).click();
+    await page.locator('#gachaScreen').click({position:{x:15,y:100}});
+    await expect.poll(async()=>(await saved(page)).pending.phase==='summary'?'summary':(await saved(page)).pending.index).toBe(pack===9?'summary':pack+1);
+    if(pack===0) {
+      await page.reload();await page.locator('#homeNavGachaButton').click();
+      expect((await saved(page)).pending.phase).toBe('cards');
+    }
+  }
+  await expect(page.locator('.gacha-summary-pack')).toHaveCount(10);
+  await expect(page.locator('.gacha-summary-pack-cards button')).toHaveCount(50);
+  expect((await saved(page)).cp).toBe(0);
 });
 test('last completed pack advances to summary on a background click', async ({page}) => {
   let s=C.initial();s.cp=5;s=C.purchase(s,'endless',1,()=>0,'last-anywhere');
@@ -359,6 +392,7 @@ test('fast continuous drag reveals all visited cards; ten-pack progress persists
   let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'ten-fixed');
   await boot(page,s);await page.locator('#homeNavGachaButton').click();
   await page.locator('[data-gacha-receive]').click();await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('[data-gacha-reveal="0"]')).toBeEnabled();
   const first=await page.locator('[data-gacha-reveal="0"]').boundingBox();
   const last=await page.locator('[data-gacha-reveal="4"]').boundingBox();
   await page.mouse.move(first.x+first.width/2,first.y+first.height/2);await page.mouse.down();

@@ -81,7 +81,7 @@
     const p = C.PACKS.find((p) => p.id === q.packId), row = q.results[q.index];
     const status = `${q.index + 1} / ${q.results.length} パック`;
     if (q.phase === "handoff") return `<div class="gacha-handoff"><button type="button" data-gacha-receive aria-label="パックを受け取る">${packet(p, q.results.length === 10 ? "gacha-pack-stack" : "")}</button></div>`;
-    if (q.phase === "tear") return `<div class="gacha-tear-stage"><div class="gacha-sealed">${packet(p)}<button class="gacha-tear-line" type="button" data-gacha-tear aria-label="点線に沿ってドラッグして開封。Enterでも開封できます"><i></i></button></div></div>`;
+    if (q.phase === "tear") return `<div class="gacha-tear-stage"><div class="gacha-sealed">${q.results.slice(q.index).map((_, i, remaining) => `<div class="gacha-cut-pack" style="--stack-offset:${i * 4}px;z-index:${remaining.length - i}">${packet(p)}</div>`).join('')}<button class="gacha-tear-line" type="button" data-gacha-tear aria-label="点線に沿ってドラッグして開封。Enterでも開封できます"><i></i></button></div></div>`;
     if (q.phase === "summary") return `<div class="gacha-summary"><h2>獲得カード</h2><div class="gacha-summary-grid" tabindex="0" aria-label="獲得カード一覧">${q.results.map((pack, i) => `<section class="gacha-summary-pack">${q.results.length > 1 ? `<h3>${i + 1}パック目</h3>` : ''}<div class="gacha-summary-pack-cards">${pack.map((c) => `<button type="button" data-gacha-detail="${c.baseId}" data-result-mode="${c.mode}" aria-label="${escape(CARD_BASES[c.baseId].name)} ${modeName[c.mode]}">${card(c)}</button>`).join("")}</div></section>`).join("")}</div><button class="gacha-return" type="button" data-gacha-finish>ショップに戻る</button></div>`;
     const viewKey = `${q.id}:${q.index}`;
     const previous = ui.flipKey === viewKey ? ui.flipCount : q.revealed;
@@ -210,7 +210,7 @@
   async function nextPack() {
     await operate(() => updatePending((p) => {
       if (p.phase !== "cards" || p.revealed !== 5 || p.urPause) return;
-      if (p.index + 1 < p.results.length) { p.index++; p.revealed = 0; p.phase = "tear"; }
+      if (p.index + 1 < p.results.length) { p.index++; p.revealed = 0; p.phase = "cards"; }
       else p.phase = "summary";
     }));
   }
@@ -257,25 +257,33 @@
     if (read().pending?.phase !== "tear") return;
     return operate(async () => {
       const sealed = screen.querySelector('.gacha-sealed');
-      const packet = sealed?.querySelector('.gacha-packet');
+      const packs = Array.from(sealed?.querySelectorAll('.gacha-cut-pack') || []);
       const line = sealed?.querySelector('[data-gacha-tear]');
-      if (packet && line) {
+      if (packs.length && line) {
         const bounds = sealed.getBoundingClientRect();
         const cut = line.getBoundingClientRect();
         const split = (cut.top + cut.height / 2 - bounds.top) / bounds.height * 100;
-        const strip = packet.cloneNode(true);
-        strip.classList.add('gacha-cut-strip');
-        strip.setAttribute('aria-hidden', 'true');
-        strip.style.clipPath = `inset(0 0 ${100 - split}% 0)`;
-        packet.style.clipPath = `inset(${split}% 0 0 0)`;
         line.hidden = true;
-        sealed.append(strip);
         const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        await strip.animate([
-          { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
-          { transform: 'translate(5%,-4%) rotate(5deg)', opacity: 1, offset: .3 },
-          { transform: 'translate(30%,18%) rotate(22deg)', opacity: 0 }
-        ], { duration: reduced ? 0 : 550, easing: 'ease-in', fill: 'forwards' }).finished;
+        await Promise.all(packs.map(async (layer, i) => {
+          const packet = layer.querySelector('.gacha-packet');
+          const strip = packet.cloneNode(true);
+          strip.classList.add('gacha-cut-strip');
+          strip.setAttribute('aria-hidden', 'true');
+          strip.style.clipPath = `inset(0 0 ${100 - split}% 0)`;
+          packet.style.clipPath = `inset(${split}% 0 0 0)`;
+          layer.append(strip);
+          const timing = { duration: reduced ? 0 : 550, delay: reduced ? 0 : i * 180, easing: 'ease-in', fill: 'forwards' };
+          await Promise.all([strip.animate([
+            { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+            { transform: 'translate(5%,-4%) rotate(5deg)', opacity: 1, offset: .3 },
+            { transform: 'translate(30%,18%) rotate(22deg)', opacity: 0 }
+          ], timing).finished, packet.animate([
+            { opacity: 1, transform: 'translateY(0)' },
+            { opacity: 1, transform: 'translateY(0)', offset: .45 },
+            { opacity: 0, transform: 'translateY(12%)' }
+          ], timing).finished]);
+        }));
       }
       await updatePending((p) => { if (p.phase === "tear") { p.phase = "cards"; p.revealed = 0; } });
     });
