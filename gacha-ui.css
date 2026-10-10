@@ -9,6 +9,8 @@
   color: #203c4e;
 }
 .gacha-screen::before { content: none; }
+body.gacha-opening #homeNavigation { display: none !important; }
+body.gacha-opening .gacha-screen { bottom: 12px; }
 .gacha-screen > * { position: relative; }
 .gacha-head { display: flex; justify-content: space-between; align-items: center; height: 48px; }
 .gacha-head h1 { font-size: 24px; margin: 0; }
@@ -74,7 +76,7 @@
 .gacha-result.spark-normal::after { display: none; }
 .spark-rare { --spark: #fff; }.spark-superRare { --spark: #9bd6f5; }.spark-ultraRare { --spark: #ffd768; }
 @keyframes gacha-spark { 0% { box-shadow: 0 0 30px 8px var(--spark); background: radial-gradient(ellipse,transparent 30%,var(--spark)); } 100% { box-shadow: 0 0 0 transparent; background: transparent; } }
-.gacha-reveal-actions { height: 48px; }
+.gacha-reveal-actions { position: relative; height: 48px; }
 .gacha-reveal-actions p { background: #f8f8f2e0; padding: 8px 14px; margin: 0; border-radius: 4px; }
 .gacha-ur-moment { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: #fff1bd; background: radial-gradient(ellipse,#4b4934eb,#142636f5 75%); }
 .gacha-ur-halo { height: 58%; aspect-ratio: 21/32; box-shadow: 0 0 45px #f9d369a0; animation: gacha-ur .9s ease-out both; }

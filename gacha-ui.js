@@ -93,6 +93,7 @@
   function renderGacha() {
     const visible = state.screen === "gacha";
     screen.classList.toggle("hidden", !visible);
+    document.body.classList.remove("gacha-opening");
     if (!visible) { stopFeatured(); return; }
     let saved;
     try { saved = read(); }
@@ -100,6 +101,7 @@
     const p = C.PACKS.find((p) => p.id === ui.packId), progress = saved.packs[p.id];
     const exchangePack = C.PACKS.find((p) => saved.packs[p.id].tickets > 0);
     const q = saved.pending;
+    document.body.classList.toggle("gacha-opening", Boolean(q));
     screen.dataset.phase = q?.phase || 'shop';
     screen.innerHTML = `<header class="gacha-head"><h1>ショップ</h1><div class="gacha-head-actions"><strong class="gacha-cp">${saved.cp} CP</strong><button class="button secondary" type="button" data-gacha-rates>提供割合</button>${q && q.phase !== "summary" ? '<button class="button secondary" type="button" data-gacha-skip>スキップ</button>' : ""}</div></header><p class="gacha-error ${ui.error ? "" : "hidden"}" role="alert">${escape(ui.error)}</p>${q ? pendingView(q) : `<div class="gacha-shop-layout"><aside class="gacha-pack-list" aria-label="パック一覧"><h2>パック一覧</h2>${C.PACKS.map((x) => `<button type="button" data-gacha-pack="${x.id}" aria-pressed="${x.id === p.id}"><span>${escape(x.name)}</span></button>`).join("")}</aside>${featured(p)}<div class="gacha-purchase-panel"><div>${packet(p)}</div><section><div class="gacha-purchase-buttons"><button class="button" type="button" data-gacha-buy="1" ${ui.busy || saved.cp < 5 || exchangePack ? "disabled" : ""}>1パック · 5 CP</button><button class="button" type="button" data-gacha-buy="10" ${ui.busy || saved.cp < 50 || exchangePack ? "disabled" : ""}>10パック · 50 CP</button>${exchangePack ? `<button class="button" type="button" data-gacha-exchange="${exchangePack.id}">URを交換する</button>` : ""}</div><p>UR交換 ${progress.total % 200} / 200</p></section></div>${furniture}</div>`}`;
     // The button labels expose revealed names, not the hidden front-face text.
@@ -196,7 +198,8 @@
     const advanceKey = ui.advanceClickKey;
     ui.advanceClickKey = null;
     const pending = read().pending;
-    if (event.detail > 0 && !ui.busy && !ui.modal && pending?.phase === "cards" && pending.revealed === 5 && !pending.urPause
+    if (!event.target.closest('button,a,input,select,textarea,label,[role="button"]')
+      && event.detail > 0 && !ui.busy && !ui.modal && pending?.phase === "cards" && pending.revealed === 5 && !pending.urPause
       && advanceKey === `${pending.id}:${pending.index}`) {
       await nextPack(); return;
     }
@@ -239,6 +242,7 @@
     ui.advanceClickKey = e.button === 0 && !ui.busy && !ui.modal && pending?.phase === "cards" && pending.revealed === 5 && !pending.urPause
       ? `${pending.id}:${pending.index}` : null;
     if (ui.busy || e.button !== 0) return;
+    if (pending?.phase === "cards" && pending.revealed === 5) return;
     const line = e.target.closest("[data-gacha-tear]");
     if (line) { ui.tearX = e.clientX; screen.setPointerCapture(e.pointerId); e.preventDefault(); }
     const target = e.target.closest("[data-gacha-reveal]");
