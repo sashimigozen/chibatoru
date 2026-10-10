@@ -83,12 +83,12 @@
     const status = `${q.index + 1} / ${q.results.length} パック`;
     if (q.phase === "handoff") return `<div class="gacha-handoff">${robot}<button type="button" data-gacha-receive aria-label="パックを受け取る">${packet(p, q.results.length === 10 ? "gacha-pack-stack" : "")}</button></div>`;
     if (q.phase === "tear") return `<div class="gacha-tear-stage"><div class="gacha-sealed">${packet(p)}<button class="gacha-tear-line" type="button" data-gacha-tear aria-label="点線に沿ってドラッグして開封。Enterでも開封できます"><i></i></button></div></div>`;
-    if (q.phase === "summary") return `<div class="gacha-summary"><h2>獲得カード</h2><div class="gacha-summary-grid" tabindex="0" aria-label="獲得カード一覧">${q.results.flat().map((c) => `<button type="button" data-gacha-detail="${c.baseId}" data-result-mode="${c.mode}" aria-label="${escape(CARD_BASES[c.baseId].name)} ${modeName[c.mode]}">${card(c)}</button>`).join("")}</div><button class="button" type="button" data-gacha-finish>ショップへ戻る</button></div>`;
+    if (q.phase === "summary") return `<div class="gacha-summary"><h2>獲得カード</h2><div class="gacha-summary-grid" tabindex="0" aria-label="獲得カード一覧">${q.results.flat().map((c) => `<button type="button" data-gacha-detail="${c.baseId}" data-result-mode="${c.mode}" aria-label="${escape(CARD_BASES[c.baseId].name)} ${modeName[c.mode]}">${card(c)}</button>`).join("")}</div><button class="gacha-return" type="button" data-gacha-finish>ショップに戻る</button></div>`;
     const viewKey = `${q.id}:${q.index}`;
     const previous = ui.flipKey === viewKey ? ui.flipCount : q.revealed;
     ui.flipKey = viewKey; ui.flipCount = q.revealed;
     const special = q.urPause ? row[q.revealed - 1] : null;
-    return `<div class="gacha-reveal-stage">${robot}<p class="gacha-pack-progress">${status}</p><div class="gacha-counter-cards">${row.map((c, i) => `<button class="gacha-result ${i < q.revealed ? 'is-revealed' : ''} ${i >= previous && i < q.revealed ? 'just-revealed' : ''}" type="button" data-gacha-reveal="${i}" aria-label="${i < q.revealed ? `${escape(CARD_BASES[c.baseId].name)} ${modeName[c.mode]}` : `${i + 1}枚目をめくる`}" ${q.urPause || ui.busy ? "disabled" : ""}><span class="gacha-flip-stage"><span class="gacha-card-back gacha-card-face"></span><span class="gacha-card-front gacha-card-face">${card(c)}</span></span></button>`).join("")}</div>${special ? `<div class="gacha-ur-moment" role="dialog" aria-modal="true" aria-label="UR獲得"><div class="gacha-ur-halo">${card(special)}</div><button class="button" type="button" data-gacha-ur-continue>続ける</button></div>` : `<div class="gacha-reveal-actions">${q.revealed === 5 ? '<button class="button" type="button" data-gacha-next>次へ</button>' : ''}</div>`}</div>`;
+    return `<div class="gacha-reveal-stage">${robot}<p class="gacha-pack-progress">${status}</p><div class="gacha-counter-cards">${row.map((c, i) => `<button class="gacha-result ${i < q.revealed ? 'is-revealed' : ''} ${i >= previous && i < q.revealed ? 'just-revealed' : ''}" type="button" data-gacha-reveal="${i}" aria-label="${i < q.revealed ? `${escape(CARD_BASES[c.baseId].name)} ${modeName[c.mode]}` : `${i + 1}枚目をめくる`}" ${q.urPause || ui.busy ? "disabled" : ""}><span class="gacha-flip-stage"><span class="gacha-card-back gacha-card-face"></span><span class="gacha-card-front gacha-card-face">${card(c)}</span></span></button>`).join("")}</div>${special ? `<div class="gacha-ur-moment" role="dialog" aria-modal="true" aria-label="UR獲得"><div class="gacha-ur-halo">${card(special)}</div><button class="button" type="button" data-gacha-ur-continue>続ける</button></div>` : '<div class="gacha-reveal-actions" aria-hidden="true"></div>'}</div>`;
   }
   function renderGacha() {
     const visible = state.screen === "gacha";
@@ -216,7 +216,6 @@
     else if (button.hasAttribute("data-gacha-reveal")) await reveal(Number(button.dataset.gachaReveal));
     else if (button.hasAttribute("data-gacha-ur-continue")) await operate(() => updatePending((p) => { p.urPause = false; }));
     else if (button.hasAttribute("data-gacha-skip")) await skip();
-    else if (button.hasAttribute("data-gacha-next")) await nextPack();
     else if (button.hasAttribute("data-gacha-finish")) await operate(() => store.transact((s) => {
       if (s.pending?.phase !== "summary") throw new Error("結果を確認してください。"); s.pending = null;
     }));
