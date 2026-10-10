@@ -19437,8 +19437,8 @@
       diligent_student: { name: "熱心な学生", type: "student", cost: 3, attack: 2, hp: 3, rowOnly: 1, allowedZones: ["seat"], category: "common" },
       plump_student: { name: "ふくよかな学生", type: "student", cost: 5, attack: 4, hp: 5, keywords: ["陽気"], occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "big" },
       aggro_princess: { name: "アグロプリンセス", type: "student", cost: 1, attack: 1, hp: 1, keywords: ["超陽気"], allowedZones: ["seat"], category: "common" },
-      sick_yuta: { name: "病に臥すU太", type: "student", cost: 0, noCost: true, attack: 4, hp: 4, generated: true, allowedZones: ["seat", "teacher"], category: "gakuyukai_item" },
-      recovered_dark_yuta: { name: "病に打ち勝った裏U太", type: "student", cost: 0, noCost: true, attack: 10, hp: 10, evolutionFrom: "sick_yuta", token: true, allowedZones: ["evolution"], category: "gakuyukai_item" },
+      sick_yuta: { name: "病に臥すU太", type: "student", cost: 0, noCost: true, attack: 4, hp: 4, evolutionFrom: "yuta", generated: true, token: true, allowedZones: ["evolution"], category: "gakuyukai_item" },
+      recovered_dark_yuta: { name: "病に打ち勝った裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 4, evolutionFrom: "sick_yuta", token: true, allowedZones: ["evolution"], category: "gakuyukai_item" },
       variable_student: { name: "変数学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "design" },
       spoon_wizard: { name: "スプーンの魔術師", type: "student", cost: 7, attack: 2, hp: 3, allowedZones: ["seat"], category: "common" },
       adjective_vs_cynical: { name: "形容詞学生vs冷笑学生", type: "student", cost: 6, attack: 5, hp: 5, occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "common" },
@@ -19520,9 +19520,9 @@
       water_2l: { name: "水2L", type: "item", cost: 4, target: "self" },
       night_pool_water: { name: "ナイトプール水", type: "item", cost: 4, target: "self" },
       i_got_it: { name: "I GOT IT!!", type: "item", cost: 3, target: "enemyMulti" },
-      accelerate: { name: "アクセラレート", type: "item", cost: 1, target: "friendlyAny" },
+      accelerate: { name: "アクセラレート", type: "item", cost: 0, target: "friendlyAny" },
       chameleon: { name: "カメレオン", type: "item", cost: 1, target: "friendlyAny" },
-      yuta_umbrella: { name: "U太の傘", type: "item", cost: 1, target: "friendlyAny" },
+      yuta_umbrella: { name: "U太の傘", type: "item", cost: 0, target: "friendlyAny" },
       red_happi: { name: "赤はっぴ", type: "item", cost: 1, target: "friendlyAny" },
       illegal_cafeteria: { name: "無法の食堂", type: "environment", cost: 3, allowedZones: ["environment"], ace: true },
       circle_crab: { name: "○○○ガニ", type: "item", cost: 4, target: "self" },
@@ -19715,6 +19715,18 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.23.19",
+        date: "2026年10月11日",
+        summary: "「病」の装備時・ターン終了時効果を変更しました。「アクセラレート」「U太の傘」の戦意を0にしました。",
+        changes: [
+          { title: "病", after: "[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の体力を-1する。\nお互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。" },
+          { title: "装備カードの戦意", before: "アクセラレート：戦意1\nU太の傘：戦意1", after: "アクセラレート：戦意0\nU太の傘：戦意0" },
+          { title: "関連カード", after: "「U太」「裏U太」「病」の関連カードに「病に臥すU太」「病に打ち勝った裏U太」を追加しました。" },
+          { title: "病に臥すU太", after: "[特殊進化]：「U太」に「病」を装備させる。\n進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。\n自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。" },
+          { title: "病に打ち勝った裏U太", after: "戦意0／攻撃力5／体力4\n[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。「病」を送られた出席者の攻撃力と体力を1にする。" }
+        ]
+      },
       {
         version: "ver.0.23.18",
         date: "2026年10月10日",
@@ -28310,7 +28322,6 @@
       clearExpiredDeckToHandLocks(side);
       resolveDelayedDestruction(side);
       resolveHandTurnEffects(side);
-      resolveIllnessTurnStart(side);
       resolveLateZone(side);
       cleanupDestroyedCards();
       applyBoardAuras();
@@ -28811,7 +28822,7 @@
         if (card.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
         if (item.baseId === "laser_beam") return ref.zone === "seat" && seatRow(ref.index) === 3;
         if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && card.type === "teacher";
-        if (illness && ["yuta", "sick_yuta"].includes(card.baseId)) return false;
+        if (illness && (card.baseId === "yuta" || !canEquipIllness(card))) return false;
         return true;
       }).map((entry) => ({
         ...entry,
@@ -28994,8 +29005,10 @@
         return scoreAiDamageEffectTargets(side, card, allTargets, { damage: 1, randomHits: 10 });
       }
       if (card.baseId === "recovered_dark_yuta") {
-        return scoreAiDamageEffectTargets(side, card, allTargets, { hpReduction: 1 })
-          + allTargets.reduce((sum, entry) => sum + Math.min(1, Math.max(0, entry.card.attack || 0)) * 1.5, 0);
+        return [side, targetSide].reduce((sum, owner) => sum + listBoardRefs(owner).map(getBoardCardFromRef)
+          .filter((target) => target?.illnessEquipments?.length && !isAibenNyoteiEffectImmune(target))
+          .reduce((score, target) => score + target.illnessEquipments.length * 2
+            + (owner === side ? -1 : 1) * (Math.max(0, target.attack - 1) * 1.5 + Math.max(0, target.maxHp - 1)), 0), 0);
       }
       return 0;
     }
@@ -32201,6 +32214,7 @@
         .map((ref) => ({ ref, card: getBoardCardFromRef(ref) })).filter(({ card }) => card);
       const guaranteedDamageByTargetId = new Map();
       const sourceIdsByTargetId = new Map();
+      const illnessDamageTargetIds = new Set();
       const addGuaranteedDamage = (entry, amount, source, options = {}) => {
         if (!entry?.card?.instanceId) return;
         const damage = options.hpReduction
@@ -32249,17 +32263,20 @@
           const targets = effectTargetEntries(side, targetSide, (card) => card.type === "student");
           if (targets.length === 1) addGuaranteedDamage(targets[0], 2, source);
         }
-        if (source.baseId === "sick_yuta" && targetEntries.length === 1
-          && !["yuta", "sick_yuta"].includes(targetEntries[0].card.baseId)) {
+        if (source.baseId === "sick_yuta" && targetEntries.length === 1 && canEquipIllness(targetEntries[0].card)
+          && targetEntries[0].card.baseId !== "yuta"
+          && !illnessDamageTargetIds.has(targetEntries[0].card.instanceId)) {
           addGuaranteedDamage(targetEntries[0], 1, source, { hpReduction: true });
+          illnessDamageTargetIds.add(targetEntries[0].card.instanceId);
         }
       });
 
-      const students = targetEntries.filter(({ card }) => card.type === "student");
-      if (students.length === 1 && !["yuta", "sick_yuta"].includes(students[0].card.baseId)) {
-        // 確定で残る装備分だけ数える。先に破壊される別の装備者には依存しない。
-        const illnessCount = students[0].card.illnessEquipments?.length || 0;
-        if (illnessCount > 0) addGuaranteedDamage(students[0], illnessCount, null, { hpReduction: true });
+      // 感染済みの出席者は体力が再び減らない。感染先が唯一の場合だけ撃破を予測する。
+      const infectionTargets = targetEntries.filter(({ card }) => canEquipIllness(card));
+      if (infectionTargets.length === 1 && infectionTargets[0].card.baseId !== "yuta"
+        && !illnessDamageTargetIds.has(infectionTargets[0].card.instanceId)
+        && targetEntries.some(({ card }) => isIllnessInfected(card))) {
+        addGuaranteedDamage(infectionTargets[0], 1, null, { hpReduction: true });
       }
       targetEntries.forEach((entry) => {
         if (isAibenNyoteiEffectImmune(entry.card)) return;
@@ -32383,6 +32400,8 @@
     function resolveEndTurnEffects(side, options = {}) {
       runEffectFeedbackSequence(() => {
         runEffectFeedbackBatch(() => resolveItemEndTurnEffects(side));
+        settleEndTurnStep();
+        runEffectFeedbackBatch(() => resolveIllnessEndTurn());
         settleEndTurnStep();
         runEffectFeedbackBatch(() => resolveTeacherEndTurnEffects(side));
         settleEndTurnStep();
@@ -32577,8 +32596,7 @@
             addLog(`${card.name}の効果：攻撃力を+1しました。`);
           }
           if (card.baseId === "sick_yuta") {
-            const target = randomBoardRef(opponent);
-            if (target) equipIllness(opponent, getBoardCardFromRef(target), createCardFromBase("illness", side));
+            equipRandomIllness(opponent, side);
           }
           if (card.baseId === "rear_queen") {
             const targets = shuffle(listBoardRefs(opponent).filter((targetRef) => getBoardCardFromRef(targetRef)?.type === "student")).slice(0, 3);
@@ -36014,44 +36032,72 @@
       const index = entries.findIndex((attached) => attached.instanceId === entry.instanceId);
       if (index < 0) return false;
       entries.splice(index, 1);
-      applyPermanentStatBuff(card, 1, 1, 0, "病の解除");
+      card.illnessInfected = true;
+      applyPermanentStatBuff(card, 0, 1, 0, "病の解除");
       moveToTrash(entry.owner || owner, entry, { reason: "装備解除", sourceZone: "equipment" });
       return true;
     }
 
+    function isIllnessInfected(card) {
+      return Boolean(card?.illnessInfected || card?.illnessEquipments?.length);
+    }
+
+    function canEquipIllness(card) {
+      return Boolean(card && !isIllnessInfected(card) && !isAibenNyoteiEffectImmune(card)
+        && equipmentEntriesForCard(card).length === 0);
+    }
+
     function equipIllness(owner, target, illness) {
-      if (!target || !illness || isAibenNyoteiEffectImmune(target)) return false;
+      if (!illness || !canEquipIllness(target)) return false;
       const ref = listBoardRefs(owner).find((entry) => getBoardCardFromRef(entry)?.instanceId === target.instanceId);
       if (!ref) return false;
       if (target.baseId === "yuta") {
+        if (!canSpecialEvolveToken(owner, ref, "sick_yuta")) return false;
         moveToTrash(illness.owner || owner, illness, { reason: "病に臥すU太", sourceZone: "equipment" });
-        destroyBoardCard(ref, { reason: "病に臥すU太", showDestroyFeedback: false });
-        const sick = makeBoardCard(createCardFromBase("sick_yuta", owner));
-        attendCard(owner, sick, ref.zone, ref.index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED });
-        addLog(`U太は病を装備し、病に臥すU太になりました。`);
-        return true;
+        return Boolean(specialEvolveToken(owner, ref, "sick_yuta"));
       }
-      if (target.baseId === "sick_yuta" && canSpecialEvolveToken(owner, ref, "recovered_dark_yuta")) {
-        moveToTrash(illness.owner || owner, illness, { reason: "特殊進化素材", sourceZone: "equipment" });
-        const evolved = specialEvolveToken(owner, ref, "recovered_dark_yuta");
-        if (!evolved) return false;
-        addLog(`${target.name}は病を克服し、${evolved.name}に特殊進化しました。`);
-        return true;
-      }
-      target.illnessEquipments = [...(target.illnessEquipments || []), illness];
-      applyPermanentStatBuff(target, -1, -1, 0, illness.name);
+      target.illnessInfected = true;
+      target.illnessEquipments = [illness];
+      applyPermanentStatBuff(target, 0, -1, 0, illness.name);
       addLog(`${target.name}に病を装備しました。`);
       return true;
     }
 
-    function resolveIllnessTurnStart(side) {
-      const equipped = listBoardRefs(side).reduce((sum, ref) =>
-        sum + (getBoardCardFromRef(ref)?.illnessEquipments?.length || 0), 0);
-      for (let i = 0; i < equipped; i += 1) {
-        const students = listBoardRefs(side).filter((ref) => getBoardCardFromRef(ref)?.type === "student");
-        const ref = students[Math.floor(Math.random() * students.length)];
-        if (ref) equipIllness(side, getBoardCardFromRef(ref), createCardFromBase("illness", side));
-      }
+    function resolveIllnessEndTurn() {
+      // 開始時点の感染者だけ発動する。今回感染した出席者からの連鎖は次の終了時から。
+      const infected = ["player", "opponent"].flatMap((side) => listBoardRefs(side)
+        .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter(({ card }) => isIllnessInfected(card)));
+      infected.forEach(({ ref, card }) => {
+        if (getBoardCardFromRef(ref)?.instanceId !== card.instanceId) return;
+        applyPermanentStatBuff(card, -1, 0, 0, "病");
+        addLog(`${card.name}の病：攻撃力を-1しました。`);
+        const targets = listBoardRefs(ref.owner).filter((targetRef) => canEquipIllness(getBoardCardFromRef(targetRef)));
+        const targetRef = targets[Math.floor(Math.random() * targets.length)];
+        if (targetRef) equipIllness(ref.owner, getBoardCardFromRef(targetRef), createCardFromBase("illness", ref.owner));
+      });
+    }
+
+    function equipRandomIllness(owner, sourceSide) {
+      const targets = listBoardRefs(owner).map(getBoardCardFromRef).filter(canEquipIllness);
+      if (!targets.length) return false;
+      return equipIllness(owner, targets[Math.floor(Math.random() * targets.length)], createCardFromBase("illness", sourceSide));
+    }
+
+    function resolveRecoveredYutaEvolution(side, source) {
+      const affected = ["player", "opponent"].flatMap(listBoardRefs).map(getBoardCardFromRef)
+        .filter((card) => card?.illnessEquipments?.length && !isAibenNyoteiEffectImmune(card));
+      let total = 0;
+      affected.forEach((card) => [...card.illnessEquipments].forEach((entry) => {
+        if (removeIllnessEquipment(card, card.owner, entry)) total += 1;
+      }));
+      applyPermanentStatBuff(source, 0, total, 0, source.name);
+      affected.forEach((card) => {
+        applyPermanentStatBuff(card, 1 - card.attack, 1 - card.maxHp, 0, source.name);
+        card.currentHp = 1;
+      });
+      addLog(`${source.name}の進化時効果：病${total}枚を校外エリアへ送り、体力を${total}上昇させました。病を送られた出席者の攻撃力と体力を1にしました。`);
+      return false;
     }
 
     function equipmentDetailText(card) {
@@ -36897,7 +36943,7 @@
       const refs = listBoardRefs(owner).filter((ref) => zone === null || (ref.zone === zone && ref.index === index));
       return refs.find((ref) => {
         const target = getBoardCardFromRef(ref);
-        return target?.baseId === card.evolutionFrom
+        return (target?.baseId === card.evolutionFrom || (card.baseId === "dark_yuta" && target?.baseId === "sick_yuta"))
           && !isPadlocked(target)
           && (allowSameTurnEvolution || Math.max(target.playedOnTurn, target.evolvedOnTurn ?? 0) < state.actionTurn);
       }) || null;
@@ -36908,6 +36954,11 @@
       const target = findEvolveTarget(side, card, owner, zone, index, options);
       if (!target) return false;
       const previous = getBoardCardFromRef(target);
+      const recoveryMaterial = card.baseId === "dark_yuta" && previous?.baseId === "sick_yuta" ? card : null;
+      if (recoveryMaterial) {
+        card = createCardFromBase("recovered_dark_yuta", side);
+        options = { ...options, specialEvolution: true };
+      }
       const evolved = makeBoardCard(card);
       evolved.evolvedOnTurn = state.actionTurn;
       evolved.evolvedFrom = previous;
@@ -36943,6 +36994,7 @@
         setBoardCard(owner, target.zone, target.index, evolved);
       }
       addLog(`${SIDES[side]}は${evolved.evolvedFrom.name}を${card.name}に${options.specialEvolution ? "特殊進化" : "進化"}させました。`);
+      if (recoveryMaterial) moveToTrash(side, recoveryMaterial, { reason: "特殊進化素材", sourceZone: "hand" });
       if (options.countAsAttendance !== false && side === state.currentSide) state.players[side].attendancesThisTurn += 1;
       if (!options.skipEvolutionEffect) scheduleEvolutionEffect(side, evolved, options);
       return evolved;
@@ -37001,7 +37053,7 @@
       const delay = evolutionEffectDelay(options);
       const effectTurn = state.actionTurn;
       const commandId = options.commandId || "";
-      const waitForAi = ["midge", "organism", "perfect_mutant", "success_student", "demon_a_plus", "oni_shima_ai", "recovered_dark_yuta", "gitch", "gigi_blood"].includes(evolved?.baseId)
+      const waitForAi = ["midge", "organism", "perfect_mutant", "success_student", "demon_a_plus", "oni_shima_ai", "sick_yuta", "recovered_dark_yuta", "gitch", "gigi_blood"].includes(evolved?.baseId)
         && ((side === "opponent" && isOpponentAiActive()) || (side === "player" && isTrainingLeftAiActive()));
       let resolveAiWait = null;
       let aiWaitPromise = null;
@@ -37082,15 +37134,11 @@
         addLog(`${evolved.name}の進化時効果：相手の出席者${movedText}をすべて破壊しました。`);
         return false;
       }
-      if (evolved.baseId === "recovered_dark_yuta") {
-        const opponent = oppositeSide(side);
-        listBoardRefs(opponent).forEach((ref) => {
-          const target = getBoardCardFromRef(ref);
-          if (target) equipIllness(opponent, target, createCardFromBase("illness", side));
-        });
-        addLog(`${evolved.name}の進化時効果：相手の出席者すべてに病を装備しました。`);
+      if (evolved.baseId === "sick_yuta") {
+        [side, oppositeSide(side)].forEach((owner) => equipRandomIllness(owner, side));
         return false;
       }
+      if (evolved.baseId === "recovered_dark_yuta") return resolveRecoveredYutaEvolution(side, evolved);
       if (evolved.baseId === "dark_yuta") {
         state.players[side].hand.push(createCardFromBase("yuta", side));
         addLog(`${evolved.name}の効果：「U太」を1枚手札に生成しました。`);
@@ -39687,6 +39735,7 @@
         return false;
       }
       if (item.baseId === "aggro_walk" && !target.name.includes("アグロ")) return false;
+      if (item.baseId === "illness" && !canEquipIllness(target)) return false;
       if (item.baseId === "stress_hair" && !canAttachUtaEquipment(target)) return false;
       if (item.baseId === "laser_beam" && !(targetZone === "seat" && seatRow(targetIndex) === 3)) return false;
       if (item.baseId === "yakitori_harassment" && target.type !== "student") return false;
@@ -45134,6 +45183,7 @@
       if (item.baseId === "go_home" && target.type !== "student") return false;
       if (item.baseId === "set_log" && target.type !== "student") return false;
       if (item.baseId === "aggro_walk" && !target.name.includes("アグロ")) return false;
+      if (item.baseId === "illness" && !canEquipIllness(target)) return false;
       if (item.baseId === "stress_hair" && !canAttachUtaEquipment(target)) return false;
       if (item.baseId === "laser_beam" && !(zone === "seat" && seatRow(index) === 3)) return false;
       if (item.baseId === "yakitori_harassment" && target.type !== "student") return false;
@@ -51150,6 +51200,7 @@
             ${navigation}
             <div class="battle-card-preview-detail-title">効果</div>
             <div class="battle-card-preview-rules">${battleCardRulesMarkup(card)}</div>
+            ${["yuta", "dark_yuta", "illness"].includes(card.baseId) ? relatedCardsTemplate(card) : ""}
             ${currentEffects.markup}
             <div class="battle-card-preview-term-description" data-preview-term-description></div>
             <div class="battle-card-preview-effect-description" data-preview-effect-description></div>
@@ -51562,7 +51613,9 @@
           selected.push(entry);
         }
       });
-      return selected.map((entry) => entry.baseId).slice(0, 10);
+      const additionalIds = ["yuta", "dark_yuta", "illness"].includes(card.baseId)
+        ? ["sick_yuta", "recovered_dark_yuta"] : [];
+      return [...new Set([...selected.map((entry) => entry.baseId), ...additionalIds])].slice(0, 10);
     }
 
     function findCardNameOccurrences(text, name) {
@@ -51937,9 +51990,9 @@
         aggro_princess: "超陽気を持つ。このカードが相手本体を攻撃したとき、自分本体に1ダメージを与える。",
         aggro_walk: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分本体に2ダメージを与える。",
         red_ideology: "お互いの講義室にいる出席者を、各行の左側の席マスへ詰める。",
-        illness: "装備カード。お互いの講義室にいる出席者1人に装備する。装備者の攻撃力と体力を-1する。装備者の持ち主のターン開始時、その講義室にいる学生1人をランダムに指名し、新しい「病」1枚を装備する。",
-        sick_yuta: "「U太」に「病」を装備したとき、それらを校外エリアへ送り、同じマスにこのカードを出席させる。このカードに「病」が装備されたとき、その「病」を校外エリアへ送り、このカードを「病に打ち勝った裏U太」に特殊進化させる。自分のターン終了時、このカードが講義室にいるなら、相手の出席者1人をランダムに指名し、新しい「病」1枚を装備する。",
-        recovered_dark_yuta: "進化：「病に臥すU太」。進化したとき、相手の講義室にいる出席者すべてに「病」を装備する。",
+        illness: "装備カード。お互いの講義室にいる出席者1人に装備する。装備者の体力を-1する。お互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。",
+        sick_yuta: "特殊進化：「U太」に「病」を装備させる。進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。",
+        recovered_dark_yuta: "特殊進化：「病に臥すU太」に「裏U太」を進化させる。進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。「病」を送られた出席者の攻撃力と体力を1にする。",
         igidakatta: "お互いの講義室に装備されている「病」すべてを校外エリアへ送る。送った1枚ごとに、相手本体に1ダメージを与えるか、自分本体を1回復するかをランダムに決める。",
         contrarian_portal: "自分の1行目と3行目の出席者の位置を入れ替える。",
         stress_hair: "装備カード。「U太」または「裏U太」1人に装備できる。装備者の体力を-1する。次の相手のターン終了時、このカードを校外エリアへ送る。このカードが装備者から校外エリアへ送られたとき、その出席者の攻撃力と体力を+4する。装備カードは通常、1人につき1枚まで。",
@@ -53048,7 +53101,10 @@
       castImmediateItem,
       resolveConfuciusSays,
       equipIllness,
-      resolveIllnessTurnStart,
+      resolveIllnessEndTurn,
+      canEquipIllness,
+      isIllnessInfected,
+      removeIllnessEquipment,
       castCaptureOnSlot,
       markCardAttackUsed,
       confirmCardChoiceSelection,

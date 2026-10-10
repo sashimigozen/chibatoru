@@ -156,7 +156,7 @@ test("生物を進化元にした完全変異体は素材だけを消費して�
   });
 });
 
-test("病に臥すU太は新しい病を校外へ送り特殊進化する", async ({ page }) => {
+test("病に臥すU太に病を装備しても克服後へ特殊進化しない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const sick = api.makeBoardCard(api.createCardFromBase("sick_yuta", "player"));
@@ -187,14 +187,14 @@ test("病に臥すU太は新しい病を校外へ送り特殊進化する", asyn
 
   expect(result).toEqual({
     equipped: true,
-    baseId: "recovered_dark_yuta",
+    baseId: "sick_yuta",
     token: true,
-    sourceId: result.expectedSourceId,
+    sourceId: undefined,
     expectedSourceId: result.expectedSourceId,
-    currentHp: 9,
+    currentHp: 2,
     attacksUsed: 1,
-    triggerIllnessInTrash: true,
-    enemyIllnesses: 1,
+    triggerIllnessInTrash: false,
+    enemyIllnesses: 0,
     attendances: 0
   });
 });
@@ -224,9 +224,8 @@ test("特殊進化カードはトークンとして進化元とカード文を�
   expect(result.texts[0]).toContain("[進化]：「単細胞生物」");
   expect(result.texts[1]).toContain("[進化]：「ミジンコ」");
   expect(result.texts[2]).toContain("[進化]：「生物」");
-  expect(result.texts[3]).toContain("[進化]：「病に臥すU太」");
-  expect(result.sickText).toContain("その「病」を校外エリアへ送り");
-  expect(result.sickText).toContain("[特殊進化]させる");
+  expect(result.texts[3]).toContain("[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。");
+  expect(result.sickText).toContain("[特殊進化]：「U太」に「病」を装備させる。");
 });
 
 test("ver.0.23.9の更新情報に特殊進化の変更を統合して表示する", async ({ page }) => {

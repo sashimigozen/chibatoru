@@ -101,7 +101,7 @@ for (const side of ["player", "opponent"]) {
       expect(result).toEqual({ reserved: true, sourcePreserved: true, targetRemoved: true });
     });
 
-    test("次の相手ターン開始に病が確実に倒す学生は撃破予約する", async ({ page }) => {
+    test("感染済みの学生は病で体力が再び減らないため撃破予約しない", async ({ page }) => {
       const result = await page.evaluate((owner) => {
         const api = window.__chibattle;
         const enemy = owner === "player" ? "opponent" : "player";
@@ -114,21 +114,21 @@ for (const side of ["player", "opponent"]) {
         ];
         api.state.players[enemy].board.seats[0] = target;
         const plan = api.planAiGuaranteedEndTurnEffectKills(owner);
-        api.resolveIllnessTurnStart(enemy);
+        api.resolveIllnessEndTurn();
         api.applyBoardAuras();
         return {
           reserved: plan.targetIds.has(target.instanceId),
           targetRemoved: !api.state.players[enemy].board.seats[0]
         };
       }, side);
-      expect(result).toEqual({ reserved: true, targetRemoved: true });
+      expect(result).toEqual({ reserved: false, targetRemoved: false });
     });
 
     test("病がランダムに広がる学生が複数なら対象を確定扱いしない", async ({ page }) => {
       const size = await page.evaluate((owner) => {
         const api = window.__chibattle;
         const enemy = owner === "player" ? "opponent" : "player";
-        for (const index of [0, 1]) {
+        for (const index of [0, 1, 2]) {
           const target = api.makeBoardCard(api.createCardFromBase("general_student", enemy));
           target.currentHp = 1;
           if (index === 0) target.illnessEquipments = [api.createCardFromBase("illness", enemy)];

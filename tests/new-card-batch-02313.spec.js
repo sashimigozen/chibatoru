@@ -142,13 +142,13 @@ test("病はU太を変化させ、別の学生へ新しい病を拡散する", a
     api.equipIllness("player", student, api.createCardFromBase("illness", "opponent"));
     const previousRandom = Math.random;
     Math.random = () => 0.99;
-    api.resolveIllnessTurnStart("player");
+    api.resolveIllnessEndTurn();
     Math.random = previousRandom;
     return { transformed, studentIllness: student.illnessEquipments.length,
       yutaTrash: api.state.players.player.trash.some((card) => card.baseId === "yuta"),
       illnessTrash: api.state.players.player.trash.some((card) => card.baseId === "illness") };
   });
-  expect(result).toEqual({ transformed: "sick_yuta", studentIllness: 2, yutaTrash: true, illnessTrash: true });
+  expect(result).toEqual({ transformed: "sick_yuta", studentIllness: 1, yutaTrash: false, illnessTrash: true });
 });
 
 test("ver.0.23.8のお知らせに病に臥すU太の特殊進化条件を表示する", async ({ page }) => {
@@ -164,7 +164,9 @@ test("ぃぎだかったぁ...は病1枚ごとにダメージか回復を抽選�
     const card = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
     api.state.players.player.board.seats[0] = card;
     api.equipIllness("player", card, api.createCardFromBase("illness", "player"));
-    api.equipIllness("player", card, api.createCardFromBase("illness", "opponent"));
+    const other = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    api.state.players.player.board.seats[1] = other;
+    api.equipIllness("player", other, api.createCardFromBase("illness", "opponent"));
     const item = api.createCardFromBase("igidakatta", "player");
     api.state.players.player.hand.push(item);
     const previousRandom = Math.random;
@@ -905,7 +907,7 @@ test("任意枚数の選択UIから出席を確定できる", async ({ page }) =
     reviveMode: "enemy_revive", revived: true });
 });
 
-test("裏U太の進化で相手全員に病を付与し、後ろにいるクイーンは終了時に4ダメージ", async ({ page }) => {
+test("克服後の進化で病がなければ強化せず、後ろにいるクイーンは終了時に4ダメージ", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const evolved = api.makeBoardCard(api.createCardFromBase("recovered_dark_yuta", "player"));
@@ -919,5 +921,5 @@ test("裏U太の進化で相手全員に病を付与し、後ろにいるクイ�
     api.resolveStudentEndTurnEffects("player");
     return { illnessCount, queenDamage: hpBefore - student.currentHp };
   });
-  expect(result).toEqual({ illnessCount: 1, queenDamage: 4 });
+  expect(result).toEqual({ illnessCount: 0, queenDamage: 4 });
 });
