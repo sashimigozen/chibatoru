@@ -34,10 +34,10 @@ test('暗号化ファイルでのみ新しい種類を解放し、再起動・�
   await page.locator('[data-card-test="general_student"]').click();
   const detail = page.locator('#caseEditorCard');
   const button = detail.locator('[data-editor-style]');
-  await expect(button).toContainText('レア');
+  await expect(button).toHaveAttribute('title', /^レア（/);
   await expect(detail.locator('.card')).toHaveClass(/rarity-rare/);
   await button.click();
-  await expect(button).toContainText('スーパーレア');
+  await expect(button).toHaveAttribute('title', /^スーパーレア（/);
   await expect(detail.locator('.card')).toHaveClass(/rarity-super-rare/);
   await page.reload();
   const saved = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), storageKey);
@@ -144,7 +144,7 @@ test('ダンジョンの旧報酬とプロフィールをシークレットへ�
   const expected = ['シークレットレア', 'レギュラー', 'レア', 'スーパーレア', 'ウルトラレア', 'シークレットレア'];
   for (let index = 0; index < expected.length; index++) {
     if (index) await button.click();
-    await expect(button).toContainText(expected[index]);
+    await expect(button).toHaveAttribute('title', new RegExp(`^${expected[index]}（`));
   }
   const save = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), storageKey);
   expect(save.cardUnlocks.yuta.ultraRare).toBe(true);

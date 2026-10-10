@@ -94,17 +94,17 @@ test("キラキラ金枠を別解放して通常・金枠と切り替え、保�
   await page.locator('[data-current-detail="king_ghidorah_bed"]').click();
   const modal = page.locator("#caseEditorCard");
   const styleButton = modal.locator("[data-editor-style]");
-  await expect(styleButton).toContainText("プリズマレア");
+  await expect(styleButton).toHaveAttribute("title", /^プリズマレア（/);
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(1);
   await styleButton.click();
-  await expect(styleButton).toContainText("レギュラー");
+  await expect(styleButton).toHaveAttribute("title", /^レギュラー（/);
   await expect(modal.locator(".reward-foil")).toHaveCount(0);
   await styleButton.click();
-  await expect(styleButton).toContainText("シークレットレア");
+  await expect(styleButton).toHaveAttribute("title", /^シークレットレア（/);
   await expect(modal.locator(".reward-foil")).toHaveCount(1);
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(0);
   await styleButton.click();
-  await expect(styleButton).toContainText("プリズマレア");
+  await expect(styleButton).toHaveAttribute("title", /^プリズマレア（/);
   await expect(modal.locator(".reward-prism-surface")).toHaveCount(1);
 });
 
