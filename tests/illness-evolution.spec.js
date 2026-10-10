@@ -55,7 +55,7 @@ test('病に臥すU太の終了時効果は感染済みを避け、装備とは�
 });
 
 for (const side of ['player', 'opponent']) {
-  test(`${side}の裏U太を病に臥すU太に重ねると5/4の克服後に進化する`, async ({ page }) => {
+  test(`${side}の裏U太を病に臥すU太に重ねると4/4の克服後に進化する`, async ({ page }) => {
     const result = await page.evaluate(owner => {
       const api = window.__chibattle;
       api.state.currentSide = owner;
@@ -71,12 +71,12 @@ for (const side of ['player', 'opponent']) {
         source: evolved.evolvedFrom.baseId, material: api.state.players[owner].trash.some(card => card.instanceId === dark.instanceId),
         generatedYuta: api.state.players[owner].hand.some(card => card.baseId === 'yuta') };
     }, side);
-    expect(result).toEqual({ sameTurn: false, allowed: true, id: 'recovered_dark_yuta', attack: 5, hp: 4,
+    expect(result).toEqual({ sameTurn: false, allowed: true, id: 'recovered_dark_yuta', attack: 4, hp: 4,
       source: 'sick_yuta', material: true, generatedYuta: false });
   });
 }
 
-test('両側の病を枚数で数え、体力だけ強化して解除対象を攻撃力0・体力1にする', async ({ page }) => {
+test('両側の病を枚数で数え、攻撃力と体力を強化して解除対象を攻撃力0・体力1にする', async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const source = api.makeBoardCard(api.createCardFromBase('recovered_dark_yuta', 'player'));
@@ -102,7 +102,7 @@ test('両側の病を枚数で数え、体力だけ強化して解除対象を�
       unchanged: JSON.stringify(before) === JSON.stringify([unaffected.attack, unaffected.maxHp, unaffected.currentHp]),
       syncedHp: snapshot.state.players.player.board.seats[0].maxHp, choice: api.state.pendingCardChoice };
   });
-  expect(result).toEqual({ source: [5, 7, 7], targets: [[0, 1, 1, 0, false], [0, 1, 1, 0, false]],
+  expect(result).toEqual({ source: [7, 7, 7], targets: [[0, 1, 1, 0, false], [0, 1, 1, 0, false]],
     trash: [1, 2], unchanged: true, syncedHp: 7, choice: null });
 });
 
@@ -121,5 +121,5 @@ test('通常のU太には今までどおり裏U太へ進化できる', async ({ 
 test('カード本文は最新の合意文面で表示する', async ({ page }) => {
   const texts = await page.evaluate(() => ['sick_yuta', 'recovered_dark_yuta'].map(id => window.__chibattle.cardRulesText(window.__chibattle.createCardFromBase(id, 'player'))));
   expect(texts[0]).toBe('[特殊進化]：「U太」に「病」を装備させる。\n進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。\n自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。');
-  expect(texts[1]).toBe('[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。\n「病」を送られた出席者の攻撃力を0、体力を1にする。');
+  expect(texts[1]).toBe('[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの攻撃力と体力を上昇させる。\n「病」を送られた出席者の攻撃力を0、体力を1にする。');
 });
