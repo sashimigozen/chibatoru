@@ -43,6 +43,10 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await page.locator('#homeNavGachaButton').click();
   await expect(page.locator('.gacha-featured h2')).toHaveText('PICK UP');
+  await expect(page.locator('.gacha-featured-cards [data-gacha-detail="aggro_student"]')).toHaveCount(1);
+  await expect(page.locator('.gacha-featured-cards [data-gacha-detail="general_student"]')).toHaveCount(0);
+  await expect(page.locator('.gacha-purchase-panel')).not.toContainText('SR保証');
+  await expect(page.locator('.gacha-purchase-panel')).toContainText('UR交換 0 / 200');
   const before = await saved(page);
   const ids = () => page.locator('.gacha-featured-cards button').evaluateAll(nodes=>nodes.map(n=>n.dataset.gachaDetail));
   for (const pack of C.PACKS) {
@@ -77,7 +81,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-pickup-rarity-2');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-4');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -137,9 +141,12 @@ test('normal UR reveal resumes; skip completes the whole batch without changing 
   expect(errors).toEqual([]);
 });
 test('legacy gifts are received once and grant 150CP per specialty; shop layout fits', async ({page}) => {
-  await boot(page,C.initial(),{unlocked:{design:true},selected:{},prismUnlocked:{king_ghidorah_bed:true}});
+  const economy=C.initial();
+  economy.gifts['dungeon:king_ghidorah_bed:5']={amount:50,label:'キングギドラベッド・5階 初回クリア',claimed:false};
+  await boot(page,economy,{unlocked:{design:true,king_ghidorah_bed:true},selected:{},prismUnlocked:{king_ghidorah_bed:true}});
   await page.locator('#homeGiftsButton').click();
   await expect(page.locator('[data-gacha-claim]')).toHaveCount(4);
+  await expect(page.locator('.gacha-dialog')).not.toContainText('キングギドラベッド');
   await page.locator('[data-gacha-claim="all"]').click();
   await expect.poll(async()=>(await saved(page)).cp).toBe(200);
   await page.locator('[data-gacha-close]').click();
@@ -147,6 +154,8 @@ test('legacy gifts are received once and grant 150CP per specialty; shop layout 
   await expect(page.locator('.gacha-dialog')).toContainText('プレゼントはありません');
   await page.locator('[data-gacha-close]').click();
   await page.locator('#homeNavGachaButton').click();
+  await expect(page.locator('#homeNavGachaButton')).toHaveText('ショップ');
+  expect(await page.locator('.gacha-table-set .table').first().evaluate(el=>getComputedStyle(el).backgroundColor)).toBe('rgb(185, 155, 123)');
   await page.screenshot({path:test.info().outputPath('shop-1440.png')});
   await page.setViewportSize({width:1280,height:800});
   await page.screenshot({path:test.info().outputPath('shop-1280.png')});
@@ -195,6 +204,25 @@ test('backup roundtrip keeps CP, owned, selected, decks; repeated import replace
   await page.locator('#homeProfileButton').click();await page.locator('#profileDataButton').click();
   await page.locator('#gachaBackupInput').setInputFiles(backup);await page.locator('[data-gacha-restore]').click();
   await page.waitForLoadState('load');expect((await saved(page)).cp).toBe(75);
+});
+test('tear accepts a held pointer approaching from outside the pack, in both directions', async ({page}) => {
+  let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'tear-wide');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-receive]').click();
+  for (const direction of [1,-1]) {
+    const r=await page.locator('[data-gacha-tear]').boundingBox();
+    const y=r.y+r.height/2;
+    const start=direction===1?r.x-100:r.x+r.width+100;
+    const entry=direction===1?r.x-50:r.x+r.width+50;
+    await page.mouse.move(start,y+100);await page.mouse.down();
+    await page.mouse.move(entry,y,{steps:5});
+    await page.mouse.move(entry+direction*r.width*.8,y,{steps:12});await page.mouse.up();
+    await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
+    if(direction===1) {
+      for(let i=0;i<5;i++) await page.locator(`[data-gacha-reveal="${i}"]`).click();
+      await page.locator('[data-gacha-next]').click();
+    }
+  }
 });
 test('fast continuous drag reveals all visited cards; ten-pack progress persists', async ({page}) => {
   let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'ten-fixed');

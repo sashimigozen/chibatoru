@@ -11,7 +11,7 @@
   const BACKUP_KEYS = ["chibattle-saved-decks-v1", "chibattle-specialty-decks-v1", "chibattle-chaos-decks-v1", "chibattle-player-profile-v1", "chibattle-dungeon-card-styles-v1", "chibattle-dungeon-run-v1", "chibattle-dungeon-pending-reward-v1", "chibattle-deleted-starter-decks-v1", "chibattle-starter-decks-seeded-v1"];
   const list = (s) => s.trim().split(/\s+/);
   const PACKS = [
-    { id: "cynical", name: "Cynical Legends", count: 122, color: "#829cb5", cards: list(`aggro_student aggro_king single_cell adjective_student general_student yuta aggro_queen ae_student hurried_student lazy_student cancel_student back_question_student best_friend laughing_front_student eaten_student trpg_member ttb predator student_comedy acting_out_man seat_taking_group sniper cynical_student loud_student college_student_vibe enemy_student fridge_thief extra_people angry_maker elite_open_chatter word_increaser impossible_pink_fat loud_group ta_killer dark_yuta general_teacher fairy_t popular_c lightning_n kyushu_info_c pro_k signal_professor_m logic_hunter kyoto_sound_i kansai_voice_t bird_a thin_professor_h ninety_three_teacher president suzaku ai_chan oni_shima_ai france_asakura demon_a_plus cafeteria_lady curry_treater chen_san tissue_distributor impossible_high_note vampire zombie ruler bento yakiniku environment_setup fluid_pasta water_2l onigiri_draw hondara fire_touch thin_item handy_jet_engine dos_attack destroy_dos_attack i_got_it substitute_attendance iv_pack accelerate chameleon yuta_umbrella red_happi wet_meal_ticket circle_crab hair_crab homeless_crab quiet_please seriously_hit chigauyo favorite_number_s sexual_eye yoyu_announce vampirization green_curry panpan capture paired_existence peaceful_mind abyss dropped_cards reversal dont_worry namen_tenno yutakun_yutakun three_gestures music_detergent donguri thanks_all_students alpha classroom cafeteria night_pool gangi_fortress seat_rules student_council full_lock design_domain chaos_world no_late_time meguro_library dorm_council on_demand_business cote_dazur`), ur: list("general_student adjective_student ae_student elite_open_chatter trpg_member general_teacher chen_san onigiri_draw night_pool") },
+    { id: "cynical", name: "Cynical Legends", count: 122, color: "#829cb5", cards: list(`aggro_student aggro_king single_cell adjective_student general_student yuta aggro_queen ae_student hurried_student lazy_student cancel_student back_question_student best_friend laughing_front_student eaten_student trpg_member ttb predator student_comedy acting_out_man seat_taking_group sniper cynical_student loud_student college_student_vibe enemy_student fridge_thief extra_people angry_maker elite_open_chatter word_increaser impossible_pink_fat loud_group ta_killer dark_yuta general_teacher fairy_t popular_c lightning_n kyushu_info_c pro_k signal_professor_m logic_hunter kyoto_sound_i kansai_voice_t bird_a thin_professor_h ninety_three_teacher president suzaku ai_chan oni_shima_ai france_asakura demon_a_plus cafeteria_lady curry_treater chen_san tissue_distributor impossible_high_note vampire zombie ruler bento yakiniku environment_setup fluid_pasta water_2l onigiri_draw hondara fire_touch thin_item handy_jet_engine dos_attack destroy_dos_attack i_got_it substitute_attendance iv_pack accelerate chameleon yuta_umbrella red_happi wet_meal_ticket circle_crab hair_crab homeless_crab quiet_please seriously_hit chigauyo favorite_number_s sexual_eye yoyu_announce vampirization green_curry panpan capture paired_existence peaceful_mind abyss dropped_cards reversal dont_worry namen_tenno yutakun_yutakun three_gestures music_detergent donguri thanks_all_students alpha classroom cafeteria night_pool gangi_fortress seat_rules student_council full_lock design_domain chaos_world no_late_time meguro_library dorm_council on_demand_business cote_dazur`), ur: list("aggro_student adjective_student ae_student elite_open_chatter trpg_member general_teacher chen_san onigiri_draw night_pool") },
     { id: "endless", name: "Endless Struggle", count: 45, color: "#af9790", cards: list(`super_ae_student enemy_boss live_person dobby pachin_uni protein_drinker failure_student success_student bounce_day yocchan trendy_student rebirth_student lone_wolf proliferating_enemy delayed_student infight_shogi aiben nyotei apprentice_vampire aggro_eater ux_design_textbook handmade_ctoc night_pool_water go_home smart_me sock_block deck_without yamanashi_minimum_wage baka_mac ikemasu set_log sage_legacy greeting_3000 full_throttle scared_me front_door door_front back_door furious_comeback stand_up building_12_classroom raptor_temple door_war shogi_duel_field aiben_vs_nyotei_title_match`), ur: list("nyotei aiben apprentice_vampire ikemasu raptor_temple") },
     { id: "awakening", name: "Ultimate Awakening", count: 38, color: "#b0a47c", cards: list(`scout_student ta_squad happy_blue_bird suit_student bust_suit intern tokyo_tech_bro absolute_woman loud_members small_omata wood_gitch gitch gigi_blood aggro_army king_ghidorah_bed diamond_dust happy_experience go_away course_registration_party lie_pekora big_wall think_so illegal_cafeteria earphones tsurai_nara company_one_day enough_to_fly ii_daro_tte quick_quiz_tournament summer_teacher brother_capital padlock crotch_febreze smoke_flare one_eyed_peek big_laughter forbidden_book philosophy_cheating`), ur: list("absolute_woman small_omata gigi_blood king_ghidorah_bed quick_quiz_tournament") },
     { id: "echoes", name: "Laboratory Echoes", count: 50, color: "#8eaba7", cards: list(`absent_student strong_student pad_present_creator cursed_students strict_lateness_teacher leaving_on_time_lecturer cornering_lecturer pure_destruction destructive_lie aggro_kingdom yabe classroom_change annoying_na childhood_memory_tutuapp efficient_experiment_method hat_man academic_move confucius_says gesture_student diligent_student plump_student aggro_princess aggro_walk red_ideology illness igidakatta contrarian_portal stress_hair laser_beam attitude folder_galaxy variable_student sweet_curry spoon_wizard adjective_vs_cynical suffix_sugi yakitori_harassment starbucks_student overfitting_student loud_typing_student tiny_rhythm_student apprentice_best_friend white_student true_enemy enemy_horde rear_queen enemy_enemy enemy_revive triple_enemy salt_to_enemy`), ur: list("overfitting_student triple_enemy cornering_lecturer efficient_experiment_method aggro_kingdom") }
@@ -35,14 +35,15 @@
     const ids = new Set(PACKS.flatMap((p) => p.cards));
     for (const [id, styles] of Object.entries(s.owned)) {
       if (!ids.has(id) || !record(styles) || Object.entries(styles).some(([m, v]) => !MODES.slice(1).includes(m) || v !== true)) throw new Error("解放データが不正です。");
-      if (styles.ultraRare && !PACKS.some((p) => p.ur.includes(id))) throw new Error("URデータが不正です。");
+      // Keep previously acquired General Student URs readable after the pool correction.
+      if (styles.ultraRare && id !== 'general_student' && !PACKS.some((p) => p.ur.includes(id))) throw new Error("URデータが不正です。");
     }
     for (const [id, value] of Object.entries(s.events)) if (!id || id.length > 200 || value !== true) throw new Error("報酬記録が不正です。");
     for (const [id, g] of Object.entries(s.gifts)) if (!(id === "initial-cp" || id === PERSONAL_GIFT_ID || /^dungeon:[a-z0-9_]+:(5|10)$/.test(id)) || !g || g.amount !== (id === PERSONAL_GIFT_ID ? 1000000 : id === "initial-cp" || id.endsWith(":5") ? 50 : 100) || typeof g.claimed !== "boolean" || typeof g.label !== "string") throw new Error("プレゼントが不正です。");
     if (s.pending !== null) {
       const q = s.pending, p = pack(q.packId);
       if (typeof q.id !== "string" || !Array.isArray(q.results) || ![1, 10].includes(q.results.length) || !integer(q.index, q.results.length - 1) || !["handoff", "tear", "cards", "summary"].includes(q.phase) || !integer(q.revealed, 5) || typeof q.urPause !== "boolean") throw new Error("開封記録が不正です。");
-      for (const row of q.results) if (!Array.isArray(row) || row.length !== 5 || row.some((c) => !MODES.includes(c.mode) || !(c.mode === "ultraRare" ? p.ur : p.cards).includes(c.baseId))) throw new Error("抽選結果が不正です。");
+      for (const row of q.results) if (!Array.isArray(row) || row.length !== 5 || row.some((c) => !MODES.includes(c.mode) || (!(c.mode === "ultraRare" ? p.ur : p.cards).includes(c.baseId) && !(q.packId === 'cynical' && c.mode === 'ultraRare' && c.baseId === 'general_student')))) throw new Error("抽選結果が不正です。");
     }
     if (s.recovery !== null) validateProjection(s.recovery);
     return clone(s);
@@ -93,20 +94,24 @@
   }
   function reward(s, { id, amount }) {
     if (!id || id.length > 200 || ![5, 50, 100].includes(amount)) throw new Error("報酬が不正です。");
+    if (id.startsWith('dungeon:king_ghidorah_bed:')) return false;
     if (s.events[id]) return false;
     s.events[id] = true; s.cp += amount; return true;
   }
   function migrate(s, specialties) {
+    for (const [id, gift] of Object.entries(s.gifts)) {
+      if (id.startsWith('dungeon:king_ghidorah_bed:') && !gift.claimed) delete s.gifts[id];
+    }
     // A stable gift ID keeps the initial grant one-time for new and existing saves.
     if (!s.gifts["initial-cp"]) s.gifts["initial-cp"] = { amount: 50, label: "初期CPプレゼント", claimed: false };
-    for (const { id, name } of specialties) for (const [floor, amount] of [[5, 50], [10, 100]]) {
+    for (const { id, name } of specialties.filter(x => x.id !== 'king_ghidorah_bed')) for (const [floor, amount] of [[5, 50], [10, 100]]) {
       const key = `dungeon:${id}:${floor}`;
       if (s.events[key] || s.gifts[key]) continue;
       s.events[key] = true; s.gifts[key] = { amount, label: `${name}・${floor}階 初回クリア`, claimed: false };
     }
   }
   function claim(s, id = null) {
-    for (const [key, g] of Object.entries(s.gifts)) if ((!id || key === id) && !g.claimed) { s.cp += g.amount; g.claimed = true; }
+    for (const [key, g] of Object.entries(s.gifts)) if (!key.startsWith('dungeon:king_ghidorah_bed:') && (!id || key === id) && !g.claimed) { s.cp += g.amount; g.claimed = true; }
   }
   function receivePersonalGift(s, data) {
     if (data?.format !== 'chibattle-personal-gift' || data.version !== 1 || data.id !== PERSONAL_GIFT_ID || data.amount !== 1000000) throw new Error('配布ファイルの形式が不正です。');

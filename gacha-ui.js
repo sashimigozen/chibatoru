@@ -101,7 +101,7 @@
     const exchangePack = C.PACKS.find((p) => saved.packs[p.id].tickets > 0);
     const q = saved.pending;
     screen.dataset.phase = q?.phase || 'shop';
-    screen.innerHTML = `<header class="gacha-head"><h1>ショップ</h1><div class="gacha-head-actions"><strong class="gacha-cp">${saved.cp} CP</strong><button class="button secondary" type="button" data-gacha-rates>提供割合</button>${q && q.phase !== "summary" ? '<button class="button secondary" type="button" data-gacha-skip>スキップ</button>' : ""}</div></header><p class="gacha-error ${ui.error ? "" : "hidden"}" role="alert">${escape(ui.error)}</p>${q ? pendingView(q) : `<div class="gacha-shop-layout"><aside class="gacha-pack-list" aria-label="パック一覧"><h2>パック一覧</h2>${C.PACKS.map((x) => `<button type="button" data-gacha-pack="${x.id}" aria-pressed="${x.id === p.id}"><span>${escape(x.name)}</span></button>`).join("")}</aside>${featured(p)}<div class="gacha-purchase-panel"><div>${packet(p)}</div><section><div class="gacha-purchase-buttons"><button class="button" type="button" data-gacha-buy="1" ${ui.busy || saved.cp < 5 || exchangePack ? "disabled" : ""}>1パック · 5 CP</button><button class="button" type="button" data-gacha-buy="10" ${ui.busy || saved.cp < 50 || exchangePack ? "disabled" : ""}>10パック · 50 CP</button>${exchangePack ? `<button class="button" type="button" data-gacha-exchange="${exchangePack.id}">URを交換する</button>` : ""}</div><p>SR保証 ${10 - progress.miss} ／ UR交換 ${progress.total % 200} / 200</p></section></div>${furniture}</div>`}`;
+    screen.innerHTML = `<header class="gacha-head"><h1>ショップ</h1><div class="gacha-head-actions"><strong class="gacha-cp">${saved.cp} CP</strong><button class="button secondary" type="button" data-gacha-rates>提供割合</button>${q && q.phase !== "summary" ? '<button class="button secondary" type="button" data-gacha-skip>スキップ</button>' : ""}</div></header><p class="gacha-error ${ui.error ? "" : "hidden"}" role="alert">${escape(ui.error)}</p>${q ? pendingView(q) : `<div class="gacha-shop-layout"><aside class="gacha-pack-list" aria-label="パック一覧"><h2>パック一覧</h2>${C.PACKS.map((x) => `<button type="button" data-gacha-pack="${x.id}" aria-pressed="${x.id === p.id}"><span>${escape(x.name)}</span></button>`).join("")}</aside>${featured(p)}<div class="gacha-purchase-panel"><div>${packet(p)}</div><section><div class="gacha-purchase-buttons"><button class="button" type="button" data-gacha-buy="1" ${ui.busy || saved.cp < 5 || exchangePack ? "disabled" : ""}>1パック · 5 CP</button><button class="button" type="button" data-gacha-buy="10" ${ui.busy || saved.cp < 50 || exchangePack ? "disabled" : ""}>10パック · 50 CP</button>${exchangePack ? `<button class="button" type="button" data-gacha-exchange="${exchangePack.id}">URを交換する</button>` : ""}</div><p>UR交換 ${progress.total % 200} / 200</p></section></div>${furniture}</div>`}`;
     // The button labels expose revealed names, not the hidden front-face text.
     screen.querySelectorAll('[data-gacha-pack]').forEach(button => {
       button.innerHTML = packTitle(C.PACKS.find(p => p.id === button.dataset.gachaPack));
@@ -231,9 +231,18 @@
     if (target) { ui.dragging = true; screen.setPointerCapture(e.pointerId); queueDrag(Number(target.dataset.gachaReveal)); }
   });
   screen.addEventListener("pointermove", (e) => {
+    if (ui.busy) return;
+    const line = screen.querySelector('[data-gacha-tear]');
+    if (line && (e.buttons & 1) && ui.tearX === null) {
+      const r = line.getBoundingClientRect();
+      const margin = Math.max(80, r.width * .35);
+      if (e.clientX >= r.left - margin && e.clientX <= r.right + margin && e.clientY >= r.top && e.clientY <= r.bottom) {
+        ui.tearX = e.clientX;
+        screen.setPointerCapture(e.pointerId);
+      }
+    }
     if (ui.tearX !== null) {
-      const line = screen.querySelector("[data-gacha-tear]");
-      if (line && e.clientX - ui.tearX >= line.getBoundingClientRect().width * .6) { ui.tearX = null; openSeal(); }
+      if (line && Math.abs(e.clientX - ui.tearX) >= line.getBoundingClientRect().width * .6) { ui.tearX = null; openSeal(); }
     }
     if (ui.dragging) {
       const target = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-gacha-reveal]");
@@ -251,7 +260,7 @@
   screen.addEventListener("pointercancel", stopDrag);
   function migrationSpecialties() {
     const pending = loadPendingDungeonReward()?.specialtyId;
-    return [...new Set([...Object.keys(unlockedDungeonCardStyles).filter((id) => unlockedDungeonCardStyles[id] === true), ...(pending ? [pending] : [])])].filter((id) => DUNGEON_CARD_STYLE_REWARDS[id])
+    return [...new Set([...Object.keys(unlockedDungeonCardStyles).filter((id) => unlockedDungeonCardStyles[id] === true), ...(pending ? [pending] : [])])].filter((id) => id !== 'king_ghidorah_bed' && DUNGEON_CARD_STYLE_REWARDS[id])
       .map((id) => ({ id, name: specialtyDefinition(id)?.name || DUNGEON_CARD_STYLE_REWARDS[id].label }));
   }
   async function migrateLegacy() {

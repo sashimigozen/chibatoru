@@ -6,6 +6,29 @@ const C = require('../gacha-core.js');
 const fixed = n => () => n;
 const rich = () => { const s = C.initial(); s.cp = 10000; return s; };
 const complete = s => { s.pending = null; return s; };
+test('Cynical UR correction preserves old ownership and pending results but new exchange uses Aggro Student', () => {
+  const s=C.purchase(rich(),'cynical',1,()=>.99999,'old-results');
+  s.pending.results[0][0]={baseId:'general_student',mode:'ultraRare'};
+  s.owned.general_student={ultraRare:true};
+  assert.equal(C.validate(s).owned.general_student.ultraRare,true);
+  s.packs.cynical.total=200;s.packs.cynical.tickets=1;
+  assert.throws(()=>C.exchange(s,'cynical','general_student'));
+  C.exchange(s,'cynical','aggro_student');
+  assert.equal(s.owned.aggro_student.ultraRare,true);
+});
+test('King Ghidorah clear records grant no CP and remove only unclaimed gifts', () => {
+  const s=C.initial();s.cp=150;
+  s.gifts['dungeon:king_ghidorah_bed:5']={amount:50,label:'old',claimed:false};
+  s.gifts['dungeon:king_ghidorah_bed:10']={amount:100,label:'old',claimed:true};
+  C.claim(s,'dungeon:king_ghidorah_bed:5');
+  assert.equal(s.cp,150);
+  C.migrate(s,[{id:'king_ghidorah_bed',name:'キングギドラベッド'}]);
+  assert.equal(s.gifts['dungeon:king_ghidorah_bed:5'],undefined);
+  assert.equal(s.gifts['dungeon:king_ghidorah_bed:10'].claimed,true);
+  assert.equal(C.reward(s,{id:'dungeon:king_ghidorah_bed:5',amount:50}),false);
+  assert.equal(s.cp,150);
+  C.validate(s);
+});
 test('personal CP gift is file-triggered, additive, and received once', () => {
   const s = rich(), file = {format:'chibattle-personal-gift',version:1,id:'personal-cp:2026-10-10',amount:1000000};
   assert.equal(s.gifts[file.id], undefined);
@@ -19,6 +42,10 @@ test('personal CP gift is file-triggered, additive, and received once', () => {
   assert.throws(()=>C.receivePersonalGift(s,{...file,amount:2000000}));
 });
 test('official pools are 255 unique existing cards, 24 specified URs; tokens excluded', () => {
+  const pool=C.PACKS.find(p=>p.id==='cynical');
+  assert.ok(pool.ur.includes('aggro_student'));
+  assert.ok(!pool.ur.includes('general_student'));
+  assert.ok(pool.cards.includes('general_student'));
   const source = fs.readFileSync(require.resolve('../index.html'), 'utf8');
   const start = source.indexOf('const CARD_BASES =');
   const end = source.indexOf('\n    };', start) + 7;
