@@ -185,7 +185,21 @@
     if (!ok) ui.dragTarget = -1;
     else drainDrag();
   }
+  async function nextPack() {
+    await operate(() => updatePending((p) => {
+      if (p.phase !== "cards" || p.revealed !== 5 || p.urPause) return;
+      if (p.index + 1 < p.results.length) { p.index++; p.revealed = 0; p.phase = "tear"; }
+      else p.phase = "summary";
+    }));
+  }
   async function handleClick(event) {
+    const advanceKey = ui.advanceClickKey;
+    ui.advanceClickKey = null;
+    const pending = read().pending;
+    if (event.detail > 0 && !ui.busy && !ui.modal && pending?.phase === "cards" && pending.revealed === 5 && !pending.urPause
+      && advanceKey === `${pending.id}:${pending.index}`) {
+      await nextPack(); return;
+    }
     const button = event.target.closest("button"); if (!button) return;
     if (button.hasAttribute("data-gacha-close")) { closeModal(); return; }
     if (ui.busy) return;
@@ -199,11 +213,7 @@
     else if (button.hasAttribute("data-gacha-reveal")) await reveal(Number(button.dataset.gachaReveal));
     else if (button.hasAttribute("data-gacha-ur-continue")) await operate(() => updatePending((p) => { p.urPause = false; }));
     else if (button.hasAttribute("data-gacha-skip")) await skip();
-    else if (button.hasAttribute("data-gacha-next")) await operate(() => updatePending((p) => {
-      if (p.revealed !== 5 || p.urPause) throw new Error("カードをすべて確認してください。");
-      if (p.index + 1 < p.results.length) { p.index++; p.revealed = 0; p.phase = "tear"; }
-      else p.phase = "summary";
-    }));
+    else if (button.hasAttribute("data-gacha-next")) await nextPack();
     else if (button.hasAttribute("data-gacha-finish")) await operate(() => store.transact((s) => {
       if (s.pending?.phase !== "summary") throw new Error("結果を確認してください。"); s.pending = null;
     }));
@@ -224,6 +234,10 @@
   function openSeal() { return operate(() => updatePending((p) => { if (p.phase === "tear") { p.phase = "cards"; p.revealed = 0; } })); }
   screen.addEventListener("click", handleClick);
   screen.addEventListener("pointerdown", (e) => {
+    const pending = read().pending;
+    // Capture readiness before this gesture, so the final flip cannot also advance.
+    ui.advanceClickKey = e.button === 0 && !ui.busy && !ui.modal && pending?.phase === "cards" && pending.revealed === 5 && !pending.urPause
+      ? `${pending.id}:${pending.index}` : null;
     if (ui.busy || e.button !== 0) return;
     const line = e.target.closest("[data-gacha-tear]");
     if (line) { ui.tearX = e.clientX; screen.setPointerCapture(e.pointerId); e.preventDefault(); }
@@ -257,7 +271,7 @@
     }
     stopDrag();
   });
-  screen.addEventListener("pointercancel", stopDrag);
+  screen.addEventListener("pointercancel", () => { ui.advanceClickKey = null; stopDrag(); });
   function migrationSpecialties() {
     const pending = loadPendingDungeonReward()?.specialtyId;
     return [...new Set([...Object.keys(unlockedDungeonCardStyles).filter((id) => unlockedDungeonCardStyles[id] === true), ...(pending ? [pending] : [])])].filter((id) => id !== 'king_ghidorah_bed' && DUNGEON_CARD_STYLE_REWARDS[id])
