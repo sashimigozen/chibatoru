@@ -254,6 +254,12 @@ test('fixed packs, equal front/back size, sparse copy and scrollable batch resul
   await page.locator('[data-gacha-buy="10"]').click();
   await expect(page.locator('[data-gacha-receive]')).toBeVisible();
   await page.waitForTimeout(900);
+  expect(await page.locator('.gacha-handoff').evaluate(el=>{
+    const counter=getComputedStyle(el,'::before');
+    const robot=getComputedStyle(el.querySelector('.gacha-robot'));
+    const pack=getComputedStyle(el.querySelector('[data-gacha-receive]'));
+    return counter.backgroundColor==='rgb(185, 155, 123)' && Number(robot.zIndex)<Number(counter.zIndex) && Number(counter.zIndex)<Number(pack.zIndex);
+  })).toBe(true);
   await page.screenshot({path:test.info().outputPath('handoff.png')});
   await page.locator('[data-gacha-receive]').click();
   await expect(page.locator('[data-gacha-tear]')).toBeVisible();
