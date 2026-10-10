@@ -91,6 +91,7 @@
     return `<div class="gacha-reveal-stage">${robot}<p class="gacha-pack-progress">${status}</p><div class="gacha-counter-cards">${row.map((c, i) => `<button class="gacha-result ${i < q.revealed ? 'is-revealed' : ''} ${i >= previous && i < q.revealed ? 'just-revealed' : ''}" type="button" data-gacha-reveal="${i}" aria-label="${i < q.revealed ? `${escape(CARD_BASES[c.baseId].name)} ${modeName[c.mode]}` : `${i + 1}枚目をめくる`}" ${q.urPause || ui.busy ? "disabled" : ""}><span class="gacha-flip-stage"><span class="gacha-card-back gacha-card-face"></span><span class="gacha-card-front gacha-card-face">${card(c)}</span></span></button>`).join("")}</div>${special ? `<div class="gacha-ur-moment" role="dialog" aria-modal="true" aria-label="UR獲得"><div class="gacha-ur-halo">${card(special)}</div><button class="button" type="button" data-gacha-ur-continue>続ける</button></div>` : '<div class="gacha-reveal-actions" aria-hidden="true"></div>'}</div>`;
   }
   function renderGacha() {
+    ui.dealing = false;
     const visible = state.screen === "gacha";
     screen.classList.toggle("hidden", !visible);
     document.body.classList.remove("gacha-opening");
@@ -108,6 +109,26 @@
     screen.querySelectorAll('[data-gacha-pack]').forEach(button => {
       button.innerHTML = packTitle(C.PACKS.find(p => p.id === button.dataset.gachaPack));
     });
+    const dealKey = q && `${q.id}:${q.index}`;
+    if (q?.phase === 'cards' && q.revealed === 0 && ui.dealKey !== dealKey) {
+      ui.dealKey = dealKey;
+      ui.dealing = true;
+      const buttons = [...screen.querySelectorAll('[data-gacha-reveal]')];
+      const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const animations = buttons.map((button, i) => {
+        button.disabled = true;
+        return button.animate([
+          { opacity: 0, transform: 'translateY(26px) scale(.82)' },
+          { opacity: 1, transform: 'translateY(-8px) scale(1.04)', offset: .65 },
+          { opacity: 1, transform: 'translateY(0) scale(1)' }
+        ], { duration: reduced ? 0 : 280, delay: reduced ? 0 : i * 140, easing: 'ease-out', fill: 'both' });
+      });
+      Promise.all(animations.map(animation => animation.finished)).then(() => {
+        if (!buttons[0]?.isConnected) return;
+        ui.dealing = false;
+        buttons.forEach(button => { button.disabled = ui.busy; });
+      }).catch(() => {});
+    }
     screen.querySelectorAll('.gacha-card-face').forEach(face => face.setAttribute('aria-hidden', 'true'));
     scheduleCardTemplateScaleSync();
     if (q) stopFeatured(); else scheduleFeatured(p);
@@ -155,7 +176,7 @@
   function updatePending(fn) { return store.transact((s) => { if (!s.pending) throw new Error("開封済みです。"); fn(s.pending, s); }); }
   async function reveal(index) {
     const q = read().pending;
-    if (!q || q.phase !== "cards" || q.urPause || index !== q.revealed || index >= 5 || ui.busy) return;
+    if (!q || q.phase !== "cards" || q.urPause || index !== q.revealed || index >= 5 || ui.busy || ui.dealing) return;
     await operate(() => updatePending((p) => {
       if (p.phase !== "cards" || p.urPause || p.revealed !== index) throw new Error("開封状態が更新されました。もう一度お試しください。");
       p.revealed++; p.urPause = p.results[p.index][index].mode === "ultraRare";
@@ -266,7 +287,7 @@
     // Capture readiness before this gesture, so the final flip cannot also advance.
     ui.advanceClickKey = e.button === 0 && !ui.busy && !ui.modal && pending?.phase === "cards" && pending.revealed === 5 && !pending.urPause
       ? `${pending.id}:${pending.index}` : null;
-    if (ui.busy || e.button !== 0) return;
+    if (ui.busy || ui.dealing || e.button !== 0) return;
     if (pending?.phase === "cards" && pending.revealed === 5) return;
     const line = e.target.closest("[data-gacha-tear]");
     if (line) { ui.tearX = e.clientX; screen.setPointerCapture(e.pointerId); e.preventDefault(); }
@@ -274,7 +295,7 @@
     if (target) { ui.dragging = true; screen.setPointerCapture(e.pointerId); queueDrag(Number(target.dataset.gachaReveal)); }
   });
   screen.addEventListener("pointermove", (e) => {
-    if (ui.busy) return;
+    if (ui.busy || ui.dealing) return;
     const line = screen.querySelector('[data-gacha-tear]');
     if (line && (e.buttons & 1) && ui.tearX === null) {
       const r = line.getBoundingClientRect();
