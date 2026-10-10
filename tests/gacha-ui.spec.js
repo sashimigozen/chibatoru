@@ -75,6 +75,9 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
     expect(await ids()).toEqual(pages[0]);
   }
   await page.locator('[data-gacha-rates]').click();
+  await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
+  expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-pickup-rarity-2');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
