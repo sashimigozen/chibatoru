@@ -4,6 +4,26 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
+for (const baseId of ["accelerate", "yuta_umbrella"]) {
+  test(`${baseId}は戦意0で装備できる`, async ({ page }) => {
+    await page.goto(gameUrl);
+    const result = await page.evaluate((id) => {
+      const api = window.__chibattle;
+      api.startCardTest("yuta");
+      api.state.phase = "battle"; api.state.currentSide = "player";
+      const target = api.makeBoardCard(api.createCardFromBase("yuta", "player"));
+      const item = api.createCardFromBase(id, "player");
+      api.state.players.player.board = { teacher: null, seats: [target, ...Array(8).fill(null)] };
+      api.state.players.player.hand = [item]; api.state.players.player.will = 0;
+      return { cost: item.cost, effective: api.effectiveCardCost(item),
+        used: api.castItemOnCard("player", item, "player", "seat", 0, false),
+        will: api.state.players.player.will,
+        equipped: api.equipmentEntriesForCard(target).some(entry => entry.baseId === id) };
+    }, baseId);
+    expect(result).toEqual({ cost: 0, effective: 0, used: true, will: 0, equipped: true });
+  });
+}
+
 test("持ち物の使用可否と対象条件が効果処理と一致する", async ({ page }) => {
   await page.goto(gameUrl);
 

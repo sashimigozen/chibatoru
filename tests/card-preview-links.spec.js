@@ -134,6 +134,24 @@ test("関連カードを参照しても対戦カードの実体と盤面・手�
   await expect(preview.locator('[data-related-card-back]')).toHaveCount(0);
 });
 
+for (const baseId of ["yuta", "dark_yuta", "illness"]) {
+  test(`${baseId}の関連カードから病に臥すU太・病に打ち勝った裏U太を確認できる`, async ({ page }) => {
+    await page.goto(gameUrl);
+    await page.evaluate((id) => {
+      const api = window.__chibattle;
+      api.startCardTest(id);
+      api.showBattleCardPreview(api.createCardFromBase(id, "player"));
+    }, baseId);
+    const preview = page.locator("#battleCardPreview");
+    for (const [id, name] of [["sick_yuta", "病に臥すU太"], ["recovered_dark_yuta", "病に打ち勝った裏U太"]]) {
+      await expect(preview.locator(`.related-card-panel [data-related-card="${id}"]`)).toHaveCount(1);
+      await preview.locator(`.related-card-panel [data-related-card="${id}"]`).click();
+      await expect.poll(() => preview.evaluate(element => element._previewCard?.name)).toBe(name);
+      await preview.locator('[data-related-card-back]').click();
+    }
+  });
+}
+
 test("カード詳細でも関連カードを開いて戻れ、閉じた後に履歴を残さない", async ({ page }) => {
   await page.goto(gameUrl);
   await page.evaluate(() => {
