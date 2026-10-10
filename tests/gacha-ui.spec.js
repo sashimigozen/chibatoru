@@ -81,7 +81,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-10');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-11');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -204,6 +204,22 @@ test('backup roundtrip keeps CP, owned, selected, decks; repeated import replace
   await page.locator('#homeProfileButton').click();await page.locator('#profileDataButton').click();
   await page.locator('#gachaBackupInput').setInputFiles(backup);await page.locator('[data-gacha-restore]').click();
   await page.waitForLoadState('load');expect((await saved(page)).cp).toBe(75);
+});
+test('cut strip separates before cards appear', async ({page}) => {
+  let s=C.initial();s.cp=5;s=C.purchase(s,'endless',1,()=>0,'cut-animation');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-receive]').click();
+  await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('.gacha-cut-strip')).toHaveCount(1);
+  await expect(page.locator('[data-gacha-tear]')).toBeHidden();
+  await page.locator('.gacha-cut-strip').evaluate(el => {
+    const animation = el.getAnimations()[0];animation.pause();animation.currentTime = 250;
+  });
+  await page.screenshot({path:test.info().outputPath('cut-strip.png')});
+  await page.locator('.gacha-cut-strip').evaluate(el => el.getAnimations()[0].play());
+  await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
+  await expect(page.locator('.gacha-cut-strip')).toHaveCount(0);
+  expect((await saved(page)).pending.revealed).toBe(0);
 });
 test('tear accepts a held pointer approaching from outside the pack, in both directions', async ({page}) => {
   let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'tear-wide');
