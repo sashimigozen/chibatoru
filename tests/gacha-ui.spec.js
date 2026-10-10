@@ -260,6 +260,7 @@ test('fixed packs, equal front/back size, sparse copy and scrollable batch resul
   await page.screenshot({path:test.info().outputPath('sealed.png')});
   await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
   const back=await page.locator('[data-gacha-reveal="0"] .gacha-card-back').boundingBox();
+  expect(await page.locator('.gacha-reveal-stage').evaluate(el=>getComputedStyle(el,'::before').backgroundColor)).toBe('rgb(185, 155, 123)');
   await page.locator('[data-gacha-reveal="0"]').click();
   if(await page.locator('[data-gacha-ur-continue]').count()) await page.locator('[data-gacha-ur-continue]').click();
   await page.waitForTimeout(700);
