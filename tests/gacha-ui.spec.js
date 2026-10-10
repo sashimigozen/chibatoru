@@ -16,6 +16,29 @@ async function boot(page, economy = C.initial(), style = null) {
   await expect(page.locator('#homeNavGachaButton')).toBeEnabled();
 }
 const saved = page => page.evaluate(key=>JSON.parse(localStorage.getItem(key)),C.KEY);
+test('robot-free shop keeps the live packet and receive/skip controls', async ({page}) => {
+  let s=C.initial();s.cp=5;s=C.purchase(s,'cynical',1,()=>0,'attendant-preview');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await expect(page.locator('.gacha-robot,.gacha-attendant,.gacha-attendant-arms,.gacha-attendant-grips')).toHaveCount(0);
+  for(const size of [{width:1440,height:900},{width:1280,height:800},{width:390,height:844}]) {
+    await page.setViewportSize(size);
+    const packet=await page.locator('[data-gacha-receive]').boundingBox();
+    expect(packet.width/packet.height).toBeCloseTo(144/217,2);
+    expect(packet.x).toBeGreaterThan(0);expect(packet.x+packet.width).toBeLessThan(size.width);
+    expect(packet.y+packet.height).toBeLessThan(size.height);
+    expect(await page.locator('[data-gacha-receive]').evaluate(el=>{
+      const r=el.getBoundingClientRect();
+      return document.elementFromPoint(r.left+3,r.top+r.height*.45).closest('[data-gacha-receive]')===el;
+    })).toBe(true);
+    await page.screenshot({path:test.info().outputPath(`attendant-${size.width}.png`)});
+  }
+  await page.locator('[data-gacha-receive]').click();
+  await expect(page.locator('[data-gacha-tear]')).toBeVisible();
+  await page.locator('[data-gacha-skip]').click();
+  await expect(page.locator('.gacha-summary-grid button')).toHaveCount(5);
+  await page.locator('[data-gacha-finish]').click();
+  await expect(page.locator('#homeNavigation')).toBeVisible();
+});
 test('personal gift import preserves saves and cannot award CP twice', async ({page}) => {
   const s=C.initial();s.cp=75;s.owned.general_student={rare:true};
   await boot(page,s,{unlocked:{},selected:{general_student:'rare'},cardUnlocks:{general_student:{rare:true}}});
@@ -81,7 +104,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-13');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-15');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -365,9 +388,8 @@ test('fixed packs, equal front/back size, sparse copy and scrollable batch resul
   await page.waitForTimeout(900);
   expect(await page.locator('.gacha-handoff').evaluate(el=>{
     const counter=getComputedStyle(el,'::before');
-    const robot=getComputedStyle(el.querySelector('.gacha-robot'));
     const pack=getComputedStyle(el.querySelector('[data-gacha-receive]'));
-    return counter.backgroundColor==='rgb(185, 155, 123)' && Number(robot.zIndex)<Number(counter.zIndex) && Number(counter.zIndex)<Number(pack.zIndex);
+    return counter.backgroundColor==='rgb(185, 155, 123)' && !el.querySelector('.gacha-robot') && Number(counter.zIndex)<Number(pack.zIndex);
   })).toBe(true);
   await page.screenshot({path:test.info().outputPath('handoff.png')});
   await page.locator('[data-gacha-receive]').click();
@@ -375,6 +397,7 @@ test('fixed packs, equal front/back size, sparse copy and scrollable batch resul
   await expect(page.locator('#homeNavigation')).toBeHidden();
   await page.screenshot({path:test.info().outputPath('sealed.png')});
   await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('[data-gacha-reveal="0"]')).toBeEnabled();
   const back=await page.locator('[data-gacha-reveal="0"] .gacha-card-back').boundingBox();
   await expect(page.locator('#homeNavigation')).toBeHidden();
   expect(await page.locator('.gacha-reveal-stage').evaluate(el=>getComputedStyle(el,'::before').backgroundColor)).toBe('rgb(185, 155, 123)');
