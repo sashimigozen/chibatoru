@@ -59,7 +59,15 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
     expect(await fits()).toBe(true);
     await page.clock.runFor(4999);
     expect(await ids()).toEqual(pages[0]);
-    if (pack.id === 'cynical') await page.screenshot({path:test.info().outputPath('students-page.png')});
+    if (pack.id === 'cynical') {
+      const boxes = await page.locator('.gacha-featured-cards button').evaluateAll(nodes=>nodes.map(n=>{
+        const r=n.getBoundingClientRect();return {top:r.top,width:r.width};
+      }));
+      expect(boxes).toHaveLength(5);
+      expect(new Set(boxes.map(r=>Math.round(r.top))).size).toBe(1);
+      expect(boxes.every(r=>r.width>140)).toBe(true);
+      await page.screenshot({path:test.info().outputPath('students-page.png')});
+    }
     await page.clock.runFor(1);
     expect(await ids()).toEqual(pages[1]);
     expect(await fits()).toBe(true);

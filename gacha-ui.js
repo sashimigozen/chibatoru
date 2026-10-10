@@ -50,7 +50,8 @@
   }
   function featuredCards(p) {
     const ids = featuredPages(p)[ui.featuredPage || 0];
-    const rows = ids.length > 4 ? 2 : 1, columns = Math.ceil(ids.length / rows);
+    const singleStudentRow = p.id === 'cynical' && !(ui.featuredPage || 0);
+    const rows = ids.length > 4 && !singleStudentRow ? 2 : 1, columns = Math.ceil(ids.length / rows);
     return `<div class="gacha-featured-grid" style="--columns:${columns};--rows:${rows}">${ids.map((baseId) => `<button type="button" data-gacha-detail="${baseId}" aria-label="${escape(CARD_BASES[baseId].name)}の詳細を見る">${card({ baseId, mode: "ultraRare" })}</button>`).join("")}</div>`;
   }
   function stopFeatured() {
