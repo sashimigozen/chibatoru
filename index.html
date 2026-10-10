@@ -19724,7 +19724,7 @@
           { title: "装備カードの戦意", before: "アクセラレート：戦意1\nU太の傘：戦意1", after: "アクセラレート：戦意0\nU太の傘：戦意0" },
           { title: "関連カード", after: "「U太」「裏U太」「病」の関連カードに「病に臥すU太」「病に打ち勝った裏U太」を追加しました。" },
           { title: "病に臥すU太", after: "[特殊進化]：「U太」に「病」を装備させる。\n進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。\n自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。" },
-          { title: "病に打ち勝った裏U太", after: "戦意0／攻撃力5／体力4\n[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。「病」を送られた出席者の攻撃力と体力を1にする。" }
+          { title: "病に打ち勝った裏U太", after: "戦意0／攻撃力5／体力4\n[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。「病」を送られた出席者の攻撃力を0、体力を1にする。" }
         ]
       },
       {
@@ -29008,7 +29008,7 @@
         return [side, targetSide].reduce((sum, owner) => sum + listBoardRefs(owner).map(getBoardCardFromRef)
           .filter((target) => target?.illnessEquipments?.length && !isAibenNyoteiEffectImmune(target))
           .reduce((score, target) => score + target.illnessEquipments.length * 2
-            + (owner === side ? -1 : 1) * (Math.max(0, target.attack - 1) * 1.5 + Math.max(0, target.maxHp - 1)), 0), 0);
+            + (owner === side ? -1 : 1) * (Math.max(0, target.attack) * 1.5 + Math.max(0, target.maxHp - 1)), 0), 0);
       }
       return 0;
     }
@@ -36093,10 +36093,10 @@
       }));
       applyPermanentStatBuff(source, 0, total, 0, source.name);
       affected.forEach((card) => {
-        applyPermanentStatBuff(card, 1 - card.attack, 1 - card.maxHp, 0, source.name);
+        applyPermanentStatBuff(card, -card.attack, 1 - card.maxHp, 0, source.name);
         card.currentHp = 1;
       });
-      addLog(`${source.name}の進化時効果：病${total}枚を校外エリアへ送り、体力を${total}上昇させました。病を送られた出席者の攻撃力と体力を1にしました。`);
+      addLog(`${source.name}の進化時効果：病${total}枚を校外エリアへ送り、体力を${total}上昇させました。病を送られた出席者の攻撃力を0、体力を1にしました。`);
       return false;
     }
 
@@ -51992,7 +51992,7 @@
         red_ideology: "お互いの講義室にいる出席者を、各行の左側の席マスへ詰める。",
         illness: "装備カード。お互いの講義室にいる出席者1人に装備する。装備者の体力を-1する。お互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。",
         sick_yuta: "特殊進化：「U太」に「病」を装備させる。進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。",
-        recovered_dark_yuta: "特殊進化：「病に臥すU太」に「裏U太」を進化させる。進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。「病」を送られた出席者の攻撃力と体力を1にする。",
+        recovered_dark_yuta: "特殊進化：「病に臥すU太」に「裏U太」を進化させる。進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの体力を上昇させる。「病」を送られた出席者の攻撃力を0、体力を1にする。",
         igidakatta: "お互いの講義室に装備されている「病」すべてを校外エリアへ送る。送った1枚ごとに、相手本体に1ダメージを与えるか、自分本体を1回復するかをランダムに決める。",
         contrarian_portal: "自分の1行目と3行目の出席者の位置を入れ替える。",
         stress_hair: "装備カード。「U太」または「裏U太」1人に装備できる。装備者の体力を-1する。次の相手のターン終了時、このカードを校外エリアへ送る。このカードが装備者から校外エリアへ送られたとき、その出席者の攻撃力と体力を+4する。装備カードは通常、1人につき1枚まで。",
