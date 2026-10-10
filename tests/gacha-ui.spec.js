@@ -81,7 +81,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-12');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-13');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -204,6 +204,27 @@ test('backup roundtrip keeps CP, owned, selected, decks; repeated import replace
   await page.locator('#homeProfileButton').click();await page.locator('#profileDataButton').click();
   await page.locator('#gachaBackupInput').setInputFiles(backup);await page.locator('[data-gacha-restore]').click();
   await page.waitForLoadState('load');expect((await saved(page)).cp).toBe(75);
+});
+test('compact results group ten packs', async ({page}) => {
+  let s=C.initial();s.cp=50;s=C.purchase(s,'endless',10,()=>0,'compact-results');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-skip]').click();
+  await expect(page.locator('.gacha-summary-pack')).toHaveCount(10);
+  await expect(page.locator('.gacha-summary-pack h3')).toHaveText(Array.from({length:10},(_,i)=>`${i+1}パック目`));
+  for (const pack of await page.locator('.gacha-summary-pack').all()) await expect(pack.locator('button')).toHaveCount(5);
+  const size=await page.locator('.gacha-summary-grid button').first().boundingBox();
+  expect(size.width).toBeLessThanOrEqual(131);expect(size.height).toBeLessThan(200);
+  await page.screenshot({path:test.info().outputPath('compact-ten-packs.png')});
+  await page.locator('.gacha-summary-grid').evaluate(el => el.scrollTop=el.scrollHeight);
+  await expect(page.locator('.gacha-summary-pack h3').last()).toBeInViewport();
+});
+test('compact single-pack results omit the pack heading', async ({page}) => {
+  let s=C.initial();s.cp=5;s=C.purchase(s,'endless',1,()=>0,'compact-single');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-skip]').click();
+  await expect(page.locator('.gacha-summary-grid button')).toHaveCount(5);
+  await expect(page.locator('.gacha-summary-pack h3')).toHaveCount(0);
+  await page.screenshot({path:test.info().outputPath('compact-single-pack.png')});
 });
 test('face-down cards pop in one by one before flipping is enabled', async ({page}) => {
   let s=C.initial();s.cp=5;s=C.purchase(s,'endless',1,()=>0,'deal-animation');
