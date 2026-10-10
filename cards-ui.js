@@ -416,7 +416,9 @@
     if (!CARD_BASES[id]) return;
     const side = state.deckBuilder.activeSide, counts = state.deckBuilder.counts[side], count = counts[id] || 0;
     const card = makePreviewCard(id, side), modes = availableCardStyleModes(id);
-    document.getElementById("caseEditorCard").innerHTML = `${cardShellTemplate(card)}${modes.length > 1 ? `<button class="button secondary" type="button" data-editor-style>${cardStyleModeLabel(localCardStyleMode(id))} · 切り替え</button>` : ""}`;
+    const mode = localCardStyleMode(id), currentLabel = cardStyleModeLabel(mode);
+    const nextLabel = cardStyleModeLabel(modes[(modes.indexOf(mode) + 1) % modes.length]);
+    document.getElementById("caseEditorCard").innerHTML = `${cardShellTemplate(card)}${modes.length > 1 ? `<button class="card-style-cycle-button" type="button" data-editor-style title="${currentLabel}（${nextLabel}に切り替える）" aria-label="${escapeHtml(card.name)}：${currentLabel}。${nextLabel}に切り替える">${cardStyleCycleIconTemplate()}</button>` : ""}`;
     document.getElementById("caseEditorText").innerHTML = `${ui.editorHistory.length ? '<button class="button secondary" type="button" data-editor-card-back>元のカードへ戻る</button>' : ""}${cardDetailTemplate(card, { interactiveTerms: true })}`;
     document.getElementById("caseEditorCopies").textContent = `${count}枚`;
     const eligible = getDeckEditorIds().includes(id);
