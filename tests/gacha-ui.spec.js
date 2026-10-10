@@ -81,7 +81,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-11');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-12');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -204,6 +204,26 @@ test('backup roundtrip keeps CP, owned, selected, decks; repeated import replace
   await page.locator('#homeProfileButton').click();await page.locator('#profileDataButton').click();
   await page.locator('#gachaBackupInput').setInputFiles(backup);await page.locator('[data-gacha-restore]').click();
   await page.waitForLoadState('load');expect((await saved(page)).cp).toBe(75);
+});
+test('face-down cards pop in one by one before flipping is enabled', async ({page}) => {
+  let s=C.initial();s.cp=5;s=C.purchase(s,'endless',1,()=>0,'deal-animation');
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-receive]').click();
+  await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
+  await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
+  const delays = await page.locator('[data-gacha-reveal]').evaluateAll(buttons => buttons.map(button => {
+    const animation = button.getAnimations()[0];
+    animation.pause();animation.currentTime = 350;
+    return animation.effect.getTiming().delay;
+  }));
+  expect(delays).toEqual([0,140,280,420,560]);
+  await expect(page.locator('[data-gacha-reveal="0"]')).toBeDisabled();
+  await page.screenshot({path:test.info().outputPath('cards-popping.png')});
+  await page.locator('[data-gacha-reveal]').evaluateAll(buttons => buttons.forEach(button => button.getAnimations()[0].finish()));
+  await expect(page.locator('[data-gacha-reveal="0"]')).toBeEnabled();
+  await expect(page.locator('.gacha-result.is-revealed')).toHaveCount(0);
+  await page.locator('[data-gacha-reveal="0"]').click();
+  await expect(page.locator('.gacha-result.is-revealed')).toHaveCount(1);
 });
 test('cut strip separates before cards appear', async ({page}) => {
   let s=C.initial();s.cp=5;s=C.purchase(s,'endless',1,()=>0,'cut-animation');
