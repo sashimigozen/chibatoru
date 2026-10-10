@@ -10,7 +10,7 @@
   elements.homeNavigation.before(screen);
   const ui = { packId: C.PACKS[0].id, busy: false, error: "", dragging: false, tearX: null, modal: null, opener: null, jobs: new Map() };
   const escape = escapeHtml;
-  const modeName = { normal: "レギュラー", rare: "レア", superRare: "スーパーレア", ultraRare: "ウルトラレア" };
+  const modeName = { normal: "レギュラー", rare: "R", superRare: "SR", ultraRare: "UR" };
   const japanesePackNames = { cynical: '冷笑伝承', endless: '終わらぬ闘争', awakening: '究極覚醒', echoes: '研究残響' };
   const packTitle = (p) => `<span class="gacha-pack-title"><strong>${escape(p.name)}</strong><small>- ${japanesePackNames[p.id]} -</small></span>`;
   const packet = (p, extra = "") => `<div class="gacha-packet ${extra}" style="--pack-color:${p.color}"><span>CHIBATTLE</span><img src="assets/home/nav-card.png" alt="">${packTitle(p)}<small>5 CARDS</small></div>`;
