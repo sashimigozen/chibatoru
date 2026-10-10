@@ -626,12 +626,13 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   clients.push(host, guest);
 
   const deckCounts = createNormalDeckCounts();
+  const manyStyles = Object.fromEntries(require("../gacha-core.js").PACKS.flatMap((p) => p.cards).map((id) => [id, "rare"]));
   const hostUpdateStart = host.messages.length;
   send(guest, {
     type: "deckUpdate",
     ...normalDeckDescriptor(deckCounts),
     ready: true,
-    cardStyles: { vampire: "reward", unexpected: "reward", lazy_student: "normal", general_student: "rare", yuta: "superRare", classroom: "reward", ruler: "ultraRare", bird_a: "secretRare" },
+    cardStyles: { ...manyStyles, vampire: "reward", unexpected: "reward", lazy_student: "normal", general_student: "rare", yuta: "superRare", classroom: "reward", ruler: "ultraRare", bird_a: "secretRare", "invalid/id": "rare", invalid_mode: "not-a-style" },
     profile: { username: "Secret", favoriteCardId: "bird_a", favoriteCardStyle: "secretRare" }
   });
   const sharedGuestStyles = await waitFor(host, (message) =>
@@ -646,6 +647,10 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(guestPublicState.cardStyles.classroom, "reward");
   assert.equal(guestPublicState.cardStyles.ruler, "ultraRare");
   assert.equal(guestPublicState.cardStyles.bird_a, "secretRare");
+  assert.equal(guestPublicState.cardStyles.salt_to_enemy, "rare");
+  assert.equal(guestPublicState.cardStyles["invalid/id"], undefined);
+  assert.equal(guestPublicState.cardStyles.invalid_mode, undefined);
+  assert.equal(Object.keys(guestPublicState.cardStyles).length, 255);
   assert.equal(guestPublicState.profile.favoriteCardStyle, "secretRare");
 
   send(host, {
@@ -678,6 +683,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(spectatorGuestState.cardStyles.classroom, "reward");
   assert.equal(spectatorGuestState.cardStyles.ruler, "ultraRare");
   assert.equal(spectatorGuestState.cardStyles.bird_a, "secretRare");
+  assert.equal(spectatorGuestState.cardStyles.salt_to_enemy, "rare");
   assert.equal(hostState.profile.favoriteCardStyle, "ultraRare");
 });
 
