@@ -81,7 +81,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-9');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-10');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -220,7 +220,7 @@ test('tear accepts a held pointer approaching from outside the pack, in both dir
     await expect(page.locator('[data-gacha-reveal]')).toHaveCount(5);
     if(direction===1) {
       for(let i=0;i<5;i++) await page.locator(`[data-gacha-reveal="${i}"]`).click();
-      await page.locator('[data-gacha-next]').click();
+      await page.locator('#gachaScreen').click({position:{x:15,y:100}});
     }
   }
 });
@@ -261,10 +261,15 @@ test('last completed pack advances to summary on a background click', async ({pa
   await page.locator('[data-gacha-tear]').focus();await page.keyboard.press('Enter');
   for(let i=0;i<5;i++) await page.locator(`[data-gacha-reveal="${i}"]`).click();
   expect((await saved(page)).pending.phase).toBe('cards');
+  await expect(page.locator('[data-gacha-next]')).toHaveCount(0);
   await page.waitForTimeout(650);
   await page.screenshot({path:test.info().outputPath('completed-pack.png')});
   await page.locator('#gachaScreen').click({position:{x:15,y:100}});
   await expect(page.locator('.gacha-summary-grid button')).toHaveCount(5);
+  const returnStyle=await page.locator('[data-gacha-finish]').evaluate(el=>{
+    const s=getComputedStyle(el);return [s.backgroundColor,s.borderTopWidth,s.boxShadow,s.alignSelf];
+  });
+  expect(returnStyle).toEqual(['rgba(0, 0, 0, 0)','0px','none','flex-end']);
   await expect(page.locator('#homeNavigation')).toBeHidden();
   await page.screenshot({path:test.info().outputPath('summary-no-nav.png')});
   await page.locator('[data-gacha-finish]').click();
@@ -279,7 +284,7 @@ test('fast continuous drag reveals all visited cards; ten-pack progress persists
   await page.mouse.move(first.x+first.width/2,first.y+first.height/2);await page.mouse.down();
   await page.mouse.move(last.x+last.width/2,last.y+last.height/2,{steps:15});await page.mouse.up();
   await expect.poll(async()=>(await saved(page)).pending.revealed).toBe(5);
-  await page.locator('[data-gacha-next]').click();await expect.poll(async()=>(await saved(page)).pending.index).toBe(1);
+  await page.locator('#gachaScreen').click({position:{x:15,y:100}});await expect.poll(async()=>(await saved(page)).pending.index).toBe(1);
   await page.reload();await page.locator('#homeNavGachaButton').click();
   expect((await saved(page)).pending.index).toBe(1);expect((await saved(page)).cp).toBe(0);
   await page.locator('[data-gacha-skip]').click();
