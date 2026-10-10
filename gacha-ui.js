@@ -233,7 +233,33 @@
     else if (button.hasAttribute("data-gacha-export")) await exportBackup();
     else if (button.hasAttribute("data-gacha-restore")) await restoreBackup();
   }
-  function openSeal() { return operate(() => updatePending((p) => { if (p.phase === "tear") { p.phase = "cards"; p.revealed = 0; } })); }
+  function openSeal() {
+    if (read().pending?.phase !== "tear") return;
+    return operate(async () => {
+      const sealed = screen.querySelector('.gacha-sealed');
+      const packet = sealed?.querySelector('.gacha-packet');
+      const line = sealed?.querySelector('[data-gacha-tear]');
+      if (packet && line) {
+        const bounds = sealed.getBoundingClientRect();
+        const cut = line.getBoundingClientRect();
+        const split = (cut.top + cut.height / 2 - bounds.top) / bounds.height * 100;
+        const strip = packet.cloneNode(true);
+        strip.classList.add('gacha-cut-strip');
+        strip.setAttribute('aria-hidden', 'true');
+        strip.style.clipPath = `inset(0 0 ${100 - split}% 0)`;
+        packet.style.clipPath = `inset(${split}% 0 0 0)`;
+        line.hidden = true;
+        sealed.append(strip);
+        const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        await strip.animate([
+          { transform: 'translate(0,0) rotate(0deg)', opacity: 1 },
+          { transform: 'translate(5%,-4%) rotate(5deg)', opacity: 1, offset: .3 },
+          { transform: 'translate(30%,18%) rotate(22deg)', opacity: 0 }
+        ], { duration: reduced ? 0 : 550, easing: 'ease-in', fill: 'forwards' }).finished;
+      }
+      await updatePending((p) => { if (p.phase === "tear") { p.phase = "cards"; p.revealed = 0; } });
+    });
+  }
   screen.addEventListener("click", handleClick);
   screen.addEventListener("pointerdown", (e) => {
     const pending = read().pending;
