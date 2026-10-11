@@ -156,7 +156,7 @@ test("生物を進化元にした完全変異体は素材だけを消費して�
   });
 });
 
-test("病に臥すU太に病を装備しても克服後へ特殊進化しない", async ({ page }) => {
+test("病に臥すU太は病を装備できず、状態も変わらない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const sick = api.makeBoardCard(api.createCardFromBase("sick_yuta", "player"));
@@ -186,12 +186,12 @@ test("病に臥すU太に病を装備しても克服後へ特殊進化しない"
   });
 
   expect(result).toEqual({
-    equipped: true,
+    equipped: false,
     baseId: "sick_yuta",
     token: true,
     sourceId: undefined,
     expectedSourceId: result.expectedSourceId,
-    currentHp: 2,
+    currentHp: 3,
     attacksUsed: 1,
     triggerIllnessInTrash: false,
     enemyIllnesses: 0,
