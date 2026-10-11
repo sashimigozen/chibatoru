@@ -3788,6 +3788,12 @@
       margin-bottom: 14px;
     }
 
+    .ai-battle-reward {
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-weight: 900;
+    }
+
     .dungeon-reward-result {
       display: grid;
       gap: 5px;
@@ -17481,10 +17487,9 @@
         <button class="button secondary" id="soloMenuBackHomeButton" type="button">ホーム</button>
       </div>
       <div class="solo-mode-actions" aria-label="ソロモード">
-        <button class="solo-mode-button coming-soon" id="soloAiBattleButton" type="button" disabled aria-disabled="true">
+        <button class="solo-mode-button" id="soloAiBattleButton" type="button">
           <span class="solo-mode-main">AIバトル</span>
           <span class="solo-mode-sub">自分のデッキを選び、ランダムなAIデッキと対戦するモード</span>
-          <span class="solo-mode-coming-soon">COMING SOON</span>
         </button>
         <button class="solo-mode-button dungeon" id="soloDungeonButton" type="button">
           <span class="solo-mode-main">魔の1号館</span>
@@ -18590,6 +18595,7 @@
   </div>
 
   <script src="websocket-client.js"></script>
+  <script src="ai-battle-decks.js?v=0.23.19"></script>
   <script>
     const SIDES = { player: "あなた", opponent: "相手AI" };
     const SOLO_OPPONENT_LABEL = "相手AI";
@@ -19720,6 +19726,7 @@
         date: "2026年10月11日",
         summary: "「病」の装備時・ターン終了時効果を変更しました。「アクセラレート」「U太の傘」の戦意を0にしました。",
         changes: [
+          { title: "AIバトル", after: "自分のデッキを選び、17種類からランダムに選ばれるAIのデッキと対戦できます。勝利すると5CPを直接獲得します。" },
           { title: "病", after: "[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の体力を-1する。\nお互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。" },
           { title: "装備カードの戦意", before: "アクセラレート：戦意1\nU太の傘：戦意1", after: "アクセラレート：戦意0\nU太の傘：戦意0" },
           { title: "関連カード", after: "「U太」「裏U太」「病」の関連カードに「病に臥すU太」「病に打ち勝った裏U太」を追加しました。" },
@@ -21469,6 +21476,7 @@
         }
       },
       soloSelection: {
+        mode: "training",
         ruleId: "normal",
         activeSide: "player",
         leftController: "player",
@@ -21491,6 +21499,7 @@
         replayTotal: 0,
         currentConfigKey: ""
       },
+      aiBattle: { active: false, rewardGameId: "" },
       dungeon: {
         entranceToken: 0,
         selectedDeckName: "",
@@ -27538,6 +27547,8 @@
     }
 
     function initializeGame(options = {}) {
+      state.aiBattle.active = options.aiBattle === true;
+      state.aiBattle.rewardGameId = "";
       resetBattleDrawers();
       closeTeacherActionChoice();
       closeCourseRegistrationConsent();
@@ -42871,6 +42882,7 @@
           `;
       elements.resultOverlay.innerHTML = `
         ${labelHtml}
+        <div class="ai-battle-reward${state.aiBattle.rewardGameId === state.analytics?.game?.gameId && winner === "player" ? "" : " hidden"}">5CP GET</div>
         <div class="result-actions">
           ${resultActions}
         </div>
@@ -42887,6 +42899,12 @@
       elements.resultOverlay.className = "result-overlay hidden";
       elements.resultOverlay.innerHTML = "";
       delete elements.resultOverlay.dataset.resultKey;
+    }
+
+    function showAiBattleReward(gameId) {
+      if (!state.aiBattle.active || state.analytics?.game?.gameId !== gameId || state.gameWinner !== "player") return;
+      state.aiBattle.rewardGameId = gameId;
+      elements.resultOverlay.querySelector(".ai-battle-reward")?.classList.remove("hidden");
     }
 
     function openTrainingDataOverlay() {
@@ -48447,6 +48465,14 @@
     function renderSoloDeckSelection() {
       if (state.screen !== "soloDeck" || !elements.soloDeckGrid) return;
       const selection = state.soloSelection;
+      const aiBattle = selection.mode === "aiBattle";
+      elements.soloDeckScreen.querySelector(".training-setup-head h1").textContent = aiBattle ? "AI BATTLE" : "TRAINING";
+      elements.soloDeckScreen.querySelector(".training-setup-layout").setAttribute("aria-label", aiBattle ? "AIバトル対戦設定" : "トレーニング対戦設定");
+      [elements.soloAiSlot, elements.soloAiDeckConfirmButton, elements.soloLeftControllerButton, elements.soloTrainingDataButton].forEach(el => el.classList.toggle("hidden", aiBattle));
+      [elements.soloRuleCycleButton, elements.soloInitiativeCycleButton].forEach(el => {
+        el.classList.toggle("hidden", aiBattle);
+        el.previousElementSibling.classList.toggle("hidden", aiBattle);
+      });
       const ruleId = normalizeOnlineRuleId(selection.ruleId);
       selection.ruleId = ruleId;
       const rule = onlineRuleDefinition(ruleId);
@@ -48466,7 +48492,7 @@
       elements.soloLeftRoleTitle.textContent = leftIsAi ? "CPU" : state.profile.username;
       applyPlayerProfileAvatar(elements.soloLeftAvatar, leftIsAi ? "cpu" : state.profile.avatarId);
       elements.soloPlayerDeckName.textContent = selection.playerDeckName || "未選択";
-      elements.soloAiDeckName.textContent = selection.opponentDeckName || "未選択";
+      elements.soloAiDeckName.textContent = aiBattle ? "ランダム" : selection.opponentDeckName || "未選択";
       elements.soloPlayerDeckConfirmButton.disabled = !selection.playerDeckName;
       elements.soloAiDeckConfirmButton.disabled = !selection.opponentDeckName;
       elements.soloDeckPicker.classList.toggle("hidden", !selection.pickerOpen);
@@ -48516,7 +48542,7 @@
       const playerValid = playerSaved && validateOnlineDeckForRule(
         deckDescriptorForRule(ruleId, selection.playerDeckName, playerSaved), playerSaved.counts || {}, ruleId
       ).valid;
-      const opponentValid = opponentSaved && validateOnlineDeckForRule(
+      const opponentValid = aiBattle ? Boolean(window.ChibattleAiBattleDecks?.length) : opponentSaved && validateOnlineDeckForRule(
         deckDescriptorForRule(ruleId, selection.opponentDeckName, opponentSaved), opponentSaved.counts || {}, ruleId
       ).valid;
       elements.soloBattleStartButton.disabled = !playerValid || !opponentValid;
@@ -48525,6 +48551,7 @@
     }
 
     function openSoloDeckPicker(side) {
+      if (state.soloSelection.mode === "aiBattle" && side !== "player") return;
       state.soloSelection.activeSide = side;
       state.soloSelection.previewName = "";
       state.soloSelection.previewExpanded = false;
@@ -48538,6 +48565,7 @@
     }
 
     function previewSoloSelectedDeck(side) {
+      if (state.soloSelection.mode === "aiBattle" && side !== "player") return;
       const selection = state.soloSelection;
       selection.activeSide = side;
       selection.previewName = side === "player" ? selection.playerDeckName : selection.opponentDeckName;
@@ -50418,6 +50446,8 @@
     }
 
     function startSoloBattleFromHome() {
+      state.soloSelection.mode = "training";
+      state.aiBattle.active = false;
       SIDES.opponent = SOLO_OPPONENT_LABEL;
       state.screen = "soloDeck";
       state.training.active = false;
@@ -50432,7 +50462,37 @@
       render();
     }
 
+    function startAiBattleFromHome() {
+      startSoloBattleFromHome();
+      state.soloSelection.mode = "aiBattle";
+      state.soloSelection.ruleId = "normal";
+      state.soloSelection.leftController = "player";
+      state.soloSelection.initiative = "random";
+      render();
+    }
+
+    function chooseAiBattleDeck() {
+      const decks = window.ChibattleAiBattleDecks || [];
+      return decks[Math.floor(Math.random() * decks.length)];
+    }
+
+    function startAiBattleWithSelectedDeck() {
+      const name = state.soloSelection.playerDeckName;
+      const saved = state.deckBuilder.savedDecks[name];
+      const descriptor = deckDescriptorForRule("normal", name, saved);
+      if (!saved || !validateOnlineDeckForRule(descriptor, saved.counts || {}, "normal").valid) return;
+      const opponent = chooseAiBattleDeck();
+      if (!opponent) return;
+      state.deckBuilder.counts.player = copyOnlineDeckCounts(descriptor, saved.counts);
+      state.deckBuilder.counts.opponent = copyOnlineDeckCounts({ format: "normal" }, opponent.counts);
+      state.training.active = false;
+      state.dungeon.active = false;
+      startNewGameWithDecks({ ruleId: "normal", playerDeckDescriptor: descriptor,
+        opponentDeckDescriptor: deckDescriptorForRule("normal"), aiBattle: true });
+    }
+
     function startSoloBattleWithSelectedDecks(options = {}) {
+      if (state.soloSelection.mode === "aiBattle") return startAiBattleWithSelectedDeck();
       const ruleId = normalizeOnlineRuleId(state.soloSelection.ruleId);
       const format = onlineRuleDefinition(ruleId).deck.formats[0] || "normal";
       const decks = state.deckBuilder[onlineDeckFormatDefinition(format).collectionKey] || {};
@@ -50481,7 +50541,8 @@
         ruleId,
         playerDeckDescriptor: playerDescriptor,
         opponentDeckDescriptor: opponentDescriptor,
-        deferPreBattle: options.training === true
+        deferPreBattle: options.training === true,
+        aiBattle: options.aiBattle === true
       });
       if (options.training === true) window.setTimeout(() => beginTrainingPreBattle(state.preBattleToken), 420);
     }
@@ -52542,6 +52603,7 @@
     elements.homeNavSoloButton.addEventListener("click", showSoloMenu);
     elements.soloMenuBackHomeButton.addEventListener("click", showHomeScreen);
     elements.soloTrainingButton.addEventListener("click", startSoloBattleFromHome);
+    elements.soloAiBattleButton.addEventListener("click", startAiBattleFromHome);
     elements.soloDungeonButton.addEventListener("click", showDungeonEntrance);
     elements.soloDeckBackHomeButton.addEventListener("click", showSoloMenu);
     elements.dungeonDeckBackSoloButton.addEventListener("click", showSoloMenu);
@@ -53117,6 +53179,9 @@
       onlineTransformSnapshotForSpectator,
       initializeGame,
       startSoloBattleFromHome,
+      startAiBattleFromHome,
+      chooseAiBattleDeck,
+      showAiBattleReward,
       startSoloBattleWithSelectedDecks,
       showCardPlayAnimation,
       showEvolutionAnimation,
@@ -53226,8 +53291,8 @@
 
   </script>
 <script src="cards-ui.js?v=0.23.18-cycle"></script>
-  <script src="desktop-ui.js?v=0.23.15"></script>
-<script src="gacha-ui.js?v=0.23.18-shop-16"></script>
+  <script src="desktop-ui.js?v=0.23.19-ai-battle"></script>
+<script src="gacha-ui.js?v=0.23.19-ai-battle"></script>
   <script src="four-mode.js"></script>
 </body>
 </html>

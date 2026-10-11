@@ -14,8 +14,8 @@ test("ソロの既存モードと準備中の状態を維持する", async ({ pa
     buttons.map((button) => button.id));
 
   expect(order).toEqual(["soloAiBattleButton", "soloDungeonButton", "soloTrainingButton", "soloTutorialButton"]);
-  await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
-  await expect(page.locator("#soloAiBattleButton")).toContainText("COMING SOON");
+  await expect(page.locator("#soloAiBattleButton")).toBeEnabled();
+  await expect(page.locator("#soloAiBattleButton")).not.toContainText("COMING SOON");
   await expect(page.locator("#soloAiBattleButton")).toContainText("ランダムなAIデッキ");
 });
 
