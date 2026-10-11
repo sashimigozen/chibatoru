@@ -232,6 +232,30 @@ function httpPost(port, pathname, password, body, contentType = "application/jso
   });
 }
 
+test("random match cancellation removes the disconnected client from the waiting queue", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  const url = `ws://127.0.0.1:${port}`;
+  const clients = [];
+  t.after(() => { clients.forEach(client => client.ws.close()); child.kill("SIGTERM"); });
+  const first = await connectRandomClient(url, "cancelled-client");
+  clients.push(first);
+  const cancelledRoom = first.messages.find(message => message.type === "playerJoined").roomId;
+  await new Promise(resolve => { first.ws.once("close", resolve); first.ws.close(); });
+  const second = await connectRandomClient(url, "new-client");
+  clients.push(second);
+  const join = second.messages.find(message => message.type === "playerJoined");
+  assert.equal(join.hasOpponent, false);
+  assert.equal(join.you.role, "host");
+  assert.notEqual(join.roomId, cancelledRoom);
+  const third = await connectRandomClient(url, "next-client");
+  clients.push(third);
+  const nextJoin = third.messages.find(message => message.type === "playerJoined");
+  assert.equal(nextJoin.roomId, join.roomId);
+  assert.equal(nextJoin.hasOpponent, true);
+  assert.ok(nextJoin.players.every(player => player.clientId !== "cancelled-client"));
+});
+
 test("random match pairs waiting clients into one room", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
