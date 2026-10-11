@@ -11,20 +11,25 @@ const context = {};
 vm.createContext(context);
 vm.runInContext(`${html.slice(start, end)}\nthis.labels = CARD_RARITY_LABELS; this.modeLabel = cardStyleModeLabel;`, context);
 
-test("ガチャ用レアリティ名を5段階で定義する", () => {
+test("レアリティの表示名を6段階で定義する", () => {
   assert.deepEqual(JSON.parse(JSON.stringify(context.labels)), {
     regular: "レギュラー",
-    rare: "レア",
-    superRare: "スーパーレア",
-    ultraRare: "ウルトラレア",
-    prismaRare: "プリズマレア"
+    rare: "R",
+    superRare: "SR",
+    ultraRare: "UR",
+    secretRare: "SC",
+    prismaRare: "PR"
   });
 });
 
-test("既存カードスタイルをレギュラー・ウルトラレア・プリズマレアとして表示する", () => {
+test("既存の保存識別子を維持して略称を表示する", () => {
   assert.equal(context.modeLabel("normal"), "レギュラー");
-  assert.equal(context.modeLabel("reward"), "ウルトラレア");
-  assert.equal(context.modeLabel("prism"), "プリズマレア");
+  assert.equal(context.modeLabel("rare"), "R");
+  assert.equal(context.modeLabel("superRare"), "SR");
+  assert.equal(context.modeLabel("ultraRare"), "UR");
+  assert.equal(context.modeLabel("reward"), "SC");
+  assert.equal(context.modeLabel("secretRare"), "SC");
+  assert.equal(context.modeLabel("prism"), "PR");
   assert.equal(context.modeLabel("unknown"), "レギュラー");
 });
 

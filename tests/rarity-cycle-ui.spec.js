@@ -41,6 +41,16 @@ test('編集左側・カード詳細・プロフィールは同じ回転アイ�
   expect(await detailButton.locator('svg').evaluate(el => el.outerHTML)).toBe(icon);
   await detailButton.click();
   await expect(page.locator('#cardTestCard .card')).toHaveClass(/rarity-rare/);
+  for (const label of ['SR', 'UR', 'SC', 'PR']) {
+    await detailButton.click();
+    await expect(page.locator('#cardTestCard .card-rarity-label')).toHaveText(label);
+    if (label === 'SC' || label === 'PR') {
+      await page.screenshot({ path: test.info().outputPath(`rarity-${label}.png`) });
+    }
+  }
+  // Return to R so the remaining profile check keeps the same starting style.
+  await detailButton.click();
+  await detailButton.click();
   await page.locator('#cardTestCancelButton').click();
   await page.locator('[data-card-test="general_student"]').click();
   await expect(page.locator('#caseEditorCard [data-editor-style]')).toHaveCount(0);
