@@ -65,7 +65,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
         await page.locator(".computer-switch:not(.previous)").click();
         await expect(page.locator("#soloMenuScreen h1")).toHaveText("ソロ");
         await expect(page.locator("#soloTrainingButton .solo-mode-sub")).toBeVisible();
-        await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
+        await expect(page.locator("#soloAiBattleButton")).toBeEnabled();
         expect(await page.locator("#modeComputer").boundingBox()).toEqual(frame);
       }
       const area = await page.locator(".computer-content").boundingBox();
@@ -138,7 +138,7 @@ test("同じPCの三角でバトルとソロを切り替え、ショートカッ
   await page.locator(".computer-switch:not(.previous)").click();
   await expect(page.locator("#soloMenuScreen")).toBeVisible();
   expect(await page.locator("#modeComputer").boundingBox()).toEqual(frame);
-  await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
+  await expect(page.locator("#soloAiBattleButton")).toBeEnabled();
   await expect(page.locator("#homeNavSoloButton")).toHaveAttribute("aria-current", "page");
   await page.screenshot({ path: test.info().outputPath("desktop-solo.png") });
   await page.locator(".computer-switch.previous").click();
@@ -229,7 +229,7 @@ test("準備中のフォルダも移動できるが開かず、Escapeで移動�
   await expect(page.locator("#soloMenuScreen")).toBeVisible();
   await dragFolder(page, "#soloAiBattleButton", box.x + box.width / 2 + 160, box.y + box.height / 2 + 30);
   await expect(page.locator("#soloMenuScreen")).toBeVisible();
-  await expect(page.locator("#soloAiBattleButton")).toBeDisabled();
+  await expect(page.locator("#soloAiBattleButton")).toBeEnabled();
 });
 
 test("2本指スクロール相当の慣性イベントで1回だけ切り替える", async ({ page }) => {

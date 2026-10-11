@@ -347,7 +347,12 @@
     } else if (state.analytics?.game?.gameId && state.analytics.game.mode === "solo") award = { id: `ai:${state.analytics.game.gameId}`, amount: 5 };
     if (!award || ui.jobs.has(award.id)) return;
     // Capture before the existing dungeon code advances/clears the run.
-    const job = store.transact((s) => C.reward(s, award)).then(() => { ui.jobs.delete(award.id); renderGacha(); }).catch((e) => {
+    const gameId = state.analytics?.game?.gameId;
+    const job = store.transact((s) => C.reward(s, award)).then(({ result }) => {
+      ui.jobs.delete(award.id);
+      if (result && award.id === `ai:${gameId}`) window.__chibattle.showAiBattleReward(gameId);
+      renderGacha();
+    }).catch((e) => {
       ui.error = `CP報酬を保存できませんでした：${e.message}`;
       // Retry is explicit in Data Management; never silently drop the award.
       ui.jobs.set(award.id, award); renderGacha();

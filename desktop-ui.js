@@ -159,7 +159,7 @@
     elements.onlinePrivateMatchButton.querySelector(".online-match-main").textContent = "プライベート";
   }
   // Existing mode descriptions remain available to assistive technology.
-  const disabledModes = [elements.soloAiBattleButton, document.getElementById("onlineFourMatchButton")];
+  const disabledModes = [document.getElementById("onlineFourMatchButton")];
   function syncDisabled() {
     for (const button of shell.querySelectorAll(".computer-folder")) {
       const disabled = disabledModes.includes(button) || button.disabled;
