@@ -98,3 +98,22 @@ test('each victory directly adds 5 CP once, persists, and shows 5CP GET; losses 
   expect(await cp(page)).toBe(10);
   await expect(page.locator('.ai-battle-reward')).toBeHidden();
 });
+
+test('result back returns to AI match setup with the selected deck and can start again', async ({ page }) => {
+  await prepare(page);
+  for (const winner of ['player', 'opponent', null]) {
+    await page.locator('#soloBattleStartButton').click();
+    await page.evaluate(winner => {
+      __chibattle.state.preBattleToken++;
+      __chibattle.state.phase = 'battle'; __chibattle.render(); endGame(winner, 'テスト');
+    }, winner);
+    await expect(page.locator('[data-result-ai-back]')).toHaveText('戻る');
+    await expect(page.locator('[data-result-home]')).toHaveCount(0);
+    await page.locator('[data-result-ai-back]').click();
+    await expect(page.locator('#resultOverlay')).toBeHidden();
+    await expect(page.locator('#soloDeckScreen h1')).toHaveText('AI BATTLE');
+    await expect(page.locator('#soloPlayerDeckName')).toHaveText('テストデッキ');
+    await expect(page.locator('#soloBattleStartButton')).toBeEnabled();
+  }
+  await page.screenshot({ path: test.info().outputPath('returned-ai-match.png') });
+});

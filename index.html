@@ -19727,6 +19727,7 @@
         summary: "「病」の装備時・ターン終了時効果を変更しました。「アクセラレート」「U太の傘」の戦意を0にしました。",
         changes: [
           { title: "AIバトル", after: "自分のデッキを選び、17種類からランダムに選ばれるAIのデッキと対戦できます。勝利すると5CPを直接獲得します。" },
+          { title: "対戦画面の移動", after: "AIバトル終了後は「戻る」でマッチ画面へ戻ります。ランダムマッチの画面を離れると、マッチングと接続を中止します。" },
           { title: "病", after: "[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の体力を-1する。\nお互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。" },
           { title: "装備カードの戦意", before: "アクセラレート：戦意1\nU太の傘：戦意1", after: "アクセラレート：戦意0\nU太の傘：戦意0" },
           { title: "関連カード", after: "「U太」「裏U太」「病」の関連カードに「病に臥すU太」「病に打ち勝った裏U太」を追加しました。" },
@@ -24372,7 +24373,8 @@
     }
 
     function onlineIsCurrentConnToken(token) {
-      return token === state.online.connToken && state.online.conn;
+      return token === state.online.connToken && state.online.conn
+        && (state.online.matchMode !== "random" || state.online.started || onlineIsRandomMatchScreen());
     }
 
     function onlineClearConnectTimer() {
@@ -24564,8 +24566,12 @@
       onlineRandomAutoStartTimer = null;
     }
 
+    function onlineIsRandomMatchScreen() {
+      return state.screen === "online" && state.online.lobbyView === "private";
+    }
+
     function onlineRandomCanAutoStart() {
-      if (state.screen !== "online"
+      if (!onlineIsRandomMatchScreen()
         || state.online.matchMode !== "random"
         || !isOnlineHost()
         || !state.online.connected
@@ -24690,11 +24696,12 @@
       pendingOnlineOneEyedPeekReveal = false;
       window.clearTimeout(oneEyedPeekRevealTimer);
       oneEyedPeekRevealTimer = null;
+      // Invalidate callbacks before close(), including a synchronous close notification.
+      state.online.connToken += 1;
       try { state.online.conn?.close(); } catch {}
       try { state.online.peer?.destroy(); } catch {}
       state.online.peer = null;
       state.online.conn = null;
-      state.online.connToken += 1;
       state.online.lobbyView = "menu";
       state.online.matchMode = "private";
       state.online.role = null;
@@ -24852,7 +24859,7 @@
     }
 
     function onlineReturnToMenu() {
-      if (state.online.role) {
+      if (state.online.role || state.online.matchMode === "random") {
         onlineCloseConnection(false);
         return;
       }
@@ -24865,7 +24872,8 @@
     }
 
     function onlineRandomMatch() {
-      if (state.online.matchMode === "random" && state.online.role && !state.online.connected) {
+      if (state.screen !== "online") return;
+      if (state.online.matchMode === "random" && !state.online.connected) {
         onlineCloseConnection(false);
         onlineSetStatus("ランダムマッチをキャンセルしました。", "warn");
         return;
@@ -42869,6 +42877,11 @@
             <button class="button secondary" type="button" data-result-training-data="true">データ</button>
             <button class="button" type="button" data-result-training-replay="true">再戦</button>
           `
+        : state.aiBattle.active && !isOnlineBattle()
+        ? `
+            <button class="button secondary" type="button" data-result-ai-back="true">戻る</button>
+            <button class="button" type="button" data-result-deck="true">デッキを編成する</button>
+          `
         : isDungeonVictory
         ? `
             <button class="button secondary" type="button" data-result-dungeon-interrupt="true">中断する</button>
@@ -43633,6 +43646,12 @@
     }
 
     function render() {
+      // Covers all navigation paths, including Cards and Shop's direct screen changes.
+      // Entering an actual online battle is not a cancellation.
+      if (state.online.matchMode === "random" && !state.online.started && !onlineIsRandomMatchScreen()) {
+        onlineCloseConnection(false);
+        return;
+      }
       removeLegacyTrashTokens();
       continueCrotchFebrezeEffects();
       renderScreen();
@@ -50344,7 +50363,7 @@
       state.preBattleToken += 1;
       resetTutorialState();
       state.screen = "online";
-      if (!state.online.role) state.online.lobbyView = "menu";
+      if (!state.online.role || (state.online.matchMode === "random" && !state.online.started)) state.online.lobbyView = "menu";
       SIDES.opponent = state.online.role ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       hideCardTooltip();
       hideBattleCardPreview();
@@ -53018,6 +53037,14 @@
       if (card) showBattleCardTypeDescription(card);
     });
     elements.resultOverlay.addEventListener("click", (event) => {
+      if (event.target.closest("[data-result-ai-back]")) {
+        event.stopPropagation();
+        state.preBattleToken += 1;
+        hideResultOverlay();
+        hidePlayReveal();
+        startAiBattleFromHome();
+        return;
+      }
       if (event.target.closest("[data-result-tutorial-retry]")) {
         event.stopPropagation();
         startTutorialBattle(state.tutorial.chapterId, { stage: state.tutorial.stage });
