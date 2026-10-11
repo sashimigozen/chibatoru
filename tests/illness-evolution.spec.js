@@ -25,7 +25,7 @@ test('U太＋病の特殊進化は両講義室に1人ずつ病を装備させる
     api.state.players.player.board.seats[0] = yuta;
     api.state.players.player.board.seats[1] = friend;
     api.state.players.opponent.board.teacher = enemy;
-    const random = Math.random; Math.random = () => 0.99;
+    const random = Math.random; Math.random = () => 0;
     const used = api.equipIllness('player', yuta, api.createCardFromBase('illness', 'player'));
     Math.random = random;
     const sick = api.state.players.player.board.seats[0];
@@ -118,8 +118,42 @@ test('通常のU太には今までどおり裏U太へ進化できる', async ({ 
   expect(result).toEqual({ id: 'dark_yuta', yuta: 'yuta' });
 });
 
+test('両方のU太は直接装備とランダム感染の対象外になる', async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle;
+    const immune = ['sick_yuta', 'recovered_dark_yuta'].map((id, index) => {
+      const card = api.makeBoardCard(api.createCardFromBase(id, 'player'));
+      api.state.players.player.board.seats[index] = card;
+      return card;
+    });
+    const direct = immune.map(card => ({
+      eligible: api.canEquipIllness(card),
+      placed: api.canPlaceCard('player', api.createCardFromBase('illness', 'player'), 'seat', 'player',
+        api.state.players.player.board.seats.indexOf(card)),
+      equipped: api.equipIllness('player', card, api.createCardFromBase('illness', 'player'))
+    }));
+    const infected = api.makeBoardCard(api.createCardFromBase('strong_student', 'player'));
+    const eligible = api.makeBoardCard(api.createCardFromBase('general_student', 'player'));
+    api.state.players.player.board.seats[2] = infected;
+    api.state.players.player.board.seats[3] = eligible;
+    api.equipIllness('player', infected, api.createCardFromBase('illness', 'player'));
+    const random = Math.random; Math.random = () => 0;
+    api.resolveIllnessEndTurn();
+    Math.random = random;
+    return { direct, immune: immune.map(card => ({
+      equipped: card.illnessEquipments?.length || 0, infected: api.isIllnessInfected(card),
+      attack: card.attack, hp: card.maxHp
+    })), other: eligible.illnessEquipments?.length || 0 };
+  });
+  expect(result).toEqual({
+    direct: [{ eligible: false, placed: false, equipped: false }, { eligible: false, placed: false, equipped: false }],
+    immune: [{ equipped: 0, infected: false, attack: 4, hp: 4 }, { equipped: 0, infected: false, attack: 4, hp: 4 }],
+    other: 1
+  });
+});
+
 test('カード本文は最新の合意文面で表示する', async ({ page }) => {
   const texts = await page.evaluate(() => ['sick_yuta', 'recovered_dark_yuta'].map(id => window.__chibattle.cardRulesText(window.__chibattle.createCardFromBase(id, 'player'))));
-  expect(texts[0]).toBe('[特殊進化]：「U太」に「病」を装備させる。\n進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。\n自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。');
-  expect(texts[1]).toBe('[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの攻撃力と体力を上昇させる。\n「病」を送られた出席者の攻撃力を0、体力を1にする。');
+  expect(texts[0]).toBe('[特殊進化]：「U太」に「病」を装備させる。\n進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。\n自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。\nこのカードは「病」を装備できない。');
+  expect(texts[1]).toBe('[特殊進化]：「病に臥すU太」に「裏U太」を進化させる。\n進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの攻撃力と体力を上昇させる。\n「病」を送られた出席者の攻撃力を0、体力を1にする。\nこのカードは「病」を装備できない。');
 });
