@@ -23474,8 +23474,8 @@
       rare: "R",
       superRare: "SR",
       ultraRare: "UR",
-      secretRare: "シークレットレア",
-      prismaRare: "プリズマレア"
+      secretRare: "SC",
+      prismaRare: "PR"
     });
 
     function cardStyleModeLabel(mode) {
@@ -48980,7 +48980,7 @@
       elements.dungeonRewardTitle.textContent = phase === "closed" || phase === "opening" ? "報酬の宝箱" : "カードスタイル獲得";
       elements.dungeonRewardCopy.textContent = phase === "closed"
         ? "宝箱を開けて、専攻の代表カードスタイルを受け取ろう。"
-        : `${cardNames}のシークレットレアカードスタイルを獲得しました。`;
+        : `${cardNames}の${CARD_RARITY_LABELS.secretRare}カードスタイルを獲得しました。`;
       elements.dungeonRewardChest.className = `dungeon-treasure-chest${phase === "opening" ? " opening" : ""}${["revealed", "homeReady"].includes(phase) ? " opened" : ""}`;
       elements.dungeonRewardChest.disabled = phase !== "closed";
       elements.dungeonRewardChest.setAttribute("aria-label", phase === "closed" ? "報酬の宝箱を開ける" : "報酬の宝箱を開封済み");
@@ -49023,7 +49023,7 @@
         }
         state.dungeon.rewardAward = reward;
         state.dungeon.rewardPhase = "revealed";
-        state.message = `${reward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・")}のシークレットレアカードスタイルを獲得しました。`;
+        state.message = `${reward.cardIds.map((baseId) => CARD_BASES[baseId]?.name).filter(Boolean).join("・")}の${CARD_RARITY_LABELS.secretRare}カードスタイルを獲得しました。`;
         render();
         dungeonRewardTimer = window.setTimeout(() => {
           dungeonRewardTimer = null;
