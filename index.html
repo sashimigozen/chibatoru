@@ -14196,6 +14196,13 @@
     .battle-screen .board-card.attack-ready { outline: 2px solid #16a356 !important; outline-offset: 1px; box-shadow: 0 0 10px rgba(22,163,86,.43) !important; }
     .battle-screen .board-card.attack-target-ready { outline: 2px solid #d33d45 !important; outline-offset: 2px; box-shadow: 0 0 11px rgba(211,61,69,.42) !important; }
     .battle-screen .board-card.selection-candidate { outline: 2px solid #317ee4 !important; outline-offset: 2px; box-shadow: 0 0 11px rgba(49,126,228,.42) !important; }
+    /* Scale the selected card, not the slot or its internal card template. */
+    .battle-screen .field-card.board-card.selected {
+      scale: 1.08;
+      transform-origin: center;
+      z-index: 12 !important;
+    }
+    .battle-screen .slot:has(> .board-card.selected) { z-index: 12 !important; }
 
     /* Grave markers are quiet until opened. */
     .battle-screen .trash-box { position: absolute !important; z-index: 11; display: grid !important; width: 54px !important; height: 38px !important; place-items: center; overflow: hidden; border: 1px solid #202b36 !important; border-radius: 3px !important; padding: 0 !important; background: linear-gradient(145deg,#4a5661,#1c242c) !important; color: #f5f7fa !important; box-shadow: 2px 3px 0 rgba(0,0,0,.18) !important; }
@@ -19743,6 +19750,8 @@
           { title: "処理待ち中の確認", after: "演出・効果処理・講義室チェック・相手の選択待ち中も、ログ・メニュー・手札や盤面のカード・校外・継続効果・遅刻ゾーンを確認できます。効果処理を同時に実行しない制御は維持します。" },
           { title: "演出中の操作", after: "自分の演出中も手札を持って動かせます。ドラッグ中はつかむポインターにします。複数の攻撃とターン終了を予約でき、必要な選択と演出が終わってから順に実行します。出席の予約は行いません。" },
           { title: "教師の行動選択", after: "攻撃予約が教師の「攻撃／講義」の選択を妨げる不具合を修正しました。演出中に教師を選んだ場合も、演出の終了後に攻撃または講義を選べます。カード本文と講義のルールは変更していません。" },
+          { title: "攻撃状態のアイコン", after: "出席者のみ攻撃できる状態と、本体にも攻撃できる状態をアイコンで区別します。召喚酔いが終わった通常の出席者や陽気を持つ出席者も、本体への攻撃が解禁されていれば青になります。注目・超注目による攻撃先の制限では色を変えません。能力や攻撃ルールは変更していません。" },
+          { title: "出席者の選択表示", after: "攻撃役・攻撃予約の攻撃役・効果で指名した出席者を、選択中だけ少し拡大します。候補全体やマスの大きさは変更しません。" },
           { title: "Ultimate U太の関連カード", after: "「U太」「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の関連カード欄から「Ultimate U太」を確認できるようにしました。カード本文と効果は変更していません。" },
           { title: "賢者の遺産", after: "自分の手札1枚を選び、デッキに戻す。その後、後攻1ターン目または後攻7ターン目なら、自分のデッキからカード1枚を選び、手札に加える。それ以外なら、デッキからカードを1枚引く。" },
           { title: "環境・出席の即時反映", after: "雁木囲いなどの環境効果が配置演出の完了直後に盤面へ反映されるようにしました。非同期の出席後に画面が更新されず、ドロー演出を待ったままAIが停止する経路も修正しました。" },
@@ -42271,13 +42280,12 @@
         && isDesignTeacher(target);
     }
 
-    function canSelectedAttackerTargetLife(targetSide) {
-      const attacker = getSelectedAttackCard();
+    function canSelectedAttackerTargetLife(targetSide, { attacker = getSelectedAttackCard(), ignoreAttention = false } = {}) {
       if (!attacker || targetSide === state.currentSide) return false;
       if (isAibenNyoteiAttackLifeBlocked(attacker, targetSide)) return false;
       if (attacker.baseId === "happy_blue_bird") return false;
       if (state.environment?.baseId === "meguro_library") return false;
-      if (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student") return false;
+      if (!ignoreAttention && listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student") return false;
       return !(attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
     }
 
@@ -48052,11 +48060,14 @@
           : null;
       const canShowAttackState = boardCard && ["student", "teacher", "vampire"].includes(card.type);
       const canAttackNow = canShowAttackState && card.owner === state.currentSide && canAttackSilently(card);
+      const canAttackLifeByState = canAttackNow && canSelectedAttackerTargetLife(oppositeSide(card.owner), {
+        attacker: card, ignoreAttention: true
+      });
       const attackStatePart = canAttackNow
         ? {
           emoji: "⚔️",
-          title: "攻撃可能",
-          tone: `emoji-status attack-state attack-ready${hasKeyword(card, "超陽気") ? " attack-super-cheerful" : ""}`
+          title: canAttackLifeByState ? "本体にも攻撃可能" : "出席者のみ攻撃可能",
+          tone: `emoji-status attack-state attack-ready${canAttackLifeByState ? " attack-super-cheerful" : ""}`
         }
         : canShowAttackState && card.hasAttacked
           ? { emoji: "⚔️", title: "攻撃済み", tone: "emoji-status attack-state attack-exhausted" }
