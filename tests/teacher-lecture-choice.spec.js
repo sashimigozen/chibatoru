@@ -84,6 +84,44 @@ test("ターン終了時には講義を自動発動しない", async ({ page }) 
   expect(result.teacherUsed).toBe(false);
 });
 
+test("次のターンに演出中の一般教師を選んでも2回目の講義を行える", async ({ page }) => {
+  await prepareTeacherBattle(page);
+  await page.locator("#playerProfessorLane .board-card").click();
+  await page.locator("#teacherLectureChoiceButton").click();
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+  const before = await page.evaluate(() => {
+    state.actionTurn += 2;
+    resetAttackFlags('player');
+    queuedBattlePresentations++;
+    render();
+    return state.players.opponent.board.seats[8].currentHp;
+  });
+  await page.locator("#playerProfessorLane .board-card").click();
+  await expect(page.locator("#teacherActionModal")).toBeVisible();
+  await page.locator("#teacherLectureChoiceButton").dispatchEvent('click');
+  expect(await page.evaluate(() => state.players.player.board.teacher.hasAttacked)).toBe(false);
+  await page.evaluate(() => { queuedBattlePresentations--; render(); });
+  await page.screenshot({ path: test.info().outputPath('second-lecture-choice.png') });
+  await page.locator("#teacherLectureChoiceButton").click();
+  await expect(page.locator("#teacherActionModal")).toBeHidden();
+  expect(await page.evaluate(() => state.players.player.board.teacher.hasAttacked)).toBe(true);
+  expect(await page.evaluate(() => state.players.opponent.board.seats[8]?.currentHp ?? 0)).toBe(before - 1);
+});
+
+test("教師は予約中も行動を選べ、攻撃を選んだ後は攻撃予約に追加できる", async ({ page }) => {
+  await prepareTeacherBattle(page);
+  await page.evaluate(() => { queuedBattlePresentations++; playerReservation().endTurn = true; render(); });
+  await page.locator("#playerProfessorLane .board-card").click();
+  await expect(page.locator("#teacherActionModal")).toBeVisible();
+  await page.evaluate(() => { queuedBattlePresentations--; render(); });
+  // Keep the choice and target in one event turn, before end-turn dispatch.
+  await page.evaluate(() => {
+    elements.teacherAttackChoiceButton.click();
+    handlePlayerReservationClick(document.querySelector('[data-life-target="opponent"]'));
+  });
+  await expect.poll(() => page.evaluate(() => state.players.opponent.life), { timeout: 15000 }).toBe(19);
+});
+
 test("講義を持たない教師には行動選択を表示しない", async ({ page }) => {
   await prepareTeacherBattle(page, "summer_teacher");
 
