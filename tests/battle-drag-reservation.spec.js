@@ -66,6 +66,38 @@ test('持っていたカードが手札から消えたらドラッグを解除�
   await page.mouse.up();
 });
 
+test('戦意0でもカードを持てるが出席や持ち物使用はできない', async ({ page }) => {
+  await page.evaluate(() => { state.players.player.will = 0; render(); });
+  const before = await page.evaluate(() => state.players.player.hand.map(c => c.instanceId));
+  await liftCard(page);
+  await page.screenshot({ path: test.info().outputPath('holding-without-will.png') });
+  const slot = await page.locator('#playerSeatGrid .slot[data-index="2"]').boundingBox();
+  await page.mouse.move(slot.x + slot.width / 2, slot.y + slot.height / 2);
+  await page.mouse.up();
+  expect(await page.evaluate(() => state.players.player.board.seats[2])).toBeNull();
+  expect(await page.evaluate(() => state.players.player.hand.map(c => c.instanceId))).toEqual(before);
+  expect(await page.evaluate(() => ({
+    slot: canDropHandCardOnSlot(state.players.player.hand[0], 'seat', 'player', 2),
+    item: canDropHandCardOnLife(state.players.player.hand[1], 'opponent'),
+    will: state.players.player.will
+  }))).toEqual({ slot: false, item: false, will: 0 });
+});
+
+test('戦意0でも定規をドラッグして定規に融合できる', async ({ page }) => {
+  await page.evaluate(() => {
+    state.players.player.will = 0;
+    state.players.player.hand = [createCardFromBase('ruler', 'player'), createCardFromBase('ruler', 'player')];
+    render();
+  });
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+  await liftCard(page);
+  const target = await page.locator('#playerHand .card').nth(1).boundingBox();
+  await page.mouse.move(target.x + target.width - 10, target.y + 25, { steps: 6 });
+  await page.mouse.up();
+  await expect.poll(() => page.evaluate(() => state.players.player.hand.some(c => c.baseId === 'double_diamond'))).toBe(true);
+  expect(await page.evaluate(() => state.players.player.will)).toBe(0);
+});
+
 test('演出中に次の攻撃とターン終了を予約し、攻撃後にターンを返す', async ({ page }) => {
   await holdPresentation(page);
   await page.locator('#playerSeatGrid .board-card[data-index="1"]').click();

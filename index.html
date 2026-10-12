@@ -19752,6 +19752,7 @@
           { title: "教師の行動選択", after: "攻撃予約が教師の「攻撃／講義」の選択を妨げる不具合を修正しました。演出中に教師を選んだ場合も、演出の終了後に攻撃または講義を選べます。カード本文と講義のルールは変更していません。" },
           { title: "攻撃状態のアイコン", after: "出席者のみ攻撃できる状態と、本体にも攻撃できる状態をアイコンで区別します。召喚酔いが終わった通常の出席者や陽気を持つ出席者も、本体への攻撃が解禁されていれば青になります。注目・超注目による攻撃先の制限では色を変えません。能力や攻撃ルールは変更していません。" },
           { title: "出席者の選択表示", after: "攻撃役・攻撃予約の攻撃役・効果で指名した出席者を、選択中だけ少し拡大します。候補全体やマスの大きさは変更しません。" },
+          { title: "手札のドラッグ", after: "戦意が足りない手札のカードも持って動かせるようにしました。使用・出席に必要な戦意や融合の条件は変更していません。" },
           { title: "Ultimate U太の関連カード", after: "「U太」「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の関連カード欄から「Ultimate U太」を確認できるようにしました。カード本文と効果は変更していません。" },
           { title: "賢者の遺産", after: "自分の手札1枚を選び、デッキに戻す。その後、後攻1ターン目または後攻7ターン目なら、自分のデッキからカード1枚を選び、手札に加える。それ以外なら、デッキからカードを1枚引く。" },
           { title: "環境・出席の即時反映", after: "雁木囲いなどの環境効果が配置演出の完了直後に盤面へ反映されるようにしました。非同期の出席後に画面が更新されず、ドロー演出を待ったままAIが停止する経路も修正しました。" },
@@ -45708,7 +45709,7 @@
       return canStartHandDrag(card) || Boolean(card
         && state.screen === "battle" && state.phase === "battle" && state.currentSide === "player"
         && !isOnlineSpectator() && !state.gameOver && !state.aiThinking
-        && battlePresentationBusy() && !battleChoicePending() && !state.lectureRoomCheck
+        && !battleChoicePending() && !state.lectureRoomCheck
         && !(isOnlineGuest() && state.remoteResolutionPending) && !isOnlineCommandPending()
         && tutorialAllowsHandCard(card) && getHandCard("player", card.instanceId));
     }
@@ -46303,13 +46304,13 @@
         button.addEventListener("mouseenter", () => showPlayerHandCardHoverOverlay(button));
         attachCardDetailEvents(button, card);
         button.addEventListener("dragstart", (event) => {
-          if (!canStartHandDrag(card)) {
+          if (!canLiftHandCard(card)) {
             event.preventDefault();
             return;
           }
           event.dataTransfer.setData("text/plain", card.instanceId);
           event.dataTransfer.effectAllowed = "move";
-          state.selectedHandId = card.instanceId;
+          if (canStartHandDrag(card)) state.selectedHandId = card.instanceId;
           activeHandDrag = { instanceId: card.instanceId, sourceElement: button, native: true };
           button.classList.add("dragging-source");
           refreshHandDropHints(card);
