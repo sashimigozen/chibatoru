@@ -19743,6 +19743,7 @@
           { title: "処理待ち中の確認", after: "演出・効果処理・講義室チェック・相手の選択待ち中も、ログ・メニュー・手札や盤面のカード・校外・継続効果・遅刻ゾーンを確認できます。効果処理を同時に実行しない制御は維持します。" },
           { title: "演出中の操作", after: "自分の演出中も手札を持って動かせます。ドラッグ中はつかむポインターにします。複数の攻撃とターン終了を予約でき、必要な選択と演出が終わってから順に実行します。出席の予約は行いません。" },
           { title: "教師の行動選択", after: "攻撃予約が教師の「攻撃／講義」の選択を妨げる不具合を修正しました。演出中に教師を選んだ場合も、演出の終了後に攻撃または講義を選べます。カード本文と講義のルールは変更していません。" },
+          { title: "Ultimate U太の関連カード", after: "「U太」「辛いなら」「会社１日」「飛ぶくらい」「いいだろって」の関連カード欄から「Ultimate U太」を確認できるようにしました。カード本文と効果は変更していません。" },
           { title: "賢者の遺産", after: "自分の手札1枚を選び、デッキに戻す。その後、後攻1ターン目または後攻7ターン目なら、自分のデッキからカード1枚を選び、手札に加える。それ以外なら、デッキからカードを1枚引く。" },
           { title: "環境・出席の即時反映", after: "雁木囲いなどの環境効果が配置演出の完了直後に盤面へ反映されるようにしました。非同期の出席後に画面が更新されず、ドロー演出を待ったままAIが停止する経路も修正しました。" },
           { title: "マリガン画面", after: "確定ボタンを押せない重なりを修正しました。見出しを「引き直すカードを選んでください。」にし、対戦画面につながる明るい配色に変更しました。" },
@@ -51908,7 +51909,7 @@
             ${navigation}
             <div class="battle-card-preview-detail-title">効果</div>
             <div class="battle-card-preview-rules">${battleCardRulesMarkup(card)}</div>
-            ${["yuta", "dark_yuta", "illness"].includes(card.baseId) ? relatedCardsTemplate(card) : ""}
+            ${["yuta", "dark_yuta", "illness"].includes(card.baseId) || UTA_FUSION_MATERIAL_IDS.includes(card.baseId) ? relatedCardsTemplate(card) : ""}
             ${currentEffects.markup}
             <div class="battle-card-preview-term-description" data-preview-term-description></div>
             <div class="battle-card-preview-effect-description" data-preview-effect-description></div>
@@ -52323,6 +52324,7 @@
       });
       const additionalIds = ["yuta", "dark_yuta", "illness"].includes(card.baseId)
         ? ["sick_yuta", "recovered_dark_yuta"] : [];
+      if (card.baseId === "yuta" || UTA_FUSION_MATERIAL_IDS.includes(card.baseId)) additionalIds.push("ultimate_yuta");
       return [...new Set([...selected.map((entry) => entry.baseId), ...additionalIds])].slice(0, 10);
     }
 

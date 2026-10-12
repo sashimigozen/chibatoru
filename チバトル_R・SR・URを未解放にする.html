@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>チバトル レアリティリセット</title>
+<style>
+body{margin:0;background:#edf2f5;color:#20394b;font:16px system-ui,sans-serif;line-height:1.8}main{max-width:620px;margin:8vh auto;padding:32px;background:#fff;border:1px solid #a7bac7;border-radius:12px}h1{font-size:24px}button,input{font:inherit}button{padding:10px 20px;background:#20394b;color:white;border:0;border-radius:6px;cursor:pointer}button:disabled{opacity:.5;cursor:default}#status{white-space:pre-wrap}
+</style>
+<main>
+<h1>R・SR・URを未解放にする</h1>
+<p>SC・PRの解放状況、CP、デッキ、プロフィール、クリア記録、パックの進捗は残します。レギュラーは引き続き使えます。</p>
+<ol>
+<li>チバトルの「プロフィール → データ管理 → ファイル書き出し」で、最新の保存データを保存します。</li>
+<li>その .chibasave ファイルを下で選びます。</li>
+<li>変換したファイルを、チバトルの同じ「データ管理 → ファイル読み込み」で読み込みます。</li>
+</ol>
+<p>元のファイルは変更しません。戻したい場合は元の保存データを読み込めます。変換から読み込みまでの間は、ゲームを進めないでください。</p>
+<input id="input" type="file" accept=".chibasave,application/json" aria-label="最新の保存データ">
+<p><button id="download" disabled>未解放にしたファイルを保存</button></p>
+<p id="status" role="status"></p>
+</main>
+<script>
+const input=document.getElementById('input'),button=document.getElementById('download'),status=document.getElementById('status');
+let converted=null;
+const removed=new Set(['rare','superRare','ultraRare']);
+async function checksum(payload){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(payload)))),n=>n.toString(16).padStart(2,'0')).join('');}
+function resetStyles(raw){
+  if(raw===null||raw===undefined)return raw;
+  const styles=JSON.parse(raw);
+  for(const [id,modes] of Object.entries(styles.cardUnlocks||{})){
+    for(const mode of removed)delete modes[mode];
+    if(!Object.keys(modes).length)delete styles.cardUnlocks[id];
+  }
+  for(const [id,mode] of Object.entries(styles.selected||{}))if(removed.has(mode))styles.selected[id]='normal';
+  return JSON.stringify(styles);
+}
+function resetProjection(projection){
+  const styleKey='chibattle-dungeon-card-styles-v1',profileKey='chibattle-player-profile-v1';
+  if(projection[styleKey]!=null)projection[styleKey]=resetStyles(projection[styleKey]);
+  if(projection[profileKey]!=null){
+    const profile=JSON.parse(projection[profileKey]);
+    if(removed.has(profile.favoriteCardStyle)){profile.favoriteCardStyle='normal';projection[profileKey]=JSON.stringify(profile);}
+  }
+}
+async function convertSave(data){
+  if(data?.format!=='chibattle-full-save'||data.version!==1||data.checksum!==await checksum(data.payload))throw new Error('チバトルから書き出した .chibasave ファイルを選んでください。');
+  const result=JSON.parse(JSON.stringify(data)),economy=result.payload.economy;
+  if(!economy||!result.payload.projection)throw new Error('保存データの形式が違います。');
+  if(economy.pending!==null)throw new Error('開封中のパックがあります。結果画面からショップへ戻り、もう一度データを書き出してください。');
+  if(economy.recovery!==null)throw new Error('データ復元中です。チバトルを再読み込みし、もう一度データを書き出してください。');
+  // Gacha ownership is authoritative: leaving it intact would re-unlock styles on startup.
+  economy.owned={};
+  resetProjection(result.payload.projection);
+  result.checksum=await checksum(result.payload);
+  return result;
+}
+input.addEventListener('change',async()=>{
+  converted=null;button.disabled=true;status.textContent='';
+  try{
+    const file=input.files[0];if(!file)return;
+    if(file.size>12000000)throw new Error('ファイルが大きすぎます。');
+    converted=await convertSave(JSON.parse(await file.text()));
+    status.textContent='変換できました。SC・PRは維持し、R・SR・URのみ未解放にします。';button.disabled=false;
+  }catch(error){status.textContent=error.message;}
+});
+button.addEventListener('click',()=>{
+  if(!converted)return;
+  const url=URL.createObjectURL(new Blob([JSON.stringify(converted)],{type:'application/json'})),link=document.createElement('a');
+  link.href=url;link.download='chibattle-R-SR-UR-locked.chibasave';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+</script>
+</html>
