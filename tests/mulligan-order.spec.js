@@ -33,11 +33,11 @@ test("ソロのマリガンで自分の先攻・後攻を表示し、引き直�
       const badge = page.locator("#mulliganOrder");
       await expect(badge).toBeVisible();
       await expect(badge).toHaveText(`あなたは${order}`);
-      await expect(badge).toHaveCSS("font-size", "18px");
+      await expect(badge).toHaveCSS("font-size", "16px");
       const bounds = await badge.boundingBox();
       const title = await page.locator("#mulliganTitle").boundingBox();
       expect(bounds.y).toBeGreaterThanOrEqual(0);
-      expect(bounds.y + bounds.height).toBeLessThanOrEqual(title.y);
+      expect(bounds.y).toBeGreaterThan(title.y);
       expect(bounds.x).toBeGreaterThanOrEqual(0);
       expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width);
       await expect(page.locator("#mulliganHand .mulligan-card")).toHaveCount(5);

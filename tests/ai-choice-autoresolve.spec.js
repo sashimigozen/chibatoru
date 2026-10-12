@@ -189,7 +189,10 @@ test("将来追加される手札・デッキ選択も左側CPUが自動確定�
     const sage = api.createCardFromBase("sage_legacy", "player");
     const first = api.createCardFromBase("general_student", "player");
     const second = api.createCardFromBase("general_teacher", "player");
-    state.players.player.hand = [sage];
+    const returned = api.createCardFromBase("ruler", "player");
+    state.firstSide = "opponent";
+    state.players.player.turnsTaken = 1;
+    state.players.player.hand = [sage, returned];
     state.players.player.deck = [first, second];
     state.pendingCardChoice = {
       mode: "sage_legacy",
@@ -201,7 +204,7 @@ test("将来追加される手札・デッキ選択も左側CPUが自動確定�
       min: 1,
       max: 1,
       selectableIds: null,
-      context: null
+      context: { returnId: returned.instanceId }
     };
     const resolved = api.resolveTrainingAiPendingSelections("player");
     return {

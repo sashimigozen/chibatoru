@@ -49,6 +49,18 @@
       opacity: 0.5;
     }
 
+    html.battle-input-blocked,
+    html.battle-input-blocked * {
+      cursor: not-allowed !important;
+    }
+
+    html.hand-card-dragging,
+    html.hand-card-dragging * {
+      cursor: grabbing !important;
+    }
+
+    .battle-end-button.turn-end-reserved { opacity: .55; }
+
     button::selection,
     button *::selection,
     .card::selection,
@@ -4283,7 +4295,7 @@
       }
       100% {
         opacity: 0;
-        transform: translate(34vw, 22vh) scale(0.28) rotate(10deg);
+        transform: translate(var(--play-target-x, 34vw), var(--play-target-y, 22vh)) scale(0.28) rotate(10deg);
       }
     }
 
@@ -4331,7 +4343,7 @@
       }
       100% {
         opacity: 0;
-        transform: translateY(-16vh) scale(0.38) rotate(1deg);
+        transform: translate(var(--play-target-x, 0px), var(--play-target-y, -16vh)) scale(0.38) rotate(1deg);
       }
     }
 
@@ -14889,7 +14901,7 @@
        after the field's right edge and ends at the log drawer's right edge. */
     .battle-screen .battle-card-preview {
       position: absolute !important;
-      z-index: 40 !important;
+      z-index: 110 !important;
       top: 122px !important;
       /* Match the right edge of the Log button. */
       right: 10px !important;
@@ -17375,6 +17387,8 @@
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
+  <link rel="stylesheet" href="draw-animation.css?v=0.23.19" />
+  <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
 <link rel="stylesheet" href="cards-ui.css?v=0.23.18-cycle" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.23.16" />
   <link rel="stylesheet" href="gacha-ui.css?v=0.23.18-shop-16" />
@@ -18156,7 +18170,7 @@
     <div class="mulligan-stage" id="mulliganStage">
       <div class="mulligan-window">
         <span class="status mulligan-order hidden" id="mulliganOrder" aria-live="polite"></span>
-        <h2 id="mulliganTitle">引き直すカードを選んでください</h2>
+        <h2 id="mulliganTitle">引き直すカードを選んでください。</h2>
         <p id="mulliganMessage">引き直したいカードを0〜5枚選び、画面下の「確定」を押してください。</p>
         <div class="mulligan-hand" id="mulliganHand"></div>
         <div class="mulligan-action-row hidden" id="thinItemChoiceActions">
@@ -19723,11 +19737,23 @@
     const UPDATE_HISTORY = [
       {
         version: "ver.0.23.19",
-        date: "2026年10月11日",
-        summary: "「病」の装備時・ターン終了時効果を変更しました。「アクセラレート」「U太の傘」の戦意を0にしました。",
+        date: "2026年10月12日",
+        summary: "対戦演出・処理待ち中の確認・攻撃予約を改善しました。「賢者の遺産」と環境効果の即時反映を修正し、「病」関連の効果・AIバトルを追加しました。",
         changes: [
+          { title: "処理待ち中の確認", after: "演出・効果処理・講義室チェック・相手の選択待ち中も、ログ・メニュー・手札や盤面のカード・校外・継続効果・遅刻ゾーンを確認できます。効果処理を同時に実行しない制御は維持します。" },
+          { title: "演出中の操作", after: "自分の演出中も手札を持って動かせます。ドラッグ中はつかむポインターにします。複数の攻撃とターン終了を予約でき、必要な選択と演出が終わってから順に実行します。出席の予約は行いません。" },
+          { title: "賢者の遺産", after: "自分の手札1枚を選び、デッキに戻す。その後、後攻1ターン目または後攻7ターン目なら、自分のデッキからカード1枚を選び、手札に加える。それ以外なら、デッキからカードを1枚引く。" },
+          { title: "環境・出席の即時反映", after: "雁木囲いなどの環境効果が配置演出の完了直後に盤面へ反映されるようにしました。非同期の出席後に画面が更新されず、ドロー演出を待ったままAIが停止する経路も修正しました。" },
+          { title: "マリガン画面", after: "確定ボタンを押せない重なりを修正しました。見出しを「引き直すカードを選んでください。」にし、対戦画面につながる明るい配色に変更しました。" },
+          { title: "デッキから校外への演出", after: "Dos攻撃などでデッキから校外へ送られるカードを、移動中にめくって公開し、校外エリアへ移動させます。複数枚はまとめて表示し、演出中は別の操作を受け付けません。" },
+          { title: "公開カードと出席の演出", after: "生成カードは手札の右端から現れます。内容がわかる生成カードは相手のものも公開し、裏返しながら手札へ移動します。相手の通常ドローは裏面を拡大せずに移動します。アルファ・ベータの校外送りの演出を重複させず、出席者は公開後に出席先のマスへ移動します。" },
           { title: "AIバトル", after: "自分のデッキを選び、17種類からランダムに選ばれるAIのデッキと対戦できます。勝利すると5CPを直接獲得します。" },
           { title: "対戦画面の移動", after: "AIバトル終了後は「戻る」でマッチ画面へ戻ります。ランダムマッチの画面を離れると、マッチングと接続を中止します。" },
+          { title: "対戦中の操作", after: "ドロー・カード・攻撃の演出や効果処理中は別の操作を止め、操作できない場所ではポインターを禁止マークにします。相手の選択中も待機し、必要な選択だけを受け付けます。オンライン・オフライン共通です。" },
+          { title: "手札から校外への演出", after: "自分の手札は上へ、相手の手札は下へ移動して表を見せた後、校外エリアへ移動します。複数枚は同時に動きます。ロジックハンター・スナイパーで公開して校外へ送ったカードの演出が重複しないようにしました。ドロー後にカードを見せる時間も短くしました。" },
+          { title: "手札追加とターン終了", after: "手札に加えたり生成したカードは表示してから手札へ移動します。ターン終了ボタンは押した直後に薄くなり、終了時の処理と演出が終わってから次のターンを開始します。持ち物の使用は中央で表示し、効果による校外送りと区別します。" },
+          { title: "ドロー演出", after: "気力の隣で、小さめのカードを移動中にめくり、短く表示して手札へ収めます。出席・効果演出の後にドローし、複数枚はまとめてめくり、同時に手札へ収めます。相手の手札は公開しません。マリガンは上段のCHANGEと下段のKEEPに分け、クリックやドラッグで交換するカードを選べます。" },
+          { title: "持ち物の処理順", after: "対象や選択肢を確定してから持ち物を表示し、校外エリアへ移動した後に効果を処理します。装備カードは装備先へ移動します。手札の校外送りとドローの演出が逆順にならないようにしました。" },
           { title: "病", after: "[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の体力を-1する。\nお互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。" },
           { title: "装備カードの戦意", before: "アクセラレート：戦意1\nU太の傘：戦意1", after: "アクセラレート：戦意0\nU太の傘：戦意0" },
           { title: "関連カード", after: "「U太」「裏U太」「病」の関連カードに「病に臥すU太」「病に打ち勝った裏U太」を追加しました。" },
@@ -21281,6 +21307,7 @@
     let nextDeferredCardPlayId = 1;
     let handDragCandidate = null;
     let activeHandDrag = null;
+    let handDragClickBlockedUntil = 0;
     let handScrollDrag = null;
     const HAND_DRAG_THRESHOLD = 10;
     const FAST_ATTACK_FOCUS_STEP_DELAY = 300;
@@ -21296,6 +21323,19 @@
     let activeEffectFeedbackSequence = null;
     let activeEffectFeedbackDelay = 0;
     let effectFeedbackEventSerial = 0;
+    let drawEffectVisualUntil = 0;
+    let renderedHandTrashState = null;
+    let publicHandAddSerial = 0;
+    const publicHandAddEvents = [];
+    const seenPublicHandAdds = new Set();
+
+    function publicHandCard(baseId, side) {
+      const card = createCardFromBase(baseId, side);
+      card.publicHandAddition = true;
+      publicHandAddEvents.push({ id: ++publicHandAddSerial, token: state.preBattleToken, side, card });
+      if (publicHandAddEvents.length > 100) publicHandAddEvents.shift();
+      return card;
+    }
     let nextSharedFeedbackId = 1;
     let dungeonEntranceTimer = null;
     let dungeonRewardTimer = null;
@@ -21385,6 +21425,8 @@
       firstSide: null,
       currentSide: "player",
       preBattleToken: 0,
+      lectureRoomCheck: false,
+      lectureRoomCheckToken: null,
       preBattleBusy: false,
       rpsPlayerChoice: null,
       rpsOpponentChoice: null,
@@ -25534,6 +25576,7 @@
         const card = isOnlineGuest() ? onlineSwapOwnersDeep(message.card) : message.card;
         showCardPlayAnimation(card, message.destination || "trash", {
           remote: true,
+          targetRef: isOnlineGuest() ? onlineSwapOwnersDeep(message.targetRef) : message.targetRef,
           rewardFoilReveal: Boolean(message.rewardFoilReveal)
         });
         return;
@@ -26557,6 +26600,20 @@
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
       snapshotState.pendingRemoteHandTrim = null;
+      snapshotState.remoteResolutionPending = battleChoicePending() || Boolean(state.lectureRoomCheck) || Boolean(pendingItemPresentation);
+      // Only publicly determined additions are sent. Hidden hands stay redacted;
+      // these events expose the generated card once, not its later hand position.
+      snapshotState.publicHandAddEvents = publicHandAddEvents
+        .filter(entry => entry.token === state.preBattleToken)
+        .map(entry => {
+          if (!entry.payload) {
+            const index = state.players[entry.side].hand.findIndex(card => card.instanceId === entry.card.instanceId);
+            if (index < 0) return null;
+            entry.payload = { id: entry.id, owner: entry.side,
+              card: JSON.parse(JSON.stringify(cardRevealPayload(entry.card))), index };
+          }
+          return entry.payload;
+        }).filter(Boolean);
       snapshotState.pendingRaptorTemple = null;
       snapshotState.selectionOverlayPeek = false;
       // A pending placement normally remains host-private.  The sole exception
@@ -26769,6 +26826,7 @@
         phase: state.phase,
         currentSide: state.currentSide,
         actionTurn: state.actionTurn,
+        preBattleToken: state.preBattleToken,
         feedbackEventIds: new Set((state.effectFeedbackEvents || []).map((event) => event.id)),
         players: {
           player: capturePlayerVisualState("player"),
@@ -26783,6 +26841,10 @@
         life: player.life,
         turnsTaken: player.turnsTaken,
         trashIds: new Set((player.trash || []).map((card) => card.instanceId)),
+        handCount: player.hand.length,
+        handIds: new Set(player.hand.map((card) => card.instanceId)),
+        deckCount: player.deck.length,
+        deckIds: new Set(player.deck.map((card) => card.instanceId)),
         board: captureBoardVisualEntries(side)
       };
     }
@@ -26872,6 +26934,18 @@
         const previous = before.players?.[side];
         const current = state.players[side];
         if (!previous || !current) return;
+        if (before.phase === "battle" && state.phase === "battle" && before.preBattleToken === state.preBattleToken) {
+          const drawIds = current.hand.filter(card => card.instanceId && !previous.handIds.has(card.instanceId) && previous.deckIds.has(card.instanceId)).map(card => card.instanceId);
+          const hiddenDrawCount = current.hand.some(card => card.hidden)
+            ? Math.max(0, Math.min(current.hand.length - previous.handCount, previous.deckCount - current.deck.length)) : 0;
+          if (drawIds.length || hiddenDrawCount) {
+            queuedBattlePresentations += 1;
+            window.requestAnimationFrame(() => {
+              queuedBattlePresentations -= 1;
+              animateRecentHandCards(side, drawIds, hiddenDrawCount);
+            });
+          }
+        }
         if (!sharedFeedbackShown) {
           const lifeDiff = current.life - previous.life;
           if (lifeDiff < 0) showFloatingTextForLife(side, String(lifeDiff), "damage");
@@ -27059,6 +27133,220 @@
         .replaceAll("__PLAYER_TWO__", "プレイヤー2");
     }
 
+    // Presentation locks are separate from choices: a required choice must
+    // remain usable, but it must never start another independent action.
+    let queuedBattlePresentations = 0;
+    let itemResolutionContext = null;
+    let pendingItemPresentation = null;
+    function battlePresentationBusy() {
+      return Boolean(pendingItemPresentation || state.pendingCardPlay || state.resolvingOrderedAttendance
+        || state.attackInProgress || state.attackQueue.length
+        || window.ChibattleDraw?.isBusy()
+        || window.ChibattleHandTrash?.isBusy()
+        || queuedBattlePresentations > 0
+        || pendingAnimations.some(animation => animation.type === "draw" && animation.phase === "battle")
+        || !elements.playRevealOverlay.classList.contains("hidden")
+        || elements.turnOverlay.getAnimations().some(animation => animation.playState === "running")
+        || Date.now() < drawEffectVisualUntil);
+    }
+
+    function battleChoicePending() {
+      return Boolean(state.pendingRemoteHandTrim || state.pendingCardChoice
+        || state.pendingThreeGestures || pendingCourseRegistrationConsent || pendingTeacherActionRef
+        || state.pendingAttendTarget || state.pendingCopiedCard
+        || state.pendingCrotchFebrezeEffects || state.pendingKingGhidorahBed
+        || state.pendingRaptorTemple || state.pendingHandDiscardItem
+        || state.pendingMultiItem || state.pendingPanpanItem || state.pendingDestroyItem);
+    }
+
+    function battleNewActionBlocked() {
+      return state.phase === "battle" && !state.gameOver
+        && (state.lectureRoomCheck || battlePresentationBusy() || battleChoicePending()
+          || Boolean(playerActionReservation && !playerActionReservation.executing
+            && (playerActionReservation.attacks.length || playerActionReservation.endTurn))
+          || (isOnlineGuest() && state.remoteResolutionPending) || isOnlineCommandPending());
+    }
+
+    const battleInspectionCards = new WeakMap();
+    let playerActionReservation = null;
+
+    function reservationMatchesTurn() {
+      return playerActionReservation?.token === state.preBattleToken
+        && playerActionReservation.turn === state.actionTurn;
+    }
+
+    function canReservePlayerAction() {
+      return state.screen === "battle" && state.phase === "battle" && state.currentSide === "player"
+        && !isOnlineSpectator() && !state.gameOver && !state.aiThinking && !state.lectureRoomCheck
+        && !battleChoicePending() && (battlePresentationBusy() || isOnlineCommandPending()
+          || (isOnlineGuest() && state.remoteResolutionPending) || reservationMatchesTurn());
+    }
+
+    function playerReservation() {
+      if (!reservationMatchesTurn()) playerActionReservation = {
+        token: state.preBattleToken, turn: state.actionTurn, selected: null, attacks: [], endTurn: false, executing: false
+      };
+      return playerActionReservation;
+    }
+
+    function reservedAttackStillValid(action) {
+      const attacker = getBoardCardFromRef(action.attacker);
+      if (attacker?.instanceId !== action.attackerId || !canAttackSilently(attacker) || isAttackReserved(action.attacker)) return false;
+      if (action.target && getBoardCardFromRef(action.target)?.instanceId !== action.targetId) return false;
+      const previous = state.selectedAttacker;
+      state.selectedAttacker = action.attacker;
+      try {
+        return action.target ? canSelectedAttackerTargetCard(action.target.owner, action.target.zone, action.target.index)
+          : canSelectedAttackerTargetLife(action.targetSide);
+      } finally { state.selectedAttacker = previous; }
+    }
+
+    function handlePlayerReservationClick(target) {
+      if (!canReservePlayerAction()) return false;
+      if (target.closest("#endTurnButton") && tutorialAllowsEndTurn()) {
+        const reservation = playerReservation();
+        reservation.endTurn = !reservation.endTurn;
+        render(); return true;
+      }
+      const board = target.closest(".board-card[data-owner][data-zone]");
+      const life = target.closest("[data-life-target]");
+      if (!board && !life) return false;
+      const ref = board ? { owner: board.dataset.owner, zone: board.dataset.zone,
+        index: board.dataset.index === "" ? null : Number(board.dataset.index) } : null;
+      if (ref?.owner === "player") {
+        const card = getBoardCardFromRef(ref);
+        if (!card || !canAttackSilently(card) || isAttackReserved(ref) || !tutorialAllowsAttacker(ref.owner, ref.zone, ref.index)) return false;
+        const reservation = playerReservation();
+        reservation.selected = { ...ref, instanceId: card.instanceId };
+        render(); return true;
+      }
+      const selected = playerActionReservation?.selected;
+      if (!selected) return false;
+      const attacker = { owner: selected.owner, zone: selected.zone, index: selected.index };
+      const action = ref ? { attacker, attackerId: selected.instanceId, target: ref, targetId: getBoardCardFromRef(ref)?.instanceId }
+        : { attacker, attackerId: selected.instanceId, targetSide: life.dataset.lifeTarget };
+      // Earlier reserved attacks may remove Attention or change other targeting
+      // restrictions. Check those rules when executing, not when recording.
+      if (getBoardCardFromRef(attacker)?.instanceId !== selected.instanceId
+        || (ref ? !action.targetId : action.targetSide === "player")
+        || (ref ? !tutorialAllowsAttackTarget(ref.owner, ref.zone, ref.index)
+        : !tutorialAllowsAttackLife(action.targetSide))) return false;
+      const reservation = playerReservation();
+      reservation.attacks.push(action); reservation.selected = null;
+      render(); return true;
+    }
+
+    async function processPlayerActionReservation() {
+      const reservation = playerActionReservation;
+      if (!reservation) return;
+      if (!reservationMatchesTurn() || state.screen !== "battle" || state.phase !== "battle"
+        || state.currentSide !== "player" || state.gameOver) { playerActionReservation = null; return; }
+      if (reservation.executing || state.lectureRoomCheck || battleChoicePending() || battlePresentationBusy()
+        || isOnlineCommandPending() || (isOnlineGuest() && state.remoteResolutionPending)) return;
+      if (reservation.attacks.length) {
+        const action = reservation.attacks.shift();
+        if (!reservedAttackStillValid(action)) { render(); return; }
+        reservation.executing = true;
+        state.selectedHandId = null;
+        state.selectedAttacker = action.attacker;
+        try {
+          if (onlineCanSendCommand()) {
+            onlineSendCommand(action.target ? "attackCard" : "attackLife", action.target
+              ? { attacker: action.attacker, target: action.target } : { attacker: action.attacker, targetSide: action.targetSide });
+            clearSelections(); render();
+          } else if (action.target) await attackCard(action.target.owner, action.target.zone, action.target.index);
+          else await attackLifeForCurrentSide(action.targetSide);
+        } finally { reservation.executing = false; }
+        return;
+      }
+      if (reservation.endTurn) {
+        playerActionReservation = null;
+        endTurn();
+      } else if (!reservation.selected) playerActionReservation = null;
+    }
+
+    function battleInspectionAllowed(target) {
+      if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion]")) return false;
+      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
+    }
+
+    function battleInputAllowed(target) {
+      if (state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return true;
+      return battleInspectionAllowed(target) || battleActionInputAllowed(target)
+        || (canReservePlayerAction() && Boolean(target.closest("#endTurnButton, [data-life-target]")));
+    }
+
+    function battleActionInputAllowed(target) {
+      if (state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return true;
+      if (state.lectureRoomCheck && !battleChoicePending()) return false;
+      if (battlePresentationBusy()) return false;
+      if (state.pendingCardChoice || state.pendingThreeGestures) {
+        return Boolean(target.closest("#threeGesturesStage, #mulliganStage, #selectionPeekReturnButton"));
+      }
+      if (pendingCourseRegistrationConsent) return Boolean(target.closest("#courseRegistrationConsentModal"));
+      if (pendingTeacherActionRef) return Boolean(target.closest("#teacherActionModal"));
+      if (isOnlineGuest() && (state.pendingCopiedCard || state.pendingAttendTarget)) {
+        return Boolean(target.closest(".slot, #threeGesturesStage, #selectionPeekReturnButton"));
+      }
+      if (state.pendingRemoteHandTrim || isOnlineCommandPending()) return false;
+      // Guest placement/target responses are the only actions permitted while
+      // the host is waiting. No private choice/card information is synced.
+      if (isOnlineGuest() && state.remoteResolutionPending
+        && !state.pendingCopiedCard && !state.pendingAttendTarget
+        && !state.pendingMultiItem) return false;
+      if (battleChoicePending()) {
+        if (target.closest("#playerHand")) return Boolean(state.pendingHandDiscardItem);
+        return Boolean(target.closest(".slot, [data-life-target], #itemTargetConfirmButton, #endTurnButton, #threeGesturesStage, #selectionPeekReturnButton"));
+      }
+      return true;
+    }
+
+    let battlePointerPosition = null;
+    function refreshBattleInputCursor() {
+      if (state.screen !== "battle" || state.phase !== "battle" || state.gameOver) {
+        document.documentElement.classList.remove("battle-input-blocked");
+        return;
+      }
+      const target = battlePointerPosition
+        ? document.elementFromPoint(battlePointerPosition.x, battlePointerPosition.y)
+        : null;
+      document.documentElement.classList.toggle("battle-input-blocked",
+        Boolean(target && !battleInputAllowed(target)));
+    }
+
+    ["click", "dblclick", "pointerdown", "pointermove", "mouseover", "mousemove", "keydown", "dragstart", "drop", "contextmenu", "wheel"].forEach(type => {
+      document.addEventListener(type, event => {
+        if (type === "pointermove" || type === "mousemove" || type === "pointerdown") {
+          battlePointerPosition = { x: event.clientX, y: event.clientY };
+        }
+        refreshBattleInputCursor();
+        if (activeHandDrag?.pointer && ["pointermove", "mousemove"].includes(type)) return;
+        if (type === "click" && Date.now() < handDragClickBlockedUntil && event.target.closest("#playerHand")) {
+          event.preventDefault(); event.stopImmediatePropagation(); return;
+        }
+        if (type === "click" && event.target.closest("[data-battle-inspect-card]")?.dataset.detailPressed !== "true"
+          && handlePlayerReservationClick(event.target)) {
+          event.preventDefault(); event.stopImmediatePropagation(); return;
+        }
+        // Cards share inspection and play/target handlers. During a wait,
+        // consume action events here and only show the already-public detail.
+        const inspectionElement = event.target.closest("[data-battle-inspect-card]");
+        if (inspectionElement && !battleActionInputAllowed(event.target)
+          && ["click", "dblclick", "contextmenu", "dragstart", "drop"].includes(type)) {
+          const card = battleInspectionCards.get(inspectionElement);
+          if (type === "click" && card && inspectionElement.dataset.detailPressed !== "true") showBattleCardPreview(card);
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+        if (battleInputAllowed(event.target)) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }, { capture: true, passive: false });
+    });
+    // Also refresh a stationary pointer when an animation/remote choice ends.
+    window.setInterval(() => { refreshBattleInputCursor(); void processPlayerActionReservation(); }, 100);
+
     function onlineCanApplyRemoteCommand(command) {
       if (!command?.type || state.gameOver) return false;
       if (command.type === "concede") return Boolean(state.online.started);
@@ -27082,7 +27370,13 @@
           && state.pendingAttendTarget?.owner === "opponent"
           && !state.pendingAttendTarget.awaitingRemote;
       }
-      return state.phase === "battle" && state.currentSide === "opponent";
+      if (command.type === "placeCopy") {
+        return state.phase === "battle" && state.currentSide === "opponent"
+          && state.pendingCopiedCard?.owner === "opponent"
+          && state.pendingCopiedCard.pendingOnlineGuestPlacement === true;
+      }
+      return state.phase === "battle" && state.currentSide === "opponent"
+        && !state.lectureRoomCheck && !battlePresentationBusy() && !battleChoicePending();
     }
 
     function onlineIsCommandAwaitingResolution(commandId) {
@@ -27226,7 +27520,7 @@
         }
         if (command.type === "sageLegacy") {
           const item = getHandCard("opponent", payload.instanceId);
-          if (item) resolveSageLegacyChoice("opponent", item, payload.selectedId || null, true);
+          if (item) resolveSageLegacyChoice("opponent", item, payload.selectedId || null, true, payload.returnId || null);
         }
         if (command.type === "musicDetergent") {
           const item = getHandCard("opponent", payload.instanceId);
@@ -28435,6 +28729,8 @@
 
     async function runOpponentAI() {
       if (state.phase !== "battle" || state.currentSide !== "opponent" || state.gameOver) return;
+      await waitForBattlePresentation();
+      if (!isOpponentAiActive()) return;
       addLog("相手AIが行動します。");
       render();
       await sleep(AI_STEP_DELAY);
@@ -29372,6 +29668,12 @@
       return new Promise((resolve) => window.setTimeout(resolve, trainingAnimationDelay(ms)));
     }
 
+    async function waitForBattlePresentation() {
+      while (state.screen === "battle" && state.phase === "battle" && !state.gameOver && battlePresentationBusy()) {
+        await new Promise(resolve => window.setTimeout(resolve, 50));
+      }
+    }
+
     function isTrainingAiVsAi() {
       return state.training.active && state.training.leftController === "ai" && !isOnlineBattle();
     }
@@ -29815,7 +30117,7 @@
       if (item.baseId === "fire_touch") return ai.deck.length >= 3 && ai.life > 4
         ? 42 + crabSearchBonus + deckOutDrawBonus
         : -Infinity;
-      if (item.baseId === "sage_legacy") return ai.deck.length >= 2
+      if (item.baseId === "sage_legacy") return canUseSageLegacy(side, item)
         ? 48 + crabSearchBonus + deckOutDrawBonus
         : -Infinity;
       if (item.baseId === "water_2l") {
@@ -29935,6 +30237,8 @@
 
     async function runTrainingLeftAI() {
       if (!isTrainingLeftAiActive()) return;
+      await waitForBattlePresentation();
+      if (!isTrainingLeftAiActive()) return;
       state.aiThinking = true;
       state.message = "左側CPUが行動を考えています。";
       render();
@@ -29959,6 +30263,8 @@
       for (const ref of attackers) {
         let attackSafety = 0;
         while (isTrainingLeftAiActive() && attackSafety < 12) {
+          await waitForBattlePresentation();
+          if (!isTrainingLeftAiActive()) return;
           attackSafety += 1;
           const attacker = getBoardCardFromRef(ref);
           if (!attacker || !canAttackSilently(attacker)) break;
@@ -31242,6 +31548,7 @@
     }
 
     async function tryUseAiItems(options = {}) {
+      await waitForBattlePresentation();
       const timing = options.timing || "normal";
       if (fuseRulersForSide("opponent", false)) {
         render();
@@ -31249,6 +31556,8 @@
       }
       let safety = 0;
       while (safety < 8 && isOpponentAiActive()) {
+        await waitForBattlePresentation();
+        if (!isOpponentAiActive()) return;
         safety += 1;
         const opponent = state.players.opponent;
         const item = opponent.hand
@@ -32034,6 +32343,8 @@
       for (const ref of attackers) {
         let attackSafety = 0;
         while (isOpponentAiActive() && attackSafety < 12) {
+          await waitForBattlePresentation();
+          if (!isOpponentAiActive()) return;
           attackSafety += 1;
           const attacker = getBoardCardFromRef(ref);
           if (!attacker || !canAttackSilently(attacker)) break;
@@ -32319,6 +32630,12 @@
 
     function endTurn(options = {}) {
       const fromAi = options.fromAi === true;
+      if (!fromAi && battleNewActionBlocked()) return;
+      if (fromAi && battlePresentationBusy()) {
+        const token = state.preBattleToken;
+        waitForBattlePresentation().then(() => { if (token === state.preBattleToken) endTurn(options); });
+        return;
+      }
       if (state.pendingCrotchFebrezeEffects) return;
       if (isOnlineSpectator() && !fromAi) return;
       if (state.resolvingOrderedAttendance) {
@@ -32377,32 +32694,51 @@
       finishEndTurn(side, { meguroDiscardId, meguroChoiceHandled: true });
     }
 
-    function finishEndTurn(endingSide, options = {}) {
-      if (endingSide === "player") pushTutorialHistoryBeforeAction("endTurn", { side: endingSide });
-      if (endingSide === "player") pushTestHistoryBeforeAction();
-      resolveEndTurnEffects(endingSide, options);
-      cleanupDestroyedCards();
-      applyBoardAuras();
-      if (checkLifeVictory()) {
+    async function finishEndTurn(endingSide, options = {}) {
+      if (state.lectureRoomCheck) return;
+      const token = state.preBattleToken;
+      state.lectureRoomCheck = true;
+      state.lectureRoomCheckToken = token;
+      try {
+        if (endingSide === "player") pushTutorialHistoryBeforeAction("endTurn", { side: endingSide });
+        if (endingSide === "player") pushTestHistoryBeforeAction();
+        // Acknowledge the accepted press before running end-of-turn effects.
         render();
-        return;
-      }
-      if (resolveCrabVictoryAtTurnEnd(endingSide)) {
+        resolveEndTurnEffects(endingSide, options);
+        cleanupDestroyedCards();
+        applyBoardAuras();
+        if (checkLifeVictory()) {
+          render();
+          return;
+        }
+        if (resolveCrabVictoryAtTurnEnd(endingSide)) {
+          render();
+          return;
+        }
+        const tutorialCompleted = endingSide === "player" && completeTutorialAction("endTurn", { side: endingSide });
+        if (tutorialCompleted && !state.tutorial.active) {
+          render();
+          return;
+        }
+        if (state.tutorial?.pauseAfterAction) {
+          render();
+          return;
+        }
+        // End-of-turn rules and their presentations belong to the ending turn.
+        // Do not announce or start the next turn while they are still resolving.
         render();
-        return;
+        while (state.screen === "battle" && state.phase === "battle" && !state.gameOver
+          && token === state.preBattleToken && (battlePresentationBusy() || battleChoicePending())) {
+          await new Promise(resolve => window.setTimeout(resolve, 50));
+        }
+        if (token !== state.preBattleToken || state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return;
+        state.lectureRoomCheck = false;
+        state.currentSide = oppositeSide(endingSide);
+        state.actionTurn += 1;
+        startTurn(state.currentSide);
+      } finally {
+        if (token === state.preBattleToken) state.lectureRoomCheck = false;
       }
-      const tutorialCompleted = endingSide === "player" && completeTutorialAction("endTurn", { side: endingSide });
-      if (tutorialCompleted && !state.tutorial.active) {
-        render();
-        return;
-      }
-      if (state.tutorial?.pauseAfterAction) {
-        render();
-        return;
-      }
-      state.currentSide = oppositeSide(endingSide);
-      state.actionTurn += 1;
-      startTurn(state.currentSide);
     }
 
     function needsMeguroHandChoice(side) {
@@ -33398,11 +33734,11 @@
           nextHand.push(card);
           return;
         }
-        const beta = createCardFromBase("beta", side);
+        const beta = publicHandCard("beta", side);
         beta.createdActionTurn = state.actionTurn;
         nextHand.push(beta);
         showCardPlayAnimation(card, "trash");
-        moveToTrash(side, card);
+        moveToTrash(side, card, { handRevealShown: true });
         addLog(`${SIDES[side]}のアルファの効果：「ベータ」を手札に加え、アルファを校外エリアへ送りました。`);
       });
       const resolvedHand = [];
@@ -33425,8 +33761,8 @@
           return;
         }
         showCardPlayAnimation(card, "trash");
-        resolvedHand.push(createCardFromBase("gamma", side));
-        moveToTrash(side, card);
+        resolvedHand.push(publicHandCard("gamma", side));
+        moveToTrash(side, card, { handRevealShown: true });
         addLog(`${SIDES[side]}のベータの効果：「ガンマ」を手札に加え、ベータを校外エリアへ送りました。`);
       });
       player.hand = resolvedHand;
@@ -33492,6 +33828,9 @@
     }
 
     function handleHandCardClick(instanceId) {
+      if (state.phase === "battle" && battleChoicePending() && !state.pendingHandDiscardItem) return;
+      if (state.phase === "battle" && (battlePresentationBusy() || state.pendingRemoteHandTrim
+        || (isOnlineGuest() && state.remoteResolutionPending && !state.pendingHandDiscardItem))) return;
       if (isOnlineSpectator()) return;
       if (state.pendingCrotchFebrezeEffects && !state.pendingHandDiscardItem) return;
       if (state.pendingCardPlay) return;
@@ -35133,17 +35472,22 @@
         resolveDroppedCardsChoice("player", item, selectedIds, true);
         return;
       }
+      if (mode === "sage_legacy_return") {
+        const item = getHandCard("player", itemId);
+        if (item) continueSageLegacyChoice(item, selectedIds[0]);
+        return;
+      }
       if (mode === "sage_legacy") {
         const item = getHandCard("player", itemId);
         if (!item) return;
         if (onlineCanSendCommand()) {
-          onlineSendCommand("sageLegacy", { instanceId: item.instanceId, selectedId: selectedIds[0] || null });
+          onlineSendCommand("sageLegacy", { instanceId: item.instanceId, selectedId: selectedIds[0] || null, returnId: pending.context?.returnId || null });
           state.message = "賢者の遺産の選択を送信しました。";
           clearSelections();
           render();
           return;
         }
-        resolveSageLegacyChoice("player", item, selectedIds[0] || null, true);
+        resolveSageLegacyChoice("player", item, selectedIds[0] || null, true, pending.context?.returnId || null);
         return;
       }
       if (mode === "deck_without_discard") {
@@ -35210,6 +35554,7 @@
     }
 
     function beginItemUse(item) {
+      if (battleNewActionBlocked()) return;
       if (state.pendingCrotchFebrezeEffects) return;
       if (!item || state.phase !== "battle" || state.currentSide !== "player" || state.gameOver) return;
       if (item.baseId === "thin_item" && !canUseThinItem()) return;
@@ -35517,17 +35862,22 @@
         && [1, 7].includes(state.players[side]?.turnsTaken);
     }
 
-    function canUseSageLegacy(side) {
+    function sageLegacyReturnCandidates(side, item) {
+      return state.players[side].hand.filter(card => card.instanceId !== item?.instanceId && !isHighLoadHandCard(card));
+    }
+
+    function canUseSageLegacy(side, item = null) {
+      const source = item || state.players[side]?.hand.find(card => card.baseId === "sage_legacy");
       return state.phase === "battle"
         && !state.gameOver
         && state.currentSide === side
-        && state.players[side]?.deck.length > 0;
+        && Boolean(source && sageLegacyReturnCandidates(side, source).length);
     }
 
     function openSageLegacyChoice(item) {
       if (!item || item.baseId !== "sage_legacy") return false;
-      if (!canUseSageLegacy("player")) {
-        addLog("賢者の遺産を使うには、デッキにカードが必要です。");
+      if (!canUseSageLegacy("player", item)) {
+        addLog("賢者の遺産を使うには、デッキに戻せる手札が必要です。");
         render();
         return true;
       }
@@ -35538,21 +35888,31 @@
       }
       state.selectedAttacker = null;
       state.selectedHandId = item.instanceId;
-      if (!isSageLegacyTurn("player")) {
-        return resolveSageLegacyChoice("player", item, null, true);
-      }
-      // 先に引く1枚は追加サーチの候補ではない。選択時点で除外しておけば、
-      // 山札トップを選んだことで別カードへすり替わることがない。
-      const postDrawCandidates = state.players.player.deck.slice(1);
-      if (postDrawCandidates.length === 0) {
-        return resolveSageLegacyChoice("player", item, null, true);
+      return openCardChoice({
+        mode: "sage_legacy_return", itemId: item.instanceId, title: "賢者の遺産",
+        message: "デッキに戻す手札1枚を選んでください。",
+        cards: sageLegacyReturnCandidates("player", item), min: 1, max: 1,
+        confirmLabel: "このカードをデッキへ戻す"
+      });
+    }
+
+    function continueSageLegacyChoice(item, returnId) {
+      const returned = sageLegacyReturnCandidates("player", item).find(card => card.instanceId === returnId);
+      if (!returned) return false;
+      if (!isSageLegacyTurn("player") || isDeckToHandLocked()) {
+        if (onlineCanSendCommand()) {
+          onlineSendCommand("sageLegacy", { instanceId: item.instanceId, returnId });
+          clearSelections(); render(); return true;
+        }
+        return resolveSageLegacyChoice("player", item, null, true, returnId);
       }
       return openCardChoice({
         mode: "sage_legacy",
         itemId: item.instanceId,
         title: "賢者の遺産",
-        message: "まずデッキの上から1枚引きます。その後、残っていれば追加で手札に加えるカードを1枚選んでください。",
-        cards: sortCardsByCostForChoice(postDrawCandidates, "asc"),
+        message: "手札に加えるカード1枚を選んでください。",
+        cards: sortCardsByCostForChoice([...state.players.player.deck, returned], "asc"),
+        context: { returnId },
         min: 1,
         max: 1,
         confirmLabel: "このカードを手札へ加える"
@@ -35785,50 +36145,48 @@
       return true;
     }
 
-    function resolveSageLegacyChoice(side, item, selectedId = null, renderAfter = true) {
+    function resolveSageLegacyChoice(side, item, selectedId = null, renderAfter = true, returnId = null) {
       if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
       if (!item || item.baseId !== "sage_legacy") return false;
       const player = state.players[side];
-      if (!canUseSageLegacy(side)) {
-        addLog("賢者の遺産を使うには、デッキにカードが必要です。");
+      const candidates = sageLegacyReturnCandidates(side, item);
+      const returned = returnId ? candidates.find(card => card.instanceId === returnId)
+        : isCpuControlledBattleSide(side) ? sortCardsByCostForChoice(candidates, "asc")[0] : null;
+      const specialSearch = isSageLegacyTurn(side);
+      if (!canUseSageLegacy(side, item) || !returned) {
+        addLog("賢者の遺産を使うには、デッキに戻す手札1枚を選ぶ必要があります。");
         if (renderAfter) render();
         return false;
       }
+      if (specialSearch && !isDeckToHandLocked()
+        && ![...player.deck, returned].some(card => card.instanceId === selectedId)) return false;
       if (!payForItem(side, item)) {
         if (renderAfter) render();
         return false;
       }
       showCardPlayAnimation(item, "trash");
-      const specialSearch = isSageLegacyTurn(side);
+      player.hand = player.hand.filter(card => card.instanceId !== returned.instanceId);
+      returned.handTurns = 0;
+      player.deck.push(returned);
+      shuffleDeckAfterSearch(side);
       const pickedNames = [];
-      const searchableIds = new Set(player.deck.slice(1).map((card) => card.instanceId));
       if (!isDeckToHandLocked()) {
-        const [topCard] = player.deck.splice(0, 1);
-        if (topCard) {
-          topCard.owner = side;
-          topCard.handTurns = 0;
-          player.hand.push(topCard);
+        const index = specialSearch ? player.deck.findIndex(card => card.instanceId === selectedId) : 0;
+        const [picked] = player.deck.splice(index, 1);
+        if (picked) {
+          picked.owner = side;
+          picked.handTurns = 0;
+          player.hand.push(picked);
           queueAnimation("draw", side, 1);
-          pickedNames.push(topCard.name);
-        }
-        if (specialSearch && player.deck.length > 0 && searchableIds.has(selectedId)) {
-          const index = player.deck.findIndex((card) => card.instanceId === selectedId);
-          const [searchedCard] = player.deck.splice(index, 1);
-          if (searchedCard) {
-            searchedCard.owner = side;
-            searchedCard.handTurns = 0;
-            player.hand.push(searchedCard);
-            queueAnimation("draw", side, 1);
-            pickedNames.push(searchedCard.name);
-          }
+          pickedNames.push(picked.name);
         }
       }
       if (specialSearch) shuffleDeckAfterSearch(side);
       moveHandCardToTrash(side, item);
       const pickedText = pickedNames.length ? pickedNames.join("、") : "カード0枚";
       addLog(specialSearch
-        ? `${SIDES[side]}は賢者の遺産を使い、デッキの上から1枚引き、さらに選んだカードを手札に加えました（${pickedText}）。`
-        : `${SIDES[side]}は賢者の遺産を使い、デッキの上から${pickedText}を手札に加えました。`);
+        ? `${SIDES[side]}は賢者の遺産を使い、手札1枚をデッキに戻し、選んだカードを手札に加えました（${pickedText}）。`
+        : `${SIDES[side]}は賢者の遺産を使い、手札1枚をデッキに戻し、カードを${pickedNames.length}枚引きました。`);
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
       clearSelections();
@@ -36276,6 +36634,7 @@
     }
 
     function playCard(instanceId, zone, owner, index = null) {
+      if (battleNewActionBlocked()) return;
       if (state.pendingCardPlay) {
         state.message = "カード演出が終わるまでお待ちください。";
         render();
@@ -36504,12 +36863,15 @@
           : `${card.name}を出席させています。`;
       clearSelections();
       showCardPlayAnimation(card, destination, {
+        targetRef: card.late && state.environment?.baseId !== "no_late_time" ? null : { owner, zone, index },
         onComplete: () => {
           if (state.pendingCardPlay?.id !== deferredId) return;
           state.pendingCardPlay = null;
           const wasHandlingRemote = state.online.isHandlingRemoteCommand;
           if (commandId && isOnlineHost()) state.online.isHandlingRemoteCommand = true;
-          placeCardFromHand(side, instanceId, zone, owner, index, renderAfter, {
+          // This completion runs later than the caller's render. Always update
+          // auras/the field and start queued effects before the AI waits again.
+          placeCardFromHand(side, instanceId, zone, owner, index, true, {
             ...options,
             revealAlreadyShown: true
           });
@@ -36622,7 +36984,7 @@
         if (renderAfter) render();
         return false;
       }
-      if (isRewardFoilCard(card) && !card.evolutionFrom && !options.revealAlreadyShown) {
+      if (!card.evolutionFrom && !options.revealAlreadyShown && !state.training?.skipAnimations) {
         return deferCardAttendanceUntilReveal(side, instanceId, zone, owner, index, renderAfter, options, card);
       }
       const analyticsCandidates = analyticsLegalPlacementCandidates(side, card);
@@ -37067,6 +37429,7 @@
       while (pendingAiTimedEffects.size > 0) {
         await Promise.all([...pendingAiTimedEffects]);
       }
+      await waitForBattlePresentation();
     }
 
     function scheduleEvolutionEffect(side, evolved, options = {}) {
@@ -37160,7 +37523,7 @@
       }
       if (evolved.baseId === "recovered_dark_yuta") return resolveRecoveredYutaEvolution(side, evolved);
       if (evolved.baseId === "dark_yuta") {
-        state.players[side].hand.push(createCardFromBase("yuta", side));
+        state.players[side].hand.push(publicHandCard("yuta", side));
         addLog(`${evolved.name}の効果：「U太」を1枚手札に生成しました。`);
       } else if (evolved.baseId === "success_student") {
         resolveSuccessStudentEvolutionEffect(side, evolved);
@@ -37688,7 +38051,7 @@
         addLog(`${card.name}の出席時効果：お互いの席マスにいる他の出席者${seatAffected}人に1ダメージ、教卓マスにいる出席者${teacherAffected}人に2ダメージ。`);
       }
       if (card.baseId === "gesture_student") {
-        for (let i = 0; i < 2; i += 1) state.players[side].hand.push(createCardFromBase("three_gestures", side));
+        for (let i = 0; i < 2; i += 1) state.players[side].hand.push(publicHandCard("three_gestures", side));
         addLog(`${card.name}の効果：「３つジェスチャー」を2枚手札に生成しました。`);
       }
       if (card.baseId === "spoon_wizard") {
@@ -37790,7 +38153,7 @@
         }
       }
       if (card.baseId === "enemy_horde") {
-        state.players[side].hand.push(createCardFromBase("enemy_student", side));
+        state.players[side].hand.push(publicHandCard("enemy_student", side));
         summonToRandomOpenSeat(side, "enemy_student", card.name);
       }
       if (card.baseId === "enemy_enemy") {
@@ -38043,7 +38406,7 @@
           const discardedIndex = Math.floor(Math.random() * opponentHand.length);
           const discarded = opponentHand[discardedIndex];
           state.players[opponent].hand = state.players[opponent].hand.filter((handCard) => handCard.instanceId !== discarded.instanceId);
-          moveToTrash(opponent, discarded);
+          moveToTrash(opponent, discarded, { handRevealShown: true });
           showCardPlayAnimation(discarded, "trash");
           addLog(`${card.name}の効果：相手の手札から「${discarded.name}」1枚をランダムに選び、校外エリアへ送りました。`);
         } else {
@@ -38257,11 +38620,11 @@
         startOrderedAttendance(
           orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("ta", side))
         );
-        state.players[side].hand.push(createCardFromBase("roar", side));
+        state.players[side].hand.push(publicHandCard("roar", side));
         addLog(`${card.name}の効果：TAを出席させ、咆哮を生成。教卓マスにいる間、自分のTAの体力+1。`);
       }
       if (card.baseId === "lightning_n") {
-        state.players[side].hand.push(createCardFromBase("ruler", side));
+        state.players[side].hand.push(publicHandCard("ruler", side));
         const pulled = zone === "teacher" ? pullCardsFromDeck(side, "ruler", 1) : 0;
         addLog(zone === "teacher"
           ? `${card.name}の効果：定規を1枚生成し、デッキから${pulled}枚引きました。`
@@ -39010,7 +39373,7 @@
       let index = hand.findIndex((card) => card.instanceId === instanceId && !isHighLoadHandCard(card));
       if (index < 0) index = hand.findIndex((card) => card.instanceId === eligible[Math.floor(Math.random() * eligible.length)].instanceId);
       const [discarded] = hand.splice(index, 1);
-      moveToTrash(opponent, discarded);
+      moveToTrash(opponent, discarded, { handRevealShown: true });
       showCardPlayAnimation(discarded, "trash");
       addLog(`${source?.name || "効果"}：相手の手札1枚を校外エリアへ送りました。`);
       if (renderAfter) render();
@@ -39119,6 +39482,9 @@
     }
 
     function handleBoardCardClick(owner, zone, index = null) {
+      if (state.phase === "battle" && (battlePresentationBusy() || state.pendingRemoteHandTrim
+        || (isOnlineGuest() && state.remoteResolutionPending && !state.pendingCopiedCard
+          && !state.pendingAttendTarget && !state.pendingMultiItem))) return;
       if (isOnlineSpectator()) return;
       if (state.resolvingOrderedAttendance) return;
       if (state.pendingCardPlay) return;
@@ -39227,6 +39593,7 @@
     }
 
     function selectAttacker(owner, zone, index = null) {
+      if (battleNewActionBlocked()) return;
       const card = getBoardCard(owner, zone, index);
       if (!card || card.type === "environment") return;
       if (isAttackReserved({ owner, zone, index })) return;
@@ -39236,6 +39603,7 @@
     }
 
     async function attackCard(targetOwner, targetZone, targetIndex = null) {
+      if (battleNewActionBlocked()) return;
       const attacker = getBoardCardFromRef(state.selectedAttacker);
       const target = getBoardCard(targetOwner, targetZone, targetIndex);
       if (!attacker || !target) {
@@ -39331,6 +39699,7 @@
     }
 
     function attackLife(targetSide) {
+      if (battleNewActionBlocked()) return;
       if (isOnlineSpectator()) return;
       if (state.resolvingOrderedAttendance) return;
       if (state.pendingCardPlay) return;
@@ -39832,7 +40201,7 @@
       if (item.baseId === "padlock") {
         if (!attachPadlock(target, item)) return false;
         state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
-        state.players[side].hand.push(createCardFromBase("key", side));
+        state.players[side].hand.push(publicHandCard("key", side));
         // Remove any continuously-derived stats and effects immediately,
         // rather than waiting for the next turn-end aura recalculation.
         applyBoardAuras();
@@ -39903,7 +40272,7 @@
       if (item.baseId === "go_home") {
         const returnedBaseId = target.baseId;
         clearBoardCardFromField(targetOwner, targetZone, targetIndex, target);
-        state.players[side].hand.push(createCardFromBase(returnedBaseId, side));
+        state.players[side].hand.push(publicHandCard(returnedBaseId, side));
         moveHandCardToTrash(side, item);
         addLog(`${SIDES[side]}は帰っていいぞを使い、${target.name}を手札に戻しました。`);
         cleanupDestroyedCards();
@@ -39953,7 +40322,7 @@
       if (item.baseId === "favorite_number_s") {
         const copiedBaseId = target.baseId;
         destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
-        state.players[side].hand.push(createCardFromBase(copiedBaseId, side));
+        state.players[side].hand.push(publicHandCard(copiedBaseId, side));
       }
       if (item.baseId === "handmade_ctoc") {
         target.sameNameAttackLocked = true;
@@ -40445,6 +40814,10 @@
         return resolveDroppedCardsChoice(side, item, selectedIds, renderAfter);
       }
       if (item.baseId === "sage_legacy") {
+        const returned = options.returnId
+          ? sageLegacyReturnCandidates(side, item).find(card => card.instanceId === options.returnId)
+          : sortCardsByCostForChoice(sageLegacyReturnCandidates(side, item), "asc")[0];
+        if (!returned) return false;
         const yocchanSearchTarget = isAiYocchanHyperCarryStrategyActive(side)
           && aiYocchanCardsInHand(side).length === 0
           && !aiHasUsedTrpgMember(side)
@@ -40452,9 +40825,9 @@
           : null;
         const selectedId = options.selectedId
           || yocchanSearchTarget?.instanceId
-          || sortCardsByCostForChoice(state.players[side].deck.slice(1), "desc")[0]?.instanceId
+          || sortCardsByCostForChoice([...state.players[side].deck, returned], "desc")[0]?.instanceId
           || null;
-        return resolveSageLegacyChoice(side, item, selectedId, renderAfter);
+        return resolveSageLegacyChoice(side, item, selectedId, renderAfter, returned.instanceId);
       }
       if (item.baseId === "three_gestures" && side === "player" && !isCpuControlledBattleSide(side) && !isDeckToHandLocked()) {
         openThreeGesturesSelection(item);
@@ -40680,7 +41053,7 @@
       if (item.baseId === "aggro_army") {
         const generatedBaseIds = ["aggro_student", "aggro_king", "aggro_queen"];
         generatedBaseIds.forEach((baseId) => {
-          state.players[side].hand.push(createCardFromBase(baseId, side));
+          state.players[side].hand.push(publicHandCard(baseId, side));
         });
         resultText = "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成しました。";
       }
@@ -40732,7 +41105,7 @@
       }
       if (item.baseId === "think_so") {
         const searched = pullCardsFromDeck(side, "yuta", 1);
-        state.players[side].hand.push(createCardFromBase("yuta", side));
+        state.players[side].hand.push(publicHandCard("yuta", side));
         let discounted = 0;
         state.players[side].hand.forEach((handCard) => {
           if (handCard.baseId !== "yuta" || handCard.noCost) return;
@@ -40904,7 +41277,7 @@
         resultText = `U太を${pulled}枚引きました。`;
       }
       if (item.baseId === "yoyu_announce") {
-        state.players[side].hand.push(createCardFromBase("yuta", side));
+        state.players[side].hand.push(publicHandCard("yuta", side));
         const drawn = drawOne(side, false) ? 1 : 0;
         resultText = `U太を1枚生成し、カードを${drawn}枚ドローしました。`;
       }
@@ -41051,7 +41424,7 @@
         resultText = "次の自分のターン開始時まで、相手の手札にあるカードの戦意を+1しました。";
       }
       if (item.baseId === "ikemasu") {
-        const generated = createCardFromBase("general_student", side);
+        const generated = publicHandCard("general_student", side);
         addKeyword(generated, "陽気", item.name);
         state.players[side].hand.push(generated);
         resultText = "陽気を持つ「一般学生」を1枚手札に生成しました。";
@@ -41545,7 +41918,36 @@
         state.message = `戦意が足りません。${item.name}のコストは${playCost}です。`;
         return false;
       }
+      // All resolver-specific target/choice validation has completed at this point.
+      // Keep the existing synchronous resolvers, but run their effects only after
+      // the shared play presentation has delivered the item to its destination.
+      const context = itemResolutionContext;
+      const equipped = !arePlayedEffectsSuppressed(side) && context?.name === "castItemOnCard"
+        && [...UTA_EQUIPMENT_BASE_IDS, "illness", "stress_hair", "padlock", "earphones"].includes(item.baseId);
+      if (context && !context.replaying && state.screen === "battle" && state.phase === "battle"
+        && !state.training?.skipAnimations) {
+        if (pendingItemPresentation) return false;
+        context.accepted = true;
+        const token = state.preBattleToken;
+        const pending = { token, itemId: item.instanceId };
+        pendingItemPresentation = pending;
+        clearSelections();
+        showCardPlayAnimation(item, equipped ? "board" : "trash", {
+          targetRef: equipped ? { owner: context.args[2], zone: context.args[3], index: context.args[4] } : null,
+          onComplete: () => {
+            if (pendingItemPresentation !== pending) return;
+            pendingItemPresentation = null;
+            if (state.preBattleToken !== token || state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return;
+            const previousContext = itemResolutionContext;
+            itemResolutionContext = { ...context, replaying: true, itemId: item.instanceId, equipped };
+            try { context.resolve(...context.args); }
+            finally { itemResolutionContext = previousContext; render(); }
+          }
+        });
+        return false;
+      }
       if (side === "player") pushTestHistoryBeforeAction();
+      item.usedFromHand = true;
       state.players[side].will -= playCost;
       const candidates = analyticsItemCandidates(side, item);
       analyticsRecordAction({
@@ -41561,6 +41963,13 @@
           willAfter: state.players[side].will
         }
       });
+      if (context && !equipped) {
+        context.itemId = item.instanceId;
+        state.players[side].hand = state.players[side].hand.filter(card => card.instanceId !== item.instanceId);
+        // Reset only the stored copy: the resolving effect still needs its source.
+        moveToTrash(side, { ...item }, { sourceZone: "hand", playedFromHand: true });
+        context.itemMoved = true;
+      }
       buffYocchanInHand(side, item);
       return true;
     }
@@ -41579,7 +41988,7 @@
     function moveHandCardToTrash(side, card, options = {}) {
       if (options.effectDiscard && isHighLoadHandCard(card)) return false;
       state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== card.instanceId);
-      moveToTrash(side, card, { ...options, playedFromHand: !options.effectDiscard });
+      moveToTrash(side, card, { ...options, sourceZone: "hand", playedFromHand: !options.effectDiscard });
       return true;
     }
 
@@ -41611,7 +42020,7 @@
       player.hand = player.hand.filter((card) => !materials.some((material) => material.instanceId === card.instanceId));
       moveToTrash(side, source);
       moveToTrash(side, target);
-      player.hand.push(createCardFromBase("double_diamond", side));
+      player.hand.push(publicHandCard("double_diamond", side));
       analyticsRecordAction({
         side,
         actionType: "fusion",
@@ -42557,6 +42966,7 @@
     function showFloatingTextAtRect(rect, text, kind, options = {}) {
       if (!rect) return;
       const delay = Number.isFinite(options.delay) ? Math.max(0, options.delay) : activeEffectFeedbackDelay;
+      drawEffectVisualUntil = Math.max(drawEffectVisualUntil, Date.now() + delay + 1600);
       holdCrotchFebrezeForVisual(delay + 1600);
       const target = options.target || null;
       const instanceId = target?.dataset.cardId;
@@ -42722,11 +43132,16 @@
     }
 
     function showCardPlayAnimation(card, destination, options = {}) {
+      if (itemResolutionContext?.replaying && itemResolutionContext.itemId === card?.instanceId) return;
       if (!card || !elements.playRevealOverlay || !elements.playRevealCard) {
         options.onComplete?.();
         return;
       }
       window.clearTimeout(playRevealTimer);
+      if (destination === "board" && !options.targetRef && card.owner) {
+        const targetRef = listBoardRefs(card.owner).find(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId);
+        if (targetRef) options = { ...options, targetRef };
+      }
       const destinationClass = destination === "environment"
         ? "to-environment"
         : destination === "board"
@@ -42738,10 +43153,22 @@
       elements.playRevealCard.innerHTML = cardShellTemplate(card);
       elements.playRevealOverlay.classList.toggle("reward-foil-reveal-active", rewardFoilReveal);
       elements.playRevealOverlay.classList.remove("hidden");
+      elements.playRevealCard.removeAttribute("style");
+      if (options.targetRef || destination === "trash") {
+        const targetElement = options.targetRef
+          ? document.querySelector(tutorialRefSelector(options.targetRef))
+          : document.getElementById(card.owner === "opponent" ? "opponentTrashButton" : "playerTrashButton");
+        const targetRect = targetElement?.getBoundingClientRect();
+        const sourceRect = elements.playRevealCard.getBoundingClientRect();
+        if (targetRect) {
+          elements.playRevealCard.style.setProperty("--play-target-x", `${targetRect.x + targetRect.width / 2 - sourceRect.x - sourceRect.width / 2}px`);
+          elements.playRevealCard.style.setProperty("--play-target-y", `${targetRect.y + targetRect.height / 2 - sourceRect.y - sourceRect.height / 2}px`);
+        }
+      }
       void elements.playRevealCard.offsetWidth;
       elements.playRevealCard.classList.add(destinationClass);
       if (!options.remote && isOnlineHost() && state.online.started && state.online.connected) {
-        onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination, rewardFoilReveal });
+        onlineSend({ type: "playReveal", card: cardRevealPayload(card), destination, targetRef: options.targetRef || null, rewardFoilReveal });
       }
       playRevealTimer = window.setTimeout(() => {
         hidePlayReveal();
@@ -43302,6 +43729,8 @@
     }
 
     function moveToTrash(owner, card, options = {}) {
+      if (itemResolutionContext?.itemId === card.instanceId
+        && itemResolutionContext.itemMoved) return true;
       if (isHighLoadHandCard(card) && !options.playedFromHand && options.sourceZone !== "deck") {
         if (!state.players[owner].hand.some((entry) => entry.instanceId === card.instanceId)) {
           state.players[owner].hand.push(card);
@@ -43310,6 +43739,10 @@
         return false;
       }
       const vanishes = isTokenCard(card);
+      const wasUsedFromHand = card.usedFromHand === true;
+      const fromHand = options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId)
+        || (renderedHandTrashState?.token === state.preBattleToken
+          && renderedHandTrashState.sides[owner].hand.some(entry => entry.id === card.instanceId));
       // 残存効果は環境の「上書き」という移動理由からのみ明示的に起動する。
       // 破壊、除去、通常の校外送りで無法の食堂が残らないよう、既定では開始しない。
       if (card?.baseId === "illegal_cafeteria" && options.startIllegalCafeteriaResidual === true) {
@@ -43329,6 +43762,10 @@
       if (detachedTokenEarphones) delete card.earphoneEquipment;
       if (vanishes) card.tokenVanished = true;
       else resetCardEffectsForTrash(card, owner);
+      card.trashFromHand = Boolean(fromHand && !options.playedFromHand && !options.handRevealShown && !wasUsedFromHand
+        && options.sourceZone !== "deck" && options.sourceZone !== "equipment");
+      card.trashFromDeck = options.sourceZone === "deck" && !options.deckRevealShown;
+      delete card.usedFromHand;
       card.directlyDestroyed = options.directDestruction === true || pendingDirectDestruction;
       delete card.pendingDirectDestruction;
       card.suppressTrashToast = options.suppressToast === true;
@@ -43645,7 +44082,75 @@
         .replaceAll("場で", "講義室で");
     }
 
+    function renderHandTrashFlights() {
+      if (state.screen !== "battle" || state.phase !== "battle") {
+        renderedHandTrashState = null;
+        window.ChibattleHandTrash?.cancel();
+        return;
+      }
+      const previous = renderedHandTrashState;
+      const next = { token: state.preBattleToken, sides: {} };
+      for (const side of ["player", "opponent"]) {
+        const player = state.players[side], zone = side === "player" ? elements.playerHand : elements.opponentHand;
+        next.sides[side] = {
+          trashIds: new Set(player.trash.map(card => card.instanceId)),
+          deckIds: new Set(player.deck.map(card => card.instanceId)),
+          hand: player.hand.map((card, index) => ({ id: card.instanceId,
+            rect: zone.children[side === "opponent" ? player.hand.length - index - 1 : index]?.getBoundingClientRect() }))
+        };
+        if (!previous || previous.token !== state.preBattleToken || state.training?.skipAnimations) continue;
+        const old = previous.sides[side];
+        const acquired = player.hand.filter(card => card.instanceId && !card.hidden
+          && !old.hand.some(entry => entry.id === card.instanceId)
+          && !(card.handEntryKind === "draw" && old.deckIds.has(card.instanceId)));
+        if (acquired.length) animateRecentHandCards(side, [], 0, true, acquired.map(card => ({
+          card: { ...card, generatedHandAddition: !old.deckIds.has(card.instanceId) && !old.trashIds.has(card.instanceId) },
+          index: player.hand.findIndex(entry => entry.instanceId === card.instanceId)
+        })));
+        const moved = player.trash.filter(card => card.trashFromHand && !old.trashIds.has(card.instanceId));
+        const entries = moved.map((card, index) => ({ card,
+          rect: (old.hand.find(entry => entry.id === card.instanceId) || old.hand[index])?.rect })).filter(entry => entry.rect);
+        const token = state.preBattleToken;
+        const deckMoved = player.trash.filter(card => card.trashFromDeck && !old.trashIds.has(card.instanceId));
+        const deckRect = (side === "player" ? elements.playerDeckPile : elements.opponentDeckPile).getBoundingClientRect();
+        const batches = [{ source: "hand", entries },
+          { source: "deck", entries: deckMoved.map(card => ({ card, rect: deckRect })) }];
+        for (const batch of batches) {
+          if (!batch.entries.length) continue;
+          window.ChibattleHandTrash?.play({ side, ...batch,
+            destination: document.getElementById(side === "player" ? "playerTrashButton" : "opponentTrashButton"),
+            face: card => cardShellTemplate(card),
+            isCurrent: () => state.screen === "battle" && state.preBattleToken === token,
+            isVisualBusy: () => state.resolvingOrderedAttendance
+              || !elements.playRevealOverlay.classList.contains("hidden") || Date.now() < drawEffectVisualUntil,
+            syncScale: scheduleCardTemplateScaleSync
+          });
+        }
+      }
+      renderedHandTrashState = next;
+    }
+
+    function renderPublicHandAddFlights() {
+      if (!(isOnlineGuest() || isOnlineSpectator()) || state.screen !== "battle" || state.phase !== "battle") return;
+      const bySide = new Map();
+      for (const entry of state.publicHandAddEvents || []) {
+        const key = `${state.preBattleToken}:${entry.id}`;
+        if (seenPublicHandAdds.has(key)) continue;
+        seenPublicHandAdds.add(key);
+        const cards = bySide.get(entry.owner) || [];
+        cards.push({ card: { ...entry.card, publicHandAddition: true }, index: entry.index });
+        bySide.set(entry.owner, cards);
+      }
+      bySide.forEach((cards, side) => animateRecentHandCards(side, [], 0, true, cards));
+    }
+
     function render() {
+      if (activeHandDrag && (state.screen !== "battle" || state.phase !== "battle" || state.gameOver
+        || state.currentSide !== "player" || battleChoicePending() || state.lectureRoomCheck
+        || !getHandCard("player", activeHandDrag.instanceId))) cancelHandPointerDrag();
+      if (pendingItemPresentation && (state.screen !== "battle" || pendingItemPresentation.token !== state.preBattleToken)) pendingItemPresentation = null;
+      if (state.screen !== "battle" || state.lectureRoomCheckToken !== state.preBattleToken) state.lectureRoomCheck = false;
+      if (state.screen !== "battle") window.ChibattleDraw?.cancel();
       // Covers all navigation paths, including Cards and Shop's direct screen changes.
       // Entering an actual online battle is not a cancellation.
       if (state.online.matchMode === "random" && !state.online.started && !onlineIsRandomMatchScreen()) {
@@ -43661,6 +44166,7 @@
       renderOnlineLobby();
       renderStatus();
       renderHands();
+      window.ChibattleDraw?.sync();
       renderPreBattleStage();
       renderMulliganStage();
       renderThreeGesturesStage();
@@ -43678,6 +44184,8 @@
       renderDungeonReward();
       renderDeckEditor();
       renderTrash();
+      renderHandTrashFlights();
+      renderPublicHandAddFlights();
       renderLog();
       renderControls();
       renderTrainingWatchControls();
@@ -43760,7 +44268,7 @@
       document.querySelectorAll(".card > .card-scale-stage").forEach((stage) => {
         const shell = stage.parentElement;
         if (!shell || shell.classList.contains("hand-card-hover-overlay")) return;
-        if (shell.classList.contains("home-favorite-card-render") || shell.closest(".gacha-screen")) {
+        if (shell.classList.contains("home-favorite-card-render") || shell.closest(".gacha-screen,.draw-flight")) {
           const scale = Math.min(shell.offsetWidth / CARD_TEMPLATE_BASE_WIDTH, shell.offsetHeight / CARD_TEMPLATE_BASE_HEIGHT);
           if (scale > 0) stage.style.setProperty("--card-template-scale", String(scale));
           return;
@@ -44441,6 +44949,7 @@
         || (state.pendingKingGhidorahBed && !state.pendingKingGhidorahBed.target);
       elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || (choosingItemTargets && !choosingCrotchFebreze) || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
+        || Boolean(state.lectureRoomCheck)
         || Boolean(state.pendingCrotchFebrezeEffects)
         || state.phase !== "battle"
         || state.gameOver
@@ -44454,10 +44963,13 @@
         || Boolean(state.pendingThreeGestures)
         || waitingForCardChoice
         || (choosingCrotchFebreze && state.pendingMultiItem.mode === "crotch_febreze_ae" && !state.pendingMultiItem.targets.length);
+      if (canReservePlayerAction() && tutorialAllowsEndTurn()) elements.endTurnButton.disabled = false;
       const recommendEndTurn = !elements.endTurnButton.disabled
         && !choosingItemTargets
         && !playerHasAvailableAction();
       elements.endTurnButton.classList.toggle("recommended", recommendEndTurn);
+      const endReserved = reservationMatchesTurn() && playerActionReservation.endTurn;
+      elements.endTurnButton.classList.toggle("turn-end-reserved", endReserved);
       elements.endTurnButton.textContent = choosingCrotchFebreze ? "指名する" : "ターン終了";
       elements.battleBackHomeButton.textContent = spectator ? "観戦を終了" : "勝てない";
       elements.resetButton.classList.toggle("hidden", spectator || !cardTestBattle);
@@ -44735,7 +45247,7 @@
       resetTutorialState();
       pendingAnimations.length = 0;
       handDragCandidate = null;
-      activeHandDrag = null;
+      finishHandDrag();
       handScrollDrag = null;
       closeItemConfirm();
       hidePlayReveal();
@@ -45081,7 +45593,7 @@
       if (item.baseId === "three_gestures" && state.players.player.deck.length < 6) return false;
       if (item.baseId === "deck_without" && state.players.player.deck.length < 2) return false;
       if (item.baseId === "dropped_cards" && state.players.player.deck.length <= 0) return false;
-      if (item.baseId === "sage_legacy" && !canUseSageLegacy("player")) return false;
+      if (item.baseId === "sage_legacy" && !canUseSageLegacy("player", item)) return false;
       if (item.baseId === "brother_capital") return brotherCapitalCandidates("player").length > 0;
       if (item.baseId === "big_wall") {
         return boardCardsForChoice("player", (card, ref) => ref.zone === "seat" && seatRow(ref.index) === 1 && card.type === "student").length >= 2;
@@ -45169,8 +45681,20 @@
       return false;
     }
 
+    // Lifting a card is visual only; the existing drop/use validation remains
+    // authoritative. It is not a queued action and never bypasses a choice.
+    function canLiftHandCard(card) {
+      return canStartHandDrag(card) || Boolean(card
+        && state.screen === "battle" && state.phase === "battle" && state.currentSide === "player"
+        && !isOnlineSpectator() && !state.gameOver && !state.aiThinking
+        && battlePresentationBusy() && !battleChoicePending() && !state.lectureRoomCheck
+        && !(isOnlineGuest() && state.remoteResolutionPending) && !isOnlineCommandPending()
+        && tutorialAllowsHandCard(card) && getHandCard("player", card.instanceId));
+    }
+
     function canStartHandDrag(card) {
       return !isOnlineSpectator()
+        && !battleNewActionBlocked()
         && state.phase === "battle"
         && state.currentSide === "player"
         && !state.gameOver
@@ -45458,6 +45982,7 @@
         && (state.phase === "mulliganDraw" || !state.players.player.mulliganUsed);
       const active = !peeking && (mulliganActive || (state.screen === "battle" && Boolean(thinChoice) && !isOnlineSpectator()));
       elements.mulliganStage.classList.toggle("choice-stage", Boolean(thinChoice));
+      elements.mulliganStage.classList.toggle("mulligan-split", mulliganActive && !thinChoice);
       elements.mulliganStage.classList.toggle("hidden", !active);
       const order = active && mulliganActive && !thinChoice && ["player", "opponent"].includes(state.firstSide)
         ? turnOrderLabel("player") : "";
@@ -45491,25 +46016,57 @@
       }
       const player = state.players.player;
       elements.thinItemChoiceActions.classList.add("hidden");
-      elements.mulliganTitle.textContent = state.phase === "mulligan"
-        ? "引き直すカードを選んでください"
-        : "カードを引き直しています";
+      elements.mulliganTitle.textContent = "引き直すカードを選んでください。";
       elements.mulliganMessage.textContent = state.phase === "mulligan"
         ? "引き直したいカードを0〜5枚選び、画面下の「確定」を押してください。"
         : normalizeLectureRoomText(state.message);
       elements.mulliganHand.innerHTML = "";
-      player.hand.forEach((card) => {
+      const rows = {};
+      for (const [key, label] of [["change", "CHANGE"], ["keep", "KEEP"]]) {
+        const section = document.createElement("section");
+        section.className = "mulligan-zone";
+        section.dataset.mulliganZone = key;
+        section.innerHTML = `<h3>${label}</h3><div class="mulligan-zone-cards"></div>`;
+        rows[key] = section.lastElementChild;
+        section.addEventListener("dragover", event => { if (state.phase === "mulligan") event.preventDefault(); });
+        section.addEventListener("drop", event => {
+          event.preventDefault();
+          const id = event.dataTransfer?.getData("application/x-chibattle-mulligan");
+          if (!player.hand.some(card => card.instanceId === id)) return;
+          if (player.mulliganSelection.includes(id) !== (key === "change")) toggleMulliganCard(id);
+        });
+        elements.mulliganHand.appendChild(section);
+      }
+      const slots = { change: [], keep: [] };
+      for (let index = 0; index < 5; index++) {
+        for (const key of ["change", "keep"]) {
+          const empty = document.createElement("div");
+          empty.className = "mulligan-empty-slot";
+          empty.setAttribute("aria-hidden", "true");
+          if (key === "change") empty.innerHTML = cardStyleCycleIconTemplate();
+          slots[key].push(empty);
+          rows[key].appendChild(empty);
+        }
+      }
+      player.hand.forEach((card, index) => {
         const button = document.createElement("button");
+        button.type = "button";
         button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
         if (card.instanceId === state.lastMulliganDrawId) button.classList.add("latest");
         button.dataset.cardId = card.instanceId;
         button.innerHTML = cardTemplate(card, false);
         button.classList.toggle("selected", player.mulliganSelection.includes(card.instanceId));
         button.disabled = state.phase !== "mulligan";
+        button.draggable = state.phase === "mulligan";
+        button.addEventListener("dragstart", event => {
+          event.dataTransfer.setData("application/x-chibattle-mulligan", card.instanceId);
+          event.dataTransfer.effectAllowed = "move";
+        });
         button.setAttribute("aria-pressed", String(player.mulliganSelection.includes(card.instanceId)));
         button.addEventListener("click", () => toggleMulliganCard(card.instanceId));
         attachCardDetailEvents(button, card, { previewOnClick: false });
-        elements.mulliganHand.appendChild(button);
+        const row = player.mulliganSelection.includes(card.instanceId) ? "change" : "keep";
+        if (slots[row][index]) slots[row][index].replaceWith(button);
       });
     }
 
@@ -45714,7 +46271,7 @@
         button.dataset.baseId = card.baseId;
         button.innerHTML = cardTemplate(card, false);
         button.classList.toggle("selected", state.selectedHandId === card.instanceId || player.mulliganSelection.includes(card.instanceId));
-        button.classList.toggle("draggable-ready", canDrag);
+        button.classList.toggle("draggable-ready", canLiftHandCard(card));
         button.classList.toggle("tutorial-allowed-card", isTutorialActive() && tutorialAllowsHandCard(card));
         button.classList.toggle("tutorial-muted-card", isTutorialActive() && Boolean(currentTutorialStep()?.action) && !tutorialAllowsHandCard(card));
         button.classList.toggle("affordable", canDrag);
@@ -45751,6 +46308,10 @@
           handleHandCardClick(card.instanceId);
         });
         elements.playerHand.appendChild(button);
+        if (activeHandDrag?.instanceId === card.instanceId) {
+          activeHandDrag.sourceElement = button;
+          button.classList.add("dragging-source");
+        }
       });
     }
 
@@ -45804,7 +46365,7 @@
     }
 
     function startHandMouseDrag(event, card, element) {
-      if (event.button !== 0 || !canStartHandDrag(card)) return;
+      if (event.button !== 0 || !canLiftHandCard(card)) return;
       handDragCandidate = {
         instanceId: card.instanceId,
         element,
@@ -45825,7 +46386,7 @@
     }
 
     function startHandPointerDrag(event, card, element) {
-      if ((event.pointerType === "mouse" && event.button !== 0) || !canStartHandDrag(card)) return;
+      if ((event.pointerType === "mouse" && event.button !== 0) || !canLiftHandCard(card)) return;
       handDragCandidate = {
         instanceId: card.instanceId,
         element,
@@ -45841,7 +46402,7 @@
       const dy = event.clientY - handDragCandidate.startY;
       if (!activeHandDrag && Math.hypot(dx, dy) >= HAND_DRAG_THRESHOLD) {
         const card = getHandCard("player", handDragCandidate.instanceId);
-        if (!card || !canStartHandDrag(card)) {
+        if (!card || !canLiftHandCard(card)) {
           handDragCandidate = null;
           return;
         }
@@ -45852,7 +46413,8 @@
           pointer: true,
           ghost: createHandDragGhost(handDragCandidate.element)
         };
-        state.selectedHandId = handDragCandidate.instanceId;
+        if (canStartHandDrag(card)) state.selectedHandId = handDragCandidate.instanceId;
+        document.documentElement.classList.add("hand-card-dragging");
         handDragCandidate.element.classList.add("dragging-source");
         refreshHandDropHints(card);
       }
@@ -46060,6 +46622,7 @@
     }
 
     function handleHandDropAtPoint(instanceId, x, y) {
+      if (battleNewActionBlocked()) return false;
       if (state.pendingCrotchFebrezeEffects) return false;
       const card = getHandCard("player", instanceId);
       const target = findHandDropTargetAtPoint(x, y, card);
@@ -46101,29 +46664,47 @@
     }
 
     function finishHandDrag() {
+      if (activeHandDrag) handDragClickBlockedUntil = Date.now() + 200;
       activeHandDrag?.sourceElement?.classList.remove("dragging-source");
       activeHandDrag?.ghost?.remove();
       activeHandDrag = null;
+      document.documentElement.classList.remove("hand-card-dragging");
       clearHandDropHints();
     }
 
     function queueAnimation(type, side, count = 1) {
       holdCrotchFebrezeForVisual(800);
-      pendingAnimations.push({ type, side, count });
+      const cardIds = type === "draw" && count > 0 ? state.players[side].hand.slice(-count).map((card) => card.instanceId) : [];
+      if (type === "draw" && count > 0) state.players[side].hand.slice(-count).forEach(card => { card.handEntryKind = "draw"; });
+      pendingAnimations.push({ type, side, count, cardIds, phase: state.phase });
     }
 
     function flushAnimationQueue() {
       if (pendingAnimations.length === 0) return;
       const animations = pendingAnimations.splice(0);
+      const battleDraw = animations.some(animation => animation.type === "draw" && animation.phase === "battle");
+      if (battleDraw) queuedBattlePresentations += 1;
       window.requestAnimationFrame(() => {
+        if (battleDraw) queuedBattlePresentations -= 1;
+        if (state.screen !== "battle") return;
+        const draws = new Map();
         animations.forEach((animation) => {
           if (animation.type === "shuffle") animateDeck(animation.side, "shuffle-anim");
           if (animation.type === "mulligan") animateHandZone(animation.side);
           if (animation.type === "draw") {
-            animateDeck(animation.side, "draw-anim");
-            animateRecentHandCards(animation.side, animation.count);
+            if (animation.phase !== "battle") {
+              if (animation.count <= 0) return;
+              animateDeck(animation.side, "draw-anim");
+              const zone = animation.side === "player" ? elements.playerHand : elements.opponentHand;
+              [...zone.children].slice(-animation.count).forEach(card => restartAnimation(card, "draw-anim"));
+              return;
+            }
+            const ids = draws.get(animation.side) || new Set();
+            animation.cardIds.forEach((id) => ids.add(id));
+            draws.set(animation.side, ids);
           }
         });
+        draws.forEach((ids, side) => animateRecentHandCards(side, ids));
       });
     }
 
@@ -46135,10 +46716,38 @@
       restartAnimation(document.querySelector(side === "player" ? ".player-hand-zone" : ".opponent-hand-zone"), "mulligan-anim");
     }
 
-    function animateRecentHandCards(side, count) {
-      const selector = side === "player" ? "#playerHand .card" : "#opponentHand .card";
-      const cards = Array.from(document.querySelectorAll(selector));
-      cards.slice(Math.max(0, cards.length - count)).forEach((card) => restartAnimation(card, "draw-anim"));
+    function animateRecentHandCards(side, cardIds, hiddenDrawCount = 0, obtained = false, publicCards = []) {
+      if (state.phase !== "battle" || state.training?.skipAnimations) return;
+      const battleToken = state.preBattleToken;
+      const hand = state.players[side].hand;
+      const zone = side === "player" ? elements.playerHand : elements.opponentHand;
+      const indices = publicCards.length ? publicCards.map(entry => entry.index) : hiddenDrawCount
+        ? Array.from({ length: hiddenDrawCount }, (_, i) => hand.length - hiddenDrawCount + i)
+        : [...cardIds].map(id => hand.findIndex(card => card.instanceId === id));
+      const cards = indices.map((index) => {
+        if (index < 0 || index >= hand.length) return null;
+        const node = zone.children[side === "opponent" ? hand.length - index - 1 : index];
+        const instanceId = hand[index].instanceId;
+        const getNode = () => {
+          const latestHand = state.players[side].hand;
+          const latestIndex = instanceId ? latestHand.findIndex(card => card.instanceId === instanceId) : index;
+          if (latestIndex < 0 || latestIndex >= latestHand.length) return null;
+          return zone.children[side === "opponent" ? latestHand.length - latestIndex - 1 : latestIndex];
+        };
+        const publicCard = publicCards.find(entry => entry.index === index)?.card;
+        return node ? { node, card: publicCard || hand[index], getNode } : null;
+      }).filter(Boolean);
+      window.ChibattleDraw?.play({
+        side, cards, obtained,
+        deck: side === "player" ? elements.playerDeckPile : elements.opponentDeckPile,
+        life: document.querySelector(`[data-life-target="${side}"]`),
+        canReveal: side === "player" && !isOnlineSpectator(),
+        face: (card) => cardShellTemplate(card),
+        isCurrent: () => state.screen === "battle" && state.preBattleToken === battleToken,
+        isVisualBusy: () => !elements.playRevealOverlay.classList.contains("hidden")
+          || window.ChibattleHandTrash?.isBusy() || state.resolvingOrderedAttendance || Date.now() < drawEffectVisualUntil,
+        syncScale: scheduleCardTemplateScaleSync
+      });
     }
 
     function restartAnimation(element, className) {
@@ -47178,6 +47787,9 @@
       button.className = `field-card board-card ${card.type}${cardVisualClass(card)}`;
       button.dataset.cardId = card.instanceId;
       button.dataset.baseId = card.baseId;
+      button.dataset.owner = owner;
+      button.dataset.zone = zone;
+      button.dataset.index = index == null ? "" : String(index);
       button.innerHTML = fieldCardTemplate(card);
       appendBoardChangeFeedback(button, card);
       if (state.pendingMultiItem?.mode === "crotch_febreze_teacher") {
@@ -47257,6 +47869,7 @@
     }
 
     function isSelectedAttacker(owner, zone, index) {
+      if (reservationMatchesTurn() && refsMatch(playerActionReservation.selected, { owner, zone, index })) return true;
       return state.selectedAttacker
         && state.selectedAttacker.owner === owner
         && state.selectedAttacker.zone === zone
@@ -50964,6 +51577,8 @@
     }
 
     function attachCardDetailEvents(element, card, options = {}) {
+      element.dataset.battleInspectCard = "true";
+      battleInspectionCards.set(element, card);
       const previewOnClick = options.previewOnClick !== false;
       element.removeAttribute("title");
       // Card details are intentionally long-press only. Hover is reserved for enlarging a hand card.
@@ -52189,7 +52804,7 @@
         abyss: "このカードを使用したターンを含む2ターンの間、自分のターン終了時に、相手の出席者1人をランダムに指名し、破壊する。",
         dropped_cards: "自分のデッキから2枚を選び、校外エリアへ送る。",
         set_log: "自分の学生1人を指名する。その学生は陽気を持つ。",
-        sage_legacy: "自分のデッキを1枚引く。後攻1ターン目または後攻7ターン目なら、その後さらに自分のデッキからカード1枚を選び、手札に加える。",
+        sage_legacy: "自分の手札1枚を選び、デッキに戻す。その後、後攻1ターン目または後攻7ターン目なら、自分のデッキからカード1枚を選び、手札に加える。それ以外なら、デッキからカードを1枚引く。",
         reversal: "前の相手ターンにダメージを受けて校外エリアへ送られた自分の出席者を、最大2人ランダムに元のマスへ出席させる。出席時効果は使用しない。",
         dont_worry: "5ターン目以降に使える。次の相手ターン終了時まで、自分の気力はダメージを受けない。",
         namen_tenno: "相手の講義室にいるヴァンパイアの出席者すべてを破壊する。その後、この効果で破壊した出席者の人数と同じダメージを相手本体に与える。",
@@ -53109,6 +53724,50 @@
     window.addEventListener("scroll", refreshTutorialSpotlight, true);
     setupHandScrollEvents();
 
+    // Shared staging for manual, CPU and host-authoritative item resolution.
+    // Donguri evolution and Uta fusion retain their dedicated presentations.
+    function stagedItemResolver(name, resolve) {
+      return function (...args) {
+        if (itemResolutionContext?.replaying) return resolve(...args);
+        const previous = itemResolutionContext;
+        const context = { name, resolve, args, accepted: false };
+        itemResolutionContext = context;
+        let result;
+        try { result = resolve(...args); }
+        finally { itemResolutionContext = previous; }
+        if (context.accepted) { render(); return true; }
+        return result;
+      };
+    }
+    resolveKingGhidorahBed = stagedItemResolver("resolveKingGhidorahBed", resolveKingGhidorahBed);
+    resolveFullThrottle = stagedItemResolver("resolveFullThrottle", resolveFullThrottle);
+    resolveEnvironmentSetupChoice = stagedItemResolver("resolveEnvironmentSetupChoice", resolveEnvironmentSetupChoice);
+    resolveGoAwayChoice = stagedItemResolver("resolveGoAwayChoice", resolveGoAwayChoice);
+    resolveBrotherCapital = stagedItemResolver("resolveBrotherCapital", resolveBrotherCapital);
+    resolveBigWall = stagedItemResolver("resolveBigWall", resolveBigWall);
+    resolveCrotchFebreze = stagedItemResolver("resolveCrotchFebreze", resolveCrotchFebreze);
+    resolvePhilosophyCheating = stagedItemResolver("resolvePhilosophyCheating", resolvePhilosophyCheating);
+    resolveCourseRegistrationRejection = stagedItemResolver("resolveCourseRegistrationRejection", resolveCourseRegistrationRejection);
+    resolveCourseRegistration = stagedItemResolver("resolveCourseRegistration", resolveCourseRegistration);
+    resolveHappyExperienceChoice = stagedItemResolver("resolveHappyExperienceChoice", resolveHappyExperienceChoice);
+    resolveJailbreak = stagedItemResolver("resolveJailbreak", resolveJailbreak);
+    resolveThreeGesturesSelection = stagedItemResolver("resolveThreeGesturesSelection", resolveThreeGesturesSelection);
+    resolveDeckWithout = stagedItemResolver("resolveDeckWithout", resolveDeckWithout);
+    resolveDroppedCardsChoice = stagedItemResolver("resolveDroppedCardsChoice", resolveDroppedCardsChoice);
+    resolveSageLegacyChoice = stagedItemResolver("resolveSageLegacyChoice", resolveSageLegacyChoice);
+    resolveMusicDetergentChoice = stagedItemResolver("resolveMusicDetergentChoice", resolveMusicDetergentChoice);
+    castItemOnLife = stagedItemResolver("castItemOnLife", castItemOnLife);
+    castItemOnCard = stagedItemResolver("castItemOnCard", castItemOnCard);
+    castPanpan = stagedItemResolver("castPanpan", castPanpan);
+    castCaptureOnSlot = stagedItemResolver("castCaptureOnSlot", castCaptureOnSlot);
+    castIGotIt = stagedItemResolver("castIGotIt", castIGotIt);
+    useSuppressedItemEffect = stagedItemResolver("useSuppressedItemEffect", useSuppressedItemEffect);
+    castItemGlobal = stagedItemResolver("castItemGlobal", castItemGlobal);
+    castImmediateItem = stagedItemResolver("castImmediateItem", castImmediateItem);
+    resolveConfuciusSays = stagedItemResolver("resolveConfuciusSays", resolveConfuciusSays);
+    castPairedExistence = stagedItemResolver("castPairedExistence", castPairedExistence);
+    resolveTitleMatch = stagedItemResolver("resolveTitleMatch", resolveTitleMatch);
+
     window.__chibattle = {
       state,
       CARD_BASES,
@@ -53319,6 +53978,8 @@
   </script>
 <script src="cards-ui.js?v=0.23.18-cycle"></script>
   <script src="desktop-ui.js?v=0.23.19-ai-battle"></script>
+<script src="draw-animation.js?v=0.23.19-video-tempo"></script>
+<script src="hand-trash-animation.js?v=0.23.19-deck"></script>
 <script src="gacha-ui.js?v=0.23.19-ai-battle"></script>
   <script src="four-mode.js"></script>
 </body>

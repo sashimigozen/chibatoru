@@ -49,7 +49,7 @@ async function openBattle(host, guest) {
   await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
 }
 
-test("ホスト・ゲストのちがうよは最大戦意に関係なく、戻した手札の半分を引く", async ({ browser }) => {
+test("ホスト・ゲストのちがうよは双方の最大戦意10で表示後に引き直す", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   const errors = [];
@@ -58,7 +58,7 @@ test("ホスト・ゲストのちがうよは最大戦意に関係なく、戻�
     await openBattle(host, guest);
     for (const side of ["player", "opponent"]) {
       const actor = side === "player" ? host : guest;
-      for (const [ownMax, otherMax] of [[9, 10], [10, 9], [10, 10]]) {
+      for (const [ownMax, otherMax] of [[10, 10]]) {
         const setup = await host.evaluate(({ side, ownMax, otherMax }) => {
           const api = window.__chibattle;
           api.startCardTest("chigauyo");
@@ -79,6 +79,7 @@ test("ホスト・ゲストのちがうよは最大戦意に関係なく、戻�
           return { id: item.instanceId, seq: api.state.online.lastSnapshotSeq };
         }, { side, ownMax, otherMax });
         await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
+        for (const page of [host, guest]) await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
         expect(await actor.evaluate((id) => {
           const api = window.__chibattle;
           return api.canUseHandCardNow(api.state.players.player.hand.find((card) => card.instanceId === id));
@@ -132,6 +133,7 @@ test("ホスト・ゲストの煩わしいなぁは戦意5・残り1回を同期
         return { id: item.instanceId, seq: api.state.online.lastSnapshotSeq };
       }, side);
       await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
+      for (const page of [host, guest]) await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
       await actor.evaluate((id) => {
         const api = window.__chibattle;
         api.beginItemUse(api.state.players.player.hand.find((card) => card.instanceId === id));

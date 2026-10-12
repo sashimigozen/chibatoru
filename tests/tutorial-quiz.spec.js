@@ -6,31 +6,35 @@ const hand = (page, id) => page.locator(`#playerHand [data-base-id="${id}"]`).fi
 const slot = (page, owner, zone, index = null) => page.locator(
   `.slot[data-owner="${owner}"][data-zone="${zone}"][data-index="${index ?? ""}"]`);
 const board = (page, owner, id) => page.locator(`#${owner}BoardPanel [data-base-id="${id}"]`).first();
+const idle = (page) => expect.poll(() => page.evaluate(() => !battlePresentationBusy()), { timeout: 15000 }).toBe(true);
 
 async function openQuiz(page, chapter) {
   await page.goto(gameUrl);
   // 本番と同じ初期化入口。練習からのUI遷移はtutorial-abilities.spec.jsで全編を検証する。
   await page.evaluate((id) => window.__chibattle.startTutorialBattle(id, { stage: "quiz" }), chapter);
   await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
+  await idle(page);
   await page.locator("#tutorialToggleButton").click();
 }
 
 async function play(page, id, zone = "seat", index = 4) {
+  await idle(page);
   await hand(page, id).click();
   await (zone === "environment" ? page.locator("#environmentSlot")
     : slot(page, "player", zone, zone === "seat" ? index : null)).click();
-  await expect.poll(() => page.evaluate(() => !window.__chibattle.state.pendingCardPlay
-    && !window.__chibattle.state.resolvingOrderedAttendance)).toBe(true);
+  await idle(page);
 }
 
 async function attack(page, id, target = null, occurrence = 0) {
+  await idle(page);
   await page.locator(`#playerBoardPanel [data-base-id="${id}"]`).nth(occurrence).click();
   if (await page.locator("#teacherActionModal").isVisible()) await page.locator("#teacherAttackChoiceButton").click();
   await (target ? board(page, "opponent", target) : page.locator("#opponentLifeTarget")).click({ force: true });
-  await expect.poll(() => page.evaluate(() => !window.__chibattle.state.attackInProgress)).toBe(true);
+  await idle(page);
 }
 
 async function drag(page, id, target, position = null) {
+  await idle(page);
   const from = await hand(page, id).boundingBox();
   const to = await target.boundingBox();
   await page.mouse.move(from.x + from.width / 2, from.y + 16);
@@ -38,16 +42,19 @@ async function drag(page, id, target, position = null) {
   await page.mouse.move(to.x + to.width * (position?.x ?? .5), to.y + to.height * (position?.y ?? .5), { steps: 16 });
   await page.mouse.up();
   if (await page.locator("#itemTargetConfirmButton").isVisible()) await page.locator("#itemTargetConfirmButton").click();
+  await idle(page);
 }
 const itemOn = (page, id, owner, zone, index = null) => drag(page, id, slot(page, owner, zone, index));
 const itemBody = (page, id) => drag(page, id, page.locator("#opponentLifeTarget"));
 const immediate = (page, id) => drag(page, id, page.locator(".playmat"), { x: .95, y: .12 });
 
 async function fuse(page) {
+  await idle(page);
   await hand(page, "ruler").click();
   await page.locator("[data-preview-ruler-fuse]").click();
   await page.locator("#threeGesturesHand button").first().click();
   await page.locator("#threeGesturesConfirmButton").click();
+  await idle(page);
 }
 
 const solutions = {

@@ -8,6 +8,8 @@ const text = "自分の手札をランダムに1枚、校外エリアへ送る�
 test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
   await page.evaluate(() => window.__chibattle.startCardTest("handy_jet_engine"));
+  // Rule checks run without presentations; timing is covered separately.
+  await page.evaluate(() => { state.training.skipAnimations = true; });
 });
 
 test("本文・表示・台帳と同日更新を揃え、カードテストに双方の手札を用意する", async ({ page }) => {
@@ -40,12 +42,12 @@ for (const side of ["player", "opponent"]) {
       Math.random = () => { calls.push([own.trash.length, other.trash.length]); return 0; };
       let used;
       try { used = api.castImmediateItem(side, item, false); } finally { Math.random = random; }
-      return { used, ownFirst: calls.some(([ownCount, otherCount]) => ownCount === 1 && otherCount === 0),
+      return { used, ownFirst: calls.some(([ownCount, otherCount]) => ownCount === 2 && otherCount === 0),
         own: own.hand.map(c => c.baseId), other: other.hand.map(c => c.baseId),
         ownTrash: own.trash.map(c => c.baseId), otherTrash: other.trash.map(c => c.baseId), will: own.will,
         sourceCount: own.trash.filter(c => c.instanceId === item.instanceId).length };
     }, side)).toEqual({ used: true, ownFirst: true, own: ["bento"], other: ["cafeteria"],
-      ownTrash: ["ruler", "handy_jet_engine"], otherTrash: ["general_student", "general_teacher"], will: 7, sourceCount: 1 });
+      ownTrash: ["handy_jet_engine", "ruler"], otherTrash: ["general_student", "general_teacher"], will: 7, sourceCount: 1 });
   });
 }
 
