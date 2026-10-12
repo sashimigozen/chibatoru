@@ -49,6 +49,49 @@ async function openBattle(host, guest) {
   await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
 }
 
+test("ロジックハンターの校外送りはオンラインの双方で一度だけ表示する", async ({ browser }) => {
+  test.setTimeout(60000);
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const [host, guest] = await Promise.all(contexts.map(c => c.newPage()));
+  try {
+    await openBattle(host, guest);
+    for (const side of ["player", "opponent"]) {
+      await host.evaluate(side => {
+        startCardTest("logic_hunter");
+        state.testMode = false; state.currentSide = side;
+        for (const owner of ["player", "opponent"]) {
+          state.players[owner].hand = ["yuta", "ruler"].map(id => createCardFromBase(id, owner));
+          state.players[owner].trash = [];
+        }
+        render(); onlineBroadcastState(true);
+      }, side);
+      await expect.poll(() => guest.evaluate(() => state.players.player.hand.length)).toBe(2);
+      for (const page of [host, guest]) {
+        await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+        await page.evaluate(() => {
+          window.repeatTrashSeen = false;
+          window.repeatObserver?.disconnect();
+          window.repeatObserver = new MutationObserver(() => {
+            if (document.querySelector('.hand-trash-flight')) window.repeatTrashSeen = true;
+          });
+          window.repeatObserver.observe(document.body, { childList: true, subtree: true });
+        });
+      }
+      await host.evaluate(side => {
+        const target = state.players[oppositeSide(side)].hand[0];
+        discardOpponentHandCardById(side, target.instanceId, createCardFromBase("logic_hunter", side), true);
+        onlineBroadcastState(true);
+      }, side);
+      await Promise.all([host, guest].map(async page => {
+        await expect(page.locator('#playRevealOverlay')).toBeVisible();
+        await expect.poll(() => page.evaluate(() => state.players.player.trash.length + state.players.opponent.trash.length)).toBe(1);
+        await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+        expect(await page.evaluate(() => window.repeatTrashSeen)).toBe(false);
+      }));
+    }
+  } finally { await Promise.all(contexts.map(c => c.close())); }
+});
+
 test("ハンディジェットエンジンの自分1枚・相手2枚の校外送りをホストとゲストで同期する", async ({ browser }) => {
   test.setTimeout(60000);
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
@@ -74,6 +117,7 @@ test("ハンディジェットエンジンの自分1枚・相手2枚の校外送
         return { id, seq: api.state.online.lastSnapshotSeq };
       }, side);
       await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
+      await expect.poll(() => actor.evaluate(() => battlePresentationBusy())).toBe(false);
       await actor.evaluate(id => {
         const api = window.__chibattle;
         api.beginItemUse(api.state.players.player.hand.find(c => c.instanceId === id));
@@ -93,6 +137,37 @@ test("ハンディジェットエンジンの自分1枚・相手2枚の校外送
   } finally { await Promise.all(contexts.map(c => c.close())); }
 });
 
+
+test("公開されたアグロ軍の生成カードはオンラインの相手にも一度だけ見える", async ({ browser }) => {
+  test.setTimeout(60000);
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const [host, guest] = await Promise.all(contexts.map(c => c.newPage()));
+  try {
+    await openBattle(host, guest);
+    for (const side of ["player", "opponent"]) {
+      const actor = side === "player" ? host : guest;
+      const observer = side === "player" ? guest : host;
+      const id = await host.evaluate(side => {
+        startCardTest("aggro_army");
+        state.testMode = false;
+        state.currentSide = side;
+        state.players[side].hand = [createCardFromBase("aggro_army", side)];
+        state.players[side].will = 10;
+        render();
+        return state.players[side].hand[0].instanceId;
+      }, side);
+      await expect.poll(() => actor.evaluate(id => state.players.player.hand.some(c => c.instanceId === id), id)).toBe(true);
+      await expect.poll(() => actor.evaluate(() => battlePresentationBusy())).toBe(false);
+      await actor.evaluate(id => beginItemUse(state.players.player.hand.find(c => c.instanceId === id)), id);
+      await observer.waitForFunction(() => document.querySelectorAll('.hand-add-flight[data-draw-phase="preview"]').length === 3);
+      await expect(observer.locator('.hand-add-flight')).toContainText(['アグロ大学生', 'アグロキング', 'アグロクイーン']);
+      if (observer === guest) expect(await observer.evaluate(() => state.players.opponent.hand.every(c => c.hidden && !c.baseId))).toBe(true);
+      await expect.poll(() => observer.evaluate(() => battlePresentationBusy())).toBe(false);
+      await observer.evaluate(() => render());
+      await expect(observer.locator('.hand-add-flight')).toHaveCount(0);
+    }
+  } finally { await Promise.all(contexts.map(c => c.close())); }
+});
 
 test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲストの両視点で同期する", async ({ browser }) => {
   test.setTimeout(60000);
@@ -127,6 +202,7 @@ test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲス�
           return { id: card.instanceId, seq: api.state.online.lastSnapshotSeq };
         }, { side, baseId });
         await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
+        await expect.poll(() => actor.evaluate(() => battlePresentationBusy())).toBe(false);
         await actor.evaluate(({ id, baseId }) => {
           const api = window.__chibattle;
           if (baseId === "grudge") api.beginItemUse(api.state.players.player.hand.find(c => c.instanceId === id));
@@ -178,6 +254,7 @@ test("木っち・技議っち・偽魏義ッ血・怨念をホストとゲス�
         expect(await guest.evaluate(side => [...window.__chibattle.state.players[side].board.seats, window.__chibattle.state.players[side].board.teacher].map(c => c?.instanceId || null), guestSide)).toEqual(positions);
         if (baseId === "wood_gitch") {
           // A synchronized generated Wood must not generate another copy when played.
+          await expect.poll(() => actor.evaluate(() => battlePresentationBusy())).toBe(false);
           await actor.evaluate(() => {
             const api = window.__chibattle, generated = api.state.players.player.hand.at(-1);
             api.playCard(generated.instanceId, "seat", "player", 5);

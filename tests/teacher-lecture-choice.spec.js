@@ -14,6 +14,7 @@ async function prepareTeacherBattle(page, teacherBaseId = "general_teacher") {
     api.state.players.player.board.teacher = teacher;
     api.render();
   }, teacherBaseId);
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
 }
 
 test("攻撃可能な教師を押すと攻撃か講義かを選べる", async ({ page }) => {

@@ -94,7 +94,7 @@ test("デッキ名や固定構成ではなく、よっちゃんを採用して�
 
 test("食堂と見習いヴァンパイアを採用した任意のデッキで4戦意コンボを優先する", async ({ page }) => {
   await setup(page, { turn: 4, actionTurn: 7 });
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const ai = api.state.players.opponent;
     ai.originalDeckCounts = { cafeteria: 1, apprentice_vampire: 1, general_student: 38 };
@@ -106,6 +106,7 @@ test("食堂と見習いヴァンパイアを採用した任意のデッキで4�
     const returned = new Set(api.chooseAiMulliganReturnIds(ai.hand));
     const firstMove = api.findAiPlayMove();
     api.placeCardFromHand("opponent", firstMove.card.instanceId, firstMove.zone, firstMove.owner, firstMove.index, false);
+    await api.waitForAiTimedEffects();
     const secondMove = api.findAiPlayMove();
     return {
       active: api.isAiCafeteriaVampireStrategyActive(),
@@ -365,7 +366,7 @@ test("後攻の左側CPUも賢者の遺産でTRPGサークルメンバーを探�
     state.currentSide = "player";
     left.turnsTaken = 1;
     left.will = left.maxWill = 1;
-    left.hand = [api.createCardFromBase("sage_legacy", "player")];
+    left.hand = [api.createCardFromBase("sage_legacy", "player"), api.createCardFromBase("general_student", "player")];
     left.deck = [
       api.createCardFromBase("general_student", "player"),
       api.createCardFromBase("trpg_member", "player"),

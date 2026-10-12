@@ -25,6 +25,7 @@ test.beforeAll(async () => {
 test.afterAll(() => server?.kill("SIGTERM"));
 
 test("オンライン双方で手札が11枚以上でも動的戦意で使用し、相手の4枚選択を同期する", async ({ browser }) => {
+  test.setTimeout(90000);
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   const errors = [];
@@ -78,6 +79,7 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
           return { id: item.instanceId, seq: api.state.online.lastSnapshotSeq };
         }, { side, ownCount, targetCount });
         await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
+        await expect.poll(() => actor.evaluate(() => battlePresentationBusy())).toBe(false);
         expect(await actor.evaluate((id) => {
           const api = window.__chibattle;
           return api.canUseHandCardNow(api.state.players.player.hand.find((card) => card.instanceId === id));
@@ -87,6 +89,16 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
           api.beginItemUse(api.state.players.player.hand.find((card) => card.instanceId === id));
         }, setup.id);
         await expect.poll(() => target.evaluate(() => Boolean(window.__chibattle.state.pendingCardChoice))).toBe(true);
+        const locked = await actor.evaluate(() => {
+          const api = window.__chibattle;
+          const side = api.state.currentSide;
+          handleHandCardClick(api.state.players.player.hand[0].instanceId);
+          endTurn();
+          return { sideUnchanged: api.state.currentSide === side, selected: api.state.selectedHandId,
+            blocked: !battleInputAllowed(document.querySelector('#endTurnButton')) };
+        });
+        expect(locked).toEqual({ sideUnchanged: true, selected: null, blocked: true });
+        await expect.poll(() => target.evaluate(() => battlePresentationBusy())).toBe(false);
         const kept = await target.evaluate(() => {
           const api = window.__chibattle;
           const ids = api.state.players.player.hand.slice(0, 4).map((card) => card.instanceId);

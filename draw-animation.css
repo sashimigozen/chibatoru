@@ -1,0 +1,39 @@
+.draw-flight {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 170;
+  pointer-events: none;
+  perspective: 1000px;
+  transform-origin: top left;
+  will-change: transform;
+}
+.draw-flight-turn {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.draw-flight-front,.draw-flight-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 6px;
+  box-shadow: 3px 8px 15px rgba(12,30,46,.28);
+}
+.draw-flight-back {
+  background: #183653 url('assets/card-back.png?v=2') center / 100% 100% no-repeat;
+}
+.draw-flight-front {
+  transform: rotateY(180deg);
+}
+.draw-flight-front > .card {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  aspect-ratio: 2 / 3 !important;
+}
