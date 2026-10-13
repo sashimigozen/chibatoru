@@ -51,7 +51,7 @@ test("全トークンは両プレイヤーの破壊・手札破棄で消滅し�
   expect(result.ids).toContain("grudge");
   expect(result.ids).toContain("recovered_dark_yuta");
   expect(result.checks.every(Boolean)).toBe(true);
-  expect(result.trash).toEqual([0, 0]);
+  expect(result.trash).toEqual([16, 16]); // 融合完成品の破壊で通常の素材だけが残る。
   expect(result.history).toBe(0);
   expect(result.snapshotHasVanishedCard).toBe(false);
 });

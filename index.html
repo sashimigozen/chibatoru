@@ -19781,7 +19781,7 @@
         date: "2026年10月13日",
         summary: "新カード14枚を追加し、素材融合と融合演出を実装しました。「病」の装備時効果も変更しました。",
         changes: [
-          { title: "融合完成品のトークン化", after: "ウマ・マイボ・骨・どこから融合で生成する完成品7種類をトークン扱いにしました。破壊・校外送りでは消滅し、校外から回収できません。直接手札やデッキへ戻す挙動は既存のトークンと同じままです。" },
+          { title: "融合完成品のトークン化", after: "ウマ・マイボ・骨・どこから融合で生成する完成品7種類をトークン扱いにしました。破壊されたとき、コピーも含めて対応する素材2枚（最終形は4枚）を校外へ生成します。完成品は消滅し、校外から回収できません。破壊以外の校外送りでは素材を生成しません。直接手札やデッキへ戻す挙動は既存のトークンと同じままです。" },
           { title: "盤面の対象選択の統一", after: "盤面の出席者を選ぶ操作は、カードをクリックして選択・解除し、右側の丸いボタンで確定する方式に統一しました。手札・デッキ・校外のカード一覧、効果の選択肢は従来の選択画面を維持しています。" },
           { title: "複数マスの出席者の指名", after: "キングギドラベッドなどの指名中、複数の席マスを占有する出席者へのクリックが操作制限で遮断される不具合を修正しました。指名条件と演出中の操作制限は維持しています。" },
           { title: "連続する回復・ダメージの表示", after: "同じ本体・出席者への回復やダメージの表示が重ならないよう、発動ごとに順番に表示するようにしました。回復量・ダメージ量・効果の処理順は変更していません。" },
@@ -36357,6 +36357,11 @@
       "fusion_maibo,fusion_where": "where_maibo",
       "fusion_bone,fusion_where": "where_bone"
     };
+    function horseFusionMaterialIds(baseId) {
+      if (baseId === "where_uma_bone_maibo") return [...HORSE_MATERIAL_IDS];
+      const recipe = Object.entries(HORSE_PAIR_RESULTS).find(([, result]) => result === baseId);
+      return recipe ? recipe[0].split(",") : [];
+    }
     const fusionEffectTasks = new Set();
     let fusionEffectTail = Promise.resolve();
     const fusionChoiceWaiters = new Map();
@@ -39517,7 +39522,7 @@
       ["player", "opponent"].forEach((owner) => {
         state.players[owner].board.seats.forEach((card, index) => {
           if (!card || !isSeatBlocked(owner, index)) return;
-          const moved = destroyBoardCard({ owner, zone: "seat", index }, { suppressLog: true, suppressToast: true, reason: "出席不可" });
+          const moved = destroyBoardCard({ owner, zone: "seat", index }, { suppressLog: true, suppressToast: true, reason: "出席不可", isDestruction: false });
           if (moved) movedCards.push(moved);
         });
       });
@@ -41666,7 +41671,7 @@
       if (item.baseId === "sock_block") {
         const targetSide = oppositeSide(side);
         const rowRefs = [6, 7, 8].map((index) => ({ owner: targetSide, zone: "seat", index }));
-        const moved = destroyBoardRefsToTrash(rowRefs, { reason: "靴下ブロック", showDestroyFeedback: false });
+        const moved = destroyBoardRefsToTrash(rowRefs, { reason: "靴下ブロック", showDestroyFeedback: false, isDestruction: false });
         rowRefs.forEach((ref) => {
           state.temporarySeatBlocks.push({
             owner: ref.owner,
@@ -44068,6 +44073,9 @@
         return null;
       }
       const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
+      // 表示を省く体力0・まとめ破壊も破壊。通常の校外送りでは素材を生成しない。
+      const isDestruction = trashOptions.isDestruction ?? (showDestroyFeedback || trashOptions.reason === "体力0");
+      const fusionMaterials = isDestruction && !card.tokenVanished ? horseFusionMaterialIds(card.baseId) : [];
       const triggersAbsentStudent = !isTokenCard(card) && card.baseId === "absent_student" && canUsePrintedCardEffects(card);
       if (showDestroyFeedback) showFloatingTextForCard(card, isTokenCard(card) ? "消滅" : "破壊", "destroy");
       recordRecentBoardTrash(ref.owner, card, ref);
@@ -44091,6 +44099,11 @@
       });
       moveToTrash(ref.owner, card, moveOptions);
       clearBoardCardFromField(ref.owner, ref.zone, ref.index, card);
+      fusionMaterials.forEach((baseId) => {
+        moveToTrash(ref.owner, createCardFromBase(baseId, ref.owner), {
+          sourceZone: "generated", reason: "融合素材", suppressToast: true
+        });
+      });
       if (triggersAbsentStudent) resolveAbsentStudentTrashTrigger(ref.owner, card);
       return card;
     }
@@ -44102,6 +44115,7 @@
           suppressLog: options.suppressIndividual !== false,
           suppressToast: options.suppressIndividual !== false,
           reason: options.reason || "まとめ破壊",
+          isDestruction: options.isDestruction !== false,
           showDestroyFeedback: options.showDestroyFeedback !== false
         });
         if (card) moved.push(card);

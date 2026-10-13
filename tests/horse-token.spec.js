@@ -22,7 +22,7 @@ test('既存の校外に残る完成品も回収候補から除外し、占有�
     state.players.player.board={teacher:null,seats:Array(9).fill(null)};state.players.player.board.seats[0]=card;
     destroyBoardCard({owner:'player',zone:'seat',index:0});
     return {oldTrash,trash:state.players.player.trash.length,field:state.players.player.board.seats[0]};
-  })).toEqual({oldTrash:0,trash:0,field:null});
+  })).toEqual({oldTrash:0,trash:2,field:null});
 });
 test('直接手札に戻す処理はミジンコと同じ挙動を維持する',async({page})=>{
   expect(await page.evaluate(()=>{
