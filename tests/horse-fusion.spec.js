@@ -107,7 +107,7 @@ test('マイボの骨は2人までに各2ダメージ、どこのマイボはラ
   expect(await page.evaluate(()=>state.players.opponent.board.seats.filter(Boolean).reduce((n,card)=>n+card.currentHp,0))).toBe(19);
 });
 
-test('回復・負荷・最終形の出席効果と手札由来限定',async({page})=>{
+test('回復・本体ダメージ・最終形の出席効果と手札由来限定',async({page})=>{
   expect(await page.evaluate(async()=>{
     state.players.player.life=10;
     const healer=makeBoardCard(createCardFromBase('umaibo','player'));state.players.player.board.seats[0]=healer;
@@ -120,8 +120,8 @@ test('回復・負荷・最終形の出席効果と手札由来限定',async({pa
     resolveAttendEffects('player',final,'seat',1,{attendanceSource:ATTENDANCE_SOURCE.DECK});
     const noTrigger=state.players.player.life;
     resolveAttendEffects('player',final,'seat',1,{attendanceSource:ATTENDANCE_SOURCE.HAND});
-    return {firstLife,noTrigger,life:state.players.player.life,final:[final.attack,final.currentHp],damage:beforeHp-enemy.currentHp,load:state.players.opponent.hand[0].handLoadLevel};
-  })).toEqual({firstLife:13,noTrigger:13,life:16,final:[5,5],damage:2,load:1});
+    return {firstLife,noTrigger,life:state.players.player.life,final:[final.attack,final.currentHp],damage:beforeHp-enemy.currentHp,opponentLife:state.players.opponent.life,load:state.players.opponent.hand[0].handLoadLevel||0};
+  })).toEqual({firstLife:13,noTrigger:13,life:16,final:[5,5],damage:2,opponentLife:17,load:0});
 });
 
 test('遠くからは元のカードを手札に残しコピーを指定マスへ、空きマスなしなら生成しない',async({page})=>{

@@ -14203,6 +14203,12 @@
       z-index: 12 !important;
     }
     .battle-screen .slot:has(> .board-card.selected) { z-index: 12 !important; }
+    .battle-screen .board-card.enemy-effect-candidate { scale: 1.08; z-index: 12 !important; cursor: pointer; }
+    .battle-screen .slot:has(> .board-card.enemy-effect-candidate) { z-index: 12 !important; }
+    #threeGesturesStage.board-target-choice { background: transparent; backdrop-filter: none; pointer-events: none; align-items: end; padding-bottom: 14vh; }
+    #threeGesturesStage.board-target-choice .mulligan-window { width: auto; min-width: 240px; padding: 10px 20px; pointer-events: auto; }
+    #threeGesturesStage.board-target-choice .mulligan-hand,
+    #threeGesturesStage.board-target-choice .selection-peek-button { display: none; }
 
     /* Grave markers are quiet until opened. */
     .battle-screen .trash-box { position: absolute !important; z-index: 11; display: grid !important; width: 54px !important; height: 38px !important; place-items: center; overflow: hidden; border: 1px solid #202b36 !important; border-radius: 3px !important; padding: 0 !important; background: linear-gradient(145deg,#4a5661,#1c242c) !important; color: #f5f7fa !important; box-shadow: 2px 3px 0 rgba(0,0,0,.18) !important; }
@@ -19487,7 +19493,7 @@
       where_maibo: { name: "どこのマイボ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
       where_bone: { name: "どこの骨", type: "student", cost: 5, attack: 4, hp: 1, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
       where_uma_bone_maibo: { name: "どこのウマの骨のマイボだよ", type: "student", cost: 8, attack: 4, hp: 4, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      remote_participant_student: { name: "遠くから参加する学生", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
+      remote_participant_student: { name: "遠くから参加する学生", type: "student", cost: 5, attack: 1, hp: 2, keywords: ["注目"], allowedZones: ["seat"], category: "gakuyukai_item" },
       information_tired_student: { name: "情報に疲れた学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "gakuyukai_item" },
       corridor_student: { name: "通路で粘る学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
       diligent_student: { name: "熱心な学生", type: "student", cost: 3, attack: 2, hp: 3, rowOnly: 1, allowedZones: ["seat"], category: "common" },
@@ -19779,6 +19785,8 @@
         date: "2026年10月13日",
         summary: "新カード14枚を追加し、素材融合と融合演出を実装しました。「病」の装備時効果も変更しました。",
         changes: [
+          { title: "連続する回復・ダメージの表示", after: "同じ本体・出席者への回復やダメージの表示が重ならないよう、発動ごとに順番に表示するようにしました。回復量・ダメージ量・効果の処理順は変更していません。" },
+          { title: "相手の出席者の指名", after: "相手の講義室の出席者は盤面から直接指名でき、指名可能なカードを少し拡大して表示するようにしました。対象条件・カード効果は変更していません。" },
           { title: "融合関連の選択操作", after: "「通路で粘る学生」の素材選択、「遠くから参加する学生」のコピー元選択、「ウマの骨」「マイボの骨」のターン終了時の指名を、選択待ち中に操作できるよう修正しました。実際の演出中や、選択に関係のないゲーム操作は引き続き待機します。カード本文・戦意・能力値・効果は変更していません。" },
           {"title":"ウマ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
           {"title":"マイボ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
@@ -19789,9 +19797,9 @@
           {"title":"どこのウマ","after":"学生／学友会・持ち物／戦意5／攻撃力2／体力2（融合専用・デッキ編成不可）\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。"},
           {"title":"マイボの骨","after":"学生／学友会・持ち物／戦意5／攻撃力3／体力2（融合専用・デッキ編成不可）\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。"},
           {"title":"どこのマイボ","after":"学生／学友会・持ち物／戦意5／攻撃力2／体力2（融合専用・デッキ編成不可）\n自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。"},
-          {"title":"どこの骨","after":"学生／学友会・持ち物／戦意5／攻撃力4／体力1（融合専用・デッキ編成不可）\n自分のターン終了時、相手の手札をランダムに1枚選ぶ。\nそれは[負荷]を持つ。"},
-          {"title":"どこのウマの骨のマイボだよ","after":"学生／学友会・持ち物／戦意8／攻撃力4／体力4（融合専用・デッキ編成不可）\nこのカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手の手札をランダムに1枚選ぶ。\nそれは[負荷]を持つ。"},
-          {"title":"遠くから参加する学生","after":"学生／学友会・持ち物／戦意5／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。"},
+          {"title":"どこの骨","after":"学生／学友会・持ち物／戦意5／攻撃力4／体力1（融合専用・デッキ編成不可）\n自分のターン終了時、相手本体に3ダメージを与える。"},
+          {"title":"どこのウマの骨のマイボだよ","after":"学生／学友会・持ち物／戦意8／攻撃力4／体力4（融合専用・デッキ編成不可）\nこのカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。"},
+          {"title":"遠くから参加する学生","after":"学生／学友会・持ち物／戦意5／攻撃力1／体力2\n[注目]\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。"},
           {"title":"情報に疲れた学生","after":"学生／学友会・持ち物／戦意2／攻撃力1／体力1\nこのカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。"},
           {"title":"通路で粘る学生","after":"学生／学友会・持ち物／戦意3／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。"},
           { title: "素材融合", after: "「ウマ」「マイボ」「骨」「どこ」と融合出席者7種類、サポート学生3種類を追加しました。「通路で粘る学生」の戦意は3です。融合は戦意を使わず、素材を校外エリアへ送らずに完成品へ取り込みます。定規とU太の融合も、カードが合体する演出に統一しました。" },
@@ -21385,6 +21393,9 @@
     const DAMAGE_FEEDBACK_GAP_MS = 100;
     let nextDamageFeedbackAt = 0;
     let damageFeedbackBattleToken = null;
+    const TARGET_FEEDBACK_GAP_MS = 420;
+    const nextTargetFeedbackAt = new Map();
+    let targetFeedbackBattleToken = null;
     const ORDERED_ATTENDANCE_INITIAL_DELAY_MS = PLAY_REVEAL_MS + 80;
     const ORDERED_ATTENDANCE_STEP_MS = 100;
     const ORDERED_ATTENDANCE_BINGO_STEP_MS = 360;
@@ -27370,6 +27381,7 @@
       // Ignore that wait only here; actual animations and unrelated actions stay locked.
       if (battlePresentationBusy({ ignoreFusionTasks: choosingFusionEffect })) return false;
       if (state.pendingCardChoice || state.pendingThreeGestures) {
+        if (isOpponentBoardCardChoice() && target.closest(".enemy-effect-candidate")) return true;
         return Boolean(target.closest("#threeGesturesStage, #mulliganStage, #selectionPeekReturnButton"));
       }
       if (pendingCourseRegistrationConsent) return Boolean(target.closest("#courseRegistrationConsentModal"));
@@ -34926,6 +34938,18 @@
       return true;
     }
 
+    function isOpponentBoardCardChoice(choice = state.pendingCardChoice) {
+      return Boolean(choice?.cards.length && choice.cards.every(card => listBoardRefs("opponent")
+        .some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId)));
+    }
+
+    function isOpponentBoardChoiceCandidate(card, owner) {
+      const choice = state.pendingCardChoice;
+      return owner === "opponent" && isOpponentBoardCardChoice(choice)
+        && choice.cards.some(candidate => candidate.instanceId === card.instanceId)
+        && (!choice.selectableIds || choice.selectableIds.includes(card.instanceId));
+    }
+
     function toggleCardChoiceCard(instanceId) {
       const pending = state.pendingCardChoice;
       if (!pending) return;
@@ -36416,11 +36440,6 @@
       return true;
     }
 
-    function applyFusionLoad(side) {
-      const target = shuffle(state.players[side].hand)[0];
-      if (target) { addHandLoad(target); addLog(`「${target.name}」は負荷を持ちました。`); }
-    }
-
     function tryFuseHorseForAi(side) {
       const materials = HORSE_MATERIAL_IDS.map(id => state.players[side].hand.find(card => card.baseId === id && !isHighLoadHandCard(card)));
       if (materials.every(Boolean) && state.players[side].will >= 8) return fuseHorseMaterials(side, materials.map(card => card.instanceId), false);
@@ -36454,7 +36473,10 @@
           targets.filter(card => card.currentHp > 0).forEach(card => dealDamageToCard(card, 2, source));
         }
         if (source.baseId === "where_maibo" && enemy.length) dealDamageToCard(shuffle(enemy)[0], 7, source);
-        if (source.baseId === "where_bone") applyFusionLoad(oppositeSide(side));
+        if (source.baseId === "where_bone") {
+          damagePlayer(oppositeSide(side), 3);
+          checkLifeVictory();
+        }
         addLog(`${source.name}のターン終了時効果を処理しました。`);
       });
     }
@@ -36465,7 +36487,7 @@
         healPlayer(side, 3);
         listBoardRefs(side).map(getBoardCardFromRef).filter(Boolean).forEach(card => applyPermanentStatBuff(card, 1, 1, 0, source.name));
         listBoardRefs(opponent).map(getBoardCardFromRef).filter(Boolean).forEach(card => dealDamageToCard(card, 2, source));
-        applyFusionLoad(opponent);
+        damagePlayer(opponent, 3);
       }
       if (source.baseId === "information_tired_student") {
         const target = shuffle(state.players[side].deck.filter(card => HORSE_MATERIAL_IDS.includes(card.baseId)))[0];
@@ -39856,6 +39878,12 @@
     }
 
     function handleBoardCardClick(owner, zone, index = null) {
+      if (isOpponentBoardCardChoice()) {
+        if (isOnlineSpectator() || state.gameOver || battlePresentationBusy({ ignoreFusionTasks: true })) return;
+        const card = getBoardCard(owner, zone, index);
+        if (card && isOpponentBoardChoiceCandidate(card, owner)) toggleCardChoiceCard(card.instanceId);
+        return;
+      }
       if (state.phase === "battle" && (battlePresentationBusy() || state.pendingRemoteHandTrim
         || (isOnlineGuest() && state.remoteResolutionPending && !state.pendingCopiedCard
           && !state.pendingAttendTarget && !state.pendingMultiItem))) return;
@@ -43308,23 +43336,39 @@
       state.effectFeedbackEvents = state.effectFeedbackEvents.slice(-80);
     }
 
+    function withSequentialTargetFeedback(key, callback) {
+      if (targetFeedbackBattleToken !== state.preBattleToken) {
+        targetFeedbackBattleToken = state.preBattleToken;
+        nextTargetFeedbackAt.clear();
+      }
+      const previousDelay = activeEffectFeedbackDelay;
+      const now = performance.now();
+      activeEffectFeedbackDelay = Math.max(previousDelay, (nextTargetFeedbackAt.get(key) || 0) - now, 0);
+      nextTargetFeedbackAt.set(key, now + activeEffectFeedbackDelay + TARGET_FEEDBACK_GAP_MS);
+      try { return callback(); } finally { activeEffectFeedbackDelay = previousDelay; }
+    }
+
     function showFloatingTextForCard(card, text, kind) {
       if (!card) return;
-      recordOnlineEffectFeedback({
-        target: "card",
-        instanceId: card.instanceId,
-        owner: card.owner || null,
-        text,
-        kind
+      return withSequentialTargetFeedback(`card:${card.instanceId}`, () => {
+        recordOnlineEffectFeedback({
+          target: "card",
+          instanceId: card.instanceId,
+          owner: card.owner || null,
+          text,
+          kind
+        });
+        const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
+        showFloatingText(target, text, kind);
       });
-      const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
-      showFloatingText(target, text, kind);
     }
 
     function showFloatingTextForLife(side, text, kind) {
-      recordOnlineEffectFeedback({ target: "life", owner: side, text, kind });
-      const target = document.querySelector(`[data-life-target="${side}"]`);
-      showFloatingText(target, text, kind);
+      return withSequentialTargetFeedback(`life:${side}`, () => {
+        recordOnlineEffectFeedback({ target: "life", owner: side, text, kind });
+        const target = document.querySelector(`[data-life-target="${side}"]`);
+        showFloatingText(target, text, kind);
+      });
     }
 
     function showFloatingText(target, text, kind) {
@@ -46467,6 +46511,8 @@
       if (!elements.threeGesturesStage) return;
       const pending = state.pendingThreeGestures;
       const choice = isThinItemCardChoice(state.pendingCardChoice) ? null : state.pendingCardChoice;
+      const boardChoice = isOpponentBoardCardChoice(choice);
+      elements.threeGesturesStage.classList.toggle("board-target-choice", boardChoice);
       const peeking = state.selectionOverlayPeek && hasPeekableSelectionOverlay();
       const active = state.screen === "battle"
         && state.phase === "battle"
@@ -46484,6 +46530,7 @@
         elements.threeGesturesConfirmButton.textContent = choice.confirmLabel;
         elements.threeGesturesConfirmButton.disabled = choice.selectedIds.length < choice.min;
         elements.threeGesturesHand.innerHTML = "";
+        if (boardChoice) return;
         choice.cards.forEach((card) => {
           const button = document.createElement("button");
           button.className = `card mulligan-card ${card.type}${cardVisualClass(card)}`;
@@ -48198,12 +48245,16 @@
       }
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
+        (isOpponentBoardChoiceCandidate(card, owner) && state.pendingCardChoice.selectedIds.includes(card.instanceId))
+        ||
         isSelectedAttacker(owner, zone, index)
         || isSelectedMultiItemTarget(owner, zone, index)
         || isSelectedPanpanTarget(owner, zone, index)
         || isSelectedDestroyItemTarget(owner, zone, index)
         || isSelectedKingGhidorahBedTarget(owner, zone, index));
       button.classList.toggle("selection-candidate",
+        isOpponentBoardChoiceCandidate(card, owner)
+        ||
         canSelectMultiItemTarget(owner, zone, index)
         || canSelectPanpanTarget(owner, zone, index)
         || canSelectDestroyItemTarget(owner, zone, index)
@@ -48229,12 +48280,14 @@
       ));
       const raptorReady = Boolean(state.pendingRaptorTemple && !state.pendingRaptorTemple.sourceRef && isRaptorTempleSourceRef("player", owner, zone, index));
       button.classList.toggle("click-ready", itemReady || raptorReady);
+      button.classList.toggle("enemy-effect-candidate", owner === "opponent" && (
+        button.classList.contains("selection-candidate") || itemReady));
       button.classList.toggle("tutorial-allowed-target", isTutorialActive() && (
         tutorialAllowsAttacker(owner, zone, index) || tutorialAllowsAttackTarget(owner, zone, index)
         || (["itemCard", "playCard"].includes(currentTutorialStep()?.action)
           && tutorialRefMatches(currentTutorialStep().target, owner, zone, index))
       ));
-      attachCardDetailEvents(button, card);
+      attachCardDetailEvents(button, card, { previewOnClick: !isOpponentBoardCardChoice() });
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         handleBoardCardClick(owner, zone, index);
@@ -53099,9 +53152,9 @@
         where_uma: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。",
         maibo_bone: "自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
         where_maibo: "自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。",
-        where_bone: "自分のターン終了時、相手の手札をランダムに1枚選ぶ。それは負荷を持つ。",
-        where_uma_bone_maibo: "このカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手の手札をランダムに1枚選ぶ。それは負荷を持つ。",
-        remote_participant_student: "このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。",
+        where_bone: "自分のターン終了時、相手本体に3ダメージを与える。",
+        where_uma_bone_maibo: "このカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。",
+        remote_participant_student: "注目を持つ。このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。",
         information_tired_student: "このカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。",
         corridor_student: "このカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",

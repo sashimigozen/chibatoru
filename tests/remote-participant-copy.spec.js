@@ -57,5 +57,5 @@ test('オンラインのゲスト配置用コピーも別IDで同期し、元の
 
 test('本文は合意したコピー出席の文面で表示する',async({page})=>{
   expect(await page.evaluate(()=>cardRulesText(createCardFromBase('remote_participant_student','player'))))
-    .toBe('このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。');
+    .toBe('[注目]\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。');
 });
