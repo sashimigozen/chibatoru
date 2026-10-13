@@ -37,6 +37,7 @@ test('ゲストの出席時指名でも大型カードを直接クリックし�
     state.pendingAttendTarget={owner:'player',targetOwner:'opponent',sourceCardInstanceId:source.instanceId,sourceCardName:source.name,effect:'small_omata'};render();
   });
   await page.locator('.multi-seat-board-card').click();
+  await page.locator('#itemTargetConfirmButton').click();
   expect(await page.evaluate(()=>window.targetCommand)).toMatchObject({type:'attendTarget',payload:{target:{owner:'opponent',zone:'seat',index:0}}});
 });
 test('演出中の大型カードへの指名は引き続きロックする',async({page})=>{

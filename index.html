@@ -14205,10 +14205,6 @@
     .battle-screen .slot:has(> .board-card.selected) { z-index: 12 !important; }
     .battle-screen .board-card.enemy-effect-candidate { scale: 1.08; z-index: 12 !important; cursor: pointer; }
     .battle-screen .slot:has(> .board-card.enemy-effect-candidate) { z-index: 12 !important; }
-    #threeGesturesStage.board-target-choice { background: transparent; backdrop-filter: none; pointer-events: none; align-items: end; padding-bottom: 14vh; }
-    #threeGesturesStage.board-target-choice .mulligan-window { width: auto; min-width: 240px; padding: 10px 20px; pointer-events: auto; }
-    #threeGesturesStage.board-target-choice .mulligan-hand,
-    #threeGesturesStage.board-target-choice .selection-peek-button { display: none; }
 
     /* Grave markers are quiet until opened. */
     .battle-screen .trash-box { position: absolute !important; z-index: 11; display: grid !important; width: 54px !important; height: 38px !important; place-items: center; overflow: hidden; border: 1px solid #202b36 !important; border-radius: 3px !important; padding: 0 !important; background: linear-gradient(145deg,#4a5661,#1c242c) !important; color: #f5f7fa !important; box-shadow: 2px 3px 0 rgba(0,0,0,.18) !important; }
@@ -19486,13 +19482,13 @@
       fusion_maibo: { name: "マイボ", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
       fusion_bone: { name: "骨", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
       fusion_where: { name: "どこ", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
-      umaibo: { name: "ウマイボ", type: "student", cost: 5, attack: 0, hp: 5, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      uma_bone: { name: "ウマの骨", type: "student", cost: 5, attack: 2, hp: 3, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      where_uma: { name: "どこのウマ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      maibo_bone: { name: "マイボの骨", type: "student", cost: 5, attack: 3, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      where_maibo: { name: "どこのマイボ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      where_bone: { name: "どこの骨", type: "student", cost: 5, attack: 4, hp: 1, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      where_uma_bone_maibo: { name: "どこのウマの骨のマイボだよ", type: "student", cost: 8, attack: 4, hp: 4, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      umaibo: { name: "ウマイボ", type: "student", cost: 5, attack: 0, hp: 5, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      uma_bone: { name: "ウマの骨", type: "student", cost: 5, attack: 2, hp: 3, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_uma: { name: "どこのウマ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      maibo_bone: { name: "マイボの骨", type: "student", cost: 5, attack: 3, hp: 2, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_maibo: { name: "どこのマイボ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_bone: { name: "どこの骨", type: "student", cost: 5, attack: 4, hp: 1, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_uma_bone_maibo: { name: "どこのウマの骨のマイボだよの学生", type: "student", cost: 8, attack: 4, hp: 4, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
       remote_participant_student: { name: "遠くから参加する学生", type: "student", cost: 5, attack: 1, hp: 2, keywords: ["注目"], allowedZones: ["seat"], category: "gakuyukai_item" },
       information_tired_student: { name: "情報に疲れた学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "gakuyukai_item" },
       corridor_student: { name: "通路で粘る学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
@@ -19785,21 +19781,23 @@
         date: "2026年10月13日",
         summary: "新カード14枚を追加し、素材融合と融合演出を実装しました。「病」の装備時効果も変更しました。",
         changes: [
+          { title: "融合完成品のトークン化", after: "ウマ・マイボ・骨・どこから融合で生成する完成品7種類をトークン扱いにしました。破壊・校外送りでは消滅し、校外から回収できません。直接手札やデッキへ戻す挙動は既存のトークンと同じままです。" },
+          { title: "盤面の対象選択の統一", after: "盤面の出席者を選ぶ操作は、カードをクリックして選択・解除し、右側の丸いボタンで確定する方式に統一しました。手札・デッキ・校外のカード一覧、効果の選択肢は従来の選択画面を維持しています。" },
           { title: "複数マスの出席者の指名", after: "キングギドラベッドなどの指名中、複数の席マスを占有する出席者へのクリックが操作制限で遮断される不具合を修正しました。指名条件と演出中の操作制限は維持しています。" },
           { title: "連続する回復・ダメージの表示", after: "同じ本体・出席者への回復やダメージの表示が重ならないよう、発動ごとに順番に表示するようにしました。回復量・ダメージ量・効果の処理順は変更していません。" },
           { title: "相手の出席者の指名", after: "相手の講義室の出席者は盤面から直接指名でき、指名可能なカードを少し拡大して表示するようにしました。対象条件・カード効果は変更していません。" },
           { title: "融合関連の選択操作", after: "「通路で粘る学生」の素材選択、「遠くから参加する学生」のコピー元選択、「ウマの骨」「マイボの骨」のターン終了時の指名を、選択待ち中に操作できるよう修正しました。実際の演出中や、選択に関係のないゲーム操作は引き続き待機します。カード本文・戦意・能力値・効果は変更していません。" },
-          {"title":"ウマ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
-          {"title":"マイボ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
-          {"title":"骨","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
-          {"title":"どこ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「どこのウマ」、「マイボ」と融合して「どこのマイボ」、「骨」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
+          {"title":"ウマ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。"},
+          {"title":"マイボ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。"},
+          {"title":"骨","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。"},
+          {"title":"どこ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「どこのウマ」、「マイボ」と融合して「どこのマイボ」、「骨」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。"},
           {"title":"ウマイボ","after":"学生／学友会・持ち物／戦意5／攻撃力0／体力5（融合専用・デッキ編成不可）\n自分のターン終了時、自分の気力を3回復する。"},
           {"title":"ウマの骨","after":"学生／学友会・持ち物／戦意5／攻撃力2／体力3（融合専用・デッキ編成不可）\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの体力を+1する。"},
           {"title":"どこのウマ","after":"学生／学友会・持ち物／戦意5／攻撃力2／体力2（融合専用・デッキ編成不可）\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。"},
           {"title":"マイボの骨","after":"学生／学友会・持ち物／戦意5／攻撃力3／体力2（融合専用・デッキ編成不可）\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。"},
           {"title":"どこのマイボ","after":"学生／学友会・持ち物／戦意5／攻撃力2／体力2（融合専用・デッキ編成不可）\n自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。"},
           {"title":"どこの骨","after":"学生／学友会・持ち物／戦意5／攻撃力4／体力1（融合専用・デッキ編成不可）\n自分のターン終了時、相手本体に3ダメージを与える。"},
-          {"title":"どこのウマの骨のマイボだよ","after":"学生／学友会・持ち物／戦意8／攻撃力4／体力4（融合専用・デッキ編成不可）\nこのカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。"},
+          {"title":"どこのウマの骨のマイボだよの学生","after":"学生／学友会・持ち物／戦意8／攻撃力4／体力4（融合専用・デッキ編成不可）\nこのカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。"},
           {"title":"遠くから参加する学生","after":"学生／学友会・持ち物／戦意5／攻撃力1／体力2\n[注目]\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。"},
           {"title":"情報に疲れた学生","after":"学生／学友会・持ち物／戦意2／攻撃力1／体力1\nこのカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。"},
           {"title":"通路で粘る学生","after":"学生／学友会・持ち物／戦意3／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。"},
@@ -26754,6 +26752,9 @@
         ? { selection: JSON.parse(JSON.stringify(state.pendingMultiItem)), message: state.message } : null;
       const preservedLogicHunterChoice = isOnlineGuest() && state.pendingCardChoice?.mode === "logic_hunter_online_response"
         ? state.pendingCardChoice : null;
+      const preservedAttendSelection = isOnlineGuest() && state.pendingAttendTarget
+        ? { sourceId: state.pendingAttendTarget.sourceCardInstanceId, target: state.pendingAttendTarget.selectedTarget,
+          awaitingRemote: state.pendingAttendTarget.awaitingRemote } : null;
       const preservedMulliganSelection = isOnlineGuest()
         && state.phase === "mulligan"
         && !state.players.player.mulliganUsed
@@ -26774,6 +26775,11 @@
       restoreOnlineThinItemChoice(preservedThinItemChoice);
       restoreOnlineCourseRegistrationChoice(preservedCourseRegistrationChoice);
       restoreOnlineCourseRegistrationConsent(preservedCourseRegistrationConsent);
+      if (!isNewBattle && preservedAttendSelection?.target && state.pendingAttendTarget?.sourceCardInstanceId === preservedAttendSelection.sourceId
+        && isAttendTargetCandidate(preservedAttendSelection.target.owner, preservedAttendSelection.target.zone, preservedAttendSelection.target.index)) {
+        state.pendingAttendTarget.selectedTarget = preservedAttendSelection.target;
+        state.pendingAttendTarget.awaitingRemote = Boolean(preservedAttendSelection.awaitingRemote);
+      }
       if (isOnlineGuest() && state.phase === "battle" && state.currentSide === "player" && !state.gameOver) {
         if (preservedCrotchTargets && getHandCard("player", preservedCrotchTargets.selection.itemId)) {
           state.pendingMultiItem = preservedCrotchTargets.selection;
@@ -27382,13 +27388,13 @@
       // Ignore that wait only here; actual animations and unrelated actions stay locked.
       if (battlePresentationBusy({ ignoreFusionTasks: choosingFusionEffect })) return false;
       if (state.pendingCardChoice || state.pendingThreeGestures) {
-        if (isOpponentBoardCardChoice() && target.closest(".enemy-effect-candidate")) return true;
+        if (isBoardCardChoice() && target.closest(".board-card.selection-candidate, #itemTargetConfirmButton")) return true;
         return Boolean(target.closest("#threeGesturesStage, #mulliganStage, #selectionPeekReturnButton"));
       }
       if (pendingCourseRegistrationConsent) return Boolean(target.closest("#courseRegistrationConsentModal"));
       if (pendingTeacherActionRef) return Boolean(target.closest("#teacherActionModal"));
       if (isOnlineGuest() && (state.pendingCopiedCard || state.pendingAttendTarget)) {
-        return Boolean(target.closest(".slot, .multi-seat-board-card, #threeGesturesStage, #selectionPeekReturnButton"));
+        return Boolean(target.closest(".slot, .multi-seat-board-card, #itemTargetConfirmButton, #threeGesturesStage, #selectionPeekReturnButton"));
       }
       if (state.pendingRemoteHandTrim || isOnlineCommandPending()) return false;
       // Guest placement/target responses are the only actions permitted while
@@ -34939,14 +34945,14 @@
       return true;
     }
 
-    function isOpponentBoardCardChoice(choice = state.pendingCardChoice) {
-      return Boolean(choice?.cards.length && choice.cards.every(card => listBoardRefs("opponent")
+    function isBoardCardChoice(choice = state.pendingCardChoice) {
+      return Boolean(choice?.cards.length && choice.cards.every(card => ["player", "opponent"].flatMap(side => listBoardRefs(side))
         .some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId)));
     }
 
-    function isOpponentBoardChoiceCandidate(card, owner) {
+    function isBoardChoiceCandidate(card, owner) {
       const choice = state.pendingCardChoice;
-      return owner === "opponent" && isOpponentBoardCardChoice(choice)
+      return isBoardCardChoice(choice)
         && choice.cards.some(candidate => candidate.instanceId === card.instanceId)
         && (!choice.selectableIds || choice.selectableIds.includes(card.instanceId));
     }
@@ -35807,6 +35813,13 @@
         state.selectedHandId = item.instanceId;
         state.pendingDestroyItem = { itemId: item.instanceId, target: null };
         state.message = `${item.name}：破壊する相手の出席者を指名してください。`;
+        render();
+        return;
+      }
+      if (usesBoardTargetConfirmation(item)) {
+        state.selectedAttacker = null;
+        state.selectedHandId = item.instanceId;
+        state.pendingDestroyItem = { itemId: item.instanceId, target: null };
         render();
         return;
       }
@@ -39879,10 +39892,10 @@
     }
 
     function handleBoardCardClick(owner, zone, index = null) {
-      if (isOpponentBoardCardChoice()) {
+      if (isBoardCardChoice()) {
         if (isOnlineSpectator() || state.gameOver || battlePresentationBusy({ ignoreFusionTasks: true })) return;
         const card = getBoardCard(owner, zone, index);
-        if (card && isOpponentBoardChoiceCandidate(card, owner)) toggleCardChoiceCard(card.instanceId);
+        if (card && isBoardChoiceCandidate(card, owner)) toggleCardChoiceCard(card.instanceId);
         return;
       }
       if (state.phase === "battle" && (battlePresentationBusy() || state.pendingRemoteHandTrim
@@ -39897,7 +39910,11 @@
         return;
       }
       if (state.pendingAttendTarget) {
-        resolveAttendTargetChoice("player", { owner, zone, index });
+        if (isAttendTargetCandidate(owner, zone, index)) {
+          const ref = { owner, zone, index };
+          state.pendingAttendTarget.selectedTarget = refsMatch(state.pendingAttendTarget.selectedTarget, ref) ? null : ref;
+          render();
+        }
         return;
       }
       if (state.pendingCrotchFebrezeEffects && !state.pendingCopiedCard) return;
@@ -39919,7 +39936,7 @@
         togglePanpanTarget(owner, zone, index);
         return;
       }
-      if (state.pendingDestroyItem && TARGETED_DESTROY_ITEM_IDS.has(selectedCard?.baseId)) {
+      if (state.pendingDestroyItem && usesBoardTargetConfirmation(selectedCard)) {
         toggleDestroyItemTarget(selectedCard, owner, zone, index);
         return;
       }
@@ -39927,6 +39944,10 @@
         if (!canUseItemOnBoardTarget(selectedCard, owner, zone, index)) {
           state.message = `${selectedCard.name}はその出席者を対象にできません。`;
           render();
+          return;
+        }
+        if (usesBoardTargetConfirmation(selectedCard)) {
+          toggleDestroyItemTarget(selectedCard, owner, zone, index);
           return;
         }
         if (selectedCard.baseId === "donguri") {
@@ -40857,6 +40878,15 @@
     }
 
     function confirmSelectedItemTargets() {
+      if (isBoardCardChoice()) {
+        confirmCardChoiceSelection();
+        return;
+      }
+      if (state.pendingAttendTarget) {
+        const target = state.pendingAttendTarget.selectedTarget;
+        if (target) resolveAttendTargetChoice("player", target);
+        return;
+      }
       if (state.pendingMultiItem) {
         confirmMultiItemTargets();
         return;
@@ -40874,11 +40904,16 @@
       }
     }
 
+    function usesBoardTargetConfirmation(item) {
+      return Boolean(item?.type === "item" && (item.baseId === "donguri" || ["enemy", "friendly", "friendlyAny", "anyBoard"].includes(item.target))
+        && !["panpan", "i_got_it", "big_wall", "crotch_febreze", "capture", "salt_to_enemy", "paired_existence"].includes(item.baseId));
+    }
+
     function toggleDestroyItemTarget(item, owner, zone, index) {
-      if (!item || !TARGETED_DESTROY_ITEM_IDS.has(item.baseId)) return false;
+      if (!usesBoardTargetConfirmation(item)) return false;
       const target = getBoardCard(owner, zone, index);
       if (!target || !canUseItemOnBoardTarget(item, owner, zone, index)) {
-        state.message = `${item.name}はその出席者を破壊対象にできません。`;
+        state.message = `${item.name}はその出席者を対象にできません。`;
         render();
         return false;
       }
@@ -40888,8 +40923,8 @@
       const ref = { owner, zone, index };
       state.pendingDestroyItem.target = refsMatch(state.pendingDestroyItem.target, ref) ? null : ref;
       state.message = state.pendingDestroyItem.target
-        ? `${item.name}：${target.name}を選択しました。「破壊する」を押してください。`
-        : `${item.name}：破壊する相手の出席者を指名してください。`;
+        ? `${item.name}：${target.name}を選択しました。`
+        : `${item.name}：対象を選んでください。`;
       render();
       return true;
     }
@@ -40901,18 +40936,24 @@
       const { owner, zone, index = null } = pending.target;
       if (!canUseItemOnBoardTarget(item, owner, zone, index)) {
         pending.target = null;
-        state.message = `${item.name}：対象がいなくなったため、破壊する相手の出席者を選び直してください。`;
+        state.message = `${item.name}：対象を選び直してください。`;
         render();
         return false;
       }
+      if (item.baseId === "happy_experience") {
+        state.pendingDestroyItem = null;
+        return openHappyExperienceChoice(item, { owner, zone, index });
+      }
       if (onlineCanSendCommand()) {
-        onlineSendCommand("itemCard", { instanceId: item.instanceId, target: pending.target });
-        state.message = `${item.name}の破壊対象を送信しました。`;
+        onlineSendCommand(item.baseId === "donguri" ? "donguri" : "itemCard", { instanceId: item.instanceId, target: pending.target });
+        state.message = `${item.name}の対象を送信しました。`;
         clearSelections();
         render();
         return true;
       }
-      return castItemOnCard("player", item, owner, zone, index, true);
+      return item.baseId === "donguri"
+        ? castDonguriEvolutionItem("player", item, owner, zone, index, true)
+        : castItemOnCard("player", item, owner, zone, index, true);
     }
 
     function togglePanpanTarget(owner, zone, index) {
@@ -45350,15 +45391,17 @@
       elements.fusionButton.disabled = !canFuseRulers;
       elements.startButton.classList.add("hidden");
       elements.startButton.disabled = true;
-      const choosingItemTargets = Boolean(state.pendingMultiItem || state.pendingPanpanItem || state.pendingDestroyItem || state.pendingThreeGestures || state.pendingKingGhidorahBed);
+      const boardChoice = isBoardCardChoice();
+      const attendChoice = Boolean(state.pendingAttendTarget && !state.pendingAttendTarget.awaitingRemote);
+      const choosingItemTargets = Boolean(boardChoice || attendChoice || state.pendingMultiItem || state.pendingPanpanItem || state.pendingDestroyItem || state.pendingThreeGestures || state.pendingKingGhidorahBed);
       const choosingCrotchFebreze = state.pendingMultiItem?.mode?.startsWith("crotch_febreze_");
       const waitingForCardChoice = Boolean(state.pendingCardChoice || state.pendingAttendTarget || state.pendingKingGhidorahBed || state.pendingRemoteHandTrim);
       const destructiveConfirmation = Boolean(
-        state.pendingDestroyItem
+        (state.pendingDestroyItem && TARGETED_DESTROY_ITEM_IDS.has(getSelectedHandCard()?.baseId))
         || (state.pendingPanpanItem?.stage === "enemy")
         || state.pendingKingGhidorahBed
       );
-      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || choosingCrotchFebreze || (!state.pendingMultiItem && !state.pendingPanpanItem && !state.pendingDestroyItem && !state.pendingKingGhidorahBed));
+      elements.itemTargetConfirmButton.classList.toggle("hidden", spectator || choosingCrotchFebreze || (!boardChoice && !attendChoice && !state.pendingMultiItem && !state.pendingPanpanItem && !state.pendingDestroyItem && !state.pendingKingGhidorahBed));
       elements.itemTargetConfirmButton.classList.toggle("destroy-confirm", destructiveConfirmation);
       elements.itemTargetConfirmButton.textContent = state.pendingMultiItem
         ? state.pendingMultiItem.mode === "big_wall"
@@ -45366,10 +45409,12 @@
           : `対象${state.pendingMultiItem.targets.length}人で使用`
         : state.pendingPanpanItem
           ? (state.pendingPanpanItem.stage === "friendly" ? "自分の出席者を確定" : "破壊する")
-          : (state.pendingDestroyItem || state.pendingKingGhidorahBed)
+          : destructiveConfirmation
             ? "破壊する"
             : "対象を確定";
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
+        || (boardChoice && state.pendingCardChoice.selectedIds.length < state.pendingCardChoice.min)
+        || (attendChoice && !state.pendingAttendTarget.selectedTarget)
         || (state.pendingMultiItem && (
           state.pendingMultiItem.mode === "big_wall"
             ? state.pendingMultiItem.targets.length !== 2
@@ -46241,16 +46286,10 @@
         return true;
       }
       if (card.baseId === "donguri") {
-        if (onlineCanSendCommand()) {
-          onlineSendCommand("donguri", { instanceId: card.instanceId, target: { owner, zone, index } });
-          state.message = `${card.name}の対象を送信しました。`;
-          render();
-          return true;
-        }
-        castDonguriEvolutionItem("player", card, owner, zone, index, true);
+        toggleDestroyItemTarget(card, owner, zone, index);
         return true;
       }
-      if (TARGETED_DESTROY_ITEM_IDS.has(card.baseId)) {
+      if (usesBoardTargetConfirmation(card)) {
         toggleDestroyItemTarget(card, owner, zone, index);
         return true;
       }
@@ -46512,12 +46551,12 @@
       if (!elements.threeGesturesStage) return;
       const pending = state.pendingThreeGestures;
       const choice = isThinItemCardChoice(state.pendingCardChoice) ? null : state.pendingCardChoice;
-      const boardChoice = isOpponentBoardCardChoice(choice);
-      elements.threeGesturesStage.classList.toggle("board-target-choice", boardChoice);
+      const boardChoice = isBoardCardChoice(choice);
       const peeking = state.selectionOverlayPeek && hasPeekableSelectionOverlay();
       const active = state.screen === "battle"
         && state.phase === "battle"
         && (Boolean(pending) || Boolean(choice))
+        && !boardChoice
         && !peeking
         && !isOnlineSpectator();
       elements.threeGesturesStage.classList.toggle("hidden", !active);
@@ -48246,7 +48285,8 @@
       }
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
       button.classList.toggle("selected",
-        (isOpponentBoardChoiceCandidate(card, owner) && state.pendingCardChoice.selectedIds.includes(card.instanceId))
+        (isBoardChoiceCandidate(card, owner) && state.pendingCardChoice.selectedIds.includes(card.instanceId))
+        || refsMatch(state.pendingAttendTarget?.selectedTarget, { owner, zone, index })
         ||
         isSelectedAttacker(owner, zone, index)
         || isSelectedMultiItemTarget(owner, zone, index)
@@ -48254,7 +48294,7 @@
         || isSelectedDestroyItemTarget(owner, zone, index)
         || isSelectedKingGhidorahBedTarget(owner, zone, index));
       button.classList.toggle("selection-candidate",
-        isOpponentBoardChoiceCandidate(card, owner)
+        isBoardChoiceCandidate(card, owner)
         ||
         canSelectMultiItemTarget(owner, zone, index)
         || canSelectPanpanTarget(owner, zone, index)
@@ -48288,7 +48328,7 @@
         || (["itemCard", "playCard"].includes(currentTutorialStep()?.action)
           && tutorialRefMatches(currentTutorialStep().target, owner, zone, index))
       ));
-      attachCardDetailEvents(button, card, { previewOnClick: !isOpponentBoardCardChoice() });
+      attachCardDetailEvents(button, card, { previewOnClick: !isBoardCardChoice() });
       button.addEventListener("click", (event) => {
         event.stopPropagation();
         handleBoardCardClick(owner, zone, index);
@@ -53144,10 +53184,10 @@
         academic_move: "お互いの講義室にこのターン出席した出席者すべては超陽気を持つ。それらは自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
         gesture_student: "このカードを手札から出席させたとき、「３つジェスチャー」2枚を手札に生成する。",
-        fusion_uma: "[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
-        fusion_maibo: "[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
-        fusion_bone: "[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
-        fusion_where: "[融合]：「ウマ」と融合して「どこのウマ」、「マイボ」と融合して「どこのマイボ」、「骨」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
+        fusion_uma: "[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
+        fusion_maibo: "[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
+        fusion_bone: "[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
+        fusion_where: "[融合]：「ウマ」と融合して「どこのウマ」、「マイボ」と融合して「どこのマイボ」、「骨」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
         umaibo: "自分のターン終了時、自分の気力を3回復する。",
         uma_bone: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの体力を+1する。",
         where_uma: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。",

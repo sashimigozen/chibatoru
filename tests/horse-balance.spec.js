@@ -47,3 +47,12 @@ test('遠くから参加する学生は注目を持ち、能力値とコピー�
     const card=createCardFromBase('remote_participant_student','player');return {stats:[card.cost,card.attack,card.hp],attention:hasKeyword(card,'注目'),text:cardRulesText(card)};
   })).toEqual({stats:[5,1,2],attention:true,text:'[注目]\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。'});
 });
+test('最終形の改名を融合先の説明とカード表示に反映し、IDと能力値は維持する',async({page})=>{
+  expect(await page.evaluate(()=>{
+    const card=createCardFromBase('where_uma_bone_maibo','player');
+    return {name:card.name,stats:[card.cost,card.attack,card.hp],result:horseFusionResult(HORSE_MATERIAL_IDS.map(id=>createCardFromBase(id,'player'))),
+      references:HORSE_MATERIAL_IDS.every(id=>cardRulesText(createCardFromBase(id,'player')).includes('「どこのウマの骨のマイボだよの学生」'))};
+  })).toEqual({name:'どこのウマの骨のマイボだよの学生',stats:[8,4,4],result:'where_uma_bone_maibo',references:true});
+  await page.evaluate(()=>showBattleCardPreview(createCardFromBase('where_uma_bone_maibo','player')));
+  await expect(page.locator('#battleCardPreview')).toContainText('どこのウマの骨のマイボだよの学生');
+});

@@ -17,7 +17,7 @@ test('終了時の指名を相手の盤面から直接選び、確定してダ�
   await page.evaluate(()=>{resolveHorseEndTurn('player',state.players.player.board.seats[0]);render();});
   const candidates=page.locator('.board-card.enemy-effect-candidate');
   await expect(candidates).toHaveCount(3);
-  await expect(page.locator('#threeGesturesStage')).toHaveClass(/board-target-choice/);
+  await expect(page.locator('#threeGesturesStage')).toHaveClass(/hidden/);
   await expect(page.locator('#threeGesturesHand button')).toHaveCount(0);
   expect(await candidates.first().evaluate(el=>getComputedStyle(el).scale)).toBe('1.08');
   await page.locator('.enemy-effect-candidate[data-index="0"]').click();await page.locator('.enemy-effect-candidate[data-index="1"]').click();
@@ -25,7 +25,7 @@ test('終了時の指名を相手の盤面から直接選び、確定してダ�
   await page.locator('.enemy-effect-candidate[data-index="2"]').click();
   expect(await page.evaluate(()=>state.pendingCardChoice.selectedIds.length)).toBe(2);
   await page.screenshot({path:test.info().outputPath('opponent-board-choice.png')});
-  await page.locator('#threeGesturesConfirmButton').click();
+  await page.locator('#itemTargetConfirmButton').click();
   await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
   expect(await page.evaluate(()=>state.players.opponent.board.seats.slice(0,3).map(card=>card?.currentHp??null))).toEqual([null,null,2]);
   await expect(page.locator('.enemy-effect-candidate')).toHaveCount(0);
@@ -46,7 +46,7 @@ test('オンラインのゲストも相手の盤面から指名して応答で�
     openCardChoice({mode:'fusion_effect_online_response',requestId:'board-test',cards:[cardRevealPayload(state.players.opponent.board.seats[0])],min:1,max:1});
   });
   await page.locator('.enemy-effect-candidate').click();
-  await page.locator('#threeGesturesConfirmButton').click();
+  await page.locator('#itemTargetConfirmButton').click();
   expect(await page.evaluate(()=>window.boardResponse.selectedIds.length)).toBe(1);
 });
 test('演出中の指名は待機し、終了後に直接選べる',async({page})=>{
@@ -69,5 +69,6 @@ test('既存の出席時指名でも選べる相手だけ拡大する',async({pa
   await expect(page.locator('.enemy-effect-candidate')).toHaveCount(3);
   expect(await page.locator('.enemy-effect-candidate').first().evaluate(el=>getComputedStyle(el).scale)).toBe('1.08');
   await page.locator('.enemy-effect-candidate[data-index="0"]').click();
+  await page.locator('#itemTargetConfirmButton').click();
   await expect.poll(()=>page.evaluate(()=>Boolean(state.pendingAttendTarget))).toBe(false);
 });

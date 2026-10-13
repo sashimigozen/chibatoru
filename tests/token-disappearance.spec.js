@@ -46,7 +46,8 @@ test("全トークンは両プレイヤーの破壊・手札破棄で消滅し�
     return { ids, checks, trash: [state.players.player.trash.length, state.players.opponent.trash.length], history: state.recentBoardTrash.length,
       snapshotHasVanishedCard: JSON.stringify(snapshot.state.players).includes('"tokenVanished":true') };
   });
-  expect(result.ids).toHaveLength(8);
+  expect(result.ids).toHaveLength(16);
+  expect(result.ids).toEqual(expect.arrayContaining(['umaibo','uma_bone','where_uma','maibo_bone','where_maibo','where_bone','where_uma_bone_maibo']));
   expect(result.ids).toContain("grudge");
   expect(result.ids).toContain("recovered_dark_yuta");
   expect(result.checks.every(Boolean)).toBe(true);
@@ -74,7 +75,7 @@ test("通常カードのコピーと生成専用カードは消滅せず、ト�
 });
 
 test("旧データのトークンも回収・デッキ戻し・逆行の対象外になり表示時に校外から消える", async ({ page }) => {
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const { state } = api;
     const token = api.createCardFromBase("extra_student", "player");
@@ -84,6 +85,7 @@ test("旧データのトークンも回収・デッキ戻し・逆行の対象�
     const item = api.createCardFromBase("go_away", "player");
     state.players.player.hand = [item];
     const returned = api.resolveGoAwayChoice("player", item, state.players.player.trash.map(c => c.instanceId), false);
+    await waitForBattlePresentation();
     state.recentBoardTrash = [{ owner: "player", zone: "seat", index: 0, actionTurn: 1, card: { ...token, lastDamageSource: { baseId: "general_student" } } }];
     const restored = api.restoreRecentBoardCard("player");
     state.players.opponent.trash = [api.createCardFromBase("ta", "opponent"), api.createCardFromBase("key", "opponent")];
@@ -120,13 +122,14 @@ test("幸せの青い鳥はトークン消滅では増殖せず通常の校外�
 });
 
 test("通常カード5枚のデッキ戻しとドローは引き続き使える", async ({ page }) => {
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const player = api.state.players.player;
     player.trash = Array.from({ length: 5 }, () => api.createCardFromBase("general_student", "player"));
     const item = api.createCardFromBase("go_away", "player");
     player.hand = [item];
     const success = api.resolveGoAwayChoice("player", item, player.trash.map(c => c.instanceId), false);
+    await waitForBattlePresentation();
     return { success, deck: player.deck.length, hand: player.hand.length, trash: player.trash.map(c => c.baseId) };
   });
   expect(result).toEqual({ success: true, deck: 3, hand: 2, trash: ["go_away"] });
