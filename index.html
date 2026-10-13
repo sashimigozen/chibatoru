@@ -19779,6 +19779,7 @@
         date: "2026年10月13日",
         summary: "新カード14枚を追加し、素材融合と融合演出を実装しました。「病」の装備時効果も変更しました。",
         changes: [
+          { title: "融合関連の選択操作", after: "「通路で粘る学生」の素材選択、「遠くから参加する学生」のコピー元選択、「ウマの骨」「マイボの骨」のターン終了時の指名を、選択待ち中に操作できるよう修正しました。実際の演出中や、選択に関係のないゲーム操作は引き続き待機します。カード本文・戦意・能力値・効果は変更していません。" },
           {"title":"ウマ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
           {"title":"マイボ","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
           {"title":"骨","after":"持ち物／学友会・持ち物／戦意0\n[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。"},
@@ -27216,8 +27217,8 @@
     let queuedBattlePresentations = 0;
     let itemResolutionContext = null;
     let pendingItemPresentation = null;
-    function battlePresentationBusy() {
-      return Boolean(fusionTasksBusy() || pendingItemPresentation || state.pendingCardPlay || state.resolvingOrderedAttendance
+    function battlePresentationBusy({ ignoreFusionTasks = false } = {}) {
+      return Boolean((!ignoreFusionTasks && fusionTasksBusy()) || pendingItemPresentation || state.pendingCardPlay || state.resolvingOrderedAttendance
         || state.attackInProgress || state.attackQueue.length
         || window.ChibattleDraw?.isBusy()
         || window.ChibattleHandTrash?.isBusy()
@@ -27364,7 +27365,10 @@
     function battleActionInputAllowed(target) {
       if (state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return true;
       if (state.lectureRoomCheck && !battleChoicePending()) return false;
-      if (battlePresentationBusy()) return false;
+      const choosingFusionEffect = ["fusion_effect_choice", "fusion_effect_online_response"].includes(state.pendingCardChoice?.mode);
+      // The resolution task stays busy until the player confirms this choice.
+      // Ignore that wait only here; actual animations and unrelated actions stay locked.
+      if (battlePresentationBusy({ ignoreFusionTasks: choosingFusionEffect })) return false;
       if (state.pendingCardChoice || state.pendingThreeGestures) {
         return Boolean(target.closest("#threeGesturesStage, #mulliganStage, #selectionPeekReturnButton"));
       }
