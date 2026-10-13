@@ -19785,6 +19785,7 @@
         date: "2026年10月13日",
         summary: "新カード14枚を追加し、素材融合と融合演出を実装しました。「病」の装備時効果も変更しました。",
         changes: [
+          { title: "複数マスの出席者の指名", after: "キングギドラベッドなどの指名中、複数の席マスを占有する出席者へのクリックが操作制限で遮断される不具合を修正しました。指名条件と演出中の操作制限は維持しています。" },
           { title: "連続する回復・ダメージの表示", after: "同じ本体・出席者への回復やダメージの表示が重ならないよう、発動ごとに順番に表示するようにしました。回復量・ダメージ量・効果の処理順は変更していません。" },
           { title: "相手の出席者の指名", after: "相手の講義室の出席者は盤面から直接指名でき、指名可能なカードを少し拡大して表示するようにしました。対象条件・カード効果は変更していません。" },
           { title: "融合関連の選択操作", after: "「通路で粘る学生」の素材選択、「遠くから参加する学生」のコピー元選択、「ウマの骨」「マイボの骨」のターン終了時の指名を、選択待ち中に操作できるよう修正しました。実際の演出中や、選択に関係のないゲーム操作は引き続き待機します。カード本文・戦意・能力値・効果は変更していません。" },
@@ -27387,7 +27388,7 @@
       if (pendingCourseRegistrationConsent) return Boolean(target.closest("#courseRegistrationConsentModal"));
       if (pendingTeacherActionRef) return Boolean(target.closest("#teacherActionModal"));
       if (isOnlineGuest() && (state.pendingCopiedCard || state.pendingAttendTarget)) {
-        return Boolean(target.closest(".slot, #threeGesturesStage, #selectionPeekReturnButton"));
+        return Boolean(target.closest(".slot, .multi-seat-board-card, #threeGesturesStage, #selectionPeekReturnButton"));
       }
       if (state.pendingRemoteHandTrim || isOnlineCommandPending()) return false;
       // Guest placement/target responses are the only actions permitted while
@@ -27397,7 +27398,7 @@
         && !state.pendingMultiItem) return false;
       if (battleChoicePending()) {
         if (target.closest("#playerHand")) return Boolean(state.pendingHandDiscardItem);
-        return Boolean(target.closest(".slot, [data-life-target], #itemTargetConfirmButton, #endTurnButton, #threeGesturesStage, #selectionPeekReturnButton"));
+        return Boolean(target.closest(".slot, .multi-seat-board-card, [data-life-target], #itemTargetConfirmButton, #endTurnButton, #threeGesturesStage, #selectionPeekReturnButton"));
       }
       return true;
     }
