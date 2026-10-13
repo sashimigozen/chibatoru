@@ -79,7 +79,7 @@ for (const side of ["player", "opponent"]) {
       expect(size).toBe(0);
     });
 
-    test("病に臥すU太の体力低下で倒せる唯一の出席者を攻撃しない", async ({ page }) => {
+    test("病に臥すU太の感染では体力が減らないため撃破予約しない", async ({ page }) => {
       const result = await page.evaluate((owner) => {
         const api = window.__chibattle;
         const enemy = owner === "player" ? "opponent" : "player";
@@ -98,7 +98,7 @@ for (const side of ["player", "opponent"]) {
           targetRemoved: !api.state.players[enemy].board.seats[0]
         };
       }, side);
-      expect(result).toEqual({ reserved: true, sourcePreserved: true, targetRemoved: true });
+      expect(result).toEqual({ reserved: false, sourcePreserved: false, targetRemoved: false });
     });
 
     test("感染済みの学生は病で体力が再び減らないため撃破予約しない", async ({ page }) => {

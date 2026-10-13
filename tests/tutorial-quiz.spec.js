@@ -306,6 +306,7 @@ test("クイズの説明切替・再挑戦ボタンの固定・終了・基本�
   await expect(page.locator("#tutorialStepCounter")).toHaveText("2/3");
   await expect(hand(page, "ruler")).toHaveCount(1);
   expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(3);
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   await page.locator("#tutorialExitButton").click();
   await page.locator('[data-tutorial-chapter="basic"]').click();
   await page.locator("#tutorialStartButton").click();

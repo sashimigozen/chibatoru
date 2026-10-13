@@ -17390,6 +17390,21 @@
       }
     }
 
+    .fusion-visual { position: fixed; inset: 0; z-index: 1600; pointer-events: none; }
+    .fusion-visual-card { position: absolute; left: 50%; top: 45%; width: 150px; height: 226px;
+      margin: -113px 0 0 -75px; animation: fusion-merge 1500ms ease-in-out both; }
+    .fusion-visual-card > .card-shell { width: 100%; height: 100%; }
+    .fusion-visual-card.fusion-result { animation: fusion-create 1500ms ease-in-out both; }
+    @keyframes fusion-merge {
+      0%, 15% { opacity: 1; transform: translate(var(--fusion-x), var(--fusion-y)) scale(.9); }
+      52% { opacity: 1; transform: translate(0, 0) scale(.95); }
+      65%, 100% { opacity: 0; transform: translate(0, 0) scale(.75); }
+    }
+    @keyframes fusion-create {
+      0%, 50% { opacity: 0; transform: scale(.7); }
+      65%, 82% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: translate(var(--fusion-hand-x, 0px), var(--fusion-hand-y, 240px)) scale(.45); }
+    }
   </style>
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
@@ -19461,6 +19476,20 @@
       acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 6, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
       hat_man: { name: "帽子男", type: "student", cost: 5, attack: 3, hp: 3, allowedZones: ["seat"], category: "common" },
       gesture_student: { name: "ジェスチャー学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "common" },
+      fusion_uma: { name: "ウマ", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
+      fusion_maibo: { name: "マイボ", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
+      fusion_bone: { name: "骨", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
+      fusion_where: { name: "どこ", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
+      umaibo: { name: "ウマイボ", type: "student", cost: 5, attack: 0, hp: 5, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      uma_bone: { name: "ウマの骨", type: "student", cost: 5, attack: 2, hp: 3, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_uma: { name: "どこのウマ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      maibo_bone: { name: "マイボの骨", type: "student", cost: 5, attack: 3, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_maibo: { name: "どこのマイボ", type: "student", cost: 5, attack: 2, hp: 2, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_bone: { name: "どこの骨", type: "student", cost: 5, attack: 4, hp: 1, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      where_uma_bone_maibo: { name: "どこのウマの骨のマイボだよ", type: "student", cost: 8, attack: 4, hp: 4, generated: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
+      remote_participant_student: { name: "遠くから参加する学生", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
+      information_tired_student: { name: "情報に疲れた学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "gakuyukai_item" },
+      corridor_student: { name: "通路で粘る学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
       diligent_student: { name: "熱心な学生", type: "student", cost: 3, attack: 2, hp: 3, rowOnly: 1, allowedZones: ["seat"], category: "common" },
       plump_student: { name: "ふくよかな学生", type: "student", cost: 5, attack: 4, hp: 5, keywords: ["陽気"], occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "big" },
       aggro_princess: { name: "アグロプリンセス", type: "student", cost: 1, attack: 1, hp: 1, keywords: ["超陽気"], allowedZones: ["seat"], category: "common" },
@@ -19713,6 +19742,8 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("fusion_uma", "fusion_maibo", "fusion_bone", "fusion_where",
+      "remote_participant_student", "information_tired_student", "corridor_student");
     ALL_DECK_IDS = [...new Set(ALL_DECK_IDS)].filter((baseId) => {
       const base = CARD_BASES[baseId];
       // Evolution cards are deck-buildable cards.  Their allowedZones setting
@@ -19742,6 +19773,17 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.24.0",
+        versioning: "semver",
+        date: "2026年10月13日",
+        summary: "「病」の装備時効果を変更し、素材4種類の融合カードと融合演出を追加しました。",
+        changes: [
+          { title: "遠くから参加する学生", after: "このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。元のカードは手札に残り、コピーは戦意を使わず出席します。コピーの手札からの出席時効果は発動しません。" },
+          { title: "素材融合", after: "「ウマ」「マイボ」「骨」「どこ」と融合出席者7種類、サポート学生3種類を追加しました。「通路で粘る学生」の戦意は3です。融合は戦意を使わず、素材を校外エリアへ送らずに完成品へ取り込みます。定規とU太の融合も、カードが合体する演出に統一しました。" },
+          { title: "病", before: "装備者の体力を-1する。", after: "装備者の攻撃力を-1する。装備時に体力は減らなくなります。ターン終了時の攻撃力低下と感染は維持し、AIの判断も変更後の効果に揃えました。" }
+        ]
+      },
       {
         version: "ver.0.23.19",
         date: "2026年10月12日",
@@ -21218,6 +21260,7 @@
 
     function updateHistorySeriesKey(entry) {
       const version = String(entry?.version || "");
+      if (entry?.versioning === "semver") return `semver:${version}`;
       const match = version.match(/^ver\.(\d+)\.(\d+)\.\d+$/);
       return match ? `${entry.date}:${match[1]}.${match[2]}` : `${entry?.date || ""}:${version}`;
     }
@@ -21899,7 +21942,7 @@
       ]),
       fusion: abilityTutorialSteps("融合編", "融合は、指定されたカードを組み合わせて別のカードを作る仕組みです。\n定規2枚を融合すると、ダブルダイヤモンドクロスが手札に加わります。", [
         { id: "fusion", title: "定規を融合しよう", body: "手札の定規を押し、カード確認の「融合する」を押してください。\nもう1枚の定規を選び、確定してください。", action: "fusion", allowedBaseId: "ruler", focus: "#playerHand" },
-        { id: "fusionResult", title: "融合の結果", body: "定規2枚が校外エリアへ送られ、ダブルダイヤモンドクロスが手札に加わりました。\n融合そのものと、できたカードを使用することは別の操作です。", focus: "#playerHand [data-base-id='double_diamond']" },
+        { id: "fusionResult", title: "融合の結果", body: "定規2枚が融合し、ダブルダイヤモンドクロスが手札に加わりました。\n融合そのものと、できたカードを使用することは別の操作です。", focus: "#playerHand [data-base-id='double_diamond']" },
         tutorialItemStep("double_diamond", "opponent", 0, "融合したカードを使おう", "ダブルダイヤモンドクロスを相手の強靭な学生までドラッグしてください。"),
         { id: "fusionUseResult", title: "融合カードの結果", body: "ダブルダイヤモンドクロスの効果が発動しました。\n融合の材料と完成するカードは、それぞれのカード本文を確認しましょう。", focus: "#opponentSeatGrid" }
       ]),
@@ -25453,6 +25496,14 @@
         state.online.lastSnapshotAckSeq = Math.max(state.online.lastSnapshotAckSeq || 0, message.seq || 0);
         return;
       }
+      if (message.type === "thinItemChoiceRequest" && message.privateChoiceKind === "fusion_effect_choice" && isOnlineGuest()) {
+        openCardChoice({ ...message, mode: "fusion_effect_online_response" });
+        return;
+      }
+      if (message.type === "thinItemChoiceResponse" && message.privateChoiceKind === "fusion_effect_choice" && isOnlineHost()) {
+        if (resolveFusionEffectChoice(message.requestId, message.selectedIds || [])) render();
+        return;
+      }
       if (message.type === "syncRequest" && isOnlineHost()) {
         if (state.online.started) onlineBroadcastState(true);
         else onlineSendRoomState();
@@ -26612,7 +26663,8 @@
       snapshotState.pendingThreeGestures = null;
       snapshotState.pendingCardChoice = null;
       snapshotState.pendingRemoteHandTrim = null;
-      snapshotState.remoteResolutionPending = battleChoicePending() || Boolean(state.lectureRoomCheck) || Boolean(pendingItemPresentation);
+      snapshotState.remoteResolutionPending = battleChoicePending() || fusionTasksBusy() || Boolean(state.lectureRoomCheck) || Boolean(pendingItemPresentation);
+      snapshotState.fusionVisualEvents = (state.fusionVisualEvents || []).filter(event => event.token === state.preBattleToken);
       // Only publicly determined additions are sent. Hidden hands stay redacted;
       // these events expose the generated card once, not its later hand position.
       snapshotState.publicHandAddEvents = publicHandAddEvents
@@ -26766,6 +26818,7 @@
 
     function isCourseRegistrationOnlineChoice(choice) {
       return Boolean(choice && [
+        "fusion_effect_online_response",
         "starbucks_cornering_online_response",
         "enemy_revive_online_response",
         "triple_enemy",
@@ -26782,7 +26835,7 @@
       return {
         ...choice,
         selectionOverlayPeek: state.selectionOverlayPeek,
-        cards: choice.cards.map((card) => ["triple_enemy_online_response", "enemy_revive_online_response"].includes(choice.mode)
+        cards: choice.cards.map((card) => ["triple_enemy_online_response", "enemy_revive_online_response", "fusion_effect_online_response"].includes(choice.mode)
           ? card : { instanceId: card.instanceId }),
         selectedIds: [...choice.selectedIds]
       };
@@ -26794,7 +26847,7 @@
         ? state.players.player.trash
         : choice.mode === "starbucks_cornering_online_response"
           ? choice.cards
-        : choice.mode === "enemy_revive_online_response"
+        : ["enemy_revive_online_response", "fusion_effect_online_response"].includes(choice.mode)
           ? choice.cards
         : choice.mode === "triple_enemy_online_response"
           ? choice.cards
@@ -27151,7 +27204,7 @@
     let itemResolutionContext = null;
     let pendingItemPresentation = null;
     function battlePresentationBusy() {
-      return Boolean(pendingItemPresentation || state.pendingCardPlay || state.resolvingOrderedAttendance
+      return Boolean(fusionTasksBusy() || pendingItemPresentation || state.pendingCardPlay || state.resolvingOrderedAttendance
         || state.attackInProgress || state.attackQueue.length
         || window.ChibattleDraw?.isBusy()
         || window.ChibattleHandTrash?.isBusy()
@@ -27285,7 +27338,7 @@
     }
 
     function battleInspectionAllowed(target) {
-      if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion]")) return false;
+      if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
       return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
 
@@ -27400,7 +27453,8 @@
 
     function onlineIsCommandAwaitingResolution(commandId) {
       if (!commandId) return false;
-      return state.pendingRemoteHandTrim?.commandId === commandId
+      return [...fusionEffectTasks].some(task => task.token === state.preBattleToken && task.commandId === commandId)
+        || state.pendingRemoteHandTrim?.commandId === commandId
         || state.pendingCrotchFebrezeEffects?.commandId === commandId
         || state.pendingCardChoice?.commandId === commandId
         || pendingCourseRegistrationConsent?.commandId === commandId
@@ -27618,6 +27672,7 @@
         if (command.type === "fuse") {
           fuseRulersForSide("opponent", true, payload.sourceInstanceId || null, payload.targetInstanceId || null);
         }
+        if (command.type === "horseFusion") fuseHorseMaterials("opponent", payload.ids || [], true);
         if (command.type === "raptorTemple") {
           const source = onlineMapRefForHost(payload.source);
           if (source) resolveRaptorTempleExchange("opponent", source, payload.targetInstanceId, true);
@@ -29160,7 +29215,9 @@
         return true;
       }).map((entry) => ({
         ...entry,
-        score: scoreAiNonCombatEffectTarget(side, item, entry, { damage, hpReduction: illness ? 1 : 0, destroy })
+        score: illness
+          ? Math.min(1, Math.max(0, entry.card.attack || 0)) * 2 + scoreAiEnemyAttendeeThreat(entry.card, entry.ref) * 0.35
+          : scoreAiNonCombatEffectTarget(side, item, entry, { damage, destroy })
       })).filter((entry) => Number.isFinite(entry.score) && entry.score > 0)
         .sort((a, b) => b.score - a.score);
       return { target: targets[0] || null, score: targets[0]?.score || 0, canHitLife: Boolean(damage && item.baseId !== "laser_beam") };
@@ -30264,6 +30321,7 @@
       await sleep(AI_START_DELAY);
       await tryUseTrainingYocchanItems("player");
       resolveTrainingAiPendingSelections("player");
+      while (tryFuseHorseForAi("player")) { render(); await waitForBattlePresentation(); }
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
         safety += 1;
@@ -31569,6 +31627,7 @@
     async function tryUseAiItems(options = {}) {
       await waitForBattlePresentation();
       const timing = options.timing || "normal";
+      while (tryFuseHorseForAi("opponent")) { render(); await waitForBattlePresentation(); }
       if (fuseRulersForSide("opponent", false)) {
         render();
         await sleep(AI_STEP_DELAY);
@@ -32013,7 +32072,7 @@
           if (TARGETED_DESTROY_ITEM_IDS.has(other.baseId)) return true;
           const damage = { ruler: 1, double_diamond: 4, laser_beam: 5 }[other.baseId] || 0;
           return aiCanPredictEffectRemoval(target)
-            && previewFinalDamageToCard(target, damage, other) + (other.baseId === "illness" ? 1 : 0) >= target.currentHp;
+            && previewFinalDamageToCard(target, damage, other) >= target.currentHp;
         }
         if (other.baseId === "green_curry") return aiCanPredictEffectRemoval(target, { destroy: true });
         if (other.baseId === "panpan") return planAiPanpan(side, other).enemy?.card.instanceId === target.instanceId;
@@ -32563,7 +32622,6 @@
         .map((ref) => ({ ref, card: getBoardCardFromRef(ref) })).filter(({ card }) => card);
       const guaranteedDamageByTargetId = new Map();
       const sourceIdsByTargetId = new Map();
-      const illnessDamageTargetIds = new Set();
       const addGuaranteedDamage = (entry, amount, source, options = {}) => {
         if (!entry?.card?.instanceId) return;
         const damage = options.hpReduction
@@ -32612,21 +32670,8 @@
           const targets = effectTargetEntries(side, targetSide, (card) => card.type === "student");
           if (targets.length === 1) addGuaranteedDamage(targets[0], 2, source);
         }
-        if (source.baseId === "sick_yuta" && targetEntries.length === 1 && canEquipIllness(targetEntries[0].card)
-          && targetEntries[0].card.baseId !== "yuta"
-          && !illnessDamageTargetIds.has(targetEntries[0].card.instanceId)) {
-          addGuaranteedDamage(targetEntries[0], 1, source, { hpReduction: true });
-          illnessDamageTargetIds.add(targetEntries[0].card.instanceId);
-        }
       });
 
-      // 感染済みの出席者は体力が再び減らない。感染先が唯一の場合だけ撃破を予測する。
-      const infectionTargets = targetEntries.filter(({ card }) => canEquipIllness(card));
-      if (infectionTargets.length === 1 && infectionTargets[0].card.baseId !== "yuta"
-        && !illnessDamageTargetIds.has(infectionTargets[0].card.instanceId)
-        && targetEntries.some(({ card }) => isIllnessInfected(card))) {
-        addGuaranteedDamage(infectionTargets[0], 1, null, { hpReduction: true });
-      }
       targetEntries.forEach((entry) => {
         if (isAibenNyoteiEffectImmune(entry.card)) return;
         let expiringHp = 0;
@@ -32781,11 +32826,15 @@
         settleEndTurnStep();
         resolveStudentEndTurnEffects(side);
         settleEndTurnStep();
-        runEffectFeedbackBatch(() => resolveEnvironmentEndTurnEffects(side, options));
-        settleEndTurnStep();
-        runEffectFeedbackBatch(() => resolveDungeonFloorEndTurnEffects(side));
-        settleEndTurnStep();
-        resolveEffectUseLockEndTurn(side);
+        const remainingEffects = () => {
+          runEffectFeedbackBatch(() => resolveEnvironmentEndTurnEffects(side, options));
+          settleEndTurnStep();
+          runEffectFeedbackBatch(() => resolveDungeonFloorEndTurnEffects(side));
+          settleEndTurnStep();
+          resolveEffectUseLockEndTurn(side);
+        };
+        if (fusionTasksBusy()) queueFusionEffect(remainingEffects);
+        else remainingEffects();
       });
     }
 
@@ -32972,6 +33021,7 @@
           if (card.baseId === "sick_yuta") {
             equipRandomIllness(opponent, side);
           }
+          if (Object.values(HORSE_PAIR_RESULTS).includes(card.baseId)) resolveHorseEndTurn(side, card);
           if (card.baseId === "rear_queen") {
             const targets = shuffle(listBoardRefs(opponent).filter((targetRef) => getBoardCardFromRef(targetRef)?.type === "student")).slice(0, 3);
             targets.forEach((targetRef) => dealDamageToCard(getBoardCardFromRef(targetRef), 4, card));
@@ -32987,10 +33037,12 @@
       });
       resolveAggroStudentEffects(side);
       resolveHappyBlueBirdEndTurnAttacks(side);
-      listBoardRefs(side).forEach((ref) => {
+      const removeAcademicMoveCards = () => listBoardRefs(side).forEach((ref) => {
         const target = getBoardCardFromRef(ref);
         if (target?.academicMoveMarked) destroyBoardCard(ref, { reason: "アカデミックムーブ", showDestroyFeedback: false });
       });
+      if (fusionTasksBusy()) queueFusionEffect(removeAcademicMoveCards);
+      else removeAcademicMoveCards();
     }
 
     function resolveEnvironmentEndTurnEffects(side, options = {}) {
@@ -34904,6 +34956,23 @@
       const itemId = pending.itemId;
       state.pendingCardChoice = null;
       state.selectionOverlayPeek = false;
+      if (mode === "fusion_effect_choice") {
+        resolveFusionEffectChoice(pending.requestId, selectedIds);
+        render(); return;
+      }
+      if (mode === "fusion_effect_online_response") {
+        onlineSend({ type: "thinItemChoiceResponse", privateChoiceKind: "fusion_effect_choice",
+          requestId: pending.requestId, selectedIds }, { track: true });
+        render(); return;
+      }
+      if (mode === "horse_fusion") {
+        if (!fuseHorseMaterials("player", [itemId, ...selectedIds], true)) {
+          state.pendingCardChoice = pending;
+          state.message = "異なる素材2枚、または4種類を1枚ずつ選んでください。";
+          render();
+        }
+        return;
+      }
       if (mode === "adjective_choice") {
         const target = pending.playTarget;
         const choice = selectedIds[0] === "adjective_weaken" ? "weaken" : "destroy";
@@ -35586,6 +35655,8 @@
         rejectTutorialAction("今は光っている持ち物だけ使えます。");
         return;
       }
+      if (HORSE_MATERIAL_IDS.includes(item.baseId)) { openHorseFusionChoice(item); return; }
+      if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) { openUtaFusionChoice(item); return; }
       if (arePlayedEffectsSuppressed("player")) {
         if (onlineCanSendCommand()) {
           onlineSendCommand("itemSuppressed", { instanceId: item.instanceId });
@@ -36222,6 +36293,258 @@
     }
 
     const UTA_EQUIPMENT_BASE_IDS = ["accelerate", "chameleon", "yuta_umbrella", "red_happi"];
+    const HORSE_MATERIAL_IDS = ["fusion_uma", "fusion_maibo", "fusion_bone", "fusion_where"];
+    const HORSE_PAIR_RESULTS = {
+      "fusion_uma,fusion_maibo": "umaibo",
+      "fusion_uma,fusion_bone": "uma_bone",
+      "fusion_uma,fusion_where": "where_uma",
+      "fusion_maibo,fusion_bone": "maibo_bone",
+      "fusion_maibo,fusion_where": "where_maibo",
+      "fusion_bone,fusion_where": "where_bone"
+    };
+    const fusionEffectTasks = new Set();
+    let fusionEffectTail = Promise.resolve();
+    const fusionChoiceWaiters = new Map();
+    let fusionChoiceSerial = 0;
+    let fusionVisualSerial = 0;
+    const seenFusionVisuals = new Set();
+    const activeFusionResults = new Map();
+
+    function horseMaterialCandidates(side) {
+      const names = new Set();
+      return state.players[side].deck.filter(card => {
+        if (!HORSE_MATERIAL_IDS.includes(card.baseId) || names.has(card.baseId)) return false;
+        names.add(card.baseId);
+        return true;
+      });
+    }
+
+    function horseFusionResult(materials) {
+      const ids = materials.map(card => card.baseId);
+      if (new Set(ids).size !== ids.length || ids.some(id => !HORSE_MATERIAL_IDS.includes(id))) return null;
+      ids.sort((a, b) => HORSE_MATERIAL_IDS.indexOf(a) - HORSE_MATERIAL_IDS.indexOf(b));
+      if (ids.length === 4) return "where_uma_bone_maibo";
+      return ids.length === 2 ? HORSE_PAIR_RESULTS[ids.join(",")] || null : null;
+    }
+
+    function fusionTasksBusy() {
+      return [...fusionEffectTasks].some(task => task.token === state.preBattleToken);
+    }
+
+    function queueFusionEffect(effect) {
+      const task = { token: state.preBattleToken,
+        commandId: state.online.activeRemoteCommandId || state.online.pendingCardPlayCommandId || "" };
+      fusionEffectTasks.add(task);
+      // A new battle must not wait behind an abandoned choice in the old battle.
+      if (![...fusionEffectTasks].some(entry => entry !== task && entry.token === task.token)) fusionEffectTail = Promise.resolve();
+      fusionEffectTail = fusionEffectTail.catch(error => console.error(error)).then(async () => {
+        if (task.token !== state.preBattleToken || state.gameOver) return;
+        await waitForOrderedAttendance();
+        if (task.token === state.preBattleToken && !state.gameOver) await effect();
+      }).finally(() => {
+        fusionEffectTasks.delete(task);
+        if (task.token === state.preBattleToken) {
+          cleanupDestroyedCards(); applyBoardAuras(); render();
+          if (task.commandId && isOnlineHost()) onlineBroadcastState(true,
+            onlineIsCommandAwaitingResolution(task.commandId) ? "" : task.commandId);
+        }
+      });
+      return fusionEffectTail;
+    }
+
+    async function chooseFusionEffectCards(side, source, cards, count, kind) {
+      if (!cards.length) return [];
+      const max = Math.min(count, cards.length);
+      if (isCpuControlledBattleSide(side)) {
+        const sorted = [...cards].sort((a, b) => {
+          if (kind === "damage") return (b.currentHp <= 2 ? 100 : 0) + scoreAiEnemyAttendeeThreat(b)
+            - (a.currentHp <= 2 ? 100 : 0) - scoreAiEnemyAttendeeThreat(a);
+          return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
+        });
+        return sorted.slice(0, max);
+      }
+      const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
+      const token = state.preBattleToken;
+      const min = kind === "buff" || kind === "damage" ? 0 : max;
+      const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
+      const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
+        requestId, context: { kind }, confirmLabel: "確定" };
+      if (side === "opponent" && isOnlineHost()) {
+        state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
+        if (!onlineSend({ type: "thinItemChoiceRequest", privateChoiceKind: "fusion_effect_choice",
+          ...options, cards: cards.map(cardRevealPayload) }, { track: true })) {
+          state.pendingRemoteHandTrim = null;
+          fusionChoiceWaiters.delete(requestId);
+          return [];
+        }
+      } else openCardChoice(options);
+      // Cancel safely when the battle is reset or conceded during a choice.
+      const timer = window.setInterval(() => {
+        if (token === state.preBattleToken && !state.gameOver && state.screen === "battle") return;
+        const pending = fusionChoiceWaiters.get(requestId);
+        fusionChoiceWaiters.delete(requestId);
+        pending?.resolve([]);
+      }, 100);
+      try { return await promise; } finally { window.clearInterval(timer); }
+    }
+
+    function resolveFusionEffectChoice(requestId, ids) {
+      const pending = fusionChoiceWaiters.get(requestId);
+      if (!pending || pending.token !== state.preBattleToken) return false;
+      const unique = [...new Set(ids)];
+      if (unique.length < pending.min || unique.length > pending.max || unique.some(id => !pending.cards.some(card => card.instanceId === id))) return false;
+      fusionChoiceWaiters.delete(requestId);
+      if (state.pendingRemoteHandTrim?.requestId === requestId) state.pendingRemoteHandTrim = null;
+      pending.resolve(pending.cards.filter(card => unique.includes(card.instanceId)));
+      return true;
+    }
+
+    function applyFusionLoad(side) {
+      const target = shuffle(state.players[side].hand)[0];
+      if (target) { addHandLoad(target); addLog(`「${target.name}」は負荷を持ちました。`); }
+    }
+
+    function tryFuseHorseForAi(side) {
+      const materials = HORSE_MATERIAL_IDS.map(id => state.players[side].hand.find(card => card.baseId === id && !isHighLoadHandCard(card)));
+      if (materials.every(Boolean) && state.players[side].will >= 8) return fuseHorseMaterials(side, materials.map(card => card.instanceId), false);
+      const pairs = [];
+      for (let i = 0; i < materials.length; i++) for (let j = i + 1; j < materials.length; j++) {
+        if (!materials[i] || !materials[j]) continue;
+        const id = horseFusionResult([materials[i], materials[j]]);
+        let score = CARD_BASES[id].attack + CARD_BASES[id].hp;
+        if (["maibo_bone", "where_maibo"].includes(id)) score += listBoardRefs(oppositeSide(side)).length * 4;
+        if (id === "umaibo") score += Math.max(0, 20 - state.players[side].life);
+        pairs.push({ ids: [materials[i].instanceId, materials[j].instanceId], score });
+      }
+      pairs.sort((a, b) => b.score - a.score);
+      return pairs.length ? fuseHorseMaterials(side, pairs[0].ids, false) : false;
+    }
+
+    function resolveHorseEndTurn(side, source) {
+      return queueFusionEffect(async () => {
+        if (!listBoardRefs(side).some(ref => getBoardCardFromRef(ref)?.instanceId === source.instanceId)
+          || !canUsePrintedCardEffects(source)) return;
+        const own = listBoardRefs(side).map(getBoardCardFromRef).filter(card => card && card.instanceId !== source.instanceId);
+        const enemy = effectTargetEntries(side, oppositeSide(side)).map(entry => entry.card);
+        if (source.baseId === "umaibo") healPlayer(side, 3);
+        if (source.baseId === "uma_bone") {
+          const targets = await chooseFusionEffectCards(side, source, own, 2, "buff");
+          targets.filter(card => own.includes(card) && card.currentHp > 0).forEach(card => applyPermanentStatBuff(card, 0, 1, 0, source.name));
+        }
+        if (source.baseId === "where_uma" && own.length) applyPermanentStatBuff(shuffle(own)[0], 2, 2, 0, source.name);
+        if (source.baseId === "maibo_bone") {
+          const targets = await chooseFusionEffectCards(side, source, enemy, 2, "damage");
+          targets.filter(card => card.currentHp > 0).forEach(card => dealDamageToCard(card, 2, source));
+        }
+        if (source.baseId === "where_maibo" && enemy.length) dealDamageToCard(shuffle(enemy)[0], 7, source);
+        if (source.baseId === "where_bone") applyFusionLoad(oppositeSide(side));
+        addLog(`${source.name}のターン終了時効果を処理しました。`);
+      });
+    }
+
+    function resolveHorseAttendance(side, source) {
+      const opponent = oppositeSide(side);
+      if (source.baseId === "where_uma_bone_maibo") {
+        healPlayer(side, 3);
+        listBoardRefs(side).map(getBoardCardFromRef).filter(Boolean).forEach(card => applyPermanentStatBuff(card, 1, 1, 0, source.name));
+        listBoardRefs(opponent).map(getBoardCardFromRef).filter(Boolean).forEach(card => dealDamageToCard(card, 2, source));
+        applyFusionLoad(opponent);
+      }
+      if (source.baseId === "information_tired_student") {
+        const target = shuffle(state.players[side].deck.filter(card => HORSE_MATERIAL_IDS.includes(card.baseId)))[0];
+        if (target) state.players[side].hand.push(publicHandCard(target.baseId, side));
+      }
+      if (source.baseId === "corridor_student") queueFusionEffect(async () => {
+        const targets = await chooseFusionEffectCards(side, source, horseMaterialCandidates(side), 2, "material");
+        targets.forEach(card => state.players[side].hand.push(publicHandCard(card.baseId, side)));
+      });
+      if (source.baseId === "remote_participant_student") queueFusionEffect(async () => {
+        const candidates = state.players[side].hand.filter(card => card.type !== "item"
+          && (card.fusionResult || (card.baseId === "ultimate_yuta" && utaFusionMaterialEntries(card).length === 4))
+          && !isHighLoadHandCard(card) && !card.unusable
+          && effectiveCardCost(card) <= 5 && PLAYER_SEAT_ORDER.some(index => isBoardSlotOpen(side, "seat", index)));
+        const [target] = await chooseFusionEffectCards(side, source, candidates, 1, "attendance");
+        if (!target || !getHandCard(side, target.instanceId)) return;
+        const boardCard = makeBoardCard(createCardFromBase(target.baseId, side));
+        boardCard.pendingAttendanceSource = ATTENDANCE_SOURCE.COPY;
+        boardCard.specialAttendanceSeatOnly = true;
+        if (isCpuControlledBattleSide(side)) {
+          const index = AI_SEAT_PRIORITY.filter(index => isBoardSlotOpen(side, "seat", index))
+            .sort((a, b) => scoreAiPlacementAuras(side, target, "seat", b) - scoreAiPlacementAuras(side, target, "seat", a))[0];
+          if (index === undefined) return;
+          startOrderedAttendance([{ side, owner: side, zone: "seat", index,
+            attendanceSource: ATTENDANCE_SOURCE.COPY, card: boardCard }]);
+          await waitForOrderedAttendance();
+        } else setPendingCopiedCardForPlacement(boardCard);
+      });
+    }
+
+    function fuseHorseMaterials(side, ids, renderAfter = true) {
+      if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
+      const materials = ids.map(id => getHandCard(side, id));
+      if (materials.some(card => !card || isHighLoadHandCard(card))) return false;
+      const resultId = horseFusionResult(materials);
+      if (!resultId) return false;
+      if (side === "player" && onlineCanSendCommand()) {
+        onlineSendCommand("horseFusion", { ids }); return true;
+      }
+      if (side === "player") pushTestHistoryBeforeAction();
+      const result = createCardFromBase(resultId, side);
+      result.fusionMaterials = materials.map(card => ({ baseId: card.baseId, instanceId: card.instanceId }));
+      result.fusionVisualAddition = true;
+      state.players[side].hand = state.players[side].hand.filter(card => !ids.includes(card.instanceId));
+      state.players[side].hand.push(result);
+      analyticsRecordAction({ side, actionType: "fusion", cardId: resultId, cardName: result.name,
+        sourceZone: "hand", targetZone: "hand", details: { materials: materials.map(analyticsCardInfo) } });
+      showFusionAnimation(materials, result);
+      addLog(`${SIDES[side]}は${materials.map(card => `「${card.name}」`).join("と")}を融合し、「${result.name}」を作りました。`);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function openHorseFusionChoice(source) {
+      const card = getHandCard("player", source?.instanceId);
+      if (!card || battleNewActionBlocked()) return false;
+      hideBattleCardPreview();
+      const cards = state.players.player.hand.filter(entry => HORSE_MATERIAL_IDS.includes(entry.baseId)
+        && entry.instanceId !== card.instanceId && entry.baseId !== card.baseId && !isHighLoadHandCard(entry));
+      if (!cards.length) return false;
+      return openCardChoice({ mode: "horse_fusion", itemId: card.instanceId, title: "融合", cards,
+        min: 1, max: 3, confirmLabel: "融合する" });
+    }
+
+    function showFusionAnimation(materials, result, broadcast = true) {
+      if (broadcast) {
+        state.fusionVisualEvents = [...(state.fusionVisualEvents || []), { id: ++fusionVisualSerial, token: state.preBattleToken,
+          materials: materials.map(card => cardRevealPayload(card)), result: cardRevealPayload(result) }].slice(-30);
+      }
+      if (state.training?.skipAnimations || state.screen !== "battle") return;
+      const overlay = document.createElement("div");
+      overlay.className = "fusion-visual";
+      const nodes = materials.map((card, index) => {
+        const node = document.createElement("div"); node.className = "fusion-visual-card";
+        node.innerHTML = cardShellTemplate(card); overlay.appendChild(node);
+        const angle = (index / materials.length) * Math.PI * 2;
+        node.style.setProperty("--fusion-x", `${Math.cos(angle) * 180}px`);
+        node.style.setProperty("--fusion-y", `${Math.sin(angle) * 90}px`);
+        return node;
+      });
+      const completed = document.createElement("div"); completed.className = "fusion-visual-card fusion-result";
+      completed.innerHTML = cardShellTemplate(result); overlay.appendChild(completed);
+      document.body.appendChild(overlay); scheduleCardTemplateScaleSync();
+      const hand = result.owner === "opponent" ? elements.opponentHand : elements.playerHand;
+      const rect = hand.getBoundingClientRect();
+      completed.style.setProperty("--fusion-hand-x", `${rect.x + rect.width / 2 - innerWidth / 2}px`);
+      completed.style.setProperty("--fusion-hand-y", `${rect.y + rect.height / 2 - innerHeight * .45}px`);
+      const token = state.preBattleToken;
+      activeFusionResults.set(result.instanceId, token);
+      queuedBattlePresentations += 1;
+      window.setTimeout(() => { overlay.remove(); queuedBattlePresentations = Math.max(0, queuedBattlePresentations - 1);
+        if (activeFusionResults.get(result.instanceId) === token) activeFusionResults.delete(result.instanceId);
+        if (token === state.preBattleToken) render(); }, 1500);
+    }
+
     const UTA_FUSION_MATERIAL_IDS = ["tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"];
 
     function utaFusionMaterialEntries(card) {
@@ -36234,6 +36557,7 @@
 
     function canFuseUtaMaterial(side, item, target) {
       if (!item || !target || !UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) return false;
+      if (isHighLoadHandCard(item) || isHighLoadHandCard(target)) return false;
       if (target.baseId !== "yuta" || item.instanceId === target.instanceId) return false;
       const hand = state.players[side]?.hand || [];
       if (!hand.some((card) => card.instanceId === item.instanceId)) return false;
@@ -36291,12 +36615,16 @@
     }
 
     function rulerFusionEligibleTargets(side, sourceCard) {
-      if (!sourceCard || sourceCard.baseId !== "ruler") return [];
+      if (!sourceCard || sourceCard.baseId !== "ruler" || isHighLoadHandCard(sourceCard)) return [];
       return (state.players[side]?.hand || [])
-        .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId);
+        .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId && !isHighLoadHandCard(card));
     }
 
     function handFusionType(side, sourceCard, targetCard) {
+      if (sourceCard && targetCard && sourceCard.instanceId !== targetCard.instanceId
+        && !isHighLoadHandCard(sourceCard) && !isHighLoadHandCard(targetCard)
+        && getHandCard(side, sourceCard.instanceId) && getHandCard(side, targetCard.instanceId)
+        && horseFusionResult([sourceCard, targetCard])) return "horse";
       if (canFuseUtaMaterial(side, sourceCard, targetCard)) return "uta";
       if (sourceCard?.baseId === "ruler"
         && targetCard?.baseId === "ruler"
@@ -36330,13 +36658,13 @@
     }
 
     function castUtaFusion(side, item, target, renderAfter = true) {
-      if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
       if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
-      if (!canFuseUtaMaterial(side, item, target) || !payForItem(side, item)) {
+      if (!canFuseUtaMaterial(side, item, target) || isHighLoadHandCard(item) || isHighLoadHandCard(target)) {
         if (renderAfter) render();
         return false;
       }
-      showCardPlayAnimation(item, "board");
+      if (side === "player") pushTestHistoryBeforeAction();
+      const visualMaterials = [{ ...target }, { ...item }];
       const player = state.players[side];
       const material = { baseId: item.baseId, name: item.name, instanceId: item.instanceId };
       player.hand = player.hand.filter((card) => card.instanceId !== item.instanceId);
@@ -36344,16 +36672,21 @@
         .sort((a, b) => UTA_FUSION_MATERIAL_IDS.indexOf(a.baseId) - UTA_FUSION_MATERIAL_IDS.indexOf(b.baseId));
       const fusedNames = target.utaFusionMaterials.map((entry) => CARD_BASES[entry.baseId]?.name || entry.name).filter(Boolean);
       const complete = UTA_FUSION_MATERIAL_IDS.every((baseId) => target.utaFusionMaterials.some((entry) => entry.baseId === baseId));
+      analyticsRecordAction({ side, actionType: "fusion", cardId: complete ? "ultimate_yuta" : "yuta",
+        sourceZone: "hand", targetZone: "hand", details: { materials: visualMaterials.map(analyticsCardInfo) } });
       if (complete) {
         const handIndex = player.hand.findIndex((card) => card.instanceId === target.instanceId);
         const ultimate = createCardFromBase("ultimate_yuta", side);
         ultimate.instanceId = target.instanceId;
         ultimate.handTurns = target.handTurns || 0;
         ultimate.utaFusionMaterials = target.utaFusionMaterials.map((entry) => ({ ...entry }));
+        ultimate.fusionVisualAddition = true;
         if (handIndex >= 0) player.hand.splice(handIndex, 1, ultimate);
+        showFusionAnimation(visualMaterials, ultimate);
         addLog(`${SIDES[side]}は融合を完成させ、「U太」を「Ultimate U太」に変化させました。\n融合済み：\n${fusedNames.join("\n")}`);
       } else {
         addLog(`${SIDES[side]}は「${item.name}」を手札の「U太」に融合しました。\n融合済み：\n${fusedNames.join("\n")}`);
+        showFusionAnimation(visualMaterials, target);
       }
       clearSelections();
       state.message = complete ? "4枚の融合が完成し、Ultimate U太になりました。" : `${item.name}をU太に融合しました。`;
@@ -36459,7 +36792,7 @@
       }
       target.illnessInfected = true;
       target.illnessEquipments = [illness];
-      applyPermanentStatBuff(target, 0, -1, 0, illness.name);
+      applyPermanentStatBuff(target, -1, 0, 0, illness.name);
       addLog(`${target.name}に病を装備しました。`);
       return true;
     }
@@ -38077,6 +38410,7 @@
         for (let i = 0; i < 2; i += 1) state.players[side].hand.push(publicHandCard("three_gestures", side));
         addLog(`${card.name}の効果：「３つジェスチャー」を2枚手札に生成しました。`);
       }
+      if (["information_tired_student", "corridor_student", "remote_participant_student", "where_uma_bone_maibo"].includes(card.baseId)) resolveHorseAttendance(side, card);
       if (card.baseId === "spoon_wizard") {
         const ids = new Set(card.spoonDestroyIds || []);
         const refs = listBoardRefs(side).filter((ref) => ids.has(getBoardCardFromRef(ref)?.instanceId));
@@ -42041,9 +42375,11 @@
       const materials = [source, target];
       if (side === "player") pushTutorialHistoryBeforeAction("fusion");
       player.hand = player.hand.filter((card) => !materials.some((material) => material.instanceId === card.instanceId));
-      moveToTrash(side, source);
-      moveToTrash(side, target);
-      player.hand.push(publicHandCard("double_diamond", side));
+      const result = createCardFromBase("double_diamond", side);
+      result.fusionMaterials = materials.map(card => ({ baseId: card.baseId, instanceId: card.instanceId }));
+      result.fusionVisualAddition = true;
+      player.hand.push(result);
+      showFusionAnimation(materials, result);
       analyticsRecordAction({
         side,
         actionType: "fusion",
@@ -44123,6 +44459,7 @@
         if (!previous || previous.token !== state.preBattleToken || state.training?.skipAnimations) continue;
         const old = previous.sides[side];
         const acquired = player.hand.filter(card => card.instanceId && !card.hidden
+          && !card.fusionVisualAddition
           && !old.hand.some(entry => entry.id === card.instanceId)
           && !(card.handEntryKind === "draw" && old.deckIds.has(card.instanceId)));
         if (acquired.length) animateRecentHandCards(side, [], 0, true, acquired.map(card => ({
@@ -44150,6 +44487,7 @@
         }
       }
       renderedHandTrashState = next;
+      for (const side of ["player", "opponent"]) state.players[side].hand.forEach(card => delete card.fusionVisualAddition);
     }
 
     function renderPublicHandAddFlights() {
@@ -44208,6 +44546,19 @@
       renderTrash();
       renderHandTrashFlights();
       renderPublicHandAddFlights();
+      if (isOnlineGuest() || isOnlineSpectator()) {
+        for (const event of state.fusionVisualEvents || []) {
+          if (event.token !== state.preBattleToken) continue;
+          const key = `${state.preBattleToken}:${event.id}`;
+          if (seenFusionVisuals.has(key)) continue;
+          seenFusionVisuals.add(key);
+          showFusionAnimation(event.materials, event.result, false);
+        }
+      }
+      for (const [id, token] of activeFusionResults) {
+        if (token !== state.preBattleToken) continue;
+        document.querySelectorAll(`.hand-card[data-card-id="${id}"]`).forEach(card => card.style.visibility = "hidden");
+      }
       renderLog();
       renderControls();
       renderTrainingWatchControls();
@@ -45568,7 +45919,9 @@
     }
 
     function canUseHandCardNow(card) {
-      if (state.pendingCardPlay || state.resolvingOrderedAttendance || !card || card.unusable || effectiveCardCost(card) > state.players.player.will) return false;
+      const fusionMaterial = card && [...HORSE_MATERIAL_IDS, ...UTA_FUSION_MATERIAL_IDS].includes(card.baseId);
+      if (state.pendingCardPlay || state.resolvingOrderedAttendance || !card || card.unusable
+        || (!fusionMaterial && effectiveCardCost(card) > state.players.player.will)) return false;
       if (card.type === "item") return canUseItemNow(card);
       return canPlaceCardSomewhere(card);
     }
@@ -45599,6 +45952,7 @@
     }
 
     function canUseItemNow(item) {
+      if (HORSE_MATERIAL_IDS.includes(item?.baseId)) return handFusionEligibleTargets("player", item).length > 0;
       if (item?.baseId === "thin_item" && !canUseThinItem()) return false;
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) return false;
       if (item?.baseId === "obon_mac" && !canUseObonMac("player")) return false;
@@ -46661,6 +47015,7 @@
       const source = getHandCard("player", instanceId);
       const target = getHandCard("player", targetInstanceId);
       const fusionType = handFusionType("player", source, target);
+      if (fusionType === "horse") return fuseHorseMaterials("player", [instanceId, targetInstanceId], true);
       if (fusionType === "uta") {
         if (onlineCanSendCommand()) {
           onlineSendCommand("utaFusion", { instanceId, targetInstanceId });
@@ -50867,6 +51222,8 @@
 
     function testHandBaseIds(baseId) {
       const companions = [...(TEST_HAND_COMPANIONS[baseId] || [])];
+      if (HORSE_MATERIAL_IDS.includes(baseId)) companions.push(...HORSE_MATERIAL_IDS.filter(id => id !== baseId));
+      if (baseId === "remote_participant_student") companions.push("umaibo", "maibo_bone");
       if (isEnemyCardTest(baseId)) {
         if (baseId !== "enemy_student" && !companions.includes("enemy_student")) companions.push("enemy_student");
         if (baseId !== "salt_to_enemy" && !companions.includes("salt_to_enemy")) companions.push("salt_to_enemy");
@@ -50879,6 +51236,9 @@
     }
 
     function createTestDeck(side, baseId, extraBaseIds = []) {
+      if (side === "player" && ["information_tired_student", "corridor_student"].includes(baseId)) {
+        return HORSE_MATERIAL_IDS.flatMap(id => [createCardFromBase(id, side), createCardFromBase(id, side)]);
+      }
       if (side === "player" && baseId === "cornering_lecturer") {
         return corneringLecturerTestDeckBaseIds().map((deckBaseId) => createCardFromBase(deckBaseId, side));
       }
@@ -51745,7 +52105,9 @@
       const utaFusionMarkup = isOwnedUtaFusionMaterial
         ? `<button class="button" type="button" data-preview-uta-fusion="true"${canStartHandDrag(card) ? "" : " disabled"}>融合する</button>`
         : "";
-      const previewActions = [rulerFusionMarkup, diamondDustRecoveryMarkup, utaFusionMarkup].filter(Boolean);
+      const horseFusionMarkup = HORSE_MATERIAL_IDS.includes(card.baseId) && getHandCard("player", card.instanceId)
+        ? `<button class="button" type="button" data-preview-horse-fusion="true"${battleNewActionBlocked() || !handFusionEligibleTargets("player", card).length ? " disabled" : ""}>融合する</button>` : "";
+      const previewActions = [rulerFusionMarkup, diamondDustRecoveryMarkup, utaFusionMarkup, horseFusionMarkup].filter(Boolean);
       const actionMarkup = previewActions.length > 0
         ? `<div class="battle-card-preview-actions${previewActions.length === 1 ? " single" : ""}">${previewActions.join("")}</div>`
         : "";
@@ -52337,6 +52699,10 @@
       const additionalIds = ["yuta", "dark_yuta", "illness"].includes(card.baseId)
         ? ["sick_yuta", "recovered_dark_yuta"] : [];
       if (card.baseId === "yuta" || UTA_FUSION_MATERIAL_IDS.includes(card.baseId)) additionalIds.push("ultimate_yuta");
+      if (card.baseId === "double_diamond") additionalIds.push("ruler");
+      const recipe = Object.entries(HORSE_PAIR_RESULTS).find(([, id]) => id === card.baseId);
+      if (recipe) additionalIds.push(...recipe[0].split(","));
+      if (card.baseId === "where_uma_bone_maibo") additionalIds.push(...HORSE_MATERIAL_IDS);
       return [...new Set([...selected.map((entry) => entry.baseId), ...additionalIds])].slice(0, 10);
     }
 
@@ -52707,12 +53073,26 @@
         academic_move: "お互いの講義室にこのターン出席した出席者すべては超陽気を持つ。それらは自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
         gesture_student: "このカードを手札から出席させたとき、「３つジェスチャー」2枚を手札に生成する。",
+        fusion_uma: "[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
+        fusion_maibo: "[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
+        fusion_bone: "[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
+        fusion_where: "[融合]：「ウマ」と融合して「どこのウマ」、「マイボ」と融合して「どこのマイボ」、「骨」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよ」になる。",
+        umaibo: "自分のターン終了時、自分の気力を3回復する。",
+        uma_bone: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの体力を+1する。",
+        where_uma: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。",
+        maibo_bone: "自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
+        where_maibo: "自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。",
+        where_bone: "自分のターン終了時、相手の手札をランダムに1枚選ぶ。それは負荷を持つ。",
+        where_uma_bone_maibo: "このカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手の手札をランダムに1枚選ぶ。それは負荷を持つ。",
+        remote_participant_student: "このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。",
+        information_tired_student: "このカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。",
+        corridor_student: "このカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",
         plump_student: "陽気を持つ。このカードを出席させるには、横に連続した席マスを2つ使用する。",
         aggro_princess: "超陽気を持つ。このカードが相手本体を攻撃したとき、自分本体に1ダメージを与える。",
         aggro_walk: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分本体に2ダメージを与える。",
         red_ideology: "お互いの講義室にいる出席者を、各行の左側の席マスへ詰める。",
-        illness: "装備カード。お互いの講義室にいる出席者1人に装備する。装備者の体力を-1する。お互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。",
+        illness: "装備カード。お互いの講義室にいる出席者1人に装備する。装備者の攻撃力を-1する。お互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。",
         sick_yuta: "特殊進化：「U太」に「病」を装備させる。進化時、お互いの講義室にいる出席者をランダムに1人ずつ指名し、「病」を装備させる。自分のターン終了時、相手の出席者1人をランダムに指名し、「病」を装備させる。このカードは「病」を装備できない。",
         recovered_dark_yuta: "特殊進化：「病に臥すU太」に「裏U太」を進化させる。進化時、お互いの出席者に装備されている「病」すべてを校外エリアへ送る。その後、送った枚数分、このカードの攻撃力と体力を上昇させる。「病」を送られた出席者の攻撃力を0、体力を1にする。このカードは「病」を装備できない。",
         igidakatta: "お互いの講義室に装備されている「病」すべてを校外エリアへ送る。送った1枚ごとに、相手本体に1ダメージを与えるか、自分本体を1回復するかをランダムに決める。",
@@ -52740,14 +53120,14 @@
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
         triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。出席させなかったカードは手札に残す。",
         salt_to_enemy: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。その出席時効果は発動する。",
-        ruler: "相手の出席者1人または相手本体を指名し、1ダメージを与える。手札に「定規」が2枚ある場合、それらを融合できる。",
+        ruler: "[融合]：「定規」と融合し、「ダブルダイヤモンドクロス」になる。\n相手の出席者1人または相手本体を指名し、1ダメージを与える。",
         aggro_eater: "自分の場の出席者1人を指名し、その体力を1回復する。その後、自分の気力を1回復する。",
         aggro_army: "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成する。",
         yabe: "相手の講義室にいる出席者を2人までランダムに指名し、それぞれに1ダメージを与える。後攻7ターン目以降、1ダメージではなく2ダメージを与える。",
-        tsurai_nara: "融合\n「U太」に融合する。",
-        company_one_day: "融合\n「U太」に融合する。",
-        enough_to_fly: "融合\n「U太」に融合する。",
-        ii_daro_tte: "融合\n「U太」に融合する。",
+        tsurai_nara: "[融合]：「U太」に融合する。",
+        company_one_day: "[融合]：「U太」に融合する。",
+        enough_to_fly: "[融合]：「U太」に融合する。",
+        ii_daro_tte: "[融合]：「U太」に融合する。",
         king_ghidorah_bed: "3つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、3つすべての効果を番号順に使用する。\n1. 相手の出席者すべてに2ダメージを与える。\n2. このカード以外の自分の手札1枚を選んで校外エリアへ送る。その後、相手の講義室にいる出席者1人を指名し、破壊する。\n3. 相手本体に4ダメージを与える。",
         quick_quiz_tournament: "お互いのプレイヤーは、自分の講義室で新たにビンゴが成立したとき、成立したビンゴごとに以下の効果を発動する。\n横一列：そのビンゴを成立させた出席者の体力を+1する。\n縦一列：そのビンゴを成立させた出席者の攻撃力を+1する。\n斜め一列：カードを1枚引く。\n8ビンゴを達成したとき（１回まで）、それを達成させた出席者の攻撃力と体力を+3し、カードを3枚引く。",
         ux_design_textbook: "自分の場の「デザイン」と名のつく教師すべての体力を+1する。",
@@ -52858,7 +53238,7 @@
         alpha: "このカードが手札にあるなら、自分のターン終了時に「ベータ」を手札に加え、このカードを校外エリアへ送る。このカードは使用できない。",
         beta: "このカードが手札にあるなら、次回以降の自分のターン終了時、相手の2行1列と2行3列がどちらも空いている場合、「ガンマ」を手札に加え、このカードを校外エリアへ送る。このカードはデッキ編成に入れられない。",
         gamma: "相手の2行2列が空いている場合にのみ使用できる。デッキを上から3枚引く。このカードはデッキ編成に入れられない。",
-        double_diamond: "融合：「定規」2枚。相手の出席者1人または相手本体を指名し、4ダメージを与える。出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。",
+        double_diamond: "相手の出席者1人または相手本体を指名し、4ダメージを与える。出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。",
         roar: "お互いの学生すべてに、それぞれの体力が1になるまでダメージを与える。",
         president_tea_room: "次の相手のターン終了時まで、環境「食堂」の効果を得る。",
         suspicious_document: "このカードは使用できない。",
@@ -53665,6 +54045,11 @@
         event.stopPropagation();
         const card = elements.battleCardPreview._previewCard;
         if (card) openUtaFusionChoice(card);
+        return;
+      }
+      if (event.target.closest("[data-preview-horse-fusion]")) {
+        event.stopPropagation();
+        openHorseFusionChoice(elements.battleCardPreview._previewCard);
         return;
       }
       hideBattleCardPreview();
