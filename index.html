@@ -1629,6 +1629,10 @@
       letter-spacing: 0.08em;
     }
 
+    [data-room-code-copy] { position: relative; -webkit-user-select: text; user-select: text; }
+    [data-room-code-copy][aria-disabled="false"] { cursor: pointer; }
+    [data-room-code-copy]:focus-visible { outline: 2px solid #0891b2; outline-offset: 3px; }
+
     .online-status {
       min-height: 42px;
       border-radius: 8px;
@@ -19786,6 +19790,13 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.25.0",
+        versioning: "semver",
+        date: "2026年10月14日",
+        summary: "部屋番号のコピー機能を追加しました。",
+        changes: [{ title: "部屋番号", after: "オンラインの対戦準備・対戦画面・4人対戦で、表示された部屋番号を押してコピーできるようにしました。" }]
+      },
+      {
         version: "ver.0.24.2",
         versioning: "semver",
         date: "2026年10月14日",
@@ -24358,6 +24369,62 @@
       return String(value || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 12);
     }
 
+    async function copyRoomCode(code) {
+      try {
+        await navigator.clipboard.writeText(code);
+        return true;
+      } catch {
+        const focused = document.activeElement;
+        const input = document.createElement("textarea");
+        input.value = code;
+        input.readOnly = true;
+        input.style.cssText = "position:fixed;left:-9999px;top:0";
+        document.body.appendChild(input);
+        input.select();
+        let copied = false;
+        try { copied = document.execCommand("copy"); } catch {}
+        input.remove();
+        focused?.focus({ preventScroll: true });
+        return copied;
+      }
+    }
+
+    function setupRoomCodeCopy(element) {
+      if (!element) return;
+      element.dataset.roomCodeCopy = "";
+      element.setAttribute("role", "button");
+      const roomCode = () => {
+        const value = element.textContent.trim();
+        return /^[A-Z0-9]{6,12}$/.test(value) ? value : "";
+      };
+      const update = () => {
+        const available = Boolean(roomCode());
+        element.tabIndex = available ? 0 : -1;
+        element.setAttribute("aria-disabled", String(!available));
+        element.setAttribute("aria-label", available ? `部屋番号${roomCode()}をコピー` : "部屋番号未発行");
+        element.title = available ? "部屋番号をコピー" : "";
+      };
+      const copy = async () => {
+        const code = roomCode();
+        if (!code) return;
+        if (await copyRoomCode(code)) {
+          return;
+        } else {
+          const selection = window.getSelection();
+          const range = document.createRange();
+          range.selectNodeContents(element);
+          selection.removeAllRanges(); selection.addRange(range);
+          element.title = "コピーできませんでした。選択した番号をコピーしてください。";
+        }
+      };
+      element.addEventListener("click", copy);
+      element.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); copy(); }
+      });
+      new MutationObserver(update).observe(element, { childList: true, subtree: true, characterData: true });
+      update();
+    }
+
     function createOnlineClientId() {
       return `c${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
     }
@@ -27402,6 +27469,7 @@
     }
 
     function battleInspectionAllowed(target) {
+      if (target.closest("[data-room-code-copy]")) return true;
       if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
       return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
@@ -54080,6 +54148,8 @@
     elements.chooseFirstButton.addEventListener("click", () => chooseStartingOrder(true));
     elements.chooseSecondButton.addEventListener("click", () => chooseStartingOrder(false));
     elements.mulliganButton.addEventListener("click", confirmPlayerMulligan);
+    [elements.onlineRoomCode, elements.onlineRandomRoomCode, elements.battleRoomCodeValue,
+      document.getElementById("fourRoomCode")].forEach(setupRoomCodeCopy);
     document.querySelectorAll("[data-selection-peek='hide']").forEach((button) => {
       button.addEventListener("click", hideSelectionOverlayForBoard);
     });
