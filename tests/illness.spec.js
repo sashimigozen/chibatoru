@@ -43,7 +43,7 @@ test('装備時は攻撃力だけ減り、感染済み・装備済みの出席�
 });
 
 for (const endingSide of ['player', 'opponent']) {
-  test(`${endingSide}の終了時に両講義室で感染し、教師・ヴァンパイアも対象になる`, async ({ page }) => {
+  test(`${endingSide}の終了時にその側だけ感染し、教師・ヴァンパイアも対象になる`, async ({ page }) => {
     const result = await page.evaluate((side) => {
       const api = window.__chibattle;
       const sources = [], targets = [];
@@ -54,7 +54,7 @@ for (const endingSide of ['player', 'opponent']) {
         api.state.players[owner].board.seats[0] = source;
         if (owner === 'player') api.state.players[owner].board.teacher = target;
         else api.state.players[owner].board.seats[1] = target;
-        api.equipIllness(owner, source, api.createCardFromBase('illness', owner));
+        api.equipIllness(owner, source, api.createCardFromBase('illness', owner === 'player' ? 'opponent' : 'player'));
         sources.push({ card: source, hp: source.currentHp, attack: source.attack });
         targets.push({ card: target, hp: target.currentHp, attack: target.attack });
       }
@@ -62,12 +62,12 @@ for (const endingSide of ['player', 'opponent']) {
       return { sources: sources.map(({card, hp, attack}) => ({ attackLoss: attack-card.attack, hpLoss: hp-card.currentHp })),
         targets: targets.map(({card, hp, attack}) => ({ infected: api.isIllnessInfected(card), hpLoss: hp-card.currentHp, attackLoss: attack-card.attack })) };
     }, endingSide);
-    expect(result).toEqual({ sources: [{attackLoss:1,hpLoss:0},{attackLoss:1,hpLoss:0}],
-      targets: [{infected:true,hpLoss:0,attackLoss:1},{infected:true,hpLoss:0,attackLoss:1}] });
+    expect(result).toEqual({ sources: ['player','opponent'].map(owner=>({attackLoss:owner===endingSide?1:0,hpLoss:0})),
+      targets: ['player','opponent'].map(owner=>({infected:owner===endingSide,hpLoss:0,attackLoss:owner===endingSide?1:0})) });
   });
 }
 
-test('装備解除後も感染は残り、再感染せず、毎終了時に攻撃力だけ減る', async ({ page }) => {
+test('装備解除後も感染は残り、再感染せず、持ち主の終了時だけ攻撃力が減る', async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const card = api.makeBoardCard(api.createCardFromBase('general_student', 'player'));
@@ -82,7 +82,7 @@ test('装備解除後も感染は残り、再感染せず、毎終了時に攻�
     return { allowed, infected: api.isIllnessInfected(copy), equipment: card.illnessEquipments.length,
       attackLoss: attack-card.attack, hpLoss: hp-card.currentHp };
   });
-  expect(result).toEqual({ allowed:false, infected:true, equipment:0, attackLoss:2, hpLoss:0 });
+  expect(result).toEqual({ allowed:false, infected:true, equipment:0, attackLoss:1, hpLoss:0 });
 });
 
 test('感染は同じ講義室だけに広がり、その終了時には連鎖しない', async ({ page }) => {
@@ -121,5 +121,5 @@ test('ターン開始時には発動せず、オンライン同期データに�
 
 test('病の表示本文は合意した文面と一致する', async ({ page }) => {
   const text = await page.evaluate(() => window.__chibattle.cardRulesText(window.__chibattle.createCardFromBase('illness', 'player')));
-  expect(text).toBe('[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の攻撃力を-1する。\nお互いのターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。');
+  expect(text).toBe('[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の攻撃力を-1する。\n装備者の持ち主のターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。');
 });
