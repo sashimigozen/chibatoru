@@ -137,8 +137,8 @@ for (const id of ["tiny_rhythm_student", "absolute_woman", "true_enemy", "bounce
         returned: s.players.player.hand.some(c => c.baseId === "strong_student"),
         sentToTrash: s.players.opponent.trash.some(c => c.baseId === id) };
     }, id);
-    expect(result.used).toBe(true);
-    if (id === "tiny_rhythm_student") expect(result.load).toBe(1);
+    expect(result.used).toBe(id !== "tiny_rhythm_student");
+    if (id === "tiny_rhythm_student") expect(result.load).toBe(0);
     if (id === "absolute_woman") expect(result.targetDestroyed).toBe(true);
     if (id === "true_enemy") expect(result.drawn).toBe(1);
     if (id === "bounce_day") expect(result).toMatchObject({ targetDestroyed: true, returned: true, sentToTrash: true });

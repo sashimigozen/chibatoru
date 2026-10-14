@@ -118,11 +118,29 @@ test('initial gift migrates existing saves without changing balance or duplicati
 });
 test('migration independent specialty gifts and repeat claims never duplicate CP', () => {
   const s = C.initial(), specialties = [{id:'information',name:'情報'},{id:'math',name:'数学'}];
-  C.migrate(s, specialties); C.migrate(s, specialties); assert.equal(Object.keys(s.gifts).length,5);
+  C.migrate(s, specialties); C.migrate(s, specialties); assert.equal(Object.keys(s.gifts).length,6);
   C.claim(s,'dungeon:math:5'); assert.equal(s.cp,50);
-  C.claim(s); C.claim(s); C.migrate(s, specialties); C.claim(s); assert.equal(s.cp,350);
+  C.claim(s); C.claim(s); C.migrate(s, specialties); C.claim(s); assert.equal(s.cp,400);
   assert.equal(C.reward(s,{id:'dungeon:math:10',amount:100}),false);
-  C.reward(s,{id:'ai:unique',amount:5}); C.reward(s,{id:'ai:unique',amount:5}); assert.equal(s.cp,355);
+  C.reward(s,{id:'ai:unique',amount:5}); C.reward(s,{id:'ai:unique',amount:5}); assert.equal(s.cp,405);
+});
+test('UR rates give about 80% natural UR probability by 200 packs without changing SR+ or guarantee', () => {
+  assert.deepEqual(C.WEIGHTS, [[65000,30000,4886,114],[30000,50000,19650,350]]);
+  const chance = 1 - (1 - 114 / 100000) ** 800 * (1 - 350 / 100000) ** 200;
+  assert.ok(chance > .80 && chance < .802);
+  assert.equal(C.WEIGHTS[0][2] + C.WEIGHTS[0][3], 5000);
+  assert.equal(C.WEIGHTS[1][2] + C.WEIGHTS[1][3], 20000);
+});
+test('additional reasonless 50CP gift survives saves, is additive and cannot repeat', () => {
+  let s = C.initial(); s.cp = 17;
+  s.gifts['initial-cp'] = {amount:50,label:'初期CPプレゼント',claimed:true};
+  C.migrate(s, []); C.migrate(s, []);
+  const id = 'cp-gift:2026-10-14';
+  assert.deepEqual(s.gifts[id], {amount:50,label:'',claimed:false});
+  assert.equal(s.cp, 17);
+  s = C.validate(JSON.parse(JSON.stringify(s))); C.claim(s, id);
+  s = C.validate(JSON.parse(JSON.stringify(s))); C.migrate(s, []); C.claim(s);
+  assert.equal(s.cp, 67); assert.equal(s.gifts[id].claimed, true);
 });
 function memory() {
   const map = new Map(); return {getItem:k=>map.get(k)??null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)};

@@ -127,9 +127,13 @@ test('initial 50CP is a gift, not direct credit, and cannot be claimed twice', a
   await expect(page.locator('.gacha-gifts')).toContainText('初期CPプレゼント');
   await page.locator('[data-gacha-claim="initial-cp"]').click();
   await expect.poll(async()=>(await saved(page)).cp).toBe(50);
+  await expect(page.locator('[data-gacha-claim="cp-gift:2026-10-14"]').locator('..')).toHaveText('50 CP受け取る');
+  await page.screenshot({path:test.info().outputPath('cp-gift.png')});
+  await page.locator('[data-gacha-claim="cp-gift:2026-10-14"]').click();
+  await expect.poll(async()=>(await saved(page)).cp).toBe(100);
   await page.reload(); await page.locator('#homeGiftsButton').click();
   await expect(page.locator('.gacha-dialog')).toContainText('プレゼントはありません');
-  expect((await saved(page)).cp).toBe(50);
+  expect((await saved(page)).cp).toBe(100);
 });
 test('normal UR reveal resumes; skip completes the whole batch without changing awards or selection', async ({page}) => {
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
@@ -168,10 +172,10 @@ test('legacy gifts are received once and grant 150CP per specialty; shop layout 
   economy.gifts['dungeon:king_ghidorah_bed:5']={amount:50,label:'キングギドラベッド・5階 初回クリア',claimed:false};
   await boot(page,economy,{unlocked:{design:true,king_ghidorah_bed:true},selected:{},prismUnlocked:{king_ghidorah_bed:true}});
   await page.locator('#homeGiftsButton').click();
-  await expect(page.locator('[data-gacha-claim]')).toHaveCount(4);
+  await expect(page.locator('[data-gacha-claim]')).toHaveCount(5);
   await expect(page.locator('.gacha-dialog')).not.toContainText('キングギドラベッド');
   await page.locator('[data-gacha-claim="all"]').click();
-  await expect.poll(async()=>(await saved(page)).cp).toBe(200);
+  await expect.poll(async()=>(await saved(page)).cp).toBe(250);
   await page.locator('[data-gacha-close]').click();
   await page.reload(); await page.locator('#homeGiftsButton').click();
   await expect(page.locator('.gacha-dialog')).toContainText('プレゼントはありません');

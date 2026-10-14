@@ -54,6 +54,8 @@ test('講義室チェック中の指名もクリックでき、他のゲーム�
     state.players.opponent.deck=[createCardFromBase('general_student','opponent')];void finishEndTurn('player');
   });
   await expect(page.locator('.board-card.selection-candidate')).toHaveCount(1);
+  await expect(page.locator('.board-card.selection-candidate')).toHaveCSS('scale','1.08');
+  await expect(page.locator('#threeGesturesStage')).toHaveClass(/hidden/);
   await page.locator('.board-card.selection-candidate').click();
   await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.selectedIds.length)).toBe(1);
   expect(await page.evaluate(()=>[state.currentSide,state.lectureRoomCheck,battleActionInputAllowed(elements.endTurnButton)])).toEqual(['player',true,false]);

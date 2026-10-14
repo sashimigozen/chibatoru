@@ -8,6 +8,7 @@
   "use strict";
   const KEY = "chibattle-gacha-v1";
   const PERSONAL_GIFT_ID = "personal-cp:2026-10-10";
+  const CP_GIFT_ID = "cp-gift:2026-10-14";
   const BACKUP_KEYS = ["chibattle-saved-decks-v1", "chibattle-specialty-decks-v1", "chibattle-chaos-decks-v1", "chibattle-player-profile-v1", "chibattle-dungeon-card-styles-v1", "chibattle-dungeon-run-v1", "chibattle-dungeon-pending-reward-v1", "chibattle-deleted-starter-decks-v1", "chibattle-starter-decks-seeded-v1"];
   const list = (s) => s.trim().split(/\s+/);
   const PACKS = [
@@ -17,7 +18,7 @@
     { id: "echoes", name: "Laboratory Echoes", count: 50, color: "#8eaba7", cards: list(`absent_student strong_student pad_present_creator cursed_students strict_lateness_teacher leaving_on_time_lecturer cornering_lecturer pure_destruction destructive_lie aggro_kingdom yabe classroom_change annoying_na childhood_memory_tutuapp efficient_experiment_method hat_man academic_move confucius_says gesture_student diligent_student plump_student aggro_princess aggro_walk red_ideology illness igidakatta contrarian_portal stress_hair laser_beam attitude folder_galaxy variable_student sweet_curry spoon_wizard adjective_vs_cynical suffix_sugi yakitori_harassment starbucks_student overfitting_student loud_typing_student tiny_rhythm_student apprentice_best_friend white_student true_enemy enemy_horde rear_queen enemy_enemy enemy_revive triple_enemy salt_to_enemy`), ur: list("overfitting_student triple_enemy cornering_lecturer efficient_experiment_method aggro_kingdom") }
   ];
   const MODES = ["normal", "rare", "superRare", "ultraRare"];
-  const WEIGHTS = [[65000, 30000, 4935, 65], [30000, 50000, 19800, 200]];
+  const WEIGHTS = [[65000, 30000, 4886, 114], [30000, 50000, 19650, 350]];
   const clone = (x) => JSON.parse(JSON.stringify(x));
   const integer = (x, max = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(x) && x >= 0 && x <= max;
   const record = (x) => x !== null && typeof x === "object" && !Array.isArray(x);
@@ -39,7 +40,7 @@
       if (styles.ultraRare && id !== 'general_student' && !PACKS.some((p) => p.ur.includes(id))) throw new Error("URデータが不正です。");
     }
     for (const [id, value] of Object.entries(s.events)) if (!id || id.length > 200 || value !== true) throw new Error("報酬記録が不正です。");
-    for (const [id, g] of Object.entries(s.gifts)) if (!(id === "initial-cp" || id === PERSONAL_GIFT_ID || /^dungeon:[a-z0-9_]+:(5|10)$/.test(id)) || !g || g.amount !== (id === PERSONAL_GIFT_ID ? 1000000 : id === "initial-cp" || id.endsWith(":5") ? 50 : 100) || typeof g.claimed !== "boolean" || typeof g.label !== "string") throw new Error("プレゼントが不正です。");
+    for (const [id, g] of Object.entries(s.gifts)) if (!(id === "initial-cp" || id === CP_GIFT_ID || id === PERSONAL_GIFT_ID || /^dungeon:[a-z0-9_]+:(5|10)$/.test(id)) || !g || g.amount !== (id === PERSONAL_GIFT_ID ? 1000000 : id === "initial-cp" || id === CP_GIFT_ID || id.endsWith(":5") ? 50 : 100) || typeof g.claimed !== "boolean" || typeof g.label !== "string") throw new Error("プレゼントが不正です。");
     if (s.pending !== null) {
       const q = s.pending, p = pack(q.packId);
       if (typeof q.id !== "string" || !Array.isArray(q.results) || ![1, 10].includes(q.results.length) || !integer(q.index, q.results.length - 1) || !["handoff", "tear", "cards", "summary"].includes(q.phase) || !integer(q.revealed, 5) || typeof q.urPause !== "boolean") throw new Error("開封記録が不正です。");
@@ -104,6 +105,7 @@
     }
     // A stable gift ID keeps the initial grant one-time for new and existing saves.
     if (!s.gifts["initial-cp"]) s.gifts["initial-cp"] = { amount: 50, label: "初期CPプレゼント", claimed: false };
+    if (!s.gifts[CP_GIFT_ID]) s.gifts[CP_GIFT_ID] = { amount: 50, label: "", claimed: false };
     for (const { id, name } of specialties.filter(x => x.id !== 'king_ghidorah_bed')) for (const [floor, amount] of [[5, 50], [10, 100]]) {
       const key = `dungeon:${id}:${floor}`;
       if (s.events[key] || s.gifts[key]) continue;

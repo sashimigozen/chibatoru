@@ -34,6 +34,21 @@ test('パンパンは自分・相手を順に選び、右側で確定してか�
   await page.locator('#itemTargetConfirmButton').click();
   await expect.poll(()=>page.evaluate(()=>['player','opponent'].every(side=>state.players[side].board.seats[0]===null))).toBe(true);
 });
+test('自分への持ち物も講義室上の候補を拡大し、選択・解除してから右側で確定する',async({page})=>{
+  await page.evaluate(()=>{const item=createCardFromBase('aggro_eater','player');state.players.player.board.seats[0].currentHp=1;state.players.player.life=19;state.players.player.hand=[item];beginItemUse(item);});
+  const own=page.locator('.board-card[data-owner="player"][data-index="0"]');
+  const enemy=page.locator('.board-card[data-owner="opponent"][data-index="0"]');
+  await expect(own).toHaveClass(/effect-target-candidate/);
+  await expect(own).toHaveCSS('scale','1.08');
+  await expect(enemy).not.toHaveClass(/effect-target-candidate/);
+  await page.screenshot({path:test.info().outputPath('friendly-board-target.png')});
+  await own.click();
+  await expect(own).toHaveClass(/selected/);
+  expect(await page.evaluate(()=>state.players.player.board.seats[0].currentHp)).toBe(1);
+  await own.click();await expect(page.locator('#itemTargetConfirmButton')).toBeDisabled();
+  await own.click();await page.locator('#itemTargetConfirmButton').click();
+  await expect.poll(()=>page.evaluate(()=>state.players.player.board.seats[0].currentHp)).toBe(2);
+});
 test('どんぐりの進化対象も右側の確定前には進化しない',async({page})=>{
   await page.evaluate(()=>{
     const card=makeBoardCard(createCardFromBase('bird_a','player'));card.playedOnTurn=0;state.players.player.board.teacher=card;

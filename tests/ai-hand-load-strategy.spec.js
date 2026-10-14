@@ -24,7 +24,7 @@ async function setup(page, side) {
 }
 
 for (const side of ["player", "opponent"]) {
-  test(`${side} CPUは小刻みリズム学生の攻撃前に白い学生を保留し負荷付与後に出席させる`, async ({ page }) => {
+  test(`${side} CPUは旧リズム学生の負荷コンボを使わない`, async ({ page }) => {
     await setup(page, side);
     const result = await page.evaluate(async (owner) => {
       const api = window.__chibattle;
@@ -43,13 +43,13 @@ for (const side of ["player", "opponent"]) {
         held, played,
         whiteOnBoard: api.state.players[owner].board.seats.some((card) => card?.baseId === "white_student"),
         whiteInHand: api.state.players[owner].hand.some((card) => card.baseId === "white_student"),
-        load: api.state.players[target].hand[0].handLoadLevel
+        load: api.state.players[target].hand[0].handLoadLevel || 0
       };
     }, side);
-    expect(result).toEqual({ held: true, played: true, whiteOnBoard: true, whiteInHand: false, load: 2 });
+    expect(result).toEqual({ held: side === 'opponent', played: false, whiteOnBoard: false, whiteInHand: true, load: 0 });
   });
 
-  test(`${side} CPUの実行フローでも攻撃時負荷から白い学生の高負荷化を同ターンで完了する`, async ({ page }) => {
+  test(`${side} CPUの実行フローでもリズム学生の攻撃は負荷を付けない`, async ({ page }) => {
     await setup(page, side);
     const result = await page.evaluate(async (owner) => {
       const api = window.__chibattle;
@@ -70,16 +70,16 @@ for (const side of ["player", "opponent"]) {
       return {
         attacked: rhythm.hasAttacked || rhythm.attacksUsedThisTurn > 0,
         whiteOnBoard: api.state.players[owner].board.seats.some((card) => card?.baseId === "white_student"),
-        load: enemyCard.handLoadLevel,
+        load: enemyCard.handLoadLevel || 0,
         enemyLife: api.state.players[target].life
       };
     }, side);
-    expect(result).toEqual({ attacked: true, whiteOnBoard: true, load: 2, enemyLife: 19 });
+    expect(result).toEqual({ attacked: true, whiteOnBoard: side === 'player', load: 0, enemyLife: 18 });
   });
 
   test(`${side} CPUは過学習学生で負荷を付けてから白い学生で高負荷にする`, async ({ page }) => {
     await setup(page, side);
-    const result = await page.evaluate((owner) => {
+    const result = await page.evaluate(async (owner) => {
       const api = window.__chibattle;
       const target = owner === "player" ? "opponent" : "player";
       const white = api.createCardFromBase("white_student", owner);
@@ -90,8 +90,10 @@ for (const side of ["player", "opponent"]) {
       const nextMove = () => owner === "player" ? api.findTrainingAiPlayMove(owner) : api.findAiPlayMove();
       const first = nextMove();
       api.placeCardFromHand(owner, first.card.instanceId, first.zone, owner, first.index, false);
+      await waitForBattlePresentation();
       const second = nextMove();
       api.placeCardFromHand(owner, second.card.instanceId, second.zone, owner, second.index, false);
+      await waitForBattlePresentation();
       return { first: first.card.baseId, second: second.card.baseId, load: api.state.players[target].hand[0].handLoadLevel };
     }, side);
     expect(result).toEqual({ first: "overfitting_student", second: "white_student", load: 2 });
@@ -120,7 +122,7 @@ for (const side of ["player", "opponent"]) {
 
   test(`${side} CPUは語尾スギでも白い学生の対象を準備する`, async ({ page }) => {
     await setup(page, side);
-    const result = await page.evaluate((owner) => {
+    const result = await page.evaluate(async (owner) => {
       const api = window.__chibattle;
       const target = owner === "player" ? "opponent" : "player";
       const white = api.createCardFromBase("white_student", owner);
@@ -130,8 +132,10 @@ for (const side of ["player", "opponent"]) {
       api.state.players[target].hand = [api.createCardFromBase("strong_student", target)];
       const score = owner === "player" ? api.scoreTrainingYocchanItem(owner, suffix) : api.scoreAiItem(suffix, { timing: "beforeBoard" });
       const used = owner === "player" ? api.useTrainingYocchanItem(owner, suffix) : api.useAiItem(suffix);
+      await waitForBattlePresentation();
       const move = owner === "player" ? api.findTrainingAiPlayMove(owner) : api.findAiPlayMove();
       api.placeCardFromHand(owner, move.card.instanceId, move.zone, owner, move.index, false);
+      await waitForBattlePresentation();
       return { scored: score > 0, used, card: move.card.baseId, load: api.state.players[target].hand[0].handLoadLevel };
     }, side);
     expect(result).toEqual({ scored: true, used: true, card: "white_student", load: 2 });
