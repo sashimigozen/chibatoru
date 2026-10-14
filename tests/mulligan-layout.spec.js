@@ -70,6 +70,45 @@ test('交換0枚でもクリックで確定できる', async ({ page }) => {
   await expect.poll(() => page.evaluate(() => window.__chibattle.state.phase)).toBe('battle');
 });
 
+for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, { width: 1108, height: 512 }]) test(`全5枚を選んでも確定して引き直し、バトルへ進める ${viewport.width}`, async ({ page }) => {
+  await page.setViewportSize(viewport);
+  await page.evaluate(() => {
+    state.screen = 'battle'; initializeGame({ aiBattle: true, deferPreBattle: true });
+    state.firstSide = 'player'; state.phase = 'dealing';
+    drawCards('player', 5, false); drawCards('opponent', 5, false);
+    enterMulligan(state.preBattleToken);
+  });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const originalRows = await page.locator('.mulligan-zone').evaluateAll(nodes => nodes.map(node => ({ width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height })));
+  const originalCard = await page.locator('#mulliganHand .card').first().boundingBox();
+  const originalConfirm = await page.locator('#mulliganButton').boundingBox();
+  for (let i = 0; i < 5; i++) {
+    await page.locator('[data-mulligan-zone="keep"] .card').first().click();
+    const rows = await page.locator('.mulligan-zone').evaluateAll(nodes => nodes.map(node => ({ width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height })));
+    rows.forEach((row, index) => {
+      expect(Math.abs(row.width - originalRows[index].width)).toBeLessThan(1);
+      expect(Math.abs(row.height - originalRows[index].height)).toBeLessThan(1);
+    });
+  }
+  await expect(page.locator('[data-mulligan-zone="change"] .card')).toHaveCount(5);
+  await page.waitForFunction(() => Number(getComputedStyle(document.querySelector('#turnOverlay')).opacity) === 0);
+  await page.screenshot({ path: test.info().outputPath(`all-selected-${viewport.width}.png`) });
+  const selectedRows = await page.locator('.mulligan-zone').evaluateAll(nodes => nodes.map(node => ({ width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height })));
+  selectedRows.forEach((row, index) => {
+    expect(Math.abs(row.width - originalRows[index].width)).toBeLessThan(1);
+    expect(Math.abs(row.height - originalRows[index].height)).toBeLessThan(1);
+  });
+  const selectedCard = await page.locator('#mulliganHand .card').first().boundingBox();
+  expect(Math.abs(selectedCard.width - originalCard.width)).toBeLessThan(1);
+  expect(Math.abs(selectedCard.height - originalCard.height)).toBeLessThan(1);
+  expect(await page.locator('#mulliganButton').boundingBox()).toEqual(originalConfirm);
+  await page.locator('#mulliganButton').click({ timeout: 3000 });
+  await expect.poll(() => page.evaluate(() => window.__chibattle.state.phase), { timeout: 10000 }).toBe('battle');
+  expect(errors).toEqual([]);
+  expect(await page.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBeGreaterThanOrEqual(5);
+});
+
 test('オンラインホストも選択後にクリックで確定し、相手を待つ', async ({ page }) => {
   await page.evaluate(() => {
     const state = window.__chibattle.state;

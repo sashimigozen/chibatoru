@@ -28,7 +28,7 @@ test('パンパンは自分・相手を順に選び、右側で確定してか�
   expect(await page.evaluate(()=>state.players.player.board.seats[0]?.baseId)).toBe('general_student');
   await page.locator('#itemTargetConfirmButton').click();
   await page.locator('.board-card[data-owner="opponent"][data-index="0"]').click();
-  await expect(page.locator('#itemTargetConfirmButton')).toHaveText('破壊する');
+  await expect(page.locator('#itemTargetConfirmButton')).toHaveText('破壊する\n1/1');
   await expect(page.locator('#threeGesturesStage')).toHaveClass(/hidden/);
   await page.screenshot({path:test.info().outputPath('panpan-right-confirm.png')});
   await page.locator('#itemTargetConfirmButton').click();

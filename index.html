@@ -14205,6 +14205,15 @@
     .battle-screen .slot:has(> .board-card.selected) { z-index: 12 !important; }
     .battle-screen .board-card.effect-target-candidate { scale: 1.08; z-index: 12 !important; cursor: pointer; }
     .battle-screen .slot:has(> .board-card.effect-target-candidate) { z-index: 12 !important; }
+    .battle-screen .field-card.board-card.effect-target-selected,
+    #threeGesturesStage .mulligan-card.effect-target-selected,
+    #mulliganStage .mulligan-card.effect-target-selected {
+      outline: 3px solid #dc2626 !important;
+      outline-offset: 2px;
+      box-shadow: 0 0 0 5px rgba(220,38,38,.18), 0 5px 14px rgba(30,48,65,.25) !important;
+    }
+    .target-selection-mark { position: absolute; top: 42%; right: 4px; z-index: 20; display: grid; place-items: center; width: 20px; height: 20px; border: 1px solid #b91c1c; border-radius: 50%; background: #dc2626; color: #fff; font-size: 14px; font-weight: 900; line-height: 1; pointer-events: none; }
+    #itemTargetConfirmButton { white-space: pre-line; }
 
     /* Grave markers are quiet until opened. */
     .battle-screen .trash-box { position: absolute !important; z-index: 11; display: grid !important; width: 54px !important; height: 38px !important; place-items: center; overflow: hidden; border: 1px solid #202b36 !important; border-radius: 3px !important; padding: 0 !important; background: linear-gradient(145deg,#4a5661,#1c242c) !important; color: #f5f7fa !important; box-shadow: 2px 3px 0 rgba(0,0,0,.18) !important; }
@@ -19776,6 +19785,17 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.24.2",
+        versioning: "semver",
+        date: "2026年10月14日",
+        summary: "効果の対象選択を見分けやすくしました。",
+        changes: [
+          { title: "対象の選択表示", after: "融合効果などの確定ボタンに選択数／上限を表示し、選択済みカードを赤い枠とチェックで強調します。盤面の指名とカード一覧からの選択に共通で適用しました。対象条件・必要人数・効果は変更していません。" },
+          { title: "高負荷の融合素材", after: "高負荷のカードも、ウマ系・定規・U太系の融合素材に使えるよう修正しました。完成品は素材の負荷を引き継ぎません。通常の使用・出席制限は維持します。" },
+          { title: "マリガン表示", after: "5枚すべてを選ぶとCHANGE・KEEPの枠とカードが縮む不具合を修正しました。選択枚数によって配置やカードの大きさが変わらないようにしました。" }
+        ]
+      },
       {
         version: "ver.0.24.1",
         versioning: "semver",
@@ -31688,7 +31708,8 @@
         safety += 1;
         const opponent = state.players.opponent;
         const item = opponent.hand
-          .filter((card) => card.type === "item" && effectiveCardCost(card) <= opponent.will)
+          .filter((card) => card.type === "item" && (effectiveCardCost(card) <= opponent.will
+            || fusionEligibleUtasInHand("opponent", card).length > 0))
           .map((card) => ({ card, score: scoreAiItem(card, { timing }) }))
           .filter((entry) => entry.score > 0)
           .filter((entry) => shouldAiUseItemAtTiming(entry.card, entry.score, timing))
@@ -34954,6 +34975,17 @@
         && (!choice.selectableIds || choice.selectableIds.includes(card.instanceId));
     }
 
+    function markEffectTargetSelection(button, selected) {
+      button.classList.toggle("effect-target-selected", Boolean(selected));
+      button.setAttribute("aria-pressed", String(Boolean(selected)));
+      if (!selected) return;
+      const mark = document.createElement("span");
+      mark.className = "target-selection-mark";
+      mark.textContent = "✓";
+      mark.setAttribute("aria-hidden", "true");
+      button.appendChild(mark);
+    }
+
     function toggleCardChoiceCard(instanceId) {
       const pending = state.pendingCardChoice;
       if (!pending) return;
@@ -36457,7 +36489,7 @@
     }
 
     function tryFuseHorseForAi(side) {
-      const materials = HORSE_MATERIAL_IDS.map(id => state.players[side].hand.find(card => card.baseId === id && !isHighLoadHandCard(card)));
+      const materials = HORSE_MATERIAL_IDS.map(id => state.players[side].hand.find(card => card.baseId === id));
       if (materials.every(Boolean) && state.players[side].will >= 8) return fuseHorseMaterials(side, materials.map(card => card.instanceId), false);
       const pairs = [];
       for (let i = 0; i < materials.length; i++) for (let j = i + 1; j < materials.length; j++) {
@@ -36573,7 +36605,7 @@
     function fuseHorseMaterials(side, ids, renderAfter = true) {
       if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
       const materials = ids.map(id => getHandCard(side, id));
-      if (materials.some(card => !card || isHighLoadHandCard(card))) return false;
+      if (materials.some(card => !card)) return false;
       const resultId = horseFusionResult(materials);
       if (!resultId) return false;
       if (side === "player" && onlineCanSendCommand()) {
@@ -36599,7 +36631,7 @@
       if (!card || battleNewActionBlocked()) return false;
       hideBattleCardPreview();
       const cards = state.players.player.hand.filter(entry => HORSE_MATERIAL_IDS.includes(entry.baseId)
-        && entry.instanceId !== card.instanceId && entry.baseId !== card.baseId && !isHighLoadHandCard(entry));
+        && entry.instanceId !== card.instanceId && entry.baseId !== card.baseId);
       if (!cards.length) return false;
       return openCardChoice({ mode: "horse_fusion", itemId: card.instanceId, title: "融合", cards,
         min: 1, max: 3, confirmLabel: "融合する" });
@@ -36648,7 +36680,6 @@
 
     function canFuseUtaMaterial(side, item, target) {
       if (!item || !target || !UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) return false;
-      if (isHighLoadHandCard(item) || isHighLoadHandCard(target)) return false;
       if (target.baseId !== "yuta" || item.instanceId === target.instanceId) return false;
       const hand = state.players[side]?.hand || [];
       if (!hand.some((card) => card.instanceId === item.instanceId)) return false;
@@ -36706,14 +36737,13 @@
     }
 
     function rulerFusionEligibleTargets(side, sourceCard) {
-      if (!sourceCard || sourceCard.baseId !== "ruler" || isHighLoadHandCard(sourceCard)) return [];
+      if (!sourceCard || sourceCard.baseId !== "ruler") return [];
       return (state.players[side]?.hand || [])
-        .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId && !isHighLoadHandCard(card));
+        .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId);
     }
 
     function handFusionType(side, sourceCard, targetCard) {
       if (sourceCard && targetCard && sourceCard.instanceId !== targetCard.instanceId
-        && !isHighLoadHandCard(sourceCard) && !isHighLoadHandCard(targetCard)
         && getHandCard(side, sourceCard.instanceId) && getHandCard(side, targetCard.instanceId)
         && horseFusionResult([sourceCard, targetCard])) return "horse";
       if (canFuseUtaMaterial(side, sourceCard, targetCard)) return "uta";
@@ -36750,7 +36780,7 @@
 
     function castUtaFusion(side, item, target, renderAfter = true) {
       if (state.phase !== "battle" || state.gameOver || state.currentSide !== side) return false;
-      if (!canFuseUtaMaterial(side, item, target) || isHighLoadHandCard(item) || isHighLoadHandCard(target)) {
+      if (!canFuseUtaMaterial(side, item, target)) {
         if (renderAfter) render();
         return false;
       }
@@ -42486,8 +42516,7 @@
       const target = targetInstanceId
         ? rulers.find((card) => card.instanceId === targetInstanceId)
         : rulers.find((card) => card.instanceId !== source?.instanceId);
-      if (!source || !target || source.instanceId === target.instanceId || state.phase !== "battle"
-        || isHighLoadHandCard(source) || isHighLoadHandCard(target)) return false;
+      if (!source || !target || source.instanceId === target.instanceId || state.phase !== "battle") return false;
       if (side === "player" && onlineCanSendCommand()) {
         onlineSendCommand("fuse", {
           sourceInstanceId: source.instanceId,
@@ -45455,6 +45484,16 @@
           : destructiveConfirmation
             ? "破壊する"
             : "対象を確定";
+      if (boardChoice) {
+        elements.itemTargetConfirmButton.textContent = `対象を確定\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}`;
+      } else if (state.pendingMultiItem) {
+        elements.itemTargetConfirmButton.textContent = `対象を確定\n${state.pendingMultiItem.targets.length}/${state.pendingMultiItem.maxTargets || 2}`;
+      } else if (attendChoice || state.pendingPanpanItem || state.pendingDestroyItem || state.pendingKingGhidorahBed) {
+        const selected = attendChoice ? state.pendingAttendTarget.selectedTarget
+          : state.pendingPanpanItem ? (state.pendingPanpanItem.stage === "friendly" ? state.pendingPanpanItem.friendly : state.pendingPanpanItem.enemy)
+          : state.pendingDestroyItem ? state.pendingDestroyItem.target : state.pendingKingGhidorahBed.target;
+        elements.itemTargetConfirmButton.textContent += `\n${selected ? 1 : 0}/1`;
+      }
       elements.itemTargetConfirmButton.disabled = !choosingItemTargets
         || (boardChoice && state.pendingCardChoice.selectedIds.length < state.pendingCardChoice.min)
         || (attendChoice && !state.pendingAttendTarget.selectedTarget)
@@ -46230,7 +46269,7 @@
         && !state.pendingThreeGestures
         && !state.pendingRemoteHandTrim
         && tutorialAllowsHandCard(card)
-        && canUseHandCardNow(card);
+        && (canUseHandCardNow(card) || handFusionEligibleTargets("player", card).length > 0);
     }
 
     function getDraggedHandCard() {
@@ -46287,7 +46326,7 @@
     }
 
     function canDropHandCardOnSlot(card, zone, owner, index) {
-      if (!card || !canStartHandDrag(card)) return false;
+      if (!card || !canStartHandDrag(card) || !canUseHandCardNow(card)) return false;
       if (card.type !== "item") return tutorialAllowsPlacement(card, zone, owner, index) && isValidPlacement(card, zone, owner, index);
       if (["capture", "salt_to_enemy"].includes(card.baseId)) {
         return owner === "opponent"
@@ -46301,6 +46340,7 @@
 
     function canDropHandCardOnLife(card, targetSide) {
       return Boolean(card
+        && canUseHandCardNow(card)
         && canStartHandDrag(card)
         && card.type === "item"
         && card.target === "enemy"
@@ -46311,6 +46351,7 @@
 
     function canDropHandCardOnPlaymat(card) {
       return Boolean(card
+        && canUseHandCardNow(card)
         && canStartHandDrag(card)
         && card.type === "item"
         && canUseItemNow(card));
@@ -46517,7 +46558,7 @@
         elements.mulliganTitle.textContent = thinChoice.title;
         elements.mulliganMessage.textContent = `${thinChoice.message} 選択中：${thinChoice.selectedIds.length}/${thinChoice.max}`;
         elements.thinItemChoiceActions.classList.remove("hidden");
-        elements.thinItemKeepConfirmButton.textContent = thinChoice.confirmLabel;
+        elements.thinItemKeepConfirmButton.textContent = `${thinChoice.confirmLabel} ${thinChoice.selectedIds.length}/${thinChoice.max}`;
         elements.thinItemKeepConfirmButton.disabled = thinChoice.selectedIds.length < thinChoice.min;
         elements.mulliganHand.innerHTML = "";
         thinChoice.cards.forEach((card) => {
@@ -46527,6 +46568,7 @@
           button.dataset.cardId = card.instanceId;
           button.innerHTML = cardTemplate(card, false);
           button.classList.toggle("selected", thinChoice.selectedIds.includes(card.instanceId));
+          markEffectTargetSelection(button, thinChoice.selectedIds.includes(card.instanceId));
           button.setAttribute("aria-pressed", String(thinChoice.selectedIds.includes(card.instanceId)));
           button.addEventListener("click", () => toggleCardChoiceCard(card.instanceId));
           attachCardDetailEvents(button, card, { previewOnClick: false });
@@ -46610,7 +46652,7 @@
       if (choice) {
         elements.threeGesturesTitle.textContent = choice.title;
         elements.threeGesturesMessage.textContent = `${choice.message} 選択中：${choice.selectedIds.length}/${choice.max}`;
-        elements.threeGesturesConfirmButton.textContent = choice.confirmLabel;
+        elements.threeGesturesConfirmButton.textContent = `${choice.confirmLabel} ${choice.selectedIds.length}/${choice.max}`;
         elements.threeGesturesConfirmButton.disabled = choice.selectedIds.length < choice.min;
         elements.threeGesturesHand.innerHTML = "";
         if (boardChoice) return;
@@ -46620,6 +46662,7 @@
           button.dataset.cardId = card.instanceId;
           button.innerHTML = cardTemplate(card, false);
           button.classList.toggle("selected", choice.selectedIds.includes(card.instanceId));
+          markEffectTargetSelection(button, choice.selectedIds.includes(card.instanceId));
           appendCardChoiceOrderBadge(button, choice, card.instanceId);
           const selectable = !choice.selectableIds || choice.selectableIds.includes(card.instanceId);
           button.disabled = !selectable;
@@ -46643,7 +46686,7 @@
       }
       elements.threeGesturesTitle.textContent = "3枚を選んでください";
       elements.threeGesturesMessage.textContent = `手札に加えるカードを3枚選んでください。選択中：${pending.selectedIds.length}/3`;
-      elements.threeGesturesConfirmButton.textContent = "3枚選択で確定";
+      elements.threeGesturesConfirmButton.textContent = `確定 ${pending.selectedIds.length}/3`;
       elements.threeGesturesConfirmButton.disabled = pending.selectedIds.length !== 3;
       elements.threeGesturesHand.innerHTML = "";
       pending.revealed.forEach((card) => {
@@ -46652,6 +46695,7 @@
         button.dataset.cardId = card.instanceId;
         button.innerHTML = cardTemplate(card, false);
         button.classList.toggle("selected", pending.selectedIds.includes(card.instanceId));
+        markEffectTargetSelection(button, pending.selectedIds.includes(card.instanceId));
         button.setAttribute("aria-pressed", String(pending.selectedIds.includes(card.instanceId)));
         button.addEventListener("click", () => toggleThreeGesturesCard(card.instanceId));
         attachCardDetailEvents(button, card, { previewOnClick: false });
@@ -46831,7 +46875,7 @@
           handleHandCardClick(card.instanceId);
         });
         elements.playerHand.appendChild(button);
-        if (activeHandDrag?.instanceId === card.instanceId) {
+        if (activeHandDrag && activeHandDrag.instanceId === card.instanceId) {
           activeHandDrag.sourceElement = button;
           button.classList.add("dragging-source");
         }
@@ -48327,6 +48371,12 @@
         }
       }
       button.classList.toggle("has-status", Boolean(button.querySelector(".field-card-status")));
+      const effectTargetSelected = (isBoardChoiceCandidate(card, owner) && state.pendingCardChoice.selectedIds.includes(card.instanceId))
+        || refsMatch(state.pendingAttendTarget?.selectedTarget, { owner, zone, index })
+        || isSelectedMultiItemTarget(owner, zone, index)
+        || isSelectedPanpanTarget(owner, zone, index)
+        || isSelectedDestroyItemTarget(owner, zone, index)
+        || isSelectedKingGhidorahBedTarget(owner, zone, index);
       button.classList.toggle("selected",
         (isBoardChoiceCandidate(card, owner) && state.pendingCardChoice.selectedIds.includes(card.instanceId))
         || refsMatch(state.pendingAttendTarget?.selectedTarget, { owner, zone, index })
@@ -48344,6 +48394,9 @@
         || canSelectDestroyItemTarget(owner, zone, index)
         || isAttendTargetCandidate(owner, zone, index)
         || isKingGhidorahBedTargetCandidate(owner, zone, index));
+      if (effectTargetSelected || button.classList.contains("selection-candidate")) {
+        markEffectTargetSelection(button, effectTargetSelected);
+      }
       button.classList.toggle("exhausted", Boolean(card.hasAttacked));
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-locked", Boolean(

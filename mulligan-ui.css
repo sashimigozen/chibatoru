@@ -33,6 +33,9 @@
 }
 #mulliganStage.mulligan-split #mulliganHand {
   display: grid;
+  /* Keep a full-width track even when KEEP contains only empty slots. */
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch;
   gap: 16px;
   padding: 0;
   overflow: visible;

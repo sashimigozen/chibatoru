@@ -31,7 +31,7 @@ test('6通りの2枚融合と4枚融合、素材は校外に入らず戦意も�
     .map((id,i) => [true,id,i===6?4:2,0,20]));
 });
 
-test('同名・3枚・完成品への追加融合・高負荷素材は不可', async ({ page }) => {
+test('同名・3枚・完成品への追加融合は不可、高負荷素材は融合可能', async ({ page }) => {
   const results = await page.evaluate(() => {
     return [['fusion_uma','fusion_uma'], ['fusion_uma','fusion_bone','fusion_where'], ['umaibo','fusion_where']]
       .map(ids => { state.players.player.hand = ids.map(id=>createCardFromBase(id,'player'));
@@ -40,7 +40,7 @@ test('同名・3枚・完成品への追加融合・高負荷素材は不可', a
         state.players.player.hand[0].handLoadLevel=2;
         return fuseHorseMaterials('player',state.players.player.hand.map(card=>card.instanceId),false); })());
   });
-  expect(results).toEqual([false,false,false,false]);
+  expect(results).toEqual([false,false,false,true]);
 });
 
 test('素材とサポートだけデッキ登録でき、完成品7種は生成専用', async ({ page }) => {
