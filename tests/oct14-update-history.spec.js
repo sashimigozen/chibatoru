@@ -15,7 +15,7 @@ test('14日のパッチ履歴を古い0.24.1へまとめ、機能追加と以前
         name: CARD_BASES[id].name, text: cardRulesText(createCardFromBase(id, 'player'))
       })) };
   });
-  expect(records.versions).toEqual(['ver.0.24.1', 'ver.0.25.0']);
+  expect(records.versions).toEqual(['ver.0.25.0', 'ver.0.24.1']);
   expect(records.changes.map(change => change.title)).toEqual([
     '病', '対象の選択表示', '高負荷の融合素材', 'マリガン表示', '小刻みリズム学生',
     '強化・弱体化の演出', '情報に疲れた学生', '通路で粘る学生'
@@ -24,7 +24,8 @@ test('14日のパッチ履歴を古い0.24.1へまとめ、機能追加と以前
   for (const card of records.texts) {
     expect(records.changes.find(change => change.title === card.name).after).toBe(card.text);
   }
-  const entry = page.locator('.update-entry').first();
+  await expect(page.locator('.update-entry').first().locator('summary')).toContainText('ver.0.25.0');
+  const entry = page.locator('.update-entry').nth(1);
   await entry.locator('summary').click();
   await expect(entry.locator('summary')).toContainText('ver.0.24.1');
   await expect(entry.locator('.update-change')).toHaveCount(8);
