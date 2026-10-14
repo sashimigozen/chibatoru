@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>チバトル（仮）プロトタイプ</title>
-  <script src="gacha-core.js?v=0.23.18-ur-pool-5"></script>
+  <script src="gacha-core.js?v=0.25.1-shop"></script>
   <script>
     window.chibattleGachaRecoveryReady = (async () => {
       const raw = localStorage.getItem(ChibattleGachaCore.KEY);
@@ -17428,7 +17428,7 @@
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
 <link rel="stylesheet" href="cards-ui.css?v=0.23.18-cycle" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.23.16" />
-  <link rel="stylesheet" href="gacha-ui.css?v=0.23.18-shop-16" />
+  <link rel="stylesheet" href="gacha-ui.css?v=0.25.1-shop" />
 </head>
 <body>
   <div class="dungeon-interior-backdrop hidden" id="dungeonInteriorBackdrop" aria-hidden="true">
@@ -19789,6 +19789,16 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.25.1",
+        versioning: "semver",
+        date: "2026年10月15日",
+        summary: "オンライン対戦の観戦者一覧と、ショップの天井到達時の購入制限・UR所持表示を修正しました。",
+        changes: [
+          { title: "観戦者のプロフィール名", after: "観戦者一覧には、観戦者本人がプロフィールに設定した名前を表示します。対戦者・観戦者のどちらからも、演出や処理の待機中に一覧を開いて確認できるよう修正しました。" },
+          { title: "パック別のUR交換", after: "天井に達したパックはUR交換まで購入を停止し、他のパックは購入できるようにしました。各パックの進捗と交換権は維持します。UR交換画面では、未所持のURの右上に小さく「未所持」を表示します。" }
+        ]
+      },
       {
         version: "ver.0.25.0",
         versioning: "semver",
@@ -27467,7 +27477,7 @@
     function battleInspectionAllowed(target) {
       if (target.closest("[data-room-code-copy]")) return true;
       if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
-      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
+      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
 
     function battleInputAllowed(target) {
@@ -54674,7 +54684,7 @@
   <script src="desktop-ui.js?v=0.23.19-ai-battle"></script>
 <script src="draw-animation.js?v=0.23.19-video-tempo"></script>
 <script src="hand-trash-animation.js?v=0.23.19-deck"></script>
-<script src="gacha-ui.js?v=0.23.19-ai-battle"></script>
+<script src="gacha-ui.js?v=0.25.1-shop"></script>
   <script src="four-mode.js"></script>
 </body>
 </html>

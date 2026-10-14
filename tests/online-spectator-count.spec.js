@@ -91,18 +91,24 @@ test("観戦者がいる対戦だけに表示し、多い手札やホバーも�
 test("観戦者の入退室・再入室でホスト、ゲスト、観戦者の人数だけが更新され、0人なら消える", async ({ browser }) => {
   const contexts = [];
   const pageErrors = [];
-  async function openBattleMenu() {
+  async function openBattleMenu(username) {
     const context = await browser.newContext();
     contexts.push(context);
     const page = await context.newPage();
     page.on("pageerror", (error) => pageErrors.push(error.message));
     await page.goto(gameUrl.href);
+    if (username) {
+      await page.locator("#homeProfileButton").click();
+      await page.locator("#profileUsernameInput").fill(username);
+      await page.locator("#profileForm button[type=submit]").click();
+      await page.reload();
+      await expect(page.locator("#homeProfileName")).toHaveText(username);
+    }
     await page.locator("#homeNavBattleButton").click();
     return page;
   }
   async function joinSpectator(roomCode, username) {
-    const page = await openBattleMenu();
-    await page.evaluate((name) => { window.__chibattle.state.profile.username = name; }, username);
+    const page = await openBattleMenu(username);
     await page.locator("#onlineSpectateButton").click();
     await page.locator("#onlineSpectateRoomInput").fill(roomCode);
     await page.locator("#onlineSpectateSearchButton").click();
@@ -152,9 +158,12 @@ test("観戦者の入退室・再入室でホスト、ゲスト、観戦者の�
     const first = await joinSpectator(roomCode, "観戦者A");
     await expectCount([host, guest, first], 1);
     for (const page of [host, guest, first]) {
+      await page.evaluate(() => { state.lectureRoomCheck = true; });
       await page.locator("#battleSpectatorCount").click();
       await expect(page.locator("#battleSpectatorNames li")).toHaveText(["観戦者A"]);
+      await page.evaluate(() => { state.lectureRoomCheck = false; });
     }
+    await host.screenshot({ path: test.info().outputPath("spectator-profile-name.png") });
     const second = await joinSpectator(roomCode, "観戦者B");
     await expectCount([host, guest, first, second], 2);
     for (const page of [host, guest, first]) {

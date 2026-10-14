@@ -24,12 +24,13 @@ test('14日のパッチ履歴を古い0.24.1へまとめ、機能追加と以前
   for (const card of records.texts) {
     expect(records.changes.find(change => change.title === card.name).after).toBe(card.text);
   }
-  await expect(page.locator('.update-entry').first().locator('summary')).toContainText('ver.0.25.0');
-  const entry = page.locator('.update-entry').nth(1);
+  const datedEntries = page.locator('.update-entry').filter({ has: page.locator('summary', { hasText: '2026年10月14日' }) });
+  await expect(datedEntries.first().locator('summary')).toContainText('ver.0.25.0');
+  const entry = datedEntries.nth(1);
   await entry.locator('summary').click();
   await expect(entry.locator('summary')).toContainText('ver.0.24.1');
   await expect(entry.locator('.update-change')).toHaveCount(8);
   await expect(page.locator('.update-entry > summary').filter({ hasText: 'ver.0.24.2' })).toHaveCount(0);
-  await expect(page.locator('.update-entry > summary').filter({ hasText: 'ver.0.25.1' })).toHaveCount(0);
+  await expect(datedEntries.locator('summary').filter({ hasText: 'ver.0.25.1' })).toHaveCount(0);
   await page.screenshot({ path: test.info().outputPath('oct14-updates.png') });
 });
