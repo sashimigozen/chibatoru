@@ -19790,6 +19790,13 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.25.1",
+        versioning: "semver",
+        date: "2026年10月14日",
+        summary: "オンラインの融合コピー出席で停止する不具合を修正しました。",
+        changes: [{ title: "小刻みリズム学生", after: "コピー元を選択した後、出席先を選べず操作が止まる不具合を修正しました。出席先の選択状態と処理完了を相手側へ同期します。カード本文・効果は変更していません。" }]
+      },
+      {
         version: "ver.0.25.0",
         versioning: "semver",
         date: "2026年10月14日",
@@ -36502,7 +36509,7 @@
         fusionEffectTasks.delete(task);
         if (task.token === state.preBattleToken) {
           cleanupDestroyedCards(); applyBoardAuras(); render();
-          if (task.commandId && isOnlineHost()) onlineBroadcastState(true,
+          if (isOnlineHost()) onlineBroadcastState(true,
             onlineIsCommandAwaitingResolution(task.commandId) ? "" : task.commandId);
         }
       });
@@ -42380,6 +42387,9 @@
       }
       state.pendingCopiedCard = card;
       if (message) state.message = message;
+      // Ordinary renders hide private choices. This public copy must be sent
+      // immediately so its owner can answer the host's placement wait.
+      if (card.pendingOnlineGuestPlacement) onlineBroadcastState(true);
       return card;
     }
 
