@@ -120,7 +120,8 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
   await page.evaluate(() => window.__chibattle.render());
-  await expect(card.locator(".board-change-feedback")).toHaveCount(0);
+  await expect(card.locator(".board-change-feedback")).toHaveCount(1);
+  await expect(card.locator(".board-change-feedback")).toHaveCount(0, { timeout: 2500 });
 
   await page.evaluate(() => {
     const api = window.__chibattle;
@@ -141,6 +142,8 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
   await expect(card.locator(".field-stat.attack i")).toHaveCount(0);
   await expect(card.locator(".field-stat.attack")).not.toContainText(/[↑↓]/);
 
+  await expect(card.locator(".board-change-feedback")).toHaveCount(0, { timeout: 2500 });
+
   await page.evaluate(() => {
     const api = window.__chibattle;
     const attendee = api.state.players.player.board.seats[0];
@@ -148,6 +151,7 @@ test("出席者の強化・弱体化・回復を一時演出し、ダメージ�
     api.render();
   });
   await expect(card.locator(".board-change-feedback")).toHaveAttribute("aria-label", /眠気 付与/);
+  await expect(card.locator(".board-change-feedback")).toHaveCount(0, { timeout: 2500 });
 
   await page.evaluate(() => {
     const api = window.__chibattle;

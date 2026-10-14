@@ -19794,7 +19794,12 @@
         versioning: "semver",
         date: "2026年10月14日",
         summary: "オンラインの融合コピー出席で停止する不具合を修正しました。",
-        changes: [{ title: "小刻みリズム学生", after: "コピー元を選択した後、出席先を選べず操作が止まる不具合を修正しました。出席先の選択状態と処理完了を相手側へ同期します。カード本文・効果は変更していません。" }]
+        changes: [
+          { title: "小刻みリズム学生", after: "コピー元を選択した後、出席先を選べず操作が止まる不具合を修正しました。出席先の選択状態と処理完了を相手側へ同期します。カード本文・効果は変更していません。" },
+          { title: "強化・弱体化の演出", after: "融合出席者などのバフ・デバフ演出が、直後の画面更新で消えないよう修正しました。共通の能力値変更処理でも、初回表示前の変化を演出に反映します。" },
+          { title: "情報に疲れた学生", after: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。" },
+          { title: "通路で粘る学生", after: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。" }
+        ]
       },
       {
         version: "ver.0.25.0",
@@ -36476,7 +36481,7 @@
 
     function horseMaterialCandidates(side) {
       const names = new Set();
-      return state.players[side].deck.filter(card => {
+      return [...state.players[side].deck, ...state.players[side].hand].filter(card => {
         if (!HORSE_MATERIAL_IDS.includes(card.baseId) || names.has(card.baseId)) return false;
         names.add(card.baseId);
         return true;
@@ -36628,7 +36633,8 @@
         damagePlayer(opponent, 3);
       }
       if (source.baseId === "information_tired_student") {
-        const target = shuffle(state.players[side].deck.filter(card => HORSE_MATERIAL_IDS.includes(card.baseId)))[0];
+        const target = shuffle([...state.players[side].deck, ...state.players[side].hand]
+          .filter(card => HORSE_MATERIAL_IDS.includes(card.baseId)))[0];
         if (target) state.players[side].hand.push(publicHandCard(target.baseId, side));
       }
       if (source.baseId === "corridor_student") queueFusionEffect(async () => {
@@ -43154,6 +43160,10 @@
         return;
       }
       if (normalizedAttack || normalizedHp || normalizedDefense) {
+        if (card.instanceId && !boardVisualSnapshots.has(card.instanceId)
+          && ["player", "opponent"].some(side => listBoardRefs(side).some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId))) {
+          boardVisualSnapshots.set(card.instanceId, boardVisualSnapshot(card));
+        }
         card.statModifiers = [
           ...(Array.isArray(card.statModifiers) ? card.statModifiers : []),
           {
@@ -47405,7 +47415,7 @@
     }
 
     function renderBoards() {
-      const retainedFeedback = [...document.querySelectorAll(".board-change-feedback[data-attendance-completion]")]
+      const retainedFeedback = [...document.querySelectorAll(".board-change-feedback")]
         .map((layer) => ({
           layer,
           instanceId: layer.parentElement?.dataset.cardId,
@@ -53372,8 +53382,8 @@
         where_bone: "自分のターン終了時、相手本体に3ダメージを与える。",
         where_uma_bone_maibo: "このカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。",
         remote_participant_student: "注目を持つ。このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。",
-        information_tired_student: "このカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。",
-        corridor_student: "このカードを手札から出席させたとき、自分のデッキにある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。",
+        information_tired_student: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。",
+        corridor_student: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",
         plump_student: "陽気を持つ。このカードを出席させるには、横に連続した席マスを2つ使用する。",
         aggro_princess: "超陽気を持つ。このカードが相手本体を攻撃したとき、自分本体に1ダメージを与える。",

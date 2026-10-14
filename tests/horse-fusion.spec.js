@@ -56,9 +56,9 @@ test('情報はデッキから素材を減らさずコピーする、対象な�
     state.players.player.deck=[createCardFromBase('fusion_uma','player')];
     resolveAttendEffects('player',source,'seat',0,{fromHand:true});
     const first=[state.players.player.deck.length,state.players.player.hand.map(card=>card.baseId)];
-    state.players.player.deck=[]; resolveAttendEffects('player',source,'seat',0,{fromHand:true});
+    state.players.player.deck=[]; state.players.player.hand=[]; resolveAttendEffects('player',source,'seat',0,{fromHand:true});
     return {first,count:state.players.player.hand.length};
-  })).toEqual({first:[1,['fusion_uma']],count:1});
+  })).toEqual({first:[1,['fusion_uma']],count:0});
 });
 
 test('通路は異名2枚、残り1種類なら1枚をコピーする', async ({ page }) => {
