@@ -1884,6 +1884,31 @@
       box-shadow: 0 4px 12px rgba(14, 116, 144, 0.14);
     }
 
+    .coin-toss-area { display: grid; justify-items: center; gap: 18px; padding: 24px 12px; perspective: 700px; }
+    .coin-motion { width: 140px; height: 140px; perspective: 700px; }
+    .coin-disc { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transform: rotateX(0deg); }
+    .coin-disc.tails { transform: rotateX(180deg); }
+    .coin-face { position: absolute; inset: 0; display: grid; place-items: center; border: 5px solid #6b8495; border-radius: 50%; backface-visibility: hidden; box-shadow: inset 0 0 0 2px #c7d8e2, inset 0 0 0 6px #7895a6; }
+    .coin-face.heads { color: #24445b; background: linear-gradient(135deg, #eaf4fa, #adc6d7 48%, #f2f8fc); transform: translateZ(2px); }
+    .coin-face.tails { color: #383f46; border-color: #161b20; background: #101419; box-shadow: inset 0 0 0 2px #3b444c, inset 0 0 0 6px #171d23; transform: rotateX(180deg) translateZ(2px); }
+    .coin-smile-mark { width: 64px; height: 32px; box-sizing: content-box; border-bottom: 10.667px solid currentColor; border-radius: 0 0 49.778px 49.778px; }
+    .coin-face.heads .coin-smile-mark { filter: drop-shadow(0 1px 0 #f7fbff); }
+    .coin-face.tails .coin-smile-mark { filter: drop-shadow(0 1px 0 #59616a); }
+    .coin-motion.tossing { animation: coin-toss-rise 1100ms ease-in-out both; }
+    .coin-disc.tossing { animation: coin-toss-spin 1100ms linear both; }
+    .coin-call { min-height: 1.5em; color: #466176; font-weight: 800; }
+    .coin-controls { display: flex; justify-content: center; gap: 18px; }
+    .coin-controls .button { min-width: 100px; }
+    @keyframes coin-toss-rise {
+      0%, 100% { transform: translateY(0); }
+      45% { transform: translateY(-48px); }
+    }
+    @keyframes coin-toss-spin {
+      from { transform: rotateX(0deg); }
+      to { transform: rotateX(var(--coin-stop-angle, 1440deg)); }
+    }
+    @media (prefers-reduced-motion: reduce) { .coin-disc.tossing, .coin-motion.tossing { animation: none; } }
+
     body[data-online="spectator"] .battle-action-slot {
       display: none;
     }
@@ -18201,6 +18226,19 @@
           <button class="rps-choice" type="button" data-rps-choice="scissors"></button>
           <button class="rps-choice" type="button" data-rps-choice="paper"></button>
         </div>
+        <div class="coin-toss-area hidden" id="coinTossArea">
+          <div class="coin-motion" id="coinMotion">
+            <div class="coin-disc" id="coinDisc" role="img" aria-label="コインの表">
+              <span class="coin-face heads" aria-hidden="true"><span class="coin-smile-mark"></span></span>
+              <span class="coin-face tails" aria-hidden="true"><span class="coin-smile-mark"></span></span>
+            </div>
+          </div>
+          <div class="coin-call" id="coinCallLabel"></div>
+          <div class="coin-controls" id="coinControls">
+            <button class="button" type="button" data-coin-face="heads">表</button>
+            <button class="button secondary" type="button" data-coin-face="tails">裏</button>
+          </div>
+        </div>
         <div class="order-choice-controls hidden" id="orderChoiceControls">
           <button class="button" id="chooseFirstButton" type="button">先攻を選ぶ</button>
           <button class="button secondary" id="chooseSecondButton" type="button">後攻を選ぶ</button>
@@ -19798,6 +19836,13 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.26.0",
+        versioning: "semver",
+        date: "2026年10月16日",
+        summary: "試合開始時の先攻・後攻決定をコイントスに統一しました。",
+        changes: [{ title: "コイントス", after: "オンラインではホスト、AI戦・トレーニングでは自分側が表か裏を選び、当たった側が先攻・後攻を選びます。CPU同士のトレーニングでは自動で進行します。じゃんけんのデータは残しています。コインは縦に回転し、表は銀青色、裏は黒地にスマイルの口を仮ロゴとして入れています。" }]
+      },
       {
         version: "ver.0.25.2",
         versioning: "semver",
@@ -21589,6 +21634,9 @@
       rpsOpponentChoice: null,
       rpsRevealed: false,
       rpsWinner: null,
+      coinCall: null,
+      coinResult: null,
+      coinLandingFace: null,
       initialDealCount: 0,
       lastMulliganDrawId: null,
       mulliganDrawRemaining: 0,
@@ -22403,6 +22451,11 @@
       playmat: document.querySelector(".playmat"),
       preBattleStage: document.getElementById("preBattleStage"),
       preBattleTitle: document.getElementById("preBattleTitle"),
+      coinTossArea: document.getElementById("coinTossArea"),
+      coinDisc: document.getElementById("coinDisc"),
+      coinMotion: document.getElementById("coinMotion"),
+      coinCallLabel: document.getElementById("coinCallLabel"),
+      coinControls: document.getElementById("coinControls"),
       preBattleMessage: document.getElementById("preBattleMessage"),
       rpsArea: document.getElementById("rpsArea"),
       playerRpsCard: document.getElementById("playerRpsCard"),
@@ -25384,7 +25437,7 @@
       onlineClearPendingMessagesByType("startGame");
       const preBattleToken = state.preBattleToken;
       render();
-      window.setTimeout(() => beginRpsSelection(preBattleToken), 1250);
+      window.setTimeout(() => beginCoinToss(preBattleToken), 1250);
       return true;
     }
 
@@ -28137,6 +28190,9 @@
       state.rpsOpponentChoice = null;
       state.rpsRevealed = false;
       state.rpsWinner = null;
+      state.coinCall = null;
+      state.coinResult = null;
+      state.coinLandingFace = null;
       state.initialDealCount = 0;
       state.lastMulliganDrawId = null;
       state.mulliganDrawRemaining = 0;
@@ -28236,7 +28292,7 @@
           ? `魔の1号館・${currentDungeonFloor().number}階のバトルを開始します。`
           : "相手AIとのバトルを開始します。");
       render();
-      if (!deferPreBattle) window.setTimeout(() => beginRpsSelection(preBattleToken), 1250);
+      if (!deferPreBattle) window.setTimeout(() => beginCoinToss(preBattleToken), 1250);
     }
 
     function isCurrentPreBattle(token, phase = null) {
@@ -28246,6 +28302,60 @@
         && (phase === null || state.phase === phase);
     }
 
+    const COIN_FACE_LABELS = Object.freeze({ heads: "表", tails: "裏" });
+
+    function rollCoinFace() {
+      const value = new Uint32Array(1);
+      crypto.getRandomValues(value);
+      return value[0] % 2 === 0 ? "heads" : "tails";
+    }
+
+    function beginCoinToss(token) {
+      if (!isCurrentPreBattle(token, "versus") || isOnlineGuest() || isOnlineSpectator()) return;
+      state.phase = "coinToss";
+      state.preBattleBusy = false;
+      state.coinCall = null;
+      state.coinResult = null;
+      state.coinLandingFace = null;
+      state.rpsWinner = null;
+      state.message = "表か裏を選んでください。";
+      render();
+      if (isTrainingAiVsAi()) chooseCoinFace(rollCoinFace());
+    }
+
+    function chooseCoinFace(face) {
+      if (isOnlineGuest() || isOnlineSpectator() || !COIN_FACE_LABELS[face]
+        || state.phase !== "coinToss" || state.preBattleBusy || state.coinCall) return false;
+      const token = state.preBattleToken;
+      state.coinCall = face;
+      // 停止する面を先に一度だけ決め、全クライアントが同じ角度で着地する。
+      // 結果の確定・選択権の付与は、これまでどおり演出終了後に行う。
+      state.coinLandingFace = rollCoinFace();
+      state.preBattleBusy = true;
+      state.message = "コイントス中…";
+      render();
+      window.setTimeout(() => {
+        if (!isCurrentPreBattle(token, "coinToss")) return;
+        state.coinResult = state.coinLandingFace;
+        // 既存の先攻・後攻選択とオンライン視点変換の勝者フィールドを流用する。
+        state.rpsWinner = state.coinCall === state.coinResult ? "player" : "opponent";
+        state.phase = "orderChoice";
+        state.preBattleBusy = false;
+        const winner = displaySideName(state.rpsWinner);
+        state.message = `${winner}が先攻か後攻を選びます。`;
+        addLog(`コイントス：${COIN_FACE_LABELS[state.coinCall]}を選択。結果は${COIN_FACE_LABELS[state.coinResult]}。${winner}が先攻・後攻の選択権を得ました。`);
+        analyticsPushEvent("coin_toss", { call: state.coinCall, result: state.coinResult, winner: state.rpsWinner });
+        render();
+        const aiWinner = !state.online.role && (state.rpsWinner === "opponent" || isTrainingAiVsAi());
+        if (aiWinner) window.setTimeout(() => {
+          if (!isCurrentPreBattle(token, "orderChoice")) return;
+          chooseStartingOrderForSide(state.rpsWinner, Math.random() < 0.7);
+        }, trainingAnimationDelay(650));
+      }, trainingAnimationDelay(1100));
+      return true;
+    }
+
+    // じゃんけんのデータ・処理は保管するが、通常の試合開始からは呼ばない。
     function beginRpsSelection(token) {
       if (!isCurrentPreBattle(token, "versus")) return;
       state.phase = "rps";
@@ -28348,6 +28458,7 @@
 
     function chooseStartingOrder(playerChoosesFirst) {
       if (isOnlineSpectator()) return;
+      if (state.phase !== "orderChoice" || state.rpsWinner !== "player" || state.preBattleBusy) return;
       if (onlineCanSendCommand()) {
         state.preBattleBusy = true;
         onlineSendCommand("order", { first: playerChoosesFirst });
@@ -28367,16 +28478,17 @@
         side,
         chose: playerChoosesFirst ? "first" : "second",
         firstSide: state.firstSide,
-        rps: {
+        ...(state.coinCall ? { coin: { call: state.coinCall, result: state.coinResult, winner: state.rpsWinner } } : { rps: {
           player: state.rpsPlayerChoice,
           opponent: state.rpsOpponentChoice,
           winner: state.rpsWinner
-        }
+        } })
       });
       state.message = `${SIDES[side]}は${playerChoosesFirst ? "先攻" : "後攻"}を選びました。`;
       addLog(`${SIDES[side]}は${playerChoosesFirst ? "先攻" : "後攻"}を選びました。`);
       render();
-      window.setTimeout(() => beginInitialDeal(state.preBattleToken), 650);
+      const token = state.preBattleToken;
+      window.setTimeout(() => beginInitialDeal(token), trainingAnimationDelay(650));
     }
 
     function beginInitialDeal(token) {
@@ -45740,6 +45852,7 @@
     function phaseLabel() {
       if (state.phase === "versus") return "対戦開始";
       if (state.phase === "rps") return "じゃんけん";
+      if (state.phase === "coinToss") return "コイントス";
       if (state.phase === "orderChoice") return "先攻・後攻選択";
       if (state.phase === "dealing") return "初期手札";
       if (state.phase === "mulligan") return "マリガン";
@@ -46799,20 +46912,33 @@
       renderOpponentHand();
       renderPlayerHand();
       const spectatorMulligan = isOnlineSpectator() && ["mulligan", "mulliganDraw"].includes(state.phase);
-      const hideNormalHands = ["versus", "rps", "orderChoice", "dealing", "mulligan", "mulliganDraw"].includes(state.phase)
+      const hideNormalHands = ["versus", "rps", "coinToss", "orderChoice", "dealing", "mulligan", "mulliganDraw"].includes(state.phase)
         && !spectatorMulligan;
       elements.playerHandZone.classList.toggle("hidden", hideNormalHands);
       elements.opponentHandZone.classList.toggle("hidden", hideNormalHands);
     }
 
     function renderPreBattleStage() {
-      const activePhases = ["versus", "rps", "orderChoice", "dealing"];
+      const activePhases = ["versus", "rps", "coinToss", "orderChoice", "dealing"];
       const active = state.screen === "battle" && activePhases.includes(state.phase);
       elements.preBattleStage.classList.toggle("hidden", !active);
       if (!active) return;
 
       elements.preBattleTitle.classList.toggle("versus", state.phase === "versus");
-      elements.rpsArea.classList.toggle("hidden", !["rps", "orderChoice"].includes(state.phase));
+      const coinActive = state.phase === "coinToss" || (state.phase === "orderChoice" && Boolean(state.coinCall));
+      elements.rpsArea.classList.toggle("hidden", coinActive || !["rps", "orderChoice"].includes(state.phase));
+      elements.coinTossArea.classList.toggle("hidden", !coinActive);
+      const choosingCoin = state.phase === "coinToss" && !state.coinCall && !state.preBattleBusy
+        && !isOnlineGuest() && !isOnlineSpectator() && !isTrainingAiVsAi();
+      elements.coinControls.classList.toggle("hidden", !choosingCoin);
+      const tossing = state.phase === "coinToss" && Boolean(state.coinCall);
+      elements.coinDisc.style.setProperty("--coin-stop-angle", state.coinLandingFace === "tails" ? "1620deg" : "1440deg");
+      elements.coinDisc.classList.toggle("tails", state.coinResult === "tails");
+      elements.coinDisc.classList.toggle("tossing", tossing);
+      elements.coinMotion.classList.toggle("tossing", tossing);
+      elements.coinDisc.setAttribute("aria-label", state.coinResult ? `コインの結果：${COIN_FACE_LABELS[state.coinResult]}` : "コイン");
+      const caller = state.online.role ? "ホスト" : isTrainingAiVsAi() ? "左側CPU" : "あなた";
+      elements.coinCallLabel.textContent = state.coinCall ? `${caller}の選択：${COIN_FACE_LABELS[state.coinCall]}` : "";
       elements.rpsControls.classList.toggle("hidden", !(
         !isOnlineSpectator()
         &&
@@ -46823,13 +46949,15 @@
       ));
       elements.orderChoiceControls.classList.toggle("hidden", !(
         !isOnlineSpectator()
+        && !isTrainingAiVsAi()
         &&
         state.phase === "orderChoice"
         && state.rpsWinner === "player"
         && !state.preBattleBusy
       ));
       elements.initialDealHand.classList.toggle("hidden", state.phase !== "dealing");
-      elements.preBattleMessage.textContent = normalizeLectureRoomText(state.message);
+      elements.preBattleMessage.textContent = state.phase === "coinToss" && !state.coinCall && (isOnlineGuest() || isOnlineSpectator())
+        ? "ホストが表か裏を選んでいます。" : normalizeLectureRoomText(state.message);
 
       if (state.phase === "versus") {
         elements.preBattleTitle.textContent = isOnlineBattle()
@@ -46837,6 +46965,8 @@
           : state.dungeon.active
             ? "VS"
             : "VS AI";
+      } else if (state.phase === "coinToss") {
+        elements.preBattleTitle.textContent = "コイントス";
       } else if (state.phase === "rps") {
         elements.preBattleTitle.textContent = state.rpsWinner === "draw" ? "あいこ" : "カードじゃんけん";
       } else if (state.phase === "orderChoice") {
@@ -50090,10 +50220,13 @@
       elements.soloDeckScreen.querySelector(".training-setup-head h1").textContent = aiBattle ? "AI BATTLE" : "TRAINING";
       elements.soloDeckScreen.querySelector(".training-setup-layout").setAttribute("aria-label", aiBattle ? "AIバトル対戦設定" : "トレーニング対戦設定");
       [elements.soloAiSlot, elements.soloAiDeckConfirmButton, elements.soloLeftControllerButton, elements.soloTrainingDataButton].forEach(el => el.classList.toggle("hidden", aiBattle));
-      [elements.soloRuleCycleButton, elements.soloInitiativeCycleButton].forEach(el => {
+      [elements.soloRuleCycleButton].forEach(el => {
         el.classList.toggle("hidden", aiBattle);
         el.previousElementSibling.classList.toggle("hidden", aiBattle);
       });
+      // 手番指定の設定値は保存したまま、試合開始は全てコイントスで決定する。
+      elements.soloInitiativeCycleButton.classList.add("hidden");
+      elements.soloInitiativeCycleButton.previousElementSibling.classList.add("hidden");
       const ruleId = normalizeOnlineRuleId(selection.ruleId);
       selection.ruleId = ruleId;
       const rule = onlineRuleDefinition(ruleId);
@@ -52175,18 +52308,7 @@
     }
 
     function beginTrainingPreBattle(token) {
-      if (!isCurrentPreBattle(token, "versus")) return;
-      const preference = state.soloSelection.initiative;
-      state.firstSide = preference === "player" || preference === "opponent"
-        ? preference
-        : (Math.random() < 0.5 ? "player" : "opponent");
-      if (state.analytics?.game) state.analytics.game.firstSide = state.firstSide;
-      state.phase = "orderChoice";
-      state.preBattleBusy = true;
-      state.message = state.firstSide === "player" ? "左側が先攻です。" : "右側が先攻です。";
-      addLog(`トレーニング設定：${state.message}`);
-      render();
-      window.setTimeout(() => beginInitialDeal(token), trainingAnimationDelay(650));
+      beginCoinToss(token);
     }
 
     function autoTrainingMulligan() {
@@ -54477,6 +54599,9 @@
     });
     document.querySelectorAll("[data-rps-choice]").forEach((button) => {
       button.addEventListener("click", () => selectRpsCard(button.dataset.rpsChoice));
+    });
+    document.querySelectorAll("[data-coin-face]").forEach(button => {
+      button.addEventListener("click", () => chooseCoinFace(button.dataset.coinFace));
     });
     elements.chooseFirstButton.addEventListener("click", () => chooseStartingOrder(true));
     elements.chooseSecondButton.addEventListener("click", () => chooseStartingOrder(false));
