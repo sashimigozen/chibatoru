@@ -14,9 +14,9 @@ test.beforeEach(async({page})=>{
   await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
 });
 
-test('通路の出席から実際のクリックで素材2枚を選び、確定して生成できる',async({page})=>{
+test('遠くからの出席から実際のクリックで素材2枚を選び、確定して生成できる',async({page})=>{
   await page.evaluate(()=>{
-    const card=createCardFromBase('corridor_student','player');state.players.player.hand=[card];
+    const card=createCardFromBase('remote_participant_student','player');state.players.player.hand=[card];
     state.players.player.deck=HORSE_MATERIAL_IDS.map(id=>createCardFromBase(id,'player'));
     placeCardFromHand('player',card.instanceId,'seat','player',0,true);
   });
@@ -66,7 +66,7 @@ test('講義室チェック中の指名もクリックでき、他のゲーム�
 test('選択待ちだけを除外し、実際のカード演出中は選択クリックも待機する',async({page})=>{
   await page.evaluate(()=>{
     state.players.player.deck=HORSE_MATERIAL_IDS.map(id=>createCardFromBase(id,'player'));
-    resolveHorseAttendance('player',createCardFromBase('corridor_student','player'));
+    resolveHorseAttendance('player',createCardFromBase('remote_participant_student','player'));
   });
   await expect(page.locator('#threeGesturesHand button.card')).toHaveCount(4);
   await page.evaluate(()=>showCardPlayAnimation(createCardFromBase('general_student','player'),'board'));
@@ -81,7 +81,7 @@ test('オンラインのゲストも選択待ち中にクリックして応答�
   await page.evaluate(()=>{
     state.online.role='guest';state.online.started=true;state.online.connected=true;state.online.conn={};state.remoteResolutionPending=true;
     onlineSend=message=>{window.fusionSelectionResponse=message;return true;};
-    openCardChoice({mode:'fusion_effect_online_response',title:'通路で粘る学生',requestId:'fusion-input-test',
+    openCardChoice({mode:'fusion_effect_online_response',title:'遠くから参加する学生',requestId:'fusion-input-test',
       cards:HORSE_MATERIAL_IDS.slice(0,2).map(id=>createCardFromBase(id,'player')),min:2,max:2});
   });
   const cards=page.locator('#threeGesturesHand button.card');

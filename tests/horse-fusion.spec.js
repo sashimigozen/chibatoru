@@ -31,9 +31,9 @@ test('6通りの2枚融合と4枚融合、素材は校外に入らず戦意も�
     .map((id,i) => [true,id,i===6?4:2,0,20]));
 });
 
-test('融合完成品7種の能力値と今回の5枚の更新情報が一致し、生成したカードにも反映する', async ({ page }) => {
-  const expected={umaibo:[5,0,5],uma_bone:[5,1,4],where_uma:[5,2,3],maibo_bone:[5,3,2],
-    where_maibo:[5,4,1],where_bone:[5,2,2],where_uma_bone_maibo:[6,4,4]};
+test('融合完成品7種の能力値と更新情報が一致し、生成したカードにも反映する', async ({ page }) => {
+  const expected={umaibo:[5,1,5],uma_bone:[5,2,4],where_uma:[5,3,3],maibo_bone:[5,3,3],
+    where_maibo:[5,4,2],where_bone:[5,2,2],where_uma_bone_maibo:[6,4,4]};
   const records=await page.evaluate(()=>{
     const combinations=[['fusion_uma','fusion_maibo'],['fusion_uma','fusion_bone'],['fusion_uma','fusion_where'],
       ['fusion_maibo','fusion_bone'],['fusion_maibo','fusion_where'],['fusion_bone','fusion_where'],[...HORSE_MATERIAL_IDS]];
@@ -52,10 +52,8 @@ test('融合完成品7種の能力値と今回の5枚の更新情報が一致し
     expect(record.baseStats,record.name).toEqual(expected[record.id]);
     expect(record.boardHp,record.name).toBe(expected[record.id][2]);
     expect(record.flags).toEqual([true,true,true]); expect(record.deckAllowed).toBe(false);
-    if(!['umaibo','maibo_bone'].includes(record.id)) {
-      const [cost,attack,hp]=expected[record.id];
-      expect(record.update).toBe(`学生／学友会・持ち物／戦意${cost}／攻撃力${attack}／体力${hp}\n${record.text}`);
-    }
+    const [cost,attack,hp]=expected[record.id];
+    expect(record.update).toBe(`学生／学友会・持ち物／戦意${cost}／攻撃力${attack}／体力${hp}\n${record.text}`);
   }
 });
 
@@ -109,13 +107,9 @@ test('通路は異名2枚、残り1種類なら1枚をコピーする', async ({
     state.players.player.deck=['fusion_uma','fusion_uma','fusion_bone'].map(id=>createCardFromBase(id,'player'));
     resolveHorseAttendance('player',createCardFromBase('corridor_student','player'));
   });
-  await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.cards.length)).toBe(2);
-  await page.evaluate(()=>{ state.pendingCardChoice.selectedIds=state.pendingCardChoice.cards.map(card=>card.instanceId); confirmCardChoiceSelection(); });
   await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
-  expect(await page.evaluate(()=>[state.players.player.deck.length,state.players.player.hand.map(card=>card.baseId)])).toEqual([3,['fusion_uma','fusion_bone']]);
+  expect(await page.evaluate(()=>[state.players.player.deck.length,state.players.player.hand.map(card=>card.baseId).sort(),Boolean(state.pendingCardChoice)])).toEqual([3,['fusion_bone','fusion_uma'],false]);
   await page.evaluate(()=>{state.players.player.hand=[];state.players.player.deck=[createCardFromBase('fusion_where','player')];resolveHorseAttendance('player',createCardFromBase('corridor_student','player'));});
-  await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.max)).toBe(1);
-  await page.evaluate(()=>{state.pendingCardChoice.selectedIds=[state.pendingCardChoice.cards[0].instanceId];confirmCardChoiceSelection();});
   await expect.poll(()=>page.evaluate(()=>state.players.player.hand.length)).toBe(1);
 });
 
@@ -248,7 +242,7 @@ test('オンラインの選択要求・応答と融合演出は同期し、無�
     state.online.role='host';state.online.started=true;state.online.connected=true;state.online.conn={};
     onlineSend=message=>{window.fusionRequest=message;return true;};
     state.players.opponent.deck=['fusion_uma','fusion_bone','general_student'].map(id=>createCardFromBase(id,'opponent'));
-    resolveHorseAttendance('opponent',createCardFromBase('corridor_student','opponent'));
+    resolveHorseAttendance('opponent',createCardFromBase('remote_participant_student','opponent'));
   });
   await expect.poll(()=>page.evaluate(()=>window.fusionRequest?.privateChoiceKind)).toBe('fusion_effect_choice');
   const request=await page.evaluate(()=>window.fusionRequest);
