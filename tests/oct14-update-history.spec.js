@@ -11,7 +11,7 @@ test('14日のパッチ履歴を古い0.24.1へまとめ、機能追加と以前
     const patch = entries.find(entry => entry.version === 'ver.0.24.1');
     return { versions: entries.map(entry => entry.version), changes: patch.changes,
       olderDate: UPDATE_HISTORY.find(entry => entry.version === 'ver.0.24.0').date,
-      texts: ['information_tired_student', 'corridor_student', 'illness'].map(id => ({
+      texts: ['information_tired_student', 'illness'].map(id => ({
         name: CARD_BASES[id].name, text: cardRulesText(createCardFromBase(id, 'player'))
       })) };
   });
@@ -24,6 +24,8 @@ test('14日のパッチ履歴を古い0.24.1へまとめ、機能追加と以前
   for (const card of records.texts) {
     expect(records.changes.find(change => change.title === card.name).after).toBe(card.text);
   }
+  // 15日のランダム化で、14日時点の手動選択の履歴は書き換えない。
+  expect(records.changes.find(change => change.title === '通路で粘る学生').after).toBe('このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。');
   const datedEntries = page.locator('.update-entry').filter({ has: page.locator('summary', { hasText: '2026年10月14日' }) });
   await expect(datedEntries.first().locator('summary')).toContainText('ver.0.25.0');
   const entry = datedEntries.nth(1);
