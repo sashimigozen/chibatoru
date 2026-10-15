@@ -1865,13 +1865,17 @@
     }
 
     .spectator-banner {
+      position: absolute;
+      left: 12px;
+      bottom: 84px;
+      z-index: 24;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 38px;
+      min-height: 0;
       border: 2px solid #0e7490;
       border-radius: 8px;
-      padding: 8px 14px;
+      padding: 8px 10px;
       background: #ecfeff;
       color: #155e75;
       font-size: 13px;
@@ -5791,8 +5795,11 @@
       flex-basis: auto;
     }
 
-    .deck-copy-badge {
+    .deck-copy-badge,
+    .card.deck-window-card > .deck-copy-badge {
       position: absolute;
+      z-index: 30;
+      pointer-events: none;
       right: 4px;
       top: 4px;
       border-radius: 999px;
@@ -18174,8 +18181,6 @@
       <div class="message" id="message">引き直したいカードを0〜5枚選び、確定してください。</div>
     </header>
 
-    <div class="spectator-banner hidden" id="spectatorBanner">観戦モード：両者の手札を公開しています。対戦への操作はできません。</div>
-
     <div class="prebattle-stage hidden" id="preBattleStage">
       <div class="prebattle-panel">
         <h2 class="prebattle-title" id="preBattleTitle">VS AI</h2>
@@ -18248,6 +18253,7 @@
     </button>
 
     <section class="game-shell">
+      <div class="spectator-banner hidden" id="spectatorBanner">観戦中</div>
       <button class="battle-v16-corner-button battle-v16-menu-button" id="battleMenuButton" type="button" aria-expanded="false">MENU</button>
       <button class="battle-v16-corner-button battle-v16-test-button battle-v16-test-undo hidden" id="battleTestUndoButton" type="button">一手戻る</button>
       <button class="battle-v16-corner-button battle-v16-test-button battle-v16-test-exit hidden" id="battleTestExitButton" type="button">やめる</button>
@@ -19798,8 +19804,10 @@
         date: "2026年10月15日",
         summary: "「通路で粘る学生」「遠くから参加する学生」と融合出席者の能力値を調整しました。オンライン対戦の観戦者一覧と、ショップの天井到達時の購入制限・UR所持表示を修正しました。",
         changes: [
+          { title: "対戦中のデッキ確認", after: "デッキ確認は演出・処理中も開けるようにし、使用中デッキの開始時の全枚数を表示します。SC・PRを含む全レアリティで、カードの右上に枚数が表示されるよう修正しました。" },
+          { title: "出席者の継続効果", after: "講義室にいる出席者の常在効果や、ターン開始・終了時などに繰り返す効果を、その出席者側の継続効果一覧にも表示するようにしました。" },
           { title: "AIのカード評価", after: "現在のカード内容に合わせて、AIのカード評価と行動選択を見直しました。カードの能力・本文・対戦ルールは変更していません。" },
-          { title: "観戦者のプロフィール名", after: "観戦者一覧には、観戦者本人がプロフィールに設定した名前を表示します。対戦者・観戦者のどちらからも、演出や処理の待機中に一覧を開いて確認できるよう修正しました。" },
+          { title: "観戦者のプロフィール名と観戦表示", after: "観戦者本人のプロフィール名をホスト・ゲスト・観戦者全員に同期し、入室後の名前変更も反映します。演出や処理の待機中も一覧を開いて確認できます。観戦中の表示は盤面を下へ押し出さないよう、左下へ浮かせました。" },
           { title: "デッキ確認のレアリティ", after: "対戦マッチングやAIバトル・トレーニングなどのデッキ確認で、選択したレアリティの枠と光沢を表示するよう修正しました。レアリティの設定・解放状況とデッキ内容は変更しません。" },
           { title: "パック別のUR交換", after: "天井に達したパックはUR交換まで購入を停止し、他のパックは購入できるようにしました。各パックの進捗と交換権は維持します。UR交換画面では、未所持のURの右上に小さく「未所持」を表示します。" },
           { title: "通路で粘る学生", after: "学生／学友会・持ち物／戦意3／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードをランダムに2枚選び、それぞれを1枚ずつ手札に生成する。" },
@@ -24521,7 +24529,12 @@
     }
 
     function onlineSendProfileSync(profileAck = false) {
-      if (!state.online.connected || !["host", "guest"].includes(state.online.role)) return false;
+      if (!state.online.connected || !["host", "guest", "spectator"].includes(state.online.role)) return false;
+      // 観戦者も本人の保存プロフィールをサーバーへ再通知する。
+      // 対戦者向けの既存同期は互換性のためそのまま残す。
+      // 古いサーバーも受理するpingへ載せ、未更新サーバーでエラーにしない。
+      onlineSend({ type: "ping", profileSync: true, profile: onlineProfilePayload() });
+      if (isOnlineSpectator()) return true;
       state.online.localCardStyles = onlineSelectedCardStyles();
       return onlineSend({
         type: "playReveal",
@@ -25370,11 +25383,21 @@
 
     function onlineHandleMessage(message) {
       if (!message || message.protocol !== ONLINE_PROTOCOL_VERSION) return;
+      if (message.type === "profileUpdate") {
+        if (message.senderId !== "server" || message.roomSessionId !== state.online.roomSessionId) return;
+        onlineUpdateSpectatorCount(message.players);
+        // 対戦者のプロフィールは既存のplayReveal同期を使う。ここでは
+        // 遅れて届いた一覧で、その新しい表示を巻き戻さない。
+        render();
+        return;
+      }
       if (message.type === "spectatorCount") {
         if (message.senderId !== "server" || message.roomSessionId !== state.online.roomSessionId) return;
         if (!Number.isSafeInteger(message.spectatorCount) || message.spectatorCount < 0) return;
         state.online.spectatorCount = message.spectatorCount;
-        if (Array.isArray(message.spectatorNames) && message.spectatorNames.length === message.spectatorCount) {
+        if (Array.isArray(message.players)) {
+          onlineUpdateSpectatorCount(message.players);
+        } else if (Array.isArray(message.spectatorNames) && message.spectatorNames.length === message.spectatorCount) {
           state.online.spectatorNames = message.spectatorNames.map((username) => normalizePlayerProfile({ username }).username);
         } else if (state.online.spectatorNames.length !== message.spectatorCount) {
           // A legacy server only sends the count. Do not show departed names.
@@ -27491,7 +27514,7 @@
     function battleInspectionAllowed(target) {
       if (target.closest("[data-room-code-copy]")) return true;
       if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
-      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
+      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
 
     function battleInputAllowed(target) {
@@ -48360,6 +48383,78 @@
       return lines;
     }
 
+    // 本文の該当箇所を再利用する。出席・進化時だけの効果や手札での効果は
+    // 継続中として掲載しない。条件付き能力は、その条件を含めて表示する。
+    const BOARD_ONGOING_RULE_STARTS = Object.freeze({
+      proliferating_enemy: "このカードが自分の講義室にいるかぎり",
+      variable_student: "このカードが講義室にいるかぎり",
+      acting_out_man: "このカードが講義室にいるかぎり",
+      aggro_student: "このカードが出席している",
+      aggro_king: "このカードが3行1列にいる",
+      aggro_queen: "このカードが2行3列にいる",
+      scout_student: "相手の講義室に出席者がいないなら",
+      happy_blue_bird: "このカードは相手本体に攻撃",
+      suit_student: "このカードは教師からダメージを受けない",
+      single_cell: "自分の講義室に",
+      midge: "自分の講義室に",
+      organism: "自分の講義室に",
+      trendy_student: "このカードが攻撃した",
+      rebirth_student: "このカードは一度だけ",
+      yuta: "このカードに装備カードがついたとき",
+      eaten_student: "相手の講義室に学生と教師がいるなら",
+      loud_student: "教師はこのカードを攻撃できない",
+      best_friend: "このカードは「バカでかい」とつくカードの効果",
+      ttb: "自分のターン終了時",
+      loud_group: "自分の講義室にこのカード以外の",
+      enemy_student: "相手の講義室に「TRPGサークルメンバー」がいるかぎり",
+      protein_drinker: "自分のターン終了時",
+      aiben: "相手講義室に「にょてい」がいるかぎり",
+      nyotei: "相手講義室に「アイベン」がいるかぎり",
+      bounce_day: "このカードが攻撃したとき",
+      lone_wolf: "このカードの周囲1マスに",
+      cynical_student: "自分のターン終了時",
+      laughing_front_student: "自分のターン終了時",
+      leaving_on_time_lecturer: "このカードを出席させた後",
+      pro_k: "このカードが教卓マスにいるかぎり",
+      lightning_n: "このカードが教卓マスにいるかぎり",
+      popular_c: "このカードが教卓マスにいるかぎり",
+      ninety_three_teacher: "このカードが教卓マスにいるかぎり",
+      president: "このカードが教卓マスにいるかぎり",
+      cafeteria_lady: "環境が「食堂」であるかぎり",
+      curry_treater: "環境が「食堂」であるかぎり",
+      tissue_distributor: "環境が「食堂」であるかぎり",
+      vampire: "環境が「食堂」なら",
+      zombie: "このカードが出席者を攻撃したとき",
+      dark_yuta: "このカードは、装備カードがついているかぎり",
+      diligent_student: "このカードが相手の教師から",
+      aggro_princess: "このカードが相手本体を攻撃したとき",
+      sick_yuta: "自分のターン終了時",
+      recovered_dark_yuta: "このカードは「病」を装備できない",
+      true_enemy: "このカードが攻撃するとき",
+      rear_queen: "自分のターン終了時",
+      pad_present_creator: "このカードがある限り",
+      umaibo: "自分のターン終了時",
+      uma_bone: "自分のターン終了時",
+      where_uma: "自分のターン終了時",
+      maibo_bone: "自分のターン終了時",
+      where_maibo: "自分のターン終了時",
+      where_bone: "自分のターン終了時"
+    });
+
+    function boardActiveEffectLines(side) {
+      return listBoardRefs(side).flatMap((ref) => {
+        const card = getBoardCardFromRef(ref);
+        if (!canUsePrintedCardEffects(card)) return [];
+        const start = BOARD_ONGOING_RULE_STARTS[card.baseId];
+        if (!start) return [];
+        const text = cardRulesText(card);
+        const index = text.indexOf(start);
+        if (index < 0) return [];
+        if (start.includes("教卓マスにいるかぎり") && ref.zone !== "teacher") return [];
+        return [`${card.name}：${text.slice(index).trim()}`];
+      });
+    }
+
     function playerActiveEffectLines(side) {
       const player = state.players[side];
       if (!player) return [];
@@ -48423,6 +48518,7 @@
         lines.push("遅刻じゃない時間：遅刻の効果がなくなっています。");
       }
       lines.push(...environmentActiveEffectLines(side));
+      lines.push(...boardActiveEffectLines(side));
       return lines;
     }
 
@@ -49645,6 +49741,7 @@
         return;
       }
       closePlayerProfile();
+      onlineSendProfileSync();
       render();
     }
 
@@ -50851,7 +50948,7 @@
 
     function openDeckWindow() {
       const counts = state.players.player.originalDeckCounts;
-      elements.deckWindowInfo.textContent = `作成時の全体像 ${deckSize(counts)}枚 / 現在の山札 ${state.players.player.deck.length}枚`;
+      elements.deckWindowInfo.textContent = `使用中デッキ ${deckSize(counts)}枚`;
       elements.deckWindowGrid.innerHTML = "";
       ALL_DECK_IDS.filter((baseId) => counts[baseId] > 0).forEach((baseId) => {
         const card = makePreviewCard(baseId, "player");

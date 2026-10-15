@@ -18,6 +18,7 @@ async function prepareEffectState(page) {
     api.state.deckToHandLocks = [];
     ["player", "opponent"].forEach((side) => {
       const player = api.state.players[side];
+      player.board = { teacher: null, seats: Array(9).fill(null) };
       player.abyssTurns = 0;
       player.internTurnsRemaining = 0;
       player.effectUseLockTurnsRemaining = 0;
@@ -75,6 +76,67 @@ test("継続効果が終了すると件数と詳細がすぐに空表示へ戻�
   await expect(page.locator("#playerActiveEffectsSummary")).toHaveText("現在なし");
   await expect(page.locator("#playerActiveEffectsCount")).toHaveText("0");
   await expect(page.locator("#battleDrawerInspector")).toContainText("継続中の効果はありません");
+});
+
+test("盤面の出席者の効果を各サイドに表示し、無効化・退場にも追従する", async ({ page }) => {
+  await prepareEffectState(page);
+  await page.evaluate(() => {
+    state.players.player.abyssTurns = 0;
+    state.players.player.internTurnsRemaining = 0;
+    state.players.opponent.effectUseLockTurnsRemaining = 0;
+    for (const side of ["player", "opponent"]) {
+      state.players[side].board = { teacher: null, seats: Array(9).fill(null) };
+    }
+    state.players.opponent.board.seats[0] = makeBoardCard(createCardFromBase("proliferating_enemy", "opponent"));
+    state.players.player.board.seats[0] = makeBoardCard(createCardFromBase("uma_bone", "player"));
+    state.players.player.board.seats[1] = makeBoardCard(createCardFromBase("ttb", "player"));
+    state.players.player.board.seats[2] = makeBoardCard(createCardFromBase("trpg_member", "player"));
+    render();
+  });
+  await expect(page.locator("#opponentActiveEffectsCount")).toHaveText("1");
+  await expect(page.locator("#playerActiveEffectsCount")).toHaveText("2");
+  await page.locator("#opponentActiveEffectsButton").click();
+  await expect(page.locator("#battleDrawerInspector")).toContainText("増殖する敵");
+  await expect(page.locator("#battleDrawerInspector")).toContainText("出席するたび");
+  await expect(page.locator("#battleDrawerInspector")).not.toContainText("ウマの骨");
+  await page.locator("#battleLogCloseButton").click();
+  await page.locator("#playerActiveEffectsButton").click();
+  await expect(page.locator("#battleDrawerInspector")).toContainText("攻撃力を+1");
+  await expect(page.locator("#battleDrawerInspector")).toContainText("TTB");
+  await expect(page.locator("#battleDrawerInspector")).not.toContainText("2枚ずつ生成");
+  await expect(page.locator("#battleDrawerInspector")).not.toContainText("TRPGサークルメンバー");
+  await page.evaluate(() => {
+    state.players.player.board.seats[0].padlockEquipment = { baseId: "padlock" };
+    state.players.player.board.seats[1].generatedWithoutEffects = true;
+    state.players.opponent.board.seats[0] = null;
+    render();
+  });
+  await expect(page.locator("#playerActiveEffectsCount")).toHaveText("0");
+  await expect(page.locator("#opponentActiveEffectsCount")).toHaveText("0");
+  await expect(page.locator("#battleDrawerInspector")).toContainText("継続中の効果はありません");
+});
+
+test("継続効果は複数マスで重複せず、別個体は別件・教卓限定は教卓だけに表示する", async ({ page }) => {
+  await prepareEffectState(page);
+  const result = await page.evaluate(() => {
+    for (const side of ["player", "opponent"]) state.players[side].board = { teacher: null, seats: Array(9).fill(null) };
+    const p = state.players.player;
+    const source = makeBoardCard(createCardFromBase("umaibo", "player"));
+    source.seatAnchorIndex = 0;
+    p.board.seats[0] = source; p.board.seats[1] = source;
+    p.board.seats[2] = makeBoardCard(createCardFromBase("umaibo", "player"));
+    p.board.seats[3] = makeBoardCard(createCardFromBase("president", "player"));
+    p.board.teacher = makeBoardCard(createCardFromBase("pro_k", "player"));
+    const lines = boardActiveEffectLines("player");
+    const mismatches = Object.entries(BOARD_ONGOING_RULE_STARTS).filter(([id, start]) => !cardRulesText(createCardFromBase(id, "player")).includes(start));
+    return { lines, mismatches };
+  });
+  expect(result.mismatches).toEqual([]);
+  expect(result.lines).toHaveLength(3);
+  expect(result.lines.filter(line => line.startsWith("ウマイボ："))).toHaveLength(2);
+  expect(result.lines.join("\n")).toContain("TAすべての体力を+1");
+  expect(result.lines.join("\n")).not.toContain("手札に生成");
+  expect(result.lines.join("\n")).not.toContain("学長：");
 });
 
 test("効果のある環境を両者の継続効果へ表示し、上書きすると入れ替わる", async ({ page }) => {
