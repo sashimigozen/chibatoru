@@ -92,15 +92,17 @@ test('オンラインで素材選択→コピー元選択を順番に送り、�
   expect(await page.evaluate(()=>state.pendingCopiedCard?.baseId)).toBe('umaibo');
 });
 
-test('5/1/2と注目、表示本文・台帳・今回の更新情報が一致する', async ({page}) => {
+test('5/1/2を維持して注目を持たず、表示本文・台帳・今回の更新情報が一致する', async ({page}) => {
   const result=await page.evaluate(()=>{
     const card=createCardFromBase('remote_participant_student','player');
     return {cost:card.cost,attack:card.attack,hp:card.hp,keywords:card.keywords,text:cardRulesText(card),
+      attention:hasKeyword(card,'注目'),
       update:UPDATE_HISTORY.find(e=>e.version==='ver.0.25.1').changes.find(c=>c.title===card.name).after};
   });
-  expect([result.cost,result.attack,result.hp]).toEqual([5,1,2]); expect(result.keywords).toContain('注目');
+  expect([result.cost,result.attack,result.hp]).toEqual([5,1,2]); expect(result.attention).toBe(false);
+  expect(result.keywords||[]).not.toContain('注目'); expect(result.text).not.toContain('注目');
   expect(result.text).toContain('それぞれを1枚ずつ手札に生成する。その後、');
   expect(result.update).toBe(`学生／学友会・持ち物／戦意5／攻撃力1／体力2\n${result.text}`);
   const ledger=fs.readFileSync(path.join(__dirname,'..','card_rules.txt'),'utf8');
-  expect(ledger).toContain('remote_participant_student: "注目を持つ。このカードを手札から出席させたとき、自分のデッキと手札にある');
+  expect(ledger).toContain('remote_participant_student: "このカードを手札から出席させたとき、自分のデッキと手札にある');
 });

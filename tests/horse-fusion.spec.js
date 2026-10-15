@@ -127,7 +127,35 @@ for (const id of ['uma_bone','where_uma']) test(`${id}は自身を強化しな�
   }
   await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
   expect(await page.evaluate(()=>state.players.player.board.seats.slice(0,2).map((card,i)=>[card.attack-beforeFusionStats[i][0],card.currentHp-beforeFusionStats[i][1]])))
-    .toEqual([[0,0],id==='uma_bone'?[0,1]:[2,2]]);
+    .toEqual([[0,0],id==='uma_bone'?[1,0]:[1,1]]);
+});
+
+for (const side of ['player','opponent']) test(`${side}の融合強化は攻撃力のみ+1と両能力+1で、対象不足・自身除外・演出を維持する`, async ({page})=>{
+  const results=await page.evaluate(async side=>{
+    const results=[];
+    chooseFusionEffectCards=async(_side,_source,candidates,max)=>candidates.slice(0,max);
+    const originalBuff=applyPermanentStatBuff;
+    let calls=[];
+    applyPermanentStatBuff=(...args)=>{calls.push([args[0].baseId,...args.slice(1,4)]);return originalBuff(...args);};
+    for(const id of ['uma_bone','where_uma'])for(const count of [0,1,3]){
+      state.players[side].board={teacher:null,seats:Array(9).fill(null)};
+      const source=makeBoardCard(createCardFromBase(id,side));state.players[side].board.seats[0]=source;
+      const own=Array.from({length:count},(_,i)=>{
+        const c=makeBoardCard(createCardFromBase('strong_student',side));state.players[side].board.seats[i+1]=c;return c;
+      });
+      const before=[source,...own].map(c=>[c.attack,c.currentHp]);calls=[];
+      await resolveHorseEndTurn(side,source);
+      results.push({id,count,calls:[...calls],diff:[source,...own].map((c,i)=>[c.attack-before[i][0],c.currentHp-before[i][1]])});
+    }
+    return results;
+  },side);
+  for(const result of results){
+    const expected=result.id==='uma_bone'?[1,0]:[1,1];
+    const affected=Math.min(result.count,result.id==='uma_bone'?2:1);
+    expect(result.calls).toEqual(Array.from({length:affected},()=>['strong_student',...expected,0]));
+    expect(result.diff[0]).toEqual([0,0]);
+    expect(result.diff.slice(1).filter(d=>d[0]||d[1])).toEqual(Array.from({length:affected},()=>expected));
+  }
 });
 
 test('マイボの骨は2人までに各2ダメージ、どこのマイボはランダム1人に7ダメージ',async({page})=>{

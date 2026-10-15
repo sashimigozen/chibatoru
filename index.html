@@ -19502,7 +19502,7 @@
       where_maibo: { name: "どこのマイボ", type: "student", cost: 5, attack: 4, hp: 2, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
       where_bone: { name: "どこの骨", type: "student", cost: 5, attack: 2, hp: 2, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
       where_uma_bone_maibo: { name: "どこのウマの骨のマイボだよの学生", type: "student", cost: 6, attack: 4, hp: 4, generated: true, token: true, fusionResult: true, allowedZones: ["seat"], category: "gakuyukai_item" },
-      remote_participant_student: { name: "遠くから参加する学生", type: "student", cost: 5, attack: 1, hp: 2, keywords: ["注目"], allowedZones: ["seat"], category: "gakuyukai_item" },
+      remote_participant_student: { name: "遠くから参加する学生", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
       information_tired_student: { name: "情報に疲れた学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "gakuyukai_item" },
       corridor_student: { name: "通路で粘る学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
       diligent_student: { name: "熱心な学生", type: "student", cost: 3, attack: 2, hp: 3, rowOnly: 1, allowedZones: ["seat"], category: "common" },
@@ -19799,10 +19799,10 @@
           { title: "デッキ確認のレアリティ", after: "対戦マッチングやAIバトル・トレーニングなどのデッキ確認で、選択したレアリティの枠と光沢を表示するよう修正しました。レアリティの設定・解放状況とデッキ内容は変更しません。" },
           { title: "パック別のUR交換", after: "天井に達したパックはUR交換まで購入を停止し、他のパックは購入できるようにしました。各パックの進捗と交換権は維持します。UR交換画面では、未所持のURの右上に小さく「未所持」を表示します。" },
           { title: "通路で粘る学生", after: "学生／学友会・持ち物／戦意3／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードをランダムに2枚選び、それぞれを1枚ずつ手札に生成する。" },
-          { title: "遠くから参加する学生", after: "学生／学友会・持ち物／戦意5／攻撃力1／体力2\n[注目]\nこのカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。その後、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。" },
+          { title: "遠くから参加する学生", after: "学生／学友会・持ち物／戦意5／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。その後、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。" },
           { title: "ウマイボ", after: "学生／学友会・持ち物／戦意5／攻撃力1／体力5\n自分のターン終了時、自分の気力を3回復する。" },
-          { title: "ウマの骨", after: "学生／学友会・持ち物／戦意5／攻撃力2／体力4\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの体力を+1する。" },
-          { title: "どこのウマ", after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。" },
+          { title: "ウマの骨", after: "学生／学友会・持ち物／戦意5／攻撃力2／体力4\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの攻撃力を+1する。" },
+          { title: "どこのウマ", after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+1する。" },
           { title: "マイボの骨", after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。" },
           { title: "どこのマイボ", after: "学生／学友会・持ち物／戦意5／攻撃力4／体力2\n自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。" },
           { title: "どこの骨", after: "学生／学友会・持ち物／戦意5／攻撃力2／体力2\n自分のターン終了時、相手本体に3ダメージを与える。" },
@@ -36597,9 +36597,9 @@
         if (source.baseId === "umaibo") healPlayer(side, 3);
         if (source.baseId === "uma_bone") {
           const targets = await chooseFusionEffectCards(side, source, own, 2, "buff");
-          targets.filter(card => own.includes(card) && card.currentHp > 0).forEach(card => applyPermanentStatBuff(card, 0, 1, 0, source.name));
+          targets.filter(card => own.includes(card) && card.currentHp > 0).forEach(card => applyPermanentStatBuff(card, 1, 0, 0, source.name));
         }
-        if (source.baseId === "where_uma" && own.length) applyPermanentStatBuff(shuffle(own)[0], 2, 2, 0, source.name);
+        if (source.baseId === "where_uma" && own.length) applyPermanentStatBuff(shuffle(own)[0], 1, 1, 0, source.name);
         if (source.baseId === "maibo_bone") {
           const targets = await chooseFusionEffectCards(side, source, enemy, 2, "damage");
           targets.filter(card => card.currentHp > 0).forEach(card => dealDamageToCard(card, 2, source));
@@ -53383,13 +53383,13 @@
         fusion_bone: "[融合]：「ウマ」と融合して「ウマの骨」、「マイボ」と融合して「マイボの骨」、「どこ」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
         fusion_where: "[融合]：「ウマ」と融合して「どこのウマ」、「マイボ」と融合して「どこのマイボ」、「骨」と融合して「どこの骨」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
         umaibo: "自分のターン終了時、自分の気力を3回復する。",
-        uma_bone: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの体力を+1する。",
-        where_uma: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+2する。",
+        uma_bone: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの攻撃力を+1する。",
+        where_uma: "自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+1する。",
         maibo_bone: "自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
         where_maibo: "自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。",
         where_bone: "自分のターン終了時、相手本体に3ダメージを与える。",
         where_uma_bone_maibo: "このカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。",
-        remote_participant_student: "注目を持つ。このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。その後、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。",
+        remote_participant_student: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードを2枚まで選び、それぞれを1枚ずつ手札に生成する。その後、自分の手札にある戦意5以下の融合で生成された出席者カード1枚を選び、そのコピーを出席させる。",
         information_tired_student: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から1枚をランダムに選び、そのカードを1枚手札に生成する。",
         corridor_student: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードをランダムに2枚選び、それぞれを1枚ずつ手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",
