@@ -8,6 +8,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
   await page.evaluate(() => {
     const api = window.__chibattle;
+    api.state.training.skipAnimations = true; // Inspect resolved tactical actions, not the reveal queue.
     api.state.preBattleToken += 1000;
     api.state.screen = "battle";
     api.state.phase = "battle";

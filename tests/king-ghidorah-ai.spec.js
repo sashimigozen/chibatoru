@@ -9,6 +9,7 @@ async function chooseAndUse(page, scenario) {
     const api = window.__chibattle;
     api.startCardTest("king_ghidorah_bed");
     const { state } = api;
+    state.training.skipAnimations = true; // Tactical assertions inspect effects after use, without reveal delays.
     const owner = scenario.side || "opponent";
     const foe = owner === "opponent" ? "player" : "opponent";
     state.currentSide = owner;

@@ -9,6 +9,7 @@ async function setup(page) {
   await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
+    state.training.skipAnimations = true; // Resolve before inspecting the synchronous result.
     state.preBattleToken += 1000;
     state.screen = "battle";
     state.phase = "battle";

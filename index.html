@@ -18681,7 +18681,8 @@
       "onigiri_draw", "hondara", "fire_touch", "deck_without", "three_gestures",
       "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "yoyu_announce", "music_detergent", "sexual_eye", "water_2l", "fluid_pasta",
-      "aggro_eater", "aggro_army", "peaceful_mind", "bento", "go_home", "chigauyo"
+      "aggro_eater", "aggro_army", "peaceful_mind", "bento", "go_home", "chigauyo",
+      "think_so", "smoke_flare", "efficient_experiment_method", "confucius_says", "childhood_memory_tutuapp", "ikemasu"
     ]);
     const AI_TACTICAL_ITEM_IDS = new Set([
       "ruler", "double_diamond", "seriously_hit", "green_curry", "roar", "thin_item",
@@ -18689,13 +18690,14 @@
       "favorite_number_s", "namen_tenno", "sock_block", "capture", "abyss", "donguri",
       "night_pool_water", "substitute_attendance", "greeting_3000", "grudge", "dos_attack",
       "destroy_dos_attack", "dropped_cards", "set_log", "sage_legacy", "thanks_all_students", "yakiniku", "pure_destruction", "destructive_lie", "scary_question",
-      "dont_worry", "gamma", "yamanashi_minimum_wage"
+      "dont_worry", "gamma", "yamanashi_minimum_wage", "illness", "laser_beam", "big_wall", "philosophy_cheating", "forbidden_book", "earphones"
     ]);
     const AI_DRAW_OR_SEARCH_CARD_IDS = new Set([
       "alpha", "hondara", "onigiri_draw", "fire_touch", "deck_without",
       "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "sexual_eye", "yoyu_announce", "three_gestures", "music_detergent",
-      "sage_legacy", "trpg_member", "lightning_n", "curry_treater", "aggro_army", "pure_destruction", "destructive_lie", "scary_question"
+      "sage_legacy", "trpg_member", "lightning_n", "curry_treater", "aggro_army", "pure_destruction", "destructive_lie", "scary_question",
+      "think_so", "efficient_experiment_method", "confucius_says", "childhood_memory_tutuapp"
     ]);
     const AI_DECK_OUT_MILL_ITEM_IDS = new Set(["dos_attack", "destroy_dos_attack"]);
     const AI_BIOLOGY_MATERIAL_IDS = new Set(["single_cell", "midge", "organism"]);
@@ -18720,7 +18722,8 @@
     const AI_REMOVAL_CARD_IDS = new Set([
       "ruler", "double_diamond", "seriously_hit", "green_curry", "vampirization",
       "panpan", "favorite_number_s", "namen_tenno", "capture", "bird_a",
-      "thin_professor_h", "demon_a_plus", "impossible_high_note"
+      "thin_professor_h", "demon_a_plus", "impossible_high_note", "scared_me", "king_ghidorah_bed", "laser_beam", "classroom_change",
+      "loud_typing_student", "adjective_vs_cynical", "strict_lateness_teacher", "signal_professor_m", "president"
     ]);
     const PLAY_REVEAL_MS = 1450;
     const REWARD_FOIL_PLAY_REVEAL_MS = 3200;
@@ -19795,6 +19798,7 @@
         date: "2026年10月15日",
         summary: "「通路で粘る学生」「遠くから参加する学生」と融合出席者の能力値を調整しました。オンライン対戦の観戦者一覧と、ショップの天井到達時の購入制限・UR所持表示を修正しました。",
         changes: [
+          { title: "AIのカード評価", after: "現在のカード内容に合わせて、AIのカード評価と行動選択を見直しました。カードの能力・本文・対戦ルールは変更していません。" },
           { title: "観戦者のプロフィール名", after: "観戦者一覧には、観戦者本人がプロフィールに設定した名前を表示します。対戦者・観戦者のどちらからも、演出や処理の待機中に一覧を開いて確認できるよう修正しました。" },
           { title: "デッキ確認のレアリティ", after: "対戦マッチングやAIバトル・トレーニングなどのデッキ確認で、選択したレアリティの枠と光沢を表示するよう修正しました。レアリティの設定・解放状況とデッキ内容は変更しません。" },
           { title: "パック別のUR交換", after: "天井に達したパックはUR交換まで購入を停止し、他のパックは購入できるようにしました。各パックの進捗と交換権は維持します。UR交換画面では、未所持のURの右上に小さく「未所持」を表示します。" },
@@ -28716,6 +28720,10 @@
       if (card.unusable && card.baseId !== "alpha") score -= 30;
       if (isEarlyDungeonAi() && card.baseId === "college_student_vibe") score -= 8;
       if (isEarlyDungeonAi() && AI_DRAW_OR_SEARCH_CARD_IDS.has(card.baseId)) score += 8;
+      if (HORSE_MATERIAL_IDS.includes(card.baseId)) {
+        score += hand.find(entry => entry.baseId === card.baseId)?.instanceId === card.instanceId ? 5 : -12;
+      }
+      if (["information_tired_student", "corridor_student"].includes(card.baseId) && horseMaterialCandidates(side).length) score += 6;
       return score;
     }
 
@@ -29316,6 +29324,7 @@
       if (values.length === 0) return 0;
       if (options.randomHits) return values.reduce((sum, value) => sum + value, 0) / values.length * options.randomHits;
       if (options.random) return values.reduce((sum, value) => sum + value, 0) / values.length;
+      if (Number.isInteger(options.maxTargets)) return values.sort((a, b) => b - a).slice(0, options.maxTargets).reduce((sum, value) => sum + Math.max(0, value), 0);
       return values.reduce((sum, value) => sum + value, 0);
     }
 
@@ -29362,7 +29371,7 @@
         if (card.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
         if (item.baseId === "laser_beam") return ref.zone === "seat" && seatRow(ref.index) === 3;
         if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && card.type === "teacher";
-        if (illness && (card.baseId === "yuta" || !canEquipIllness(card))) return false;
+        if (illness && (card.baseId === "yuta" || !canEquipIllness({ ...card }))) return false;
         return true;
       }).map((entry) => ({
         ...entry,
@@ -29580,6 +29589,7 @@
       if (isAiProtectedCrabCard(side, card)) score += 220;
       if (isAiYocchanHyperCarryStrategyActive(side) && card.baseId === "yocchan") score += 180;
       if (ref?.zone === "teacher" && card.type === "teacher") score += 12;
+      score += Math.max(0, aiRecurringCardValue(side, card));
       return score;
     }
 
@@ -29926,7 +29936,58 @@
       if (isAiYocchanHyperCarryStrategyActive(side) && card.baseId === "yocchan") score += 1000;
       if (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) || card.baseId === "ultimate_yuta") score += 100;
       if (card.unusable) score -= 40;
+      score += aiCardResourceValue(side, card) + aiRecurringCardValue(side, card);
+      if (HORSE_MATERIAL_IDS.includes(card.baseId)) score += aiHorseMaterialValue(side, card);
       return score;
+    }
+
+    // Evaluate resources and repeatable effects from the current board, not
+    // printed cost alone. Shared by placement, copying, and discard decisions.
+    function aiRecurringCardValue(side, card) {
+      if (!card || !canUsePrintedCardEffects(card)) return 0;
+      const own = listBoardRefs(side).map(getBoardCardFromRef).filter(c => c && c.instanceId !== card.instanceId);
+      const enemy = effectTargetEntries(side, oppositeSide(side));
+      const missingLife = Math.max(0, currentLifeCap(side) - state.players[side].life);
+      if (card.baseId === "umaibo") return Math.min(3, missingLife) * 2;
+      if (card.baseId === "uma_bone") return Math.min(2, own.filter(c => !isPadlocked(c) && !isAibenNyoteiEffectImmune(c)).length) * 3;
+      if (card.baseId === "where_uma") return own.some(c => !isPadlocked(c) && !isAibenNyoteiEffectImmune(c)) ? 5 : 0;
+      if (card.baseId === "maibo_bone") return scoreAiDamageEffectTargets(side, card, enemy, { damage: 2, maxTargets: 2 });
+      if (card.baseId === "where_maibo") return scoreAiDamageEffectTargets(side, card, enemy, { damage: 7, random: true });
+      if (card.baseId === "where_bone") return aiLifeDamagePrevented(oppositeSide(side), state.actionTurn, side) ? 0
+        : state.players[oppositeSide(side)].life <= 3 ? 60 : 9;
+      if (card.baseId === "rear_queen") return scoreAiDamageEffectTargets(side, card, enemy.filter(e => e.card.type === "student"), { damage: 4, random: true }) * Math.min(3, enemy.filter(e => e.card.type === "student").length);
+      if (card.baseId === "sick_yuta") return enemy.filter(e => canEquipIllness({ ...e.card }) && e.card.baseId !== "yuta").length ? 4 : 0;
+      if (card.baseId === "protein_drinker") return 3;
+      if (card.baseId === "acting_out_man") return Math.min(8, state.players[oppositeSide(side)].hand.length * 1.2);
+      return 0;
+    }
+
+    function aiHorseMaterialValue(side, card) {
+      const hand = state.players[side].hand.filter(c => c.instanceId !== card.instanceId);
+      if (hand.some(c => c.baseId === card.baseId)) return 1;
+      const names = new Set(hand.filter(c => HORSE_MATERIAL_IDS.includes(c.baseId)).map(c => c.baseId));
+      return names.size >= 3 ? 18 : names.size ? 10 : 4;
+    }
+
+    function aiCardResourceValue(side, card) {
+      if (!card || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
+      const own = state.players[side];
+      const drawable = count => isDeckToHandLocked() ? 0 : Math.min(count, own.deck.length) * 3;
+      if (card.baseId === "information_tired_student") return horseMaterialCandidates(side).length ? 5 : 0;
+      if (card.baseId === "corridor_student") return Math.min(2, horseMaterialCandidates(side).length) * 5;
+      if (card.baseId === "gesture_student") return 4 + (own.deck.length >= 6 && own.will - effectiveCardCost(card) >= 4 ? 4 : 0);
+      if (card.baseId === "wood_gitch") return own.hand.some(c => c.baseId === "gitch") ? 5 : 2;
+      if (card.baseId === "word_increaser") return drawable(7) - Math.max(0, own.hand.length - 1) * 3;
+      if (card.baseId === "angry_maker") return drawable(2) - (isDeckToHandLocked() ? 0 : Math.min(2, state.players[oppositeSide(side)].deck.length) * 2);
+      if (card.baseId === "elite_open_chatter") return isDeckToHandLocked() ? 0 : -Math.min(3, state.players[oppositeSide(side)].deck.length) * 2;
+      if (card.baseId === "where_uma_bone_maibo") {
+        const enemies = effectTargetEntries(side, oppositeSide(side));
+        return Math.min(3, Math.max(0, currentLifeCap(side) - own.life)) * 2
+          + (listBoardRefs(side).length + 1) * 2.5
+          + scoreAiDamageEffectTargets(side, card, enemies, { damage: 2 })
+          + (aiLifeDamagePrevented(oppositeSide(side), state.actionTurn, side) ? 0 : state.players[oppositeSide(side)].life <= 3 ? 1000 : 9);
+      }
+      return 0;
     }
 
     function chooseTrainingAiCardChoiceIds(side, choice) {
@@ -30201,7 +30262,9 @@
         return 650 + materialCount * 30;
       }
       if (!isAiYocchanHyperCarryStrategyActive(side)) {
-        return offensiveEffectPriority * 10 + aiEnemyAttendanceBonus(side, card) * 10;
+        const body = Math.max(0, card.attack || 0) + Math.max(0, card.hp || 0) * 0.65;
+        return (offensiveEffectPriority + aiEnemyAttendanceBonus(side, card) + body
+          + aiCardResourceValue(side, card) + aiRecurringCardValue(side, card)) * 10;
       }
       if (card.baseId === "trpg_member" && aiDeckIncludesCard(side, "trpg_member")) {
         const needsSearch = aiYocchanCardsInHand(side).length === 0 && !aiHasUsedTrpgMember(side);
@@ -30297,6 +30360,8 @@
       if (needsTurnThreeSearch && ai.will - cost < effectiveCardCost(trpg)) return -Infinity;
       const hasYocchan = aiYocchanCardsInHand(side).length > 0;
       const targets = effectTargetEntries(side, targetSide);
+      const utility = planAiUtilityItem(side, item);
+      if (utility) return utility.score > 0 ? utility.score + crabDefenseBonus + deckOutDefenseBonus : -Infinity;
       if (item.baseId === "obon_mac") {
         const discountValue = obonMacHandDiscountValue(side);
         return discountValue > 0 ? 8 + discountValue * 2 + crabDefenseBonus + deckOutDrawBonus : -Infinity;
@@ -30378,6 +30443,8 @@
     }
 
     function useTrainingYocchanItem(side, item) {
+      const utility = planAiUtilityItem(side, item);
+      if (utility) return utility.score > 0 && useAiUtilityItem(side, item, utility);
       const nonCombatPlan = planAiNonCombatItem(side, item);
       if (nonCombatPlan) {
         const targetSide = oppositeSide(side);
@@ -30879,7 +30946,9 @@
       let healing = isCafeteriaEnvironmentActive() ? 1 : 0;
       healing += listBoardRefs(side)
         .map((ref) => getBoardCardFromRef(ref))
-        .filter((card) => card?.baseId === "laughing_front_student").length;
+        .filter((card) => card?.baseId === "laughing_front_student" && canUsePrintedCardEffects(card)).length;
+      healing += listBoardRefs(side).map(getBoardCardFromRef)
+        .filter(card => card?.baseId === "umaibo" && canUsePrintedCardEffects(card)).length * 3;
       return healing;
     }
 
@@ -31355,6 +31424,11 @@
       const friendlyRefs = context.friendlyRefs;
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
       let score = bodyScore + (zone === "seat" ? 2 : 0);
+      score += aiCardResourceValue("opponent", card) + aiRecurringCardValue("opponent", card);
+      if (card.late && state.environment?.baseId !== "no_late_time") {
+        const support = state.players.opponent.hand.some(c => ["tokyo_tech_bro", "substitute_attendance"].includes(c.baseId));
+        score -= card.late * (support ? 0.5 : context.ownLife <= 8 ? 3 : 1.2);
+      }
       score += scoreAiPlacementAuras("opponent", card, zone, index);
       if (["student", "teacher", "vampire"].includes(card.type)) {
         const boardNeed = aiBoardNeedScore(context);
@@ -31692,6 +31766,49 @@
       const enemySeats = state.players[targetSide].board.seats;
       const replacementBonus = aiEnvironmentReplacementBonus(side);
       const replacementRiskPenalty = aiEnvironmentReplacementRiskPenalty(side, card.baseId);
+      const ownCards = listBoardRefs(side).map(getBoardCardFromRef).filter(Boolean);
+      const otherCards = listBoardRefs(targetSide).map(getBoardCardFromRef).filter(Boolean);
+      const countCards = (cards, predicate) => cards.filter(predicate).length;
+      if (["student_council", "dark_student_council"].includes(card.baseId)) {
+        const attack = card.baseId === "dark_student_council";
+        const value = cards => cards.reduce((sum,c) => sum + (attack && !aiCanCardTargetLife(c,c.owner) ? 0.4 : 1),0);
+        return (value(ownCards) - value(otherCards)) * (attack ? 4 : 3) + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "building_12_classroom") {
+        const value = cards => countCards(cards,c=>c.type==='teacher') - countCards(cards,c=>c.type==='student' && c.attack>0);
+        return (value(ownCards) - value(otherCards)) * 3 + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "cote_dazur") return (countCards(ownCards,isAeNamedAttendee) - countCards(otherCards,isAeNamedAttendee)) * 20 + replacementBonus - replacementRiskPenalty;
+      if (card.baseId === "aggro_dome") {
+        const value = cards => cards.filter(c=>c.name.includes("アグロ")).reduce((sum,c)=>sum+Math.max(0,c.attack||0),0);
+        return (value(ownCards) - value(otherCards)) * 3 + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "aggro_kingdom") {
+        const value = cards => ["aggro_student","aggro_king","aggro_queen"].every(id=>cards.some(c=>c.baseId===id)) ? cards.length * 3 + 6 : 0;
+        return value(ownCards) - value(otherCards) + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "illegal_cafeteria") {
+        const value = cards => cards.filter(c=>c.type==='vampire').reduce((sum,c)=>sum+1+Math.min(1,Math.max(0,c.maxHp-c.currentHp)),0);
+        return 2 + value(ownCards) * 3 - value(otherCards) * 3 + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "full_lock") return (ownCards.length - otherCards.length) * 4 + replacementBonus - replacementRiskPenalty;
+      if (card.baseId === "no_late_time") {
+        const value = owner => state.players[owner].hand.filter(c=>c.late && (owner===side || c.publicHandAddition)).reduce((sum,c)=>sum+Math.min(4,c.late),0);
+        return (value(side)-value(targetSide))*3 + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "raptor_temple") return (countCards(ownCards,c=>isDesignTeacher(c)) * Math.min(3,state.players[side].trash.filter(c=>isDesignTeacher(c)&&!c.evolutionFrom).length)
+        - countCards(otherCards,c=>isDesignTeacher(c)) * Math.min(3,state.players[targetSide].trash.filter(c=>isDesignTeacher(c)&&!c.evolutionFrom).length)) * 4 + replacementBonus - replacementRiskPenalty;
+      if (card.baseId === "dorm_council") {
+        const ownValue = state.players[side].deck.some(c=>hasKeyword(c,"注目")) ? 3 : 0;
+        const enemyRisk = state.players[targetSide].deck.length > 0 ? 1.5 : 0;
+        return isDeckToHandLocked() ? 0 : ownValue - enemyRisk + replacementBonus - replacementRiskPenalty;
+      }
+      if (card.baseId === "on_demand_business") return (countCards(ownCards,c=>c.type==='student') * Number(otherCards.some(c=>c.type==='teacher'&&!c.noLecture))
+        - countCards(otherCards,c=>c.type==='student') * Number(ownCards.some(c=>c.type==='teacher'&&!c.noLecture))) * 3 + replacementBonus - replacementRiskPenalty;
+      if (card.baseId === "academic_move") {
+        const value = cards => cards.filter(c=>c.playedOnTurn===state.actionTurn).reduce((sum,c)=>sum+(aiCanCardTargetLife(c,c.owner)?Math.max(0,c.attack||0)*2:0)-Math.max(0,c.currentHp||0)*0.5,0);
+        return value(ownCards)-value(otherCards) + replacementBonus - replacementRiskPenalty;
+      }
       if (card.baseId === "meguro_library") {
         const progress = aiOpponentEnvironmentProgress(side);
         const lowOpponentHandBonus = progress.handSize <= 2 ? 6 : 0;
@@ -31733,8 +31850,8 @@
       }
       if (card.baseId === "gangi_fortress") {
         const buffSeats = [3, 4, 6, 7];
-        const friendlyCount = buffSeats.filter((index) => friendlySeats[index]).length;
-        const enemyCount = buffSeats.filter((index) => enemySeats[index]).length;
+        const friendlyCount = new Set(buffSeats.map(index=>friendlySeats[index]).filter(Boolean)).size;
+        const enemyCount = new Set(buffSeats.map(index=>enemySeats[index]).filter(Boolean)).size;
         return 3 + friendlyCount * 3 - enemyCount * 2 + replacementBonus;
       }
       if (card.baseId === "seat_rules") {
@@ -31817,6 +31934,78 @@
       if (getAiLethalEnablingItemPlan(item)) return 1000;
       const baseScore = baseScoreAiItem(item);
       return adjustAiItemScoreForContext(item, baseScore, options.timing || "normal");
+    }
+
+    function planAiUtilityItem(side, item) {
+      const ids = ["smoke_flare", "think_so", "forbidden_book", "big_laughter", "big_wall",
+        "brother_capital", "philosophy_cheating", "go_away", "lie_pekora", "diamond_dust", "earphones"];
+      if (!ids.includes(item?.baseId)) return null;
+      const plan = { score: 0, selectedIds: [] };
+      if (item.unusable || effectiveCardCost(item) > state.players[side].will || arePlayedEffectsSuppressed(side)) return plan;
+      const own = state.players[side], enemySide = oppositeSide(side), enemy = state.players[enemySide];
+      const ownEntries = listBoardRefs(side).map(ref => ({ ref, card: getBoardCardFromRef(ref) })).filter(e => e.card);
+      const enemyEntries = listBoardRefs(enemySide).map(ref => ({ ref, card: getBoardCardFromRef(ref) })).filter(e => e.card);
+      const bodyValue = card => Math.max(0, card.attack || 0) * 1.2 + Math.max(0, card.currentHp || card.hp || 0) * 0.6;
+      if (item.baseId === "smoke_flare") {
+        const gain = Math.min(2, Math.max(0, 10 - own.maxWill));
+        const draws = own.maxWill + gain === 10 && !isDeckToHandLocked();
+        plan.score = draws && own.deck.length === 0 ? 0 : gain * 4 + (draws ? 3 : 0);
+      }
+      if (item.baseId === "think_so") plan.score = 5 + (!isDeckToHandLocked() && own.deck.some(c => c.baseId === "yuta") ? 4 : 0)
+        + own.hand.filter(c => c.baseId === "yuta" && effectiveCardCost(c) > 0).length;
+      if (item.baseId === "forbidden_book" && own.life <= 10 && aiCanSurviveSelfDamage(side, 3)
+        && !aiLifeDamagePrevented(enemySide, state.actionTurn, side)) plan.score = enemy.life <= 5 ? 1000 : own.life > 6 ? 10 : 0;
+      if (item.baseId === "big_laughter" && countOccupiedClassroomSlots(side) >= 4) {
+        const healing = Math.min(countOccupiedClassroomSlots(side), Math.max(0, currentLifeCap(side) - own.life));
+        const loss = ownEntries.filter(e => e.card.type === "student" && previewFinalDamageToCard(e.card, 1, item) >= e.card.currentHp)
+          .reduce((sum, e) => sum + bodyValue(e.card) + aiRecurringCardValue(side, e.card), 0);
+        plan.score = Math.max(0, healing * 2 - loss);
+      }
+      if (item.baseId === "brother_capital") {
+        const capacity = PLAYER_SEAT_ORDER.filter(i => isBoardSlotOpen(side, "seat", i)).length + Number(isBoardSlotOpen(side, "teacher", null));
+        const candidates = brotherCapitalCandidates(side).filter(c => !c.unusable && !c.evolutionFrom)
+          .sort((a,b) => bodyValue(b) - bodyValue(a)).slice(0, capacity);
+        plan.selectedIds = candidates.map(c => c.instanceId);
+        plan.score = candidates.reduce((sum,c) => sum + bodyValue(c), 0);
+      }
+      if (item.baseId === "big_wall") {
+        const targets = ownEntries.filter(e => e.ref.zone === "seat" && seatRow(e.ref.index) === 1 && e.card.type === "student" && !isPadlocked(e.card) && !isAibenNyoteiEffectImmune(e.card))
+          .sort((a,b) => bodyValue(b.card) - bodyValue(a.card)).slice(0,2);
+        if (targets.length === 2) { plan.selectedIds = targets.map(e => e.card.instanceId); plan.score = 8 + (own.life <= 8 ? 8 : 0); }
+      }
+      if (item.baseId === "philosophy_cheating") {
+        const targets = enemy.hand.filter(c => c.type === "item" && !isHighLoadHandCard(c) && !c.unusable)
+          .sort((a,b) => trainingAiChoiceCardScore(enemySide,b) - trainingAiChoiceCardScore(enemySide,a)).slice(0,2);
+        plan.selectedIds = targets.map(c => c.instanceId); plan.score = targets.length * 6;
+      }
+      if (item.baseId === "go_away") {
+        const targets = goAwayCandidates(side);
+        if (targets.length >= 5) {
+          plan.selectedIds = [...targets].sort((a,b) => trainingAiChoiceCardScore(side,b) - trainingAiChoiceCardScore(side,a)).slice(0,5).map(c => c.instanceId);
+          plan.score = own.deck.length <= 5 ? 14 : own.deck.length <= 10 ? 4 : 0;
+        }
+      }
+      if (item.baseId === "lie_pekora" && ownEntries.length === enemyEntries.length) plan.score = Math.max(0,
+        enemyEntries.reduce((sum,e) => sum + bodyValue(e.card),0) - ownEntries.reduce((sum,e) => sum + bodyValue(e.card),0) - 3);
+      if (item.baseId === "diamond_dust" && canUseDiamondDust(side)) plan.score = Math.max(0,
+        enemyEntries.filter(e => aiCanPredictEffectRemoval(e.card,{destroy:true})).reduce((sum,e) => sum + bodyValue(e.card),0)
+        - ownEntries.filter(e => aiCanPredictEffectRemoval(e.card,{destroy:true})).reduce((sum,e) => sum + bodyValue(e.card),0) - 2);
+      if (item.baseId === "earphones" && enemyEntries.some(e => e.ref.zone === "teacher" && e.card.type === "teacher" && !e.card.noLecture && canUsePrintedCardEffects(e.card))) {
+        const targets = ownEntries.filter(e => e.card.type === "student" && !isEarphoneEquipped(e.card) && !isPadlocked(e.card)
+          && !isAibenNyoteiEffectImmune(e.card) && equipmentEntriesForCard({ ...e.card }).length === 0)
+          .sort((a,b) => (b.card.currentHp <= 1 ? 5 : 0) + bodyValue(b.card) - (a.card.currentHp <= 1 ? 5 : 0) - bodyValue(a.card));
+        if (targets[0]) { plan.target = targets[0]; plan.score = 3 + Math.min(5, bodyValue(targets[0].card)); }
+      }
+      return plan;
+    }
+
+    function useAiUtilityItem(side, item, plan) {
+      if (plan.score <= 0) return false;
+      if (item.baseId === "brother_capital") return resolveBrotherCapital(side,item,plan.selectedIds,false);
+      if (item.baseId === "big_wall") return resolveBigWall(side,item,plan.selectedIds,false);
+      if (item.baseId === "philosophy_cheating") return resolvePhilosophyCheating(side,item,plan.selectedIds,false);
+      if (plan.target) return castItemOnCard(side,item,plan.target.ref.owner,plan.target.ref.zone,plan.target.ref.index,false);
+      return castImmediateItem(side,item,false,{selectedIds:plan.selectedIds});
     }
 
     function aiUtaEquipmentTargets(side, item) {
@@ -31902,6 +32091,8 @@
       const enemyCards = listBoardRefs("player").map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
       const friendlyCards = listBoardRefs("opponent").map((ref) => getBoardCardFromRef(ref)).filter(Boolean);
       const deck = opponent.deck;
+      const utility = planAiUtilityItem("opponent", item);
+      if (utility) return utility.score;
       if (item.baseId === "obon_mac") return obonMacHandDiscountValue("opponent") * 2;
       const nonCombatPlan = planAiNonCombatItem("opponent", item);
       if (nonCombatPlan) {
@@ -32114,7 +32305,11 @@
           ? 8 + vampires.reduce((sum, card) => sum + (card.attack || 0) + (card.currentHp || 0), 0)
           : 0;
       }
-      if (item.baseId === "peaceful_mind") return opponent.life <= 15 ? 3 : 0;
+      if (item.baseId === "peaceful_mind") {
+        const ownHeal = Math.min(5, Math.max(0, currentLifeCap("opponent") - opponent.life));
+        const enemyHeal = Math.min(5, Math.max(0, currentLifeCap("player") - state.players.player.life));
+        return ownHeal > 0 ? Math.max(0, ownHeal * 2 - enemyHeal * 1.5) : 0;
+      }
       if (item.baseId === "handmade_ctoc") {
         return effectTargetEntries("opponent", "player", (card) => hasOpposingSameNameAttendee(card)).length > 0 ? 6 : 0;
       }
@@ -32361,6 +32556,8 @@
     }
 
     function useAiItem(item) {
+      const utility = planAiUtilityItem("opponent", item);
+      if (utility) return utility.score > 0 && useAiUtilityItem("opponent", item, utility);
       if (arePlayedEffectsSuppressed("opponent")) return useSuppressedItemEffect("opponent", item, false);
       const lethalPlan = getAiLethalEnablingItemPlan(item);
       const lethalTarget = lethalPlan?.targetRef
@@ -32644,11 +32841,13 @@
         cynical_student: 9,
         president: 9,
         tissue_distributor: 8,
-        pro_k: 7
+        pro_k: 7,
+        umaibo: 6, uma_bone: 7, where_uma: 7, maibo_bone: 10, where_maibo: 10, where_bone: 12,
+        rear_queen: 12, sick_yuta: 8, protein_drinker: 5, acting_out_man: 8
       };
       let score = Math.max(0, card.attack || 0) * 1.4
         + Math.max(0, card.currentHp || 0) * 0.35
-        + (persistentBonus[card.baseId] || 0);
+        + (canUsePrintedCardEffects(card) ? persistentBonus[card.baseId] || 0 : 0);
       if (hasKeyword(card, "超注目")) score += 12;
       else if (hasKeyword(card, "注目")) score += 8;
       if (ref?.zone === "teacher" && card.type === "teacher") score += 8;
@@ -32803,6 +33002,17 @@
           if (targets.length <= 3) {
             targets.forEach((entry) => addGuaranteedDamage(entry, 4, source));
           }
+        }
+        if (source.baseId === "maibo_bone") {
+          const targets = effectTargetEntries(side,targetSide)
+            .filter(e=>!isPadlocked(e.card)&&!isAibenNyoteiEffectImmune(e.card)&&!aiShouldPreserveEnemyTrpg(side,e.card))
+            .map(e=>({...e,value:scoreAiNonCombatEffectTarget(side,source,e,{damage:2})}))
+            .filter(e=>e.value>0).sort((a,b)=>b.value-a.value).slice(0,2);
+          targets.forEach(entry=>addGuaranteedDamage(entry,2,source));
+        }
+        if (source.baseId === "where_maibo") {
+          const targets=effectTargetEntries(side,targetSide);
+          if(targets.length===1) addGuaranteedDamage(targets[0],7,source);
         }
         if (source.baseId === "aggro_queen" && ref.zone === "seat" && ref.index === 5) {
           const targets = effectTargetEntries(side, targetSide, (card) => card.type === "student");
@@ -36530,11 +36740,20 @@
       const max = Math.min(count, cards.length);
       if (isCpuControlledBattleSide(side)) {
         const sorted = [...cards].sort((a, b) => {
-          if (kind === "damage") return (b.currentHp <= 2 ? 100 : 0) + scoreAiEnemyAttendeeThreat(b)
-            - (a.currentHp <= 2 ? 100 : 0) - scoreAiEnemyAttendeeThreat(a);
+          if (kind === "damage") {
+            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:2});
+            return value(b)-value(a);
+          }
+          if (kind === "buff") {
+            const value = card => isPadlocked(card) || isAibenNyoteiEffectImmune(card) ? -100
+              : Math.min(3,card.attackLimit||1)*3 + Math.min(5,Math.max(0,card.currentHp||0))*0.5;
+            return value(b)-value(a);
+          }
+          if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
-        return sorted.slice(0, max);
+        return sorted.filter(card => !["buff","damage"].includes(kind) || (!isPadlocked(card) && !isAibenNyoteiEffectImmune(card)
+          && (kind !== "damage" || !aiShouldPreserveEnemyTrpg(side,card)))).slice(0, max);
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
@@ -36574,14 +36793,18 @@
 
     function tryFuseHorseForAi(side) {
       const materials = HORSE_MATERIAL_IDS.map(id => state.players[side].hand.find(card => card.baseId === id));
-      if (materials.every(Boolean) && state.players[side].will >= 8) return fuseHorseMaterials(side, materials.map(card => card.instanceId), false);
+      const finalCost = effectiveCardCost(makePreviewCard("where_uma_bone_maibo", side));
+      if (materials.every(Boolean)) {
+        if (state.players[side].will >= finalCost) return fuseHorseMaterials(side, materials.map(card => card.instanceId), false);
+        // Do not irreversibly split a complete four-material finisher into pairs.
+        return false;
+      }
       const pairs = [];
       for (let i = 0; i < materials.length; i++) for (let j = i + 1; j < materials.length; j++) {
         if (!materials[i] || !materials[j]) continue;
         const id = horseFusionResult([materials[i], materials[j]]);
         let score = CARD_BASES[id].attack + CARD_BASES[id].hp;
-        if (["maibo_bone", "where_maibo"].includes(id)) score += listBoardRefs(oppositeSide(side)).length * 4;
-        if (id === "umaibo") score += Math.max(0, 20 - state.players[side].life);
+        score += aiRecurringCardValue(side, makePreviewCard(id, side));
         pairs.push({ ids: [materials[i].instanceId, materials[j].instanceId], score });
       }
       pairs.sort((a, b) => b.score - a.score);
