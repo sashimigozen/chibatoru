@@ -169,10 +169,20 @@ test("観戦者の入退室・再入室でホスト、ゲスト、観戦者の�
     for (const page of [host, guest, first]) {
       await expect(page.locator("#battleSpectatorNames li")).toHaveText(["観戦者A", "観戦者B"]);
     }
+    // 入室後のプロフィール変更も本人の情報として全参加者へ反映する。
+    await first.evaluate(() => {
+      state.profile = savePlayerProfile({ ...state.profile, username: "観戦プロフィール変更" });
+      onlineSendProfileSync();
+    });
+    for (const page of [host, guest, first]) {
+      await expect(page.locator("#battleSpectatorNames li")).toHaveText(["観戦プロフィール変更", "観戦者B"]);
+    }
+    await second.locator("#battleSpectatorCount").click();
+    await expect(second.locator("#battleSpectatorNames li")).toHaveText(["観戦プロフィール変更", "観戦者B"]);
     const before = await host.evaluate(() => ({ message: window.__chibattle.state.message, log: [...window.__chibattle.state.log], status: window.__chibattle.state.online.status }));
     await second.context().close();
     await expectCount([host, guest, first], 1);
-    await expect(host.locator("#battleSpectatorNames li")).toHaveText(["観戦者A"]);
+    await expect(host.locator("#battleSpectatorNames li")).toHaveText(["観戦プロフィール変更"]);
     await first.context().close();
     await expectCount([host, guest], 0);
     await expect(host.locator("#battleSpectatorList")).toBeHidden();
@@ -185,6 +195,34 @@ test("観戦者の入退室・再入室でホスト、ゲスト、観戦者の�
   } finally {
     for (const context of contexts) await context.close();
   }
+});
+
+test("観戦表示を左下へ浮かせても盤面と手札の位置は変わらない", async ({ page }) => {
+  await page.goto(gameUrl.href);
+  await page.evaluate(() => {
+    startCardTest("abyss");
+    scheduleOpponentAI = () => {};
+    state.phase = "battle";
+    render();
+  });
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 1122, height: 768 }]) {
+    await page.setViewportSize(viewport);
+    const positions = async () => page.evaluate(() => ({
+      shell: document.querySelector("#battleScreen .game-shell").getBoundingClientRect().top,
+      hand: document.getElementById("playerHand").getBoundingClientRect().top
+    }));
+    await page.evaluate(() => { state.online.role = "host"; document.body.dataset.online = "host"; render(); });
+    const before = await positions();
+    await page.evaluate(() => { state.online.role = "spectator"; document.body.dataset.online = "spectator"; render(); });
+    expect(await positions()).toEqual(before);
+    const banner = await page.locator("#spectatorBanner").boundingBox();
+    const hand = await page.locator("#playerHand").boundingBox();
+    expect(banner.x).toBeLessThan(viewport.width / 3);
+    expect(banner.y).toBeGreaterThan(viewport.height / 2);
+    expect(banner.x + banner.width).toBeLessThan(hand.x);
+    await expect(page.locator("#spectatorBanner")).toHaveText("観戦中");
+  }
+  await page.screenshot({ path: test.info().outputPath("spectator-bottom-left.png") });
 });
 
 test("観戦者一覧は盤面・手札・山札に重ならず、一覧内スクロールと閉じる操作ができる", async ({ page }) => {
@@ -204,6 +242,7 @@ test("観戦者一覧は盤面・手札・山札に重ならず、一覧内ス�
   });
   for (const viewport of [{ width: 1440, height: 900 }, { width: 1122, height: 768 }]) {
     await page.setViewportSize(viewport);
+    await page.evaluate(() => syncBattleLayout());
     await page.locator("#battleSpectatorCount").click();
     await expect(page.locator("#battleSpectatorList")).toBeVisible();
     await expect(page.locator("#battleSpectatorCount")).toHaveAttribute("aria-expanded", "true");

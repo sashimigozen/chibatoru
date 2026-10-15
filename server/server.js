@@ -1814,6 +1814,20 @@ function handleDeckUpdate(ws, message) {
   }
 }
 
+// プロフィールだけを更新する経路。観戦者にも許可し、デッキ・準備状態や
+// 対戦スナップショットには触れず、サーバーが持つ本人の情報を全員へ配信する。
+function handleProfileUpdate(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player || !message.profile || typeof message.profile !== "object") return;
+  player.profile = normalizePlayerProfile(message.profile, player.profile);
+  broadcast(room, {
+    type: "profileUpdate",
+    senderId: SERVER_ID,
+    roomSessionId: room.sessionId,
+    players: roomPlayers(room)
+  });
+}
+
 function handleSetRoomRule(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
@@ -2100,6 +2114,9 @@ function routeMessage(ws, raw) {
     case "deckUpdate":
       handleDeckUpdate(ws, message);
       break;
+    case "profileUpdate":
+      handleProfileUpdate(ws, message);
+      break;
     case "setRoomRule":
       handleSetRoomRule(ws, message);
       break;
@@ -2169,6 +2186,7 @@ function routeMessage(ws, raw) {
       handleReturnRoom(ws, message);
       break;
     case "ping":
+      if (message.profileSync === true) handleProfileUpdate(ws, message);
       send(ws, { type: "pong", pingId: message.msgId, senderId: SERVER_ID });
       break;
     default:
@@ -2211,6 +2229,7 @@ wss.on("connection", (ws) => {
         senderId: SERVER_ID,
         roomSessionId: room.sessionId,
         spectatorCount: roomSpectatorCount(room),
+        players: roomPlayers(room),
         spectatorNames: [...room.players.values()]
           .filter((member) => member.role === "spectator")
           .map((member) => normalizePlayerProfile(member.profile).username)

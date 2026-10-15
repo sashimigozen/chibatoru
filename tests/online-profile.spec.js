@@ -100,10 +100,12 @@ test("ランダムマッチで双方のプロフィール名とアイコンを�
     await left.page.locator("#profileViewerCloseButton").click();
 
     await left.page.evaluate(() => {
+      window.__chibattle.state.online.started = true;
       window.__chibattle.state.screen = "battle";
       window.__chibattle.render();
     });
     await right.page.evaluate(() => {
+      window.__chibattle.state.online.started = true;
       window.__chibattle.state.screen = "battle";
       window.__chibattle.render();
     });

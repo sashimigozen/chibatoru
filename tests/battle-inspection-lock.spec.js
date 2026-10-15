@@ -52,6 +52,14 @@ for (const lock of ['check', 'drawQueue', 'onlineGuest']) {
       }
       window.ruleSnapshot = window.captureRuleSnapshot();
     }, lock);
+    await page.locator('#playerDeckPile').hover();
+    await page.mouse.down();
+    await page.waitForTimeout(650);
+    await page.mouse.up();
+    await page.locator('#deckInspectButton').click();
+    await expect(page.locator('#deckModal')).toBeVisible();
+    await page.locator('#deckModalClose').click();
+    await expect(page.locator('#deckModal')).toBeHidden();
     await page.locator('#battleMenuButton').click();
     await expect(page.locator('#battleMenuDrawer')).toHaveAttribute('aria-hidden', 'false');
     await page.locator('#battleMenuCloseButton').click();
