@@ -99,7 +99,7 @@
     try { saved = read(); }
     catch (e) { stopFeatured(); screen.innerHTML = `<div class="gacha-error" role="alert">${escape(e.message)}</div>`; return; }
     const p = C.PACKS.find((p) => p.id === ui.packId), progress = saved.packs[p.id];
-    const exchangePack = C.PACKS.find((p) => saved.packs[p.id].tickets > 0);
+    const exchangePack = progress.tickets > 0 ? p : null;
     const q = saved.pending;
     document.body.classList.toggle("gacha-opening", Boolean(q));
     screen.dataset.phase = q?.phase || 'shop';
@@ -158,7 +158,11 @@
   function gifts() { try { modal("プレゼント", giftHtml(), "gifts"); } catch (e) { ui.error = e.message; render(); } }
   function exchangeHtml(id) {
     const p = C.PACKS.find((p) => p.id === id);
-    return `<h3>${escape(p.name)}</h3><p>交換するURを選んでください。残り ${read().packs[id].tickets} 回</p><div class="gacha-exchange-grid">${p.ur.map((baseId) => `<button type="button" data-gacha-redeem="${baseId}" data-pack-id="${id}" aria-label="${escape(CARD_BASES[baseId].name)}と交換">${card({ baseId, mode: "ultraRare" })}<span>${escape(CARD_BASES[baseId].name)}</span></button>`).join("")}</div>`;
+    const saved = read();
+    return `<h3>${escape(p.name)}</h3><p>交換するURを選んでください。残り ${saved.packs[id].tickets} 回</p><div class="gacha-exchange-grid">${p.ur.map((baseId) => {
+      const unowned = !saved.owned[baseId]?.ultraRare && !availableCardStyleModes(baseId).includes("ultraRare");
+      return `<button type="button" data-gacha-redeem="${baseId}" data-pack-id="${id}" aria-label="${escape(CARD_BASES[baseId].name)}と交換${unowned ? "（UR未所持）" : ""}"><span class="gacha-exchange-art">${card({ baseId, mode: "ultraRare" })}${unowned ? '<span class="gacha-unowned">未所持</span>' : ""}</span><span>${escape(CARD_BASES[baseId].name)}</span></button>`;
+    }).join("")}</div>`;
   }
   function refreshModal() {
     if (!ui.modal) return;

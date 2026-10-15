@@ -104,7 +104,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.23.18-shop-16');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.25.1-shop');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -192,6 +192,7 @@ test('legacy gifts are received once and grant 150CP per specialty; shop layout 
 test('mandatory UR exchange blocks purchases and survives closing the dialog', async ({page}) => {
   const s=C.initial(); s.cp=100; s.packs.echoes.total=200; s.packs.echoes.tickets=1;
   await boot(page,s); await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-pack="echoes"]').click();
   await expect(page.locator('[data-gacha-buy="1"]')).toBeDisabled();
   await page.locator('[data-gacha-exchange]').click();
   await page.locator('[data-gacha-close]').click();
@@ -199,6 +200,63 @@ test('mandatory UR exchange blocks purchases and survives closing the dialog', a
   await page.locator('[data-gacha-redeem="triple_enemy"]').click();
   await expect(page.locator('[data-gacha-buy="1"]')).toBeEnabled();
   expect((await saved(page)).owned.triple_enemy).toEqual({ultraRare:true});
+});
+test('天井はそのパックだけを止め、別パックの購入後も交換権を保持する', async ({page}) => {
+  const s=C.initial(); s.cp=100;
+  s.packs.cynical.total=200; s.packs.cynical.tickets=1;
+  s.packs.echoes.total=200; s.packs.echoes.tickets=1;
+  await boot(page,s); await page.locator('#homeNavGachaButton').click();
+  await expect(page.locator('[data-gacha-buy="1"]')).toBeDisabled();
+  await expect(page.locator('[data-gacha-exchange]')).toHaveAttribute('data-gacha-exchange','cynical');
+  await page.locator('[data-gacha-pack="endless"]').click();
+  await expect(page.locator('[data-gacha-buy="1"]')).toBeEnabled();
+  await expect(page.locator('[data-gacha-buy="10"]')).toBeEnabled();
+  await expect(page.locator('[data-gacha-exchange]')).toHaveCount(0);
+  await page.locator('[data-gacha-buy="10"]').click();
+  await page.locator('[data-gacha-skip]').click();
+  await page.locator('[data-gacha-finish]').click();
+  await expect.poll(async () => (await saved(page)).pending).toBeNull();
+  await page.reload(); await page.locator('#homeNavGachaButton').click();
+  await expect(page.locator('[data-gacha-buy="10"]')).toBeDisabled();
+  await page.locator('[data-gacha-pack="echoes"]').click();
+  await expect(page.locator('[data-gacha-exchange]')).toHaveAttribute('data-gacha-exchange','echoes');
+  await expect(page.locator('[data-gacha-buy="1"]')).toBeDisabled();
+  const actual=await saved(page);
+  expect(actual.cp).toBe(50);
+  expect(actual.packs.cynical).toEqual(s.packs.cynical);
+  expect(actual.packs.echoes).toEqual(s.packs.echoes);
+  expect(actual.packs.endless.total).toBe(10);
+});
+test('未所持URの右上だけに11px表示し、交換・既存解放・再表示へ追従する', async ({page}) => {
+  const s=C.initial(); s.cp=100; s.packs.cynical.total=400; s.packs.cynical.tickets=2;
+  s.owned.aggro_student={ultraRare:true};
+  s.owned.adjective_student={rare:true,superRare:true};
+  await boot(page,s,{unlocked:{},selected:{},cardUnlocks:{ae_student:{ultraRare:true}}});
+  await page.locator('#homeNavGachaButton').click(); await page.locator('[data-gacha-exchange]').click();
+  const regular=page.locator('[data-gacha-redeem="aggro_student"]');
+  const unowned=page.locator('[data-gacha-redeem="adjective_student"]');
+  await expect(regular.locator('.gacha-unowned')).toHaveCount(0);
+  await expect(page.locator('[data-gacha-redeem="ae_student"] .gacha-unowned')).toHaveCount(0);
+  await expect(unowned.locator('.gacha-unowned')).toHaveText('未所持');
+  await expect(unowned.locator('.gacha-unowned')).toHaveCSS('font-size','11px');
+  for(const size of [{width:1440,height:900},{width:1280,height:800}]) {
+    await page.setViewportSize(size);
+    const geometry=await unowned.evaluate(el=>{
+      const card=el.querySelector('.card').getBoundingClientRect();
+      const badge=el.querySelector('.gacha-unowned').getBoundingClientRect();
+      const name=el.querySelector('.card-name').getBoundingClientRect();
+      return {card:{left:card.left,right:card.right,top:card.top},badge:{left:badge.left,right:badge.right,bottom:badge.bottom},nameTop:name.top};
+    });
+    expect(geometry.badge.left).toBeGreaterThan(geometry.card.left);
+    expect(geometry.badge.right).toBeLessThanOrEqual(geometry.card.right);
+    expect(geometry.badge.bottom).toBeLessThanOrEqual(geometry.nameTop);
+    await page.screenshot({path:test.info().outputPath(`unowned-ur-${size.width}.png`)});
+  }
+  await unowned.click();
+  await expect(unowned.locator('.gacha-unowned')).toHaveCount(0);
+  expect((await saved(page)).packs.cynical.tickets).toBe(1);
+  await page.reload(); await page.locator('#homeNavGachaButton').click(); await page.locator('[data-gacha-exchange]').click();
+  await expect(page.locator('[data-gacha-redeem="adjective_student"] .gacha-unowned')).toHaveCount(0);
 });
 test('AI wins pay once, losses/training/tutorial excluded and dungeon milestones distinct', async ({page}) => {
   await boot(page);

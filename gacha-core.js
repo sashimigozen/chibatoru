@@ -72,7 +72,7 @@
     const s = validate(source), p = pack(id), progress = s.packs[id];
     if (![1, 10].includes(count)) throw new Error("購入数が不正です。");
     if (s.pending) throw new Error("購入済みのパックを先に確認してください。");
-    if (PACKS.some((p) => s.packs[p.id].tickets > 0)) throw new Error("URを交換してから購入してください。");
+    if (progress.tickets > 0) throw new Error("このパックのURを交換してから購入してください。");
     if (s.cp < count * 5) throw new Error("CPが不足しています。");
     const results = [];
     for (let i = 0; i < count; i++) {

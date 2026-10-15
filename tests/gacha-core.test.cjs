@@ -101,7 +101,13 @@ test('199/399 threshold grants mandatory ticket, normal UR never resets it', () 
     assert.equal(bought.packs.awakening.total, total + 1);
     assert.equal(bought.packs.awakening.tickets, 1);
     complete(bought);
-    assert.throws(() => C.purchase(bought, 'echoes', 1, fixed(0), 'blocked'));
+    assert.throws(() => C.purchase(bought, 'awakening', 1, fixed(0), 'blocked'));
+    assert.throws(() => C.purchase(bought, 'awakening', 10, fixed(0), 'blocked-batch'));
+    const other = complete(C.purchase(bought, 'echoes', 10, fixed(0), 'other-pack'));
+    assert.equal(other.cp, bought.cp - 50);
+    assert.equal(other.packs.echoes.total, 10);
+    assert.deepEqual(other.packs.awakening, bought.packs.awakening);
+    assert.throws(() => C.purchase(other, 'awakening', 1, fixed(0), 'still-blocked'));
     assert.throws(() => C.exchange(bought, 'awakening', 'general_student'));
     C.exchange(bought, 'awakening', 'gigi_blood');
     assert.equal(bought.packs.awakening.tickets, 0);
