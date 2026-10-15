@@ -19799,6 +19799,13 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.25.2",
+        versioning: "semver",
+        date: "2026年10月16日",
+        summary: "出席者の継続効果の表示対象を整理しました。",
+        changes: [{ title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" }]
+      },
+      {
         version: "ver.0.25.1",
         versioning: "semver",
         date: "2026年10月15日",
@@ -48383,8 +48390,8 @@
       return lines;
     }
 
-    // 本文の該当箇所を再利用する。出席・進化時だけの効果や手札での効果は
-    // 継続中として掲載しない。条件付き能力は、その条件を含めて表示する。
+    // 講義室にいる間、他の出席者・プレイヤー・講義室へ及ぼす効果だけを掲載。
+    // 出席時だけの効果や、自身だけの強化・耐性・攻撃時能力は掲載しない。
     const BOARD_ONGOING_RULE_STARTS = Object.freeze({
       proliferating_enemy: "このカードが自分の講義室にいるかぎり",
       variable_student: "このカードが講義室にいるかぎり",
@@ -48392,45 +48399,15 @@
       aggro_student: "このカードが出席している",
       aggro_king: "このカードが3行1列にいる",
       aggro_queen: "このカードが2行3列にいる",
-      scout_student: "相手の講義室に出席者がいないなら",
-      happy_blue_bird: "このカードは相手本体に攻撃",
-      suit_student: "このカードは教師からダメージを受けない",
-      single_cell: "自分の講義室に",
-      midge: "自分の講義室に",
-      organism: "自分の講義室に",
-      trendy_student: "このカードが攻撃した",
-      rebirth_student: "このカードは一度だけ",
-      yuta: "このカードに装備カードがついたとき",
-      eaten_student: "相手の講義室に学生と教師がいるなら",
-      loud_student: "教師はこのカードを攻撃できない",
-      best_friend: "このカードは「バカでかい」とつくカードの効果",
       ttb: "自分のターン終了時",
-      loud_group: "自分の講義室にこのカード以外の",
-      enemy_student: "相手の講義室に「TRPGサークルメンバー」がいるかぎり",
-      protein_drinker: "自分のターン終了時",
-      aiben: "相手講義室に「にょてい」がいるかぎり",
-      nyotei: "相手講義室に「アイベン」がいるかぎり",
-      bounce_day: "このカードが攻撃したとき",
-      lone_wolf: "このカードの周囲1マスに",
       cynical_student: "自分のターン終了時",
       laughing_front_student: "自分のターン終了時",
-      leaving_on_time_lecturer: "このカードを出席させた後",
       pro_k: "このカードが教卓マスにいるかぎり",
-      lightning_n: "このカードが教卓マスにいるかぎり",
       popular_c: "このカードが教卓マスにいるかぎり",
       ninety_three_teacher: "このカードが教卓マスにいるかぎり",
       president: "このカードが教卓マスにいるかぎり",
-      cafeteria_lady: "環境が「食堂」であるかぎり",
-      curry_treater: "環境が「食堂」であるかぎり",
       tissue_distributor: "環境が「食堂」であるかぎり",
-      vampire: "環境が「食堂」なら",
-      zombie: "このカードが出席者を攻撃したとき",
-      dark_yuta: "このカードは、装備カードがついているかぎり",
-      diligent_student: "このカードが相手の教師から",
-      aggro_princess: "このカードが相手本体を攻撃したとき",
       sick_yuta: "自分のターン終了時",
-      recovered_dark_yuta: "このカードは「病」を装備できない",
-      true_enemy: "このカードが攻撃するとき",
       rear_queen: "自分のターン終了時",
       pad_present_creator: "このカードがある限り",
       umaibo: "自分のターン終了時",
@@ -48445,13 +48422,21 @@
       return listBoardRefs(side).flatMap((ref) => {
         const card = getBoardCardFromRef(ref);
         if (!canUsePrintedCardEffects(card)) return [];
+        // 通常のキングは自身だけの強化。王国成立時のみ全体強化になる。
+        if (card.baseId === "aggro_king" && (!hasAggroKingdomTrio(side) || ref.zone !== "seat" || ref.index !== 6)) return [];
+        if (card.baseId === "aggro_queen" && (ref.zone !== "seat" || ref.index !== 5)) return [];
+        if (card.baseId === "tissue_distributor" && !isCafeteriaEnvironmentActive()) return [];
         const start = BOARD_ONGOING_RULE_STARTS[card.baseId];
         if (!start) return [];
         const text = cardRulesText(card);
         const index = text.indexOf(start);
         if (index < 0) return [];
         if (start.includes("教卓マスにいるかぎり") && ref.zone !== "teacher") return [];
-        return [`${card.name}：${text.slice(index).trim()}`];
+        let detail = text.slice(index).trim();
+        // 複数能力のうち、自身にしか作用しない部分は表示から除外する。
+        if (card.baseId === "tissue_distributor") detail = detail.replace("このカードの戦意を-2し、", "");
+        if (card.baseId === "sick_yuta") detail = detail.replace(/このカードは「病」を装備できない。/, "").trim();
+        return [`${card.name}：${detail}`];
       });
     }
 

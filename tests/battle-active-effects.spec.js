@@ -139,6 +139,62 @@ test("継続効果は複数マスで重複せず、別個体は別件・教卓�
   expect(result.lines.join("\n")).not.toContain("学長：");
 });
 
+test("自身だけの能力は継続効果に載せず、他の出席者・本体へ作用する効果は残す", async ({ page }) => {
+  await prepareEffectState(page);
+  const result = await page.evaluate(() => {
+    const excluded = ['scout_student', 'suit_student', 'yuta', 'dark_yuta', 'enemy_student',
+      'protein_drinker', 'lone_wolf', 'cafeteria_lady', 'vampire', 'recovered_dark_yuta',
+      'aiben', 'nyotei', 'trendy_student', 'rebirth_student', 'true_enemy', 'aggro_princess'];
+    const included = ['proliferating_enemy', 'variable_student', 'acting_out_man',
+      'umaibo', 'uma_bone', 'where_uma', 'maibo_bone', 'where_maibo', 'where_bone', 'rear_queen', 'ttb'];
+    const errors = [];
+    for (const side of ['player', 'opponent']) {
+      const p = state.players[side];
+      p.board = { teacher: null, seats: Array(9).fill(null) };
+      for (const id of [...excluded, ...included]) {
+        p.board.seats[0] = makeBoardCard(createCardFromBase(id, side));
+        const count = boardActiveEffectLines(side).length;
+        if (count !== (included.includes(id) ? 1 : 0)) errors.push(`${side}/${id}/${count}`);
+      }
+    }
+    state.players.opponent.board.seats[0] = makeBoardCard(createCardFromBase('proliferating_enemy', 'opponent'));
+    state.players.opponent.board.seats[1] = makeBoardCard(createCardFromBase('vampire', 'opponent'));
+    render();
+    return errors;
+  });
+  expect(result).toEqual([]);
+  await page.locator('#opponentActiveEffectsButton').click();
+  await expect(page.locator('#battleDrawerInspector')).toContainText('増殖する敵');
+  await expect(page.locator('#battleDrawerInspector')).not.toContainText('CITヴァンパイア');
+  await page.screenshot({ path: test.info().outputPath('external-ongoing-effects.png') });
+});
+
+test("複数能力のカードから自身だけの能力を除き、条件を満たす全体効果だけを表示する", async ({ page }) => {
+  await prepareEffectState(page);
+  const result = await page.evaluate(() => {
+    const p = state.players.player;
+    p.board = { teacher: null, seats: Array(9).fill(null) };
+    p.board.seats[0] = makeBoardCard(createCardFromBase('sick_yuta', 'player'));
+    p.board.seats[1] = makeBoardCard(createCardFromBase('tissue_distributor', 'player'));
+    p.board.seats[6] = makeBoardCard(createCardFromBase('aggro_king', 'player'));
+    const before = boardActiveEffectLines('player');
+    state.environment = makeBoardCard(createCardFromBase('cafeteria', 'player'));
+    const cafeteria = boardActiveEffectLines('player');
+    state.environment = makeBoardCard(createCardFromBase('aggro_kingdom', 'player'));
+    p.board.seats[5] = makeBoardCard(createCardFromBase('aggro_queen', 'player'));
+    p.board.seats[2] = makeBoardCard(createCardFromBase('aggro_student', 'player'));
+    const kingdom = boardActiveEffectLines('player');
+    return { before, cafeteria, kingdom };
+  });
+  expect(result.before).toHaveLength(1);
+  expect(result.before[0]).toContain('相手の出席者1人');
+  expect(result.before[0]).not.toContain('装備できない');
+  expect(result.cafeteria).toHaveLength(2);
+  expect(result.cafeteria.join('\n')).toContain('ヴァンパイアすべての体力を+2');
+  expect(result.cafeteria.join('\n')).not.toContain('戦意を-2');
+  expect(result.kingdom.some(line => line.startsWith('アグロキング：') && line.includes('出席者すべて'))).toBe(true);
+});
+
 test("効果のある環境を両者の継続効果へ表示し、上書きすると入れ替わる", async ({ page }) => {
   test.setTimeout(60000);
   await prepareEffectState(page);
