@@ -31,6 +31,49 @@ test('6通りの2枚融合と4枚融合、素材は校外に入らず戦意も�
     .map((id,i) => [true,id,i===6?4:2,0,20]));
 });
 
+test('融合完成品7種の能力値と今回の5枚の更新情報が一致し、生成したカードにも反映する', async ({ page }) => {
+  const expected={umaibo:[5,0,5],uma_bone:[5,1,4],where_uma:[5,2,3],maibo_bone:[5,3,2],
+    where_maibo:[5,4,1],where_bone:[5,2,2],where_uma_bone_maibo:[6,4,4]};
+  const records=await page.evaluate(()=>{
+    const combinations=[['fusion_uma','fusion_maibo'],['fusion_uma','fusion_bone'],['fusion_uma','fusion_where'],
+      ['fusion_maibo','fusion_bone'],['fusion_maibo','fusion_where'],['fusion_bone','fusion_where'],[...HORSE_MATERIAL_IDS]];
+    return combinations.map(ids=>{
+      state.players.player.hand=ids.map(id=>createCardFromBase(id,'player'));
+      if(!fuseHorseMaterials('player',state.players.player.hand.map(c=>c.instanceId),false)) throw Error('融合失敗');
+      const c=state.players.player.hand[0], b=CARD_BASES[c.baseId];
+      return {id:c.baseId,stats:[c.cost,c.attack,c.hp],boardHp:makeBoardCard(c).currentHp,
+        flags:[c.generated,c.token,c.fusionResult],deckAllowed:DIRECT_DECK_CARD_IDS.has(c.baseId),
+        update:UPDATE_HISTORY[0].changes.find(change=>change.title===c.name)?.after,text:cardRulesText(c),name:c.name,
+        baseStats:[b.cost,b.attack,b.hp]};
+    });
+  });
+  for(const record of records){
+    expect(record.stats,record.name).toEqual(expected[record.id]);
+    expect(record.baseStats,record.name).toEqual(expected[record.id]);
+    expect(record.boardHp,record.name).toBe(expected[record.id][2]);
+    expect(record.flags).toEqual([true,true,true]); expect(record.deckAllowed).toBe(false);
+    if(!['umaibo','maibo_bone'].includes(record.id)) {
+      const [cost,attack,hp]=expected[record.id];
+      expect(record.update).toBe(`学生／学友会・持ち物／戦意${cost}／攻撃力${attack}／体力${hp}\n${record.text}`);
+    }
+  }
+});
+
+test('最終形は戦意5では出席できず、戦意6を払って出席し、既存の出席効果を使う', async ({page})=>{
+  await page.evaluate(()=>{
+    const c=createCardFromBase('where_uma_bone_maibo','player'); state.players.player.hand=[c];
+    state.players.player.will=5; state.players.player.life=10; render();
+  });
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
+  await page.evaluate(()=>playCard(state.players.player.hand[0].instanceId,'seat','player',4));
+  expect(await page.evaluate(()=>[state.players.player.board.seats[4],state.players.player.hand.length,state.players.player.will])).toEqual([null,1,5]);
+  await page.evaluate(()=>{state.players.player.will=6;playCard(state.players.player.hand[0].instanceId,'seat','player',4);});
+  await expect.poll(()=>page.evaluate(()=>state.players.player.board.seats[4]?.baseId)).toBe('where_uma_bone_maibo');
+  expect(await page.evaluate(()=>[state.players.player.will,state.players.player.life,
+    state.players.player.board.seats[4].attack,state.players.player.board.seats[4].currentHp,state.players.opponent.life]))
+    .toEqual([0,13,5,5,17]);
+});
+
 test('同名・3枚・完成品への追加融合は不可、高負荷素材は融合可能', async ({ page }) => {
   const results = await page.evaluate(() => {
     return [['fusion_uma','fusion_uma'], ['fusion_uma','fusion_bone','fusion_where'], ['umaibo','fusion_where']]
