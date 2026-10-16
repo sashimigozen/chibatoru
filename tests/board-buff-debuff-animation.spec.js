@@ -4,6 +4,37 @@ const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
+test("出席前・初回表示前の複数バフでも両者の全出席者に一度ずつ演出する", async ({ page }) => {
+  await page.goto(gameUrl);
+  await page.evaluate(() => {
+    state.screen = 'battle'; state.phase = 'battle'; state.actionTurn = 4;
+    state.environment = null;
+    for (const side of ['player', 'opponent']) {
+      state.players[side].board = { teacher: null, seats: Array(9).fill(null) };
+      for (let i = 0; i < 10; i++) {
+        const card = makeBoardCard(createCardFromBase(i === 9 ? 'general_teacher' : 'general_student', side));
+        // Buff while still outside the board; there is no previous DOM snapshot.
+        applyPermanentStatBuff(card, 2, 1, 0, '全体強化');
+        if (i === 9) state.players[side].board.teacher = card;
+        else state.players[side].board.seats[i] = card;
+      }
+    }
+    render();
+  });
+  const buffs = page.locator('.board-card .board-change-effect.buff');
+  await expect(buffs).toHaveCount(20);
+  await expect(page.locator('.board-card .board-change-feedback')).toHaveCount(20);
+  expect(await page.locator('.board-card .board-change-feedback').evaluateAll(nodes => nodes.every(node =>
+    node.getAttribute('aria-label').includes('攻撃力強化 +2') && node.getAttribute('aria-label').includes('体力強化 +1')))).toBe(true);
+  await page.evaluate(() => { render(); render(); });
+  await expect(buffs).toHaveCount(20);
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: test.info().outputPath('all-targets-buffed.png') });
+  await expect(buffs).toHaveCount(0, { timeout: 2500 });
+  await page.evaluate(() => render());
+  await expect(buffs).toHaveCount(0);
+});
+
 test("声が大きい集団は両側のコピー出席が全て完了してから強化し、演出を再表示で切らない", async ({ page }) => {
   await page.goto(gameUrl);
   const result = await page.evaluate(async () => {

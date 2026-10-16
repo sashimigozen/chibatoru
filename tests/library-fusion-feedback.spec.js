@@ -41,7 +41,7 @@ for (const id of ['uma_bone', 'where_uma']) test(`${id}のターン終了時バ�
   }
   await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
   const layer = page.locator('.slot[data-owner="player"][data-index="1"] .board-change-feedback');
-  await expect(layer).toHaveAttribute('aria-label', /体力強化/);
+  await expect(layer).toHaveAttribute('aria-label', id === 'uma_bone' ? /攻撃力強化/ : /体力強化/);
   await layer.evaluate(node => node.dataset.testRetained = 'yes');
   await page.evaluate(() => { render(); render(); });
   await expect(layer).toHaveAttribute('data-test-retained', 'yes');
