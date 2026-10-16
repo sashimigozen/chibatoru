@@ -7748,6 +7748,10 @@
     .update-before { color: #9f1239; }
     .update-after { color: #166534; }
     .update-before, .update-after { white-space: pre-line; }
+    .update-change.has-text-highlights .update-before,
+    .update-change.has-text-highlights .update-after { color: #334155; }
+    .update-before .update-text-highlight { color: #9f1239; background: #ffe4e6; font-weight: 900; }
+    .update-after .update-text-highlight { color: #166534; background: #dcfce7; font-weight: 900; }
     .update-arrow { text-align: center; font-weight: 1000; }
 
     .deck-library-grid {
@@ -19849,7 +19853,10 @@
           { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。回転と結果表示が実際に終わってから、効果演出と数値を更新します。オンラインでも各画面のコイン演出が終わるまで、強化後の数値や盤面を先に表示しません。" },
           { title: "コインの裏面", after: "試合中のコイントスで、結果表示中に表面が逆さに映る不具合を修正しました。裏は黒地にスマイルの口の柄が表示されます。" },
           { title: "バトルメニュー", after: "観戦を小さくし、空いた場所に「じゃんけん大会」を追加しました。COMING SOON表示で、まだ利用できません。" },
-          { title: "形容詞学生vs冷笑学生", before: "2. 相手の手札と講義室にある出席者カードすべての攻撃力を-2する。", after: "2. 次の相手のターン終了まで、相手の手札と講義室にある出席者カードすべての攻撃力を-3する。" },
+          { title: "形容詞学生vs冷笑学生",
+            before: "学生／共通カード／戦意6／攻撃力5／体力5\nこのカードは横に連続した席マスを2つ使用する。\nこのカードを手札から出席させるとき、次の効果から1つを選ぶ。\n1. 相手の出席者1人をランダムに破壊する。\nコインを1回投げ、表ならこの効果を繰り返す。\n2. 相手の手札と講義室にある出席者カードすべての攻撃力を-2する。",
+            after: "学生／共通カード／戦意6／攻撃力5／体力5\nこのカードは横に連続した席マスを2つ使用する。\nこのカードを手札から出席させるとき、次の効果から1つを選ぶ。\n1. 相手の出席者1人をランダムに破壊する。\nコインを1回投げ、表ならこの効果を繰り返す。\n2. 次の相手のターン終了まで、相手の手札と講義室にある出席者カードすべての攻撃力を-3する。",
+            beforeHighlights: ["-2"], afterHighlights: ["次の相手のターン終了まで、", "-3"] },
           { title: "形容詞学生", after: "[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。\n遅刻・効果による出席でも、コインの結果表示が終わってから講義室へ出席します。" },
           { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。形容詞学生はコインの結果後に強化演出を見せてから、ターン開始表示や次の出席へ進みます。カード本文・効果・数値は変更していません。" },
           { title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" },
@@ -50350,6 +50357,21 @@
       elements.homeUpdatesDot.classList.toggle("hidden", !LATEST_UPDATE_READ_ID || read.has(LATEST_UPDATE_READ_ID));
     }
 
+    function updateHighlightedText(text, highlights = []) {
+      const phrases = highlights.filter(phrase => typeof phrase === "string" && phrase.length > 0);
+      let remaining = String(text);
+      let html = "";
+      while (remaining) {
+        const match = phrases.map(phrase => ({ phrase, index: remaining.indexOf(phrase) }))
+          .filter(entry => entry.index >= 0).sort((a, b) => a.index - b.index || b.phrase.length - a.phrase.length)[0];
+        if (!match) return html + escapeHtml(remaining);
+        html += escapeHtml(remaining.slice(0, match.index))
+          + `<span class="update-text-highlight">${escapeHtml(match.phrase)}</span>`;
+        remaining = remaining.slice(match.index + match.phrase.length);
+      }
+      return html;
+    }
+
     function renderUpdateHistory() {
       if (state.screen !== "updates" || !elements.updateList) return;
       const read = loadReadUpdateVersions();
@@ -50360,7 +50382,8 @@
         details.className = `update-entry${unread ? " unread" : ""}`;
         const changes = entry.changes.map((change) => {
           if (change.before) {
-            return `<div class="update-change"><div class="update-before"><strong>${escapeHtml(change.title)}</strong><br>${escapeHtml(change.before)}</div><div class="update-arrow">→</div><div class="update-after"><strong>変更後</strong><br>${escapeHtml(change.after)}</div></div>`;
+            const highlighted = change.beforeHighlights || change.afterHighlights;
+            return `<div class="update-change${highlighted ? " has-text-highlights" : ""}"><div class="update-before"><strong>${escapeHtml(change.title)}（変更前）</strong><br>${updateHighlightedText(change.before, change.beforeHighlights)}</div><div class="update-arrow">→</div><div class="update-after"><strong>変更後</strong><br>${updateHighlightedText(change.after, change.afterHighlights)}</div></div>`;
           }
           return `<div class="update-change"><div class="update-after"><strong>${escapeHtml(change.title)}</strong><br>${escapeHtml(change.after)}</div></div>`;
         }).join("");
