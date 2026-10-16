@@ -307,7 +307,7 @@ test("形容詞学生vs冷笑学生の表示文を既存文体へ統一する", 
     return api.cardRulesText(api.createCardFromBase("adjective_vs_cynical", "player"));
   });
   expect(rules).toContain("このカードを手札から出席させるとき、次の効果から1つを選ぶ。");
-  expect(rules).toContain("50%の確率で、この効果を繰り返す。");
+  expect(rules).toContain("コインを1回投げ、表ならこの効果を繰り返す。");
   expect(rules).not.toContain("50%の確率でもう一度");
 });
 

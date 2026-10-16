@@ -35,7 +35,7 @@ test("カード自身の能力を冒頭へまとめ、条件付き能力は本�
   expect(texts.multiple).toBe("[注目] [陽気]\n自分の席マスすべてを占有し、1人の出席者として扱う。\nこのカードが出席したとき、相手の講義室の出席者すべては1ターン攻撃できない。");
   expect(texts.conditional).toBe("相手の講義室に出席者がいないなら、これは[超陽気]を持つ。");
   expect(texts.reference).toBe("これは[講義]のダメージを受けない。\n手札から出席させたとき、相手のランダムな教師に1ダメージを与える。");
-  expect(texts.late).toBe("[遅刻4]\nこのカードが出席したとき、50%の確率でこのカードの攻撃力を+3する。");
+  expect(texts.late).toBe("[遅刻4]\nこのカードが出席したとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。");
   expect(texts.evolution).toBe("[陽気]\n[進化]：「愛ちゃん」\n進化したとき、相手の学生すべてに1ダメージを与える。");
   expect(texts.evolutionGitch.startsWith("[進化]：「木っち（ぎっち）」\n")).toBe(true);
   expect(texts.evolutionWithFlavor).toContain("\n-我が光に仇なす者よ。今この翼を以って頽落せしめん。羽ばたけ-");

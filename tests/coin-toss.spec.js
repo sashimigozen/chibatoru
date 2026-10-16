@@ -134,6 +134,18 @@ for (const face of ['heads', 'tails']) test(`オンラインの結果${face}: �
     await expect.poll(() => guest.evaluate(() => state.firstSide)).toBe(guestWinner);
     await expect.poll(() => spectator.evaluate(() => state.firstSide)).toBe(winner);
     await expect.poll(() => guest.evaluate(() => state.phase)).toBe('mulligan');
+    await host.evaluate(() => {
+      state.phase = 'battle'; state.currentSide = 'player'; render();
+      window.effectDone = false;
+      tossEffectCoin('効果判定').then(() => { window.effectDone = true; render(); onlineBroadcastState(true); });
+    });
+    for (const page of [host, guest, spectator]) {
+      await expect(page.locator('.effect-coin-overlay')).toBeVisible();
+      expect(await page.evaluate(() => state.effectCoinEvents.at(-1).face)).toBe(face);
+    }
+    await expect.poll(() => host.evaluate(() => effectDone)).toBe(true);
+    for (const page of [host, guest, spectator]) await expect(page.locator('.effect-coin-overlay')).toHaveCount(0);
+    expect(await host.evaluate(() => window.tossRolls)).toBe(2);
   } finally { for (const context of contexts) await context.close(); }
 });
 
