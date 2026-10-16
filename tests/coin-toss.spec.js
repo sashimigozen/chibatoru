@@ -136,10 +136,11 @@ for (const face of ['heads', 'tails']) test(`オンラインの結果${face}: �
     await expect.poll(() => guest.evaluate(() => state.phase)).toBe('mulligan');
     await host.evaluate(() => {
       state.phase = 'battle'; state.currentSide = 'player';
-      const card = makeBoardCard(createCardFromBase('general_student', 'player'));
-      state.players.player.board.seats[0] = card; render();
+      const card = makeBoardCard(createCardFromBase('adjective_student', 'player'));
+      state.players.player.board.seats[0] = null; render();
       window.effectDone = false;
-      tossEffectCoin('効果判定').then(() => { applyPermanentStatBuff(card, 3, 0); window.effectDone = true; render(); onlineBroadcastState(true); });
+      attendCard('player', card, 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.GENERATED });
+      beforeAttendancePromises.get(card).then(() => { window.effectDone = true; });
     });
     for (const page of [host, guest, spectator]) {
       await expect(page.locator('.effect-coin-overlay')).toBeVisible();
@@ -156,13 +157,13 @@ for (const face of ['heads', 'tails']) test(`オンラインの結果${face}: �
     });
     await expect.poll(() => host.evaluate(() => effectDone)).toBe(true);
     // A slower viewer must not receive the post-coin board before its own flip.
-    expect(await guest.evaluate(() => state.players.opponent.board.seats[0].attack)).toBe(2);
+    expect(await guest.evaluate(() => state.players.opponent.board.seats[0])).toBeNull();
     await guest.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
     await expect(guest.locator('.effect-coin-overlay')).toHaveAttribute('data-stage', 'result');
     await guest.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.pause()));
-    expect(await guest.evaluate(() => state.players.opponent.board.seats[0].attack)).toBe(2);
+    expect(await guest.evaluate(() => state.players.opponent.board.seats[0])).toBeNull();
     await guest.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
-    await expect.poll(() => guest.evaluate(() => state.players.opponent.board.seats[0].attack)).toBe(5);
+    await expect.poll(() => guest.evaluate(() => state.players.opponent.board.seats[0]?.attack)).toBe(face === 'heads' ? 5 : 2);
     for (const page of [host, guest, spectator]) await expect(page.locator('.effect-coin-overlay')).toHaveCount(0);
     expect(await host.evaluate(() => window.tossRolls)).toBe(2);
   } finally { for (const context of contexts) await context.close(); }

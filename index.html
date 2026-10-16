@@ -19843,7 +19843,10 @@
         date: "2026年10月16日",
         summary: "試合開始時の先攻・後攻決定をコイントスに統一しました。",
         changes: [{ title: "コイントス", after: "オンラインではホスト、AI戦・トレーニングでは自分側が表か裏を選び、当たった側が先攻・後攻を選びます。CPU同士のトレーニングでは自動で進行します。じゃんけんのデータは残しています。コインは縦に回転し、表は銀青色、裏は黒地にスマイルの口を仮ロゴとして入れています。" },
-          { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。回転と結果表示が実際に終わってから、効果演出と数値を更新します。オンラインでも各画面のコイン演出が終わるまで、強化後の数値や盤面を先に表示しません。" }]
+          { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。回転と結果表示が実際に終わってから、効果演出と数値を更新します。オンラインでも各画面のコイン演出が終わるまで、強化後の数値や盤面を先に表示しません。" },
+          { title: "コインの裏面", after: "試合中のコイントスで、結果表示中に表面が逆さに映る不具合を修正しました。裏は黒地にスマイルの口の柄が表示されます。" },
+          { title: "形容詞学生", after: "[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。\n遅刻・効果による出席でも、コインの結果表示が終わってから講義室へ出席します。" },
+          { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。カード本文・効果・数値は変更していません。" }]
       },
       {
         version: "ver.0.25.2",
@@ -21552,6 +21555,9 @@
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
     const boardVisualSnapshots = new Map();
+    let statBuffVisualSerial = 0;
+    let statBuffVisualToken = null;
+    const seenStatBuffVisuals = new Map();
     let pendingCourseRegistrationConsent = null;
     let orderedAttendanceTimer = null;
     let activeOrderedAttendance = null;
@@ -29023,6 +29029,20 @@
       resolveDelayedDestruction(side);
       resolveHandTurnEffects(side);
       resolveLateZone(side);
+      const beforeAttendance = [...fusionEffectTasks].filter(task => task.beforeAttendance && task.token === state.preBattleToken)
+        .map(task => task.promise);
+      if (beforeAttendance.length) {
+        const token = state.preBattleToken;
+        Promise.all(beforeAttendance).then(() => {
+          if (token === state.preBattleToken && state.screen === "battle" && !state.gameOver) continueTurnStartAfterLate(side);
+        });
+        render();
+        return;
+      }
+      continueTurnStartAfterLate(side);
+    }
+
+    function continueTurnStartAfterLate(side) {
       cleanupDestroyedCards();
       applyBoardAuras();
       if (state.gameOver) return;
@@ -33866,19 +33886,25 @@
           });
         }
       }
-      if (attended) {
-        sequence.attendedCount += 1;
-        if (typeof entry.afterAttend === "function") entry.afterAttend(attended);
-      }
-      cleanupDestroyedCards();
-      applyBoardAuras();
-      render();
-      if (attended) animateOrderedAttendanceArrival(attended);
-      if (sequence.entries.length === 0) {
-        orderedAttendanceTimer = window.setTimeout(finishOrderedAttendance, orderedAttendanceStepDelay(result));
-      } else {
-        orderedAttendanceTimer = window.setTimeout(runOrderedAttendanceStep, orderedAttendanceStepDelay(result));
-      }
+      const completeStep = (attended) => {
+        if (sequence !== activeOrderedAttendance || state.screen !== "battle") return;
+        if (attended) {
+          sequence.attendedCount += 1;
+          if (typeof entry.afterAttend === "function") entry.afterAttend(attended);
+        }
+        cleanupDestroyedCards();
+        applyBoardAuras();
+        render();
+        if (attended) animateOrderedAttendanceArrival(attended);
+        if (sequence.entries.length === 0) {
+          orderedAttendanceTimer = window.setTimeout(finishOrderedAttendance, orderedAttendanceStepDelay(result));
+        } else {
+          orderedAttendanceTimer = window.setTimeout(runOrderedAttendanceStep, orderedAttendanceStepDelay(result));
+        }
+      };
+      const pending = beforeAttendancePromises.get(attended);
+      if (pending) pending.then(completeStep);
+      else completeStep(attended);
     }
 
     function startOrderedAttendance(entries, options = {}) {
@@ -38745,10 +38771,63 @@
       };
     }
 
+    const beforeAttendancePromises = new WeakMap();
+    const beforeAttendanceSlots = new Set();
+    function beforeAttendanceSlotKey(owner, zone, index) {
+      return `${state.preBattleToken}:${owner}:${zone}:${index ?? ""}`;
+    }
+
+    function deferAdjectiveAttendance(side, card, zone, index, options) {
+      const owner = options.owner || side;
+      const slot = beforeAttendanceSlotKey(owner, zone, index);
+      const task = { token: state.preBattleToken,
+        commandId: options.commandId || state.online.activeRemoteCommandId || "", beforeAttendance: true };
+      beforeAttendanceSlots.add(slot);
+      // Participate in the existing resolution lock, but do not wait for the
+      // ordered-attendance queue: that queue is waiting for this very card.
+      fusionEffectTasks.add(task);
+      card.owner = owner;
+      const pending = (async () => {
+        try {
+          const face = await tossEffectCoin(card.name);
+          if (!face || task.token !== state.preBattleToken || state.gameOver) return null;
+          beforeAttendanceSlots.delete(slot);
+          if (!isBoardSlotOpen(owner, zone, index)) {
+            moveToTrash(side, card, { reason: "出席先が埋まったため" });
+            return null;
+          }
+          if (face === "heads") {
+            applyPermanentStatBuff(card, 3, 0, 0, card.name, { beforeAttendance: true });
+            addLog(`${card.name}の効果：攻撃力を+3しました。`);
+          }
+          const attended = attendCard(side, card, zone, index, { ...options, adjectiveCoinResolved: true });
+          if (!attended) moveToTrash(side, card, { reason: "出席できないため" });
+          return attended;
+        } finally {
+          beforeAttendanceSlots.delete(slot);
+          fusionEffectTasks.delete(task);
+          if (task.token === state.preBattleToken) {
+            cleanupDestroyedCards(); applyBoardAuras(); render();
+            if (isOnlineHost()) onlineBroadcastState(true,
+              onlineIsCommandAwaitingResolution(task.commandId) ? "" : task.commandId);
+          }
+        }
+      })();
+      beforeAttendancePromises.set(card, pending);
+      task.promise = pending;
+      return card;
+    }
+
     function attendCard(side, card, zone, index = null, options = {}) {
       if (!card || !["seat", "teacher", "environment"].includes(zone)) return null;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return null;
       const owner = options.owner || side;
+      if (card.baseId === "adjective_student" && !options.adjectiveCoinResolved && !options.alreadyPlaced
+        && !options.skipLocalAttendEffects && !card.skipAttendEffectsOnPlacement
+        && canUsePrintedCardEffects(card) && !arePlayedEffectsSuppressed(owner)) {
+        if (!isBoardSlotOpen(owner, zone, index)) return null;
+        return deferAdjectiveAttendance(side, card, zone, index, options);
+      }
       const attendanceSource = attendanceSourceForEffect({
         attendanceSource: options.attendanceSource || card.pendingAttendanceSource,
         sourceZone: options.sourceZone,
@@ -39320,12 +39399,6 @@
         });
         addLog(`${card.name}の効果：お互いの場の他の出席者${affected}人に1ダメージ。`);
       }
-      if (card.baseId === "adjective_student") queueFusionEffect(async () => {
-        if (await tossEffectCoin(card.name) !== "heads") return;
-        applyPermanentStatBuff(card, 3, 0, 0, card.name);
-        showFloatingTextForCard(card, "+3攻", "heal");
-        addLog(`${card.name}の効果：攻撃力を+3しました。`);
-      });
       if (card.baseId === "cancel_student") {
         const hitSummary = dealDistributedDamageToRandomTargets({
           source: card,
@@ -43196,7 +43269,12 @@
           overlay.querySelector(".coin-motion").classList.remove("tossing");
           overlay.dataset.stage = "result";
           overlay.setAttribute("aria-label", `${event.label}：${COIN_FACE_LABELS[event.face]}`);
-          await disc.animate([{ opacity: 1 }, { opacity: 1 }], { duration: trainingAnimationDelay(350) }).finished.catch(() => {});
+          // Animating opacity on the 3D disc flattens its two faces in WebKit
+          // and Chromium. Hold on its outer motion wrapper instead.
+          await overlay.querySelector(".coin-motion").animate(
+            [{ transform: "translateY(0)" }, { transform: "translateY(0)" }],
+            { duration: trainingAnimationDelay(350) }
+          ).finished.catch(() => {});
           return event.token === state.preBattleToken && state.screen === "battle" && !state.gameOver ? event.face : null;
         } finally { overlay.remove(); }
       };
@@ -43616,13 +43694,13 @@
       applyDerivedStats(card, newAttack, newMaxHp);
     }
 
-    function applyPermanentStatBuff(card, attackBonus, hpBonus, defenseBonus = 0, source = "") {
+    function applyPermanentStatBuff(card, attackBonus, hpBonus, defenseBonus = 0, source = "", options = {}) {
       if (!card) return;
       if (isAibenNyoteiEffectImmune(card)) return;
       const normalizedAttack = Number(attackBonus) || 0;
       const normalizedHp = Number(hpBonus) || 0;
       const normalizedDefense = Number(defenseBonus) || 0;
-      if (hasPendingOrderedAttendance() && (normalizedAttack > 0 || normalizedHp > 0 || normalizedDefense > 0)) {
+      if (!options.beforeAttendance && hasPendingOrderedAttendance() && (normalizedAttack > 0 || normalizedHp > 0 || normalizedDefense > 0)) {
         orderedAttendanceBuffs.push({
           card,
           attack: Math.max(0, normalizedAttack),
@@ -43663,6 +43741,15 @@
       if (defenseBonus) {
         card.baseDefense = Math.max(0, (card.baseDefense ?? card.defense ?? 0) + defenseBonus);
         card.defense = Math.max(0, (card.defense ?? 0) + defenseBonus);
+      }
+      if (normalizedAttack > 0 || normalizedHp > 0 || normalizedDefense > 0) {
+        // Keep the trigger on each target, including cards buffed before their
+        // first board render. Snapshots carry it to guests and spectators too.
+        statBuffVisualSerial = Math.max(statBuffVisualSerial, ...(card.statBuffVisuals || []).map(event => event.id)) + 1;
+        card.statBuffVisuals = [...(card.statBuffVisuals || []), {
+          id: statBuffVisualSerial, attack: Math.max(0, normalizedAttack),
+          hp: Math.max(0, normalizedHp), defense: Math.max(0, normalizedDefense)
+        }].slice(-16);
       }
     }
 
@@ -44536,6 +44623,7 @@
     }
 
     function isBoardSlotOpen(owner, zone, index = null) {
+      if (beforeAttendanceSlots.has(beforeAttendanceSlotKey(owner, zone, index))) return false;
       if (zone === "seat") {
         return index !== null
           && !isSeatBlocked(owner, index)
@@ -47986,14 +48074,13 @@
       const previous = boardVisualSnapshots.get(card.instanceId);
       boardVisualSnapshots.set(card.instanceId, current);
       if (!previous) {
-        const printedAttack = Number(CARD_BASES[card.baseId]?.attack);
-        if (card.baseId === "adjective_student"
-          && Number.isFinite(printedAttack)
-          && current.attack >= printedAttack + 3
-          && card.playedOnTurn === state.actionTurn) {
-          return [{ tone: "buff", label: `攻撃力強化 +${current.attack - printedAttack}` }];
-        }
-        return [];
+        const base = CARD_BASES[card.baseId];
+        return [["attack", "攻撃力"], ["hp", "体力"], ["defense", "防御力"]].flatMap(([key, label]) => {
+          const printed = Number(base?.[key] ?? (key === "defense" ? 0 : NaN));
+          const difference = current[key] - printed;
+          return Number.isFinite(printed) && difference > 0
+            ? [{ tone: "buff", label: `${label}強化 +${difference}` }] : [];
+        });
       }
       const changes = [];
       [
@@ -48031,6 +48118,24 @@
 
     function appendBoardChangeFeedback(button, card) {
       const changes = boardChangeFeedbackForCard(card);
+      if (statBuffVisualToken !== state.preBattleToken) {
+        statBuffVisualToken = state.preBattleToken;
+        seenStatBuffVisuals.clear();
+      }
+      const seen = seenStatBuffVisuals.get(card.instanceId) || 0;
+      const events = (card.statBuffVisuals || []).filter(event => event.id > seen);
+      if (events.length) {
+        seenStatBuffVisuals.set(card.instanceId, Math.max(...events.map(event => event.id)));
+        const labels = new Set(changes.map(change => change.label));
+        for (const event of events) {
+          for (const [key, label] of [["attack", "攻撃力"], ["hp", "体力"], ["defense", "防御力"]]) {
+            if (!(event[key] > 0)) continue;
+            const text = `${label}強化 +${event[key]}`;
+            if (!labels.has(text)) changes.push({ tone: "buff", label: text });
+            labels.add(text);
+          }
+        }
+      }
       if (changes.length === 0) return;
       appendBoardChangeFeedbackLayer(button, changes);
     }
@@ -53829,7 +53934,7 @@
         midge: "進化：「単細胞生物」。進化したとき、相手の出席者1人をランダムに指名し、1ダメージを与える。自分の講義室に「ミジンコ」が2人いる場合、先に出席した「ミジンコ」を「生物」に特殊進化させ、もう1人を破壊する。",
         organism: "進化：「ミジンコ」。陽気を持つ。進化したとき、相手の出席者すべてに2ダメージを与える。自分の講義室に「生物」「ミジンコ」「単細胞生物」が1人ずついる場合、「生物」を「完全変異体」に特殊進化させ、「ミジンコ」と「単細胞生物」を破壊する。",
         perfect_mutant: "進化：「生物」。超陽気を持つ。進化したとき、相手の出席者すべてを破壊する。",
-        adjective_student: "遅刻4。このカードが出席したとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。",
+        adjective_student: "遅刻4。このカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。",
         absent_student: "遅刻3。このカードが自分の講義室から校外エリアへ送られたとき、相手の講義室にいる教師1人をランダムに指名し、破壊する。",
         yocchan: "超陽気を持つ。このカードが手札にあるかぎり、自分が持ち物カードを使うたび、このカードの攻撃力と体力を+1する。",
         trendy_student: "このカードが攻撃した出席者の体力を0にした場合、反撃ダメージを受けない。その出席者を校外エリアへ送るたび、このカードはもう一度攻撃できる。",

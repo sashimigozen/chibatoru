@@ -24,16 +24,18 @@ for (const face of ['heads', 'tails']) {
     await setup(page, face);
     await page.evaluate(() => {
       window.attendee = makeBoardCard(createCardFromBase('adjective_student', 'player'));
-      state.players.player.board.seats[0] = attendee;
-      resolveAttendEffects('player', attendee, 'seat', 0, { forceLocalAttendEffects: true }); render();
+      attendCard('player', attendee, 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.GENERATED }); render();
     });
     await expect(page.locator('.effect-coin-overlay')).toBeVisible();
     expect(await page.evaluate(() => attendee.attack)).toBe(2);
+    expect(await page.evaluate(() => state.players.player.board.seats[0])).toBeNull();
+    expect(await page.evaluate(() => isBoardSlotOpen('player', 'seat', 0))).toBe(false);
     expect(await page.evaluate(() => battleNewActionBlocked())).toBe(true);
     await page.screenshot({ path: test.info().outputPath('effect-coin.png') });
     await page.clock.runFor(1400);
     await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
     expect(await page.evaluate(() => attendee.attack)).toBe(face === 'heads' ? 5 : 2);
+    expect(await page.evaluate(() => state.players.player.board.seats[0]?.baseId)).toBe('adjective_student');
     expect(await page.evaluate(() => rolls)).toBe(1);
     await expect(page.locator('.effect-coin-overlay')).toHaveCount(0);
   });
@@ -99,9 +101,53 @@ test('表示本文は表で強化・繰り返し、裏で眠気失敗に統一�
     cardRulesText(createCardFromBase('adjective_vs_cynical', 'player')),
     BATTLE_CARD_TERM_DESCRIPTIONS['眠気']
   ]);
-  expect(texts[0]).toContain('コインを1回投げ、表ならこのカードの攻撃力を+3する。');
+  expect(texts[0]).toBe('[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。');
   expect(texts[1]).toContain('コインを1回投げ、表ならこの効果を繰り返す。');
   expect(texts[2]).toContain('コインを1回投げ、裏なら攻撃に失敗する。');
+});
+
+for (const source of ['late', 'ordered', 'turnStart']) test(`出席前コイン ${source}：判定中は未出席、終了後に1回だけ出席する`, async ({ page }) => {
+  await setup(page, 'heads');
+  await page.evaluate(source => {
+    const card = createCardFromBase('adjective_student', 'player');
+    if (source === 'ordered') {
+      startOrderedAttendance(orderedAttendanceEntries('player', [0, 1], () => createCardFromBase('adjective_student', 'player')),
+        { initialDelayMs: 0 });
+    } else {
+      state.players.player.late = [{ card, remaining: 1, owner: 'player', zone: 'seat', index: 0 }];
+      if (source === 'turnStart') startTurn('player');
+      else resolveLateZone('player');
+    }
+    render();
+  }, source);
+  await page.clock.runFor(30);
+  await expect(page.locator('.effect-coin-overlay')).toBeVisible();
+  expect(await page.evaluate(() => state.players.player.board.seats[0])).toBeNull();
+  expect(await page.evaluate(() => state.players.player.attendancesThisTurn)).toBe(0);
+  await page.clock.runFor(1600);
+  await expect.poll(() => page.evaluate(() => state.players.player.board.seats[0]?.attack)).toBe(5);
+  if (source === 'ordered') {
+    await page.clock.runFor(1000);
+    await expect(page.locator('.effect-coin-overlay')).toBeVisible();
+    expect(await page.evaluate(() => state.players.player.board.seats[1])).toBeNull();
+    await page.clock.runFor(1600);
+    await expect.poll(() => page.evaluate(() => state.players.player.board.seats[1]?.attack)).toBe(5);
+    await page.clock.runFor(1000);
+    expect(await page.evaluate(() => hasPendingOrderedAttendance())).toBe(false);
+  }
+  expect(await page.evaluate(() => rolls)).toBe(source === 'ordered' ? 2 : 1);
+});
+
+test('埋まった出席先・出席効果なし指定ではコインを投げない', async ({ page }) => {
+  await setup(page, 'heads');
+  const result = await page.evaluate(() => {
+    state.players.player.board.seats[0] = makeBoardCard(createCardFromBase('general_student', 'player'));
+    const rejected = attendCard('player', makeBoardCard(createCardFromBase('adjective_student', 'player')), 'seat', 0);
+    const plain = attendCard('player', makeBoardCard(createCardFromBase('adjective_student', 'player')), 'seat', 1,
+      { skipLocalAttendEffects: true });
+    return [rejected, plain.attack, rolls, state.players.player.board.seats[1].attack];
+  });
+  expect(result).toEqual([null, 2, 0, 2]);
 });
 
 test('演出スキップでも判定は1回だけ行う', async ({ page }) => {
@@ -118,8 +164,7 @@ test('試合を離れたら古いコインから強化処理を再開しない',
   await setup(page, 'heads');
   await page.evaluate(() => {
     window.attendee = makeBoardCard(createCardFromBase('adjective_student', 'player'));
-    state.players.player.board.seats[0] = attendee;
-    resolveAttendEffects('player', attendee, 'seat', 0, { forceLocalAttendEffects: true });
+    attendCard('player', attendee, 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.HAND });
   });
   await expect(page.locator('.effect-coin-overlay')).toBeVisible();
   await page.evaluate(() => { state.preBattleToken++; state.screen = 'home'; });
@@ -132,8 +177,7 @@ test('回転や結果表示が終わるまで強化数値を見せず、バフ�
   await setup(page, 'heads');
   await page.evaluate(() => {
     window.attendee = makeBoardCard(createCardFromBase('adjective_student', 'player'));
-    state.players.player.board.seats[0] = attendee;
-    resolveAttendEffects('player', attendee, 'seat', 0, { forceLocalAttendEffects: true }); render();
+    attendCard('player', attendee, 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.HAND }); render();
   });
   await expect(page.locator('.effect-coin-overlay')).toBeVisible();
   await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.pause()));
@@ -142,6 +186,9 @@ test('回転や結果表示が終わるまで強化数値を見せず、バフ�
   await expect(page.locator('.effect-coin-overlay')).toHaveAttribute('data-stage', 'tossing');
   await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
   await expect(page.locator('.effect-coin-overlay')).toHaveAttribute('data-stage', 'result');
+  // The result hold must not animate the 3D disc's opacity: that flattens
+  // the faces and displays the front upside down instead of the black back.
+  expect(await page.evaluate(() => document.querySelector('.effect-coin-overlay .coin-disc').getAnimations().length)).toBe(0);
   await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.pause()));
   expect(await page.evaluate(() => attendee.attack)).toBe(2);
   await page.screenshot({ path: test.info().outputPath('coin-result-before-buff.png') });
