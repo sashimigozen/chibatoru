@@ -308,6 +308,7 @@ test("形容詞学生vs冷笑学生の表示文を既存文体へ統一する", 
   });
   expect(rules).toContain("このカードを手札から出席させるとき、次の効果から1つを選ぶ。");
   expect(rules).toContain("コインを1回投げ、表ならこの効果を繰り返す。");
+  expect(rules).toContain("2. 次の相手のターン終了まで、相手の手札と講義室にある出席者カードすべての攻撃力を-3する。");
   expect(rules).not.toContain("50%の確率でもう一度");
 });
 
@@ -463,8 +464,10 @@ test("子曰くの二段階UIでタイプを宣言してカードを選べる", 
 });
 
 test("形容詞学生vs冷笑学生は出席前の選択UIから弱体化を実行する", async ({ page }) => {
+  await page.waitForFunction(() => !battleNewActionBlocked());
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
+    api.state.training.skipAnimations = true;
     const card = api.createCardFromBase("adjective_vs_cynical", "player");
     api.state.players.player.hand = [card];
     const enemy = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
@@ -479,6 +482,68 @@ test("形容詞学生vs冷笑学生は出席前の選択UIから弱体化を実�
   });
   expect(result).toEqual({ mode: "adjective_choice", placed: "adjective_vs_cynical",
     secondSeat: "adjective_vs_cynical", enemyAttack: 0 });
+});
+
+for (const side of ["player", "opponent"]) test(`形容詞学生vs冷笑学生の弱体化は手札出席後も次の相手ターン終了まで続く ${side}`, async ({ page }) => {
+  const result = await page.evaluate(side => {
+    const a = window.__chibattle;
+    const enemySide = side === "player" ? "opponent" : "player";
+    a.state.currentSide = side;
+    a.state.training.skipAnimations = true;
+    a.state.actionTurn = 10;
+    const enemy = a.makeBoardCard(a.createCardFromBase("general_student", enemySide));
+    enemy.attack = enemy.baseAttack = 5;
+    const hand = a.createCardFromBase("general_student", enemySide);
+    const lateHand = a.createCardFromBase("general_student", enemySide);
+    const unaffected = a.createCardFromBase("general_student", enemySide);
+    a.state.players[enemySide].board.seats[0] = enemy;
+    a.state.players[enemySide].hand = [hand, lateHand];
+    const source = a.createCardFromBase("adjective_vs_cynical", side);
+    a.state.players[side].hand = [source];
+    a.placeCardFromHand(side, source.instanceId, "seat", side, 0, true, { adjectiveChoice: "weaken" });
+    a.applyBoardAuras();
+    const reduced = [enemy.attack, hand.attack, lateHand.attack];
+    const guestExpiryOwner = onlineSwapOwnersDeep(hand).statModifiers[0].targetOwner;
+    a.resolveEndTurnEffects(side);
+    const ownEnd = enemy.attack;
+    a.state.actionTurn = 11;
+    a.state.currentSide = enemySide;
+    a.state.players[enemySide].hand = [lateHand, unaffected];
+    const attended = a.makeBoardCard(hand);
+    a.state.players[enemySide].board.seats[3] = attended;
+    a.applyBoardAuras();
+    const during = [enemy.attack, attended.attack, lateHand.attack, unaffected.attack];
+    // Snapshot-shaped copies must retain the expiry data for online clients.
+    a.state.players[enemySide].hand = JSON.parse(JSON.stringify(a.state.players[enemySide].hand));
+    a.resolveEndTurnEffects(enemySide);
+    const after = [enemy.attack, attended.attack, ...a.state.players[enemySide].hand.map(c => c.attack)];
+    a.resolveEndTurnEffects(enemySide);
+    return { reduced, ownEnd, during, after, noDoubleRestore: attended.attack, guestExpiryOwner };
+  }, side);
+  expect(result).toEqual({ reduced: [2, 0, 0], ownEnd: 2, during: [2, 0, 0, 2],
+    after: [5, 2, 2, 2], noDoubleRestore: 2, guestExpiryOwner: side });
+});
+
+test("弱体化は重複しても期限で解除し、別の強化や効果無効の出席者を変えない", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const a = window.__chibattle;
+    a.state.actionTurn = 10;
+    const target = a.makeBoardCard(a.createCardFromBase("general_student", "opponent"));
+    const immune = a.makeBoardCard(a.createCardFromBase("aiben", "opponent"));
+    a.state.players.opponent.board.seats[0] = target;
+    a.state.players.opponent.board.seats[3] = immune;
+    applyAdjectiveWeakening(target, "opponent");
+    applyAdjectiveWeakening(target, "opponent");
+    applyAdjectiveWeakening(immune, "opponent");
+    applyPermanentStatBuff(target, 2, 0, 0, "別の強化");
+    a.applyBoardAuras();
+    const reduced = target.attack;
+    a.state.actionTurn = 11;
+    a.resolveEndTurnEffects("opponent");
+    return { reduced, restored: target.attack, modifiers: target.statModifiers.map(e => e.source),
+      immuneAffected: immune.statModifiers.some(e => e.adjectiveWeakening) };
+  });
+  expect(result).toEqual({ reduced: 0, restored: 4, modifiers: ["別の強化"], immuneAffected: false });
 });
 
 test("形容詞学生vs冷笑学生の盤面名はPCとスマホの横2席カード内に収まる", async ({ page }) => {
