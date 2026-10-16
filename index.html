@@ -19848,7 +19848,7 @@
           { title: "形容詞学生", after: "[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。\n遅刻・効果による出席でも、コインの結果表示が終わってから講義室へ出席します。" },
           { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。形容詞学生はコインの結果後に強化演出を見せてから、ターン開始表示や次の出席へ進みます。カード本文・効果・数値は変更していません。" },
           { title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" },
-          { title: "AIの破壊・環境判断", after: "パンパン・破壊させる嘘などは弱い出席者を優先し、損な破壊を控え、必要に応じて低戦意の出席者を先に出す手順を検討します。一般教室は環境が空なら温存します。本体を攻撃できない場面でも、敵の強化源になる相手のTRPGサークルメンバーを安易に倒さないよう修正しました。カード本文・能力値・効果・ルールは変更していません。" }]
+          { title: "AIのカード使用判断", after: "パンパン・破壊させる嘘などは弱い出席者を優先し、損な破壊を控え、必要に応じて低戦意の出席者を先に出す手順を検討します。一般教室は環境が空なら温存します。本体を攻撃できない場面でも、敵の強化源になる相手のTRPGサークルメンバーを安易に倒さないよう修正しました。気にするなは通常の序盤では温存し、敗北回避や終盤の決着を守る場面で使用します。焼き鳥ハラスメントは対象の傷と最大戦意を計算し、出席→戦意回復→追加の出席につながる順番と対象を選びます。カード本文・能力値・効果・ルールは変更していません。" }]
       },
       {
         version: "ver.0.25.1",
@@ -29199,6 +29199,13 @@
       const moveLimit = isEarlyDungeonAi() ? 5 : 8;
       while (safety < moveLimit && isOpponentAiActive()) {
         safety += 1;
+        const refill = planAiYakitori("opponent");
+        if (refill.target && refill.score > 0 && !getAiGuaranteedBoardLethalPlan()) {
+          if (castItemOnCard("opponent", refill.item, "opponent", refill.target.zone, refill.target.index, false)) {
+            render(); await waitForOrderedAttendance(); await waitForAiTimedEffects();
+            continue;
+          }
+        }
         const move = findAiPlayMove();
         if (!move) break;
         placeCardFromHand("opponent", move.card.instanceId, move.zone, move.owner, move.index, false);
@@ -29252,6 +29259,76 @@
         return counts.fusion_uma || counts.fusion_maibo ? "adaptiveFusion" : "boneBurn";
       }
       return counts.adjective_student && counts.adjective_vs_cynical ? "coinBoard" : "normal";
+    }
+
+    function scoreAiDontWorry(side, item) {
+      const own = state.players[side], enemySide = oppositeSide(side);
+      if (state.actionTurn < 5 || effectiveCardCost(item) > own.will || item.unusable || isHighLoadHandCard(item)
+        || arePlayedEffectsSuppressed(side)
+        || (own.lifeShieldUntilTurn >= state.actionTurn + 1 && own.lifeShieldUntilSide === enemySide)) return 0;
+      const forecast = getAiLethalForecast(side);
+      if (forecast.immediateGuaranteedDamage >= state.players[enemySide].life) return 0;
+      const incoming = Math.max(0, forecast.opponentNextTurnDamage);
+      if (incoming <= 0) return 0;
+      if (forecast.opponentCounterLethal) return 65 + incoming;
+      const decisive = own.maxWill >= 7 || own.turnsTaken >= 6 || own.life <= 8 || state.players[enemySide].life <= 8;
+      // Preserve it during ordinary early exchanges; spend it to secure the
+      // next finish, not simply because any damage is forecast.
+      if (decisive && forecast.nextTurnLethal) return 38 + incoming;
+      if (decisive && own.life - incoming <= 3 && incoming >= own.life * 0.5) return 25 + incoming;
+      return 0;
+    }
+
+    function planAiYakitori(side, onlyItem = null) {
+      const own = state.players[side];
+      const none = { score: 0, item: null, target: null, setup: null };
+      if (arePlayedEffectsSuppressed(side)) return none;
+      const items = onlyItem ? [onlyItem] : own.hand.filter(card => card.baseId === "yakitori_harassment");
+      const plans = [];
+      const followUpValue = card => Math.max(0, card.attack || 0) + Math.max(0, card.hp || 0) * 0.65
+        + aiCardResourceValue(side, card) + aiRecurringCardValue(side, card) + aiDeckPlanCardBonus(side, card);
+      const legalFollowUp = (card, setup = null) => {
+        if (card.type === "item" || card.type === "environment" || card.unusable || isHighLoadHandCard(card)) return false;
+        if (card.baseId === "predator" && setup) return true; // It can consume the newly attended student.
+        return canPlaceCard(side, card, "teacher", side, null)
+          || AI_SEAT_PRIORITY.some(index => index !== setup?.index && canPlaceCard(side, card, "seat", side, index));
+      };
+      for (const item of items) {
+        const cost = effectiveCardCost(item);
+        if (item.unusable || isHighLoadHandCard(item) || cost > own.will) continue;
+        const targets = listBoardRefs(side).filter(ref => {
+          const card = getBoardCardFromRef(ref);
+          return card?.type === "student" && !isPadlocked(card) && !isAibenNyoteiEffectImmune(card);
+        });
+        for (const ref of targets) {
+          const card = getBoardCardFromRef(ref);
+          const refund = Math.max(0, 5 - Math.max(0, card.maxHp - card.currentHp));
+          const afterWill = Math.min(own.maxWill, own.will - cost + refund);
+          if (afterWill <= own.will) continue;
+          const follow = own.hand.filter(card => card.instanceId !== item.instanceId && effectiveCardCost(card) > own.will
+            && effectiveCardCost(card) <= afterWill && legalFollowUp(card)).sort((a, b) => followUpValue(b) - followUpValue(a))[0];
+          if (follow) plans.push({ item, target: ref, setup: null, afterWill,
+            score: 30 + (afterWill - own.will) * 4 + followUpValue(follow) });
+        }
+        for (const card of own.hand) {
+          const cardCost = effectiveCardCost(card);
+          if (card.type !== "student" || card.evolutionFrom || card.late || card.occupiedSeatSize
+            || card.unusable || isHighLoadHandCard(card) || cardCost <= 0 || cardCost + cost > own.will
+            || card.baseId === "predator") continue;
+          const index = AI_SEAT_PRIORITY.find(index => canPlaceCard(side, card, "seat", side, index));
+          if (index === undefined) continue;
+          const setup = { card, zone: "seat", owner: side, index };
+          const spentWill = own.will - cardCost;
+          const afterWill = Math.min(own.maxWill, spentWill - cost + 5);
+          if (afterWill <= spentWill) continue;
+          const follow = own.hand.filter(next => next.instanceId !== card.instanceId && next.instanceId !== item.instanceId
+            && effectiveCardCost(next) > spentWill && effectiveCardCost(next) <= afterWill && legalFollowUp(next, setup))
+            .sort((a, b) => followUpValue(b) - followUpValue(a))[0];
+          if (follow) plans.push({ item, target: null, setup, afterWill,
+            score: 25 + followUpValue(card) + followUpValue(follow) });
+        }
+      }
+      return plans.sort((a, b) => b.score - a.score)[0] || none;
     }
 
     function aiDeckPlanCardBonus(side, card) {
@@ -30520,6 +30597,8 @@
 
     function findTrainingAiPlayMove(side) {
       const player = state.players[side];
+      const refill = planAiYakitori(side);
+      if (refill.setup && aiBoardFaceDamage(side, { readyOnly: true }).guaranteed < state.players[oppositeSide(side)].life) return refill.setup;
       const candidates = player.hand
         .filter((card) => card.type !== "item"
           && effectiveCardCost(card) <= player.will
@@ -30669,9 +30748,11 @@
       if (item.baseId === "peaceful_mind") return ai.life <= 15
         ? 28 + crabDefenseBonus + deckOutDefenseBonus
         : (hasYocchan ? 10 : -Infinity);
-      if (item.baseId === "dont_worry") return state.actionTurn >= 5
-        ? (hasYocchan ? 24 : 14) + crabDefenseBonus + deckOutDefenseBonus
-        : -Infinity;
+      if (item.baseId === "dont_worry") return scoreAiDontWorry(side, item) || -Infinity;
+      if (item.baseId === "yakitori_harassment") {
+        const refill = planAiYakitori(side, item);
+        return refill.target ? refill.score : -Infinity;
+      }
       if (["aggro_army", "ikemasu"].includes(item.baseId)) {
         return (hasYocchan ? 22 : 8) + crabSearchBonus
           + (item.baseId === "aggro_army" ? deckOutDrawBonus : 0);
@@ -30689,6 +30770,11 @@
     }
 
     function useTrainingYocchanItem(side, item) {
+      if (item.baseId === "dont_worry" && scoreAiDontWorry(side, item) <= 0) return false;
+      if (item.baseId === "yakitori_harassment") {
+        const plan = planAiYakitori(side, item);
+        return plan.target ? castItemOnCard(side, item, side, plan.target.zone, plan.target.index, false) : false;
+      }
       const utility = planAiUtilityItem(side, item);
       if (utility) return utility.score > 0 && useAiUtilityItem(side, item, utility);
       const nonCombatPlan = planAiNonCombatItem(side, item);
@@ -30805,6 +30891,13 @@
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
         safety += 1;
+        const refill = planAiYakitori("player");
+        if (refill.target && aiBoardFaceDamage("player", { readyOnly: true }).guaranteed < state.players.opponent.life) {
+          if (castItemOnCard("player", refill.item, "player", refill.target.zone, refill.target.index, false)) {
+            render(); await waitForOrderedAttendance(); await waitForAiTimedEffects();
+            continue;
+          }
+        }
         const move = findTrainingAiPlayMove("player");
         if (!move) break;
         placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
@@ -31389,6 +31482,8 @@
 
     function shouldAiUseItemAtTiming(item, score, timing) {
       if (score <= 0) return false;
+      if (item.baseId === "dont_worry") return scoreAiDontWorry("opponent", item) > 0;
+      if (item.baseId === "yakitori_harassment") return Boolean(planAiYakitori("opponent", item).target);
       if (getAiLethalEnablingItemPlan(item)) return true;
       if (item.baseId === "suffix_sugi") return scoreAiHandLoadItem("opponent", item) > 0;
       if (isAiYocchanHyperCarryStrategyActive()) {
@@ -31534,6 +31629,8 @@
 
     function findAiPlayMove() {
       const opponent = state.players.opponent;
+      const refill = planAiYakitori("opponent");
+      if (refill.setup && !getAiGuaranteedBoardLethalPlan()) return refill.setup;
       const affordable = opponent.hand.filter((card) => card.type !== "item"
         && effectiveCardCost(card) <= opponent.will
         && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi("opponent", card))));
@@ -32197,6 +32294,11 @@
     }
 
     function scoreAiItem(item, options = {}) {
+      if (item?.baseId === "dont_worry") return scoreAiDontWorry("opponent", item);
+      if (item?.baseId === "yakitori_harassment") {
+        const plan = planAiYakitori("opponent", item);
+        return plan.target ? plan.score : 0;
+      }
       if (item?.baseId === "aggro_walk" && !aiCanSurviveSelfDamage("opponent", 2)) return 0;
       if (item?.baseId === "thin_item" && !canUseThinItem()) return 0;
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) return 0;
@@ -32605,18 +32707,7 @@
       }
       if (item.baseId === "thanks_all_students") return friendlyCards.some((card) => card.type === "student" && card.currentHp < card.maxHp) ? 7 : 3;
       if (item.baseId === "dont_worry") {
-        if (state.actionTurn < 5) return 0;
-        if (opponent.lifeShieldUntilTurn >= state.actionTurn + 1
-          && opponent.lifeShieldUntilSide === "player") return 0;
-        const forecast = getAiLethalForecast();
-        const incomingDamage = Math.max(0, forecast.opponentNextTurnDamage || 0);
-        if (incomingDamage <= 0) return 0;
-        if (incomingDamage >= opponent.life) return 45 + incomingDamage;
-        const remainingLife = opponent.life - incomingDamage;
-        if (remainingLife <= 4) return 18 + incomingDamage;
-        if (incomingDamage >= opponent.life * 0.5) return 12 + incomingDamage;
-        if (opponent.life <= 8) return 8 + incomingDamage;
-        return 2 + Math.min(5, incomingDamage);
+        return scoreAiDontWorry("opponent", item);
       }
       if (item.baseId === "abyss") return enemyCards.length >= 2 ? 8 + enemyCards.length : 0;
       if (item.baseId === "yamanashi_minimum_wage") {
@@ -32650,7 +32741,10 @@
         && friendlyCards.some((card) => card.name.includes("アグロ")) ? 8 : 0;
       if (item.baseId === "stress_hair") return friendlyCards.some((card) => ["yuta", "dark_yuta"].includes(card.baseId)) ? 7 : 0;
       if (item.baseId === "attitude") return !state.players.player.board.teacher && enemyCards.some((card) => card.type === "student") ? 6 : 0;
-      if (item.baseId === "yakitori_harassment") return friendlyCards.some((card) => card.type === "student") ? 5 : 0;
+      if (item.baseId === "yakitori_harassment") {
+        const plan = planAiYakitori("opponent", item);
+        return plan.target ? plan.score : 0;
+      }
       if (item.baseId === "sweet_curry") return enemyCards.some((card) => card.type === "vampire") ? 10 : 0;
       if (item.baseId === "confucius_says") return opponent.deck.length >= 3 ? 7 : 0;
       if (item.baseId === "suffix_sugi") return scoreAiHandLoadItem("opponent", item);
@@ -32828,6 +32922,11 @@
     }
 
     function useAiItem(item) {
+      if (item.baseId === "dont_worry" && scoreAiDontWorry("opponent", item) <= 0) return false;
+      if (item.baseId === "yakitori_harassment") {
+        const plan = planAiYakitori("opponent", item);
+        return plan.target ? castItemOnCard("opponent", item, "opponent", plan.target.zone, plan.target.index, false) : false;
+      }
       const utility = planAiUtilityItem("opponent", item);
       if (utility) return utility.score > 0 && useAiUtilityItem("opponent", item, utility);
       if (arePlayedEffectsSuppressed("opponent")) return useSuppressedItemEffect("opponent", item, false);
@@ -55307,6 +55406,9 @@
       aiDeckOutItemScore,
       scoreAiDestroyTarget,
       planAiPanpan,
+      scoreAiDontWorry,
+      planAiYakitori,
+      playAiBoardMoves,
       planAiSacrificeSetup,
       scoreAiFriendlySacrifice,
       aiDeckGamePlan,
