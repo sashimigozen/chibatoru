@@ -18691,7 +18691,7 @@
   </div>
 
   <script src="websocket-client.js"></script>
-  <script src="ai-battle-decks.js?v=0.23.19"></script>
+  <script src="ai-battle-decks.js?v=0.26.0"></script>
   <script>
     const SIDES = { player: "あなた", opponent: "相手AI" };
     const SOLO_OPPONENT_LABEL = "相手AI";
@@ -19847,7 +19847,9 @@
           { title: "コインの裏面", after: "試合中のコイントスで、結果表示中に表面が逆さに映る不具合を修正しました。裏は黒地にスマイルの口の柄が表示されます。" },
           { title: "形容詞学生", after: "[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。\n遅刻・効果による出席でも、コインの結果表示が終わってから講義室へ出席します。" },
           { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。カード本文・効果・数値は変更していません。" },
-          { title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" }]
+          { title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" },
+          { title: "AIバトルのデッキ", after: "「顔殴りのどこ骨」「どこのウマの骨のマイボだよ！」「コイントス研究会」を追加し、「重い想い」「北風小僧のU太郎」を更新しました。提供されたカード構成・枚数を反映し、AIのランダム使用デッキは20種類になりました。勝利報酬は従来どおり5CPを直接獲得します。" },
+          { title: "AIのデッキ方針と破壊判断", after: "どこの骨を並べる本体ダメージ戦略、状況に応じた融合先の選択、コイントス研究会の盤面展開を評価へ反映しました。パンパン・破壊させる嘘などは弱い出席者を優先し、損な破壊を控え、必要に応じて低戦意の出席者を先に出す手順を検討します。一般教室は環境が空なら温存します。カード本文・能力値・効果・ルールは変更していません。" }]
       },
       {
         version: "ver.0.25.1",
@@ -29245,6 +29247,39 @@
       return aiDeckIncludesCard(side, "yocchan");
     }
 
+    function aiDeckGamePlan(side) {
+      const counts = state.players[side].originalDeckCounts || {};
+      if (counts.fusion_bone && counts.fusion_where) {
+        return counts.fusion_uma || counts.fusion_maibo ? "adaptiveFusion" : "boneBurn";
+      }
+      return counts.adjective_student && counts.adjective_vs_cynical ? "coinBoard" : "normal";
+    }
+
+    function aiDeckPlanCardBonus(side, card) {
+      const plan = aiDeckGamePlan(side);
+      if (!canUsePrintedCardEffects(card) || arePlayedEffectsSuppressed(side)) return 0;
+      const enemySide = oppositeSide(side);
+      const incoming = aiBoardFaceDamage(enemySide, { futureActionTurn: state.actionTurn + 1 }).expected;
+      const danger = incoming >= state.players[side].life;
+      if (plan === "boneBurn" && card.baseId === "where_bone") {
+        if (aiLifeDamagePrevented(enemySide, state.actionTurn, side)) return 0;
+        const existingDamage = listBoardRefs(side).map(getBoardCardFromRef)
+          .filter(c => c?.baseId === "where_bone" && canUsePrintedCardEffects(c)).length * 3;
+        return existingDamage + 3 >= state.players[enemySide].life ? 180 : danger ? 2 : 18;
+      }
+      if (plan === "adaptiveFusion") {
+        if (card.baseId === "umaibo") return Math.min(3, Math.max(0, currentLifeCap(side) - state.players[side].life)) * (danger ? 8 : 3);
+        if (["maibo_bone", "where_maibo"].includes(card.baseId)) return Math.max(0, aiRecurringCardValue(side, card)) * (danger ? 2 : 0.8);
+        if (["uma_bone", "where_uma"].includes(card.baseId)) return Math.max(0, aiRecurringCardValue(side, card)) * 0.8;
+        if (card.baseId === "where_bone" && !aiLifeDamagePrevented(enemySide, state.actionTurn, side)) return state.players[enemySide].life <= 3 ? 180 : danger ? 0 : 4;
+      }
+      if (plan === "coinBoard") {
+        if (card.baseId === "adjective_student") return danger ? 0 : 5;
+        if (card.baseId === "lazy_student") return danger ? 0 : 3;
+      }
+      return 0;
+    }
+
     function isAiCafeteriaVampireStrategyActive(side = "opponent") {
       return aiDeckIncludesCard(side, "cafeteria")
         && aiDeckIncludesCard(side, "apprentice_vampire");
@@ -29745,7 +29780,7 @@
     function scoreAiFriendlySacrifice(side, card, ref = null) {
       if (!card) return Infinity;
       let score = Math.max(0, card.attack || 0) * 2
-        + Math.max(0, card.currentHp || 0)
+        + Math.max(0, card.currentHp ?? card.hp ?? 0)
         + Math.max(0, effectiveCardCost(card));
       if (isAiProtectedBiologyMaterial(side, card)) {
         const materialBonus = { single_cell: 120, midge: 150, organism: 190 };
@@ -29755,6 +29790,9 @@
       if (isAiYocchanHyperCarryStrategyActive(side) && card.baseId === "yocchan") score += 180;
       if (ref?.zone === "teacher" && card.type === "teacher") score += 12;
       score += Math.max(0, aiRecurringCardValue(side, card));
+      score += Math.max(0, aiDeckPlanCardBonus(side, card));
+      if (card.baseId === "lazy_student") score += 8;
+      if (aiCardProvidesFaceProtection(card)) score += 6;
       return score;
     }
 
@@ -29762,7 +29800,7 @@
       const targetSide = oppositeSide(side);
       const friendly = listBoardRefs(side)
         .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
-        .filter((entry) => entry.card && !isPadlocked(entry.card))
+        .filter((entry) => entry.card && !isPadlocked(entry.card) && !isAibenNyoteiEffectImmune(entry.card))
         .sort((a, b) => scoreAiFriendlySacrifice(side, a.card, a.ref)
           - scoreAiFriendlySacrifice(side, b.card, b.ref))[0] || null;
       const enemy = effectTargetEntries(side, targetSide)
@@ -29771,12 +29809,47 @@
       if (!friendly || !enemy) return { friendly: null, enemy: null, score: 0 };
       const enemyValue = scoreAiDestroyTarget(enemy.card, enemy.ref);
       const friendlyValue = scoreAiFriendlySacrifice(side, friendly.card, friendly.ref);
+      const emergency = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 }).expected >= state.players[side].life
+        && aiCanCardTargetLife(enemy.card, targetSide);
+      // Destroy-target scores heavily weight HP; compare losses on the same
+      // resource scale rather than treating every high-HP target as a good trade.
+      const enemyTradeValue = scoreAiFriendlySacrifice(targetSide, enemy.card, enemy.ref);
+      const worthwhile = emergency || friendlyValue < 12 || enemyTradeValue >= friendlyValue * 1.2;
       return {
         friendly,
         enemy,
-        score: Math.max(1, 20 + enemyValue * 0.45 - friendlyValue * 0.2
-          - Math.max(0, effectiveCardCost(item)) * 2)
+        score: worthwhile ? Math.max(0, 20 + enemyValue * 0.45 - friendlyValue * 0.9
+          - Math.max(0, effectiveCardCost(item)) * 2 + (emergency ? 40 : 0)) : 0
       };
+    }
+
+    function planAiSacrificeSetup(side) {
+      const own = state.players[side];
+      if (arePlayedEffectsSuppressed(side)) return null;
+      if (aiBoardFaceDamage(side, { readyOnly: true }).guaranteed >= state.players[oppositeSide(side)].life) return null;
+      const currentValue = Math.min(Infinity, ...listBoardRefs(side).map(ref =>
+        scoreAiFriendlySacrifice(side, getBoardCardFromRef(ref), ref)));
+      if (currentValue <= 7) return null;
+      for (const item of own.hand.filter(c => ["panpan", "destructive_lie"].includes(c.baseId) && !c.unusable && !isHighLoadHandCard(c))) {
+        const enemy = effectTargetEntries(side, oppositeSide(side))
+          .filter(entry => !aiShouldPreserveEnemyTrpg(side, entry.card))
+          .sort((a, b) => scoreAiDestroyTarget(b.card, b.ref) - scoreAiDestroyTarget(a.card, a.ref))[0];
+        if (item.baseId === "panpan" && !enemy) continue;
+        if (item.baseId === "destructive_lie" && (isDeckToHandLocked() || own.deck.length < 2)) continue;
+        const candidates = own.hand.filter(card => card.type === "student" && !card.evolutionFrom
+          && !card.unusable && !isHighLoadHandCard(card) && (!card.late || state.environment?.baseId === "no_late_time")
+          && effectiveCardCost(card) <= 2 && (card.attack || 0) <= 2
+          && effectiveCardCost(card) + effectiveCardCost(item) <= own.will)
+          .map(card => ({ card, value: scoreAiFriendlySacrifice(side, card) }))
+          .filter(entry => entry.value <= 9 && entry.value + 4 < currentValue)
+          .sort((a, b) => a.value - b.value || effectiveCardCost(a.card) - effectiveCardCost(b.card));
+        for (const { card, value } of candidates) {
+          if (item.baseId === "panpan" && scoreAiDestroyTarget(enemy.card, enemy.ref) < value) continue;
+          const index = AI_SEAT_PRIORITY.find(index => canPlaceCard(side, card, "seat", side, index));
+          if (index !== undefined) return { card, zone: "seat", owner: side, index };
+        }
+      }
+      return null;
     }
 
     function aiDeckOutItemScore(side, item) {
@@ -30102,6 +30175,7 @@
       if (UTA_FUSION_MATERIAL_IDS.includes(card.baseId) || card.baseId === "ultimate_yuta") score += 100;
       if (card.unusable) score -= 40;
       score += aiCardResourceValue(side, card) + aiRecurringCardValue(side, card);
+      score += aiDeckPlanCardBonus(side, card);
       if (HORSE_MATERIAL_IDS.includes(card.baseId)) score += aiHorseMaterialValue(side, card);
       return score;
     }
@@ -30462,7 +30536,7 @@
           if (target) return { card, zone: target.zone, owner: side, index: target.index };
           continue;
         }
-        if (card.type === "environment" && canPlaceCard(side, card, "environment", null, null)) {
+        if (card.type === "environment" && scoreAiEnvironment(card, side) > 0 && canPlaceCard(side, card, "environment", null, null)) {
           return { card, zone: "environment", owner: null, index: null };
         }
         if (card.type === "teacher" && canPlaceCard(side, card, "teacher", side, null)) {
@@ -30556,6 +30630,13 @@
       if (item.baseId === "panpan") {
         return planAiPanpan(side, item).score || -Infinity;
       }
+      if (item.baseId === "destructive_lie") {
+        const value = Math.min(Infinity, ...listBoardRefs(side).map(ref => {
+          const card = getBoardCardFromRef(ref);
+          return isPadlocked(card) || isAibenNyoteiEffectImmune(card) ? Infinity : scoreAiFriendlySacrifice(side, card, ref);
+        }));
+        return !isDeckToHandLocked() && ai.deck.length > 0 ? Math.max(0, 12 - value * 1.2) : 0;
+      }
       if (item.baseId === "king_ghidorah_bed") return planAiKingGhidorahBed(item, side).score || -Infinity;
       if (item.baseId === "yabe") {
         if (!targets.length) return -Infinity;
@@ -30625,9 +30706,16 @@
       if (item.baseId === "green_curry") return castItemGlobal(side, item, false);
       if (item.baseId === "panpan") {
         const plan = planAiPanpan(side, item);
-        return plan.friendly && plan.enemy
+        return plan.score > 0 && plan.friendly && plan.enemy
           ? castPanpan(side, item, plan.friendly.ref, plan.enemy.ref, false)
           : false;
+      }
+      if (item.baseId === "destructive_lie") {
+        const target = listBoardRefs(side).map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
+          .filter(entry => !isPadlocked(entry.card) && !isAibenNyoteiEffectImmune(entry.card))
+          .sort((a, b) => scoreAiFriendlySacrifice(side, a.card, a.ref) - scoreAiFriendlySacrifice(side, b.card, b.ref))[0];
+        return scoreTrainingYocchanItem(side, item) > 0 && target
+          ? castItemOnCard(side, item, side, target.ref.zone, target.ref.index, false) : false;
       }
       if (isImmediateItemBaseId(item.baseId)) return castImmediateItem(side, item, false);
       return false;
@@ -30638,6 +30726,14 @@
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
         safety += 1;
+        const setup = planAiSacrificeSetup(side);
+        if (setup && placeCardFromHand(side, setup.card.instanceId, setup.zone, setup.owner, setup.index, false)) {
+          usedAny = true;
+          render();
+          await waitForOrderedAttendance();
+          await waitForAiTimedEffects();
+          continue;
+        }
         const choice = state.players[side].hand
           .filter((card) => card.type === "item")
           .map((item) => ({ item, score: scoreTrainingYocchanItem(side, item) }))
@@ -31590,6 +31686,7 @@
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
       let score = bodyScore + (zone === "seat" ? 2 : 0);
       score += aiCardResourceValue("opponent", card) + aiRecurringCardValue("opponent", card);
+      score += aiDeckPlanCardBonus("opponent", card);
       if (card.late && state.environment?.baseId !== "no_late_time") {
         const support = state.players.opponent.hand.some(c => ["tokyo_tech_bro", "substitute_attendance"].includes(c.baseId));
         score -= card.late * (support ? 0.5 : context.ownLife <= 8 ? 3 : 1.2);
@@ -31699,7 +31796,7 @@
       if (zone === "seat" && card.baseId === "seat_taking_group") score += index === 4 ? 12 : -20;
       if (card.baseId === "predator") {
         const prey = getBoardCard("opponent", zone, index);
-        score += prey ? 11 - (prey.attack || 0) - (prey.currentHp || 0) * 0.5 : -30;
+        score += prey ? 11 - scoreAiFriendlySacrifice("opponent", prey, { owner: "opponent", zone, index }) : -30;
         const canSummonBestFriend = zone === "seat"
           && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
         score += canSummonBestFriend ? 45 : 0;
@@ -31982,7 +32079,7 @@
           - replacementRiskPenalty - ownDiscardBurden;
       }
       if (card.baseId === "classroom") {
-        if (!state.environment) return 1;
+        if (!state.environment) return 0;
         return replacementBonus > 0 ? replacementBonus + 3 : 0;
       }
       if (card.baseId === "quick_quiz_tournament") {
@@ -32073,6 +32170,15 @@
         if (!isOpponentAiActive()) return;
         safety += 1;
         const opponent = state.players.opponent;
+        const setup = planAiSacrificeSetup("opponent");
+        if (setup && !getAiGuaranteedBoardLethalPlan()) {
+          if (placeCardFromHand("opponent", setup.card.instanceId, setup.zone, setup.owner, setup.index, false)) {
+            render();
+            await waitForOrderedAttendance();
+            await waitForAiTimedEffects();
+            continue;
+          }
+        }
         const item = opponent.hand
           .filter((card) => card.type === "item" && (effectiveCardCost(card) <= opponent.will
             || fusionEligibleUtasInHand("opponent", card).length > 0))
@@ -32277,8 +32383,9 @@
       }
       if (item.baseId === "destructive_lie") {
         if (friendlyCards.length === 0) return 0;
-        const weakest = Math.min(...friendlyCards.map((card) => Math.max(0, card.attack || 0) + Math.max(0, card.currentHp || 0)));
-        return deck.length > 0 ? Math.max(1, 8 + Math.min(2, deck.length) - weakest * 0.5) : 0;
+        const weakest = Math.min(...friendlyCards.filter(card => !isPadlocked(card) && !isAibenNyoteiEffectImmune(card))
+          .map(card => scoreAiFriendlySacrifice("opponent", card)));
+        return !isDeckToHandLocked() && deck.length > 0 ? Math.max(0, 12 - weakest * 1.2) : 0;
       }
       if (item.baseId === "scary_question") {
         return effectTargetEntries("opponent", "player").length > 0
@@ -32798,10 +32905,11 @@
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "destructive_lie") {
+        if (!(baseScoreAiItem(item) > 0)) return false;
         const target = listBoardRefs("opponent")
           .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
           .filter((entry) => entry.card && !isPadlocked(entry.card) && !isAibenNyoteiEffectImmune(entry.card))
-          .sort((a, b) => ((a.card.attack || 0) + (a.card.currentHp || 0)) - ((b.card.attack || 0) + (b.card.currentHp || 0)))[0];
+          .sort((a, b) => scoreAiFriendlySacrifice("opponent", a.card, a.ref) - scoreAiFriendlySacrifice("opponent", b.card, b.ref))[0];
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "bento") {
@@ -32861,7 +32969,7 @@
       }
       if (item.baseId === "panpan") {
         const plan = planAiPanpan("opponent", item);
-        return plan.friendly && plan.enemy
+        return plan.score > 0 && plan.friendly && plan.enemy
           ? castPanpan("opponent", item, plan.friendly.ref, plan.enemy.ref, false)
           : false;
       }
@@ -36982,7 +37090,7 @@
     function tryFuseHorseForAi(side) {
       const materials = HORSE_MATERIAL_IDS.map(id => state.players[side].hand.find(card => card.baseId === id));
       const finalCost = effectiveCardCost(makePreviewCard("where_uma_bone_maibo", side));
-      if (materials.every(Boolean)) {
+      if (materials.every(Boolean) && aiDeckGamePlan(side) !== "adaptiveFusion") {
         if (state.players[side].will >= finalCost) return fuseHorseMaterials(side, materials.map(card => card.instanceId), false);
         // Do not irreversibly split a complete four-material finisher into pairs.
         return false;
@@ -36993,7 +37101,13 @@
         const id = horseFusionResult([materials[i], materials[j]]);
         let score = CARD_BASES[id].attack + CARD_BASES[id].hp;
         score += aiRecurringCardValue(side, makePreviewCard(id, side));
+        score += aiDeckPlanCardBonus(side, makePreviewCard(id, side));
         pairs.push({ ids: [materials[i].instanceId, materials[j].instanceId], score });
+      }
+      if (materials.every(Boolean) && state.players[side].will >= finalCost) {
+        const final = makePreviewCard("where_uma_bone_maibo", side);
+        pairs.push({ ids: materials.map(card => card.instanceId),
+          score: final.attack + final.hp + aiCardResourceValue(side, final) });
       }
       pairs.sort((a, b) => b.score - a.score);
       return pairs.length ? fuseHorseMaterials(side, pairs[0].ids, false) : false;
@@ -37882,9 +37996,16 @@
         card.tripleEnemyOrderIds = ids === undefined ? candidates.map((entry) => entry.instanceId) : ids;
       }
       if (side === "opponent" && !isOnlineBattle()) {
-        if (card.baseId === "spoon_wizard") card.spoonDestroyIds = listBoardRefs(side)
-          .slice(0, listBoardRefs(oppositeSide(side)).length)
-          .map((ref) => getBoardCardFromRef(ref)?.instanceId).filter(Boolean);
+        if (card.baseId === "spoon_wizard") {
+          const enemies = listBoardRefs(oppositeSide(side)).map(ref => ({ ref, card: getBoardCardFromRef(ref) }));
+          const averageGain = enemies.reduce((sum, entry) => sum + (aiCanPredictEffectRemoval(entry.card)
+            ? scoreAiFriendlySacrifice(oppositeSide(side), entry.card, entry.ref) : 0), 0) / Math.max(1, enemies.length);
+          card.spoonDestroyIds = listBoardRefs(side).map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
+            .filter(entry => aiCanPredictEffectRemoval(entry.card)
+              && scoreAiFriendlySacrifice(side, entry.card, entry.ref) < averageGain)
+            .sort((a, b) => scoreAiFriendlySacrifice(side, a.card, a.ref) - scoreAiFriendlySacrifice(side, b.card, b.ref))
+            .slice(0, enemies.length).map(entry => entry.card.instanceId);
+        }
         if (card.baseId === "enemy_revive") card.enemyReviveIds = state.players[side].trash
           .filter((entry) => entry.baseId === "enemy_student").map((entry) => entry.instanceId);
       }
@@ -55173,6 +55294,11 @@
       aiDeckOutItemScore,
       scoreAiDestroyTarget,
       planAiPanpan,
+      planAiSacrificeSetup,
+      scoreAiFriendlySacrifice,
+      aiDeckGamePlan,
+      aiDeckPlanCardBonus,
+      tryFuseHorseForAi,
       aiGreenCurryBoardAssessment,
       chooseAiMulliganReturnIds,
       scoreAiPlacement,

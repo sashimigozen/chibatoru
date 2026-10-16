@@ -26,7 +26,7 @@ async function prepare(page) {
 }
 const cp = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)).cp, C.KEY);
 
-test('17 legal decks are selected uniformly with unchanged counts', async ({ page }) => {
+test('20 legal decks are selected uniformly with unchanged counts', async ({ page }) => {
   const data = await page.evaluate(() => {
     const pool = ChibattleAiBattleDecks;
     const random = Math.random;
@@ -38,10 +38,33 @@ test('17 legal decks are selected uniformly with unchanged counts', async ({ pag
       });
     } finally { Math.random = random; }
   });
-  expect(data).toHaveLength(17);
-  expect(new Set(data.map(d => d.name)).size).toBe(17);
+  expect(data).toHaveLength(20);
+  expect(new Set(data.map(d => d.name)).size).toBe(20);
   expect(data.every(d => d.valid && d.name === d.picked)).toBe(true);
 });
+
+for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会']) {
+  test(`new AI deck starts with the supplied contents: ${deckName}`, async ({ page }) => {
+    await prepare(page);
+    const result = await page.evaluate(name => {
+      const index = ChibattleAiBattleDecks.findIndex(deck => deck.name === name);
+      const random = Math.random;
+      try {
+        Math.random = () => (index + 0.5) / ChibattleAiBattleDecks.length;
+        __chibattle.startSoloBattleWithSelectedDecks();
+      } finally { Math.random = random; }
+      const player = __chibattle.state.players.opponent;
+      return {
+        expected: ChibattleAiBattleDecks[index].counts,
+        actual: Object.fromEntries(Object.entries(player.originalDeckCounts).filter(([, n]) => n > 0)),
+        valid: player.deckValid.valid
+      };
+    }, deckName);
+    expect(result.actual).toEqual(result.expected);
+    expect(result.valid).toBe(true);
+    await expect(page.locator('#battleScreen')).toBeVisible();
+  });
+}
 
 test('only the player selects a deck; AI contents stay hidden and training stays separate', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));

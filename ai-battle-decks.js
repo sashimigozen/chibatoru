@@ -1,4 +1,4 @@
-// AIバトル専用。提供された17デッキのカードID・枚数をそのまま使用する。
+// AIバトル専用。提供された20デッキのカードID・枚数をそのまま使用する。
 window.ChibattleAiBattleDecks = Object.freeze([
   {
     "name": "LO最終講義",
@@ -266,17 +266,17 @@ window.ChibattleAiBattleDecks = Object.freeze([
   {
     "name": "重い想い",
     "counts": {
+      "aggro_student": 3,
       "aggro_queen": 3,
-      "trpg_member": 3,
+      "trpg_member": 2,
       "infight_shogi": 1,
       "general_teacher": 2,
       "signal_professor_m": 1,
       "king_ghidorah_bed": 3,
       "onigiri_draw": 3,
-      "green_curry": 1,
       "ikemasu": 3,
       "dont_worry": 2,
-      "scared_me": 3,
+      "scared_me": 2,
       "alpha": 3,
       "classroom": 2,
       "efficient_experiment_method": 1,
@@ -391,16 +391,83 @@ window.ChibattleAiBattleDecks = Object.freeze([
       "general_teacher": 3,
       "king_ghidorah_bed": 3,
       "onigiri_draw": 3,
-      "go_away": 1,
+      "go_away": 2,
       "accelerate": 3,
       "chameleon": 2,
-      "quiet_please": 2,
+      "quiet_please": 1,
       "sexual_eye": 1,
       "ikemasu": 3,
       "scared_me": 2,
       "alpha": 3,
       "classroom": 2,
       "illness": 3
+    }
+  },
+  {
+    "name": "顔殴りのどこ骨",
+    "counts": {
+      "aggro_student": 2,
+      "aggro_king": 3,
+      "aggro_queen": 3,
+      "lazy_student": 3,
+      "trpg_member": 3,
+      "infight_shogi": 2,
+      "king_ghidorah_bed": 3,
+      "onigiri_draw": 3,
+      "ikemasu": 2,
+      "alpha": 3,
+      "classroom": 2,
+      "tiny_rhythm_student": 3,
+      "fusion_bone": 1,
+      "fusion_where": 1,
+      "remote_participant_student": 3,
+      "corridor_student": 3
+    }
+  },
+  {
+    "name": "どこのウマの骨のマイボだよ！",
+    "counts": {
+      "aggro_queen": 3,
+      "ae_student": 1,
+      "trpg_member": 3,
+      "absolute_woman": 1,
+      "signal_professor_m": 1,
+      "king_ghidorah_bed": 3,
+      "onigiri_draw": 3,
+      "go_away": 1,
+      "green_curry": 1,
+      "scared_me": 2,
+      "alpha": 3,
+      "classroom": 2,
+      "tiny_rhythm_student": 3,
+      "fusion_uma": 1,
+      "fusion_maibo": 1,
+      "fusion_bone": 1,
+      "fusion_where": 1,
+      "remote_participant_student": 3,
+      "information_tired_student": 3,
+      "corridor_student": 3
+    }
+  },
+  {
+    "name": "コイントス研究会",
+    "counts": {
+      "aggro_student": 2,
+      "adjective_student": 3,
+      "aggro_queen": 3,
+      "lazy_student": 3,
+      "trpg_member": 3,
+      "signal_professor_m": 1,
+      "king_ghidorah_bed": 3,
+      "onigiri_draw": 3,
+      "chigauyo": 3,
+      "ikemasu": 3,
+      "peaceful_mind": 3,
+      "dont_worry": 2,
+      "alpha": 3,
+      "classroom": 2,
+      "plump_student": 2,
+      "adjective_vs_cynical": 3
     }
   }
 ].map(deck => Object.freeze({ ...deck, counts: Object.freeze(deck.counts) })));
