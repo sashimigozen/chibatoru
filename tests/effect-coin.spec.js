@@ -33,6 +33,7 @@ for (const face of ['heads', 'tails']) {
     expect(await page.evaluate(() => battleNewActionBlocked())).toBe(true);
     await page.screenshot({ path: test.info().outputPath('effect-coin.png') });
     await page.clock.runFor(1400);
+    if (face === 'heads') await page.clock.runFor(1400);
     await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
     expect(await page.evaluate(() => attendee.attack)).toBe(face === 'heads' ? 5 : 2);
     expect(await page.evaluate(() => state.players.player.board.seats[0]?.baseId)).toBe('adjective_student');
@@ -126,13 +127,19 @@ for (const source of ['late', 'ordered', 'turnStart']) test(`出席前コイン 
   expect(await page.evaluate(() => state.players.player.attendancesThisTurn)).toBe(0);
   await page.clock.runFor(1600);
   await expect.poll(() => page.evaluate(() => state.players.player.board.seats[0]?.attack)).toBe(5);
+  if (source === 'turnStart') {
+    await expect(page.locator('[data-card-id] .board-change-effect.buff')).toHaveCount(1);
+    expect(await page.evaluate(() => elements.turnOverlay.getAnimations().some(a => a.playState === 'running'))).toBe(false);
+    await page.screenshot({ path: test.info().outputPath('late-buff-before-turn-banner.png') });
+  }
+  await page.clock.runFor(1400);
   if (source === 'ordered') {
     await page.clock.runFor(1000);
     await expect(page.locator('.effect-coin-overlay')).toBeVisible();
     expect(await page.evaluate(() => state.players.player.board.seats[1])).toBeNull();
     await page.clock.runFor(1600);
     await expect.poll(() => page.evaluate(() => state.players.player.board.seats[1]?.attack)).toBe(5);
-    await page.clock.runFor(1000);
+    await page.clock.runFor(2400);
     expect(await page.evaluate(() => hasPendingOrderedAttendance())).toBe(false);
   }
   expect(await page.evaluate(() => rolls)).toBe(source === 'ordered' ? 2 : 1);

@@ -19846,9 +19846,9 @@
           { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。回転と結果表示が実際に終わってから、効果演出と数値を更新します。オンラインでも各画面のコイン演出が終わるまで、強化後の数値や盤面を先に表示しません。" },
           { title: "コインの裏面", after: "試合中のコイントスで、結果表示中に表面が逆さに映る不具合を修正しました。裏は黒地にスマイルの口の柄が表示されます。" },
           { title: "形容詞学生", after: "[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。\n遅刻・効果による出席でも、コインの結果表示が終わってから講義室へ出席します。" },
-          { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。カード本文・効果・数値は変更していません。" },
+          { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。形容詞学生はコインの結果後に強化演出を見せてから、ターン開始表示や次の出席へ進みます。カード本文・効果・数値は変更していません。" },
           { title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" },
-          { title: "AIの破壊・環境判断", after: "パンパン・破壊させる嘘などは弱い出席者を優先し、損な破壊を控え、必要に応じて低戦意の出席者を先に出す手順を検討します。一般教室は環境が空なら温存します。カード本文・能力値・効果・ルールは変更していません。" }]
+          { title: "AIの破壊・環境判断", after: "パンパン・破壊させる嘘などは弱い出席者を優先し、損な破壊を控え、必要に応じて低戦意の出席者を先に出す手順を検討します。一般教室は環境が空なら温存します。本体を攻撃できない場面でも、敵の強化源になる相手のTRPGサークルメンバーを安易に倒さないよう修正しました。カード本文・能力値・効果・ルールは変更していません。" }]
       },
       {
         version: "ver.0.25.1",
@@ -29408,20 +29408,21 @@
     function aiShouldPreserveEnemyTrpg(side, target) {
       if (target?.baseId !== "trpg_member" || target.owner === side) return false;
       const targetSide = oppositeSide(side);
-      if (hasKeyword(target, "注目")) return false;
+      if (hasKeyword(target, "注目") || hasKeyword(target, "超注目")) return false;
       const hasEnemy = listBoardRefs(side).map(getBoardCardFromRef)
         .some((card) => enemyStudentTrpgAuraActive(card) && card.currentHp > 0)
         || state.players[side].hand.some((card) => card.baseId === "enemy_student"
           && canUsePrintedCardEffects(card) && effectiveCardCost(card) <= state.players[side].will);
       if (!hasEnemy) return false;
-      if (state.environment?.baseId === "meguro_library" || listAttackPriorityCards(targetSide).length > 0) return false;
-      const canAttackFace = listBoardRefs(side).map(getBoardCardFromRef).some((attacker) =>
-        canAttackSilently(attacker) && canAiLethalAttackerHitLife(attacker, targetSide));
-      if (!canAttackFace) return false;
       const faceDamage = aiBoardFaceDamage(side, { readyOnly: true }).guaranteed;
       if (faceDamage >= state.players[targetSide].life) return true;
       const incoming = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 }).expected;
-      return incoming < state.players[side].life;
+      // An exhausted enemy, a life shield, or a different attention card does
+      // not make the aura disposable. Only remove its source for a real threat.
+      const trpgThreat = Math.max(0, target.attack || 0) > 0
+        && !isAttackLocked(target, state.actionTurn + 1)
+        && aiCanCardTargetLife(target, targetSide);
+      return incoming < state.players[side].life || !trpgThreat;
     }
 
     function aiEnemyTrpgRemovalPenalty(side, removedCards) {
@@ -38916,6 +38917,19 @@
           }
           const attended = attendCard(side, card, zone, index, { ...options, adjectiveCoinResolved: true });
           if (!attended) moveToTrash(side, card, { reason: "出席できないため" });
+          if (attended && face === "heads") {
+            applyBoardAuras();
+            render();
+            if (isOnlineHost()) onlineBroadcastState(true);
+            // Keep the pre-attendance resolution alive until the buff has
+            // actually played, before turn banners/draws/the next attendance.
+            const effects = [...document.querySelectorAll(`[data-card-id="${card.instanceId}"] .board-change-effect.buff .board-change-energy-image`)];
+            effects.forEach(node => node.style.animationDuration = `${trainingAnimationDelay(1300)}ms`);
+            await Promise.all([
+              sleep(1300),
+              ...effects.flatMap(node => node.getAnimations().map(animation => animation.finished.catch(() => {})))
+            ]);
+          }
           return attended;
         } finally {
           beforeAttendanceSlots.delete(slot);

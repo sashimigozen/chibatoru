@@ -298,3 +298,26 @@ test("手札の敵の出席評価にもTRPGによる攻撃力+5を織り込む",
   expect(result.boosted).toBeGreaterThan(result.ordinary + 5);
   expect(result.leftMove).toBe("enemy_student");
 });
+
+test("本体を攻撃できない間や別の注目がいても、強化源のTRPGは温存する", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = __chibattle, f = __aiEnemyTest;
+    return ['player', 'opponent'].flatMap(side => ['blockedLife', 'otherAttention', 'exhaustedEnemy'].map(mode => {
+      f.reset(side);
+      api.state.environment = null;
+      const targetSide = side === 'player' ? 'opponent' : 'player';
+      const enemy = f.put('enemy_student', side);
+      f.put('general_student', side, 1);
+      const trpg = f.put('trpg_member', targetSide);
+      if (mode === 'blockedLife') api.state.environment = api.createCardFromBase('meguro_library', targetSide);
+      else if (mode === 'otherAttention') f.put('general_student', targetSide, 2, { keywords: ['注目'] });
+      else enemy.attacksUsedThisTurn = 99;
+      api.applyBoardAuras();
+      const target = f.target(side, mode === 'exhaustedEnemy' ? api.state.players[side].board.seats[1] : enemy);
+      const targetCard = target ? getBoardCardFromRef(target.ref || target) : null;
+      return { mode, side, preserve: aiShouldPreserveEnemyTrpg(side, trpg), attackedTrpg: targetCard?.baseId === 'trpg_member' };
+    }));
+  });
+  expect(result.every(entry => entry.preserve)).toBe(true);
+  expect(result.every(entry => !entry.attackedTrpg)).toBe(true);
+});
