@@ -19843,7 +19843,7 @@
         date: "2026年10月16日",
         summary: "試合開始時の先攻・後攻決定をコイントスに統一しました。",
         changes: [{ title: "コイントス", after: "オンラインではホスト、AI戦・トレーニングでは自分側が表か裏を選び、当たった側が先攻・後攻を選びます。CPU同士のトレーニングでは自動で進行します。じゃんけんのデータは残しています。コインは縦に回転し、表は銀青色、裏は黒地にスマイルの口を仮ロゴとして入れています。" },
-          { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。判定のコイン演出が終わってから処理を進めます。" }]
+          { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。回転と結果表示が実際に終わってから、効果演出と数値を更新します。オンラインでも各画面のコイン演出が終わるまで、強化後の数値や盤面を先に表示しません。" }]
       },
       {
         version: "ver.0.25.2",
@@ -26942,6 +26942,13 @@
 
     function onlineApplySnapshot(snapshot) {
       if (!snapshot || snapshot.seq <= state.online.lastSnapshotSeq) return;
+      // The sender may finish its coin before this viewer does. Keep the
+      // pre-result board until this viewer has actually seen the result.
+      if (snapshot.state?.preBattleToken === state.preBattleToken && !snapshot.state.gameOver
+        && activeEffectCoinTokens.get(state.preBattleToken) > 0) {
+        deferredEffectCoinSnapshots.push(snapshot);
+        return;
+      }
       onlineApplySnapshotCardStyles(snapshot);
       onlineApplySnapshotProfiles(snapshot);
       const isNewBattle = state.screen !== "battle" || !state.online.started
@@ -43157,6 +43164,8 @@
     let effectCoinSerial = 0;
     let effectCoinTail = Promise.resolve();
     const seenEffectCoins = new Set();
+    const activeEffectCoinTokens = new Map();
+    const deferredEffectCoinSnapshots = [];
 
     function showEffectCoin(event) {
       const play = async () => {
@@ -43165,30 +43174,44 @@
             || elements.turnOverlay.getAnimations().some(animation => animation.playState === "running"))) {
           await new Promise(resolve => window.setTimeout(resolve, 50));
         }
-        if (event.token !== state.preBattleToken || state.screen !== "battle") return null;
+        if (event.token !== state.preBattleToken || state.screen !== "battle" || state.gameOver) return null;
         const overlay = document.createElement("div");
         overlay.className = "effect-coin-overlay";
+        overlay.dataset.stage = "tossing";
         overlay.setAttribute("role", "status");
         overlay.setAttribute("aria-label", event.label);
         overlay.innerHTML = `<div class="coin-motion tossing"><div class="coin-disc tossing" style="--coin-stop-angle:${event.face === "tails" ? 1620 : 1440}deg"><span class="coin-face heads"><span class="coin-smile-mark"></span></span><span class="coin-face tails"><span class="coin-smile-mark"></span></span></div></div>`;
         overlay.querySelectorAll(".tossing").forEach(node => node.style.animationDuration = `${trainingAnimationDelay(1100)}ms`);
         const disc = overlay.querySelector(".coin-disc");
         document.body.appendChild(overlay);
+        const spins = overlay.getAnimations({ subtree: true });
         try {
           await sleep(1100);
+          // Timers can run ahead of CSS animation playback (especially in
+          // background tabs). Never reveal the effect before the actual flip.
+          await Promise.all(spins.map(animation => animation.finished.catch(() => {})));
           if (event.token !== state.preBattleToken || state.screen !== "battle" || state.gameOver) return null;
           disc.classList.remove("tossing");
           disc.classList.toggle("tails", event.face === "tails");
           overlay.querySelector(".coin-motion").classList.remove("tossing");
+          overlay.dataset.stage = "result";
           overlay.setAttribute("aria-label", `${event.label}：${COIN_FACE_LABELS[event.face]}`);
-          await sleep(250);
+          await disc.animate([{ opacity: 1 }, { opacity: 1 }], { duration: trainingAnimationDelay(350) }).finished.catch(() => {});
           return event.token === state.preBattleToken && state.screen === "battle" && !state.gameOver ? event.face : null;
         } finally { overlay.remove(); }
       };
       queuedBattlePresentations += 1;
+      activeEffectCoinTokens.set(event.token, (activeEffectCoinTokens.get(event.token) || 0) + 1);
       const previous = effectCoinTail;
       effectCoinTail = previous.catch(console.error).then(play).finally(() => {
         queuedBattlePresentations = Math.max(0, queuedBattlePresentations - 1);
+        const remaining = (activeEffectCoinTokens.get(event.token) || 1) - 1;
+        if (remaining) activeEffectCoinTokens.set(event.token, remaining);
+        else activeEffectCoinTokens.delete(event.token);
+        while (!(activeEffectCoinTokens.get(state.preBattleToken) > 0) && deferredEffectCoinSnapshots.length) {
+          const snapshot = deferredEffectCoinSnapshots.shift();
+          if (snapshot.state?.preBattleToken === state.preBattleToken) onlineApplySnapshot(snapshot);
+        }
         if (event.token === state.preBattleToken) render();
       });
       return effectCoinTail;

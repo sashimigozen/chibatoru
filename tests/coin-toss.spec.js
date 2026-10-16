@@ -135,15 +135,34 @@ for (const face of ['heads', 'tails']) test(`オンラインの結果${face}: �
     await expect.poll(() => spectator.evaluate(() => state.firstSide)).toBe(winner);
     await expect.poll(() => guest.evaluate(() => state.phase)).toBe('mulligan');
     await host.evaluate(() => {
-      state.phase = 'battle'; state.currentSide = 'player'; render();
+      state.phase = 'battle'; state.currentSide = 'player';
+      const card = makeBoardCard(createCardFromBase('general_student', 'player'));
+      state.players.player.board.seats[0] = card; render();
       window.effectDone = false;
-      tossEffectCoin('効果判定').then(() => { window.effectDone = true; render(); onlineBroadcastState(true); });
+      tossEffectCoin('効果判定').then(() => { applyPermanentStatBuff(card, 3, 0); window.effectDone = true; render(); onlineBroadcastState(true); });
     });
     for (const page of [host, guest, spectator]) {
       await expect(page.locator('.effect-coin-overlay')).toBeVisible();
       expect(await page.evaluate(() => state.effectCoinEvents.at(-1).face)).toBe(face);
     }
+    await guest.evaluate(() => {
+      const overlay = document.querySelector('.effect-coin-overlay');
+      overlay.getAnimations({ subtree: true }).forEach(a => a.pause());
+      const observer = new MutationObserver(() => {
+        if (overlay.dataset.stage !== 'result') return;
+        overlay.getAnimations({ subtree: true }).forEach(a => a.pause()); observer.disconnect();
+      });
+      observer.observe(overlay, { attributes: true, attributeFilter: ['data-stage'] });
+    });
     await expect.poll(() => host.evaluate(() => effectDone)).toBe(true);
+    // A slower viewer must not receive the post-coin board before its own flip.
+    expect(await guest.evaluate(() => state.players.opponent.board.seats[0].attack)).toBe(2);
+    await guest.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
+    await expect(guest.locator('.effect-coin-overlay')).toHaveAttribute('data-stage', 'result');
+    await guest.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.pause()));
+    expect(await guest.evaluate(() => state.players.opponent.board.seats[0].attack)).toBe(2);
+    await guest.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
+    await expect.poll(() => guest.evaluate(() => state.players.opponent.board.seats[0].attack)).toBe(5);
     for (const page of [host, guest, spectator]) await expect(page.locator('.effect-coin-overlay')).toHaveCount(0);
     expect(await host.evaluate(() => window.tossRolls)).toBe(2);
   } finally { for (const context of contexts) await context.close(); }

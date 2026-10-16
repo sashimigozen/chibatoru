@@ -47,6 +47,7 @@ for (const face of ['heads', 'tails']) {
     });
     await expect(page.locator('.effect-coin-overlay')).toBeVisible();
     await page.clock.runFor(1400);
+    await expect.poll(() => page.evaluate(() => miss)).not.toBeNull();
     expect(await page.evaluate(() => miss)).toBe(face === 'tails');
     expect(await page.evaluate(() => rolls)).toBe(1);
     expect(await page.evaluate(() => { attendee.keywords = []; return attackMissesFromDrowsiness(attendee); })).toBe(false);
@@ -67,7 +68,7 @@ for (const face of ['heads', 'tails']) {
     });
     await page.clock.runFor(2000);
     await page.clock.runFor(2000);
-    expect(await page.evaluate(() => attackDone)).toBe(true);
+    await expect.poll(() => page.evaluate(() => attackDone)).toBe(true);
     expect(await page.evaluate(() => state.players.opponent.board.seats[0].currentHp)).toBe(face === 'heads' ? 8 : 10);
     expect(await page.evaluate(() => rolls)).toBe(1);
   });
@@ -85,8 +86,9 @@ test('連続破壊：破壊→表→破壊→裏で終了する', async ({ page 
   await expect(page.locator('.effect-coin-overlay')).toBeVisible();
   expect(await page.evaluate(() => listBoardRefs('opponent').length)).toBe(2);
   await page.clock.runFor(1400);
-  expect(await page.evaluate(() => listBoardRefs('opponent').length)).toBe(1);
+  await expect.poll(() => page.evaluate(() => listBoardRefs('opponent').length)).toBe(1);
   await page.clock.runFor(1400);
+  await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
   expect(await page.evaluate(() => [listBoardRefs('opponent').length, rolls, fusionTasksBusy()])).toEqual([1, 2, false]);
 });
 
@@ -124,4 +126,29 @@ test('試合を離れたら古いコインから強化処理を再開しない',
   await page.clock.runFor(1400);
   expect(await page.evaluate(() => attendee.attack)).toBe(2);
   await expect(page.locator('.effect-coin-overlay')).toHaveCount(0);
+});
+
+test('回転や結果表示が終わるまで強化数値を見せず、バフ演出と同時に更新する', async ({ page }) => {
+  await setup(page, 'heads');
+  await page.evaluate(() => {
+    window.attendee = makeBoardCard(createCardFromBase('adjective_student', 'player'));
+    state.players.player.board.seats[0] = attendee;
+    resolveAttendEffects('player', attendee, 'seat', 0, { forceLocalAttendEffects: true }); render();
+  });
+  await expect(page.locator('.effect-coin-overlay')).toBeVisible();
+  await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.pause()));
+  await page.clock.runFor(5000);
+  expect(await page.evaluate(() => attendee.attack)).toBe(2);
+  await expect(page.locator('.effect-coin-overlay')).toHaveAttribute('data-stage', 'tossing');
+  await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
+  await expect(page.locator('.effect-coin-overlay')).toHaveAttribute('data-stage', 'result');
+  await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.pause()));
+  expect(await page.evaluate(() => attendee.attack)).toBe(2);
+  await page.screenshot({ path: test.info().outputPath('coin-result-before-buff.png') });
+  await page.evaluate(() => document.querySelector('.effect-coin-overlay').getAnimations({ subtree: true }).forEach(a => a.finish()));
+  await expect.poll(() => page.evaluate(() => attendee.attack)).toBe(5);
+  const card = page.locator('.field-card[data-base-id="adjective_student"]');
+  await expect(card.locator('.field-stat.attack')).toHaveText('5');
+  await expect(card.locator('.board-change-effect.buff')).toBeVisible();
+  await page.screenshot({ path: test.info().outputPath('buff-with-new-value.png') });
 });
