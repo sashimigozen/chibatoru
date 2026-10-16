@@ -17460,7 +17460,7 @@
   <link rel="stylesheet" href="draw-animation.css?v=0.23.19" />
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
 <link rel="stylesheet" href="cards-ui.css?v=0.23.18-cycle" />
-  <link rel="stylesheet" href="desktop-ui.css?v=0.23.16" />
+  <link rel="stylesheet" href="desktop-ui.css?v=0.26.0" />
   <link rel="stylesheet" href="gacha-ui.css?v=0.25.1-shop" />
 </head>
 <body>
@@ -17807,6 +17807,9 @@
         <button class="online-match-button" id="onlineSpectateButton" type="button">
           <span class="online-match-main">観戦</span>
           <span class="online-match-sub">対戦中の部屋を選んで観戦します</span>
+        </button>
+        <button class="online-match-button" id="onlineRpsTournamentButton" type="button" disabled aria-disabled="true">
+          <span class="online-match-main">じゃんけん大会 <span class="online-match-coming-soon">COMING SOON</span></span>
         </button>
       </div>
       <div class="screen-head online-subview-head hidden" id="onlineSubviewHead">
@@ -19845,6 +19848,8 @@
         changes: [{ title: "コイントス", after: "オンラインではホスト、AI戦・トレーニングでは自分側が表か裏を選び、当たった側が先攻・後攻を選びます。CPU同士のトレーニングでは自動で進行します。じゃんけんのデータは残しています。コインは縦に回転し、表は銀青色、裏は黒地にスマイルの口を仮ロゴとして入れています。" },
           { title: "効果のコイントス", after: "形容詞学生の強化と形容詞学生vs冷笑学生の連続破壊は、コインを1回投げ、表なら発動します。眠気は攻撃するたび、コインを1回投げ、裏なら攻撃に失敗します。確率は従来と同じ50％です。回転と結果表示が実際に終わってから、効果演出と数値を更新します。オンラインでも各画面のコイン演出が終わるまで、強化後の数値や盤面を先に表示しません。" },
           { title: "コインの裏面", after: "試合中のコイントスで、結果表示中に表面が逆さに映る不具合を修正しました。裏は黒地にスマイルの口の柄が表示されます。" },
+          { title: "バトルメニュー", after: "観戦を小さくし、空いた場所に「じゃんけん大会」を追加しました。COMING SOON表示で、まだ利用できません。" },
+          { title: "形容詞学生vs冷笑学生", after: "②を「次の相手のターン終了まで、相手の手札と講義室にある出席者カードすべての攻撃力を-3する。」に変更しました。手札から出席しても弱体化と期限を引き継ぎます。①は変更していません。" },
           { title: "形容詞学生", after: "[遅刻4]\nこのカードを出席させるとき、コインを1回投げ、表ならこのカードの攻撃力を+3する。\n遅刻・効果による出席でも、コインの結果表示が終わってから講義室へ出席します。" },
           { title: "バフ演出", after: "出席前や初回表示前に強化された出席者にもバフ演出を表示します。複数体の強化では対象全員に演出を出し、オンラインのゲスト・観戦者にも反映します。形容詞学生はコインの結果後に強化演出を見せてから、ターン開始表示や次の出席へ進みます。カード本文・効果・数値は変更していません。" },
           { title: "出席者の継続効果", after: "その出席者が他の出席者・プレイヤー・講義室へ及ぼす効果だけを表示します。自身だけの強化・耐性などは表示しません。カード本文と効果処理は変更していません。" },
@@ -29780,7 +29785,7 @@
       if (card.baseId === "adjective_vs_cynical" && card.adjectiveChoice === "weaken") {
         return targets.filter(({ card: target }) => !isAibenNyoteiEffectImmune(target))
           .reduce((sum, { card: target, ref }) => sum
-            + Math.min(2, target.attack || 0) * (1.5 + Math.max(0, scoreAiEnemyAttendeeThreat(target, ref)) / 40), 0);
+            + Math.min(3, target.attack || 0) * (1.5 + Math.max(0, scoreAiEnemyAttendeeThreat(target, ref)) / 40), 0);
       }
       if (card.baseId === "impossible_high_note") {
         return targets.filter(({ card: target }) => !isAibenNyoteiEffectImmune(target))
@@ -33558,6 +33563,8 @@
           runEffectFeedbackBatch(() => resolveDungeonFloorEndTurnEffects(side));
           settleEndTurnStep();
           resolveEffectUseLockEndTurn(side);
+          expireAdjectiveWeakening(side);
+          settleEndTurnStep();
         };
         if (fusionTasksBusy()) queueFusionEffect(remainingEffects);
         else remainingEffects();
@@ -37860,7 +37867,7 @@
           message: "出席時に使う効果を選んでください。",
           cards: [
             { instanceId: "adjective_destroy", name: "破壊", type: "item", noCost: true, effect: "相手の出席者1人をランダムに破壊する。コインを1回投げ、表ならこの効果を繰り返す。" },
-            { instanceId: "adjective_weaken", name: "弱体化", type: "item", noCost: true, effect: "相手の手札と講義室の出席者の攻撃力を-2。" }
+            { instanceId: "adjective_weaken", name: "弱体化", type: "item", noCost: true, effect: "次の相手のターン終了まで、相手の手札と講義室にある出席者カードすべての攻撃力を-3する。" }
           ],
           min: 1, max: 1, confirmLabel: "この効果で出席",
           playCardId: instanceId, playTarget: { zone, owner, index }
@@ -38308,7 +38315,7 @@
       const boardCard = {
         ...card,
         handLoadLevel: 0,
-        baseAttack: card.attack ?? null,
+        baseAttack: card.statModifiers?.some(entry => entry.adjectiveWeakening) ? card.baseAttack : card.attack ?? null,
         baseMaxHp: card.hp ?? null,
         baseDefense: card.defense ?? 0,
         attack: card.attack ?? null,
@@ -39372,9 +39379,9 @@
       if (card.baseId === "adjective_vs_cynical") {
         if (card.adjectiveChoice === "weaken") {
           state.players[opponent].hand.filter((entry) => ["student", "teacher", "vampire"].includes(entry.type))
-            .forEach((entry) => { entry.attack = Math.max(0, (entry.attack || 0) - 2); });
-          listBoardRefs(opponent).forEach((ref) => applyPermanentStatBuff(getBoardCardFromRef(ref), -2, 0, 0, card.name));
-          addLog(`${card.name}の効果：相手の手札と講義室の出席者の攻撃力を-2しました。`);
+            .forEach((entry) => applyAdjectiveWeakening(entry, opponent));
+          listBoardRefs(opponent).forEach((ref) => applyAdjectiveWeakening(getBoardCardFromRef(ref), opponent));
+          addLog(`${card.name}の効果：次の相手のターン終了まで、相手の手札と講義室の出席者の攻撃力を-3しました。`);
         } else {
           queueFusionEffect(async () => {
             let destroyed = 0;
@@ -43919,6 +43926,40 @@
       const newAttack = (card.attack ?? card.baseAttack ?? 0) + bonus.attack;
       const newMaxHp = (card.maxHp ?? card.baseMaxHp ?? 0) + bonus.hp;
       applyDerivedStats(card, newAttack, newMaxHp);
+    }
+
+    function applyAdjectiveWeakening(card, untilSide) {
+      if (!card || isAibenNyoteiEffectImmune(card)) return;
+      // Keep the unclamped base so a low-attack hand card restores correctly
+      // and carries the same reduction into the lecture room.
+      const baseAttack = card.baseAttack ?? card.attack ?? 0;
+      applyPermanentStatBuff(card, -3, 0, 0, CARD_BASES.adjective_vs_cynical.name);
+      Object.assign(card.statModifiers[card.statModifiers.length - 1], {
+        adjectiveWeakening: true, targetOwner: untilSide, untilTurn: state.actionTurn + 1
+      });
+      card.baseAttack = baseAttack - 3;
+      card.attack = Math.max(0, card.attack);
+    }
+
+    function expireAdjectiveWeakening(endingSide) {
+      const seen = new Set();
+      for (const owner of ["player", "opponent"]) {
+        const player = state.players[owner];
+        const cards = [...player.hand, ...player.deck, ...player.trash,
+          ...player.late.map(entry => entry.card), ...listBoardRefs(owner).map(getBoardCardFromRef)];
+        for (const card of cards) {
+          if (!card || seen.has(card)) continue;
+          seen.add(card);
+          const expired = (card.statModifiers || []).filter(entry => entry.adjectiveWeakening
+            && entry.targetOwner === endingSide && entry.untilTurn <= state.actionTurn);
+          if (!expired.length) continue;
+          const restoration = -expired.reduce((sum, entry) => sum + entry.attack, 0);
+          card.statModifiers = card.statModifiers.filter(entry => !expired.includes(entry));
+          card.baseAttack = (card.baseAttack ?? card.attack ?? 0) + restoration;
+          card.attack = Math.max(0, card.baseAttack);
+          showFloatingTextForCard(card, `攻撃力+${restoration}`, "buff");
+        }
+      }
     }
 
     function applyPermanentStatBuff(card, attackBonus, hpBonus, defenseBonus = 0, source = "", options = {}) {
@@ -54279,7 +54320,7 @@
         variable_student: "このカードが講義室にいるかぎり、相手の席マスに出席者が出席するたび、その出席者を相手の空いている席マス1つへランダムに移動させる。",
         sweet_curry: "相手の講義室にいるヴァンパイアすべてを破壊する。",
         spoon_wizard: "相手の校外エリアに「グリーンカレー」があるなら、このカードを戦意を消費せずに出席させられる。このカードを手札から出席させたとき、自分の講義室の出席者を好きな人数だけ破壊する。その後、破壊した人数と同じ人数の相手の出席者をランダムに破壊する。",
-        adjective_vs_cynical: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させるとき、次の効果から1つを選ぶ。\n1. 相手の出席者1人をランダムに破壊する。コインを1回投げ、表ならこの効果を繰り返す。\n2. 相手の手札と講義室にある出席者カードすべての攻撃力を-2する。",
+        adjective_vs_cynical: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させるとき、次の効果から1つを選ぶ。\n1. 相手の出席者1人をランダムに破壊する。コインを1回投げ、表ならこの効果を繰り返す。\n2. 次の相手のターン終了まで、相手の手札と講義室にある出席者カードすべての攻撃力を-3する。",
         suffix_sugi: "お互いの手札から、それぞれカードをランダムに3枚まで選び、負荷を付与する。",
         yakitori_harassment: "自分の講義室にいる学生1人を指名し、体力を5回復する。回復しきれなかった分だけ自分の戦意を回復する。",
         starbucks_student: "このカードを手札から出席させたとき、自分の講義室にいる学生すべてに1ダメージを与える。その後、自分の校外エリアにある戦意が固定で4以下の教師1人をランダムに選び、手札から出席させたものとして自分の教卓マスへ出席させる。",
@@ -55576,7 +55617,7 @@
 
   </script>
 <script src="cards-ui.js?v=0.23.18-cycle"></script>
-  <script src="desktop-ui.js?v=0.23.19-ai-battle"></script>
+  <script src="desktop-ui.js?v=0.26.0"></script>
 <script src="draw-animation.js?v=0.23.19-video-tempo"></script>
 <script src="hand-trash-animation.js?v=0.23.19-deck"></script>
 <script src="gacha-ui.js?v=0.25.1-shop"></script>

@@ -33,7 +33,8 @@
   const groups = [
     { board: elements.onlineMatchActions, folders: [
       ["onlineRandomMatchButton", .04, .03], ["onlinePrivateMatchButton", .04, .54],
-      ["onlineFourMatchButton", .34, .54], ["onlineSpectateButton", .34, .03]
+      ["onlineFourMatchButton", .34, .54], ["onlineSpectateButton", .34, .03],
+      ["onlineRpsTournamentButton", .64, .03]
     ] },
     { board: elements.soloMenuScreen.querySelector(".solo-mode-actions"), folders: [
       ["soloAiBattleButton", .04, .03], ["soloDungeonButton", .34, .03],
@@ -159,7 +160,7 @@
     elements.onlinePrivateMatchButton.querySelector(".online-match-main").textContent = "プライベート";
   }
   // Existing mode descriptions remain available to assistive technology.
-  const disabledModes = [document.getElementById("onlineFourMatchButton")];
+  const disabledModes = [document.getElementById("onlineFourMatchButton"), document.getElementById("onlineRpsTournamentButton")];
   function syncDisabled() {
     for (const button of shell.querySelectorAll(".computer-folder")) {
       const disabled = disabledModes.includes(button) || button.disabled;

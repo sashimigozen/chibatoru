@@ -60,6 +60,17 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
     await expect(page.locator("#onlinePrivateMatchButton")).toContainText("プライベートマッチ");
     await expect(page.locator("#onlinePrivateMatchButton .online-match-sub")).toBeVisible();
     await expect(page.locator("#onlineFourMatchButton")).toBeDisabled();
+    const tournament = page.locator("#onlineRpsTournamentButton");
+    await expect(tournament).toContainText("じゃんけん大会");
+    await expect(tournament).toContainText("COMING SOON");
+    await expect(tournament).toBeDisabled();
+    const spectateBox = await page.locator("#onlineSpectateButton").boundingBox();
+    const tournamentBox = await tournament.boundingBox();
+    expect(spectateBox.width).toBeCloseTo(tournamentBox.width, 1);
+    expect(spectateBox.y).toBeCloseTo(tournamentBox.y, 1);
+    expect(spectateBox.x + spectateBox.width).toBeLessThan(tournamentBox.x);
+    await tournament.evaluate(button => button.click());
+    await expect(page.locator("#onlineMatchActions")).toBeVisible();
     for (const selector of ["#onlineMatchActions button", "#soloMenuScreen .solo-mode-button"]) {
       if (selector.includes("soloMenuScreen")) {
         await page.locator(".computer-switch:not(.previous)").click();
@@ -86,6 +97,9 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
     await expect(page.locator("#onlineScreen")).toBeVisible();
     await page.locator("#onlinePrivateMatchButton").click();
     await expect(page.locator("#modeComputer #onlinePrivatePanel")).toBeVisible();
+    await page.locator("#onlineBackMenuButton").click();
+    await page.locator("#onlineSpectateButton").click();
+    await expect(page.locator("#onlineSpectatePanel")).toBeVisible();
     await page.locator("#onlineBackMenuButton").click();
     await page.locator("#onlineBackHomeButton").click();
     await expect(page.locator("#homeDeskStage")).toBeVisible();
