@@ -7762,6 +7762,9 @@
       line-height: 1.65;
     }
 
+    .update-category { display: grid; gap: 8px; min-width: 0; }
+    .update-category h3 { margin: 10px 0 0; padding-bottom: 5px; border-bottom: 1px solid #dbe3ef; font-size: 16px; color: #334155; }
+
     .update-change {
       display: grid;
       grid-template-columns: minmax(0, 1fr) 26px minmax(0, 1fr);
@@ -7774,6 +7777,7 @@
     }
 
     .update-before { color: #9f1239; }
+    .update-after:only-child { grid-column: 1 / -1; }
     .update-after { color: #166534; }
     .update-before, .update-after { white-space: pre-line; }
     .update-change.has-text-highlights .update-before,
@@ -19882,47 +19886,47 @@
         date: "2026年10月17日",
         summary: "アクティングアウトの新カード2枚を追加し、アクティングアウトマン・前で積極的に笑う学生・アカデミックムーブ・ジェイルブレイクソフトを調整しました。",
         changes: [
-          { title: "マイボの骨",
+          { category: "カード調整", title: "マイボの骨",
             before: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
             after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。",
             beforeHighlights: ["2ダメージ"], afterHighlights: ["3ダメージ"] },
-          { title: "融合の追加素材", after: "手札の2枚融合で作った出席者に、未融合の素材を追加できるようにしました。3種類の途中段階は元の名前・戦意・能力値・効果を維持し、4種類が揃うと「どこのウマの骨のマイボだよの学生」になります。融合済み素材はカード確認に表示します。" },
-          { title: "手札の状態表示", after: "複製された融合素材、追加融合済みカード、能力や数値が変化したカードに小さな「！」を表示します。相手の非公開手札には表示しません。" },
-          { title: "ウマの骨",
+          { category: "システム", title: "融合の追加素材", after: "手札の2枚融合で作った出席者に、未融合の素材を追加できるようにしました。3種類の途中段階は元の名前・戦意・能力値・効果を維持し、4種類が揃うと「どこのウマの骨のマイボだよの学生」になります。融合済み素材はカード確認に表示します。" },
+          { category: "表示・操作改善", title: "手札の状態表示", after: "複製された融合素材、追加融合済みカード、能力や数値が変化したカードに小さな「！」を表示します。相手の非公開手札には表示しません。" },
+          { category: "カード調整", title: "ウマの骨",
             before: "学生／学友会・持ち物／戦意5／攻撃力2／体力4\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者を2人まで指名し、それらの攻撃力を+1する。",
             after: "学生／学友会・持ち物／戦意5／攻撃力2／体力4\n自分のターン終了時、自分の講義室にいる融合で生成されていない出席者を2人まで指名し、それらの体力を+1する。",
             beforeHighlights: ["、このカード以外の出席者", "攻撃力を+1"], afterHighlights: ["融合で生成されていない出席者", "体力を+1"] },
-          { title: "どこのウマ",
+          { category: "カード調整", title: "どこのウマ",
             before: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、自分の講義室にいる、このカード以外の出席者1人をランダムに指名し、その攻撃力と体力を+1する。",
             after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、自分の講義室にいる融合で生成されていない出席者1人をランダムに指名し、その攻撃力と体力を+1する。",
             beforeHighlights: ["、このカード以外の出席者"], afterHighlights: ["融合で生成されていない出席者"] },
-          { title: "小刻みリズム学生",
+          { category: "カード調整", title: "小刻みリズム学生",
             before: "学生／学友会・持ち物／戦意7／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。",
             after: "学生／学友会・持ち物／戦意8／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。",
             beforeHighlights: ["戦意7"], afterHighlights: ["戦意8"] },
-          { title: "アクティングアウトマン",
+          { category: "カード調整", title: "アクティングアウトマン",
             before: "学生／デザイン／戦意6／攻撃力2／体力3\nこのカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。",
             after: "学生／デザイン／戦意4／攻撃力3／体力3\nこのカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。\n自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
             beforeHighlights: ["戦意6／攻撃力2", "このカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。"],
             afterHighlights: ["戦意4／攻撃力3", "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。", "自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。"] },
-          { title: "前で積極的に笑う学生",
+          { category: "カード調整", title: "前で積極的に笑う学生",
             before: "学生／共通カード／戦意3／攻撃力2／体力2\nこのカードは席マスに出席させる場合、1行目にのみ出席できる。\n自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
             after: "学生／共通カード／戦意3／攻撃力1／体力3\n[超注目]\nこのカードは1行目にのみ出席できる。\n自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
             beforeHighlights: ["攻撃力2／体力2", "このカードは席マスに出席させる場合、1行目にのみ出席できる。", "自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。"],
             afterHighlights: ["攻撃力1／体力3", "[超注目]", "このカードは1行目にのみ出席できる。", "自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。"] },
-          { title: "アカデミックムーブ",
+          { category: "カード調整", title: "アカデミックムーブ",
             before: "環境／共通カード／戦意5／攻撃力0／体力0\nお互いの講義室にこのターン出席した出席者すべては[超陽気]を持つ。それらは自分のターン終了時、校外エリアへ送られる。",
             after: "環境／共通カード／戦意4／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。",
             beforeHighlights: ["戦意5", "お互いの講義室にこのターン出席した出席者すべては", "それらは"],
             afterHighlights: ["戦意4", "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは", "その出席者は"] },
-          { title: "新カード：アクティングアウトマン2号", after: "学生／共通カード／戦意2／攻撃力0／体力3\n[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。" },
-          { title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
-          { title: "-幼き日の思い出-⚪︎u⚪︎uApp",
+          { category: "新カード", title: "新カード：アクティングアウトマン2号", after: "学生／共通カード／戦意2／攻撃力0／体力3\n[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。" },
+          { category: "新カード", title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
+          { category: "カード調整", title: "-幼き日の思い出-⚪︎u⚪︎uApp",
             before: "持ち物／共通カード／戦意3／攻撃力0／体力0\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。\n自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
             after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n自分のデッキから持ち物カード1枚をランダムに手札に加える。\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。",
             beforeHighlights: ["このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。", "自分のデッキから持ち物カード1枚をランダムに手札へ加える。"],
             afterHighlights: ["自分のデッキから持ち物カード1枚をランダムに手札に加える。", "このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。"] },
-          { title: "ジェイルブレイクソフト-⚪︎u⚪︎uApp",
+          { category: "カード調整", title: "ジェイルブレイクソフト-⚪︎u⚪︎uApp",
             before: "持ち物／共通カード／戦意3／攻撃力0／体力0\nお互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。\n相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。",
             after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。",
             beforeHighlights: ["お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。", "相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。"],
@@ -50594,13 +50598,25 @@
         const details = document.createElement("details");
         const unread = entry.version === LATEST_UPDATE_VERSION && !read.has(updateReadId(entry));
         details.className = `update-entry${unread ? " unread" : ""}`;
-        const changes = entry.changes.map((change) => {
+        const renderChange = (change) => {
           if (change.before) {
             const highlighted = change.beforeHighlights || change.afterHighlights;
             return `<div class="update-change${highlighted ? " has-text-highlights" : ""}"><div class="update-before"><strong>${escapeHtml(change.title)}（変更前）</strong><br>${updateHighlightedText(change.before, change.beforeHighlights)}</div><div class="update-arrow">→</div><div class="update-after"><strong>変更後</strong><br>${updateHighlightedText(change.after, change.afterHighlights)}</div></div>`;
           }
           return `<div class="update-change"><div class="update-after"><strong>${escapeHtml(change.title)}</strong><br>${escapeHtml(change.after)}</div></div>`;
-        }).join("");
+        };
+        let changes;
+        if (entry.changes.some(change => change.category)) {
+          const categories = ["新カード", "カード調整", "システム", "表示・操作改善", "不具合修正"];
+          const groups = new Map();
+          entry.changes.forEach(change => {
+            const category = change.category || "その他";
+            if (!groups.has(category)) groups.set(category, []);
+            groups.get(category).push(change);
+          });
+          const ordered = [...categories.filter(category => groups.has(category)), ...[...groups.keys()].filter(category => !categories.includes(category))];
+          changes = ordered.map(category => `<section class="update-category"><h3>${escapeHtml(category)}</h3>${groups.get(category).map(renderChange).join("")}</section>`).join("");
+        } else changes = entry.changes.map(renderChange).join("");
         details.innerHTML = `
           <summary><span>${escapeHtml(entry.displayVersion || entry.version)}（${escapeHtml(entry.date)}）</span></summary>
           <div class="update-body"><p>${escapeHtml(entry.summary)}</p>${changes}</div>
