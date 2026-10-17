@@ -19916,7 +19916,7 @@
             beforeHighlights: ["戦意5", "お互いの講義室にこのターン出席した出席者すべては", "それらは"],
             afterHighlights: ["戦意4", "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは", "その出席者は"] },
           { title: "新カード：アクティングアウトマン2号", after: "学生／共通カード／戦意2／攻撃力0／体力3\n[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。" },
-          { title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
+          { title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
           { title: "-幼き日の思い出-⚪︎u⚪︎uApp",
             before: "持ち物／共通カード／戦意3／攻撃力0／体力0\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。\n自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
             after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n自分のデッキから持ち物カード1枚をランダムに手札に加える。\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。",
@@ -43855,7 +43855,8 @@
       return listBoardRefs(side).map(getBoardCardFromRef).some(actingOutWomanEffectActive);
     }
 
-    function actingOutStudentDamageReduction(side, source) {
+    function actingOutStudentDamageReduction(side, source, target = null) {
+      if (target && !String(target.name || "").includes("アクティングアウト")) return 0;
       return source?.type === "student" && source.owner === oppositeSide(side) && hasActingOutWomanAura(side) ? 2 : 0;
     }
 
@@ -44275,7 +44276,7 @@
       const multiplier = !ignoreWeakness && isVampireWeaknessDamage(card, source) ? 2 : 1;
       const finalDamage = amount * multiplier;
       const defense = Math.max(0, Number(card.defense) || 0);
-      const reducedDamage = Math.max(0, finalDamage - defense - actingOutStudentDamageReduction(card.owner, source));
+      const reducedDamage = Math.max(0, finalDamage - defense - actingOutStudentDamageReduction(card.owner, source, card));
       showFloatingTextForCard(card, reducedDamage > 0 ? `-${reducedDamage}` : "防御", reducedDamage > 0 ? "damage" : "heal");
       card.currentHp -= reducedDamage;
       const dealt = Math.min(beforeHp, reducedDamage);
@@ -44314,7 +44315,7 @@
       }
       const multiplier = !ignoreWeakness && isVampireWeaknessDamage(card, source) ? 2 : 1;
       return Math.max(0, (amount * multiplier) - Math.max(0, Number(card.defense) || 0)
-        - actingOutStudentDamageReduction(card.owner, source));
+        - actingOutStudentDamageReduction(card.owner, source, card));
     }
 
     function dealDistributedDamageToRandomTargets(options = {}) {
@@ -44359,7 +44360,7 @@
         if (!card || card.currentHp === null) return;
         attendees += hits;
         affectedCards += 1;
-        if (actingOutStudentDamageReduction(card.owner, source) > 0) {
+        if (actingOutStudentDamageReduction(card.owner, source, card) > 0) {
           for (let hit = 0; hit < hits; hit += 1) attendeeDamage += dealDamageToCard(card, 1, source);
         } else attendeeDamage += dealDamageToCard(card, hits, source);
       });
@@ -54533,7 +54534,7 @@
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
         acting_out_man: "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
         acting_out_man_2: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては陽気を持つ。",
-        acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
+        acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
         academic_move: "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは超陽気を持つ。その出席者は、自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",

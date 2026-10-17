@@ -35,7 +35,7 @@ test("4枚の全文・能力値・共通カード登録・1行目制限が一致
     "[超注目]\nこのカードは1行目にのみ出席できる。\n自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
     "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。",
     "[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。",
-    "このカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。"
+    "このカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。"
   ];
   result.forEach((entry, i) => {
     expect(entry.text).toBe(texts[i]);
@@ -94,17 +94,20 @@ for (const side of ["player", "opponent"]) test(`2号は自身以外の味方の
   expect(result.ongoing).toContain("自分の「アクティングアウト」とつく、このカード以外の出席者すべて");
 });
 
-for (const side of ["player", "opponent"]) test(`ウーマンは本体・全出席者の学生ダメージを2軽減し、重複しない ${side}`, async ({ page }) => {
+for (const side of ["player", "opponent"]) test(`ウーマンは本体・名前一致だけ学生ダメージを2軽減し、重複しない ${side}`, async ({ page }) => {
   const result = await page.evaluate(side => {
     const p = state.players[side];
     const other = oppositeSide(side);
     const women = [0, 1].map(i => p.board.seats[i] = makeBoardCard(createCardFromBase("acting_out_woman", side)));
     const target = makeBoardCard(createCardFromBase("strong_student", side));
     p.board.teacher = target;
+    target.name = "アクティングアウト対象";
     const student = makeBoardCard(createCardFromBase("strong_student", other));
     const teacher = makeBoardCard(createCardFromBase("general_teacher", other));
     const item = createCardFromBase("double_diamond", other);
     const preview = previewFinalDamageToCard(target, 4, student, { combat: true });
+    const unrelated = makeBoardCard(createCardFromBase("strong_student", side));
+    const unprotected = [previewFinalDamageToCard(unrelated, 4, student), dealDamageToCard(unrelated, 4, student)];
     const combat = dealDamageToCard(target, 4, student, { combat: true });
     const ownStudent = makeBoardCard(createCardFromBase("general_student", side));
     const unchanged = [previewFinalDamageToCard(target, 3, teacher), previewFinalDamageToCard(target, 3, item),
@@ -116,9 +119,9 @@ for (const side of ["player", "opponent"]) test(`ウーマンは本体・全出�
     const teacherLife = p.life;
     women.forEach(card => card.padlockEquipment = { baseId: "padlock" });
     damagePlayer(side, 2, student);
-    return { preview, combat, unchanged, floor, protectedLife, teacherLife, suppressedLife: p.life };
+    return { preview, combat, unprotected, unchanged, floor, protectedLife, teacherLife, suppressedLife: p.life };
   }, side);
-  expect(result).toEqual({ preview: 2, combat: 2, unchanged: [3, 3, 3], floor: 0,
+  expect(result).toEqual({ preview: 2, combat: 2, unprotected: [4,4], unchanged: [3, 3, 3], floor: 0,
     protectedLife: 8, teacherLife: 6, suppressedLife: 4 });
 });
 
@@ -157,6 +160,7 @@ test("学生の反撃・終了時効果・複数回の1ダメージも軽減す�
   const result = await page.evaluate(async () => {
     const woman = makeBoardCard(createCardFromBase("acting_out_woman", "player"));
     const ally = makeBoardCard(createCardFromBase("strong_student", "player"));
+    ally.name = "アクティングアウト反撃対象";
     const enemy = makeBoardCard(createCardFromBase("where_bone", "opponent"));
     state.players.player.board.seats[0] = woman;
     state.players.player.board.seats[1] = ally;
