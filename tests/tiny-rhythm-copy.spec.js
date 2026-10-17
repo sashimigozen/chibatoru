@@ -6,7 +6,7 @@ test.beforeEach(async({page})=>{
   await page.goto(pathToFileURL(path.join(__dirname,'..','index.html')).href);
   await page.evaluate(()=>{
     startCardTest('tiny_rhythm_student');scheduleOpponentAI=()=>{};state.training.skipAnimations=true;state.environment=null;
-    for(const side of ['player','opponent'])Object.assign(state.players[side],{board:{teacher:null,seats:Array(9).fill(null)},hand:[],trash:[],late:[],deck:[],will:7,maxWill:10,life:20});
+    for(const side of ['player','opponent'])Object.assign(state.players[side],{board:{teacher:null,seats:Array(9).fill(null)},hand:[],trash:[],late:[],deck:[],will:8,maxWill:10,life:20});
   });
   await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
 });
@@ -34,7 +34,7 @@ test('本文・能力値・カテゴリーを更新し、同名2枚も選んで�
     return {stats:[base.cost,base.attack,base.hp,base.category],hand:p.hand.map(c=>c.instanceId),will:p.will,
       copies:copies.map(c=>c.baseId),fresh:copies.every(c=>!window.originalIds.includes(c.instanceId)),sources:copies.map(c=>c.lastAttendanceSource),
       text:cardRulesText(createCardFromBase('tiny_rhythm_student','player'))};
-  })).toEqual({stats:[7,2,2,'gakuyukai_item'],hand:await page.evaluate(()=>window.originalIds),will:0,
+  })).toEqual({stats:[8,2,2,'gakuyukai_item'],hand:await page.evaluate(()=>window.originalIds),will:0,
     copies:['umaibo','umaibo','maibo_bone'],fresh:true,sources:['copy','copy','copy'],
     text:'このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。'});
 });
@@ -45,7 +45,14 @@ for(const side of ['player','opponent'])test(`${side}のCPUは空き席が不足
     for(let i=0;i<7;i++)p.board.seats[i]=makeBoardCard(createCardFromBase('general_student',side));
     resolveHorseAttendance(side,createCardFromBase('tiny_rhythm_student',side));await fusionEffectTail;
     return {hand:p.hand.length,will:p.will,copies:p.board.seats.filter(c=>c?.fusionResult).length,pending:state.pendingCopiedCard};
-  },side)).toEqual({hand:3,will:7,copies:2,pending:null});
+  },side)).toEqual({hand:3,will:8,copies:2,pending:null});
+});
+test('戦意7では出席できず8で出席できる',async({page})=>{
+  expect(await page.evaluate(()=>{
+    const p=state.players.player,c=createCardFromBase('tiny_rhythm_student','player');p.hand=[c];p.will=7;
+    const seven=placeCardFromHand('player',c.instanceId,'seat','player',0,false);p.will=8;
+    return {seven,eight:placeCardFromHand('player',c.instanceId,'seat','player',0,false)};
+  })).toEqual({seven:false,eight:true});
 });
 test('任意で0枚を選べ、コピー出席では発動しない',async({page})=>{
   await page.evaluate(()=>{state.players.player.hand=[createCardFromBase('umaibo','player')];resolveHorseAttendance('player',createCardFromBase('tiny_rhythm_student','player'));});

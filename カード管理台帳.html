@@ -683,16 +683,52 @@
       combo: "", notes: "攻撃時効果、ターン終了時効果、常時効果は使用できる。"
     });
     upsertCard({
+      id: "laughing_front_student", name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 1, hp: 3,
+      availability: "deck", placement: "1行目の席マス",
+      effect: "超注目を持つ。このカードは1行目にのみ出席できる。自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
+      combo: "教師", notes: "教師の体力は回復しない。"
+    });
+    upsertCard({
+      id: "academic_move", name: "アカデミックムーブ", type: "environment", cost: 4, attack: null, hp: null,
+      availability: "deck", placement: "環境マス",
+      effect: "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは超陽気を持つ。その出席者は、自分のターン終了時、校外エリアへ送られる。",
+      combo: "", notes: "設置前の出席者は対象外。各ターン両者を合わせて最初の1人だけ。付与済みの退場効果は環境を張り替えても残る。"
+    });
+    upsertCard({
+      id: "tiny_rhythm_student", name: "小刻みリズム学生", type: "student", cost: 8, attack: 2, hp: 2,
+      availability: "deck", placement: "席マス",
+      effect: "このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。",
+      combo: "融合出席者", notes: "戦意のみ7から8へ変更。"
+    });
+    upsertCard({
+      id: "acting_out_man", name: "アクティングアウトマン", type: "student", cost: 4, attack: 3, hp: 3,
+      availability: "deck", placement: "席マス / 教卓マス",
+      effect: "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
+      combo: "アクティングアウトマン2号 / アクティングアウトウーマン", notes: "自身以外の学生が条件。攻撃力上昇は学生への攻撃中のみ。従来の出席制限は削除。"
+    });
+    upsertCard({
+      id: "acting_out_man_2", name: "アクティングアウトマン2号", type: "student", cost: 3, attack: 1, hp: 3,
+      availability: "deck", placement: "1行目の席マス",
+      effect: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては陽気を持つ。",
+      combo: "アクティングアウトマン・アクティングアウトウーマン", notes: "自身も対象。発生源が離れると陽気を失う。"
+    });
+    upsertCard({
+      id: "acting_out_woman", name: "アクティングアウトウーマン", type: "student", cost: 3, attack: 1, hp: 3,
+      availability: "deck", placement: "1行目の席マス",
+      effect: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
+      combo: "アクティングアウトマン2号", notes: "攻撃・効果・反撃による学生からのダメージを軽減し、最低0。複数いても-2。"
+    });
+    upsertCard({
       id: "childhood_memory_tutuapp", name: "-幼き日の思い出-⚪︎u⚪︎uApp", type: "item", cost: 3, attack: null, hp: null,
       availability: "deck", placement: "手札から使用",
-      effect: "このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
+      effect: "自分のデッキから持ち物カード1枚をランダムに手札に加える。このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。",
       combo: "ジェイルブレイクソフト-⚪︎u⚪︎uApp", notes: "手札で迎えた自分のターン開始回数を数える。"
     });
     upsertCard({
       id: "jailbreak_tutuapp", name: "ジェイルブレイクソフト-⚪︎u⚪︎uApp", type: "item", cost: 3, attack: null, hp: null,
       availability: "generated", placement: "手札から使用",
-      effect: "お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。",
-      combo: "-幼き日の思い出-⚪︎u⚪︎uApp", notes: "この効果で出席したカードの出席時効果は使用する。比較には選択時に手札へ表示されている戦意を使う。"
+      effect: "次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。",
+      combo: "-幼き日の思い出-⚪︎u⚪︎uApp", notes: "次の持ち物使用までターンをまたいで残る。装備では消費しない。残ったカードの再使用にも通常の戦意が必要。"
     });
     upsertCard({
       id: "efficient_experiment_method", name: "効率的な実験法", type: "item", cost: 3, attack: null, hp: null,

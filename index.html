@@ -4014,7 +4014,8 @@
       animation: reward-foil-reveal-shine var(--reward-foil-reveal-duration) ease-in-out both;
     }
 
-    .play-reveal-card.to-trash {
+    .play-reveal-card.to-trash,
+    .play-reveal-card.to-hand {
       animation: revealToTrash 1.45s ease-in-out forwards;
     }
 
@@ -4026,7 +4027,8 @@
       animation: revealToBoard 1.45s ease-in-out forwards;
     }
 
-    .play-reveal-card.reward-foil-reveal.to-trash {
+    .play-reveal-card.reward-foil-reveal.to-trash,
+    .play-reveal-card.reward-foil-reveal.to-hand {
       animation: reward-foil-reveal-to-trash var(--reward-foil-reveal-duration) ease-in-out forwards;
     }
 
@@ -19273,7 +19275,7 @@
       curry_treater: ["cafeteria"],
       chen_san: ["cafeteria"],
       green_curry: ["cafeteria_lady"],
-      acting_out_man: ["general_teacher"],
+      acting_out_man: ["general_teacher", "acting_out_man_2", "acting_out_woman"],
       seat_taking_group: [],
       predator: ["general_student"],
       ttb: ["suspicious_document"],
@@ -19361,7 +19363,7 @@
       classroom_change: [],
       annoying_na: [],
       childhood_memory_tutuapp: ["jailbreak_tutuapp", "general_student"],
-      jailbreak_tutuapp: [],
+      jailbreak_tutuapp: ["onigiri_draw", "bento"],
       efficient_experiment_method: [],
       pure_destruction: ["strong_student", "cafeteria"],
       destructive_lie: [],
@@ -19430,7 +19432,7 @@
       "ux_design_textbook", "sock_block", "deck_without", "smart_me", "greeting_3000", "grudge",
       "yamanashi_minimum_wage", "baka_mac", "ikemasu", "president_tea_room", "diamond_dust",
       "environment_setup", "go_away", "happy_experience", "course_registration_party", "brother_capital", "crotch_febreze", "lie_pekora", "big_wall", "one_eyed_peek", "big_laughter", "forbidden_book", "think_so", "philosophy_cheating", "smoke_flare", "intern",
-      "classroom_change", "annoying_na", "childhood_memory_tutuapp", "efficient_experiment_method", "pure_destruction", "scary_question",
+      "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method", "pure_destruction", "scary_question",
       "confucius_says", "red_ideology", "igidakatta", "contrarian_portal", "folder_galaxy", "sweet_curry", "suffix_sugi", "obon_mac"
     ];
 
@@ -19465,7 +19467,7 @@
       lazy_student: { name: "不真面目な学生", type: "student", cost: 2, attack: 4, hp: 4, late: 1, allowedZones: ["seat"] },
       cancel_student: { name: "ドタキャン学生", type: "student", cost: 3, attack: 3, hp: 3, late: 2, allowedZones: ["seat", "teacher"] },
       tokyo_tech_bro: { name: "東工ニキ", type: "student", cost: 3, attack: 1, hp: 1, ace: true, allowedZones: ["seat", "teacher"] },
-      laughing_front_student: { name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 2, hp: 2, rowOnly: 1, allowedZones: ["seat"] },
+      laughing_front_student: { name: "前で積極的に笑う学生", type: "student", cost: 3, attack: 1, hp: 3, rowOnly: 1, frontRowOnly: true, allowedZones: ["seat"], keywords: ["超注目"] },
       eaten_student: { name: "飯を食ってきた学生", type: "student", cost: 4, attack: 3, hp: 1, late: 1, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       loud_student: { name: "バカでかい声の学生", type: "student", cost: 8, attack: 7, hp: 9, keywords: ["陽気"], allowedZones: ["seat", "teacher"] },
       loud_members: { name: "バカでかい班員たち", type: "student", cost: 6, attack: 8, hp: 4, allowedZones: ["seat"], occupiedSeatSize: { rows: 2, cols: 2 } },
@@ -19543,7 +19545,9 @@
       zombie: { name: "ゾンビ", type: "vampire", cost: 3, attack: 2, hp: 1, keywords: ["陽気"], allowedZones: ["teacher", "seat"] },
       impossible_high_note: { name: "ありえない高音", type: "vampire", cost: 8, attack: 3, hp: 3, allowedZones: ["teacher", "seat"] },
       back_question_student: { name: "後ろから質問する学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
-      acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 6, attack: 2, hp: 3, allowedZones: ["seat", "teacher"] },
+      acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
+      acting_out_man_2: { name: "アクティングアウトマン2号", type: "student", cost: 3, attack: 1, hp: 3, rowOnly: 1, frontRowOnly: true, allowedZones: ["seat"], keywords: ["注目"], category: "common" },
+      acting_out_woman: { name: "アクティングアウトウーマン", type: "student", cost: 3, attack: 1, hp: 3, rowOnly: 1, frontRowOnly: true, allowedZones: ["seat"], category: "common" },
       hat_man: { name: "帽子男", type: "student", cost: 5, attack: 3, hp: 3, allowedZones: ["seat"], category: "common" },
       gesture_student: { name: "ジェスチャー学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "common" },
       fusion_uma: { name: "ウマ", type: "item", cost: 0, target: "ownHand", category: "gakuyukai_item" },
@@ -19571,7 +19575,7 @@
       starbucks_student: { name: "片手にスタバ学生", type: "student", cost: 7, attack: 3, hp: 3, allowedZones: ["seat"], category: "design" },
       overfitting_student: { name: "過学習学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "interference" },
       loud_typing_student: { name: "バカでかいタイピング音の学生", type: "student", cost: 8, attack: 4, hp: 4, allowedZones: ["seat"], category: "big" },
-      tiny_rhythm_student: { name: "小刻みリズム学生", type: "student", cost: 7, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
+      tiny_rhythm_student: { name: "小刻みリズム学生", type: "student", cost: 8, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
       apprentice_best_friend: { name: "見習いベストフレンド", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "big" },
       white_student: { name: "白い学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"], category: "interference" },
       true_enemy: { name: "真の敵", type: "student", cost: 6, attack: 1, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "expansion" },
@@ -19706,7 +19710,7 @@
       president_tea_room: { name: "学長の茶室", type: "item", cost: 1, target: "self", generated: true },
       suspicious_document: { name: "怪しげな文書", type: "item", cost: 0, noCost: true, target: "none", generated: true, unusable: true },
       classroom: { name: "一般教室", type: "environment", cost: 1, allowedZones: ["environment"] },
-      academic_move: { name: "アカデミックムーブ", type: "environment", cost: 5, allowedZones: ["environment"], category: "common" },
+      academic_move: { name: "アカデミックムーブ", type: "environment", cost: 4, allowedZones: ["environment"], category: "common" },
       aggro_kingdom: { name: "アグロキングダム", type: "environment", cost: 2, allowedZones: ["environment"] },
       aggro_dome: { name: "アグロドーム", type: "environment", cost: 2, allowedZones: ["environment"], category: "common" },
       quick_quiz_tournament: { name: "早押しクイズ大会", type: "environment", cost: 1, allowedZones: ["environment"] },
@@ -19812,6 +19816,8 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("acting_out_man_2", "acting_out_woman");
+    SPECIALTY_CARD_IDS.common.push("acting_out_man_2", "acting_out_woman");
     ALL_DECK_IDS.push("fusion_uma", "fusion_maibo", "fusion_bone", "fusion_where",
       "remote_participant_student", "information_tired_student", "corridor_student");
     SPECIALTY_CARD_IDS.gakuyukai_item.push("tiny_rhythm_student");
@@ -19844,6 +19850,45 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.27.0",
+        versioning: "semver",
+        date: "2026年10月17日",
+        summary: "アクティングアウトの新カード2枚を追加し、アクティングアウトマン・前で積極的に笑う学生・アカデミックムーブ・ジェイルブレイクソフトを調整しました。",
+        changes: [
+          { title: "小刻みリズム学生",
+            before: "学生／学友会・持ち物／戦意7／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。",
+            after: "学生／学友会・持ち物／戦意8／攻撃力2／体力2\nこのカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。",
+            beforeHighlights: ["戦意7"], afterHighlights: ["戦意8"] },
+          { title: "アクティングアウトマン",
+            before: "学生／デザイン／戦意6／攻撃力2／体力3\nこのカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。",
+            after: "学生／デザイン／戦意4／攻撃力3／体力3\nこのカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。\n自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
+            beforeHighlights: ["戦意6／攻撃力2", "このカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。"],
+            afterHighlights: ["戦意4／攻撃力3", "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。", "自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。"] },
+          { title: "前で積極的に笑う学生",
+            before: "学生／共通カード／戦意3／攻撃力2／体力2\nこのカードは席マスに出席させる場合、1行目にのみ出席できる。\n自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
+            after: "学生／共通カード／戦意3／攻撃力1／体力3\n[超注目]\nこのカードは1行目にのみ出席できる。\n自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
+            beforeHighlights: ["攻撃力2／体力2", "このカードは席マスに出席させる場合、1行目にのみ出席できる。", "自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。"],
+            afterHighlights: ["攻撃力1／体力3", "[超注目]", "このカードは1行目にのみ出席できる。", "自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。"] },
+          { title: "アカデミックムーブ",
+            before: "環境／共通カード／戦意5／攻撃力0／体力0\nお互いの講義室にこのターン出席した出席者すべては[超陽気]を持つ。それらは自分のターン終了時、校外エリアへ送られる。",
+            after: "環境／共通カード／戦意4／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。",
+            beforeHighlights: ["戦意5", "お互いの講義室にこのターン出席した出席者すべては", "それらは"],
+            afterHighlights: ["戦意4", "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは", "その出席者は"] },
+          { title: "新カード：アクティングアウトマン2号", after: "学生／共通カード／戦意3／攻撃力1／体力3\n[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては[陽気]を持つ。" },
+          { title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
+          { title: "-幼き日の思い出-⚪︎u⚪︎uApp",
+            before: "持ち物／共通カード／戦意3／攻撃力0／体力0\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。\n自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
+            after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n自分のデッキから持ち物カード1枚をランダムに手札に加える。\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。",
+            beforeHighlights: ["このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。", "自分のデッキから持ち物カード1枚をランダムに手札へ加える。"],
+            afterHighlights: ["自分のデッキから持ち物カード1枚をランダムに手札に加える。", "このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。"] },
+          { title: "ジェイルブレイクソフト-⚪︎u⚪︎uApp",
+            before: "持ち物／共通カード／戦意3／攻撃力0／体力0\nお互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。\n相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。",
+            after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。",
+            beforeHighlights: ["お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。", "相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。"],
+            afterHighlights: ["次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。"] }
+        ]
+      },
       {
         version: "ver.0.26.0",
         versioning: "semver",
@@ -22620,6 +22665,7 @@
       abyssTurns: 0,
       internTurnsRemaining: 0,
       effectUseLockTurnsRemaining: 0,
+      retainNextUsedItem: false,
       turnActionTaken: false,
       designTextbookBonus: 0,
       designTextbookUntilTurn: 0,
@@ -29553,8 +29599,8 @@
 
     function aiAttackCounterDamage(attacker, target) {
       const kills = attacker.baseId === "absolute_woman"
-        || previewFinalDamageToCard(target, attacker.attack || 0, attacker, { combat: true }) >= target.currentHp;
-      if (target.yutaUmbrellaShield || attacker.noCounterAttack || attacker.baseId === "absolute_woman"
+        || previewFinalDamageToCard(target, cardAttackDamage(attacker, target), attacker, { combat: true }) >= target.currentHp;
+      if (target.yutaUmbrellaShield || attacker.noCounterAttack || actingOutStudentAttackBonus(attacker, target) > 0 || attacker.baseId === "absolute_woman"
         || (attacker.baseId === "trendy_student" && kills)) return 0;
       return previewFinalDamageToCard(attacker, target.attack || 0, target, { combat: true });
     }
@@ -29587,11 +29633,11 @@
       if (!canAiLethalAttackerHitLife(attacker, targetSide)
         || (listAttentionCards(targetSide).length > 0 && attacker.baseId !== "loud_student")) return false;
       // A floor shield at 1 life can still be consumed by positive damage.
-      return Math.max(0, attacker.attack || 0) > 0 || aiAttackTriggerHasValue(side, attacker);
+      return previewFinalDamageToLife(targetSide, attacker.attack || 0, attacker) > 0 || aiAttackTriggerHasValue(side, attacker);
     }
 
     function aiShouldAttackCard(side, attacker, target) {
-      const damage = previewFinalDamageToCard(target, Math.max(0, attacker.attack || 0), attacker, { combat: true });
+      const damage = previewFinalDamageToCard(target, cardAttackDamage(attacker, target), attacker, { combat: true });
       const triggerValue = aiAttackTriggerHasValue(side, attacker, target);
       if (damage <= 0 && !triggerValue) return false;
       const counter = aiAttackCounterDamage(attacker, target);
@@ -30286,7 +30332,6 @@
       if (card.baseId === "rear_queen") return scoreAiDamageEffectTargets(side, card, enemy.filter(e => e.card.type === "student"), { damage: 4, random: true }) * Math.min(3, enemy.filter(e => e.card.type === "student").length);
       if (card.baseId === "sick_yuta") return enemy.filter(e => canEquipIllness({ ...e.card }) && e.card.baseId !== "yuta").length ? 4 : 0;
       if (card.baseId === "protein_drinker") return 3;
-      if (card.baseId === "acting_out_man") return Math.min(8, state.players[oppositeSide(side)].hand.length * 1.2);
       return 0;
     }
 
@@ -30866,7 +30911,7 @@
         .filter(({ card }) => aiShouldAttackCard(side, attacker, card))
         .map((entry) => {
           const defeats = attacker.baseId === "absolute_woman"
-            || previewFinalDamageToCard(entry.card, attacker.attack || 0, attacker, { combat: true }) >= entry.card.currentHp;
+            || previewFinalDamageToCard(entry.card, cardAttackDamage(attacker, entry.card), attacker, { combat: true }) >= entry.card.currentHp;
           return { ...entry, defeats, score: (defeats ? 14 : 0)
             + (aiAttackCounterDamage(attacker, entry.card) < attacker.currentHp ? 4 : -8)
             + scoreAiEnemyAttendeeThreat(entry.card, entry.ref) - entry.card.currentHp * 0.25 };
@@ -31032,7 +31077,7 @@
           if (isAttackLocked(card, futureActionTurn)) return total;
           if (isSameNameAttackLocked(card)) return total;
         }
-        const attack = Math.max(0, card.attack || 0);
+        const attack = previewFinalDamageToLife(oppositeSide(side), card.attack || 0, card);
         const drowsy = hasKeyword(card, "眠気");
         addDamage(total, "max", attack);
         addDamage(total, "expected", attack * aiAttackHitFactor(card));
@@ -31048,7 +31093,7 @@
       if (incoming < state.players[side].life || isAttackLocked(targetCard, futureTurn)
         || isSameNameAttackLocked(targetCard) || !aiCanCardTargetLife(targetCard, targetSide, { actionTurn: futureTurn })) return false;
       const defeats = attacker.baseId === "absolute_woman"
-        || previewFinalDamageToCard(targetCard, attacker.attack || 0, attacker, { combat: true }) >= targetCard.currentHp;
+        || previewFinalDamageToCard(targetCard, cardAttackDamage(attacker, targetCard), attacker, { combat: true }) >= targetCard.currentHp;
       return defeats && aiBoardFaceDamage(targetSide, {
         futureActionTurn: futureTurn, excludedInstanceId: targetCard.instanceId
       }).expected < state.players[side].life;
@@ -31074,7 +31119,7 @@
 
     function canAiLethalAttackerDefeatCard(attacker, target) {
       if (!canAiLethalAttackerTargetCard(attacker, target) || target.yutaUmbrellaShield) return false;
-      return previewFinalDamageToCard(target, Math.max(0, attacker.attack || 0), attacker, { combat: true }) >= target.currentHp;
+      return previewFinalDamageToCard(target, cardAttackDamage(attacker, target), attacker, { combat: true }) >= target.currentHp;
     }
 
     function canAiLethalAttackerHitLife(card, targetSide = "player") {
@@ -31090,7 +31135,7 @@
     function aiGuaranteedFaceDamageFromAttackers(attackers) {
       return attackers
         .filter((entry) => canAiLethalAttackerHitLife(entry.card))
-        .reduce((total, entry) => total + Math.max(0, entry.card.attack || 0), 0);
+        .reduce((total, entry) => total + previewFinalDamageToLife("player", entry.card.attack || 0, entry.card), 0);
     }
 
     function findAiAttentionClearLethalPlan() {
@@ -31310,7 +31355,7 @@
 
     function aiEndTurnHealing(side) {
       let healing = isCafeteriaEnvironmentActive() ? 1 : 0;
-      healing += listBoardRefs(side)
+      healing += (state.players[side].board.teacher?.type === "teacher" ? 3 : 0) * listBoardRefs(side)
         .map((ref) => getBoardCardFromRef(ref))
         .filter((card) => card?.baseId === "laughing_front_student" && canUsePrintedCardEffects(card)).length;
       healing += listBoardRefs(side).map(getBoardCardFromRef)
@@ -31932,13 +31977,19 @@
         }
       }
       if (card.baseId === "laughing_front_student") {
-        const usefulHealing = state.players.opponent.life < 20 || friendlyRefs.some((ref) => {
-          const friendly = getBoardCardFromRef(ref);
-          return friendly?.type === "teacher" && friendly.currentHp < friendly.maxHp;
-        });
+        const usefulHealing = state.players.opponent.life < currentLifeCap("opponent")
+          && state.players.opponent.board.teacher?.type === "teacher";
         score += usefulHealing ? 4 : 0;
       }
-      if (card.baseId === "acting_out_man") score += enemyRefs.length > 0 ? 20 : 8;
+      if (card.baseId === "acting_out_man_2") score += friendlyRefs.filter(ref =>
+        String(getBoardCardFromRef(ref)?.name || "").includes("アクティングアウト")).length * 4;
+      if (card.baseId === "acting_out_woman" && !hasActingOutWomanAura("opponent")) score += enemyRefs.filter(ref =>
+        getBoardCardFromRef(ref)?.type === "student").length * 4;
+      if (card.baseId === "acting_out_man") {
+        score += scoreAiDamageEffectTargets("opponent", card, enemyRefs.map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
+          .filter(entry => entry.card?.type === "student"), { damage: 1, maxTargets: enemyRefs.length });
+        if (friendlyRefs.some(ref => isActingOutStudent(getBoardCardFromRef(ref)))) score += 8;
+      }
       if (["cafeteria_lady", "curry_treater", "chen_san"].includes(card.baseId) && isCafeteriaEnvironmentActive()) {
         score += 6;
       }
@@ -32031,7 +32082,7 @@
           })));
         const preview = makeBoardCard({ ...card, owner: side });
         const baseValue = value(preview);
-        if (state.environment?.baseId === "academic_move") {
+        if (academicMoveCanGrant()) {
           preview.keywords = [...(preview.keywords || []), "超陽気"];
           preview.academicMoveMarked = true;
         }
@@ -32177,8 +32228,10 @@
       if (card.baseId === "on_demand_business") return (countCards(ownCards,c=>c.type==='student') * Number(otherCards.some(c=>c.type==='teacher'&&!c.noLecture))
         - countCards(otherCards,c=>c.type==='student') * Number(ownCards.some(c=>c.type==='teacher'&&!c.noLecture))) * 3 + replacementBonus - replacementRiskPenalty;
       if (card.baseId === "academic_move") {
-        const value = cards => cards.filter(c=>c.playedOnTurn===state.actionTurn).reduce((sum,c)=>sum+(aiCanCardTargetLife(c,c.owner)?Math.max(0,c.attack||0)*2:0)-Math.max(0,c.currentHp||0)*0.5,0);
-        return value(ownCards)-value(otherCards) + replacementBonus - replacementRiskPenalty;
+        const next = state.players[side].hand.filter(c => ["student", "teacher", "vampire"].includes(c.type)
+          && effectiveCardCost(c) <= state.players[side].will - effectiveCardCost(card));
+        const value = next.length ? Math.max(...next.map(c => Math.max(0, c.attack || 0) * 2 - (c.hp || 0) * .5)) : 0;
+        return value + replacementBonus - replacementRiskPenalty;
       }
       if (card.baseId === "meguro_library") {
         const progress = aiOpponentEnvironmentProgress(side);
@@ -32669,12 +32722,11 @@
         return (hasTarget ? 8 : 0) + (state.environment ? 5 : 0) + (hasSixPlusStudentInClassroom("opponent") ? 3 : 0);
       }
       if (item.baseId === "jailbreak_tutuapp") {
-        const own = jailbreakEligibleCards("opponent");
-        const enemy = jailbreakEligibleCards("player");
-        if (own.length === 0) return 0;
-        const bestOwn = Math.max(...own.map((card) => effectiveCardCost(card)));
-        const bestEnemy = enemy.length > 0 ? Math.max(...enemy.map((card) => effectiveCardCost(card))) : 0;
-        return 6 + bestOwn + Math.max(0, bestEnemy - bestOwn) * 2;
+        if (opponent.retainNextUsedItem) return 0;
+        const reusable = opponent.hand.filter(card => card.type === "item" && card.instanceId !== item.instanceId
+          && card.baseId !== "jailbreak_tutuapp" && !isEquipmentItem(card)
+          && !HORSE_MATERIAL_IDS.includes(card.baseId) && !UTA_FUSION_MATERIAL_IDS.includes(card.baseId));
+        return reusable.length ? 5 + Math.max(...reusable.map(card => effectiveCardCost(card))) : 0;
       }
       if (CRAB_SET_IDS.includes(item.baseId)) {
         if (isAiCrabVictoryStrategyActive("opponent")) return 0;
@@ -32957,24 +33009,7 @@
         return target ? castItemOnCard("opponent", item, target.ref.owner, target.ref.zone, target.ref.index, false) : false;
       }
       if (item.baseId === "jailbreak_tutuapp") {
-        const source = chooseJailbreakCardForAi("opponent");
-        if (!source) return false;
-        const targets = jailbreakEligibleCards("player");
-        if (targets.length > 0 && !isCpuControlledBattleSide("player")) {
-          return openCardChoice({
-            mode: "jailbreak_cpu_target",
-            itemId: item.instanceId,
-            title: item.name,
-            message: "戦意を消費せずに出席させる自分の出席者カードを1枚選んでください。",
-            cards: targets,
-            min: 1,
-            max: 1,
-            confirmLabel: "このカードを出席させる",
-            context: { sourceSide: "opponent", sourceSelectedId: source.instanceId }
-          });
-        }
-        const target = chooseJailbreakCardForAi("player");
-        return resolveJailbreak("opponent", item, source.instanceId, target?.instanceId || null, false);
+        return castImmediateItem("opponent", item, false);
       }
       if (isImmediateItemBaseId(item.baseId)) {
         return castImmediateItem("opponent", item, false);
@@ -33274,7 +33309,7 @@
         .filter((target) => aiShouldAttackCard("opponent", attacker, target.card))
         .map((target) => {
           const canDefeat = attacker.baseId === "absolute_woman"
-            || previewFinalDamageToCard(target.card, attacker.attack || 0, attacker, { combat: true }) >= target.card.currentHp;
+            || previewFinalDamageToCard(target.card, cardAttackDamage(attacker, target.card), attacker, { combat: true }) >= target.card.currentHp;
           const survivesCounter = aiAttackCounterDamage(attacker, target.card) < attacker.currentHp;
           const score = (canDefeat ? 14 : 0)
             + (survivesCounter ? 4 : -8)
@@ -33743,12 +33778,10 @@
             if (healed > 0) addLog(`${card.name}の余裕：体力を${healed}回復しました。`);
           }
           if (card.baseId === "laughing_front_student") {
-            healPlayer(side, 1);
-            listBoardRefs(side).forEach((teacherRef) => {
-              const teacherCard = getBoardCardFromRef(teacherRef);
-              if (teacherCard && teacherCard.type === "teacher") healCard(teacherCard, 1);
-            });
-            addLog(`${card.name}の効果：自分と教師を1回復。`);
+            if (state.players[side].board.teacher?.type === "teacher") {
+              healPlayer(side, 3);
+              addLog(`${card.name}の効果：自分の気力を3回復。`);
+            }
           }
           if (card.baseId === "ttb") {
             generateCardsIntoDeck(opponent, "suspicious_document", 1);
@@ -34378,7 +34411,7 @@
               dealDamageToCard(target.card, 2, card);
               addLog(`${card.name}の効果：相手の学生1人をランダムに指名し、2ダメージ。`);
             } else if (kingdomActive) {
-              damagePlayer(opponent, 2);
+              damagePlayer(opponent, 2, card);
               addLog(`${card.name}の効果：相手の学生がいないため、相手本体に2ダメージ。`);
             } else {
               addLog(`${card.name}の効果：相手の学生がいないため不発。`);
@@ -36492,10 +36525,6 @@
         openKingGhidorahBedChoice(item);
         return;
       }
-      if (item.baseId === "jailbreak_tutuapp") {
-        openJailbreakSourceChoice(item);
-        return;
-      }
       if (item.baseId === "environment_setup" && openEnvironmentSetupChoice(item)) return;
       if (item.baseId === "go_away" && openGoAwayChoice(item)) return;
       if (item.baseId === "happy_experience") {
@@ -36655,38 +36684,9 @@
     }
 
     function resolveJailbreak(side, item, sourceSelectedId, targetSelectedId, renderAfter = true) {
-      if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
       if (!item || item.baseId !== "jailbreak_tutuapp") return false;
-      const sourceSide = side;
-      const targetSide = oppositeSide(side);
-      const sourceCard = jailbreakEligibleCards(sourceSide).find((card) => card.instanceId === sourceSelectedId);
-      const targetCard = jailbreakEligibleCards(targetSide).find((card) => card.instanceId === targetSelectedId) || null;
-      if (!sourceCard) {
-        addLog(`${item.name}で出席させる自分のカードを確認できませんでした。`);
-        if (renderAfter) render();
-        return false;
-      }
-      const sourceCost = effectiveCardCost(sourceCard);
-      const targetCost = targetCard ? effectiveCardCost(targetCard) : 0;
-      if (!payForItem(sourceSide, item)) {
-        if (renderAfter) render();
-        return false;
-      }
-      showCardPlayAnimation(item, "trash");
-      moveHandCardToTrash(sourceSide, item);
-      const sourceAttendee = attendJailbreakCard(sourceSide, sourceCard);
-      const targetAttendee = targetCard ? attendJailbreakCard(targetSide, targetCard) : null;
-      const difference = targetAttendee ? Math.max(0, targetCost - sourceCost) : 0;
-      if (sourceAttendee && difference > 0) {
-        applyPermanentStatBuff(sourceAttendee, difference, difference, 0, item.name);
-        addLog(`${item.name}の効果：戦意の差${difference}だけ${sourceAttendee.name}の攻撃力と体力を上げました。`);
-      }
-      addLog(`${SIDES[sourceSide]}は${item.name}を使いました。`);
-      cleanupDestroyedCards();
-      applyBoardAuras();
-      clearSelections();
-      if (renderAfter) render();
-      return true;
+      // Keep legacy commands/API compatible, but never run the former attendance effect.
+      return castImmediateItem(side, item, renderAfter);
     }
 
     function openJailbreakSourceChoice(item) {
@@ -37244,7 +37244,7 @@
         }
         if (source.baseId === "where_maibo" && enemy.length) dealDamageToCard(shuffle(enemy)[0], 7, source);
         if (source.baseId === "where_bone") {
-          damagePlayer(oppositeSide(side), 3);
+          damagePlayer(oppositeSide(side), 3, source);
           checkLifeVictory();
         }
         addLog(`${source.name}のターン終了時効果を処理しました。`);
@@ -37273,7 +37273,7 @@
         healPlayer(side, 3);
         listBoardRefs(side).map(getBoardCardFromRef).filter(Boolean).forEach(card => applyPermanentStatBuff(card, 1, 1, 0, source.name));
         listBoardRefs(opponent).map(getBoardCardFromRef).filter(Boolean).forEach(card => dealDamageToCard(card, 2, source));
-        damagePlayer(opponent, 3);
+        damagePlayer(opponent, 3, source);
       }
       if (source.baseId === "information_tired_student") {
         const target = shuffle([...state.players[side].deck, ...state.players[side].hand]
@@ -38457,16 +38457,12 @@
     }
 
     function isAttendanceLimited(side) {
-      return state.currentSide === side
-        && (state.players[side]?.attendancesThisTurn || 0) >= 1
-        && listBoardRefs(oppositeSide(side)).some((ref) => {
-          const card = getBoardCardFromRef(ref);
-          return card?.baseId === "acting_out_man" && canUsePrintedCardEffects(card);
-        });
+      return false;
     }
 
     function canPlaceCard(side, card, zone, owner, index, options = {}) {
       if (!card || state.phase !== "battle" || state.gameOver) return false;
+      if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return false;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return false;
       if (zone !== "environment" && owner !== side) return false;
       if (card.type === "environment") {
@@ -39059,8 +39055,14 @@
       return card;
     }
 
+    function academicMoveCanGrant() {
+      return state.environment?.baseId === "academic_move"
+        && state.environment.academicMoveLastAttendanceTurn !== state.actionTurn;
+    }
+
     function attendCard(side, card, zone, index = null, options = {}) {
       if (!card || !["seat", "teacher", "environment"].includes(zone)) return null;
+      if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return null;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return null;
       const owner = options.owner || side;
       if (card.baseId === "adjective_student" && !options.adjectiveCoinResolved && !options.alreadyPlaced
@@ -39092,6 +39094,9 @@
       }
 
       card.owner = owner;
+      if (zone === "environment" && card.baseId === "academic_move") {
+        delete card.academicMoveLastAttendanceTurn;
+      }
       card.lastAttendanceSource = attendanceSource;
       card.attendanceSource = attendanceSource;
       card.attendanceEvent = {
@@ -39103,7 +39108,8 @@
         index: zone === "seat" ? index : null
       };
       if (zone === "seat" || zone === "teacher") {
-        if (state.environment?.baseId === "academic_move") {
+        if (academicMoveCanGrant()) {
+          state.environment.academicMoveLastAttendanceTurn = state.actionTurn;
           addKeyword(card, "超陽気", state.environment.name);
           card.academicMoveMarked = true;
         }
@@ -39892,7 +39898,9 @@
         }
       }
       if (card.baseId === "acting_out_man") {
-        addLog(`${card.name}がいる間、相手は1ターンに1回しか出席できません。`);
+        listBoardRefs(opponent).map(getBoardCardFromRef).filter(target => target?.type === "student")
+          .forEach(target => dealDamageToCard(target, 1, card));
+        addLog(`${card.name}の出席時効果：相手の学生すべてに1ダメージ。`);
       }
       if (card.baseId === "pro_k" && zone === "teacher") {
         const seatIndexes = [0, 2].filter((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex));
@@ -39958,7 +39966,7 @@
         addLog(`${card.name}の効果：相手の1列目・3列目から${enemyText}、自分の2列目から${friendlyText}を破壊しました。`);
       }
       if (card.baseId === "ninety_three_teacher" && zone === "teacher") {
-        damagePlayer(opponent, 3);
+        damagePlayer(opponent, 3, card);
         checkLifeVictory();
         addLog(`${card.name}の効果：相手本体に3ダメージ。`);
       }
@@ -40050,13 +40058,7 @@
         addLog(`${card.name}の効果：お互いの2列目は出席できません。`);
       }
       if (card.baseId === "academic_move" && zone === "environment") {
-        ["player", "opponent"].forEach((owner) => listBoardRefs(owner).forEach((ref) => {
-          const attendee = getBoardCardFromRef(ref);
-          if (attendee?.attendanceEvent?.turn !== state.actionTurn) return;
-          addKeyword(attendee, "超陽気", card.name);
-          attendee.academicMoveMarked = true;
-        }));
-        addLog(`${card.name}の効果：このターン出席した出席者が超陽気と自分のターン終了時退場を得ました。`);
+        addLog(`${card.name}の効果：設置後、各ターン最初に出席する出席者1人に超陽気と自分のターン終了時退場を付与します。`);
       }
       if (card.baseId === "full_lock" && zone === "environment") {
         state.fullLockSeatBlocks = [];
@@ -40133,7 +40135,7 @@
         dealDamageToCard(target.card, 1, sourceCard);
         targetText = `${target.card.name}に1ダメージ`;
       } else if (options.allowLifeFallback === true) {
-        damagePlayer(targetSide, 1);
+        damagePlayer(targetSide, 1, sourceCard);
         targetText = "相手本体に1ダメージ";
       } else {
         return { resolved: false, drawn: 0, targetText: "" };
@@ -41178,9 +41180,10 @@
           : `${attacker.name}の攻撃時効果：${target.name}の破壊は置き換えられました。`);
         return;
       }
-      const attackDamage = attacker.attack || 0;
+      const attackDamage = cardAttackDamage(attacker, target);
+      if (actingOutStudentAttackBonus(attacker, target) > 0) showFloatingTextForCard(attacker, "攻撃力+1", "buff");
       const dealtDamage = dealDamageToCard(target, attackDamage, attacker, { combat: true });
-      const counterDamage = attacker.noCounterAttack
+      const counterDamage = attacker.noCounterAttack || actingOutStudentAttackBonus(attacker, target) > 0
         || (attacker.baseId === "trendy_student" && target.currentHp <= 0)
         ? 0
         : (target.attack || 0);
@@ -41291,7 +41294,7 @@
 
     function resolveBounceDayLifeAttack(attackerRef, attacker, targetSide) {
       const beforeLife = state.players[targetSide].life;
-      damagePlayer(targetSide, attacker.attack || 0);
+      damagePlayer(targetSide, attacker.attack || 0, attacker);
       const dealtDamage = beforeLife - state.players[targetSide].life;
       if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(attacker);
       destroyBoardCard(attackerRef, { reason: "バウンスディ", showDestroyFeedback: false });
@@ -41318,7 +41321,7 @@
 
     function resolveLifeAttack(attacker, targetSide) {
       const beforeLife = state.players[targetSide].life;
-      damagePlayer(targetSide, attacker.attack || 0);
+      damagePlayer(targetSide, attacker.attack || 0, attacker);
       const dealtDamage = beforeLife - state.players[targetSide].life;
       if (state.players[targetSide].life <= 0 && state.analytics) state.analytics.lastLethalCard = analyticsCardInfo(attacker);
       const healed = healVampireFromDamage(attacker, dealtDamage);
@@ -42326,6 +42329,10 @@
         const pulled = pullRandomCardsFromDeck(side, (card) => card.type === "item", 1);
         resultText = `自分のデッキから持ち物カードを${pulled}枚、ランダムに手札へ加えました。`;
       }
+      if (item.baseId === "jailbreak_tutuapp") {
+        state.players[side].retainNextUsedItem = true;
+        resultText = "次に使用する持ち物カードを、使用後に校外エリアへ送らず手札に残します。";
+      }
       if (item.baseId === "efficient_experiment_method") {
         const student = pullRandomCardsFromDeck(side, (card) => card.type === "student", 1);
         const teacher = pullRandomCardsFromDeck(side, (card) => card.type === "teacher", 1);
@@ -43226,6 +43233,22 @@
       return true;
     }
 
+    function isEquipmentItem(item) {
+      return Boolean(item && [...UTA_EQUIPMENT_BASE_IDS, "illness", "stress_hair", "padlock", "earphones"].includes(item.baseId));
+    }
+
+    function finishRetainedItem(context) {
+      const retained = context?.retainedItem;
+      if (!retained) return;
+      context.retainedItem = null;
+      delete retained.item.usedFromHand;
+      if (!state.players[retained.side].hand.some(card => card.instanceId === retained.item.instanceId)) {
+        state.players[retained.side].hand.push(retained.item);
+      }
+      addLog(`${retained.item.name}はジェイルブレイクソフトの効果で手札に残りました。`);
+      if (state.screen === "battle") render();
+    }
+
     function payForItem(side, item) {
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) {
         state.message = "ちがうよはお互いの最大戦意がそれぞれ10の場合にのみ使えます。";
@@ -43245,7 +43268,8 @@
       // the shared play presentation has delivered the item to its destination.
       const context = itemResolutionContext;
       const equipped = !arePlayedEffectsSuppressed(side) && context?.name === "castItemOnCard"
-        && [...UTA_EQUIPMENT_BASE_IDS, "illness", "stress_hair", "padlock", "earphones"].includes(item.baseId);
+        && isEquipmentItem(item);
+      const retained = !isEquipmentItem(item) && state.players[side].retainNextUsedItem === true;
       if (context && !context.replaying && state.screen === "battle" && state.phase === "battle"
         && !state.training?.skipAnimations) {
         if (pendingItemPresentation) return false;
@@ -43254,16 +43278,17 @@
         const pending = { token, itemId: item.instanceId };
         pendingItemPresentation = pending;
         clearSelections();
-        showCardPlayAnimation(item, equipped ? "board" : "trash", {
+        showCardPlayAnimation(item, equipped ? "board" : retained ? "hand" : "trash", {
           targetRef: equipped ? { owner: context.args[2], zone: context.args[3], index: context.args[4] } : null,
           onComplete: () => {
             if (pendingItemPresentation !== pending) return;
             pendingItemPresentation = null;
             if (state.preBattleToken !== token || state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return;
             const previousContext = itemResolutionContext;
-            itemResolutionContext = { ...context, replaying: true, itemId: item.instanceId, equipped };
+            const replayContext = { ...context, replaying: true, itemId: item.instanceId, equipped };
+            itemResolutionContext = replayContext;
             try { context.resolve(...context.args); }
-            finally { itemResolutionContext = previousContext; render(); }
+            finally { finishRetainedItem(replayContext); itemResolutionContext = previousContext; render(); }
           }
         });
         return false;
@@ -43288,8 +43313,13 @@
       if (context && !equipped) {
         context.itemId = item.instanceId;
         state.players[side].hand = state.players[side].hand.filter(card => card.instanceId !== item.instanceId);
-        // Reset only the stored copy: the resolving effect still needs its source.
-        moveToTrash(side, { ...item }, { sourceZone: "hand", playedFromHand: true });
+        if (retained) {
+          state.players[side].retainNextUsedItem = false;
+          context.retainedItem = { side, item };
+        } else {
+          // Reset only the stored copy: the resolving effect still needs its source.
+          moveToTrash(side, { ...item }, { sourceZone: "hand", playedFromHand: true });
+        }
         context.itemMoved = true;
       }
       buffYocchanInHand(side, item);
@@ -43370,12 +43400,31 @@
         || isSameNameAttackLocked(card));
     }
 
+    function isActingOutStudent(card) {
+      return card?.type === "student" && card.currentHp > 0 && String(card.name || "").includes("アクティングアウト");
+    }
+
+    function actingOutManAbilityActive(card) {
+      return card?.baseId === "acting_out_man" && canUsePrintedCardEffects(card)
+        && listBoardRefs(card.owner).map(getBoardCardFromRef).some(other =>
+          other?.instanceId !== card.instanceId && isActingOutStudent(other));
+    }
+
+    function actingOutStudentAttackBonus(attacker, target) {
+      return target?.type === "student" && actingOutManAbilityActive(attacker) ? 1 : 0;
+    }
+
+    function cardAttackDamage(attacker, target) {
+      return Math.max(0, (attacker?.attack || 0) + actingOutStudentAttackBonus(attacker, target));
+    }
+
     function cardAttackLimit(card) {
-      const limit = Number(card?.attackLimit ?? CARD_BASES[card?.baseId]?.attackLimit ?? 1);
+      const limit = Math.max(actingOutManAbilityActive(card) ? 2 : 1, Number(card?.attackLimit ?? CARD_BASES[card?.baseId]?.attackLimit ?? 1));
       return Number.isFinite(limit) ? Math.max(1, Math.floor(limit) + (card?.trueEnemyExtraAttack || 0)) : 1;
     }
 
     function cardAttacksUsedThisTurn(card) {
+      if (card?.baseId === "acting_out_man" && Number.isFinite(card.attacksUsedThisTurn)) return Math.max(0, card.attacksUsedThisTurn);
       if (card?.hasAttacked) return cardAttackLimit(card);
       const stored = Number(card?.attacksUsedThisTurn);
       if (Number.isFinite(stored) && stored >= 0) return Math.floor(stored);
@@ -43684,7 +43733,28 @@
       }
       if (keyword === "陽気" && card.baseId === "curry_treater" && isCafeteriaEnvironmentActive()) return true;
       if (keyword === "陽気" && enemyStudentTrpgAuraActive(card)) return true;
+      if (keyword === "陽気" && isCardCurrentlyOnBoard(card)
+        && String(card.name || "").includes("アクティングアウト")
+        && hasActingOutMan2Aura(card.owner)) return true;
       return false;
+    }
+
+    function hasActingOutMan2Aura(side) {
+      return listBoardRefs(side).some(ref => {
+        const card = getBoardCardFromRef(ref);
+        return card?.baseId === "acting_out_man_2" && card.currentHp > 0 && canUsePrintedCardEffects(card);
+      });
+    }
+
+    function hasActingOutWomanAura(side) {
+      return listBoardRefs(side).some(ref => {
+        const card = getBoardCardFromRef(ref);
+        return card?.baseId === "acting_out_woman" && card.currentHp > 0 && canUsePrintedCardEffects(card);
+      });
+    }
+
+    function actingOutStudentDamageReduction(side, source) {
+      return source?.type === "student" && source.owner === oppositeSide(side) && hasActingOutWomanAura(side) ? 2 : 0;
     }
 
     function enemyStudentTrpgAuraActive(card) {
@@ -43785,6 +43855,9 @@
         cleanupCount = cleanupDestroyedCards();
         guard += 1;
       } while (cleanupCount > 0 && guard < 6);
+      ["player", "opponent"].forEach(side => listBoardRefs(side).map(getBoardCardFromRef).forEach(card => {
+        if (card?.baseId === "acting_out_man") card.hasAttacked = cardAttacksUsedThisTurn(card) >= cardAttackLimit(card);
+      }));
     }
 
     function recalculateBoardAuras() {
@@ -44100,7 +44173,7 @@
       const multiplier = !ignoreWeakness && isVampireWeaknessDamage(card, source) ? 2 : 1;
       const finalDamage = amount * multiplier;
       const defense = Math.max(0, Number(card.defense) || 0);
-      const reducedDamage = Math.max(0, finalDamage - defense);
+      const reducedDamage = Math.max(0, finalDamage - defense - actingOutStudentDamageReduction(card.owner, source));
       showFloatingTextForCard(card, reducedDamage > 0 ? `-${reducedDamage}` : "防御", reducedDamage > 0 ? "damage" : "heal");
       card.currentHp -= reducedDamage;
       const dealt = Math.min(beforeHp, reducedDamage);
@@ -44138,7 +44211,8 @@
         return Math.max(0, card.currentHp);
       }
       const multiplier = !ignoreWeakness && isVampireWeaknessDamage(card, source) ? 2 : 1;
-      return Math.max(0, (amount * multiplier) - Math.max(0, Number(card.defense) || 0));
+      return Math.max(0, (amount * multiplier) - Math.max(0, Number(card.defense) || 0)
+        - actingOutStudentDamageReduction(card.owner, source));
     }
 
     function dealDistributedDamageToRandomTargets(options = {}) {
@@ -44183,9 +44257,13 @@
         if (!card || card.currentHp === null) return;
         attendees += hits;
         affectedCards += 1;
-        attendeeDamage += dealDamageToCard(card, hits, source);
+        if (actingOutStudentDamageReduction(card.owner, source) > 0) {
+          for (let hit = 0; hit < hits; hit += 1) attendeeDamage += dealDamageToCard(card, 1, source);
+        } else attendeeDamage += dealDamageToCard(card, hits, source);
       });
-      if (life > 0) damagePlayer(targetSide, life);
+      if (actingOutStudentDamageReduction(targetSide, source) > 0) {
+        for (let hit = 0; hit < life; hit += 1) damagePlayer(targetSide, 1, source);
+      } else if (life > 0) damagePlayer(targetSide, life, source);
       analyticsRecordEffect({
         side: source?.owner || null,
         source,
@@ -44248,13 +44326,22 @@
       return healed;
     }
 
-    function damagePlayer(side, amount) {
-      if (amount <= 0) return;
-      return withSequentialDamageFeedback(() => applyPlayerDamage(side, amount));
+    function previewFinalDamageToLife(side, amount, source = null) {
+      return Math.max(0, amount - actingOutStudentDamageReduction(side, source));
     }
 
-    function applyPlayerDamage(side, amount) {
+    function damagePlayer(side, amount, source = null) {
       if (amount <= 0) return;
+      return withSequentialDamageFeedback(() => applyPlayerDamage(side, amount, source));
+    }
+
+    function applyPlayerDamage(side, amount, source = null) {
+      if (amount <= 0) return;
+      amount = previewFinalDamageToLife(side, amount, source);
+      if (amount <= 0) {
+        showFloatingTextForLife(side, "軽減", "heal");
+        return;
+      }
       const player = state.players[side];
       if (player.lifeShieldUntilTurn && player.lifeShieldUntilTurn >= state.actionTurn && player.lifeShieldUntilSide === state.currentSide) {
         showFloatingTextForLife(side, "無効", "heal");
@@ -44597,7 +44684,7 @@
         ? "to-environment"
         : destination === "board"
           ? "to-board"
-          : "to-trash";
+          : destination === "hand" ? "to-hand" : "to-trash";
       const rewardFoilReveal = shouldUseRewardFoilReveal(card, options);
       holdCrotchFebrezeForVisual(rewardFoilReveal ? REWARD_FOIL_PLAY_REVEAL_MS : PLAY_REVEAL_MS);
       elements.playRevealCard.className = `play-reveal-card${rewardFoilReveal ? " reward-foil-reveal" : ""}`;
@@ -44605,10 +44692,11 @@
       elements.playRevealOverlay.classList.toggle("reward-foil-reveal-active", rewardFoilReveal);
       elements.playRevealOverlay.classList.remove("hidden");
       elements.playRevealCard.removeAttribute("style");
-      if (options.targetRef || destination === "trash") {
+      if (options.targetRef || destination === "trash" || destination === "hand") {
         const targetElement = options.targetRef
           ? document.querySelector(tutorialRefSelector(options.targetRef))
-          : document.getElementById(card.owner === "opponent" ? "opponentTrashButton" : "playerTrashButton");
+          : destination === "hand" ? elements[card.owner === "opponent" ? "opponentHand" : "playerHand"]
+            : document.getElementById(card.owner === "opponent" ? "opponentTrashButton" : "playerTrashButton");
         const targetRect = targetElement?.getBoundingClientRect();
         const sourceRect = elements.playRevealCard.getBoundingClientRect();
         if (targetRect) {
@@ -47130,7 +47218,6 @@
       if (item.baseId === "forbidden_book") return state.players.player.life <= 10;
       if (item.baseId === "contrarian_portal") return !listBoardRefs("player")
         .some((ref) => getBoardCardFromRef(ref)?.occupiedSeatSize?.rows > 1);
-      if (item.baseId === "jailbreak_tutuapp") return jailbreakEligibleCards("player").length > 0;
       if (isImmediateItemBaseId(item.baseId)) return true;
       if (item.target === "global") return true;
       if (item.baseId === "paired_existence") {
@@ -48977,7 +49064,7 @@
       let detail;
       switch (environment.baseId) {
         case "academic_move":
-          detail = "このターンに講義室へ出席した出席者は[超陽気]を持ち、自分のターン終了時に校外エリアへ送られます。";
+          detail = cardRulesText(environment);
           break;
         case "seat_rules":
           detail = "自分の講義室の2列目には出席できません。";
@@ -49016,7 +49103,8 @@
     const BOARD_ONGOING_RULE_STARTS = Object.freeze({
       proliferating_enemy: "このカードが自分の講義室にいるかぎり",
       variable_student: "このカードが講義室にいるかぎり",
-      acting_out_man: "このカードが講義室にいるかぎり",
+      acting_out_man_2: "このカードが自分の講義室にいるかぎり",
+      acting_out_woman: "このカードが自分の講義室にいるかぎり",
       aggro_student: "このカードが出席している",
       aggro_king: "このカードが3行1列にいる",
       aggro_queen: "このカードが2行3列にいる",
@@ -49065,6 +49153,9 @@
       const player = state.players[side];
       if (!player) return [];
       const lines = [];
+      if (player.retainNextUsedItem) {
+        lines.push(`${CARD_BASES.jailbreak_tutuapp.name}：次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。`);
+      }
       if (player.lifeShieldUntilTurn && player.lifeShieldUntilTurn >= state.actionTurn) {
         lines.push("気にするな：次の相手ターン終了時まで、気力はダメージを受けません。");
       }
@@ -53834,6 +53925,9 @@
         if (card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") add("陽気", "人気デザイン講師C");
         if (card.baseId === "curry_treater" && isCafeteriaEnvironmentActive()) add("陽気", "食堂");
         if (enemyStudentTrpgAuraActive(card)) add("陽気", "TRPGサークルメンバー");
+        if (String(card.name || "").includes("アクティングアウト") && hasActingOutMan2Aura(card.owner)) {
+          add("陽気", CARD_BASES.acting_out_man_2.name);
+        }
       }
       if (hasKeyword(card, "眠気") && !baseKeywords.has("眠気") && !directSources.眠気) {
         const president = ["player", "opponent"]
@@ -54239,7 +54333,7 @@
         lazy_student: "遅刻1。",
         cancel_student: "遅刻2。出席したとき、相手の学生にランダムに3ダメージを割り振る。",
         tokyo_tech_bro: "このカードを手札から出席させたとき、自分の遅刻ゾーンにいるすべての出席者を出席させる。",
-        laughing_front_student: "このカードは席マスに出席させる場合、1行目にのみ出席できる。自分のターン終了時、自分の気力と自分の教師すべての体力を1回復する。",
+        laughing_front_student: "超注目を持つ。このカードは1行目にのみ出席できる。自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
         eaten_student: "遅刻1。陽気を持つ。相手の場に学生と教師がいるなら、超陽気を持つ。",
         loud_student: "陽気を持つ。このカードを手札から出席させたとき、お互いの講義室の他の出席者すべてに1ダメージを与える。教師はこのカードを攻撃できない。このカードは注目と超注目を無視して攻撃できる。「ベストフレンド」とつく出席者と隣接しているかぎり、超陽気を持つ。",
         best_friend: "このカードを手札から出席させたとき、自分のデッキから「バカでかい」とつくカード1枚を手札に加える。このカードは「バカでかい」とつくカードの効果によるダメージを受けない。このカードが「バカでかい」とつくカードと隣接しているかぎり、攻撃力と体力を+2する。",
@@ -54307,9 +54401,11 @@
         impossible_high_note: "このカードを手札から出席させたとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
         dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを1枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
-        acting_out_man: "このカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。",
+        acting_out_man: "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
+        acting_out_man_2: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては陽気を持つ。",
+        acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
-        academic_move: "お互いの講義室にこのターン出席した出席者すべては超陽気を持つ。それらは自分のターン終了時、校外エリアへ送られる。",
+        academic_move: "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは超陽気を持つ。その出席者は、自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
         gesture_student: "このカードを手札から出席させたとき、「３つジェスチャー」2枚を手札に生成する。",
         fusion_uma: "[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
@@ -54437,8 +54533,8 @@
         scary_question: "相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。",
         classroom_change: "相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに遅刻1を付与する。",
         annoying_na: "自分のターン開始時にのみ使用できる。お互いのプレイヤーがそれぞれ1回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。",
-        childhood_memory_tutuapp: "このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
-        jailbreak_tutuapp: "お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。",
+        childhood_memory_tutuapp: "自分のデッキから持ち物カード1枚をランダムに手札に加える。このカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。",
+        jailbreak_tutuapp: "次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。",
         efficient_experiment_method: "自分のデッキから学生、教師、持ち物をそれぞれ1枚ずつランダムに手札へ加える。",
         strong_student: "効果なし。",
         favorite_number_s: "相手の教卓マスにいる教師1人を指名し、破壊する。その後、その教師と同名のカード1枚を自分の手札に加える。",
@@ -55389,7 +55485,7 @@
         itemResolutionContext = context;
         let result;
         try { result = resolve(...args); }
-        finally { itemResolutionContext = previous; }
+        finally { finishRetainedItem(context); itemResolutionContext = previous; }
         if (context.accepted) { render(); return true; }
         return result;
       };

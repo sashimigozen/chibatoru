@@ -75,7 +75,7 @@ test("アカデミックムーブは出席者に超陽気とターン終了時�
   expect(result).toEqual({ cheerful: true, removed: true, trashed: true });
 });
 
-test("アカデミックムーブはこのターンの出席者だけに付与し、各自のターン終了時に退場させる", async ({ page }) => {
+test("アカデミックムーブは設置後最初の出席者だけに付与し、自分のターン終了時に退場させる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const state = api.state;
@@ -103,31 +103,32 @@ test("アカデミックムーブはこのターンの出席者だけに付与�
     api.resolveStudentEndTurnEffects("opponent");
     return { rules, marked, afterPlayer, opponentAfterOwnTurn: state.players.opponent.board.seats[0]?.baseId || null };
   });
-  expect(result.rules).toBe("お互いの講義室にこのターン出席した出席者すべては[超陽気]を持つ。それらは自分のターン終了時、校外エリアへ送られる。");
-  expect(result.marked).toEqual([false, true, true, true]);
-  expect(result.afterPlayer).toEqual({ old: "general_student", ownEarlier: null, ownLater: null, opponentEarlier: "general_student" });
-  expect(result.opponentAfterOwnTurn).toBeNull();
+  expect(result.rules).toBe("このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。");
+  expect(result.marked).toEqual([false, false, false, true]);
+  expect(result.afterPlayer).toEqual({ old: "general_student", ownEarlier: "general_student", ownLater: null, opponentEarlier: "general_student" });
+  expect(result.opponentAfterOwnTurn).toBe("general_student");
 });
 
-test("アカデミックムーブの戦意は5で、対戦とデッキ編成に反映される", async ({ page }) => {
+test("アカデミックムーブの戦意は4で、対戦とデッキ編成に反映される", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const card = api.createCardFromBase("academic_move", "player");
+    api.state.training.skipAnimations = true;
     api.state.testMode = false;
     api.state.players.player.hand = [card];
-    api.state.players.player.will = 4;
+    api.state.players.player.will = 3;
     const blocked = api.placeCardFromHand("player", card.instanceId, "environment", "player", null, false);
-    api.state.players.player.will = 5;
+    api.state.players.player.will = 4;
     const played = api.placeCardFromHand("player", card.instanceId, "environment", "player", null, false);
     return { cost: card.cost, blocked, played, remainingWill: api.state.players.player.will };
   });
-  expect(result).toEqual({ cost: 5, blocked: false, played: true, remainingWill: 0 });
+  expect(result).toEqual({ cost: 4, blocked: false, played: true, remainingWill: 0 });
 
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
   await page.locator("[data-case-view=\"library\"]").click();
   await page.locator("#deckLibraryGrid .new-deck").click();
-  await expect(page.locator('#deckEditorList [data-card-test="academic_move"] [aria-label="戦意5"]').first()).toHaveText("5");
+  await expect(page.locator('#deckEditorList [data-card-test="academic_move"] [aria-label="戦意4"]').first()).toHaveText("4");
 });
 
 test("病はU太を変化させ、別の学生へ新しい病を拡散する", async ({ page }) => {

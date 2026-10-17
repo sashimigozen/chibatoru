@@ -25,7 +25,7 @@ test.beforeAll(async () => {
 
 test.afterAll(() => server?.kill("SIGTERM"));
 
-test("ホストのアクティングアウトマンはゲストの2回目の出席を止めて同期する", async ({ browser }) => {
+test("アクティングアウトマンがいてもゲストの2回目の出席を許可して同期する", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   try {
@@ -84,6 +84,7 @@ test("ホストのアクティングアウトマンはゲストの2回目の出�
         hand: state.players.player.hand.map((card) => card.baseId), actorHp: state.players.opponent.board.seats[0]?.currentHp };
     })).toEqual({ phase: "battle", currentSide: "player",
       hand: ["general_student", "general_student"], actorHp: 3 });
+    await expect.poll(() => guest.evaluate(() => battleNewActionBlocked()), { timeout: 15000 }).toBe(false);
     await guest.evaluate((id) => window.__chibattle.playCard(id, "seat", "player", 0), setup.firstId);
     for (const page of [host, guest]) {
       await expect.poll(() => page.evaluate(() => {
@@ -94,19 +95,19 @@ test("ホストのアクティングアウトマンはゲストの2回目の出�
           attendanceCount: api.state.players[side].attendancesThisTurn,
           secondAvailable: api.canPlaceCard(side, api.state.players[side].hand[0], "seat", side, 1)
         };
-      })).toEqual({ first: "general_student", attendanceCount: 1, secondAvailable: false });
+      })).toEqual({ first: "general_student", attendanceCount: 1, secondAvailable: true });
     }
+    await expect.poll(() => guest.evaluate(() => battleNewActionBlocked()), { timeout: 15000 }).toBe(false);
     await guest.evaluate((id) => window.__chibattle.playCard(id, "seat", "player", 1), setup.secondId);
     await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.pendingTurnCommandId)).toBeFalsy();
     for (const page of [host, guest]) {
-      const result = await page.evaluate(() => {
+      await expect.poll(() => page.evaluate(() => {
         const api = window.__chibattle;
         const side = api.state.online.role === "host" ? "opponent" : "player";
         return { second: api.state.players[side].board.seats[1]?.baseId || null,
           held: api.state.players[side].hand.some((card) => card.baseId === "general_student"),
           will: api.state.players[side].will };
-      });
-      expect(result).toEqual({ second: null, held: true, will: 4 });
+      })).toEqual({ second: "general_student", held: false, will: 2 });
     }
   } finally {
     await Promise.all(contexts.map((context) => context.close()));

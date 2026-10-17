@@ -91,7 +91,7 @@ test("敵はTRPGサークルメンバーがいても戦意2のまま攻撃力+5�
   expect(result).toEqual({ before: 2, active: { cost: 2, attack: 6, cheerful: true }, after: 2, limit: 60 });
 });
 
-test("アクティングアウトマンは相手の2回目の出席を止め、場を離れると解除する", async ({ page }) => {
+test("アクティングアウトマンは相手の2回目の出席を制限しない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const actor = api.makeBoardCard(api.createCardFromBase("acting_out_man", "opponent"));
@@ -112,17 +112,18 @@ test("アクティングアウトマンは相手の2回目の出席を止め、�
   });
 
   expect(result).toEqual({
-    stats: { cost: 6, attack: 2, hp: 3 },
-    text: "このカードが講義室にいるかぎり、相手は1ターンに1回しか出席できない。",
-    first: true, blocked: false, forced: false, environmentAllowed: true,
-    available: true, afterRemoval: true
+    stats: { cost: 4, attack: 3, hp: 3 },
+    text: "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。\n自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。\nさらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
+    first: true, blocked: true, forced: true, environmentAllowed: true,
+    available: false, afterRemoval: false
   });
 });
 
-test("アクティングアウトマンは手札出席を止め、効果出席でも環境を出さない", async ({ page }) => {
+test("アクティングアウトマンは手札出席を制限せず、効果出席で環境を出さない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
+    state.training.skipAnimations = true;
     const actor = api.makeBoardCard(api.createCardFromBase("acting_out_man", "opponent"));
     state.players.opponent.board.seats[0] = actor;
     api.attendCard("player", api.makeBoardCard(api.createCardFromBase("general_student", "player")), "seat", 0);
@@ -137,7 +138,7 @@ test("アクティングアウトマンは手札出席を止め、効果出席�
     return { blocked, stillHeld, willBefore, willAfter: state.players.player.will,
       generatedHp: generated.currentHp, environment: state.environment?.baseId || null };
   });
-  expect(result).toEqual({ blocked: false, stillHeld: true, willBefore: 20, willAfter: 20,
+  expect(result).toEqual({ blocked: true, stillHeld: false, willBefore: 20, willAfter: 18,
     generatedHp: 3, environment: null });
 });
 

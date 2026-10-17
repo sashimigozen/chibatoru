@@ -7,7 +7,7 @@ for (const width of [1280, 390]) test(`カード修正は能力値と全文を�
   await page.setViewportSize({ width, height: 900 });
   await page.goto(url);
   await page.locator("#homeUpdatesButton").click();
-  const release = page.locator(".update-entry").first();
+  const release = page.locator(".update-entry").filter({ has: page.locator("summary", { hasText: "ver.0.26.0（" }) });
   await release.locator("summary").click();
   const change = release.locator(".update-change").filter({
     has: page.locator(".update-before strong", { hasText: "形容詞学生vs冷笑学生" })

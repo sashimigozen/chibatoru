@@ -76,7 +76,7 @@ for (const env of ['academic_move', 'full_lock', 'no_late_time', 'shogi_duel_fie
       arrived: ['player', 'opponent'].every(side => !state.players[side].late.length && state.players[side].board.seats[0]?.baseId === 'scout_student'),
       life: ['player', 'opponent'].map(side => state.players[side].life)
     }));
-    if (env === 'academic_move') expect(result.boosted).toBe(true);
+    if (env === 'academic_move') expect(result.boosted).toBe(false);
     if (env === 'full_lock') expect(result.blocked).toBe(true);
     if (env === 'no_late_time') {
       expect(result.arrived).toBe(true);

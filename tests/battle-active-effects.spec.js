@@ -144,8 +144,8 @@ test("自身だけの能力は継続効果に載せず、他の出席者・本�
   const result = await page.evaluate(() => {
     const excluded = ['scout_student', 'suit_student', 'yuta', 'dark_yuta', 'enemy_student',
       'protein_drinker', 'lone_wolf', 'cafeteria_lady', 'vampire', 'recovered_dark_yuta',
-      'aiben', 'nyotei', 'trendy_student', 'rebirth_student', 'true_enemy', 'aggro_princess'];
-    const included = ['proliferating_enemy', 'variable_student', 'acting_out_man',
+      'aiben', 'nyotei', 'trendy_student', 'rebirth_student', 'true_enemy', 'aggro_princess', 'acting_out_man'];
+    const included = ['proliferating_enemy', 'variable_student',
       'umaibo', 'uma_bone', 'where_uma', 'maibo_bone', 'where_maibo', 'where_bone', 'rear_queen', 'ttb'];
     const errors = [];
     for (const side of ['player', 'opponent']) {

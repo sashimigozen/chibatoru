@@ -7,6 +7,18 @@ const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
 
 test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
+  // These assertions inspect synchronous rule results; presentations are tested
+  // separately in item-presentation-order and jailbreak-retention.
+  await page.evaluate(() => {
+    const api = window.__chibattle;
+    const start = api.startCardTest;
+    api.startCardTest = (...args) => {
+      const result = start(...args);
+      api.state.training.skipAnimations = true;
+      return result;
+    };
+    api.state.training.skipAnimations = true;
+  });
 });
 
 test("新しい持ち物5種を⚪︎表記と既存文体で登録する", async ({ page }) => {
@@ -43,7 +55,7 @@ test("新しい持ち物5種を⚪︎表記と既存文体で登録する", asyn
   expect(result.every((entry) => entry.type === "item")).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").generated).toBe(true);
   expect(result.find((entry) => entry.baseId === "jailbreak_tutuapp").text)
-    .toBe("お互いのプレイヤーは、自分の手札から出席させられる出席者カード1枚を選び、戦意を消費せずに出席させる。\n相手が出席させたカードの戦意が、自分が出席させたカードの戦意より高い場合、その差分だけ、自分が出席させた出席者の攻撃力と体力を上げる。");
+    .toBe("次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。");
   expect(result.find((entry) => entry.baseId === "classroom_change").text)
     .toBe("相手の講義室にいる出席者すべてを遅刻ゾーンに置き、それらに[遅刻1]を付与する。");
 
@@ -277,7 +289,7 @@ test("効率的な実験法は学生・教師・持ち物を1枚ずつ手札へ�
   expect(result).toEqual({ handTypes: ["item", "student", "teacher"], will: 7 });
 });
 
-test("ジェイルブレイクは両者を無料出席させ、戦意差で使用者側だけを強化する", async ({ page }) => {
+test("ジェイルブレイクの旧APIでも無料出席せず次の持ち物を手札に残す効果を設定する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -309,9 +321,9 @@ test("ジェイルブレイクは両者を無料出席させ、戦意差で使�
   expect(result).toEqual({
     used: true,
     will: 7,
-    own: { attack: 6, hp: 6 },
-    enemy: "strong_student",
-    handCount: 0,
+    own: null,
+    enemy: null,
+    handCount: 1,
     itemInTrash: true
   });
 });
