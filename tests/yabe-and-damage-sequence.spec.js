@@ -178,7 +178,7 @@ test("既存の全体ダメージも防御を含め順次表示し、再描画�
     api.render();
     return { events: state.effectFeedbackEvents, lastId: state.players.opponent.board.seats[8].instanceId };
   });
-  expect(result.events.map((event) => event.text)).toEqual(["防御", "-3", "-3"]);
+  expect(result.events.map((event) => event.text)).toEqual(["0", "-3", "-3"]);
   for (let i = 1; i < result.events.length; i++) {
     const prev = result.events[i - 1];
     const next = result.events[i];

@@ -19886,6 +19886,8 @@
         date: "2026年10月17日",
         summary: "アクティングアウトの新カード2枚を追加し、アクティングアウトマン・前で積極的に笑う学生・アカデミックムーブ・ジェイルブレイクソフトを調整しました。",
         changes: [
+          { category: "表示・操作改善", title: "アクティングアウトマンの攻撃演出", after: "学生への攻撃時の強化を、バフ演出、攻撃演出、元の攻撃力表示に戻る順に変更しました。カードの効果とダメージ量は変わりません。" },
+          { category: "表示・操作改善", title: "0ダメージの表示", after: "ダメージが0になったときの「防御」「軽減」を「0」表示に変更しました。" },
           { category: "カード調整", title: "マイボの骨",
             before: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
             after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。",
@@ -21651,6 +21653,7 @@
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
     const boardVisualSnapshots = new Map();
+    const attackVisualBonuses = new Map();
     let statBuffVisualSerial = 0;
     let statBuffVisualToken = null;
     const seenStatBuffVisuals = new Map();
@@ -27297,6 +27300,10 @@
       events.forEach((event) => {
         const occurredOffset = Math.max(0, (Number(event.occurredAt) || firstOccurredAt) - firstOccurredAt);
         const delay = occurredOffset + Math.max(0, Number(event.delayMs) || 0);
+        if (event.target === "attack-sequence") {
+          window.setTimeout(() => { void playAttackFocusSequence(event.attackerRef, event.targetRef); }, delay);
+          return;
+        }
         if (event.target === "announcement") {
           window.setTimeout(() => showCenterAnnouncement(event.text, event.variant || ""), delay);
           return;
@@ -41251,7 +41258,7 @@
     function resolveCardAttack(attacker, target) {
       if (consumeActiveUtaUmbrella(target)) {
         addLog(`${target.name}のU太の傘：攻撃を一度だけ防ぎ、傘を校外エリアへ送りました。`);
-        showFloatingTextForCard(target, "防御", "heal");
+        showFloatingTextForCard(target, "0", "heal");
         return;
       }
       if (attacker.baseId === "absolute_woman") {
@@ -41283,7 +41290,6 @@
         return;
       }
       const attackDamage = cardAttackDamage(attacker, target);
-      if (actingOutStudentAttackBonus(attacker, target) > 0) showFloatingTextForCard(attacker, "攻撃力+1", "buff");
       const dealtDamage = dealDamageToCard(target, attackDamage, attacker, { combat: true });
       const counterDamage = attacker.noCounterAttack || actingOutStudentAttackBonus(attacker, target) > 0
         || (attacker.baseId === "trendy_student" && target.currentHp <= 0)
@@ -44281,7 +44287,7 @@
       const finalDamage = amount * multiplier;
       const defense = Math.max(0, Number(card.defense) || 0);
       const reducedDamage = Math.max(0, finalDamage - defense - actingOutStudentDamageReduction(card.owner, source, card));
-      showFloatingTextForCard(card, reducedDamage > 0 ? `-${reducedDamage}` : "防御", reducedDamage > 0 ? "damage" : "heal");
+      showFloatingTextForCard(card, reducedDamage > 0 ? `-${reducedDamage}` : "0", reducedDamage > 0 ? "damage" : "heal");
       card.currentHp -= reducedDamage;
       const dealt = Math.min(beforeHp, reducedDamage);
       if (source) {
@@ -44446,7 +44452,7 @@
       if (amount <= 0) return;
       amount = previewFinalDamageToLife(side, amount, source);
       if (amount <= 0) {
-        showFloatingTextForLife(side, "軽減", "heal");
+        showFloatingTextForLife(side, "0", "heal");
         return;
       }
       const player = state.players[side];
@@ -49725,15 +49731,53 @@
 
     async function playAttackFocusSequence(attackerRef, targetRef, token = null) {
       const delay = attackFocusStepDelay(attackerRef);
-      showAttackFocus(attackerRef, "attacker", delay);
-      await sleep(delay);
-      if (token !== null && (!state.attackInProgress || state.attackDelayToken !== token)) return false;
-      showAttackFocus(targetRef, "target", delay);
-      await sleep(delay);
-      return token === null || (state.attackInProgress && state.attackDelayToken === token);
+      const attacker = getBoardCardFromRef(attackerRef);
+      const target = targetRef?.zone === "life" ? null : getBoardCardFromRef(targetRef);
+      const bonus = actingOutStudentAttackBonus(attacker, target);
+      const battleToken = state.preBattleToken;
+      const current = () => battleToken === state.preBattleToken
+        && (token === null || (state.attackInProgress && state.attackDelayToken === token));
+      const visual = bonus > 0 ? { bonus, battleToken } : null;
+      try {
+        if (visual && !state.training?.skipAnimations) {
+          if (token !== null && isOnlineHost()) {
+            recordOnlineEffectFeedback({ target: "attack-sequence", attackerRef, targetRef });
+            onlineBroadcastState(true);
+          }
+          attackVisualBonuses.set(attacker.instanceId, visual);
+          refreshAttackVisualNumber(attacker);
+          const element = document.querySelector(`[data-card-id="${attacker.instanceId}"]`);
+          appendBoardChangeFeedbackLayer(element, [{ tone: "buff", label: `攻撃力+${bonus}` }]);
+          await sleep(trainingAnimationDelay(1300));
+          if (!current()) return false;
+        }
+        showAttackFocus(attackerRef, "attacker", delay);
+        await sleep(delay);
+        if (!current()) return false;
+        showAttackFocus(targetRef, "target", delay);
+        await sleep(delay);
+        return current();
+      } finally {
+        if (visual && attackVisualBonuses.get(attacker.instanceId) === visual) {
+          attackVisualBonuses.delete(attacker.instanceId);
+          refreshAttackVisualNumber(attacker);
+        }
+      }
+    }
+
+    function displayedBoardAttack(card) {
+      const visual = attackVisualBonuses.get(card.instanceId);
+      return (card.attack || 0) + (visual?.battleToken === state.preBattleToken ? visual.bonus : 0);
+    }
+
+    function refreshAttackVisualNumber(card) {
+      document.querySelectorAll(`[data-card-id="${card.instanceId}"] .field-stat.attack`)
+        .forEach(element => { element.textContent = displayedBoardAttack(card); });
     }
 
     function flashAttackFocus(attackerRef, targetRef) {
+      if (onlineCanSendCommand() && targetRef?.zone !== "life"
+        && actingOutStudentAttackBonus(getBoardCardFromRef(attackerRef), getBoardCardFromRef(targetRef)) > 0) return;
       void playAttackFocusSequence(attackerRef, targetRef);
     }
 
@@ -49999,7 +50043,7 @@
         ? ""
         : `<span class="field-stat cost" aria-label="戦意${effectiveCost}">${effectiveCost}</span>`;
       const stats = hasStats
-        ? `<span class="field-card-stats"><span class="field-stat attack">${card.attack}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
+        ? `<span class="field-card-stats"><span class="field-stat attack">${displayedBoardAttack(card)}</span><span class="field-stat hp">${card.currentHp}</span>${card.defense > 0 ? `<span class="field-stat defense">防${card.defense}</span>` : ""}</span>`
         : "";
       const typeLabel = isAceCard(card) ? `${labelForType(card.type)} / エースぺ` : labelForType(card.type);
       return `
