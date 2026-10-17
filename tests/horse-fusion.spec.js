@@ -158,7 +158,7 @@ for (const side of ['player','opponent']) test(`${side}の融合強化は体力�
   }
 });
 
-test('マイボの骨は2人までに各2ダメージ、どこのマイボはランダム1人に7ダメージ',async({page})=>{
+test('マイボの骨は2人までに各3ダメージ、どこのマイボはランダム1人に7ダメージ',async({page})=>{
   await page.evaluate(()=>{
     state.players.opponent.board.seats=[0,1,2].map(()=>{const card=makeBoardCard(createCardFromBase('strong_student','opponent'));card.currentHp=10;card.maxHp=10;card.baseMaxHp=10;return card;}).concat(Array(6).fill(null));
     const source=makeBoardCard(createCardFromBase('maibo_bone','player'));state.players.player.board.seats[0]=source;resolveHorseEndTurn('player',source);
@@ -166,10 +166,23 @@ test('マイボの骨は2人までに各2ダメージ、どこのマイボはラ
   await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.max)).toBe(2);
   await page.evaluate(()=>{state.pendingCardChoice.selectedIds=state.pendingCardChoice.cards.slice(0,2).map(card=>card.instanceId);confirmCardChoiceSelection();});
   await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
-  expect(await page.evaluate(()=>state.players.opponent.board.seats.filter(Boolean).map(card=>card.currentHp))).toEqual([8,8,10]);
+  expect(await page.evaluate(()=>state.players.opponent.board.seats.filter(Boolean).map(card=>card.currentHp))).toEqual([7,7,10]);
   await page.evaluate(()=>{const source=makeBoardCard(createCardFromBase('where_maibo','player'));state.players.player.board.seats[0]=source;resolveHorseEndTurn('player',source);});
   await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
-  expect(await page.evaluate(()=>state.players.opponent.board.seats.filter(Boolean).reduce((n,card)=>n+card.currentHp,0))).toBe(19);
+  expect(await page.evaluate(()=>state.players.opponent.board.seats.filter(Boolean).reduce((n,card)=>n+card.currentHp,0))).toBe(17);
+});
+
+for(const side of ['player','opponent'])test(`${side}のCPUもマイボの骨で出席者2人に3ダメージを与える`,async({page})=>{
+  const result=await page.evaluate(async side=>{
+    isCpuControlledBattleSide=()=>true;state.currentSide=side;
+    const source=makeBoardCard(createCardFromBase('maibo_bone',side));state.players[side].board.seats[0]=source;
+    const other=oppositeSide(side);
+    const targets=Array.from({length:3},()=>{const c=makeBoardCard(createCardFromBase('general_student',other));c.baseMaxHp=c.maxHp=c.currentHp=10;return c;});
+    targets.forEach((c,i)=>state.players[other].board.seats[i]=c);
+    await resolveHorseEndTurn(side,source);
+    return {hp:targets.map(c=>c.currentHp).sort((a,b)=>a-b),stats:[source.cost,source.attack,source.maxHp],text:cardRulesText(source)};
+  },side);
+  expect(result).toEqual({hp:[7,7,10],stats:[5,3,3],text:'自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。'});
 });
 
 test('回復・本体ダメージ・最終形の出席効果と手札由来限定',async({page})=>{

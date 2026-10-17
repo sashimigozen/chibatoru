@@ -19572,7 +19572,7 @@
       impossible_high_note: { name: "ありえない高音", type: "vampire", cost: 8, attack: 3, hp: 3, allowedZones: ["teacher", "seat"] },
       back_question_student: { name: "後ろから質問する学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       acting_out_man: { name: "アクティングアウトマン", type: "student", cost: 4, attack: 3, hp: 3, allowedZones: ["seat", "teacher"] },
-      acting_out_man_2: { name: "アクティングアウトマン2号", type: "student", cost: 3, attack: 1, hp: 3, rowOnly: 1, frontRowOnly: true, allowedZones: ["seat"], keywords: ["注目"], category: "common" },
+      acting_out_man_2: { name: "アクティングアウトマン2号", type: "student", cost: 2, attack: 0, hp: 3, rowOnly: 1, frontRowOnly: true, allowedZones: ["seat"], keywords: ["注目"], category: "common" },
       acting_out_woman: { name: "アクティングアウトウーマン", type: "student", cost: 3, attack: 1, hp: 3, rowOnly: 1, frontRowOnly: true, allowedZones: ["seat"], category: "common" },
       hat_man: { name: "帽子男", type: "student", cost: 5, attack: 3, hp: 3, allowedZones: ["seat"], category: "common" },
       gesture_student: { name: "ジェスチャー学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "common" },
@@ -19882,6 +19882,10 @@
         date: "2026年10月17日",
         summary: "アクティングアウトの新カード2枚を追加し、アクティングアウトマン・前で積極的に笑う学生・アカデミックムーブ・ジェイルブレイクソフトを調整しました。",
         changes: [
+          { title: "マイボの骨",
+            before: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
+            after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。",
+            beforeHighlights: ["2ダメージ"], afterHighlights: ["3ダメージ"] },
           { title: "融合の追加素材", after: "手札の2枚融合で作った出席者に、未融合の素材を追加できるようにしました。3種類の途中段階は元の名前・戦意・能力値・効果を維持し、4種類が揃うと「どこのウマの骨のマイボだよの学生」になります。融合済み素材はカード確認に表示します。" },
           { title: "手札の状態表示", after: "複製された融合素材、追加融合済みカード、能力や数値が変化したカードに小さな「！」を表示します。相手の非公開手札には表示しません。" },
           { title: "ウマの骨",
@@ -19911,8 +19915,8 @@
             after: "環境／共通カード／戦意4／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。",
             beforeHighlights: ["戦意5", "お互いの講義室にこのターン出席した出席者すべては", "それらは"],
             afterHighlights: ["戦意4", "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは", "その出席者は"] },
-          { title: "新カード：アクティングアウトマン2号", after: "学生／共通カード／戦意3／攻撃力1／体力3\n[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては[陽気]を持つ。" },
-          { title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
+          { title: "新カード：アクティングアウトマン2号", after: "学生／共通カード／戦意2／攻撃力0／体力3\n[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。" },
+          { title: "新カード：アクティングアウトウーマン", after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。" },
           { title: "-幼き日の思い出-⚪︎u⚪︎uApp",
             before: "持ち物／共通カード／戦意3／攻撃力0／体力0\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。\n自分のデッキから持ち物カード1枚をランダムに手札へ加える。",
             after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n自分のデッキから持ち物カード1枚をランダムに手札に加える。\nこのカードが手札にある状態で自分のターン開始を3回迎えたとき、このカードを「ジェイルブレイクソフト-⚪︎u⚪︎uApp」にする。",
@@ -30361,7 +30365,7 @@
       if (card.baseId === "umaibo") return Math.min(3, missingLife) * 2;
       if (card.baseId === "uma_bone") return Math.min(2, own.filter(c => !isFusionGeneratedAttendee(c) && !isPadlocked(c) && !isAibenNyoteiEffectImmune(c)).length) * 3;
       if (card.baseId === "where_uma") return own.some(c => !isFusionGeneratedAttendee(c) && !isPadlocked(c) && !isAibenNyoteiEffectImmune(c)) ? 5 : 0;
-      if (card.baseId === "maibo_bone") return scoreAiDamageEffectTargets(side, card, enemy, { damage: 2, maxTargets: 2 });
+      if (card.baseId === "maibo_bone") return scoreAiDamageEffectTargets(side, card, enemy, { damage: 3, maxTargets: 2 });
       if (card.baseId === "where_maibo") return scoreAiDamageEffectTargets(side, card, enemy, { damage: 7, random: true });
       if (card.baseId === "where_bone") return aiLifeDamagePrevented(oppositeSide(side), state.actionTurn, side) ? 0
         : state.players[oppositeSide(side)].life <= 3 ? 60 : 9;
@@ -32019,7 +32023,8 @@
       }
       if (card.baseId === "acting_out_man_2") score += friendlyRefs.filter(ref =>
         String(getBoardCardFromRef(ref)?.name || "").includes("アクティングアウト")).length * 4;
-      if (card.baseId === "acting_out_woman" && !hasActingOutWomanAura("opponent")) score += enemyRefs.filter(ref =>
+      if (card.baseId === "acting_out_woman" && !hasActingOutWomanAura("opponent")
+        && friendlyRefs.some(ref => String(getBoardCardFromRef(ref)?.name || "").includes("アクティングアウト"))) score += enemyRefs.filter(ref =>
         getBoardCardFromRef(ref)?.type === "student").length * 4;
       if (card.baseId === "acting_out_man") {
         score += scoreAiDamageEffectTargets("opponent", card, enemyRefs.map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
@@ -33467,9 +33472,9 @@
         if (source.baseId === "maibo_bone") {
           const targets = effectTargetEntries(side,targetSide)
             .filter(e=>!isPadlocked(e.card)&&!isAibenNyoteiEffectImmune(e.card)&&!aiShouldPreserveEnemyTrpg(side,e.card))
-            .map(e=>({...e,value:scoreAiNonCombatEffectTarget(side,source,e,{damage:2})}))
+            .map(e=>({...e,value:scoreAiNonCombatEffectTarget(side,source,e,{damage:3})}))
             .filter(e=>e.value>0).sort((a,b)=>b.value-a.value).slice(0,2);
-          targets.forEach(entry=>addGuaranteedDamage(entry,2,source));
+          targets.forEach(entry=>addGuaranteedDamage(entry,3,source));
         }
         if (source.baseId === "where_maibo") {
           const targets=effectTargetEntries(side,targetSide);
@@ -37211,7 +37216,7 @@
       if (isCpuControlledBattleSide(side)) {
         const sorted = [...cards].sort((a, b) => {
           if (kind === "damage") {
-            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:2});
+            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:source.baseId === "maibo_bone" ? 3 : 2});
             return value(b)-value(a);
           }
           if (kind === "buff") {
@@ -37316,7 +37321,7 @@
         if (source.baseId === "where_uma" && own.length) applyPermanentStatBuff(shuffle(own)[0], 1, 1, 0, source.name);
         if (source.baseId === "maibo_bone") {
           const targets = await chooseFusionEffectCards(side, source, enemy, 2, "damage");
-          targets.filter(card => card.currentHp > 0).forEach(card => dealDamageToCard(card, 2, source));
+          targets.filter(card => card.currentHp > 0).forEach(card => dealDamageToCard(card, 3, source));
         }
         if (source.baseId === "where_maibo" && enemy.length) dealDamageToCard(shuffle(enemy)[0], 7, source);
         if (source.baseId === "where_bone") {
@@ -43828,22 +43833,26 @@
       if (keyword === "陽気" && enemyStudentTrpgAuraActive(card)) return true;
       if (keyword === "陽気" && isCardCurrentlyOnBoard(card)
         && String(card.name || "").includes("アクティングアウト")
-        && hasActingOutMan2Aura(card.owner)) return true;
+        && hasActingOutMan2Aura(card.owner, card.instanceId)) return true;
       return false;
     }
 
-    function hasActingOutMan2Aura(side) {
+    function hasActingOutMan2Aura(side, excludedInstanceId = null) {
       return listBoardRefs(side).some(ref => {
         const card = getBoardCardFromRef(ref);
-        return card?.baseId === "acting_out_man_2" && card.currentHp > 0 && canUsePrintedCardEffects(card);
+        return card?.baseId === "acting_out_man_2" && card.instanceId !== excludedInstanceId
+          && card.currentHp > 0 && canUsePrintedCardEffects(card);
       });
     }
 
+    function actingOutWomanEffectActive(card) {
+      return card?.baseId === "acting_out_woman" && card.currentHp > 0 && canUsePrintedCardEffects(card)
+        && listBoardRefs(card.owner).map(getBoardCardFromRef).some(other => other?.instanceId !== card.instanceId
+          && other?.currentHp > 0 && String(other.name || "").includes("アクティングアウト"));
+    }
+
     function hasActingOutWomanAura(side) {
-      return listBoardRefs(side).some(ref => {
-        const card = getBoardCardFromRef(ref);
-        return card?.baseId === "acting_out_woman" && card.currentHp > 0 && canUsePrintedCardEffects(card);
-      });
+      return listBoardRefs(side).map(getBoardCardFromRef).some(actingOutWomanEffectActive);
     }
 
     function actingOutStudentDamageReduction(side, source) {
@@ -49216,7 +49225,7 @@
       proliferating_enemy: "このカードが自分の講義室にいるかぎり",
       variable_student: "このカードが講義室にいるかぎり",
       acting_out_man_2: "このカードが自分の講義室にいるかぎり",
-      acting_out_woman: "このカードが自分の講義室にいるかぎり",
+      acting_out_woman: "このカードが自分の講義室にいて",
       aggro_student: "このカードが出席している",
       aggro_king: "このカードが3行1列にいる",
       aggro_queen: "このカードが2行3列にいる",
@@ -49247,6 +49256,7 @@
         if (card.baseId === "aggro_king" && (!hasAggroKingdomTrio(side) || ref.zone !== "seat" || ref.index !== 6)) return [];
         if (card.baseId === "aggro_queen" && (ref.zone !== "seat" || ref.index !== 5)) return [];
         if (card.baseId === "tissue_distributor" && !isCafeteriaEnvironmentActive()) return [];
+        if (card.baseId === "acting_out_woman" && !actingOutWomanEffectActive(card)) return [];
         const start = BOARD_ONGOING_RULE_STARTS[card.baseId];
         if (!start) return [];
         const text = cardRulesText(card);
@@ -54045,7 +54055,7 @@
         if (card.type === "teacher" && String(card.name || "").includes("デザイン") && state.players[card.owner]?.board.teacher?.baseId === "popular_c") add("陽気", "人気デザイン講師C");
         if (card.baseId === "curry_treater" && isCafeteriaEnvironmentActive()) add("陽気", "食堂");
         if (enemyStudentTrpgAuraActive(card)) add("陽気", "TRPGサークルメンバー");
-        if (String(card.name || "").includes("アクティングアウト") && hasActingOutMan2Aura(card.owner)) {
+        if (String(card.name || "").includes("アクティングアウト") && hasActingOutMan2Aura(card.owner, card.instanceId)) {
           add("陽気", CARD_BASES.acting_out_man_2.name);
         }
       }
@@ -54522,8 +54532,8 @@
         dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを1枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
         acting_out_man: "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
-        acting_out_man_2: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては陽気を持つ。",
-        acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
+        acting_out_man_2: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては陽気を持つ。",
+        acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
         academic_move: "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは超陽気を持つ。その出席者は、自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
@@ -54535,7 +54545,7 @@
         umaibo: "自分のターン終了時、自分の気力を3回復する。",
         uma_bone: "自分のターン終了時、自分の講義室にいる融合で生成されていない出席者を2人まで指名し、それらの体力を+1する。",
         where_uma: "自分のターン終了時、自分の講義室にいる融合で生成されていない出席者1人をランダムに指名し、その攻撃力と体力を+1する。",
-        maibo_bone: "自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
+        maibo_bone: "自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。",
         where_maibo: "自分のターン終了時、相手の講義室にいる出席者1人をランダムに指名し、7ダメージを与える。",
         where_bone: "自分のターン終了時、相手本体に3ダメージを与える。",
         where_uma_bone_maibo: "このカードを手札から出席させたとき、自分の気力を3回復する。その後、自分の講義室にいる出席者すべての攻撃力と体力を+1し、相手の講義室にいる出席者すべてに2ダメージを与える。その後、相手本体に3ダメージを与える。",

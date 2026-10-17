@@ -695,6 +695,12 @@
       combo: "", notes: "設置前の出席者は対象外。各ターン両者を合わせて最初の1人だけ。付与済みの退場効果は環境を張り替えても残る。"
     });
     upsertCard({
+      id: "maibo_bone", name: "マイボの骨", type: "student", cost: 5, attack: 3, hp: 3,
+      availability: "generated", placement: "席マス",
+      effect: "自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。",
+      combo: "融合", notes: "ダメージを2から3へ変更。対象数・タイミング・能力値は維持。"
+    });
+    upsertCard({
       id: "uma_bone", name: "ウマの骨", type: "student", cost: 5, attack: 2, hp: 4,
       availability: "generated", placement: "席マス",
       effect: "自分のターン終了時、自分の講義室にいる融合で生成されていない出席者を2人まで指名し、それらの体力を+1する。",
@@ -719,16 +725,16 @@
       combo: "アクティングアウトマン2号 / アクティングアウトウーマン", notes: "自身以外の学生が条件。攻撃力上昇は学生への攻撃中のみ。従来の出席制限は削除。"
     });
     upsertCard({
-      id: "acting_out_man_2", name: "アクティングアウトマン2号", type: "student", cost: 3, attack: 1, hp: 3,
+      id: "acting_out_man_2", name: "アクティングアウトマン2号", type: "student", cost: 2, attack: 0, hp: 3,
       availability: "deck", placement: "1行目の席マス",
-      effect: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては陽気を持つ。",
-      combo: "アクティングアウトマン・アクティングアウトウーマン", notes: "自身も対象。発生源が離れると陽気を失う。"
+      effect: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては陽気を持つ。",
+      combo: "アクティングアウトマン・アクティングアウトウーマン", notes: "自身は対象外。発生源が離れると陽気を失う。別の2号がいれば互いに陽気を与える。"
     });
     upsertCard({
       id: "acting_out_woman", name: "アクティングアウトウーマン", type: "student", cost: 3, attack: 1, hp: 3,
       availability: "deck", placement: "1行目の席マス",
-      effect: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
-      combo: "アクティングアウトマン2号", notes: "攻撃・効果・反撃による学生からのダメージを軽減し、最低0。複数いても-2。"
+      effect: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
+      combo: "アクティングアウトマン2号", notes: "自身以外の味方の名前一致が必要。攻撃・効果・反撃による学生からのダメージを軽減し、最低0。複数いても-2。"
     });
     upsertCard({
       id: "childhood_memory_tutuapp", name: "-幼き日の思い出-⚪︎u⚪︎uApp", type: "item", cost: 3, attack: null, hp: null,

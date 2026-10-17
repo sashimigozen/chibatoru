@@ -34,12 +34,12 @@ test("4枚の全文・能力値・共通カード登録・1行目制限が一致
   const texts = [
     "[超注目]\nこのカードは1行目にのみ出席できる。\n自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
     "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。",
-    "[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく出席者すべては[陽気]を持つ。",
-    "このカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。"
+    "[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。",
+    "このカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。"
   ];
   result.forEach((entry, i) => {
     expect(entry.text).toBe(texts[i]);
-    expect(entry.stats).toEqual(i === 1 ? [4, 0, 0] : [3, 1, 3]);
+    expect(entry.stats).toEqual(i === 1 ? [4, 0, 0] : i === 2 ? [2, 0, 3] : [3, 1, 3]);
     expect(entry.deck && entry.common).toBe(true);
     if (i !== 1) expect([entry.row1, entry.row2, entry.teacher]).toEqual([true, false, false]);
   });
@@ -67,7 +67,7 @@ for (const side of ["player", "opponent"]) test(`前で積極的に笑う学生�
   expect(result).toEqual({ seatTeacher: 10, healed: 13, teacherHp: 1, afterSuppression: 13, estimate: 3 });
 });
 
-for (const side of ["player", "opponent"]) test(`2号は自身を含む味方の名前一致だけに陽気を与え、離れると消える ${side}`, async ({ page }) => {
+for (const side of ["player", "opponent"]) test(`2号は自身以外の味方の名前一致だけに陽気を与え、離れると消える ${side}`, async ({ page }) => {
   const result = await page.evaluate(side => {
     const p = state.players[side];
     const other = oppositeSide(side);
@@ -86,12 +86,12 @@ for (const side of ["player", "opponent"]) test(`2号は自身を含む味方の
     p.board.seats[0] = null;
     return { keywords, enemyCheerful, sources, ongoing, suppressed, removed: hasKeyword(cards[1], "陽気") };
   }, side);
-  expect(result.keywords).toEqual([true, true, true, false]);
+  expect(result.keywords).toEqual([false, true, true, false]);
   expect(result.enemyCheerful).toBe(false);
   expect(result.suppressed).toBe(false);
   expect(result.removed).toBe(false);
   expect(result.sources).toContainEqual({ keyword: "陽気", source: "アクティングアウトマン2号" });
-  expect(result.ongoing).toContain("自分の「アクティングアウト」とつく出席者すべて");
+  expect(result.ongoing).toContain("自分の「アクティングアウト」とつく、このカード以外の出席者すべて");
 });
 
 for (const side of ["player", "opponent"]) test(`ウーマンは本体・全出席者の学生ダメージを2軽減し、重複しない ${side}`, async ({ page }) => {
@@ -122,6 +122,37 @@ for (const side of ["player", "opponent"]) test(`ウーマンは本体・全出�
     protectedLife: 8, teacherLife: 6, suppressedLife: 4 });
 });
 
+for (const side of ["player", "opponent"]) test(`ウーマンは単独・相手だけでは軽減せず味方の出入りで切り替わる ${side}`, async ({page}) => {
+  const r = await page.evaluate(side => {
+    const p = state.players[side], other = oppositeSide(side);
+    const woman = makeBoardCard(createCardFromBase("acting_out_woman", side)); p.board.seats[0] = woman;
+    state.players[other].board.seats[0] = makeBoardCard(createCardFromBase("acting_out_man_2", other));
+    const enemy = makeBoardCard(createCardFromBase("general_student", other));
+    const alone = [previewFinalDamageToLife(side,3,enemy), boardActiveEffectLines(side).length];
+    p.board.seats[1] = makeBoardCard(createCardFromBase("general_student", side));
+    const unrelated = previewFinalDamageToLife(side,3,enemy);
+    const ally = makeBoardCard(createCardFromBase("acting_out_man_2",side));p.board.seats[1] = ally;
+    const active = [previewFinalDamageToLife(side,3,enemy), previewFinalDamageToCard(woman,3,enemy), boardActiveEffectLines(side).filter(line=>line.startsWith(woman.name)).length];
+    ally.currentHp = 0;
+    const defeated = previewFinalDamageToLife(side,3,enemy);
+    ally.currentHp = 3;p.board.seats[1] = null;
+    const removed = [previewFinalDamageToLife(side,3,enemy), boardActiveEffectLines(side).length];
+    return {alone,unrelated,active,defeated,removed};
+  },side);
+  expect(r).toEqual({alone:[3,0],unrelated:3,active:[1,1,1],defeated:3,removed:[3,0]});
+});
+
+for (const side of ["player", "opponent"]) test(`2号2人は互いだけに陽気を与え、1人になると自身への付与を失う ${side}`, async ({page}) => {
+  const r = await page.evaluate(side => {
+    const p = state.players[side];
+    const cards = [0,1].map(i=>p.board.seats[i]=makeBoardCard(createCardFromBase("acting_out_man_2",side)));
+    const mutual = cards.map(c=>hasKeyword(c,"陽気"));
+    p.board.seats[1] = null;
+    return {mutual,alone:hasKeyword(cards[0],"陽気"),details:battleCardGrantedKeywordEntries(cards[0])};
+  },side);
+  expect(r).toEqual({mutual:[true,true],alone:false,details:[]});
+});
+
 test("学生の反撃・終了時効果・複数回の1ダメージも軽減する", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const woman = makeBoardCard(createCardFromBase("acting_out_woman", "player"));
@@ -129,6 +160,7 @@ test("学生の反撃・終了時効果・複数回の1ダメージも軽減す�
     const enemy = makeBoardCard(createCardFromBase("where_bone", "opponent"));
     state.players.player.board.seats[0] = woman;
     state.players.player.board.seats[1] = ally;
+    state.players.player.board.seats[2] = makeBoardCard(createCardFromBase("acting_out_man_2", "player"));
     state.players.opponent.board.seats[0] = enemy;
     enemy.attack = 3;
     const counter = aiAttackCounterDamage(ally, enemy);
@@ -176,6 +208,7 @@ test("ウーマンの軽減をAIの本体攻撃判断・予測とオンライン
     state.currentSide = "opponent";
     const woman = makeBoardCard(createCardFromBase("acting_out_woman", "player"));
     state.players.player.board.seats[0] = woman;
+    state.players.player.board.seats[1] = makeBoardCard(createCardFromBase("acting_out_man_2", "player"));
     const attacker = makeBoardCard(createCardFromBase("general_student", "opponent"));
     attacker.playedOnTurn = 1;
     state.players.opponent.board.seats[0] = attacker;
@@ -183,6 +216,7 @@ test("ウーマンの軽減をAIの本体攻撃判断・予測とオンライン
     const forecast = aiBoardFaceDamage("opponent").guaranteed;
     const guest = onlineSwapOwnersDeep(onlineCreateSnapshot().state.players.player.board.seats[0]);
     state.players.opponent.board.seats[1] = makeBoardCard(guest);
+    state.players.opponent.board.seats[2] = makeBoardCard(createCardFromBase("acting_out_man_2", "opponent"));
     const guestProtects = previewFinalDamageToLife("opponent", 3, makeBoardCard(createCardFromBase("general_student", "player")));
     return { shouldAttack, forecast, guestProtects };
   });
