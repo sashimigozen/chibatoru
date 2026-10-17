@@ -17153,6 +17153,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .board-change-feedback.attack-buff-feedback .board-change-energy-image {
+        animation: none !important;
+        opacity: .64;
+      }
       .board-change-energy-image,
       .board-change-heal-cross,
       .quick-quiz-click-effect {
@@ -19886,8 +19890,8 @@
         date: "2026年10月17日",
         summary: "アクティングアウトの新カード2枚を追加し、アクティングアウトマン・前で積極的に笑う学生・アカデミックムーブ・ジェイルブレイクソフトを調整しました。",
         changes: [
-          { category: "表示・操作改善", title: "アクティングアウトマンの攻撃演出", after: "学生への攻撃時の強化を、バフ演出、攻撃演出、元の攻撃力表示に戻る順に変更しました。カードの効果とダメージ量は変わりません。" },
-          { category: "表示・操作改善", title: "0ダメージの表示", after: "ダメージが0になったときの「防御」「軽減」を「0」表示に変更しました。" },
+          { category: "表示・操作改善", title: "アクティングアウトマンの攻撃演出", after: "学生への攻撃時の強化を、バフ演出、攻撃演出、元の攻撃力表示に戻る順に変更しました。バフ時には赤い光と「攻撃力+1」の文字を表示し、演出の再生完了を待って攻撃します。「動きを減らす」設定でも赤い強化表示は残ります。カードの効果とダメージ量は変わりません。" },
+          { category: "表示・操作改善", title: "0ダメージの表示", after: "ダメージが0になったときの「防御」「軽減」を「0」表示に変更しました。出席者への攻撃で反撃を受けない場合も、攻撃した出席者に「0」を表示します。" },
           { category: "カード調整", title: "マイボの骨",
             before: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに2ダメージを与える。",
             after: "学生／学友会・持ち物／戦意5／攻撃力3／体力3\n自分のターン終了時、相手の講義室にいる出席者を2人まで指名し、それぞれに3ダメージを与える。",
@@ -41259,9 +41263,11 @@
       if (consumeActiveUtaUmbrella(target)) {
         addLog(`${target.name}のU太の傘：攻撃を一度だけ防ぎ、傘を校外エリアへ送りました。`);
         showFloatingTextForCard(target, "0", "heal");
+        showFloatingTextForCard(attacker, "0", "heal");
         return;
       }
       if (attacker.baseId === "absolute_woman") {
+        showFloatingTextForCard(attacker, "0", "heal");
         const targetRef = listBoardRefs(target.owner)
           .find((ref) => getBoardCardFromRef(ref)?.instanceId === target.instanceId);
         const destroyed = targetRef ? destroyBoardCard(targetRef, { reason: attacker.name }) : null;
@@ -41297,6 +41303,7 @@
         : (target.attack || 0);
       const healed = healVampireFromDamage(attacker, dealtDamage);
       const counterDealtDamage = counterDamage > 0 ? dealDamageToCard(attacker, counterDamage, target, { combat: true }) : 0;
+      if (counterDamage <= 0) showFloatingTextForCard(attacker, "0", "heal");
       if (attacker.baseId === "zombie" && !isAibenNyoteiEffectImmune(target) && target.type !== "vampire" && target.currentHp > 0) {
         const previousName = target.name;
         const zombieBase = CARD_BASES.zombie;
@@ -41376,6 +41383,7 @@
     }
 
     function resolveBounceDayCardAttack(attackerRef, targetRef, attacker, target) {
+      showFloatingTextForCard(attacker, "0", "heal");
       const returnedBaseId = target.baseId;
       setBoardCard(targetRef.owner, targetRef.zone, targetRef.index, null);
       const returned = createCardFromBase(returnedBaseId, targetRef.owner);
@@ -48673,6 +48681,7 @@
 
       button.appendChild(layer);
       window.setTimeout(() => layer.remove(), 1550);
+      return layer;
     }
 
     function appendQuickQuizClickEffect(instanceIds = []) {
@@ -49747,8 +49756,15 @@
           attackVisualBonuses.set(attacker.instanceId, visual);
           refreshAttackVisualNumber(attacker);
           const element = document.querySelector(`[data-card-id="${attacker.instanceId}"]`);
-          appendBoardChangeFeedbackLayer(element, [{ tone: "buff", label: `攻撃力+${bonus}` }]);
-          await sleep(trainingAnimationDelay(1300));
+          const feedback = appendBoardChangeFeedbackLayer(element, [{ tone: "buff", label: `攻撃力+${bonus}` }]);
+          feedback?.classList.add("attack-buff-feedback");
+          showFloatingText(element, `攻撃力+${bonus}`, "buff");
+          const effects = [...(feedback?.querySelectorAll(".board-change-energy-image") || [])];
+          effects.forEach(effect => { effect.style.animationDuration = `${trainingAnimationDelay(1300)}ms`; });
+          await Promise.all([
+            sleep(trainingAnimationDelay(1300)),
+            ...effects.flatMap(effect => effect.getAnimations().map(animation => animation.finished.catch(() => {})))
+          ]);
           if (!current()) return false;
         }
         showAttackFocus(attackerRef, "attacker", delay);

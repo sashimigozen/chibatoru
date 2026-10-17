@@ -29,6 +29,7 @@ for(const side of ['player','opponent']) test(`バフ→攻撃→表示復元、
   const card=page.locator(`[data-card-id="${id}"]`);
   await expect(card.locator('.board-change-feedback')).toHaveAttribute('aria-label','攻撃力+1');
   await expect(card.locator('.field-stat.attack')).toHaveText('4');
+  await expect(page.locator('.floating-pop.buff')).toHaveText('攻撃力+1');
   await expect(page.locator('.attack-focus-overlay')).toHaveCount(0);
   await page.screenshot({path:test.info().outputPath('before-attack-buff.png')});
   await page.evaluate(()=>renderBoards());
@@ -37,6 +38,28 @@ for(const side of ['player','opponent']) test(`バフ→攻撃→表示復元、
   expect(await page.evaluate(()=>focusNumbers)).toEqual([['attacker',4],['target',4]]);
   await expect(card.locator('.field-stat.attack')).toHaveText('3');
   expect(await page.evaluate(side=>state.players[side].board.seats[0].attack,side)).toBe(3);
+});
+test('実際のクリックでバフの光と文字が攻撃前に見える',async({page})=>{
+  const ids=await page.evaluate(()=>{
+    const c=makeBoardCard(createCardFromBase('acting_out_man','player'));c.playedOnTurn=0;
+    const t=makeBoardCard(createCardFromBase('general_student','opponent'));
+    t.baseMaxHp=t.maxHp=t.currentHp=20;
+    state.players.player.board.seats[0]=c;
+    state.players.player.board.seats[1]=makeBoardCard(createCardFromBase('acting_out_man_2','player'));
+    state.players.opponent.board.seats[0]=t;render();
+    return {attacker:c.instanceId,target:t.instanceId};
+  });
+  const attacker=page.locator(`[data-card-id="${ids.attacker}"]`);
+  await attacker.click();
+  await page.locator(`[data-card-id="${ids.target}"]`).click();
+  await expect(page.locator('.floating-pop.buff')).toHaveText('攻撃力+1');
+  await expect(attacker.locator('.field-stat.attack')).toHaveText('4');
+  const energy=attacker.locator('.board-change-effect.buff .board-change-energy-image');
+  await expect.poll(()=>energy.evaluate(e=>Number(getComputedStyle(e).opacity))).toBeGreaterThan(.2);
+  await expect(page.locator('.attack-focus-overlay')).toHaveCount(0);
+  await page.screenshot({path:test.info().outputPath('click-buff-visible.png')});
+  await expect(page.locator(`[data-card-id="${ids.target}"] .field-stat.hp`)).toHaveText('16');
+  await expect(attacker.locator('.field-stat.attack')).toHaveText('3');
 });
 test('実際の攻撃は4ダメージだけ与え、反撃を受けず元の数値を維持',async({page})=>{
   const r=await page.evaluate(async()=>{
@@ -50,6 +73,29 @@ test('実際の攻撃は4ダメージだけ与え、反撃を受けず元の数�
     return {attack:c.attack,hp:c.currentHp,target:t.currentHp,visual:attackVisualBonuses.size};
   });
   expect(r).toEqual({attack:3,hp:3,target:16,visual:0});
+});
+for (const reducedMotion of ['no-preference','reduce']) test(`AIバトルでも赤い強化表示が透明にならない ${reducedMotion}`,async({page})=>{
+  await page.emulateMedia({reducedMotion});
+  const id=await page.evaluate(()=>{
+    state.training.active=false;state.aiBattle.active=true;
+    const c=makeBoardCard(createCardFromBase('acting_out_man','player'));c.playedOnTurn=0;
+    const target=makeBoardCard(createCardFromBase('general_student','opponent'));
+    target.baseMaxHp=target.maxHp=target.currentHp=20;
+    state.players.player.board.seats[0]=c;
+    state.players.player.board.seats[1]=makeBoardCard(createCardFromBase('acting_out_man_2','player'));
+    state.players.opponent.board.seats[0]=target;render();return c.instanceId;
+  });
+  const attacker=page.locator(`[data-card-id="${id}"]`);
+  await attacker.click();
+  await page.locator('[data-owner="opponent"][data-zone="seat"][data-index="0"] .board-card').click();
+  await expect(attacker.locator('.field-stat.attack')).toHaveText('4');
+  const energy=attacker.locator('.attack-buff-feedback .board-change-energy-image');
+  await expect.poll(()=>energy.evaluate(e=>Number(getComputedStyle(e).opacity))).toBeGreaterThan(.2);
+  await page.evaluate(()=>render());
+  await expect.poll(()=>energy.evaluate(e=>Number(getComputedStyle(e).opacity))).toBeGreaterThan(.2);
+  await expect(page.locator('.attack-focus-overlay')).toHaveCount(0);
+  await page.screenshot({path:test.info().outputPath('ai-buff.png')});
+  await expect(attacker.locator('.field-stat.attack')).toHaveText('3');
 });
 test('教師への攻撃と条件未成立ではバフせず、中断でも表示を戻す',async({page})=>{
   const r=await page.evaluate(async()=>{
@@ -86,6 +132,7 @@ test('オンライン受信イベントでもバフを先に表示する',async(
   const card=page.locator(`[data-card-id="${id}"]`);
   await expect(card.locator('.field-stat.attack')).toHaveText('4');
   await expect(card.locator('.board-change-feedback')).toHaveAttribute('aria-label','攻撃力+1');
+  await expect(page.locator('.floating-pop.buff')).toHaveText('攻撃力+1');
   await expect(page.locator('.attack-focus-overlay')).toHaveCount(0);
   await expect(page.locator('.attack-focus-overlay.target')).toBeVisible();
   await expect(card.locator('.field-stat.attack')).toHaveText('3');
