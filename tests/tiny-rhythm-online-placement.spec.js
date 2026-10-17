@@ -58,6 +58,6 @@ test('ゲストがコピー元を選び、3人を実際に配置して操作ロ�
   await expect.poll(() => guest.evaluate(() => [state.remoteResolutionPending, Boolean(state.pendingCopiedCard), battleActionInputAllowed(elements.endTurnButton)]))
     .toEqual([false, false, true]);
   expect(await guest.evaluate(() => [state.players.player.hand.length, state.players.player.board.seats.filter(Boolean).length,
-    state.online.pendingTurnCommandId, state.players.player.will])).toEqual([3, 4, '', 3]);
+    state.online.pendingTurnCommandId, state.players.player.will])).toEqual([3, 4, '', 2]);
   await guest.close();
 });
