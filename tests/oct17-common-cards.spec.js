@@ -19,8 +19,8 @@ test('新カード3枚の能力値・本文・共通カード登録', async ({pa
     const c=createCardFromBase(id,'player');
     return {stats:[c.cost,c.attack||0,c.hp||0],text:cardRulesText(c),registered:ALL_DECK_IDS.includes(id)&&SPECIALTY_CARD_IDS.common.includes(id)};
   }));
-  expect(rows.map(r=>r.stats)).toEqual([[7,0,0],[2,0,0],[3,2,2]]);
-  expect(rows.map(r=>r.text)).toEqual(['お互いの講義室にいる出席者すべてを破壊する。','自分のターン終了まで、お互いの継続効果をすべて無効にする。','このカードを手札から出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。']);
+  expect(rows.map(r=>r.stats)).toEqual([[7,0,0],[2,0,0],[3,2,1]]);
+  expect(rows.map(r=>r.text)).toEqual(['お互いの講義室にいる出席者すべてを破壊する。','自分のターン終了まで、お互いの継続効果をすべて無効にする。','このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。']);
   expect(rows.every(r=>r.registered)).toBe(true);
 });
 test('一旦は両陣営の席・教卓を破壊し、環境は残す',async({page})=>{
@@ -76,6 +76,37 @@ test('一旦は複数マスを重複破壊せず、南京錠の耐性を尊重�
 test('スナイプは対象なしでも選択待ちを作らない',async({page})=>{
   expect(await page.evaluate(()=>beginWindowSnipeTargetChoice('player',createCardFromBase('window_snipe_student','player')))).toBe(false);
   expect(await page.evaluate(()=>state.pendingAttendTarget)).toBeNull();
+});
+for(const side of ['player','opponent'])test(`スナイプは他の席にも出席できるが手札から3行3列だけ発動する ${side}`,async({page})=>{
+  const rows=await page.evaluate(side=>{
+    state.currentSide=side;
+    state.online.isHandlingRemoteCommand=true;
+    state.players[oppositeSide(side)].board.teacher=makeBoardCard(createCardFromBase('general_teacher',oppositeSide(side)));
+    return Array.from({length:9},(_,index)=>{
+      const sniper=makeBoardCard(createCardFromBase('window_snipe_student',side));
+      const allowed=canPlaceCard(side,sniper,'seat',side,index);
+      state.players[side].board.seats[index]=sniper;
+      resolveAttendEffects(side,sniper,'seat',index,{attendanceSource:ATTENDANCE_SOURCE.HAND});
+      const triggered=state.pendingAttendTarget?.effect==='window_snipe_student';
+      state.pendingAttendTarget=null;
+      resolveAttendEffects(side,sniper,'seat',index,{attendanceSource:ATTENDANCE_SOURCE.GENERATED});
+      const generatedTriggered=!!state.pendingAttendTarget;
+      state.pendingAttendTarget=null;state.players[side].board.seats[index]=null;
+      return {allowed,triggered,generatedTriggered};
+    });
+  },side);
+  rows.forEach((row,index)=>expect(row).toEqual({allowed:true,triggered:index===8,generatedTriggered:false}));
+});
+test('AIはスナイプのダメージを3行3列だけで評価する',async({page})=>{
+  const result=await page.evaluate(()=>{
+    state.currentSide='opponent';
+    state.players.player.board.teacher=makeBoardCard(createCardFromBase('general_teacher','player'));
+    const sniper=createCardFromBase('window_snipe_student','opponent');
+    state.players.opponent.hand=[sniper];
+    const move=findAiPlayMove();
+    return {zone:move.zone,index:move.index,hp:sniper.hp};
+  });
+  expect(result).toEqual({zone:'seat',index:8,hp:1});
 });
 test('カシカシは環境・本体・全体付与を一時停止し、保存値を維持',async({page})=>{
   const r=await page.evaluate(()=>{
@@ -136,11 +167,11 @@ test('停止中に置いた環境も停止し、出席時の単発効果は使�
     const hp=c.maxHp;
     state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));
     const sniper=makeBoardCard(createCardFromBase('window_snipe_student','player'));
-    state.players.player.board.seats[0]=sniper;
-    resolveAttendEffects('player',sniper,'seat',0,{attendanceSource:ATTENDANCE_SOURCE.HAND});
+    state.players.player.board.seats[8]=sniper;
+    resolveAttendEffects('player',sniper,'seat',8,{attendanceSource:ATTENDANCE_SOURCE.HAND});
     const pending=state.pendingAttendTarget?.effect;
     state.pendingAttendTarget=null;
-    resolveAttendEffects('player',sniper,'seat',0,{attendanceSource:ATTENDANCE_SOURCE.EFFECT});
+    resolveAttendEffects('player',sniper,'seat',8,{attendanceSource:ATTENDANCE_SOURCE.EFFECT});
     const effectPending=state.pendingAttendTarget;
     state.kashikashiActionTurn=null;applyBoardAuras();
     return {hp,pending,effectPending,restored:c.maxHp};

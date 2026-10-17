@@ -19477,7 +19477,7 @@
     const CARD_BASES = {
       ittan: { name: "一旦", type: "item", cost: 7, target: "self", category: "common" },
       kashikashi: { name: "カシカシ", type: "item", cost: 2, target: "self", category: "common" },
-      window_snipe_student: { name: "窓からスナイプ学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "common" },
+      window_snipe_student: { name: "窓からスナイプ学生", type: "student", cost: 3, attack: 2, hp: 1, allowedZones: ["seat"], category: "common" },
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
       strong_student: { name: "強靭な学生", type: "student", cost: 6, attack: 7, hp: 7, allowedZones: ["seat", "teacher"] },
       suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
@@ -19900,7 +19900,10 @@
           { category: "不具合修正", title: "AIの配置判断", after: "ベータ・ガンマの妨害に対する過大な評価を抑え、教卓での講義や特定マスの能力を生かした配置を優先しやすくしました。配置価値の差が小さい場合は引き続き妨害も考慮します。カードの能力値・本文・効果は変更していません。" },
           { category: "新カード", title: "新カード：一旦", after: "持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの講義室にいる出席者すべてを破壊する。" },
           { category: "新カード", title: "新カード：カシカシ", after: "持ち物／共通カード／戦意2／攻撃力0／体力0\n自分のターン終了まで、お互いの継続効果をすべて無効にする。" },
-          { category: "新カード", title: "新カード：窓からスナイプ学生", after: "学生／共通カード／戦意3／攻撃力2／体力2\nこのカードを手札から出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。" },
+          { category: "新カード", title: "新カード：窓からスナイプ学生",
+            before: "学生／共通カード／戦意3／攻撃力2／体力2\nこのカードを手札から出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。",
+            after: "学生／共通カード／戦意3／攻撃力2／体力1\nこのカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。",
+            beforeHighlights: ["体力2", "手札から出席させたとき"], afterHighlights: ["体力1", "手札から3行3列に出席させたとき"] },
           { category: "表示・操作改善", title: "アクティングアウトマンの攻撃演出", after: "学生への攻撃時の強化を、バフ演出、攻撃演出、元の攻撃力表示に戻る順に変更しました。バフ時には赤い光と「攻撃力+1」の文字を表示し、演出の再生完了を待って攻撃します。「動きを減らす」設定でも赤い強化表示は残ります。カードの効果とダメージ量は変わりません。" },
           { category: "表示・操作改善", title: "0ダメージの表示", after: "ダメージが0になったときの「防御」「軽減」を「0」表示に変更しました。出席者への攻撃で反撃を受けない場合も、攻撃した出席者に「0」を表示します。" },
           { category: "カード調整", title: "マイボの骨",
@@ -31942,7 +31945,8 @@
       let score = bodyScore + (zone === "seat" ? 2 : 0);
       score += aiCardResourceValue("opponent", card) + aiRecurringCardValue("opponent", card);
       score += aiDeckPlanCardBonus("opponent", card);
-      if (card.baseId === "window_snipe_student" && !arePlayedEffectsSuppressed("opponent")) {
+      if (card.baseId === "window_snipe_student" && zone === "seat" && index === 8
+        && !arePlayedEffectsSuppressed("opponent")) {
         score += Math.max(0, ...effectTargetEntries("opponent", "player")
           .map(entry => scoreAiNonCombatEffectTarget("opponent", card, entry, { damage: 4 })));
       }
@@ -39513,7 +39517,7 @@
         beginUltimateYutaVictory(side, card);
         return;
       }
-      if (card.baseId === "window_snipe_student") beginWindowSnipeTargetChoice(side, card);
+      if (card.baseId === "window_snipe_student" && zone === "seat" && index === 8) beginWindowSnipeTargetChoice(side, card);
       if (card.baseId === "strict_lateness_teacher") {
         resolveStrictLatenessTeacherAttendance(side, card);
         return;
@@ -54678,7 +54682,7 @@
       const rules = {
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
         kashikashi: "自分のターン終了まで、お互いの継続効果をすべて無効にする。",
-        window_snipe_student: "このカードを手札から出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。",
+        window_snipe_student: "このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。",
         general_student: "効果なし。",
         cursed_students: "このカードが出席したとき、自分の講義室の空いている席マスを3つ選ぶ。それぞれに「アグロ大学生」1人を出席させる。",
         earphones: "装備\n装備者は講義の効果を受けない。",
