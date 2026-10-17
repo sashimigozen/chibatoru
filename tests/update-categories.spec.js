@@ -11,7 +11,7 @@ for (const width of [1280, 390]) test(`最新更新を分類し全文と差分�
   await release.locator("summary").click();
   await expect(release.locator(".update-category h3")).toHaveText(["新カード", "カード調整", "システム", "表示・操作改善"]);
   const groups = release.locator(".update-category");
-  await expect(groups.nth(0).locator(".update-change")).toHaveCount(2);
+  await expect(groups.nth(0).locator(".update-change")).toHaveCount(5);
   await expect(groups.nth(1).locator(".update-change")).toHaveCount(9);
   await expect(groups.nth(2)).toContainText("融合の追加素材");
   await expect(groups.nth(3)).toContainText("手札の状態表示");

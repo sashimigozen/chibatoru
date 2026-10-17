@@ -6,13 +6,13 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const helpers = html.slice(html.indexOf('    function updateHistorySeriesKey('), html.indexOf('    const LATEST_UPDATE_VERSION'));
 const { consolidateUpdateHistory } = Function(`${helpers}; return { consolidateUpdateHistory };`)();
 
-test('10月17日は新カード2枚と未公開のカード変更をマイナー0.27.0へまとめる', () => {
+test('10月17日は新カード5枚とカード変更をマイナー0.27.0へまとめる', () => {
   const start = html.indexOf('const UPDATE_HISTORY =') + 'const UPDATE_HISTORY ='.length;
   const history = Function(`return ${html.slice(start, html.indexOf('    function updateReadId(', start)).trim().replace(/;$/, '')};`)();
   assert.equal(history[0].version, 'ver.0.27.0');
   assert.equal(history[0].date, '2026年10月17日');
   assert.equal(history[0].versioning, 'semver');
-  assert.equal(history[0].changes.filter(change => change.title.startsWith('新カード：')).length, 2);
+  assert.equal(history[0].changes.filter(change => change.title.startsWith('新カード：')).length, 5);
   for (const change of history[0].changes.filter(change => change.before)) {
     assert.ok(change.before.includes('戦意'));
     assert.ok(change.after.includes('攻撃力'));
