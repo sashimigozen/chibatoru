@@ -19891,6 +19891,16 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.27.1",
+        versioning: "semver",
+        date: "2026年10月18日",
+        summary: "AIの配置判断と、トレーニングのスキップ処理を改善しました。",
+        changes: [
+          { category: "システム", title: "トレーニングのスキップ高速化", after: "CPU同士の対戦でスキップ中は途中の盤面描画・カード演出・行動の待ち時間を省き、対戦処理と結果の記録だけを進めます。連続対戦は最後に結果を表示します。通常再生・倍速・対戦ルール・AIの判断内容は変更していません。" },
+          { category: "不具合修正", title: "AIの配置判断", after: "ベータ・ガンマの妨害に対する過大な評価を抑え、教卓での講義や特定マスの能力を生かした配置を優先しやすくしました。配置価値の差が小さい場合は引き続き妨害も考慮します。カードの能力値・本文・効果は変更していません。" }
+        ]
+      },
+      {
         version: "ver.0.27.0",
         versioning: "semver",
         date: "2026年10月17日",
@@ -28467,7 +28477,7 @@
       state.preBattleBusy = true;
       state.message = "コイントス中…";
       render();
-      window.setTimeout(() => {
+      scheduleTrainingTask(() => {
         if (!isCurrentPreBattle(token, "coinToss")) return;
         state.coinResult = state.coinLandingFace;
         // 既存の先攻・後攻選択とオンライン視点変換の勝者フィールドを流用する。
@@ -28480,7 +28490,7 @@
         analyticsPushEvent("coin_toss", { call: state.coinCall, result: state.coinResult, winner: state.rpsWinner });
         render();
         const aiWinner = !state.online.role && (state.rpsWinner === "opponent" || isTrainingAiVsAi());
-        if (aiWinner) window.setTimeout(() => {
+        if (aiWinner) scheduleTrainingTask(() => {
           if (!isCurrentPreBattle(token, "orderChoice")) return;
           chooseStartingOrderForSide(state.rpsWinner, Math.random() < 0.7);
         }, trainingAnimationDelay(650));
@@ -28621,7 +28631,7 @@
       addLog(`${SIDES[side]}は${playerChoosesFirst ? "先攻" : "後攻"}を選びました。`);
       render();
       const token = state.preBattleToken;
-      window.setTimeout(() => beginInitialDeal(token), trainingAnimationDelay(650));
+      scheduleTrainingTask(() => beginInitialDeal(token), trainingAnimationDelay(650));
     }
 
     function beginInitialDeal(token) {
@@ -28632,7 +28642,7 @@
       state.players.opponent.hand = [];
       state.message = "初期手札を引いています。";
       render();
-      window.setTimeout(() => dealNextInitialCard(token), 260);
+      scheduleTrainingTask(() => dealNextInitialCard(token), 260);
     }
 
     function dealNextInitialCard(token) {
@@ -28643,11 +28653,11 @@
       state.message = `初期手札 ${state.initialDealCount}/5枚`;
       render();
       if (state.initialDealCount < 5) {
-        window.setTimeout(() => dealNextInitialCard(token), INITIAL_DEAL_STEP_MS);
+        scheduleTrainingTask(() => dealNextInitialCard(token), INITIAL_DEAL_STEP_MS);
         return;
       }
       addLog("両プレイヤーが初期手札を5枚引きました。");
-      window.setTimeout(() => enterMulligan(token), 700);
+      scheduleTrainingTask(() => enterMulligan(token), 700);
     }
 
     function enterMulligan(token) {
@@ -29046,7 +29056,7 @@
       render();
       window.setTimeout(() => battleViewport?.scrollTo({ top: 0, left: 0, behavior: "instant" }), 80);
       showCenterAnnouncement("バトル開始");
-      window.setTimeout(() => {
+      scheduleTrainingTask(() => {
         if (state.screen !== "battle" || state.phase !== "battle" || state.actionTurn !== 0 || state.gameOver) return;
         state.aiThinking = false;
         state.actionTurn = 1;
@@ -29215,7 +29225,7 @@
       render();
       showTurnOverlay(side);
       if (side === "opponent" && !isOnlineBattle()) scheduleOpponentAI();
-      if (side === "player" && isTrainingAiVsAi()) window.setTimeout(runTrainingLeftAI, trainingAnimationDelay(AI_START_DELAY));
+      if (side === "player" && isTrainingAiVsAi()) scheduleTrainingTask(runTrainingLeftAI, trainingAnimationDelay(AI_START_DELAY));
     }
 
     function resolveOpponentTurnStartEffects(side) {
@@ -29257,7 +29267,7 @@
       }
       state.message = "相手AIが行動を考えています。";
       render();
-      window.setTimeout(runOpponentAI, AI_START_DELAY);
+      scheduleTrainingTask(runOpponentAI, AI_START_DELAY);
     }
 
     async function runOpponentAI() {
@@ -30352,7 +30362,28 @@
 
     async function sleep(ms) {
       await waitForTrainingPlayback();
+      if (trainingFastSimulation()) return yieldTrainingSimulation();
       return new Promise((resolve) => window.setTimeout(resolve, trainingAnimationDelay(ms)));
+    }
+
+    function trainingFastSimulation() {
+      return state.screen === "battle" && isTrainingAiVsAi() && state.training.skipAnimations;
+    }
+
+    let trainingFastYieldAt = 0;
+    async function yieldTrainingSimulation() {
+      if (performance.now() < trainingFastYieldAt) return;
+      trainingFastYieldAt = performance.now() + 16;
+      await new Promise(resolve => window.setTimeout(resolve, 0));
+    }
+
+    function scheduleTrainingTask(callback, delay) {
+      if (!trainingFastSimulation()) return window.setTimeout(callback, delay);
+      const token = state.preBattleToken;
+      void yieldTrainingSimulation().then(() => {
+        if (token === state.preBattleToken) callback();
+      });
+      return null;
     }
 
     async function waitForBattlePresentation() {
@@ -32220,8 +32251,10 @@
           && !ownSeats[5];
         const gammaNeedsCare = enemyHand.some((entry) => entry.baseId === "gamma")
           && !ownSeats[4];
-        if (!preserveChenSan && betaNeedsCare && [3, 5].includes(index)) score += 26;
-        if (!preserveChenSan && gammaNeedsCare && index === 4) score += 32;
+        // Denying future draws is a tie-breaker, not a reason to give up
+        // a teacher's lectern or a card's strong positional ability.
+        if (!preserveChenSan && betaNeedsCare && [3, 5].includes(index)) score += 4;
+        if (!preserveChenSan && gammaNeedsCare && index === 4) score += 6;
       }
       if (zone === "seat" && card.baseId === "aggro_student") {
         const reservations = state.players.player.late.filter((entry) =>
@@ -34159,6 +34192,7 @@
     }
 
     function animateOrderedAttendanceArrival(card) {
+      if (trainingFastSimulation()) return;
       if (!card?.instanceId) return;
       window.requestAnimationFrame(() => {
         const target = document.querySelector(`[data-card-id="${card.instanceId}"]`);
@@ -34192,7 +34226,7 @@
       state.resolvingOrderedAttendance = true;
       const delay = Math.max(0, Number(activeOrderedAttendance.initialDelayMs) || 0);
       window.clearTimeout(orderedAttendanceTimer);
-      orderedAttendanceTimer = window.setTimeout(runOrderedAttendanceStep, delay);
+      orderedAttendanceTimer = scheduleTrainingTask(runOrderedAttendanceStep, delay);
     }
 
     function finishOrderedAttendance() {
@@ -34259,9 +34293,9 @@
         render();
         if (attended) animateOrderedAttendanceArrival(attended);
         if (sequence.entries.length === 0) {
-          orderedAttendanceTimer = window.setTimeout(finishOrderedAttendance, orderedAttendanceStepDelay(result));
+          orderedAttendanceTimer = scheduleTrainingTask(finishOrderedAttendance, orderedAttendanceStepDelay(result));
         } else {
-          orderedAttendanceTimer = window.setTimeout(runOrderedAttendanceStep, orderedAttendanceStepDelay(result));
+          orderedAttendanceTimer = scheduleTrainingTask(runOrderedAttendanceStep, orderedAttendanceStepDelay(result));
         }
       };
       const pending = beforeAttendancePromises.get(attended);
@@ -35574,6 +35608,7 @@
     }
 
     function holdCrotchFebrezeForVisual(durationMs) {
+      if (trainingFastSimulation()) return;
       const pending = state.pendingCrotchFebrezeEffects;
       if (!pending || !(durationMs > 0)) return;
       pending.visualUntil = Math.max(pending.visualUntil || 0, Date.now() + durationMs);
@@ -38789,6 +38824,7 @@
     }
 
     function evolutionEffectDelay(options = {}) {
+      if (trainingFastSimulation()) return 0;
       if (Number.isFinite(options.effectDelayMs)) return Math.max(0, options.effectDelayMs);
       return options.skipEvolutionAnimation ? 0 : EVOLUTION_REVEAL_MS;
     }
@@ -38999,7 +39035,7 @@
       };
       addLog(`${sourceCard.name}の進化時効果：相手の出席者へランダムに1ダメージを10回与えます。`);
       for (let i = 0; i < 10; i += 1) {
-        window.setTimeout(() => {
+        scheduleTrainingTask(() => {
           if (finished) return;
           if (state.phase !== "battle" || state.gameOver || state.actionTurn < effectTurn) {
             finish();
@@ -40831,7 +40867,7 @@
       if (options.resumeAi && state.phase === "battle" && state.currentSide === "opponent" && !isOnlineBattle()) {
         state.aiThinking = true;
         render();
-        window.setTimeout(runOpponentAI, AI_STEP_DELAY);
+        scheduleTrainingTask(runOpponentAI, AI_STEP_DELAY);
         return true;
       }
       render();
@@ -44701,6 +44737,7 @@
     }
 
     function showFloatingTextForCard(card, text, kind) {
+      if (trainingFastSimulation()) return;
       if (!card) return;
       return withSequentialTargetFeedback(`card:${card.instanceId}`, () => {
         recordOnlineEffectFeedback({
@@ -44716,6 +44753,7 @@
     }
 
     function showFloatingTextForLife(side, text, kind) {
+      if (trainingFastSimulation()) return;
       return withSequentialTargetFeedback(`life:${side}`, () => {
         recordOnlineEffectFeedback({ target: "life", owner: side, text, kind });
         const target = document.querySelector(`[data-life-target="${side}"]`);
@@ -44735,6 +44773,7 @@
     }
 
     function showFloatingTextAtRect(rect, text, kind, options = {}) {
+      if (trainingFastSimulation()) return;
       if (!rect) return;
       const delay = Number.isFinite(options.delay) ? Math.max(0, options.delay) : activeEffectFeedbackDelay;
       drawEffectVisualUntil = Math.max(drawEffectVisualUntil, Date.now() + delay + 1600);
@@ -44830,6 +44869,7 @@
     }
 
     function showEvolutionAnimation(payload = {}, options = {}) {
+      if (trainingFastSimulation()) return;
       if (!elements.playRevealOverlay || !elements.playRevealCard) return;
       window.clearTimeout(playRevealTimer);
       elements.playRevealOverlay.classList.remove("reward-foil-reveal-active");
@@ -44863,6 +44903,7 @@
     }
 
     function showDonguriEvolutionAnimation(payload = {}, options = {}) {
+      if (trainingFastSimulation()) return;
       if (!elements.playRevealOverlay || !elements.playRevealCard) return;
       window.clearTimeout(playRevealTimer);
       elements.playRevealOverlay.classList.remove("reward-foil-reveal-active");
@@ -44903,6 +44944,7 @@
     }
 
     function showCardPlayAnimation(card, destination, options = {}) {
+      if (trainingFastSimulation()) { options.onComplete?.(); return; }
       if (itemResolutionContext?.replaying && itemResolutionContext.itemId === card?.instanceId) return;
       if (!card || !elements.playRevealOverlay || !elements.playRevealCard) {
         options.onComplete?.();
@@ -45040,6 +45082,7 @@
     }
 
     function showResultOverlay(winner, options = {}, displayOptions = {}) {
+      if (trainingFastSimulation() && state.training.replayRemaining > 0) return;
       if (!elements.resultOverlay) return;
       const key = resultOverlayKey(winner, options);
       if (!displayOptions.replay
@@ -45752,7 +45795,7 @@
       onlineSubmitAnalyticsLog("game_end");
       showResultOverlay(winner, state.gameResultOptions);
       if (state.training.active && state.training.replayRemaining > 0) {
-        window.setTimeout(() => {
+        scheduleTrainingTask(() => {
           if (!state.gameOver || state.training.replayRemaining <= 0) return;
           hideResultOverlay();
           startNextTrainingReplay();
@@ -45944,6 +45987,10 @@
       }
       removeLegacyTrashTokens();
       continueCrotchFebrezeEffects();
+      if (trainingFastSimulation() && (!state.gameOver || state.training.replayRemaining > 0)) {
+        pendingAnimations.length = 0;
+        return;
+      }
       renderScreen();
       syncBattleLayout();
       renderHomeNavigation();
@@ -48538,6 +48585,7 @@
     }
 
     function queueAnimation(type, side, count = 1) {
+      if (trainingFastSimulation()) return;
       holdCrotchFebrezeForVisual(800);
       const cardIds = type === "draw" && count > 0 ? state.players[side].hand.slice(-count).map((card) => card.instanceId) : [];
       if (type === "draw" && count > 0) state.players[side].hand.slice(-count).forEach(card => { card.handEntryKind = "draw"; });
@@ -49859,6 +49907,7 @@
     }
 
     async function playAttackFocusSequence(attackerRef, targetRef, token = null) {
+      if (trainingFastSimulation()) return true;
       const delay = attackFocusStepDelay(attackerRef);
       const attacker = getBoardCardFromRef(attackerRef);
       const target = targetRef?.zone === "life" ? null : getBoardCardFromRef(targetRef);
@@ -53222,7 +53271,7 @@
         deferPreBattle: options.training === true,
         aiBattle: options.aiBattle === true
       });
-      if (options.training === true) window.setTimeout(() => beginTrainingPreBattle(state.preBattleToken), 420);
+      if (options.training === true) scheduleTrainingTask(() => beginTrainingPreBattle(state.preBattleToken), 420);
     }
 
     function beginTrainingPreBattle(token) {
@@ -53242,7 +53291,7 @@
       const namesText = (names) => names.length ? names.map((name) => `「${name}」`).join("、") : "なし";
       state.message = `引き直すカード　左側CPU：${namesText(playerReturned)}／右側CPU：${namesText(opponentReturned)}`;
       render();
-      window.setTimeout(() => {
+      scheduleTrainingTask(() => {
         if (!isTrainingAiVsAi() || state.phase !== "mulligan") return;
         replaceSelectedCards("player", playerIds);
         replaceSelectedCards("opponent", opponentIds);
@@ -53250,7 +53299,7 @@
         state.players.opponent.mulliganUsed = true;
         state.message = `引き直し完了　左側CPU：${playerIds.length}枚／右側CPU：${opponentIds.length}枚`;
         render();
-        window.setTimeout(() => {
+        scheduleTrainingTask(() => {
           if (!isTrainingAiVsAi() || state.phase !== "mulligan") return;
           beginBattleAfterMulligan();
         }, trainingAnimationDelay(720));
@@ -53546,6 +53595,7 @@
     }
 
     function showCenterAnnouncement(text, variant = "") {
+      if (trainingFastSimulation()) return;
       if (state.screen !== "battle" || !elements.turnOverlay) return;
       elements.turnOverlay.classList.remove("tutorial-title");
       elements.turnOverlay.classList.toggle("bingo-announcement", variant === "bingo");

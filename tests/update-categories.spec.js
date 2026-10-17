@@ -7,7 +7,7 @@ for (const width of [1280, 390]) test(`最新更新を分類し全文と差分�
   await page.setViewportSize({ width, height: 900 });
   await page.goto(url);
   await page.locator("#homeUpdatesButton").click();
-  const release = page.locator(".update-entry").first();
+  const release = page.locator(".update-entry").filter({has: page.locator('summary', {hasText:'ver.0.27.0'})});
   await release.locator("summary").click();
   await expect(release.locator(".update-category h3")).toHaveText(["新カード", "カード調整", "システム", "表示・操作改善"]);
   const groups = release.locator(".update-category");

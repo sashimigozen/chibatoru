@@ -9,6 +9,9 @@ const { consolidateUpdateHistory } = Function(`${helpers}; return { consolidateU
 test('10月17日は新カード5枚とカード変更をマイナー0.27.0へまとめる', () => {
   const start = html.indexOf('const UPDATE_HISTORY =') + 'const UPDATE_HISTORY ='.length;
   const history = Function(`return ${html.slice(start, html.indexOf('    function updateReadId(', start)).trim().replace(/;$/, '')};`)();
+  assert.equal(history[0].version, 'ver.0.27.1');
+  assert.equal(history[0].date, '2026年10月18日');
+  history.shift();
   assert.equal(history[0].version, 'ver.0.27.0');
   assert.equal(history[0].date, '2026年10月17日');
   assert.equal(history[0].versioning, 'semver');
