@@ -695,6 +695,18 @@
       combo: "", notes: "設置前の出席者は対象外。各ターン両者を合わせて最初の1人だけ。付与済みの退場効果は環境を張り替えても残る。"
     });
     upsertCard({
+      id: "uma_bone", name: "ウマの骨", type: "student", cost: 5, attack: 2, hp: 4,
+      availability: "generated", placement: "席マス",
+      effect: "自分のターン終了時、自分の講義室にいる融合で生成されていない出席者を2人まで指名し、それらの体力を+1する。",
+      combo: "融合", notes: "自身と融合で生成された出席者は強化対象外。"
+    });
+    upsertCard({
+      id: "where_uma", name: "どこのウマ", type: "student", cost: 5, attack: 3, hp: 3,
+      availability: "generated", placement: "席マス",
+      effect: "自分のターン終了時、自分の講義室にいる融合で生成されていない出席者1人をランダムに指名し、その攻撃力と体力を+1する。",
+      combo: "融合", notes: "自身と融合で生成された出席者は強化対象外。"
+    });
+    upsertCard({
       id: "tiny_rhythm_student", name: "小刻みリズム学生", type: "student", cost: 8, attack: 2, hp: 2,
       availability: "deck", placement: "席マス",
       effect: "このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。",

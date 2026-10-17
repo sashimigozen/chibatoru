@@ -43,7 +43,7 @@ test('融合完成品7種の能力値と更新情報が一致し、生成した�
       const c=state.players.player.hand[0], b=CARD_BASES[c.baseId];
       return {id:c.baseId,stats:[c.cost,c.attack,c.hp],boardHp:makeBoardCard(c).currentHp,
         flags:[c.generated,c.token,c.fusionResult],deckAllowed:DIRECT_DECK_CARD_IDS.has(c.baseId),
-        update:UPDATE_HISTORY[0].changes.find(change=>change.title===c.name)?.after,text:cardRulesText(c),name:c.name,
+        update:UPDATE_HISTORY.flatMap(entry=>entry.changes).find(change=>change.title===c.name && change.after?.startsWith('学生／'))?.after,text:cardRulesText(c),name:c.name,
         baseStats:[b.cost,b.attack,b.hp]};
     });
   });
@@ -72,7 +72,7 @@ test('最終形は戦意5では出席できず、戦意6を払って出席し、
     .toEqual([0,13,5,5,17]);
 });
 
-test('同名・3枚・完成品への追加融合は不可、高負荷素材は融合可能', async ({ page }) => {
+test('同名・生素材3枚は不可、完成品への追加融合と高負荷素材は融合可能', async ({ page }) => {
   const results = await page.evaluate(() => {
     return [['fusion_uma','fusion_uma'], ['fusion_uma','fusion_bone','fusion_where'], ['umaibo','fusion_where']]
       .map(ids => { state.players.player.hand = ids.map(id=>createCardFromBase(id,'player'));
@@ -81,7 +81,7 @@ test('同名・3枚・完成品への追加融合は不可、高負荷素材は�
         state.players.player.hand[0].handLoadLevel=2;
         return fuseHorseMaterials('player',state.players.player.hand.map(card=>card.instanceId),false); })());
   });
-  expect(results).toEqual([false,false,false,true]);
+  expect(results).toEqual([false,false,true,true]);
 });
 
 test('素材とサポートだけデッキ登録でき、完成品7種は生成専用', async ({ page }) => {
@@ -127,10 +127,10 @@ for (const id of ['uma_bone','where_uma']) test(`${id}は自身を強化しな�
   }
   await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
   expect(await page.evaluate(()=>state.players.player.board.seats.slice(0,2).map((card,i)=>[card.attack-beforeFusionStats[i][0],card.currentHp-beforeFusionStats[i][1]])))
-    .toEqual([[0,0],id==='uma_bone'?[1,0]:[1,1]]);
+    .toEqual([[0,0],id==='uma_bone'?[0,1]:[1,1]]);
 });
 
-for (const side of ['player','opponent']) test(`${side}の融合強化は攻撃力のみ+1と両能力+1で、対象不足・自身除外・演出を維持する`, async ({page})=>{
+for (const side of ['player','opponent']) test(`${side}の融合強化は体力のみ+1と両能力+1で、対象不足・自身除外・演出を維持する`, async ({page})=>{
   const results=await page.evaluate(async side=>{
     const results=[];
     chooseFusionEffectCards=async(_side,_source,candidates,max)=>candidates.slice(0,max);
@@ -150,7 +150,7 @@ for (const side of ['player','opponent']) test(`${side}の融合強化は攻撃�
     return results;
   },side);
   for(const result of results){
-    const expected=result.id==='uma_bone'?[1,0]:[1,1];
+    const expected=result.id==='uma_bone'?[0,1]:[1,1];
     const affected=Math.min(result.count,result.id==='uma_bone'?2:1);
     expect(result.calls).toEqual(Array.from({length:affected},()=>['strong_student',...expected,0]));
     expect(result.diff[0]).toEqual([0,0]);
