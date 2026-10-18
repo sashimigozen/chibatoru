@@ -178,6 +178,10 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
 .case-editor-deck-card { position: relative; display: block; width: 100%; padding: 0; border: 0; background: transparent; cursor: grab; }
 .case-editor-deck-card > .card { width: 100%; height: auto; aspect-ratio: 21 / 32; min-height: 0; transform: none; }
 .case-editor-deck-card .deck-copy-badge { position: absolute; top: 4px; right: 3px; bottom: auto; left: auto; font-size: 12px; }
+#deckScreen .deck-card-test, #deckScreen .case-editor-deck-card { -webkit-user-select: none; user-select: none; }
+#deckScreen .deck-card-test *, #deckScreen .case-editor-deck-card * { -webkit-user-drag: none; -webkit-user-select: none; user-select: none; }
+#deckScreen .case-editor-drag-image { position: fixed; z-index: 2147483647; margin: 0; min-height: 0; max-width: none; transform: none; overflow: hidden; contain: paint; isolation: isolate; pointer-events: none; cursor: grabbing; }
+#deckScreen .case-editor-drag-image, #deckScreen .case-editor-drag-image * { animation: none !important; transition: none !important; pointer-events: none !important; }
 #deckScreen .deck-card-test.selected, #deckScreen .case-editor-deck-card.selected { outline: 2px solid #52b9dc; outline-offset: 2px; }
 #deckScreen .case-drop-target { outline: 3px solid #52b9dc; outline-offset: -3px; background-color: #345972; }
 .case-confirm { width: min(460px,calc(100vw - 60px)); padding: 26px; border: 1px solid #7e9db0; border-radius: 7px; color: #173246; background: #f5f8fa; }

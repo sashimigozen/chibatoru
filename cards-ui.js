@@ -4,7 +4,7 @@
   const screen = elements.deckScreen;
   const DECKS_PER_PAGE = 12;
   const ui = { cardPage: 0, deckPage: 0, query: "", type: "", cost: "", category: "", cardContext: [], opener: null,
-    editorCardId: null, editorHistory: [], editorScroll: 0, drag: null };
+    editorCardId: null, editorHistory: [], editorScroll: 0, drag: null, dragImage: null };
   const arrow = (label, previous = false) => `<button type="button" class="case-arrow${previous ? " previous" : ""}" aria-label="${label}"><img src="assets/tutorial/chevron-right.svg" alt=""></button>`;
   const categories = [{ id: "common", name: "共通カード" }, ...SPECIALTY_DEFINITIONS];
   const categoryName = (id) => categories.find((entry) => entry.id === id)?.name || "共通カード";
@@ -97,13 +97,40 @@
     if (event.target.closest("[data-editor-card-back]")) { selectEditorCard(ui.editorHistory.pop(), true); return; }
     if (event.target.closest("[data-editor-style]")) { toggleDungeonCardStyle(ui.editorCardId); render(); }
   });
+  function clearEditorDragImage() {
+    ui.dragImage?.remove();
+    ui.dragImage = null;
+  }
+  function setEditorDragImage(event, button) {
+    clearEditorDragImage();
+    const rect = button.getBoundingClientRect();
+    const preview = button.cloneNode(true);
+    preview.classList.add("case-editor-drag-image");
+    preview.removeAttribute("id");
+    preview.removeAttribute("data-current-detail");
+    preview.removeAttribute("data-card-test");
+    preview.setAttribute("aria-hidden", "true");
+    preview.draggable = false;
+    preview.querySelectorAll("[id]").forEach(node => node.removeAttribute("id"));
+    preview.querySelectorAll("img, [draggable]").forEach(node => { node.draggable = false; });
+    Object.assign(preview.style, { left: `${rect.left}px`, top: `${rect.top}px`,
+      width: `${rect.width}px`, height: `${rect.height}px` });
+    screen.appendChild(preview);
+    ui.dragImage = preview;
+    event.dataTransfer.setDragImage(preview,
+      Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
+      Math.max(0, Math.min(rect.height, event.clientY - rect.top)));
+  }
   for (const [zone, source] of [[elements.currentDeckList, "deck"], [elements.deckEditorList, "catalog"]]) {
     zone.addEventListener("dragstart", (event) => {
       const button = event.target.closest(source === "deck" ? "[data-current-detail]" : "[data-card-test]");
-      if (!button) return;
+      if (!button || !event.dataTransfer) { event.preventDefault(); return; }
       ui.drag = { id: button.dataset.currentDetail || button.dataset.cardTest, source };
+      window.getSelection()?.removeAllRanges();
+      event.dataTransfer.clearData();
       event.dataTransfer.effectAllowed = "copyMove";
       event.dataTransfer.setData("application/x-chibattle-card", JSON.stringify(ui.drag));
+      setEditorDragImage(event, button);
       hideCardTooltip();
     });
     zone.addEventListener("dragover", (event) => {
@@ -118,16 +145,20 @@
       zone.classList.remove("case-drop-target");
       const drag = ui.drag;
       ui.drag = null;
+      clearEditorDragImage();
       if (!drag || drag.source === source || !getDeckEditorIds().includes(drag.id)) return;
       selectEditorCard(drag.id);
       changeDeckCount(state.deckBuilder.activeSide, drag.id, source === "deck" ? 1 : -1);
     });
     zone.addEventListener("dragend", () => {
       ui.drag = null;
+      clearEditorDragImage();
       elements.currentDeckList.classList.remove("case-drop-target");
       elements.deckEditorList.classList.remove("case-drop-target");
     });
   }
+
+  document.addEventListener("dragend", clearEditorDragImage);
 
   const library = elements.deckLibraryView;
   const paged = document.createElement("div");

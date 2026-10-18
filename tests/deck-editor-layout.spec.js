@@ -110,3 +110,46 @@ test("満杯のデッキ・同じ領域へのドロップでは増えず、60種
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect.poll(() => page.locator("#currentDeckList").evaluate(node => node.scrollHeight - node.clientHeight)).toBeLessThanOrEqual(1);
 });
+
+for (const from of ['catalog','deck']) test(`${from}のドラッグ画像は隣のカードを含まない1枚だけ`,async({page})=>{
+  await page.evaluate(()=>{
+    state.deckBuilder.counts.player={general_teacher:1,general_student:1};render();
+    window.dragImages=[];
+    const original=DataTransfer.prototype.setDragImage;
+    DataTransfer.prototype.setDragImage=function(node,x,y){
+      window.dragImages.push({cards:node.querySelectorAll('.card').length,
+        names:[...node.querySelectorAll('.card')].map(card=>card.textContent),
+        clipped:getComputedStyle(node).contain,selectedText:getSelection().toString(),
+        payload:JSON.parse(this.getData('application/x-chibattle-card'))});
+      return original.call(this,node,x,y);
+    };
+    // A stale browser text selection must not turn into a multi-card drag.
+    const range=document.createRange();range.selectNodeContents(elements.currentDeckList);
+    getSelection().removeAllRanges();getSelection().addRange(range);
+  });
+  const source=page.locator(from==='catalog'?'#deckEditorList [data-card-test="general_student"]':'#currentDeckList [data-current-detail="general_student"]');
+  const target=page.locator(from==='catalog'?'#currentDeckList':'#deckEditorList');
+  await source.dragTo(target);
+  const images=await page.evaluate(()=>window.dragImages);
+  expect(images).toHaveLength(1);
+  expect(images[0]).toMatchObject({cards:1,clipped:'paint',selectedText:'',payload:{id:'general_student',source:from}});
+  expect(images[0].names[0]).toContain('一般学生');
+  expect(images[0].names[0]).not.toContain('一般教師');
+  expect(await count(page)).toBe(from==='catalog'?2:0);
+  expect(await count(page,'general_teacher')).toBe(1);
+  await expect(page.locator('.case-editor-drag-image')).toHaveCount(0);
+});
+
+test('キャンセルしたドラッグ画像を残さない',async({page})=>{
+  await page.locator('#deckSearchInput').fill('一般学生');
+  await page.locator('[data-card-test="general_student"]').evaluate(button=>{
+    button.dispatchEvent(new DragEvent('dragstart',{bubbles:true,dataTransfer:new DataTransfer()}));
+  });
+  await expect(page.locator('.case-editor-drag-image')).toHaveCount(1);
+  await page.screenshot({path:'/tmp/chibatoru-deck-single-drag.png'});
+  await page.locator('[data-card-test="general_student"]').evaluate(button=>{
+    button.dispatchEvent(new DragEvent('dragend',{bubbles:true,dataTransfer:new DataTransfer()}));
+  });
+  await expect(page.locator('.case-editor-drag-image')).toHaveCount(0);
+  expect(await count(page)).toBe(0);
+});
