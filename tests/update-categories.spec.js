@@ -20,6 +20,7 @@ for (const width of [1280, 390]) test(`最新更新を分類し全文と差分�
   const sniper = groups.nth(0).locator('.update-change').filter({hasText:'新カード：窓からスナイプ学生'});
   await expect(sniper).toContainText('戦意3／攻撃力2／体力1');
   await expect(sniper).toContainText('手札から3行3列に出席させたとき');
+  await expect(sniper).toContainText('3ダメージを与える。');
   await expect(sniper.locator('.update-text-highlight')).toHaveCount(0);
   await expect(sniper).not.toContainText('体力2');
   await expect(groups.nth(1)).toContainText("学生／学友会・持ち物／戦意5／攻撃力3／体力3");

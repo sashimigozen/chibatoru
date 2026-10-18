@@ -20,7 +20,7 @@ test('新カード3枚の能力値・本文・共通カード登録', async ({pa
     return {stats:[c.cost,c.attack||0,c.hp||0],text:cardRulesText(c),registered:ALL_DECK_IDS.includes(id)&&SPECIALTY_CARD_IDS.common.includes(id)};
   }));
   expect(rows.map(r=>r.stats)).toEqual([[7,0,0],[2,0,0],[3,2,1]]);
-  expect(rows.map(r=>r.text)).toEqual(['お互いの講義室にいる出席者すべてを破壊する。','自分のターン終了まで、お互いの継続効果をすべて無効にする。','このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、4ダメージを与える。']);
+  expect(rows.map(r=>r.text)).toEqual(['お互いの講義室にいる出席者すべてを破壊する。','自分のターン終了まで、お互いの継続効果をすべて無効にする。','このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、3ダメージを与える。']);
   expect(rows.every(r=>r.registered)).toBe(true);
 });
 test('一旦は両陣営の席・教卓を破壊し、環境は残す',async({page})=>{
@@ -36,16 +36,17 @@ test('一旦は両陣営の席・教卓を破壊し、環境は残す',async({pa
   });
   expect(r).toEqual({used:true,counts:[0,0],env:'classroom',will:13});
 });
-test('スナイプは盤面を直接指名して4ダメージ、選択を解放する',async({page})=>{
+test('スナイプは盤面を直接指名して3ダメージ、選択を解放する',async({page})=>{
   const r=await page.evaluate(()=>{
     const c=makeBoardCard(createCardFromBase('window_snipe_student','player'));
     const target=makeBoardCard(createCardFromBase('general_teacher','opponent'));
+    target.baseMaxHp=target.maxHp=target.currentHp=8;
     state.players.player.board.seats[0]=c;state.players.opponent.board.teacher=target;
     const started=beginWindowSnipeTargetChoice('player',c);
     const resolved=resolveAttendTargetChoice('player',{owner:'opponent',zone:'teacher',index:null},false);
     return {started,resolved,hp:target.currentHp,pending:state.pendingAttendTarget};
   });
-  expect(r).toEqual({started:true,resolved:true,hp:2,pending:null});
+  expect(r).toEqual({started:true,resolved:true,hp:5,pending:null});
 });
 test('新カード3枚とスナイプの指名画面を実表示する',async({page})=>{
   await page.setViewportSize({width:1280,height:800});
