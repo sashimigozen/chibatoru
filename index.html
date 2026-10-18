@@ -2685,10 +2685,11 @@
       transform-origin: bottom center;
     }
 
-    .hand-effect-indicator {
+    .card.hand-card > .hand-effect-indicator {
       position: absolute;
-      top: -7px;
-      left: 32%;
+      top: var(--hand-effect-anchor-y, 0px);
+      left: var(--hand-effect-anchor-x, 40%);
+      transform: translate(-50%, -50%);
       z-index: 20;
       display: grid;
       place-items: center;
@@ -2704,7 +2705,6 @@
       pointer-events: none;
     }
     .opponent-hand .hand-effect-indicator {
-      top: -5px;
       width: 12px;
       height: 12px;
       border-width: 1px;
@@ -19894,8 +19894,9 @@
         version: "ver.0.28.0",
         versioning: "semver",
         date: "2026年10月18日",
-        summary: "既存のAI判断を維持しながら、戦意配分・手札の温存・攻撃時の交換判断を追加しました。",
+        summary: "AIの戦術判断を追加し、手札の状態を示す印の表示位置を統一しました。",
         changes: [
+          { category: "表示・操作改善", title: "手札の状態表示", after: "効果や状態の変化を示す「！」を、カード上端の同じ相対位置へ固定しました。カードの種類・レアリティ・画面サイズ・ホバーによる拡大にかかわらずカード枠を基準に配置し、SC・PRだけ印が下へずれる問題も修正しました。" },
           { category: "システム", title: "AIの戦術判断", after: "既存のリーサル確認・配置・カードごとの連携判断を残し、2枚を使う戦意配分、有利な盤面での手札温存、相打ちで失う出席者の価値を追加で考慮します。出席者だけを攻撃できる味方や反撃を受けずに倒せる味方を生かした攻撃順、処理後に残る体力、本体への打点を残す役割分担も判断します。攻撃が終わるたびに残りの味方の順番を見直します。将来の盤面の残りやすさは、相手の非公開手札の内容を参照せずに見積もります。カードの能力・対戦ルールは変更していません。" }
         ]
       },
@@ -46241,6 +46242,12 @@
         if (bounds.width <= 0 || bounds.height <= 0) return;
         const scale = Math.min(bounds.width / CARD_TEMPLATE_BASE_WIDTH, bounds.height / CARD_TEMPLATE_BASE_HEIGHT);
         stage.style.setProperty("--card-template-scale", String(scale));
+        if (shell.classList.contains("hand-card")) {
+          // The marker lives outside the clipped face. Anchor its center to
+          // the rendered frame, not the shell's width or rarity-specific flow.
+          shell.style.setProperty("--hand-effect-anchor-x", `${stage.offsetLeft + CARD_TEMPLATE_BASE_WIDTH * scale * 0.4}px`);
+          shell.style.setProperty("--hand-effect-anchor-y", `${stage.offsetTop}px`);
+        }
       });
     }
 
