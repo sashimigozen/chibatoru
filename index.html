@@ -19896,6 +19896,7 @@
         date: "2026年10月18日",
         summary: "AIの戦術判断を追加し、手札の状態を示す印の表示位置を統一しました。",
         changes: [
+          { category: "不具合修正", title: "保存デッキの名前変更", after: "通常・専攻・カオスの保存デッキを編集中に名前を変えて保存すると、元のデッキが残って複製される問題を修正しました。改名後もカード構成と作成順の情報を引き継ぎます。同名デッキへの上書き確認、新規保存、固定スターターデッキの別名保存は従来どおりです。" },
           { category: "表示・操作改善", title: "手札の状態表示", after: "効果や状態の変化を示す「！」を、カード上端の同じ相対位置へ固定しました。カードの種類・レアリティ・画面サイズ・ホバーによる拡大にかかわらずカード枠を基準に配置し、SC・PRだけ印が下へずれる問題も修正しました。" },
           { category: "システム", title: "AIの戦術判断", after: "既存のリーサル確認・配置・カードごとの連携判断を残し、2枚を使う戦意配分、有利な盤面での手札温存、相打ちで失う出席者の価値を追加で考慮します。出席者だけを攻撃できる味方や反撃を受けずに倒せる味方を生かした攻撃順、処理後に残る体力、本体への打点を残す役割分担も判断します。攻撃が終わるたびに残りの味方の順番を見直します。将来の盤面の残りやすさは、相手の非公開手札の内容を参照せずに見積もります。カードの能力・対戦ルールは変更していません。" }
         ]
@@ -52252,10 +52253,17 @@
         return;
       }
       const collection = activeDeckCollection();
+      const originalName = state.deckBuilder.editingName;
+      // Fixed starter recipes retain their existing save-as behavior.
+      const renaming = originalName && originalName !== name && Object.hasOwn(collection, originalName)
+        && !(!isSpecialtyDeckFormat() && !isChaosDeckFormat() && isStarterDeckName(originalName));
+      const originalDeck = renaming ? collection[originalName] : null;
+      const previousTarget = Object.hasOwn(collection, name) ? collection[name] : null;
       const formatLabel = isSpecialtyDeckFormat() ? "専攻デッキ" : isChaosDeckFormat() ? "カオスデッキ" : "保存デッキ";
       if (collection[name] && !window.confirm(`${formatLabel}「${name}」を上書きしますか？`)) return;
-      const createdOrder = collection[name]?.createdOrder || (collection[name] ? 0 :
+      const createdOrder = originalDeck ? (originalDeck.createdOrder || 0) : collection[name]?.createdOrder || (collection[name] ? 0 :
         Object.values(collection).reduce((max, deck) => Math.max(max, Number(deck?.createdOrder) || 0), 0) + 1);
+      if (renaming) delete collection[originalName];
       collection[name] = {
         counts: copyDeckCounts(counts, { unlimited: isChaosDeckFormat() }),
         savedAt: new Date().toISOString(),
@@ -52266,8 +52274,21 @@
         ? persistSpecialtyDecks()
         : isChaosDeckFormat() ? persistChaosDecks() : persistSavedDecks();
       if (!persisted) {
+        // A failed save must not remove the original or overwrite another deck.
+        if (previousTarget) collection[name] = previousTarget;
+        else delete collection[name];
+        if (renaming) collection[originalName] = originalDeck;
         render();
         return;
+      }
+      if (renaming) {
+        const soloFormat = onlineRuleDefinition(normalizeOnlineRuleId(state.soloSelection.ruleId)).deck.formats[0] || "normal";
+        if (onlineDeckCollectionForDescriptor({ format: soloFormat }) === collection) {
+          for (const key of ["playerDeckName", "opponentDeckName", "previewName"]) {
+            if (state.soloSelection[key] === originalName) state.soloSelection[key] = name;
+          }
+        }
+        if (isSpecialtyDeckFormat() && state.dungeon.selectedDeckName === originalName) state.dungeon.selectedDeckName = name;
       }
       state.deckBuilder.editingName = name;
       state.deckBuilder.originalFingerprint = currentFingerprint;
