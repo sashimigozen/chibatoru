@@ -6,18 +6,28 @@ const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const helpers = html.slice(html.indexOf('    function updateHistorySeriesKey('), html.indexOf('    const LATEST_UPDATE_VERSION'));
 const { consolidateUpdateHistory } = Function(`${helpers}; return { consolidateUpdateHistory };`)();
 
+test('10月18日の戦術判断追加は互換性を保つ新機能0.28.0として掲載する', () => {
+  const start = html.indexOf('const UPDATE_HISTORY =') + 'const UPDATE_HISTORY ='.length;
+  const history = Function(`return ${html.slice(start, html.indexOf('    function updateReadId(', start)).trim().replace(/;$/, '')};`)();
+  assert.equal(history[0].version, 'ver.0.28.0');
+  assert.equal(history[0].versioning, 'semver');
+  assert.equal(history[0].date, '2026年10月18日');
+  assert.equal(history.filter(entry => entry.date === '2026年10月18日').length, 1);
+  assert.ok(history[0].changes.some(change => change.title === 'AIの戦術判断'));
+});
+
 test('10月17日は新カード5枚とカード変更をマイナー0.27.0へまとめる', () => {
   const start = html.indexOf('const UPDATE_HISTORY =') + 'const UPDATE_HISTORY ='.length;
   const history = Function(`return ${html.slice(start, html.indexOf('    function updateReadId(', start)).trim().replace(/;$/, '')};`)();
-  assert.equal(history[0].version, 'ver.0.27.0');
+  const release = history.find(entry => entry.version === 'ver.0.27.0');
   assert.ok(!history.some(entry => entry.version === 'ver.0.27.1'));
   for (const title of ['トレーニングのスキップ高速化', 'AIの配置判断']) {
-    assert.equal(history[0].changes.filter(change => change.title === title).length, 1);
+    assert.equal(release.changes.filter(change => change.title === title).length, 1);
   }
-  assert.equal(history[0].date, '2026年10月17日');
-  assert.equal(history[0].versioning, 'semver');
-  assert.equal(history[0].changes.filter(change => change.title.startsWith('新カード：')).length, 5);
-  for (const change of history[0].changes.filter(change => change.before)) {
+  assert.equal(release.date, '2026年10月17日');
+  assert.equal(release.versioning, 'semver');
+  assert.equal(release.changes.filter(change => change.title.startsWith('新カード：')).length, 5);
+  for (const change of release.changes.filter(change => change.before)) {
     assert.ok(change.before.includes('戦意'));
     assert.ok(change.after.includes('攻撃力'));
     assert.ok(change.beforeHighlights.length);

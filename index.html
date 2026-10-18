@@ -19891,6 +19891,15 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.28.0",
+        versioning: "semver",
+        date: "2026年10月18日",
+        summary: "既存のAI判断を維持しながら、戦意配分・手札の温存・攻撃時の交換判断を追加しました。",
+        changes: [
+          { category: "システム", title: "AIの戦術判断", after: "既存のリーサル確認・配置・カードごとの連携判断を残し、2枚を使う戦意配分、有利な盤面での手札温存、相打ちで失う出席者の価値を追加で考慮します。出席者だけを攻撃できる味方や反撃を受けずに倒せる味方を生かした攻撃順、処理後に残る体力、本体への打点を残す役割分担も判断します。攻撃が終わるたびに残りの味方の順番を見直します。将来の盤面の残りやすさは、相手の非公開手札の内容を参照せずに見積もります。カードの能力・対戦ルールは変更していません。" }
+        ]
+      },
+      {
         version: "ver.0.27.0",
         versioning: "semver",
         date: "2026年10月17日",
@@ -31477,8 +31486,9 @@
     function aiBoardSurvivalFactor(attackingSide) {
       const defendingSide = oppositeSide(attackingSide);
       const defenders = listBoardRefs(defendingSide).length;
-      const removalCards = state.players[defendingSide].hand.filter((card) => AI_REMOVAL_CARD_IDS.has(card.baseId)).length;
-      return Math.max(0.48, 0.9 - Math.min(4, defenders) * 0.055 - Math.min(3, removalCards) * 0.09);
+      // Hand size is public; the identities of hidden removal cards are not.
+      const handSize = state.players[defendingSide].hand.length;
+      return Math.max(0.48, 0.9 - Math.min(4, defenders) * 0.055 - Math.min(6, handSize) * 0.025);
     }
 
     function getAiLethalForecast(side = "opponent") {
@@ -31787,6 +31797,43 @@
       return adjusted;
     }
 
+    function aiPlacementUsesSeparateSlots(first, second) {
+      // Do not pretend that evolution, replacement, or multi-seat attendance
+      // can be simulated by a simple budget comparison.
+      if (first.card.instanceId === second.card.instanceId
+        || [first, second].some(move => move.card.evolutionFrom || move.card.occupiedSeatSize
+          || move.card.late || move.card.baseId === "predator" || move.zone === "environment")) return false;
+      return first.zone !== second.zone || first.index !== second.index;
+    }
+
+    function aiPlacementStrategyAdjustment(move, moves, forecast = getAiLethalForecast("opponent")) {
+      const side = "opponent", own = state.players[side];
+      // Never displace an immediate finish, emergency answer, or an existing
+      // high-priority card-specific plan with this general-purpose heuristic.
+      if (move.score <= 0 || move.score >= 60 || forecast.opponentCounterLethal || forecast.immediateLethal
+        || move.zone === "environment" || move.card.evolutionFrom) return 0;
+      const remaining = own.will - effectiveCardCost(move.card);
+      const followUp = moves.filter(next => next.score > 0 && effectiveCardCost(next.card) <= remaining
+        && aiPlacementUsesSeparateSlots(move, next))
+        .sort((a, b) => b.score - a.score)[0];
+      let adjustment = followUp ? Math.min(8, followUp.score * 0.3) : 0;
+      const friendly = listBoardRefs(side).map(getBoardCardFromRef).filter(Boolean);
+      const plainBody = cardRulesText(move.card).trim() === "効果なし。"
+        && !move.card.late && !move.card.occupiedSeatSize
+        && !aiCardProvidesFaceProtection(move.card)
+        && aiCardResourceValue(side, move.card) <= 0 && aiRecurringCardValue(side, move.card) <= 0
+        && scoreAiAttendanceRemoval(side, move.card, move.zone, move.index) <= 0
+        && scoreAiPlacementAuras(side, move.card, move.zone, move.index) <= 0
+        && scoreAiFusionCopyAttendance(side, move.card) <= 0
+        && !aiCardCanAttackLifeOnAttendance(move.card, side, move.zone, move.index);
+      // Hold only ordinary surplus bodies on an already dominant, safe board.
+      // Keep developing against opposition and keep all specialized plans intact.
+      if (plainBody && move.score < 20 && friendly.length >= 3 && own.hand.length <= 3
+        && listBoardRefs("player").length === 0 && friendly.reduce((sum, card) => sum + Math.max(0, card.attack || 0), 0) >= 9
+        && forecast.nextTurnLethal) adjustment -= 24;
+      return adjustment;
+    }
+
     function findAiPlayMove() {
       const opponent = state.players.opponent;
       const refill = planAiYakitori("opponent");
@@ -31827,6 +31874,11 @@
           });
         }
       });
+      // Calculate against unchanged scores, so enumeration order cannot affect
+      // another candidate's follow-up value. Re-evaluate after every real move.
+      const strategyForecast = getAiLethalForecast("opponent");
+      const adjustedScores = moves.map(move => move.score + aiPlacementStrategyAdjustment(move, moves, strategyForecast));
+      moves.forEach((move, index) => { move.score = adjustedScores[index]; });
       moves.sort((a, b) => b.score - a.score || effectiveCardCost(b.card) - effectiveCardCost(a.card));
       if (!(moves[0]?.score > 0)) return null;
       return aiStudentComedySetupMove("opponent", moves[0]) || moves[0];
@@ -33280,12 +33332,35 @@
       return false;
     }
 
+    function aiCombatOpeningPriority(side, ref) {
+      const card = getBoardCardFromRef(ref);
+      if (!card || !canAttackSilently(card)) return 0;
+      if (shouldAiUseLecture(ref, card, side)) return 100;
+      if (hasKeyword(card, "眠気")) return 0;
+      const targetSide = oppositeSide(side);
+      const priorityIds = new Set(listAttackPriorityCards(targetSide).map(target => target.instanceId));
+      const effectKills = planAiGuaranteedEndTurnEffectKills(side);
+      const targets = listBoardRefs(targetSide).map(getBoardCardFromRef).filter(target => target
+        && (card.baseId === "loud_student" || !priorityIds.size || priorityIds.has(target.instanceId))
+        && !effectKills.targetIds.has(target.instanceId)
+        && !aiShouldPreserveEnemyTrpg(side, target)
+        && canAiLethalAttackerDefeatCard(card, target)
+        && aiShouldAttackCard(side, card, target));
+      if (!targets.length) return 0;
+      // Use restricted attackers for removal before spending an attack which
+      // could have hit the leader. No new combat rules are introduced here.
+      if (!canAiLethalAttackerHitLife(card, targetSide)) return 60;
+      return targets.some(target => aiAttackCounterDamage(card, target) === 0) ? 40 : 0;
+    }
+
     function aiOrderedAttackRefs(side) {
-      return listBoardRefs(side).sort((a, b) => {
+      const refs = listBoardRefs(side);
+      const priorities = new Map(refs.map(ref => [getBoardCardFromRef(ref)?.instanceId, aiCombatOpeningPriority(side, ref)]));
+      return refs.sort((a, b) => {
         const first = getBoardCardFromRef(a);
         const second = getBoardCardFromRef(b);
-        const priority = (ref, card) => shouldAiUseLecture(ref, card, side) ? 2 : 0;
-        return priority(b, second) - priority(a, first) || (first?.attack || 0) - (second?.attack || 0);
+        return priorities.get(second?.instanceId) - priorities.get(first?.instanceId)
+          || (first?.attack || 0) - (second?.attack || 0);
       });
     }
 
@@ -33294,8 +33369,16 @@
     }
 
     async function aiAttackWithReadyCards() {
-      const attackers = aiOrderedAttackRefs("opponent");
-      for (const ref of attackers) {
+      const processedAttackers = new Set();
+      // Reconsider the board after each attendee has acted, rather than keeping
+      // a stale order after a blocker, aura source, or lecturer has disappeared.
+      for (let attendeeSafety = 0; attendeeSafety < 20 && isOpponentAiActive(); attendeeSafety += 1) {
+        const ref = aiOrderedAttackRefs("opponent").find(entry => {
+          const card = getBoardCardFromRef(entry);
+          return card && !processedAttackers.has(card.instanceId) && canAttackSilently(card);
+        });
+        if (!ref) break;
+        processedAttackers.add(getBoardCardFromRef(ref).instanceId);
         let attackSafety = 0;
         while (isOpponentAiActive() && attackSafety < 12) {
           await waitForBattlePresentation();
@@ -33406,6 +33489,36 @@
       return score;
     }
 
+    function aiCombatTradeAdjustment(side, attacker, target) {
+      const counter = aiAttackCounterDamage(attacker, target);
+      if (counter >= attacker.currentHp) return 0; // Existing loss-of-attendee scoring handles this.
+      const targetSide = oppositeSide(side);
+      let score = -Math.min(6, counter * 0.6);
+      // A one-HP survivor is often a very different board from a healthy one.
+      // Evaluate visible return attacks, without mutating cards or using hands.
+      if (counter > 0 && attacker.type !== "vampire") {
+        const remainingHp = attacker.currentHp - counter;
+        const newlyExposed = listBoardRefs(targetSide).map(getBoardCardFromRef).some(enemy => enemy
+          && enemy.instanceId !== target.instanceId && !isAttackLocked(enemy, state.actionTurn + 1)
+          && canAiLethalAttackerTargetCard(enemy, attacker)
+          && previewFinalDamageToCard(attacker, cardAttackDamage(enemy, attacker), enemy, { combat: true }) >= remainingHp
+          && previewFinalDamageToCard(attacker, cardAttackDamage(enemy, attacker), enemy, { combat: true }) < attacker.currentHp);
+        if (newlyExposed) score -= 4;
+      }
+      if (!canAiLethalAttackerHitLife(attacker, targetSide)) return score;
+      const priorityIds = new Set(listAttackPriorityCards(targetSide).map(card => card.instanceId));
+      const alternative = listBoardRefs(side).map(getBoardCardFromRef).filter(card => card
+        && card.instanceId !== attacker.instanceId && canAttackSilently(card) && !hasKeyword(card, "眠気")
+        && (card.baseId === "loud_student" || !priorityIds.size || priorityIds.has(target.instanceId))
+        && canAiLethalAttackerDefeatCard(card, target) && aiAttackCounterDamage(card, target) < card.currentHp);
+      const faceValue = card => canAiLethalAttackerHitLife(card, targetSide)
+        ? previewFinalDamageToLife(targetSide, Math.max(0, card.attack || 0), card) : 0;
+      const ownFace = faceValue(attacker);
+      if (alternative.length) score -= Math.min(12, Math.max(0,
+        ownFace - Math.min(...alternative.map(faceValue))) * 1.5);
+      return score;
+    }
+
     function findAiAttackTarget(attacker) {
       const attentionIds = new Set(listAttackPriorityCards("player").map((card) => card.instanceId));
       const cannotAttackLife = !aiShouldAttackLife("opponent", attacker)
@@ -33434,9 +33547,13 @@
           const canDefeat = attacker.baseId === "absolute_woman"
             || previewFinalDamageToCard(target.card, cardAttackDamage(attacker, target.card), attacker, { combat: true }) >= target.card.currentHp;
           const survivesCounter = aiAttackCounterDamage(attacker, target.card) < attacker.currentHp;
+          const lostValue = survivesCounter ? 0 : Math.max(0, attacker.attack || 0) * 1.5
+            + Math.max(0, aiRecurringCardValue("opponent", attacker));
           const score = (canDefeat ? 14 : 0)
             + (survivesCounter ? 4 : -8)
             + scoreAiEnemyAttendeeThreat(target.card, target)
+            - lostValue
+            + aiCombatTradeAdjustment("opponent", attacker, target.card)
             - target.card.currentHp * 0.25;
           return { ...target, score, canDefeat, survivesCounter };
         })
