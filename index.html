@@ -19894,13 +19894,19 @@
         version: "ver.0.28.1",
         versioning: "semver",
         date: "2026年10月20日",
-        summary: "オンライン対戦の準備画面とカード使用可否、「敵」の出席直後の強化判定を修正し、「子曰く」で手札に加えられる枚数を3枚までに変更しました。",
+        summary: "「子曰く」「アクティングアウトマン」「アクティングアウトウーマン」を調整し、オンライン対戦の準備画面とカード使用可否、「敵」の出席直後の強化判定を修正しました。",
         changes: [
           { title: "不具合修正", after: "オンライン画面で初期選択の編集中デッキが使用不可の場合、使用できる保存デッキを選択するように修正。保存済みデッキの内容は変更しません。ランダムマッチでも準備できない理由を表示します。対戦サーバーのカード一覧を通常版と一致させ、追加済みカードを誤って使用不可にする不具合を修正しました。" },
           { category: "不具合修正", title: "効果で出席した「敵」の強化", after: "「真の敵」などの効果で「敵」が出席した場合も、その直後に相手の講義室の「TRPGサークルメンバー」を確認し、攻撃力+5と陽気を反映するよう修正しました。席マス・教卓マスの両方に対応し、カード本文と能力値は変更していません。" },
           { category: "カード調整", title: "子曰く",
             before: "持ち物／共通カード／戦意3／攻撃力0／体力0\n学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。\n残りをデッキに戻してシャッフルする。",
-            after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを3枚まで手札に加える。\n残りをデッキに戻してシャッフルする。" }
+            after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを3枚まで手札に加える。\n残りをデッキに戻してシャッフルする。" },
+          { category: "カード調整", title: "アクティングアウトマン",
+            before: "学生／デザイン／戦意4／攻撃力3／体力3\nこのカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。\n自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。\nさらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
+            after: "学生／デザイン／戦意4／攻撃力3／体力3\nこのカードを手札から出席させたとき、相手の3行目にいる学生すべてと、自分の講義室にいる学生すべてに1ダメージ。\n自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。\nさらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。" },
+          { category: "カード調整", title: "アクティングアウトウーマン",
+            before: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。",
+            after: "学生／共通カード／戦意3／攻撃力1／体力3\nこのカードは1行目にのみ出席できる。\n自分の講義室にこのカード以外の「アクティングアウト」とつく出席者がいるなら、このカードが自分の講義室にいるかぎり、自分本体と自分の「アクティングアウト」とつく出席者すべてが学生から受けるダメージを-2する。\nこの効果は重複しない。" }
         ]
       },
       {
@@ -32179,8 +32185,20 @@
         && friendlyRefs.some(ref => String(getBoardCardFromRef(ref)?.name || "").includes("アクティングアウト"))) score += enemyRefs.filter(ref =>
         getBoardCardFromRef(ref)?.type === "student").length * 4;
       if (card.baseId === "acting_out_man") {
-        score += scoreAiDamageEffectTargets("opponent", card, enemyRefs.map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
-          .filter(entry => entry.card?.type === "student"), { damage: 1, maxTargets: enemyRefs.length });
+        const entries = actingOutManAttendanceEntries("opponent");
+        score += scoreAiDamageEffectTargets("opponent", card, entries.filter(entry => entry.ref.owner === "player"),
+          { damage: 1, maxTargets: enemyRefs.length });
+        const womanAfterAttendance = !ongoingEffectsSuppressed() && friendlyRefs.some(ref => {
+          const friend = getBoardCardFromRef(ref);
+          return friend?.baseId === "acting_out_woman" && friend.currentHp > 0 && canUsePrintedCardEffects(friend);
+        });
+        entries.filter(entry => entry.ref.owner === "opponent").forEach(({ ref, card: target }) => {
+          const protectedAfterAttendance = womanAfterAttendance && isActingOutStudent(target);
+          const damage = protectedAfterAttendance ? 0 : previewFinalDamageToCard(target, 1, card);
+          score -= Math.min(target.currentHp, damage) * 2;
+          if (damage > 0 && damage >= target.currentHp) score -= scoreAiFriendlySacrifice("opponent", target, ref);
+        });
+        if (!womanAfterAttendance) score -= 2; // The newly attended man is also a student.
         if (friendlyRefs.some(ref => isActingOutStudent(getBoardCardFromRef(ref)))) score += 8;
       }
       if (["cafeteria_lady", "curry_treater", "chen_san"].includes(card.baseId) && isCafeteriaEnvironmentActive()) {
@@ -40261,9 +40279,8 @@
         }
       }
       if (card.baseId === "acting_out_man") {
-        listBoardRefs(opponent).map(getBoardCardFromRef).filter(target => target?.type === "student")
-          .forEach(target => dealDamageToCard(target, 1, card));
-        addLog(`${card.name}の出席時効果：相手の学生すべてに1ダメージ。`);
+        actingOutManAttendanceEntries(side).forEach(({ card: target }) => dealDamageToCard(target, 1, card));
+        addLog(`${card.name}の出席時効果：相手の3行目の学生すべてと、自分の講義室の学生すべてに1ダメージ。`);
       }
       if (card.baseId === "pro_k" && zone === "teacher") {
         const seatIndexes = [0, 2].filter((seatIndex) => isBoardSlotOpen(side, "seat", seatIndex));
@@ -43807,6 +43824,14 @@
       return card?.type === "student" && card.currentHp > 0 && String(card.name || "").includes("アクティングアウト");
     }
 
+    function actingOutManAttendanceEntries(side) {
+      return [oppositeSide(side), side].flatMap(owner => listBoardRefs(owner)
+        .map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
+        .filter(({ ref, card }) => card?.type === "student" && (owner === side
+          || (ref.zone === "seat" && (card.occupiedSeatIndexes || occupiedSeatIndexesFor(card, ref.index))
+            .some(index => seatRow(index) === 3)))));
+    }
+
     function actingOutManAbilityActive(card) {
       return card?.baseId === "acting_out_man" && canUsePrintedCardEffects(card)
         && listBoardRefs(card.owner).map(getBoardCardFromRef).some(other =>
@@ -44168,7 +44193,7 @@
 
     function actingOutStudentDamageReduction(side, source, target = null) {
       if (target && !String(target.name || "").includes("アクティングアウト")) return 0;
-      return source?.type === "student" && source.owner === oppositeSide(side) && hasActingOutWomanAura(side) ? 2 : 0;
+      return source?.type === "student" && hasActingOutWomanAura(side) ? 2 : 0;
     }
 
     function enemyStudentTrpgAuraActive(card) {
@@ -49567,7 +49592,7 @@
       proliferating_enemy: "このカードが自分の講義室にいるかぎり",
       variable_student: "このカードが講義室にいるかぎり",
       acting_out_man_2: "このカードが自分の講義室にいるかぎり",
-      acting_out_woman: "このカードが自分の講義室にいて",
+      acting_out_woman: "自分の講義室にこのカード以外の「アクティングアウト」とつく出席者がいるなら",
       aggro_student: "このカードが出席している",
       aggro_king: "このカードが3行1列にいる",
       aggro_queen: "このカードが2行3列にいる",
@@ -54959,9 +54984,9 @@
         impossible_high_note: "このカードを手札から出席させたとき、相手の出席者1人をランダムに指名し、その攻撃力を-2、体力を-1する。環境が「食堂」である場合、このカードの戦意を-3し、この効果の対象は相手の出席者すべてになる。",
         dark_yuta: "進化：「U太」。進化元についていた装備カードとその効果を引き継ぐ。このカードには装備カードを1枚までつけられる。進化したとき、「U太」1枚を手札に生成する。このカードは、装備カードがついているかぎり陽気を持つ。",
         back_question_student: "このカードが自分の3行目の席マスに出席したとき、相手の教卓マスにいる出席者に4ダメージを与える。",
-        acting_out_man: "このカードを手札から出席させたとき、相手の講義室にいる学生すべてに1ダメージ。自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
+        acting_out_man: "このカードを手札から出席させたとき、相手の3行目にいる学生すべてと、自分の講義室にいる学生すべてに1ダメージ。自分の講義室にこのカード以外の「アクティングアウト」とつく学生がいるなら、1ターンに2回攻撃できる。さらに学生への攻撃なら、攻撃中は攻撃力を+1し、反撃を受けない。",
         acting_out_man_2: "注目を持つ。このカードは1行目にのみ出席できる。このカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては陽気を持つ。",
-        acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
+        acting_out_woman: "このカードは1行目にのみ出席できる。自分の講義室にこのカード以外の「アクティングアウト」とつく出席者がいるなら、このカードが自分の講義室にいるかぎり、自分本体と自分の「アクティングアウト」とつく出席者すべてが学生から受けるダメージを-2する。この効果は重複しない。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
         academic_move: "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは超陽気を持つ。その出席者は、自分のターン終了時、校外エリアへ送られる。",
         confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを3枚まで手札に加える。残りをデッキに戻してシャッフルする。",

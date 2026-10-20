@@ -35,7 +35,7 @@ test("4枚の全文・能力値・共通カード登録・1行目制限が一致
     "[超注目]\nこのカードは1行目にのみ出席できる。\n自分のターン終了時、自分の教卓マスに教師がいるなら、自分の気力を3回復する。",
     "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは[超陽気]を持つ。\nその出席者は、自分のターン終了時、校外エリアへ送られる。",
     "[注目]\nこのカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいるかぎり、自分の「アクティングアウト」とつく、このカード以外の出席者すべては[陽気]を持つ。",
-    "このカードは1行目にのみ出席できる。\nこのカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。\nこの効果は重複しない。"
+    "このカードは1行目にのみ出席できる。\n自分の講義室にこのカード以外の「アクティングアウト」とつく出席者がいるなら、このカードが自分の講義室にいるかぎり、自分本体と自分の「アクティングアウト」とつく出席者すべてが学生から受けるダメージを-2する。\nこの効果は重複しない。"
   ];
   result.forEach((entry, i) => {
     expect(entry.text).toBe(texts[i]);
@@ -121,7 +121,7 @@ for (const side of ["player", "opponent"]) test(`ウーマンは本体・名前�
     damagePlayer(side, 2, student);
     return { preview, combat, unprotected, unchanged, floor, protectedLife, teacherLife, suppressedLife: p.life };
   }, side);
-  expect(result).toEqual({ preview: 2, combat: 2, unprotected: [4,4], unchanged: [3, 3, 3], floor: 0,
+  expect(result).toEqual({ preview: 2, combat: 2, unprotected: [4,4], unchanged: [3, 3, 1], floor: 0,
     protectedLife: 8, teacherLife: 6, suppressedLife: 4 });
 });
 
@@ -222,7 +222,8 @@ test("ウーマンの軽減をAIの本体攻撃判断・予測とオンライン
     state.players.opponent.board.seats[1] = makeBoardCard(guest);
     state.players.opponent.board.seats[2] = makeBoardCard(createCardFromBase("acting_out_man_2", "opponent"));
     const guestProtects = previewFinalDamageToLife("opponent", 3, makeBoardCard(createCardFromBase("general_student", "player")));
-    return { shouldAttack, forecast, guestProtects };
+    const guestSelfProtects = previewFinalDamageToLife("opponent", 3, makeBoardCard(createCardFromBase("general_student", "opponent")));
+    return { shouldAttack, forecast, guestProtects, guestSelfProtects };
   });
-  expect(result).toEqual({ shouldAttack: false, forecast: 0, guestProtects: 1 });
+  expect(result).toEqual({ shouldAttack: false, forecast: 0, guestProtects: 1, guestSelfProtects: 1 });
 });
