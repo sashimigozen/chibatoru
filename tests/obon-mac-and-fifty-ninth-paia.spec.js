@@ -27,6 +27,8 @@ test.beforeEach(async ({ page }) => {
       player.life = 30;
     }
   });
+  await page.waitForFunction(() => !battleNewActionBlocked());
+  await page.evaluate(() => { state.training.skipAnimations = true; });
 });
 
 test("食堂の2枚を既存データとカード文に登録する", async ({ page }) => {
@@ -49,7 +51,7 @@ test("食堂の2枚を既存データとカード文に登録する", async ({ p
 
   expect(cards).toEqual([
     {
-      baseId: "obon_mac", name: "お盆mac", type: "item", cost: 4,
+      baseId: "obon_mac", name: "お盆mac", type: "item", cost: 3,
       attack: undefined, hp: undefined, category: "cafeteria",
       rules: "自分の校外エリアにヴァンパイアが5枚以上ある場合にのみ使用できる。\n自分の手札にあるヴァンパイアすべての戦意を-2する。"
     },
@@ -89,6 +91,7 @@ test("お盆macはヴァンパイア5枚以上が校外にいる場合だけ使�
       itemKept: player.hand.some((card) => card.instanceId === item.instanceId)
     };
     player.trash.push(api.createCardFromBase("vampire", "player"));
+    player.will = 3;
     const allowed = api.canUseHandCardNow(item);
     const used = api.castImmediateItem("player", item, false);
     player.hand.push(futureVampire);
@@ -96,6 +99,7 @@ test("お盆macはヴァンパイア5枚以上が校外にいる場合だけ使�
       blocked,
       allowed,
       used,
+      remainingWill: player.will,
       vampireCosts: [vampire.cost, vampireTwo.cost, futureVampire.cost],
       studentCost: student.cost,
       itemInTrash: player.trash.some((card) => card.instanceId === item.instanceId)
@@ -106,6 +110,7 @@ test("お盆macはヴァンパイア5枚以上が校外にいる場合だけ使�
     blocked: { canUse: false, used: false, itemKept: true },
     allowed: true,
     used: true,
+    remainingWill: 0,
     vampireCosts: [0, 8, 7],
     studentCost: 2,
     itemInTrash: true
