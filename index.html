@@ -19891,6 +19891,15 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.28.1",
+        versioning: "semver",
+        date: "2026年10月20日",
+        summary: "オンライン対戦の準備画面とカード使用可否の判定を修正しました。",
+        changes: [
+          { title: "不具合修正", after: "オンライン画面で初期選択の編集中デッキが使用不可の場合、使用できる保存デッキを選択するように修正。保存済みデッキの内容は変更しません。ランダムマッチでも準備できない理由を表示します。対戦サーバーのカード一覧を通常版と一致させ、追加済みカードを誤って使用不可にする不具合を修正しました。" }
+        ]
+      },
+      {
         version: "ver.0.28.0",
         versioning: "semver",
         date: "2026年10月18日",
@@ -24550,6 +24559,23 @@
 
     function onlineLocalDeckValidation() {
       return validateOnlineDeckForRule(state.online.localDeckName, createOnlineDeckCounts());
+    }
+
+    function onlineSelectUsableInitialDeck() {
+      // Do not rewrite decks or replace an explicitly selected saved deck.
+      if (state.online.role || onlineLocalDeckDescriptor().kind !== "current" || onlineLocalDeckValidation().valid) return;
+      const rule = onlineRuleDefinition();
+      for (const format of rule.deck.formats) {
+        const definition = onlineDeckFormatDefinition(format);
+        const collection = state.deckBuilder[definition.collectionKey] || {};
+        for (const [name, deck] of Object.entries(collection)) {
+          const descriptor = normalizeOnlineDeckDescriptor({ format, kind: "saved", name, specialtyId: deck.specialtyId || "" });
+          if (!validateOnlineDeckForRule(descriptor, deck.counts).valid) continue;
+          state.online.localDeckName = onlineDeckDescriptorValue(descriptor);
+          state.online.localReady = false;
+          return;
+        }
+      }
     }
 
     function onlineRemoteDeckValidation() {
@@ -46520,6 +46546,8 @@
       elements.onlineRandomReadyButton.classList.toggle("ready", state.online.localReady);
       elements.onlineRandomStatusText.textContent = randomWaiting
         ? "マッチング中…"
+        : !localValidation.valid
+          ? onlineDeckValidationMessage(localValidation)
         : bothReady
           ? "バトルを開始します"
           : state.online.localReady
@@ -53211,6 +53239,7 @@
       state.preBattleToken += 1;
       resetTutorialState();
       state.screen = "online";
+      onlineSelectUsableInitialDeck();
       if (!state.online.role || (state.online.matchMode === "random" && !state.online.started)) state.online.lobbyView = "menu";
       SIDES.opponent = state.online.role ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       hideCardTooltip();

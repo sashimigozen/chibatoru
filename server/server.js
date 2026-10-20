@@ -49,35 +49,13 @@ const SPECIALTY_DEFINITIONS = Object.freeze({
   big: Object.freeze({ id: "big", name: "バカでかい型" }),
   vampire: Object.freeze({ id: "vampire", name: "ヴァンパイア" })
 });
-const SPECIALTY_CARD_IDS = Object.freeze({
-  common: Object.freeze(["ai_chan", "alpha", "absolute_woman", "beta", "chaos_world", "circle_crab", "classroom", "course_registration_party", "environment_setup", "fridge_thief", "gamma", "general_student", "general_teacher", "go_away", "hair_crab", "happy_experience", "homeless_crab", "hondara", "impossible_pink_fat", "laughing_front_student", "on_demand_business", "oni_shima_ai", "sage_legacy", "smart_me", "summer_teacher", "ta", "three_gestures", "water_2l", "word_increaser"]),
-  gakuyukai_item: Object.freeze(["abyss", "accelerate", "aggro_eater", "back_door", "chameleon", "dark_student_council", "dark_yuta", "deck_without", "delayed_student", "door_front", "door_war", "dropped_cards", "failure_student", "front_door", "full_throttle", "greeting_3000", "ikemasu", "kansai_voice_t", "paired_existence", "panpan", "red_happi", "scared_me", "set_log", "sexual_eye", "student_council", "success_student", "think_so", "trendy_student", "yocchan", "yoyu_announce", "yuta", "yuta_umbrella", "yutakun_yutakun"]),
-  cafeteria: Object.freeze(["apprentice_vampire", "bento", "cafeteria", "cafeteria_lady", "chen_san", "curry_treater", "dry_meal_ticket", "fluid_pasta", "gigi_blood", "gitch", "green_curry", "illegal_cafeteria", "impossible_high_note", "iv_pack", "onigiri_draw", "reversal", "tissue_distributor", "vampire", "vampirization", "wet_meal_ticket", "wood_gitch", "yakiniku", "zombie"]),
-  design: Object.freeze(["acting_out_man", "back_question_student", "bird_a", "demon_a_plus", "design_domain", "diamond_dust", "donguri", "double_diamond", "fairy_t", "lightning_n", "music_detergent", "namen_tenno", "popular_c", "raptor_temple", "ruler", "suzaku", "ux_design_textbook"]),
-  late: Object.freeze(["adjective_student", "cancel_student", "eaten_student", "hurried_student", "lazy_student", "no_late_time", "signal_professor_m", "substitute_attendance", "tokyo_tech_bro"]),
-  expansion: Object.freeze(["aggro_king", "aggro_queen", "brother_capital", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "seat_taking_group", "single_cell", "sock_block", "trpg_member"]),
-  interference: Object.freeze(["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage"]),
-  shogi: Object.freeze(["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"]),
-  big: Object.freeze(["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer"]),
-  vampire: Object.freeze([])
-});
-const NON_DIRECT_DECK_CARD_IDS = new Set([
-  "beta", "gamma", "ta", "dark_student_council", "dry_meal_ticket", "double_diamond",
-  "extra_student", "midge", "organism", "perfect_mutant", "roar", "suspicious_document", "key"
-]);
-const DIRECT_DECK_CARD_IDS = new Set([
-  ...Object.values(SPECIALTY_CARD_IDS).flat()
-].filter((baseId) => !NON_DIRECT_DECK_CARD_IDS.has(baseId)));
-const ACE_CARD_IDS = new Set([
-  "tokyo_tech_bro", "brother_capital", "smoke_flare", "forbidden_book", "philosophy_cheating",
-  "think_so", "illegal_cafeteria", "namen_tenno"
-]);
-const CARD_COPY_LIMITS = Object.freeze({
-  enemy_student: MAX_DECK_CARDS,
-  circle_crab: 2,
-  hair_crab: 1,
-  homeless_crab: 1
-});
+// Generated from the regular client's catalog, never the experimental runtime.
+// The checked-in copy keeps Render's server directory independently deployable.
+const CARD_CATALOG = require("./card-catalog.json");
+const SPECIALTY_CARD_IDS = CARD_CATALOG.specialties;
+const DIRECT_DECK_CARD_IDS = new Set(CARD_CATALOG.direct);
+const ACE_CARD_IDS = new Set(CARD_CATALOG.aces);
+const CARD_COPY_LIMITS = Object.freeze(CARD_CATALOG.copyLimits);
 
 // New room rules should be added here. Validation below reads this data instead
 // of hard-coding rule IDs throughout the room and deck code.
