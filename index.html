@@ -19899,6 +19899,9 @@
         summary: "新カード「大盛りおばあちゃん」と超吸血を追加。「子曰く」「アクティングアウトマン」「アクティングアウトウーマン」の調整と、オンライン対戦・「敵」の強化判定の修正も含みます。",
         changes: [
           { category: "新カード", title: "大盛りおばあちゃん", after: "ヴァンパイア／食堂／戦意3／攻撃力2／体力2\n[超吸血]\n環境が「食堂」であるかぎり、このカードの戦意を-2し、[陽気]を持つ。" },
+          { category: "カード調整", title: "一旦",
+            before: "持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの講義室にいる出席者すべてを破壊する。",
+            after: "持ち物／共通カード／戦意7／攻撃力0／体力0\n自分本体に2ダメージを与える。その後、お互いの講義室にいる出席者すべてを破壊する。" },
           { category: "カード調整", title: "ティッシュ配り",
             before: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが出席したとき、自分の講義室にいるヴァンパイアすべてを全回復する。\n環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力を+2する。",
             after: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。\n環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。" },
@@ -32587,6 +32590,7 @@
     function scoreAiItem(item, options = {}) {
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (item?.baseId === "ittan") {
+        if (!aiCanSurviveSelfDamage("opponent", 2)) return 0;
         const value = side => listBoardRefs(side).map(getBoardCardFromRef)
           .filter(card => !isPadlocked(card) && !isAibenNyoteiEffectImmune(card))
           .reduce((sum,card) => sum + Math.max(0,card.attack || 0)*1.2 + Math.max(0,card.currentHp || 0)*.8,0);
@@ -42643,9 +42647,14 @@
       let resultText = "";
       let itemAlreadyMovedToTrash = false;
       if (item.baseId === "ittan") {
-        const refs = ["player", "opponent"].flatMap(owner => listBoardRefs(owner));
-        const destroyed = destroyBoardRefsToTrash(refs, { reason: item.name });
-        resultText = `お互いの出席者${destroyed.length}人を破壊しました。`;
+        damagePlayer(side, 2, item);
+        if (state.players[side].life > 0) {
+          const refs = ["player", "opponent"].flatMap(owner => listBoardRefs(owner));
+          const destroyed = destroyBoardRefsToTrash(refs, { reason: item.name });
+          resultText = `自分本体に2ダメージを与えた後、お互いの出席者${destroyed.length}人を破壊しました。`;
+        } else {
+          resultText = "自分本体に2ダメージを与え、気力が0になったため全体破壊を行いませんでした。";
+        }
       }
       if (item.baseId === "kashikashi") {
         state.kashikashiActionTurn = state.actionTurn;
@@ -54891,7 +54900,7 @@
         if (kingdomRules[card.baseId]) return formatCardRulesDisplayText(card, kingdomRules[card.baseId]);
       }
       const rules = {
-        ittan: "お互いの講義室にいる出席者すべてを破壊する。",
+        ittan: "自分本体に2ダメージを与える。その後、お互いの講義室にいる出席者すべてを破壊する。",
         kashikashi: "自分のターン終了まで、お互いの継続効果をすべて無効にする。",
         window_snipe_student: "このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、3ダメージを与える。",
         general_student: "効果なし。",
