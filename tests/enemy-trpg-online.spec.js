@@ -26,6 +26,65 @@ test.beforeAll(async () => {
 
 test.afterAll(() => serverProcess?.kill("SIGTERM"));
 
+test("真の敵による出席直後の強化と解除をホスト・ゲスト双方へ同期する", async ({ browser }) => {
+  const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+  const [host, guest] = await Promise.all(contexts.map(context => context.newPage()));
+  try {
+    for (const page of [host, guest]) {
+      await page.goto(gameFileUrl.href);
+      await page.locator("#homeNavBattleButton").click();
+      await page.locator("#onlinePrivateMatchButton").click();
+    }
+    await host.locator("#onlineCreateRoomButton").click();
+    await expect.poll(() => host.evaluate(() => state.online.lastSeenAt)).toBeGreaterThan(0);
+    await guest.locator("#onlineRoomInput").fill(await host.evaluate(() => state.online.roomCode));
+    await guest.locator("#onlineJoinRoomButton").click();
+    for (const page of [host, guest]) {
+      await expect.poll(() => page.evaluate(() => state.online.connected)).toBe(true);
+      await page.locator("#onlineReadyButton").click();
+    }
+    await expect(host.locator("#onlineStartButton")).toBeEnabled();
+    await host.locator("#onlineStartButton").click();
+    for (const page of [host, guest]) await expect.poll(() => page.evaluate(() => state.online.started)).toBe(true);
+
+    for (const owner of ["player", "opponent"]) {
+      const created = await host.evaluate(owner => {
+        startCardTest("enemy_student");
+        state.training.skipAnimations = true;
+        state.currentSide = owner;
+        state.environment = null;
+        for (const side of ["player", "opponent"]) {
+          state.players[side].board = { teacher: null, seats: Array(9).fill(null) };
+          state.players[side].hand = []; state.players[side].deck = [];
+        }
+        state.players[oppositeSide(owner)].board.teacher = makeBoardCard(createCardFromBase("trpg_member", oppositeSide(owner)));
+        const source = makeBoardCard(createCardFromBase("true_enemy", owner));
+        state.players[owner].board.seats[0] = source;
+        state.players[owner].deck = [createCardFromBase("enemy_student", owner)];
+        markCardAttackUsed(source);
+        const enemy = state.players[owner].board.seats.find(card => card?.baseId === "enemy_student");
+        const immediateAttack = enemy?.attack;
+        render();
+        return { id: enemy?.instanceId, immediateAttack };
+      }, owner);
+      expect(created.immediateAttack).toBe(6);
+      for (const page of [host, guest]) {
+        await expect(page.locator(`[data-card-id="${created.id}"].board-card .field-stat.attack`)).toHaveText("6");
+      }
+      await host.evaluate(owner => {
+        state.players[oppositeSide(owner)].board.teacher = null;
+        applyBoardAuras(); render();
+      }, owner);
+      for (const page of [host, guest]) {
+        await expect(page.locator(`[data-card-id="${created.id}"].board-card .field-stat.attack`)).toHaveText("1");
+      }
+    }
+    await host.screenshot({ path: test.info().outputPath("enemy-aura-online.png") });
+  } finally {
+    await Promise.all(contexts.map(context => context.close()));
+  }
+});
+
 test("敵に塩でホスト・ゲスト両方の敵を即時強化し、表示・本体ダメージ・条件解除を同期する", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
