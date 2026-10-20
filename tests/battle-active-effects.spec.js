@@ -186,11 +186,13 @@ test("複数能力のカードから自身だけの能力を除き、条件を�
     const kingdom = boardActiveEffectLines('player');
     return { before, cafeteria, kingdom };
   });
-  expect(result.before).toHaveLength(1);
+  expect(result.before).toHaveLength(2);
   expect(result.before[0]).toContain('相手の出席者1人');
   expect(result.before[0]).not.toContain('装備できない');
   expect(result.cafeteria).toHaveLength(2);
-  expect(result.cafeteria.join('\n')).toContain('ヴァンパイアすべての体力を+2');
+  expect(result.before.join('\n')).toContain('ヴァンパイアすべての体力を+1');
+  expect(result.before.join('\n')).not.toContain('さらに+1');
+  expect(result.cafeteria.join('\n')).toContain('ヴァンパイアすべての体力をさらに+1');
   expect(result.cafeteria.join('\n')).not.toContain('戦意を-2');
   expect(result.kingdom.some(line => line.startsWith('アグロキング：') && line.includes('出席者すべて'))).toBe(true);
 });

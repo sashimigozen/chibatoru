@@ -19899,6 +19899,9 @@
         summary: "新カード「大盛りおばあちゃん」と超吸血を追加。「子曰く」「アクティングアウトマン」「アクティングアウトウーマン」の調整と、オンライン対戦・「敵」の強化判定の修正も含みます。",
         changes: [
           { category: "新カード", title: "大盛りおばあちゃん", after: "ヴァンパイア／食堂／戦意3／攻撃力2／体力2\n[超吸血]\n環境が「食堂」であるかぎり、このカードの戦意を-2し、[陽気]を持つ。" },
+          { category: "カード調整", title: "ティッシュ配り",
+            before: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが出席したとき、自分の講義室にいるヴァンパイアすべてを全回復する。\n環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力を+2する。",
+            after: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。\n環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。" },
           { category: "カード調整", title: "お盆mac",
             before: "持ち物／食堂／戦意4／攻撃力0／体力0\n自分の校外エリアにヴァンパイアが5枚以上ある場合にのみ使用できる。\n自分の手札にあるヴァンパイアすべての戦意を-2する。",
             after: "持ち物／食堂／戦意3／攻撃力0／体力0\n自分の校外エリアにヴァンパイアが5枚以上ある場合にのみ使用できる。\n自分の手札にあるヴァンパイアすべての戦意を-2する。" },
@@ -30775,11 +30778,11 @@
         if (isCafeteriaEnvironmentActive()) return 950;
         if (cafeteriaPlan.cafeteria) return -900;
       }
-      if (card.baseId === "tissue_distributor" && isCafeteriaEnvironmentActive()) {
+      if (card.baseId === "tissue_distributor") {
         const vampireCount = listBoardRefs(side)
           .map((ref) => getBoardCardFromRef(ref))
           .filter((fieldCard) => fieldCard?.type === "vampire").length;
-        if (vampireCount > 0) return 800 + vampireCount * 10;
+        if (vampireCount > 0) return 800 + vampireCount * (isCafeteriaEnvironmentActive() ? 10 : 5);
       }
       if (card.type === "environment") {
         const environmentScore = scoreAiEnvironment(card, side);
@@ -40245,17 +40248,6 @@
           addLog(`${card.name}の効果：相手の席マスの${target.name}をランダムに指名し、破壊しました。`);
         }
       }
-      if (card.baseId === "tissue_distributor") {
-        let healed = 0;
-        listBoardRefs(side).forEach((ref) => {
-          const vampireCard = getBoardCardFromRef(ref);
-          if (vampireCard?.type !== "vampire") return;
-          const before = vampireCard.currentHp;
-          healCard(vampireCard, vampireCard.maxHp);
-          healed += vampireCard.currentHp - before;
-        });
-        addLog(`${card.name}の効果：自分のヴァンパイアを合計${healed}回復しました。`);
-      }
       if (card.baseId === "impossible_high_note") {
         const refs = effectTargetEntries(side, opponent).map((entry) => entry.ref);
         let targets = refs;
@@ -44270,14 +44262,13 @@
       return adjacentIndexes(ref.index).some((index) => isBakadekaiCard(state.players[card.owner].board.seats[index]));
     }
 
-    function hasFriendlyCafeteriaTissue(owner) {
-      if (ongoingEffectsSuppressed()) return false;
-      return isCafeteriaEnvironmentActive()
-        && Boolean(owner)
-        && listBoardRefs(owner).some((ref) => {
-          const card = getBoardCardFromRef(ref);
-          return card?.baseId === "tissue_distributor" && canUsePrintedCardEffects(card);
-        });
+    function friendlyTissueHpBonus(owner) {
+      if (!owner || ongoingEffectsSuppressed()) return 0;
+      const count = listBoardRefs(owner).filter((ref) => {
+        const card = getBoardCardFromRef(ref);
+        return card?.baseId === "tissue_distributor" && card.currentHp > 0 && canUsePrintedCardEffects(card);
+      }).length;
+      return count * (isCafeteriaEnvironmentActive() ? 2 : 1);
     }
 
     function isAeNameCard(card) {
@@ -44286,7 +44277,9 @@
 
     function cafeteriaVampireStatBonus(card) {
       const bonus = { attack: 0, hp: 0 };
-      if (!card || card.type !== "vampire" || !isCafeteriaEnvironmentActive()) return bonus;
+      if (!card || card.type !== "vampire") return bonus;
+      bonus.hp += friendlyTissueHpBonus(card.owner);
+      if (!isCafeteriaEnvironmentActive()) return bonus;
       // 「食堂」から受ける全体効果は残すが、カード自身の継続効果は南京錠中に失う。
       if (canUsePrintedCardEffects(card) && card.baseId === "cafeteria_lady") {
         bonus.attack += 1;
@@ -44296,7 +44289,6 @@
         bonus.attack += 1;
         bonus.hp += 1;
       }
-      if (hasFriendlyCafeteriaTissue(card.owner)) bonus.hp += 2;
       return bonus;
     }
 
@@ -49616,7 +49608,7 @@
       popular_c: "このカードが教卓マスにいるかぎり",
       ninety_three_teacher: "このカードが教卓マスにいるかぎり",
       president: "このカードが教卓マスにいるかぎり",
-      tissue_distributor: "環境が「食堂」であるかぎり",
+      tissue_distributor: "このカードが自分の講義室にいるかぎり",
       sick_yuta: "自分のターン終了時",
       rear_queen: "自分のターン終了時",
       pad_present_creator: "このカードがある限り",
@@ -49636,7 +49628,6 @@
         // 通常のキングは自身だけの強化。王国成立時のみ全体強化になる。
         if (card.baseId === "aggro_king" && (!hasAggroKingdomTrio(side) || ref.zone !== "seat" || ref.index !== 6)) return [];
         if (card.baseId === "aggro_queen" && (ref.zone !== "seat" || ref.index !== 5)) return [];
-        if (card.baseId === "tissue_distributor" && !isCafeteriaEnvironmentActive()) return [];
         if (card.baseId === "acting_out_woman" && !actingOutWomanEffectActive(card)) return [];
         const start = BOARD_ONGOING_RULE_STARTS[card.baseId];
         if (!start) return [];
@@ -49646,7 +49637,10 @@
         if (start.includes("教卓マスにいるかぎり") && ref.zone !== "teacher") return [];
         let detail = text.slice(index).trim();
         // 複数能力のうち、自身にしか作用しない部分は表示から除外する。
-        if (card.baseId === "tissue_distributor") detail = detail.replace("このカードの戦意を-2し、", "");
+        if (card.baseId === "tissue_distributor") {
+          detail = detail.replace("このカードの戦意を-2し、", "");
+          if (!isCafeteriaEnvironmentActive()) detail = detail.split("\n").filter(line => !line.startsWith("環境が「食堂」")).join("\n");
+        }
         if (card.baseId === "sick_yuta") detail = detail.replace(/このカードは「病」を装備できない。/, "").trim();
         return [`${card.name}：${detail}`];
       });
@@ -54447,14 +54441,10 @@
         add("アイベン／にょていの特殊出席", bonus.attack, 0, bonus.defense);
         return entries;
       }
-      const cafeteriaBonus = cafeteriaVampireStatBonus(card);
+      if (card.type === "vampire") add("ティッシュ配り", 0, friendlyTissueHpBonus(card.owner));
       if (isCafeteriaEnvironmentActive()) {
-        const ownCafeteriaHp = canUsePrintedCardEffects(card)
-          ? (card.baseId === "cafeteria_lady" ? 2 : card.baseId === "curry_treater" ? 1 : 0)
-          : 0;
         if (canUsePrintedCardEffects(card) && card.baseId === "cafeteria_lady") add("食堂", 1, 2);
         if (canUsePrintedCardEffects(card) && card.baseId === "curry_treater") add("食堂", 1, 1);
-        if (cafeteriaBonus.hp > ownCafeteriaHp) add("ティッシュ配り", 0, cafeteriaBonus.hp - ownCafeteriaHp);
       }
       const ref = listBoardRefs(card.owner).find((entry) => getBoardCardFromRef(entry)?.instanceId === card.instanceId);
       if (!ref) return entries;
@@ -54992,7 +54982,7 @@
         hearty_grandma: "超吸血を持つ。環境が「食堂」であるかぎり、このカードの戦意を-2し、陽気を持つ。",
         curry_treater: "このカードが出席したとき、自分のデッキから「グリーンカレー」1枚を手札に加える。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
         chen_san: "このカードを手札から出席させたとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
-        tissue_distributor: "このカードが出席したとき、自分の場のヴァンパイアすべてを全回復する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の場のヴァンパイアすべての体力を+2する。",
+        tissue_distributor: "このカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。",
         apprentice_vampire: "このカードが席マスに出席したとき、隣の空き席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-3する。",
         fifty_ninth_paia: "このカードを手札から席マスに出席させたとき、右隣の空いている席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
         vampire: "陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。",
