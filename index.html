@@ -19894,9 +19894,12 @@
         version: "ver.0.28.1",
         versioning: "semver",
         date: "2026年10月20日",
-        summary: "オンライン対戦の準備画面とカード使用可否の判定を修正しました。",
+        summary: "オンライン対戦の準備画面とカード使用可否の判定を修正し、「子曰く」で手札に加えられる枚数を3枚までに変更しました。",
         changes: [
-          { title: "不具合修正", after: "オンライン画面で初期選択の編集中デッキが使用不可の場合、使用できる保存デッキを選択するように修正。保存済みデッキの内容は変更しません。ランダムマッチでも準備できない理由を表示します。対戦サーバーのカード一覧を通常版と一致させ、追加済みカードを誤って使用不可にする不具合を修正しました。" }
+          { title: "不具合修正", after: "オンライン画面で初期選択の編集中デッキが使用不可の場合、使用できる保存デッキを選択するように修正。保存済みデッキの内容は変更しません。ランダムマッチでも準備できない理由を表示します。対戦サーバーのカード一覧を通常版と一致させ、追加済みカードを誤って使用不可にする不具合を修正しました。" },
+          { category: "カード調整", title: "子曰く",
+            before: "持ち物／共通カード／戦意3／攻撃力0／体力0\n学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。\n残りをデッキに戻してシャッフルする。",
+            after: "持ち物／共通カード／戦意3／攻撃力0／体力0\n学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを3枚まで手札に加える。\n残りをデッキに戻してシャッフルする。" }
         ]
       },
       {
@@ -36101,9 +36104,9 @@
           return;
         }
         openCardChoice({ mode: "confucius_pick", itemId, title: item.name,
-          message: `「${declaredType}」を宣言しました。公開した3枚から同じタイプを2枚まで選んでください。`,
+          message: `「${declaredType}」を宣言しました。公開した3枚から同じタイプを3枚まで選んでください。`,
           cards: revealed, selectableIds: revealed.filter((card) => card.type === declaredType).map((card) => card.instanceId),
-          min: 0, max: 2, confirmLabel: "手札に加える", context: { declaredType } });
+          min: 0, max: 3, confirmLabel: "手札に加える", context: { declaredType } });
         return;
       }
       if (mode === "confucius_pick") {
@@ -42451,7 +42454,7 @@
         const types = ["student", "teacher", "vampire", "item", "environment"];
         const declared = types.sort((a, b) => revealed.filter((card) => card.type === b).length
           - revealed.filter((card) => card.type === a).length)[0];
-        const ids = revealed.filter((card) => card.type === declared).slice(0, 2).map((card) => card.instanceId);
+        const ids = revealed.filter((card) => card.type === declared).slice(0, 3).map((card) => card.instanceId);
         return resolveConfuciusSays(side, item, declared, ids, renderAfter);
       }
       if (item.baseId === "annoying_na" && state.players[side].turnActionTaken) {
@@ -43226,7 +43229,7 @@
         || !["student", "teacher", "vampire", "item", "environment"].includes(declaredType)) return false;
       const revealed = state.players[side].deck.slice(0, 3);
       const legalIds = new Set(revealed.filter((card) => card.type === declaredType).map((card) => card.instanceId));
-      if (selectedIds.length > 2 || selectedIds.some((id) => !legalIds.has(id))) return false;
+      if (selectedIds.length > 3 || selectedIds.some((id) => !legalIds.has(id))) return false;
       if (!payForItem(side, item)) return false;
       showCardPlayAnimation(item, "trash");
       state.players[side].deck.splice(0, revealed.length);
@@ -54956,7 +54959,7 @@
         acting_out_woman: "このカードは1行目にのみ出席できる。このカードが自分の講義室にいて、ほかに自分の「アクティングアウト」とつく出席者がいるなら、自分本体と自分の「アクティングアウト」とつく出席者すべてが相手の学生から受けるダメージを-2する。この効果は重複しない。",
         hat_man: "陽気を持つ。このカードを出席させる席マスと同じ列に相手の学生が2人以上いるなら、このカードの戦意を-3する。",
         academic_move: "このカードが環境マスにあるかぎり、各ターン、次に講義室に出席した出席者1人だけは超陽気を持つ。その出席者は、自分のターン終了時、校外エリアへ送られる。",
-        confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。残りをデッキに戻してシャッフルする。",
+        confucius_says: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。自分のデッキの上から3枚を公開し、宣言したタイプのカードを3枚まで手札に加える。残りをデッキに戻してシャッフルする。",
         gesture_student: "このカードを手札から出席させたとき、「３つジェスチャー」2枚を手札に生成する。",
         fusion_uma: "[融合]：「マイボ」と融合して「ウマイボ」、「骨」と融合して「ウマの骨」、「どこ」と融合して「どこのウマ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",
         fusion_maibo: "[融合]：「ウマ」と融合して「ウマイボ」、「骨」と融合して「マイボの骨」、「どこ」と融合して「どこのマイボ」になる。\n[融合]：「ウマ」「マイボ」「骨」「どこ」を融合し、「どこのウマの骨のマイボだよの学生」になる。",

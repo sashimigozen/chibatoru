@@ -25,6 +25,10 @@ test.beforeEach(async ({ page }) => {
       player.attendancesThisTurn = 0;
     }
   });
+  if (test.info().title.includes("子曰く")) {
+    await page.waitForFunction(() => !battleNewActionBlocked());
+    await page.evaluate(() => { state.training.skipAnimations = true; });
+  }
 });
 
 test("37枚の定義とカード文が揃い、席制約と戦意軽減が働く", async ({ page }) => {
@@ -197,7 +201,7 @@ test("子曰くは戦意3を消費し、宣言タイプだけを手札へ加え�
       trash: api.state.players.player.trash.map((card) => card.baseId) };
   });
   expect(result).toEqual({ used: true, cost: 3, will: 17,
-    text: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを2枚まで手札に加える。\n残りをデッキに戻してシャッフルする。",
+    text: "学生、教師、ヴァンパイア、持ち物、環境から1つを宣言する。\n自分のデッキの上から3枚を公開し、宣言したタイプのカードを3枚まで手札に加える。\n残りをデッキに戻してシャッフルする。",
     hand: ["general_student", "hat_man"], deck: ["ruler"], trash: ["confucius_says"] });
 });
 
@@ -224,6 +228,39 @@ for (const side of ["player", "opponent"]) {
       used: true, will: 0, hand: ["general_student"], trash: ["confucius_says"] });
   });
 }
+
+for (const side of ["player", "opponent"]) {
+  test(`子曰く（${side}側）は一致する3枚を加えられ、4枚の要求は状態を変えず拒否する`, async ({ page }) => {
+    const result = await page.evaluate(owner => {
+      const api = window.__chibattle, player = api.state.players[owner];
+      const cards = ["general_student", "hat_man", "diligent_student", "general_student"]
+        .map(id => api.createCardFromBase(id, owner));
+      const item = api.createCardFromBase("confucius_says", owner);
+      player.hand = [item]; player.deck = cards.slice();
+      const blocked = api.resolveConfuciusSays(owner, item, "student", cards.map(c => c.instanceId), false);
+      const untouched = player.will === 20 && player.hand.length === 1 && player.deck.length === 4 && !player.trash.length;
+      const used = api.resolveConfuciusSays(owner, item, "student", cards.slice(0, 3).map(c => c.instanceId), false);
+      return { blocked, untouched, used, will: player.will,
+        hand: player.hand.map(c => c.instanceId), expected: cards.slice(0, 3).map(c => c.instanceId),
+        deck: player.deck.map(c => c.instanceId), remaining: cards[3].instanceId, trash: player.trash.map(c => c.baseId) };
+    }, side);
+    expect(result).toMatchObject({ blocked: false, untouched: true, used: true, will: 17, trash: ["confucius_says"] });
+    expect(result.hand).toEqual(result.expected);
+    expect(result.deck).toEqual([result.remaining]);
+  });
+}
+
+test("子曰くのAI自動選択も一致する3枚を手札へ加える", async ({ page }) => {
+  const result = await page.evaluate(() => {
+    const api = window.__chibattle, player = api.state.players.opponent;
+    const item = api.createCardFromBase("confucius_says", "opponent");
+    player.hand = [item];
+    player.deck = ["general_student", "hat_man", "diligent_student"].map(id => api.createCardFromBase(id, "opponent"));
+    const used = api.castImmediateItem("opponent", item, false);
+    return { used, hand: player.hand.map(c => c.baseId), deck: player.deck.length, will: player.will };
+  });
+  expect(result).toEqual({ used: true, hand: ["general_student", "hat_man", "diligent_student"], deck: 0, will: 17 });
+});
 
 test("スプーンの魔術師と復活の敵は選択したカードだけを処理する", async ({ page }) => {
   const result = await page.evaluate(() => {
@@ -445,7 +482,8 @@ test("子曰くの二段階UIでタイプを宣言してカードを選べる", 
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const student = api.createCardFromBase("hat_man", "player");
-    api.state.players.player.deck = [student, api.createCardFromBase("ruler", "player")];
+    const students = [student, api.createCardFromBase("general_student", "player"), api.createCardFromBase("diligent_student", "player")];
+    api.state.players.player.deck = students;
     const item = api.createCardFromBase("confucius_says", "player");
     api.state.players.player.hand = [item];
     api.beginItemUse(item);
@@ -454,14 +492,15 @@ test("子曰くの二段階UIでタイプを宣言してカードを選べる", 
     api.confirmCardChoiceSelection();
     const secondMode = api.state.pendingCardChoice?.mode;
     const selectableIds = api.state.pendingCardChoice?.selectableIds;
-    api.state.pendingCardChoice.selectedIds = [student.instanceId];
+    const max = api.state.pendingCardChoice?.max;
+    api.state.pendingCardChoice.selectedIds = students.map(c => c.instanceId);
     api.confirmCardChoiceSelection();
-    return { firstMode, secondMode, selectableIds,
-      added: api.state.players.player.hand.some((card) => card.instanceId === student.instanceId) };
+    return { firstMode, secondMode, selectableIds, max,
+      added: students.every(student => api.state.players.player.hand.some((card) => card.instanceId === student.instanceId)) };
   });
   expect(result).toEqual({ firstMode: "confucius_type", secondMode: "confucius_pick",
-    selectableIds: expect.any(Array), added: true });
-  expect(result.selectableIds).toHaveLength(1);
+    selectableIds: expect.any(Array), max: 3, added: true });
+  expect(result.selectableIds).toHaveLength(3);
 });
 
 test("形容詞学生vs冷笑学生は出席前の選択UIから弱体化を実行する", async ({ page }) => {
