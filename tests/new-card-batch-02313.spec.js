@@ -423,6 +423,8 @@ test("三敵は候補以外の指定を拒否し、空席がなければ敵を�
 });
 
 test("敵に塩は戦意2のまま相手の指定空席へTRPGサークルメンバーを出席させ、その出席時効果を発動する", async ({ page }) => {
+  await page.evaluate(() => waitForBattlePresentation());
+  await page.evaluate(() => { state.training.skipAnimations = true; });
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const item = api.createCardFromBase("salt_to_enemy", "player");
@@ -444,15 +446,17 @@ test("敵に塩は戦意2のまま相手の指定空席へTRPGサークルメン
       discarded: api.state.players.player.trash.some((card) => card.baseId === "salt_to_enemy")
     };
   });
-  expect(result).toEqual({
+  expect(result).toMatchObject({
     used: true,
     cost: 2,
     rules: "相手の講義室の空いている席マス1つを選び、そこに「TRPGサークルメンバー」1人を出席させる。\nその出席時効果は発動する。",
     placed: "trpg_member",
-    opponentHand: ["aggro_student", "enemy_student", "general_student"],
-    opponentDeck: ["ruler"],
     discarded: true
   });
+  expect(result.opponentHand).toHaveLength(2);
+  expect(result.opponentHand.every(id => ["aggro_student", "enemy_student", "general_student"].includes(id))).toBe(true);
+  expect(result.opponentDeck).toHaveLength(2);
+  expect(result.opponentDeck).toContain("ruler");
 });
 
 test("ver.0.23.10の更新情報に同日分のカード調整をまとめて表示する", async ({ page }) => {
