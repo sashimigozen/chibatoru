@@ -119,7 +119,7 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.happy_blue_bird.opponentBoard).toEqual([
     expect.objectContaining({ baseId: "general_student", hp: 1 })
   ]);
-  expect(result.suit_student.effectiveCost).toBe(6);
+  expect(result.suit_student.effectiveCost).toBe(3);
   expect(result.suit_student.rulesText).toContain("出席数：2人");
   expect(result.suit_student.hand.filter((baseId) => baseId === "suit_student")).toHaveLength(2);
   expect(result.suit_student.playerBoard.some((card) => card.baseId === "suit_student")).toBe(true);
@@ -1073,7 +1073,7 @@ test("スーツを着た学生は出席元と再出席を数えて戦意が下�
     };
   });
 
-  expect(result.costs).toEqual([8, 7, 6, 5, 4]);
+  expect(result.costs).toEqual([5, 4, 3, 2, 1]);
   expect(result.count).toBe(4);
   expect(result.dynamicText).toContain("\n出席数：4人");
   expect(result.minimumCost).toBe(0);

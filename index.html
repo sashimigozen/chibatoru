@@ -18781,7 +18781,7 @@
       "dont_worry", "gamma", "yamanashi_minimum_wage", "illness", "laser_beam", "big_wall", "philosophy_cheating", "forbidden_book", "earphones"
     ]);
     const AI_DRAW_OR_SEARCH_CARD_IDS = new Set([
-      "alpha", "hondara", "onigiri_draw", "fire_touch", "deck_without",
+      "alpha", "hondara", "onigiri_draw", "fire_touch", "deck_without", "suit_student",
       "environment_setup", "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "sexual_eye", "yoyu_announce", "three_gestures", "music_detergent",
       "sage_legacy", "trpg_member", "lightning_n", "curry_treater", "aggro_army", "pure_destruction", "destructive_lie", "scary_question",
@@ -19481,7 +19481,7 @@
       window_snipe_student: { name: "窓からスナイプ学生", type: "student", cost: 3, attack: 2, hp: 1, allowedZones: ["seat"], category: "common" },
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
       strong_student: { name: "強靭な学生", type: "student", cost: 6, attack: 7, hp: 7, allowedZones: ["seat", "teacher"] },
-      suit_student: { name: "スーツを着た学生", type: "student", cost: 8, attack: 1, hp: 1, allowedZones: ["seat"] },
+      suit_student: { name: "スーツを着た学生", type: "student", cost: 5, attack: 1, hp: 1, allowedZones: ["seat"] },
       ta_squad: { name: "TA隊長", type: "student", cost: 4, attack: 2, hp: 1, rowOnly: 2, allowedZones: ["seat"] },
       happy_blue_bird: { name: "幸せの青い鳥", type: "student", cost: 2, attack: 5, hp: 5, allowedZones: ["seat", "teacher"] },
       absolute_woman: { name: "「絶対」女", type: "student", cost: 7, attack: 1, hp: 3, attackLimit: 3, keywords: ["陽気"], allowedZones: ["seat"] },
@@ -19896,8 +19896,11 @@
         version: "ver.0.29.1",
         versioning: "semver",
         date: "2026年10月21日",
-        summary: "複数マスを使う出席者が別のカードに変化した際、カードや占有マスが重複して残る不具合を修正しました。",
+        summary: "「スーツを着た学生」を調整し、複数マスを使う出席者の変化後にカードや占有マスが重複して残る不具合を修正しました。",
         changes: [
+          { category: "カード調整", title: "スーツを着た学生",
+            before: "学生／展開・敵増殖／戦意8／攻撃力1／体力1\nこのカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。\nこのカードは教師からダメージを受けない。",
+            after: "学生／展開・敵増殖／戦意5／攻撃力1／体力1\nこのカードを手札から出席させたとき、自分のデッキからカードを1枚引く。\nこのカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。\nこのカードは教師からダメージを受けない。" },
           { category: "不具合修正", title: "変化後の出席者と占有マス", after: "ゾンビや「スーツを着た学生」へ変化した際、変化前の占有マスを解放し、元の基準マスに1枚だけ配置します。変化後のカード本来の大きさで表示し、空いたマスを再び使用できるよう修正しました。カード本文・能力値は変更していません。" }
         ]
       },
@@ -40110,6 +40113,10 @@
         const pulled = pullRandomCardsFromDeck(side, (deckCard) => deckCard.type === "student", 3);
         addLog(`${card.name}の効果：デッキから学生カードを${pulled}枚、ランダムに手札へ加えました。`);
       }
+      if (card.baseId === "suit_student") {
+        const drawn = drawUpTo(side, 1);
+        addLog(`${card.name}の出席時効果：自分のデッキからカードを${drawn}枚引きました。`);
+      }
       if (card.baseId === "college_student_vibe" && zone === "seat") {
         const rightIndex = index + 1;
         if (seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen(side, "seat", rightIndex)) {
@@ -54928,7 +54935,7 @@
         scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
         ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。",
         happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
-        suit_student: "このカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。",
+        suit_student: "このカードを手札から出席させたとき、自分のデッキからカードを1枚引く。このカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。",
         single_cell: "自分の講義室に「単細胞生物」が2人いる場合、先に出席した「単細胞生物」を「ミジンコ」に特殊進化させ、もう1人を破壊する。",
         midge: "進化：「単細胞生物」。進化したとき、相手の出席者1人をランダムに指名し、1ダメージを与える。自分の講義室に「ミジンコ」が2人いる場合、先に出席した「ミジンコ」を「生物」に特殊進化させ、もう1人を破壊する。",
         organism: "進化：「ミジンコ」。陽気を持つ。進化したとき、相手の出席者すべてに2ダメージを与える。自分の講義室に「生物」「ミジンコ」「単細胞生物」が1人ずついる場合、「生物」を「完全変異体」に特殊進化させ、「ミジンコ」と「単細胞生物」を破壊する。",
