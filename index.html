@@ -3914,6 +3914,15 @@
       min-width: min(520px, calc(100vw - 48px));
     }
 
+    .result-save-log {
+      position: fixed;
+      top: max(18px, env(safe-area-inset-top));
+      right: max(18px, env(safe-area-inset-right));
+      z-index: 121;
+      font-size: 14px;
+      pointer-events: auto;
+    }
+
     .result-actions .button {
       min-height: 58px;
       border-width: 2px;
@@ -18492,6 +18501,7 @@
       </section>
     </div>
     <div class="result-overlay hidden" id="resultOverlay" aria-live="assertive"></div>
+    <button class="button secondary result-save-log hidden" id="resultSaveLogButton" type="button">ログを保存</button>
     <div class="ultimate-yuta-overlay hidden" id="ultimateYutaOverlay" aria-live="assertive">
       <div class="ultimate-yuta-phrase-layout">
         <span class="ultimate-yuta-footer">思ってまう</span>
@@ -18734,6 +18744,7 @@
   </div>
 
   <script src="websocket-client.js"></script>
+  <script src="online-replay.js"></script>
   <script src="ai-battle-decks.js?v=0.26.0"></script>
   <script>
     const SIDES = { player: "あなた", opponent: "相手AI" };
@@ -19893,11 +19904,13 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
-        version: "ver.0.29.1",
+        version: "ver.0.30.0",
         versioning: "semver",
         date: "2026年10月21日",
-        summary: "「スーツを着た学生」を調整し、複数マスを使う出席者の変化後にカードや占有マスが重複して残る不具合を修正しました。",
+        summary: "オンライン対戦の詳細記録と分析用保存を追加。「スーツを着た学生」などの調整、不具合修正も含みます。",
         changes: [
+          { category: "システム", title: "オンライン対戦の詳細記録", after: "表示ログはそのままに、人間同士のオンライン対戦の状態・操作・ランダム結果を管理者専用ログへ記録します。正常終了した通常ルールの対戦だけをAI改善の分析候補に抽出し、CPU戦・切断などのある試合は含めません。AIの自動更新は行いません。" },
+          { category: "システム", title: "オンラインログの保存", after: "試合終了画面の右上に「ログを保存」を追加。ホストは詳細ログ、ゲストは自分視点のログを端末へ保存できます。Cloudflare D1の接続設定後は、サーバーから非公開のクラウド保存先へ自動保存します。未設定・通信失敗時にも試合は続行でき、保存状態は管理者画面で確認できます。" },
           { category: "カード調整", title: "TRPGサークルメンバー",
             before: "学生／展開・敵増殖／戦意3／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分のデッキから学生カード3枚をランダムに手札へ加える。",
             after: "学生／展開・敵増殖／戦意3／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分のデッキから学生カード2枚をランダムに手札へ加える。" },
@@ -22609,6 +22622,7 @@
       battleLogCloseButton: document.getElementById("battleLogCloseButton"),
       turnOverlay: document.getElementById("turnOverlay"),
       resultOverlay: document.getElementById("resultOverlay"),
+      resultSaveLogButton: document.getElementById("resultSaveLogButton"),
       ultimateYutaOverlay: document.getElementById("ultimateYutaOverlay"),
       tutorialLayer: document.getElementById("tutorialLayer"),
       tutorialSpotlight: document.getElementById("tutorialSpotlight"),
@@ -22837,7 +22851,7 @@
     }
 
     function analyticsSideDeckName(side) {
-      if (isOnlineBattle()) {
+      if (isOnlineBattle() || onlineReplayEnabled()) {
         if (side === "player") return deckNameForOnline(state.online.localDeckName);
         return deckNameForOnline(state.online.remoteDeckName || "__current");
       }
@@ -22913,6 +22927,40 @@
       };
     }
 
+    let onlineReplayRecorder = null;
+    let onlineReplaySentSeq = 0;
+
+    function onlineReplayEnabled() {
+      return isOnlineHost() && state.online.connected && (state.online.started || state.online.startPending)
+        && !state.aiBattle.active && !state.training.active
+        && !state.dungeon.active && !state.testMode && !isTutorialActive();
+    }
+
+    function onlineReplayCheckpoint(cause) {
+      if (!onlineReplayEnabled() || !onlineReplayRecorder) return;
+      analyticsSafe(() => {
+        const snapshot = {};
+        // Private recorder only. Never attach this to the shared state/snapshots.
+        const excluded = new Set(["analytics", "online", "deckBuilder", "profile", "profileEditor", "profileViewer", "training", "tutorial", "dungeon", "testSetup", "logs"]);
+        for (const key of Object.keys(state)) if (!excluded.has(key)) snapshot[key] = state[key];
+        snapshot.nextCardInstanceId = nextCardInstanceId;
+        onlineReplayRecorder.checkpoint(snapshot, cause);
+      });
+    }
+
+    function battleRandom() {
+      const value = Math.random();
+      if (onlineReplayEnabled() && onlineReplayRecorder) onlineReplayRecorder.record("random", { value, actionTurn: state.actionTurn });
+      return value;
+    }
+
+    for (const type of ["error", "unhandledrejection"]) window.addEventListener(type, () => {
+      if (onlineReplayEnabled() && onlineReplayRecorder) {
+        onlineReplayRecorder.record("incident", { type, actionTurn: state.actionTurn });
+        onlineSubmitAnalyticsLog("client_error");
+      }
+    });
+
     function analyticsPushEvent(eventType, payload = {}) {
       return analyticsSafe(() => {
         const analytics = analyticsState();
@@ -22927,6 +22975,10 @@
           ...payload
         };
         analytics.events.push(event);
+        if (onlineReplayEnabled() && onlineReplayRecorder) {
+          onlineReplayRecorder.record("event", event);
+          onlineReplayCheckpoint(eventType);
+        }
         return event;
       });
     }
@@ -22934,13 +22986,18 @@
     function analyticsStartGame() {
       analyticsSafe(() => {
         state.analytics = createAnalyticsState();
+        onlineReplayRecorder = onlineReplayEnabled() ? window.ChibattleOnlineReplay.createRecorder() : null;
+        onlineReplaySentSeq = 0;
         const playerDeckList = analyticsCopyDeckList(state.players.player.originalDeckCounts);
         const opponentDeckList = analyticsCopyDeckList(state.players.opponent.originalDeckCounts);
         state.analytics.game = {
           gameId: createAnalyticsGameId(),
           version: GAME_DATA_VERSION,
+          clientRelease: UPDATE_HISTORY[0].version,
+          ruleId: state.battleRuleId,
+          participants: onlineReplayEnabled() ? { player: "human", opponent: "human" } : null,
           schemaVersion: ANALYTICS_SCHEMA_VERSION,
-          mode: isOnlineBattle() ? "online" : state.dungeon.active ? "dungeon" : state.testMode ? "test" : isTutorialActive() ? "tutorial" : "solo",
+          mode: onlineReplayEnabled() ? "online" : state.dungeon.active ? "dungeon" : state.testMode ? "test" : isTutorialActive() ? "tutorial" : "solo",
           onlineRole: state.online.role || null,
           startedAt: analyticsNow(),
           firstSide: state.firstSide,
@@ -23377,6 +23434,45 @@
       downloadTextFile(`${gameId}${publicView ? "-public" : "-full"}.jsonl`, `${jsonl}\n`, "application/x-ndjson");
       state.message = publicView ? "自分視点のJSONLログを書き出しました。" : "完全JSONLログを書き出しました。";
       render();
+    }
+
+    let resultLogDownloadTimer = null;
+    let resultLogDownloadGameId = "";
+
+    function positionResultLogButton() {
+      const rect = elements.battleLogButton?.getBoundingClientRect();
+      if (!rect?.width) return;
+      elements.resultSaveLogButton.style.right = `${Math.max(18, window.innerWidth - rect.left + 10)}px`;
+      elements.resultSaveLogButton.style.top = `${Math.max(18, rect.top)}px`;
+    }
+    window.addEventListener("resize", () => window.requestAnimationFrame(positionResultLogButton));
+
+    function downloadLocalOnlineBattleLog() {
+      const full = isOnlineHost() && Boolean(onlineReplayRecorder?.entries.length);
+      const gameId = state.analytics?.game?.gameId;
+      const log = {
+        gameId, source: full ? "online-local-diagnostic" : "online-public-view",
+        clientVersion: UPDATE_HISTORY[0].version, final: Boolean(state.gameOver),
+        events: analyticsEventsForExport({ publicView: !full }),
+        ...(full ? { trace: { schemaVersion: 1, entries: onlineReplayRecorder.entries, truncated: onlineReplayRecorder.truncated } } : {})
+      };
+      downloadTextFile(`${gameId}-${full ? "local-full" : "public"}.json`, JSON.stringify(log, null, 2), "application/json");
+    }
+
+    function saveResultOnlineBattleLog() {
+      if (!state.gameOver || state.analytics?.game?.mode !== "online" || isOnlineSpectator()) return;
+      if (resultLogDownloadGameId) return;
+      if (!isOnlineHost() || !state.online.connected || !state.online.started) { downloadLocalOnlineBattleLog(); return; }
+      resultLogDownloadGameId = state.analytics.game.gameId;
+      const button = elements.resultSaveLogButton;
+      if (button) { button.disabled = true; button.textContent = "保存中…"; }
+      onlineSend({ type: "downloadBattleLog", gameId: resultLogDownloadGameId });
+      resultLogDownloadTimer = window.setTimeout(() => {
+        const sameGame = state.analytics?.game?.gameId === resultLogDownloadGameId;
+        resultLogDownloadGameId = "";
+        if (sameGame) downloadLocalOnlineBattleLog();
+        if (button?.isConnected) { button.disabled = false; button.textContent = "ログを保存"; }
+      }, 5000);
     }
 
     function analyticsCsvEscape(value) {
@@ -25148,23 +25244,38 @@
 
     function onlineSubmitAnalyticsLog(reason = "update") {
       analyticsSafe(() => {
-        if (!isOnlineHost() || !state.online.started || !state.online.connected) return;
+        if (!onlineReplayEnabled() || !state.online.started || !state.online.connected) return;
+        onlineReplayCheckpoint(reason);
         const events = analyticsEventsForExport({ publicView: false });
         if (!events.length) return;
         const gameId = state.analytics?.game?.gameId || events.find((event) => event.gameId)?.gameId || "";
         const lastSeq = events.at(-1)?.eventSeq || 0;
         const final = Boolean(state.analytics?.final || state.gameOver || reason === "game_end");
         if (final && state.online.lastAnalyticsLogFinal && state.online.lastAnalyticsLogGameId === gameId) return;
-        if (!final && lastSeq <= (state.online.lastAnalyticsLogEventSeq || 0)) return;
-        const sent = onlineSend({
-          type: "analyticsLog",
-          reason,
-          gameId,
-          version: GAME_DATA_VERSION,
-          final,
-          events
-        });
-        if (!sent) return;
+        if (!final && lastSeq <= (state.online.lastAnalyticsLogEventSeq || 0)
+          && (onlineReplayRecorder?.entries.length || 0) <= onlineReplaySentSeq) return;
+        const pending = (onlineReplayRecorder?.entries || []).filter(entry => entry.seq > onlineReplaySentSeq);
+        // Bound each message; the server merges numbered chunks and retry duplicates.
+        const batches = [[]];
+        let batchBytes = 0;
+        for (const entry of pending) {
+          const bytes = JSON.stringify(entry).length * 2;
+          if (batchBytes + bytes > 128 * 1024 && batches.at(-1).length) { batches.push([]); batchBytes = 0; }
+          batches.at(-1).push(entry); batchBytes += bytes;
+        }
+        for (const entries of batches) {
+          const sent = onlineSend({
+            type: "analyticsLog",
+            reason,
+            gameId,
+            version: UPDATE_HISTORY[0].version,
+            final,
+            events,
+            trace: { schemaVersion: 1, entries, truncated: Boolean(onlineReplayRecorder?.truncated) }
+          }, { track: true });
+          if (!sent) return;
+          if (entries.length) onlineReplaySentSeq = entries.at(-1).seq;
+        }
         state.online.lastAnalyticsLogEventSeq = lastSeq;
         state.online.lastAnalyticsLogGameId = gameId;
         if (final) state.online.lastAnalyticsLogFinal = true;
@@ -25731,6 +25842,15 @@
         onlineApplyCardStyles(players);
         onlineSetStatus(message.message || "相手の接続が切れました。再入室を待っています。", "bad");
         render();
+        return;
+      }
+      if (message.type === "battleLogDownload") {
+        if (!resultLogDownloadGameId || message.gameId !== resultLogDownloadGameId || message.gameId !== state.analytics?.game?.gameId) return;
+        window.clearTimeout(resultLogDownloadTimer);
+        resultLogDownloadGameId = "";
+        downloadTextFile(`${message.gameId}-full.json`, JSON.stringify(message.log, null, 2), "application/json");
+        const button = elements.resultSaveLogButton;
+        if (button) { button.disabled = false; button.textContent = "ログを保存"; }
         return;
       }
       if (message.type === "startGame") {
@@ -27933,6 +28053,7 @@
       const previousActiveRemoteCommandId = state.online.activeRemoteCommandId;
       state.online.activeRemoteCommandId = command.id || "";
       const payload = command.payload || {};
+      if (onlineReplayEnabled() && onlineReplayRecorder) onlineReplayRecorder.record("guest_command", command);
       try {
         if (command.type === "rps") onlineChooseRpsForSide("opponent", payload.choice);
         if (command.type === "order") chooseStartingOrderForSide("opponent", Boolean(payload.first));
@@ -28344,7 +28465,7 @@
     function shuffle(cards) {
       const copy = [...cards];
       for (let i = copy.length - 1; i > 0; i -= 1) {
-        const j = Math.floor(Math.random() * (i + 1));
+        const j = Math.floor(battleRandom() * (i + 1));
         [copy[i], copy[j]] = [copy[j], copy[i]];
       }
       return copy;
@@ -28518,7 +28639,9 @@
     function rollCoinFace() {
       const value = new Uint32Array(1);
       crypto.getRandomValues(value);
-      return value[0] % 2 === 0 ? "heads" : "tails";
+      const face = value[0] % 2 === 0 ? "heads" : "tails";
+      if (onlineReplayEnabled() && onlineReplayRecorder) onlineReplayRecorder.record("coin", { face, actionTurn: state.actionTurn });
+      return face;
     }
 
     function beginCoinToss(token) {
@@ -28560,7 +28683,7 @@
         const aiWinner = !state.online.role && (state.rpsWinner === "opponent" || isTrainingAiVsAi());
         if (aiWinner) scheduleTrainingTask(() => {
           if (!isCurrentPreBattle(token, "orderChoice")) return;
-          chooseStartingOrderForSide(state.rpsWinner, Math.random() < 0.7);
+          chooseStartingOrderForSide(state.rpsWinner, battleRandom() < 0.7);
         }, trainingAnimationDelay(650));
       }, trainingAnimationDelay(1100));
       return true;
@@ -28600,7 +28723,7 @@
       state.rpsPlayerChoice = choice;
       const winningAiChoice = choices.find((candidate) => RPS_BEATS[candidate] === choice);
       const losingAiChoice = RPS_BEATS[choice];
-      state.rpsOpponentChoice = Math.random() < 0.5 ? winningAiChoice : losingAiChoice;
+      state.rpsOpponentChoice = battleRandom() < 0.5 ? winningAiChoice : losingAiChoice;
       state.rpsRevealed = false;
       state.message = `${SIDES.opponent}のカードを公開します。`;
       render();
@@ -28648,7 +28771,7 @@
         render();
         return;
       }
-      const aiChoosesFirst = Math.random() < 0.7;
+      const aiChoosesFirst = battleRandom() < 0.7;
       state.firstSide = aiChoosesFirst ? "opponent" : "player";
       if (state.analytics?.game) state.analytics.game.firstSide = state.firstSide;
       analyticsPushEvent("order_choice", {
@@ -30364,7 +30487,7 @@
       president.floorGenerated = true;
       president.darkPresident = true;
       const deck = state.players.opponent.deck;
-      const insertAt = Math.floor(Math.random() * (deck.length + 1));
+      const insertAt = Math.floor(battleRandom() * (deck.length + 1));
       deck.splice(insertAt, 0, president);
       for (let i = 0; i < 3; i += 1) {
         state.players.opponent.hand.push(createCardFromBase("president_tea_room", "opponent"));
@@ -30374,7 +30497,7 @@
 
     function resolveDungeonFloorStartTurnEffects(side) {
       if (isDungeonFloorRuleActive(7) && side === "opponent") {
-        const baseId = DUNGEON_UTA_EQUIPMENT_IDS[Math.floor(Math.random() * DUNGEON_UTA_EQUIPMENT_IDS.length)];
+        const baseId = DUNGEON_UTA_EQUIPMENT_IDS[Math.floor(battleRandom() * DUNGEON_UTA_EQUIPMENT_IDS.length)];
         const generated = createCardFromBase(baseId, "opponent");
         state.players.opponent.hand.push(generated);
         addLog(`7階のフロア規則：相手は${generated.name}を手札に生成しました。`);
@@ -34186,7 +34309,7 @@
         const candidates = listBoardRefs(side)
           .map((ref) => getBoardCardFromRef(ref))
           .filter((card) => card?.playedOnTurn === state.actionTurn && card.currentHp > 0);
-        const target = candidates[Math.floor(Math.random() * candidates.length)];
+        const target = candidates[Math.floor(battleRandom() * candidates.length)];
         if (target) {
           dealDamageToCard(target, 1, state.environment);
           addLog(`ドア前戦争の効果：このターンに${SIDES[side]}が出席させた${target.name}に1ダメージ。`);
@@ -34224,13 +34347,13 @@
 
     function randomEffectTargetEntry(sourceSide, targetSide, predicate = null) {
       const entries = effectTargetEntries(sourceSide, targetSide, predicate);
-      return entries[Math.floor(Math.random() * entries.length)] || null;
+      return entries[Math.floor(battleRandom() * entries.length)] || null;
     }
 
     function chooseRandomEffectTarget(sourceSide, targetSide, predicate) {
       const candidates = effectTargetEntries(sourceSide, targetSide, predicate);
       if (candidates.length === 0) return { target: null, pending: false };
-      return { target: candidates[Math.floor(Math.random() * candidates.length)], pending: false };
+      return { target: candidates[Math.floor(battleRandom() * candidates.length)], pending: false };
     }
 
     function randomBoardRef(owner, predicate = null, sourceSide = null) {
@@ -34239,7 +34362,7 @@
         const card = getBoardCardFromRef(ref);
         return card && (!predicate || predicate(card, ref));
       });
-      return refs[Math.floor(Math.random() * refs.length)] || null;
+      return refs[Math.floor(battleRandom() * refs.length)] || null;
     }
 
     function resolveBiologyFusion(side) {
@@ -34347,7 +34470,7 @@
       const openSeats = state.players[side].board.seats
         .map((card, index) => (!card && isBoardSlotOpen(side, "seat", index) ? index : null))
         .filter((index) => index !== null);
-      const seatIndex = openSeats[Math.floor(Math.random() * openSeats.length)];
+      const seatIndex = openSeats[Math.floor(battleRandom() * openSeats.length)];
       if (seatIndex === undefined) {
         addLog(`${sourceName}の効果：空いている席マスがないため出席できません。`);
         return null;
@@ -34592,7 +34715,7 @@
       const openSeats = state.players[targetSide].board.seats
         .map((seatCard, seatIndex) => (!seatCard && isBoardSlotOpen(targetSide, "seat", seatIndex) ? seatIndex : null))
         .filter((seatIndex) => seatIndex !== null);
-      const seatIndex = openSeats[Math.floor(Math.random() * openSeats.length)];
+      const seatIndex = openSeats[Math.floor(battleRandom() * openSeats.length)];
       if (seatIndex === undefined) {
         addLog(`${sourceName}の効果：相手の講義室に空いている席マスがないため、${CARD_BASES[baseId].name}を出席させられません。`);
         return null;
@@ -34687,7 +34810,7 @@
       if (eligible.length === 0) return null;
       let index = preferredInstanceId ? hand.findIndex((card) => card.instanceId === preferredInstanceId && !isHighLoadHandCard(card)) : -1;
       if (index < 0) {
-        const chosen = side === "player" ? eligible[0] : eligible[Math.floor(Math.random() * eligible.length)];
+        const chosen = side === "player" ? eligible[0] : eligible[Math.floor(battleRandom() * eligible.length)];
         index = hand.findIndex((card) => card.instanceId === chosen.instanceId);
       }
       const [discarded] = hand.splice(index, 1);
@@ -34786,7 +34909,7 @@
         const attacker = getBoardCardFromRef(attackerRef);
         if (!attacker || !canUsePrintedCardEffects(attacker) || !canAttackSilently(attacker)) return;
         const targets = happyBlueBirdAttackTargets(attacker);
-        const targetEntry = targets[Math.floor(Math.random() * targets.length)];
+        const targetEntry = targets[Math.floor(battleRandom() * targets.length)];
         if (!targetEntry) {
           addLog(`${attacker.name}の効果：攻撃できる相手の出席者がいないため不発。`);
           return;
@@ -35549,7 +35672,7 @@
         || (choiceId !== "environment_setup_deck" && trashCandidates.length === 0)
         || !payForItem(side, item)) return false;
       if (choiceId === "environment_setup_deck") {
-        card = deckCandidates[Math.floor(Math.random() * deckCandidates.length)] || null;
+        card = deckCandidates[Math.floor(battleRandom() * deckCandidates.length)] || null;
         if (card) {
           player.deck = player.deck.filter((entry) => entry.instanceId !== card.instanceId);
           card.handTurns = 0;
@@ -35559,7 +35682,7 @@
           addLog(`${item.name}の効果：${SIDES[side]}はデッキから環境カード1枚を手札に加えました。`);
         }
       } else {
-        card = trashCandidates[Math.floor(Math.random() * trashCandidates.length)] || null;
+        card = trashCandidates[Math.floor(battleRandom() * trashCandidates.length)] || null;
         if (card) {
           player.trash = player.trash.filter((entry) => entry.instanceId !== card.instanceId);
           card.handTurns = 0;
@@ -38062,7 +38185,7 @@
         applyPermanentStatBuff(card, -1, 0, 0, "病");
         addLog(`${card.name}の病：攻撃力を-1しました。`);
         const targets = listBoardRefs(ref.owner).filter((targetRef) => canEquipIllness(getBoardCardFromRef(targetRef)));
-        const targetRef = targets[Math.floor(Math.random() * targets.length)];
+        const targetRef = targets[Math.floor(battleRandom() * targets.length)];
         if (targetRef) equipIllness(ref.owner, getBoardCardFromRef(targetRef), createCardFromBase("illness", ref.owner));
       });
     }
@@ -38070,7 +38193,7 @@
     function equipRandomIllness(owner, sourceSide) {
       const targets = listBoardRefs(owner).map(getBoardCardFromRef).filter(canEquipIllness);
       if (!targets.length) return false;
-      return equipIllness(owner, targets[Math.floor(Math.random() * targets.length)], createCardFromBase("illness", sourceSide));
+      return equipIllness(owner, targets[Math.floor(battleRandom() * targets.length)], createCardFromBase("illness", sourceSide));
     }
 
     function resolveRecoveredYutaEvolution(side, source) {
@@ -38798,7 +38921,7 @@
           && card.baseId !== "suit_student"
           && !isAibenNyoteiEffectImmune(card);
       });
-      const targetRef = candidates[Math.floor(Math.random() * candidates.length)] || null;
+      const targetRef = candidates[Math.floor(battleRandom() * candidates.length)] || null;
       const target = getBoardCardFromRef(targetRef);
       if (!targetRef || !target) {
         addLog(`インターンの効果：${SIDES[side]}の講義室に変化できる学生がいませんでした（残り${player.internTurnsRemaining}回）。`);
@@ -38821,14 +38944,14 @@
       ["player", "opponent"].forEach((owner) => {
         state.players[owner].hand.forEach((card) => {
           if (card.noCost) return;
-          card.cost = Math.floor(Math.random() * 11);
+          card.cost = Math.floor(battleRandom() * 11);
           handAffected += 1;
         });
         listBoardRefs(owner).forEach((ref) => {
           const card = getBoardCardFromRef(ref);
           if (!card || isAibenNyoteiEffectImmune(card) || !["student", "teacher", "vampire"].includes(card.type)) return;
-          const nextAttack = Math.floor(Math.random() * 11);
-          const nextHp = 1 + Math.floor(Math.random() * 10);
+          const nextAttack = Math.floor(battleRandom() * 11);
+          const nextHp = 1 + Math.floor(battleRandom() * 10);
           card.baseAttack = nextAttack;
           card.attack = nextAttack;
           card.baseMaxHp = nextHp;
@@ -39180,7 +39303,7 @@
           .concat({ zone: "teacher", index: null })
           .filter((slot) => canPlaceCard(side, card, slot.zone, side, slot.index));
         if (slots.length === 0) break;
-        const slot = slots[Math.floor(Math.random() * slots.length)];
+        const slot = slots[Math.floor(battleRandom() * slots.length)];
         if (!attendCard(side, card, slot.zone, slot.index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED })) break;
         showCardPlayAnimation(card, "board");
         summoned += 1;
@@ -39241,7 +39364,7 @@
             finish();
             return;
           }
-          const targetEntry = targets[Math.floor(Math.random() * targets.length)];
+          const targetEntry = targets[Math.floor(battleRandom() * targets.length)];
           const damage = dealDamageToCard(targetEntry.card, 1, sourceCard);
           addLog(`${sourceCard.name}の連続攻撃${i + 1}回目：${targetEntry.card.name}に${damage}ダメージ。`);
           cleanupDestroyedCards();
@@ -39581,7 +39704,7 @@
           .filter((seatIndex) => seatIndex !== index && !isSeatBlocked(owner, seatIndex)
             && (card.occupiedSeatSize ? canPlaceMultiSeatCard(owner, card, seatIndex)
               : !state.players[owner].board.seats[seatIndex]));
-        const destination = destinations[Math.floor(Math.random() * destinations.length)];
+        const destination = destinations[Math.floor(battleRandom() * destinations.length)];
         if (destination !== undefined) {
           if (card.occupiedSeatSize) placeMultiSeatCard(owner, destination, card);
           else setBoardCard(owner, "seat", destination, card);
@@ -39645,7 +39768,7 @@
         if (!player.hand.some((handCard) => handCard.instanceId === entry.instanceId)) continue;
         const seats = PLAYER_SEAT_ORDER.filter((seatIndex) =>
           canPlaceCard(sequence.side, entry, "seat", sequence.side, seatIndex, { ignoreAttendanceLimit: true }));
-        const seatIndex = seats[Math.floor(Math.random() * seats.length)];
+        const seatIndex = seats[Math.floor(battleRandom() * seats.length)];
         if (seatIndex === undefined) continue;
         player.hand = player.hand.filter((handCard) => handCard.instanceId !== entry.instanceId);
         const placed = makeBoardCard(entry);
@@ -39785,7 +39908,7 @@
         cleanupDestroyedCards();
         addLog(`${card.name}の効果：自分の学生${affected}人に1ダメージを与えました。`);
         const candidates = starbucksTeacherCandidates(side);
-        const teacher = candidates[Math.floor(Math.random() * candidates.length)] || null;
+        const teacher = candidates[Math.floor(battleRandom() * candidates.length)] || null;
         if (teacher?.baseId === "cornering_lecturer") {
           if (isCpuControlledBattleSide(side)) {
             summonStarbucksTeacher(side, teacher.instanceId, chooseCorneringLecturerEffectForAi(side));
@@ -39815,7 +39938,7 @@
             for (let i = 0; i < 64; i += 1) {
               const refs = listBoardRefs(opponent);
               if (!refs.length) break;
-              const ref = refs[Math.floor(Math.random() * refs.length)];
+              const ref = refs[Math.floor(battleRandom() * refs.length)];
               if (destroyBoardCard(ref, { reason: card.name })) destroyed += 1;
               render();
               const face = await tossEffectCoin(card.name);
@@ -40102,7 +40225,7 @@
       if (card.baseId === "sniper") {
         const opponentHand = state.players[opponent].hand.filter((handCard) => !isHighLoadHandCard(handCard));
         if (opponentHand.length > 0) {
-          const discardedIndex = Math.floor(Math.random() * opponentHand.length);
+          const discardedIndex = Math.floor(battleRandom() * opponentHand.length);
           const discarded = opponentHand[discardedIndex];
           state.players[opponent].hand = state.players[opponent].hand.filter((handCard) => handCard.instanceId !== discarded.instanceId);
           moveToTrash(opponent, discarded, { handRevealShown: true });
@@ -40353,7 +40476,7 @@
         } else {
           const target = isCpuControlledBattleSide(side)
             ? chooseAiOpponentHandDiscardTarget(opponentHand, opponent)
-            : opponentHand[Math.floor(Math.random() * opponentHand.length)];
+            : opponentHand[Math.floor(battleRandom() * opponentHand.length)];
           discardOpponentHandCardById(side, target.instanceId, card, false);
         }
       }
@@ -40888,7 +41011,7 @@
       const player = state.players[side];
       const moved = [];
       for (let i = 0; i < count && player.deck.length > 0; i += 1) {
-        const index = Math.floor(Math.random() * player.deck.length);
+        const index = Math.floor(battleRandom() * player.deck.length);
         const [card] = player.deck.splice(index, 1);
         moved.push(card);
       }
@@ -40914,7 +41037,7 @@
       for (let i = 0; i < count; i += 1) {
         const candidates = player.hand.filter((card) => card.instanceId !== excludedInstanceId && !isHighLoadHandCard(card));
         if (candidates.length === 0) break;
-        const card = candidates[Math.floor(Math.random() * candidates.length)];
+        const card = candidates[Math.floor(battleRandom() * candidates.length)];
         player.hand = player.hand.filter((entry) => entry.instanceId !== card.instanceId);
         moved.push(card);
       }
@@ -40926,7 +41049,7 @@
       const player = state.players[side];
       let returned = 0;
       while (player.hand.length > targetCount) {
-        const index = Math.floor(Math.random() * player.hand.length);
+        const index = Math.floor(battleRandom() * player.hand.length);
         const [card] = player.hand.splice(index, 1);
         card.handTurns = 0;
         player.deck.push(card);
@@ -41085,7 +41208,7 @@
         return false;
       }
       let index = hand.findIndex((card) => card.instanceId === instanceId && !isHighLoadHandCard(card));
-      if (index < 0) index = hand.findIndex((card) => card.instanceId === eligible[Math.floor(Math.random() * eligible.length)].instanceId);
+      if (index < 0) index = hand.findIndex((card) => card.instanceId === eligible[Math.floor(battleRandom() * eligible.length)].instanceId);
       const [discarded] = hand.splice(index, 1);
       moveToTrash(opponent, discarded, { handRevealShown: true });
       showCardPlayAnimation(discarded, "trash");
@@ -42695,7 +42818,7 @@
           const target = getBoardCardFromRef(ref);
           [...(target?.illnessEquipments || [])].forEach((entry) => {
             if (!removeIllnessEquipment(target, owner, entry)) return;
-            if (Math.random() < 0.5) damage += 1;
+            if (battleRandom() < 0.5) damage += 1;
             else healing += 1;
           });
         }));
@@ -43094,7 +43217,7 @@
         const candidates = state.players[targetSide].late
           .map((entry, index) => ({ entry, index }))
           .filter(({ entry }) => entry.card?.type === "student");
-        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        const chosen = candidates[Math.floor(battleRandom() * candidates.length)];
         if (chosen) {
           const [removed] = state.players[targetSide].late.splice(chosen.index, 1);
           moveToTrash(targetSide, removed.card);
@@ -43190,7 +43313,7 @@
       }
       if (item.baseId === "substitute_attendance") {
         const candidates = collectLateEntries();
-        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        const chosen = candidates[Math.floor(battleRandom() * candidates.length)];
         if (chosen) {
           releaseLateEntry(chosen.side, chosen.entry);
           resultText = `遅刻ゾーンの${chosen.entry.card.name}をランダムに指名し、遅刻カウントを0にしました。`;
@@ -43230,7 +43353,7 @@
           if (renderAfter) render();
           return false;
         }
-        const target = candidates[Math.floor(Math.random() * candidates.length)];
+        const target = candidates[Math.floor(battleRandom() * candidates.length)];
         if (target) {
           destroyBoardCard(target.ref);
           resultText = `相手の出席者のうち体力が最も高い${target.card.name}をランダムに指名し、破壊しました。`;
@@ -44719,7 +44842,7 @@
           if (card.currentHp - pending <= 0) return;
           targets.push({ kind: "card", ref: { ...ref }, key, card });
         });
-        const target = targets[Math.floor(Math.random() * targets.length)];
+        const target = targets[Math.floor(battleRandom() * targets.length)];
         if (!target) break;
         if (target.kind === "life") {
           life += 1;
@@ -45298,6 +45421,9 @@
     function showResultOverlay(winner, options = {}, displayOptions = {}) {
       if (trainingFastSimulation() && state.training.replayRemaining > 0) return;
       if (!elements.resultOverlay) return;
+      elements.resultSaveLogButton.classList.toggle("hidden", !(state.gameOver && state.analytics?.game?.mode === "online" && !isOnlineSpectator()));
+      positionResultLogButton();
+      window.requestAnimationFrame(positionResultLogButton);
       const key = resultOverlayKey(winner, options);
       if (!displayOptions.replay
         && elements.resultOverlay.dataset.resultKey === key
@@ -45364,6 +45490,11 @@
 
     function hideResultOverlay() {
       if (!elements.resultOverlay) return;
+      elements.resultSaveLogButton.classList.add("hidden");
+      elements.resultSaveLogButton.disabled = false;
+      elements.resultSaveLogButton.textContent = "ログを保存";
+      window.clearTimeout(resultLogDownloadTimer);
+      resultLogDownloadGameId = "";
       hideUltimateYutaVictorySequence();
       elements.resultOverlay.className = "result-overlay hidden";
       elements.resultOverlay.innerHTML = "";
@@ -56027,6 +56158,7 @@
       const card = elements.battleCardPreview._previewCard;
       if (card) showBattleCardTypeDescription(card);
     });
+    elements.resultSaveLogButton.addEventListener("click", saveResultOnlineBattleLog);
     elements.resultOverlay.addEventListener("click", (event) => {
       if (event.target.closest("[data-result-ai-back]")) {
         event.stopPropagation();

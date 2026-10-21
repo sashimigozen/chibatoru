@@ -6,6 +6,8 @@ const http = require("http");
 const os = require("os");
 const path = require("path");
 const { WebSocketServer } = require("ws");
+const Replay = require("../online-replay.js");
+const { createD1LogStore, createArchiveQueue } = require("./d1-log-store.js");
 
 const PORT = Number(process.env.PORT || 8787);
 const PROTOCOL_VERSION = 1;
@@ -92,6 +94,9 @@ const MAX_IMPORT_BYTES = Number(process.env.MAX_IMPORT_BYTES || 8 * 1024 * 1024)
 const rooms = new Map();
 const randomMatchQueue = [];
 const onlineBattleLogs = new Map();
+let cloudLogStore = null;
+try { cloudLogStore = createD1LogStore(); } catch { console.warn("D1の接続設定が無効です。環境変数を確認してください。"); }
+const cloudLogQueue = createArchiveQueue(cloudLogStore);
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url || "/", "http://localhost");
@@ -106,6 +111,17 @@ const server = http.createServer((req, res) => {
   }
   if (url.pathname === "/admin/logs/backup.json") {
     handleAdminLogsBackupJson(req, res);
+    return;
+  }
+  if (url.pathname === "/admin/logs/learning.json") {
+    if (!requireAdmin(req, res)) return;
+    const logs = [...onlineBattleLogs.values()].filter(log => Replay.learningEligibility(log).eligible);
+    jsonResponse(res, 200, { schemaVersion: 1, purpose: "human-online-review", requiresReview: true, count: logs.length, logs });
+    return;
+  }
+  if (url.pathname === "/admin/logs/archive" || url.pathname.startsWith("/admin/logs/archive/")) {
+    if (!requireAdmin(req, res)) return;
+    void handleCloudArchive(req, res, url);
     return;
   }
   if (url.pathname === "/admin/logs" || url.pathname.startsWith("/admin/logs/")) {
@@ -408,6 +424,7 @@ function trimStoredLogs() {
 }
 
 function writeLogToDisk(log) {
+  cloudLogQueue.enqueue(log);
   try {
     ensureLogDir();
     const file = path.join(LOG_STORAGE_DIR, `${safeLogFileName(log.gameId)}.json`);
@@ -537,6 +554,23 @@ function normalizeAnalyticsLog(room, player, payload) {
 
 function saveOnlineBattleLog(room, player, payload) {
   const log = normalizeAnalyticsLog(room, player, payload || {});
+  room.lastAnalyticsGameId = log.gameId;
+  const previous = onlineBattleLogs.get(log.gameId);
+  // Client flags alone never make an offline/CPU log a human match.
+  const start = log.events.find(event => event.eventType === "game_start")?.game;
+  log.source = "online-human-v1";
+  log.serverVerifiedHumanMatch = Boolean(room.humanReplayMatch && start?.mode === "online"
+    && start?.participants?.player === "human" && start?.participants?.opponent === "human");
+  log.ruleId = room.ruleId;
+  log.trace = Replay.mergeTrace(previous?.roomSessionId === room.sessionId ? previous.trace : null, payload.trace);
+  log.incidents = [...(room.replayIncidents || [])];
+  // A retry of an earlier batch must not roll the final event list backwards.
+  if (previous?.events?.length > log.events.length) {
+    log.events = previous.events;
+    log.summary = previous.summary;
+    log.final = previous.final;
+  }
+  log.learning = Replay.learningEligibility(log);
   onlineBattleLogs.set(log.gameId, log);
   trimStoredLogs();
   writeLogToDisk(log);
@@ -559,6 +593,35 @@ function handleAnalyticsLog(ws, message) {
     gameId: log.gameId,
     eventCount: log.summary.eventCount
   });
+}
+
+function handleDownloadBattleLog(ws, message) {
+  const { room, player } = requireJoined(ws);
+  if (!room || !player) return;
+  const log = onlineBattleLogs.get(String(message.gameId || ""));
+  if (player.role !== "host" || !log || log.gameId !== room.lastAnalyticsGameId
+    || log.roomSessionId !== room.sessionId || !log.final) {
+    sendError(ws, "この対戦の詳細ログはホストが試合終了後に保存できます。", "log_not_available");
+    return;
+  }
+  send(ws, { type: "battleLogDownload", senderId: SERVER_ID, roomSessionId: room.sessionId, gameId: log.gameId, log });
+}
+
+async function handleCloudArchive(req, res, url) {
+  if (!cloudLogStore) { htmlResponse(res, 503, adminPageShell('<h1>クラウド保存は未設定です</h1><p>RenderへD1の接続情報を設定してください。</p>')); return; }
+  try {
+    if (url.pathname.startsWith("/admin/logs/archive/")) {
+      const id = decodeURIComponent(url.pathname.slice("/admin/logs/archive/".length).replace(/\.json$/, ""));
+      const log = await cloudLogStore.get(id);
+      if (!log) { jsonResponse(res, 404, { error: "ログが見つかりません。" }); return; }
+      res.setHeader("content-disposition", `attachment; filename="${safeLogFileName(id)}.json"`);
+      jsonResponse(res, 200, log);
+      return;
+    }
+    const page = await cloudLogStore.list((url.searchParams.get("cursor") || "").slice(0, 160));
+    const rows = page.logs.map(log => `<tr><td>${escapeHtml(log.gameId)}</td><td>${escapeHtml(log.receivedAt)}</td><td>${log.final ? "終了" : "途中"}</td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json">保存</a></td></tr>`).join("");
+    htmlResponse(res, 200, adminPageShell(`<section class="panel"><h1>クラウド保存済みログ</h1><p>サーバー再起動後もD1に残っている記録です。</p><a href="/admin/logs">管理画面に戻る</a><table><tbody>${rows || "<tr><td>記録はまだありません。</td></tr>"}</tbody></table>${page.nextCursor ? `<a href="/admin/logs/archive?cursor=${encodeURIComponent(page.nextCursor)}">次のページ</a>` : ""}</section>`));
+  } catch { htmlResponse(res, 503, adminPageShell("<h1>クラウド記録を取得できませんでした</h1><p>設定・容量・通信を確認してください。接続情報は表示しません。</p>")); }
 }
 
 function listLogSummaries() {
@@ -659,8 +722,11 @@ function renderAdminLogsPage() {
       <h1>チバトル オンライン対戦ログ</h1>
       <p class="muted">管理者だけが見られるログ一覧です。プレイヤーの個人名は保存せず、カードバランス分析に必要な対戦イベントを保存します。</p>
       <p class="muted">保存先: <code>${escapeHtml(LOG_STORAGE_DIR)}</code></p>
+      <p class="muted">クラウド保存: ${cloudLogQueue.status.configured ? `設定済み／待機 ${cloudLogQueue.status.pending}件／最終保存 ${escapeHtml(cloudLogQueue.status.lastSavedAt || "まだありません")}` : "未設定（端末保存・バックアップを利用してください）"} ${escapeHtml(cloudLogQueue.status.error)}</p>
       <p class="actions">
         <a class="button backup" href="/admin/logs/backup.json" download>バックアップJSONをダウンロード</a>
+        <a class="button backup" href="/admin/logs/learning.json" download>人間同士の対戦・分析候補JSON</a>
+        <a class="button secondary" href="/admin/logs/archive">クラウド保存済みログ</a>
         <a class="button secondary" href="/admin/logs.json">JSON一覧を開く</a>
         <a class="button secondary" href="/admin/logs/import">JSONをインポート</a>
       </p>
@@ -982,6 +1048,10 @@ function send(ws, message) {
 }
 
 function sendError(ws, message, code = "bad_request") {
+  const room = rooms.get(ws.roomId);
+  if (room?.started && !room.state?.state?.gameOver && isBattleRole(room.players.get(ws.clientId)?.role)) {
+    room.replayIncidents = [...(room.replayIncidents || []), { type: "server_error", code, at: new Date().toISOString() }].slice(-100);
+  }
   send(ws, { type: "error", code, message, senderId: SERVER_ID });
 }
 
@@ -1886,6 +1956,10 @@ function handleStartGame(ws, message) {
     return;
   }
   room.started = true;
+  room.humanReplayMatch = !message.snapshot.state?.aiBattle?.active
+    && !message.snapshot.state?.training?.active && !message.snapshot.state?.dungeon?.active
+    && !message.snapshot.state?.testMode;
+  room.replayIncidents = [];
   clearWaitingRoomTimer(room);
   room.state = message.snapshot;
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
@@ -2119,6 +2193,9 @@ function routeMessage(ws, raw) {
     case "analyticsLog":
       handleAnalyticsLog(ws, message);
       break;
+    case "downloadBattleLog":
+      handleDownloadBattleLog(ws, message);
+      break;
     case "playCard":
     case "endTurn":
     case "gameAction":
@@ -2193,6 +2270,15 @@ wss.on("connection", (ws) => {
       });
     }
     if (isBattleRole(player.role)) {
+      if (room.started) {
+        room.replayIncidents = [...(room.replayIncidents || []), { type: "disconnect", role: player.role, at: new Date().toISOString() }];
+        onlineBattleLogs.forEach(log => {
+          if (log.roomSessionId !== room.sessionId || log.final) return;
+          log.incidents = [...room.replayIncidents];
+          log.learning = Replay.learningEligibility(log);
+          writeLogToDisk(log);
+        });
+      }
       broadcast(room, {
         type: "opponentDisconnected",
         senderId: SERVER_ID,

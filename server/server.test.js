@@ -10,6 +10,57 @@ const { spawn } = require("node:child_process");
 const test = require("node:test");
 const WebSocket = require("ws");
 
+test("private replay chunks persist and only verified completed human games enter learning export", async (t) => {
+  const port = await freePort();
+  const logDir = fs.mkdtempSync(path.join(os.tmpdir(), "chibatoru-replay-test-"));
+  const child = await startServer(port, { CHIBATORU_LOG_ADMIN_PASSWORD: "secret", CHIBATORU_LOG_DIR: logDir });
+  const host = await connectClient(`ws://127.0.0.1:${port}`, "REPLAY1", "replay-host", true);
+  const guest = await connectClient(`ws://127.0.0.1:${port}`, "REPLAY1", "replay-guest");
+  t.after(() => { host.ws.close(); guest.ws.close(); child.kill("SIGTERM"); fs.rmSync(logDir, { recursive: true, force: true }); });
+  for (const client of [host, guest]) send(client, { type: "deckUpdate", ...normalDeckDescriptor(createNormalDeckCounts()), ready: true });
+  await waitFor(host, m => m.type === "playerJoined" && m.players?.filter(p => p.ready).length === 2);
+  send(host, { type: "startGame", snapshot: { seq: 1, state: { currentSide: "player", gameOver: false } } });
+  await waitFor(guest, m => m.type === "startGame");
+  assert.equal((await httpGet(port, "/admin/logs/learning.json")).statusCode, 401);
+  const events = [
+    { eventType: "game_start", gameId: "replay-game", eventSeq: 1, game: { mode: "online", participants: { player: "human", opponent: "human" }, clientRelease: "ver.test" } },
+    { eventType: "game_end", gameId: "replay-game", eventSeq: 2, final: { winner: "player", finalTurn: 4 } }
+  ];
+  const entry1 = { seq: 1, kind: "checkpoint", data: { changes: { players: { player: { hand: ["private-replay-secret"] } }, gameOver: false }, removed: [] } };
+  const entry2 = { seq: 2, kind: "checkpoint", data: { changes: { gameOver: true }, removed: [] } };
+  const upload = entries => send(host, { type: "analyticsLog", gameId: "replay-game", events, final: true, trace: { schemaVersion: 1, entries } });
+  upload([entry1]);
+  await waitFor(host, m => m.type === "analyticsLogSaved");
+  assert.equal(JSON.parse((await httpGet(port, "/admin/logs/learning.json", "secret")).body).count, 0);
+  upload([entry1, entry2]);
+  await new Promise(resolve => setTimeout(resolve, 80));
+  const exported = JSON.parse((await httpGet(port, "/admin/logs/learning.json", "secret")).body);
+  assert.equal(exported.count, 1);
+  assert.equal(exported.logs[0].trace.entries.length, 2);
+  send(host, { type: "downloadBattleLog", gameId: "replay-game" });
+  const downloaded = await waitFor(host, m => m.type === "battleLogDownload");
+  assert.equal(downloaded.message.log.trace.entries.length, 2);
+  send(guest, { type: "downloadBattleLog", gameId: "replay-game" });
+  await waitFor(guest, m => m.type === "error" && m.code === "log_not_available");
+  assert.equal((await httpGet(port, "/admin/logs/archive")).statusCode, 401);
+  assert.equal((await httpGet(port, "/admin/logs/archive", "secret")).statusCode, 503);
+  assert.equal(fs.existsSync(path.join(logDir, "replay-game.json")), true);
+  assert.equal(JSON.stringify(guest.messages).includes("private-replay-secret"), false);
+  send(guest, { type: "analyticsLog", gameId: "forged-guest", events, trace: { schemaVersion: 1, entries: [entry1, entry2] } });
+  await waitFor(guest, m => m.type === "error" && m.code === "forbidden");
+  send(host, { type: "analyticsLog", gameId: "cpu-forged", final: true,
+    events: [{ ...events[0], game: { mode: "solo" } }, events[1]], trace: { schemaVersion: 1, entries: [entry1, entry2] } });
+  await waitFor(host, m => m.type === "analyticsLogSaved" && m.gameId === "cpu-forged");
+  assert.equal(JSON.parse((await httpGet(port, "/admin/logs/learning.json", "secret")).body).count, 1);
+  send(host, { type: "analyticsLog", gameId: "interrupted-game", final: false, events: [events[0]],
+    trace: { schemaVersion: 1, entries: [entry1] } });
+  await waitFor(host, m => m.type === "analyticsLogSaved" && m.gameId === "interrupted-game");
+  guest.ws.close();
+  await waitFor(host, m => m.type === "opponentDisconnected");
+  const backup = JSON.parse((await httpGet(port, "/admin/logs/backup.json", "secret")).body);
+  assert.equal(backup.logs.find(log => log.gameId === "interrupted-game").incidents.some(i => i.type === "disconnect"), true);
+});
+
 function freePort() {
   return new Promise((resolve, reject) => {
     const probe = net.createServer();

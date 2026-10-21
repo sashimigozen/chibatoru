@@ -1,4 +1,4 @@
-// AIバトル専用。提供された20デッキのカードID・枚数をそのまま使用する。
+// AIバトル専用。提供されたデッキのカードID・枚数をそのまま使用する。
 window.ChibattleAiBattleDecks = Object.freeze([
   {
     "name": "LO最終講義",
@@ -468,6 +468,25 @@ window.ChibattleAiBattleDecks = Object.freeze([
       "classroom": 2,
       "plump_student": 2,
       "adjective_vs_cynical": 3
+    }
+  },
+  {
+    "name": "小細工はなしだ",
+    "counts": {
+      "aggro_army": 3,
+      "king_ghidorah_bed": 3,
+      "onigiri_draw": 3,
+      "dos_attack": 3,
+      "destroy_dos_attack": 3,
+      "deck_without": 3,
+      "peaceful_mind": 3,
+      "sage_legacy": 3,
+      "dont_worry": 3,
+      "scared_me": 3,
+      "three_gestures": 3,
+      "alpha": 3,
+      "meguro_library": 3,
+      "confucius_says": 3
     }
   }
 ].map(deck => Object.freeze({ ...deck, counts: Object.freeze(deck.counts) })));
