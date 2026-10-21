@@ -19893,6 +19893,15 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
+        version: "ver.0.29.1",
+        versioning: "semver",
+        date: "2026年10月21日",
+        summary: "複数マスを使う出席者が別のカードに変化した際、カードや占有マスが重複して残る不具合を修正しました。",
+        changes: [
+          { category: "不具合修正", title: "変化後の出席者と占有マス", after: "ゾンビや「スーツを着た学生」へ変化した際、変化前の占有マスを解放し、元の基準マスに1枚だけ配置します。変化後のカード本来の大きさで表示し、空いたマスを再び使用できるよう修正しました。カード本文・能力値は変更していません。" }
+        ]
+      },
+      {
         version: "ver.0.29.0",
         versioning: "semver",
         date: "2026年10月20日",
@@ -38792,6 +38801,7 @@
       const previousName = target.name;
       const transformed = transformToSuitStudent(target);
       if (!transformed) return null;
+      clearBoardCardFromField(targetRef.owner, targetRef.zone, targetRef.index, target);
       setBoardCard(targetRef.owner, targetRef.zone, targetRef.index, transformed);
       recordSuitStudentAttendance(transformed);
       showFloatingTextForCard(transformed, "変化", "buff");
@@ -41607,6 +41617,12 @@
       if (attacker.baseId === "zombie" && !isAibenNyoteiEffectImmune(target) && target.type !== "vampire" && target.currentHp > 0) {
         const previousName = target.name;
         const zombieBase = CARD_BASES.zombie;
+        const targetRef = listBoardRefs(target.owner).find(ref => getBoardCardFromRef(ref)?.instanceId === target.instanceId);
+        // Release the old footprint before removing its multi-seat metadata.
+        if (targetRef) clearBoardCardFromField(targetRef.owner, targetRef.zone, targetRef.index, target);
+        delete target.occupiedSeatSize;
+        delete target.occupiedSeatIndexes;
+        delete target.seatAnchorIndex;
         target.baseId = "zombie";
         target.name = zombieBase.name;
         target.type = zombieBase.type;
@@ -41617,6 +41633,7 @@
         target.maxHp = zombieBase.hp;
         target.currentHp = zombieBase.hp;
         target.keywords = [...(zombieBase.keywords || [])];
+        if (targetRef) setBoardCard(targetRef.owner, targetRef.zone, targetRef.index, target);
         addLog(`${attacker.name}の効果：${previousName}をゾンビにしました。`);
       }
       const vampireLog = healed > 0 ? ` ${hasKeyword(attacker, "超吸血") ? "超吸血で気力を" : "吸血で"}${healed}回復。` : "";
