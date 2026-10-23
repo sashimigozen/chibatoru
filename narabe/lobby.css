@@ -1,0 +1,19 @@
+/* Share the normal matching screen's PC frame, surface and keyboard. */
+body.computer-active:not(.narabe-playing) { overflow: hidden; }
+#narabeComputer { --home-desk-nav-height: 0px; }
+#narabeComputer .computer-content { overflow-x: hidden; overflow-y: auto; }
+.narabe-lobby-content { max-width: 1160px; margin: 0 auto; padding: 18px 24px; }
+.narabe-lobby-content header {
+  padding: 14px 18px; border: 1px solid #b3c4dc; border-radius: 8px;
+  background: #ffffff; box-shadow: 0 6px 18px #0f172a0d;
+}
+.narabe-lobby-content .heading { padding-top: 20px; padding-bottom: 18px; }
+.narabe-lobby-content .panel {
+  border-color: #1f2937; border-radius: 8px; background: #ffffff;
+  box-shadow: 0 12px 28px #0f172a1a;
+}
+body.narabe-playing #narabeComputer { display: none; }
+@media (max-width: 650px) {
+  .narabe-lobby-content { padding: 12px; }
+  .narabe-lobby-content header { padding: 12px; gap: 10px; }
+}

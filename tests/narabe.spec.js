@@ -43,10 +43,16 @@ test('チバトル素材を使ったマッチング画面とCPU戦をPC・スマ
   for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
     await page.setViewportSize(viewport);await page.goto(url);
     await expect(page.locator('#lobby')).toBeVisible();
+    await expect(page.locator('#lobby .rules, #specialRules')).toHaveCount(0);
+    await expect(page.locator('#narabeComputer')).toBeVisible();
+    await expect(page.locator('#narabeComputer .computer-base img')).toBeVisible();
+    await expect(page.locator('#narabeComputer .computer-content #lobby')).toBeVisible();
+    await expect(page.locator('#narabeComputer .computer-content')).toHaveCSS('background-color', 'rgb(237, 242, 246)');
     await expect.poll(()=>page.locator('.battle-art').evaluate(img=>img.naturalWidth)).toBeGreaterThan(0);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     await page.screenshot({path:test.info().outputPath(`lobby-${viewport.width}.png`),fullPage:true});
     await page.locator('#solo').click(); await expect(page.locator('#battle')).toBeVisible();
+    await expect(page.locator('#narabeComputer')).toBeHidden();
     await expect(page.locator('#table .slot')).toHaveCount(50);
     expect(await page.locator('#table [data-row-label]').evaluateAll(rows=>rows.map(row=>row.dataset.rowLabel))).toEqual(['環境','教師','学生','ヴァンパイア','持ち物']);
     await expect(page.locator('#table .empty-seat')).toHaveCount(7);

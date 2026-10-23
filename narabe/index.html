@@ -4,6 +4,8 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>チバトル並べ｜チバトル</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../desktop-ui.css?v=0.26.0">
+  <link rel="stylesheet" href="lobby.css">
   <link rel="stylesheet" href="../draw-animation.css">
   <link rel="stylesheet" href="battle.css">
   <script defer src="../hand-drag-visuals.js"></script>
@@ -12,8 +14,10 @@
   <script defer src="original-card.js"></script>
   <script defer src="../server/narabe-cards.js"></script><script defer src="../server/narabe-specials.js"></script><script defer src="../server/narabe-engine.js"></script><script defer src="app.js"></script>
 </head>
-<body>
+<body class="computer-active">
   <main>
+    <section id="narabeComputer" class="mode-computer" aria-label="チバトル並べのPC">
+      <div class="computer-display"><div class="computer-content"><div class="narabe-lobby-content">
     <header><a class="back" href="../index.html">‹ チバトルへ</a><span class="mode-tag">チバトル並べ</span><span class="brand">チバトル</span></header>
     <section id="lobby">
       <div class="heading"><div><p class="eyebrow">みんなで、ひとならべ。</p><h1>チバトル並べ</h1><p>部屋番号で集まって、七並べを遊ぼう。</p></div><img src="../assets/home/nav-battle.png" alt="" class="battle-art"></div>
@@ -43,7 +47,10 @@
           <details><summary>接続先の設定</summary><label for="endpoint">七並べ用WebSocketサーバー</label><input id="endpoint" type="url"><p class="small">通常のオンライン対戦と同じサーバーを使います。接続先を変更する場合のみ設定してください。</p></details>
         </section>
       </div>
-      <section class="panel rules"><h2>チバトル並べのルール</h2><p>通常カード43枚を配り、戦意5の5枚を場に並べて残り38枚でプレイします。タイプごとに戦意順につなげます。環境10を含むカードのない7マスは配置済みの「空席」です。通常カードの能力・攻撃力・体力は判定に使いません。</p><p>専用カードは全18種類から重複なしで1人3枚。通常手札とは別に持ち、自分の手番の通常配置前に1枚まで使えます。使用後は消費し、補充はありません。専用カードが残っていても通常手札が0枚ならあがりです。</p><p>自分の番に通常カード1枚を配置するかパス。パスは合計3回まで、4回目で脱落し通常手札を場に並べます。配札で「狼(いっぴきおおかみ)」を持っていた人から開始します。戦意5を場へ移すため、開始時の通常手札枚数は人によって異なります。</p><details><summary>専用カード18種類の効果</summary><dl id="specialRules"></dl></details><p class="small">オンラインでは途中退出・切断を脱落として扱い、再接続は未対応です。通常のチバトル対戦には影響しません。</p></section>
+    </section>
+        <footer>CHIBATORU · チバトル並べ</footer>
+      </div></div></div>
+      <div class="computer-base" aria-hidden="true"><img src="../assets/tutorial/laptop-keyboard-graphite-us.svg" alt="" draggable="false"></div>
     </section>
     <section id="battle" hidden aria-label="チバトル並べ対戦画面">
       <button id="menuButton" class="battle-corner menu-button" type="button" aria-expanded="false" aria-controls="menuDrawer">MENU</button>
@@ -72,7 +79,6 @@
       <aside id="cardPreview" class="battle-drawer card-preview" hidden aria-label="カード確認"><div class="drawer-head"><strong>カード確認</strong><button id="previewClose" type="button">閉じる</button></div><div id="previewCard"></div><p id="previewName"></p><p class="small">能力は発動しません。攻撃力・体力も配置や勝敗の判定には使いません。</p></aside>
       <section id="results" class="result-overlay" hidden><div class="panel"><h2>結果</h2><ol id="rankings"></ol><button id="resultBack" class="primary">開始画面へ</button></div></section>
     </section>
-    <footer>CHIBATORU · チバトル並べ</footer>
   </main>
 </body>
 </html>

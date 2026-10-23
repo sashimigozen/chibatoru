@@ -372,7 +372,6 @@
   $('selectionPeek').onclick=()=>{selectionPeek=true;drawSpecialDialog();$('selectionReturn').focus();};
   $('selectionReturn').onclick=()=>{selectionPeek=false;$('cardPreview').hidden=true;drawSpecialDialog();$('selectionPeek').focus();};
   $('specialHelp').onclick=()=>{specialDraft=null;helpOpen=true;selectionPeek=false;drawSpecialDialog();};
-  E.specials.forEach(c=>{$('specialRules').append(text('dt',c.name),text('dd',c.text));});
   function drawer(which,open){const id=which==='menu'?'menuDrawer':'logDrawer',button=which==='menu'?'menuButton':'logButton';if(open)$('cardPreview').hidden=true;$(id).hidden=!open;$(button).setAttribute('aria-expanded',String(open));}
   $('menuButton').onclick=()=>{drawer('log',false);drawer('menu',$('menuDrawer').hidden);};$('logButton').onclick=()=>{drawer('menu',false);drawer('log',$('logDrawer').hidden);};
   $('menuClose').onclick=()=>drawer('menu',false);$('logClose').onclick=()=>drawer('log',false);
