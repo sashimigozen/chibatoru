@@ -8,6 +8,7 @@ const path = require("path");
 const { WebSocketServer } = require("ws");
 const Replay = require("../online-replay.js");
 const { createD1LogStore, createArchiveQueue } = require("./d1-log-store.js");
+const narabeRooms = require("./narabe-rooms.js").createNarabeRooms();
 
 const PORT = Number(process.env.PORT || 8787);
 const PROTOCOL_VERSION = 1;
@@ -2249,7 +2250,12 @@ function routeMessage(ws, raw) {
   }
 }
 
-wss.on("connection", (ws) => {
+wss.on("connection", (ws, request) => {
+  // Seven-only namespace; do not register normal battle routing or analytics.
+  if (new URL(request.url || "/", "http://localhost").pathname === "/narabe") {
+    narabeRooms.connect(ws);
+    return;
+  }
   ws.on("message", (raw) => routeMessage(ws, raw));
   ws.on("close", () => {
     const room = rooms.get(ws.roomId);

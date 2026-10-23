@@ -4,7 +4,8 @@
   const queues = new Map();
   function cancel() { [...active].forEach(flight => flight.dispose()); queues.clear(); }
   function sync() { [...active].forEach(flight => flight.sync()); }
-  function play({ side, cards, deck, life, canReveal, face, isCurrent, isVisualBusy, syncScale, obtained = false }) {
+  function play({ side, cards, deck, life, canReveal, face, isCurrent, isVisualBusy, syncScale, obtained = false, speed = 1 }) {
+    const playbackSpeed = Number.isFinite(speed) && speed > 0 ? speed : 1;
     if (!cards.length || (!obtained && !deck) || !isCurrent() || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const start = deck?.getBoundingClientRect() || cards[0].node.getBoundingClientRect();
     if (!start.width || !start.height) return;
@@ -77,7 +78,7 @@
       const current = () => !disposed && target.isConnected && isCurrent();
       async function animate(element, keyframes, options) {
         if (!current()) throw new Error('draw cancelled');
-        const animation = element.animate(keyframes, { fill: 'forwards', ...options });
+        const animation = element.animate(keyframes, { fill: 'forwards', ...options, duration: options.duration / playbackSpeed, delay: (options.delay || 0) / playbackSpeed });
         running.add(animation);
         await animation.finished;
         running.delete(animation);
@@ -127,6 +128,7 @@
     queues.set(side, previous);
     previous.finally(() => { if (queues.get(side) === previous) queues.delete(side); });
     syncScale?.();
+    return previous;
   }
   window.ChibattleDraw = { play, cancel, sync, isBusy: () => active.size > 0 };
   window.addEventListener('pagehide', cancel);

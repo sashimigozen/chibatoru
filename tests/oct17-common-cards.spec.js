@@ -20,8 +20,8 @@ test('新カード3枚の能力値・本文・共通カード登録', async ({pa
     const c=createCardFromBase(id,'player');
     return {stats:[c.cost,c.attack||0,c.hp||0],text:cardRulesText(c),registered:ALL_DECK_IDS.includes(id)&&SPECIALTY_CARD_IDS.common.includes(id)};
   }));
-  expect(rows.map(r=>r.stats)).toEqual([[7,0,0],[2,0,0],[3,2,1]]);
-  expect(rows.map(r=>r.text)).toEqual(['自分本体に2ダメージを与える。その後、お互いの講義室にいる出席者すべてを破壊する。','自分のターン終了まで、お互いの継続効果をすべて無効にする。','このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、3ダメージを与える。']);
+  expect(rows.map(r=>r.stats)).toEqual([[8,0,0],[2,0,0],[3,2,1]]);
+  expect(rows.map(r=>r.text)).toEqual(['お互いの講義室にいる出席者すべてを破壊する。','自分のターン終了まで、お互いの継続効果をすべて無効にする。','このカードを手札から3行3列に出席させたとき、相手の講義室にいる出席者1人を指名し、3ダメージを与える。']);
   expect(rows.every(r=>r.registered)).toBe(true);
 });
 test('一旦は両陣営の席・教卓を破壊し、環境は残す',async({page})=>{
@@ -35,10 +35,10 @@ test('一旦は両陣営の席・教卓を破壊し、環境は残す',async({pa
     const used=castImmediateItem('player',item,false);
     return {used,counts:['player','opponent'].map(s=>listBoardRefs(s).length),env:state.environment.baseId,will:state.players.player.will,life:state.players.player.life};
   });
-  expect(r).toEqual({used:true,counts:[0,0],env:'classroom',will:13,life:8});
+  expect(r).toEqual({used:true,counts:[0,0],env:'classroom',will:12,life:10});
 });
 for (const side of ['player','opponent']) {
-  for (const life of [2,3]) test('一旦は自傷で敗北したら破壊せず、耐えれば破壊する ' + side + ' ' + life, async ({page})=>{
+  for (const life of [1,2,3]) test('一旦は自傷せず低気力でも全体破壊する ' + side + ' ' + life, async ({page})=>{
     const result=await page.evaluate(({side,life})=>{
       state.currentSide=side;
       const p=state.players[side];p.life=life;
@@ -54,12 +54,11 @@ for (const side of ['player','opponent']) {
           spent:20-p.will,trashed:p.trash.some(c=>c.instanceId===item.instanceId),order};
       } finally {damagePlayer=originalDamage;destroyBoardRefsToTrash=originalDestroy;}
     },{side,life});
-    expect(result).toMatchObject({used:true,life:life-2,counts:life===2?[1,1]:[0,0],spent:7,trashed:true,
-      order:life===2?['damage']:['damage','destroy']});
-    expect(Boolean(result.gameOver)).toBe(life===2);
+    expect(result).toMatchObject({used:true,life,counts:[0,0],spent:8,trashed:true,order:['destroy']});
+    expect(Boolean(result.gameOver)).toBe(false);
   });
 }
-test('一旦は自傷を防いだ場合も破壊し、AIは致死自傷を避ける',async({page})=>{
+test('一旦のAI判断は気力や自傷防止効果に左右されない',async({page})=>{
   const result=await page.evaluate(()=>{
     state.currentSide='opponent';const p=state.players.opponent;p.life=2;
     state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('vampire','player'));
@@ -70,8 +69,9 @@ test('一旦は自傷を防いだ場合も破壊し、AIは致死自傷を避け
     const used=castImmediateItem('opponent',item,false);
     return {dangerous,protectedScore,used,life:p.life,enemy:listBoardRefs('player').length};
   });
-  expect(result).toMatchObject({dangerous:0,used:true,life:2,enemy:0});
-  expect(result.protectedScore).toBeGreaterThan(0);
+  expect(result).toMatchObject({used:true,life:2,enemy:0});
+  expect(result.dangerous).toBeGreaterThan(0);
+  expect(result.protectedScore).toBe(result.dangerous);
 });
 test('スナイプは盤面を直接指名して3ダメージ、選択を解放する',async({page})=>{
   const r=await page.evaluate(()=>{

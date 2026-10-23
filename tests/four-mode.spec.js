@@ -8,16 +8,16 @@ test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
 });
 
-test("オンラインメニューのチバトルふぉーは他のボタンと同じ色で準備中表示にする", async ({ page }) => {
+test("オンラインメニューの既存位置から独立したチバトル並べテストへ進む", async ({ page }) => {
   await page.locator("#homeNavBattleButton").click();
   const buttons = page.locator("#onlineMatchActions .online-match-button");
   await expect(buttons.nth(1)).toHaveAttribute("id", "onlinePrivateMatchButton");
   await expect(buttons.nth(2)).toHaveAttribute("id", "onlineFourMatchButton");
   const privateButton = page.locator("#onlinePrivateMatchButton");
   const fourButton = page.locator("#onlineFourMatchButton");
-  await expect(fourButton).toBeDisabled();
-  await expect(fourButton).toContainText("COMING SOON");
-  await expect(fourButton).toContainText("現在準備中です");
+  await expect(fourButton).toBeEnabled();
+  await expect(fourButton).toContainText("チバトル並べ");
+  await expect(fourButton).toContainText("テスト");
   const colors = await page.evaluate(() => {
     const privateStyle = getComputedStyle(document.getElementById("onlinePrivateMatchButton"));
     const fourStyle = getComputedStyle(document.getElementById("onlineFourMatchButton"));
@@ -33,8 +33,9 @@ test("オンラインメニューのチバトルふぉーは他のボタンと�
   expect(colors.fourBackground).toBe(colors.privateBackground);
   expect(colors.fourBorder).toBe(colors.privateBorder);
   expect(colors.fourColor).toBe(colors.privateColor);
-  await fourButton.evaluate((button) => button.click());
-  await expect(page.locator("#fourSetupScreen")).toBeHidden();
+  await fourButton.click();
+  await expect(page).toHaveURL(/narabe-test\/index.html$/);
+  await expect(page.locator('#lobby h1')).toHaveText('チバトル並べ');
 });
 
 test("ターン強度、隣接関係、共通敵得点を基準仕様どおり処理する", async ({ page }) => {

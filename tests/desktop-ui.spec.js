@@ -59,7 +59,7 @@ for (const viewport of [{ width: 1280, height: 720 }, { width: 1440, height: 900
     await expect(page.locator("#onlineMenuHead h1")).toHaveText("オンラインバトル");
     await expect(page.locator("#onlinePrivateMatchButton")).toContainText("プライベートマッチ");
     await expect(page.locator("#onlinePrivateMatchButton .online-match-sub")).toBeVisible();
-    await expect(page.locator("#onlineFourMatchButton")).toBeDisabled();
+    await expect(page.locator("#onlineFourMatchButton")).toBeEnabled();
     const tournament = page.locator("#onlineRpsTournamentButton");
     await expect(tournament).toContainText("じゃんけん大会");
     await expect(tournament).toContainText("COMING SOON");
@@ -147,7 +147,7 @@ test("同じPCの三角でバトルとソロを切り替え、ショートカッ
   const folderBox = await page.locator("#onlinePrivateMatchButton").boundingBox();
   await page.locator("#onlinePrivateMatchButton").hover();
   expect(await page.locator("#onlinePrivateMatchButton").boundingBox()).toEqual(folderBox);
-  await expect(page.locator("#onlineFourMatchButton")).toBeDisabled();
+  await expect(page.locator("#onlineFourMatchButton")).toBeEnabled();
   await page.screenshot({ path: test.info().outputPath("desktop-battle.png") });
   await page.locator(".computer-switch:not(.previous)").click();
   await expect(page.locator("#soloMenuScreen")).toBeVisible();
