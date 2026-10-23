@@ -17,6 +17,19 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+test('ジョブズウッディの食堂軽減は-1、通常戦意・ほかのカードは維持する',async({page})=>{
+  expect(await page.evaluate(()=>{
+    const cards=['player','opponent'].map(side=>createCardFromBase('jobs_woody',side));
+    state.environment=createCardFromBase('cafeteria','player');
+    const active=cards.map(card=>effectiveCardCost(card));
+    state.environment=null;
+    const normal=cards.map(card=>effectiveCardCost(card));
+    state.cafeteriaEffectPermanentlyActive=true;
+    const permanent=cards.map(card=>effectiveCardCost(card));
+    return {active,normal,permanent};
+  })).toEqual({active:[5,5],normal:[6,6],permanent:[5,5]});
+});
+
 test('新カードの能力値・所属・本文・戦意とサーバー登録', async ({ page }) => {
   const result = await page.evaluate(() => ['kakiage_teacher', 'window_eater', 'jobs_woody', 'ittan'].map(id => {
     const card = createCardFromBase(id, 'player');
@@ -27,13 +40,13 @@ test('新カードの能力値・所属・本文・戦意とサーバー登録',
       normal, discounted, text: cardRulesText(card), deck: ALL_DECK_IDS.includes(id) };
   }));
   expect(result.map(r => r.stats)).toEqual([[6,2,4],[9,4,5],[6,4,4],[8,0,0]]);
-  expect(result.map(r => r.discounted)).toEqual([6,7,4,8]);
+  expect(result.map(r => r.discounted)).toEqual([6,7,5,8]);
   expect(result.map(r => r.category)).toEqual(['common','cafeteria','cafeteria','common']);
   expect(result.every(r => r.deck)).toBe(true);
   expect(result[0].text).toBe('[陽気]\nこのカードが教卓マスにいるかぎり、自分のターン終了時に自分本体の気力を1回復する。');
   expect(result[1].text.replaceAll('\n', '')).toBe('このカードを手札から出席させたとき、相手の席マスの列を1つ選び、その列にいる出席者すべてを破壊する。環境が「食堂」なら、1つではなく2つの列を選ぶ。環境が「食堂」であるかぎり、このカードの戦意を-2する。');
   expect(result[3].text).toBe('お互いの講義室にいる出席者すべてを破壊する。');
-  expect(result[2].text.replaceAll('\n', '')).toBe('このカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-2する。');
+  expect(result[2].text.replaceAll('\n', '')).toBe('このカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。');
   const catalog = require('../server/card-catalog.json');
   const rules = fs.readFileSync(path.join(__dirname, '../card_rules.txt'), 'utf8');
   for (const r of result) {

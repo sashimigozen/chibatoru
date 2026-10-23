@@ -53,9 +53,9 @@ body.narabe-playing header,body.narabe-playing footer{display:none}
 #specialRules dt{font-weight:800;margin-top:16px}#specialRules dd{margin:5px 0;color:#52687a;line-height:1.8}
 .self-controls{position:absolute;right:24px;bottom:66px;width:var(--controls);padding:10px;display:flex;flex-direction:column;gap:10px;border-radius:10px;background:var(--play-surface);color:#233a53}
 #battle #pass{width:100%;min-height:42px;padding:8px;font-size:14px;background:#d6edfa;color:#203b56;border:1px solid #9dc3dc;border-radius:7px;box-shadow:none;z-index:2}
-.hand-window{width:100%;padding-top:22px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#9cb7c9 transparent}
+.hand-window{width:100%;padding-top:22px;overflow:visible}
 #battle .hand{display:flex;flex-wrap:nowrap;justify-content:center;align-items:flex-end;gap:0;width:100%;min-width:0;padding:0 10px 5px;isolation:isolate}
-#battle .hand .playing-card{flex:0 0 var(--hand-width);width:var(--hand-width);height:var(--hand-height);margin-left:var(--overlap,-32px);box-shadow:-2px 2px 4px #18365335;border-radius:7px;transform-origin:bottom center;touch-action:none;cursor:grab}
+#battle .hand .playing-card{position:absolute;width:var(--hand-width);height:var(--hand-height);margin:0;box-shadow:-2px 2px 4px #18365335;border-radius:7px;transform-origin:bottom center;touch-action:none;cursor:grab}
 #battle .hand .playing-card:first-child{margin-left:0}
 #battle .hand .playing-card:not(.playable){opacity:1}
 #battle .hand .playing-card:not(.playable) .card-face{filter:brightness(.88)}
@@ -111,5 +111,40 @@ html.narabe-input-blocked #hand .playing-card,html.narabe-input-blocked #pass{cu
   #battle .table{--board-card:min(calc((100vw - var(--rail) - 140px)/10),calc((100dvh - var(--hand-height) - 191px)*21/160))}
   #battle .players{top:64px;bottom:60px;padding:6px;gap:4px}.opponent-backs{margin-bottom:3px;min-height:12px}
   .player-info{padding:5px 8px;min-height:0}.player-info>div{margin-top:3px}
-  .self-area,.self-controls{bottom:60px}.self-area{min-height:calc(var(--hand-height) + 28px)}
+  .self-area{bottom:60px;min-height:calc(var(--hand-height) + 28px)}
+}
+
+/* Hand and controls share no horizontal space: controls belong to the board. */
+#battle .table-panel{bottom:calc(var(--hand-stack-height,var(--hand-height)) + 112px);padding-right:calc(var(--controls) + 34px);overflow:hidden}
+.table-scroll{width:100%;height:100%;min-height:0;overflow:auto;display:flex;justify-content:center;align-items:center;flex:none}
+#battle .table{--board-card:min(calc((100vw - var(--rail) - var(--controls) - 176px)/10),calc((100dvh - var(--hand-stack-height,var(--hand-height)) - 226px)*21/160),110px)}
+.self-area{right:24px;min-height:calc(var(--hand-stack-height,var(--hand-height)) + 34px)}
+#battle .hand{position:relative;display:block;padding:0;isolation:isolate}
+.table-panel>.self-controls{right:12px;bottom:12px;width:var(--controls)}
+.special-hand-area{flex:0 0 144px;padding:0 0 0 10px;align-self:center}
+.special-hand{overflow:visible;gap:8px;padding:6px 0 0}
+.special-hand .special-card{flex:1 1 0;min-width:0;max-width:40px;height:calc(var(--hand-height) - 10px);min-height:110px;padding:8px 4px;align-items:center;justify-content:center}
+.special-hand .special-card>strong{writing-mode:vertical-rl;text-orientation:upright;font-size:14px;line-height:1.3;letter-spacing:.08em;white-space:nowrap}
+.special-details>strong{writing-mode:horizontal-tb}
+.selection-return{position:fixed;right:24px;top:50%;z-index:85;padding:12px 18px;border:1px solid #94a3b8;border-radius:8px;background:#f8fafc;color:#1e293b;box-shadow:0 4px 0 #cbd5e1,0 10px 18px #0f172a1f;font:inherit;cursor:pointer}
+.selection-return[hidden],.special-reveal[hidden]{display:none}
+.special-modal .drawer-head{gap:10px}.special-modal .drawer-head>strong{flex:1}
+.special-reveal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;pointer-events:none}
+#specialRevealCard{filter:drop-shadow(0 24px 34px #0f172a57);transform-origin:center}
+#specialRevealCard>.special-card{width:76px;max-width:none;height:300px;align-items:center;justify-content:center}
+#specialRevealCard strong{writing-mode:vertical-rl;text-orientation:upright;font-size:24px;letter-spacing:.12em;white-space:nowrap}
+#specialRevealName{position:absolute;top:calc(50% + 170px);padding:8px 16px;border-radius:8px;background:#f8fbfdf2;color:#233a53;font-weight:800}
+@media(max-width:650px){
+  #battle{--hand-width:52px}
+  #battle .players{bottom:calc(var(--hand-stack-height,var(--hand-height)) + 150px)}
+  .self-area{left:8px;right:8px;bottom:84px}
+  .special-hand-area{flex-basis:88px;padding-left:5px}.special-hand{gap:4px}
+  .special-hand .special-card{height:112px;min-height:112px;padding:5px 2px}
+  .special-hand .special-card>strong{font-size:11px;letter-spacing:0}
+  #battle .table-panel{bottom:calc(var(--hand-stack-height,var(--hand-height)) + 132px);padding:8px 8px 112px;min-height:0}
+  #battle .table{--board-card:34px}
+  .table-scroll{justify-content:flex-start;align-items:flex-start}
+  .table-panel>.self-controls{position:absolute;right:8px;bottom:8px;width:190px;flex-direction:row;align-items:center;padding:5px;gap:6px;z-index:3}
+  .self-controls .self-info{width:100px;flex:none}.self-controls #pass{flex:1;min-width:0}
+  .selection-return{right:12px;font-size:12px;padding:10px}
 }

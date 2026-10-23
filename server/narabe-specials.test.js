@@ -10,6 +10,16 @@ function game(id){
 const use=(g,id,params={})=>{assert.equal(E.act(g,0,{type:'special',specialId:id,...params},()=>.4),true);};
 const choose=(g,seat,cardId)=>assert.equal(E.act(g,seat,{type:'choice',cardId,requestId:g.pending?.requestId},()=>.4),true);
 
+test('使用演出は成功した専用カードだけを公開し、通常配置や脱落では再発行しない',()=>{
+  const g=game('reverse');assert.equal(E.view(g,1).lastSpecial,undefined);
+  assert.equal(E.act(g,0,{type:'special',specialId:'block'}),false);assert.equal(g.lastSpecial,undefined);
+  use(g,'reverse');const event={...g.lastSpecial};
+  assert.equal(event.id,'reverse');assert.equal(event.seat,0);assert.ok(Number.isInteger(event.serial));
+  assert.deepEqual(E.view(g,1).lastSpecial,event);
+  assert.equal(E.act(g,0,{type:'play',cardId:c(0,4).id}),true);assert.deepEqual(g.lastSpecial,event);
+  E.forfeit(g,1);assert.deepEqual(g.lastSpecial,event);
+});
+
 test('18種類が全員重複なし・各人3枚。通常43枚・空席7・環境10は空席',()=>{
   for(let n=2;n<=6;n++)for(let k=0;k<30;k++){
     const g=E.create(Array.from({length:n},(_,i)=>`P${i}`));

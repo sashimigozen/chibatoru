@@ -41,7 +41,8 @@ test('チバトル素材を使ったマッチング画面とCPU戦をPC・スマ
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
     const rev = await page.locator('#logs li').count();
     const card=page.locator('#hand button.playable:enabled').first();
-    if(await card.count())await card.click();else await page.locator('#pass').click();
+    // Click the exposed left edge of an overlapping hand, as a player would.
+    if(await card.count())await card.click({position:{x:10,y:35}});else await page.locator('#pass').click();
     await expect.poll(()=>page.locator('#logs li').count()).toBeGreaterThan(rev);
   }
   expect(errors).toEqual([]);
@@ -81,10 +82,11 @@ test('通常版と同じ配札演出とドラッグ表示を使用し、左上ME
   });
   expect(layout.table.height).toBeGreaterThan(650);
   expect(layout.table.bottom).toBeLessThan(layout.hand.top);
-  expect(layout.hand.right).toBeLessThan(layout.controls.left);
+  expect(layout.controls.right).toBeLessThan(layout.table.right);
+  expect(layout.controls.bottom).toBeLessThan(layout.table.bottom);
   expect(layout.controls.width).toBe(160);
   expect(layout.surface).toBe('rgb(248, 251, 253)');expect(layout.outer).toBe('rgb(237, 243, 247)');
-  if(layout.cards.length>1)expect(layout.cards[1].x-layout.cards[0].x).toBeGreaterThanOrEqual(layout.cards[0].width*.59);
+  if(layout.cards.length>1)expect(layout.cards[1].x-layout.cards[0].x).toBeGreaterThanOrEqual(layout.cards[0].width*.42-1);
   const card=page.locator('#hand button.playable').first(),cardId=await card.getAttribute('data-card-id'),source=await card.boundingBox();
   const target=await page.locator(`#table [data-card-id="${cardId}"]`).boundingBox();
   await page.mouse.move(source.x+10,source.y+source.height/2);await page.mouse.down();await page.mouse.move(target.x+target.width/2,target.y+target.height/2,{steps:12});

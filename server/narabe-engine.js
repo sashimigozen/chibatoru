@@ -104,6 +104,7 @@
     if((id==='exchange'||id==='cunning')&&!chosen)return false;
     if(id==='cunning'&&!canPlay(g,chosen,true))return false;
     p.specials=p.specials.filter(x=>x!==id);g.specialDiscard.push(id);g.turnState.specialUsed=true;
+    g.lastSpecial={seat,id,serial:g.revision+1};
     g.log.push(`${p.name}：専用カード「${specialById.get(id).name}」を使用しました。`);
     if(id==='chaos'){
       const seats=activeSeats(g),normal=shuffle(seats.flatMap(i=>g.players[i].hand),random),dedicated=shuffle(seats.flatMap(i=>g.players[i].specials),random);
@@ -219,7 +220,7 @@
   }
   function view(g,seat){
     const actors=actorSeats(g),choice=choiceFor(g,seat);
-    return {board:g.board,turn:g.turn,turnState:g.turnState,direction:g.direction,blocks:g.blocks,revision:g.revision,over:g.over,log:g.log,startingCards:g.startingCards,lastMove:g.lastMove,actors,
+    return {board:g.board,turn:g.turn,turnState:g.turnState,direction:g.direction,blocks:g.blocks,revision:g.revision,over:g.over,log:g.log,startingCards:g.startingCards,lastMove:g.lastMove,lastSpecial:g.lastSpecial,actors,
       pending:g.pending?{kind:g.pending.kind,source:g.pending.source,requestId:g.pending.requestId}:null,choice,
       players:g.players.map((p,i)=>({name:p.name,count:p.hand.length,specialCount:p.specials.length,passes:p.passes,status:p.status,rank:p.rank,confused:p.confused,
         revealed:p.hand.filter(c=>p.revealed.includes(c.id)),...(i===seat?{hand:p.hand,specials:p.specials,usableSpecials:p.specials.filter(id=>canSpecial(g,seat,id))}:{})}))};

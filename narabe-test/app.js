@@ -6,6 +6,7 @@
   let shown = null, ownSeat = 0, epoch = 0, visualQueue = Promise.resolve(), busy = false, pending = false;
   let selected = null, cancelDrags = [], activeMove = null;
   let specialDraft=null,choiceSelection=null,choiceRevision=-1,helpOpen=false;
+  let selectionPeek=false;
   const dealFlights=new Set();
   function cancelDealFlights(){for(const flight of dealFlights)flight.animation.cancel();}
   const localHost = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
@@ -25,7 +26,7 @@
     cancelDrags.forEach(cancel => cancel()); cancelDrags = []; shown = null; selected = null; busy = false; pending = false;
     document.body.classList.remove('narabe-playing'); document.documentElement.classList.remove('narabe-input-blocked');
     $('menuDrawer').hidden = true; $('logDrawer').hidden = true;$('cardPreview').hidden=true;
-    $('specialDialog').hidden=true;specialDraft=null;helpOpen=false;choiceSelection=null;choiceRevision=-1;
+    $('specialDialog').hidden=true;$('selectionReturn').hidden=true;selectionPeek=false;specialDraft=null;helpOpen=false;choiceSelection=null;choiceRevision=-1;
     $('menuButton').setAttribute('aria-expanded','false'); $('logButton').setAttribute('aria-expanded','false');
     clearTimeout(cpuTimer); clearTimeout(helloTimer); const old = socket; socket = null;
     old?.close(); connecting = false; state = null; roomCode = ''; local = null;
@@ -77,11 +78,11 @@
     }, 650);
   }
   function myTurn(g = shown, seat = ownSeat) { return Boolean(g && !g.over && !g.pending && !g.presenting && g.turn === seat && g.players[seat].status === 'playing'); }
-  const canPlace=c=>Boolean(shown&&E.playable(shown,ownSeat).some(card=>card.id===c.id));
+  const canPlace=c=>Boolean(shown&&!specialDraft&&!shown.choice&&E.playable(shown,ownSeat).some(card=>card.id===c.id));
   const placeAction=c=>({type:shown.turnState.ordinary<1+shown.turnState.extra?'play':'chain',cardId:c.id});
   function refreshControls() {
     document.documentElement.classList.toggle('narabe-input-blocked', busy || pending || Boolean(shown?.presenting));
-    $('pass').disabled = busy || pending || !myTurn();
+    $('pass').disabled = busy || pending || !myTurn() || Boolean(specialDraft);
     $('hand').querySelectorAll('button').forEach(b => {
       b.disabled = busy || pending;
       const card=E.cards.find(c=>String(c.id)===b.dataset.cardId);
@@ -113,42 +114,48 @@
   }
   function fitCards() {
     const hand = $('hand');hand.style.minWidth='';
-    const count = hand.children.length, width = hand.clientWidth - 20;
-    if (count > 1) {
-      const cw = hand.firstElementChild.getBoundingClientRect().width;
-      // Keep at least 60% of each card exposed; long hands scroll instead of collapsing.
-      const step = Math.max(cw * .6, Math.min(cw * .75, (width - cw) / (count-1)));
-      hand.style.setProperty('--overlap',`${step-cw}px`);
-      hand.style.minWidth = `${cw + step*(count-1) + 20}px`;
-    } else hand.style.minWidth = '';
+    const count=hand.children.length,width=Math.max(1,hand.clientWidth-20);
+    if(count){
+      const cw=hand.firstElementChild.offsetWidth,ch=hand.firstElementChild.offsetHeight;
+      const capacity=Math.max(1,Math.min(count,Math.floor((width-cw)/(cw*.42))+1));
+      const rows=Math.ceil(count/capacity),columns=Math.ceil(count/rows),step=columns>1?Math.min(cw*.75,(width-cw)/(columns-1)):0;
+      [...hand.children].forEach((card,i)=>{const row=Math.floor(i/columns),n=Math.min(columns,count-row*columns);card.style.left=`${10+(width-cw-step*(n-1))/2+(i%columns)*step}px`;card.style.top=`${row*(ch+22)}px`;});
+      hand.style.height=`${rows*ch+(rows-1)*22+5}px`;
+      $('battle').style.setProperty('--hand-stack-height',`${Math.max(112,rows*ch+(rows-1)*22)}px`);
+    }else{hand.style.height='var(--hand-height)';$('battle').style.removeProperty('--hand-stack-height');}
     $('players').querySelectorAll('.opponent-backs').forEach(row => {
       const n = row.children.length, cw = row.firstElementChild?.getBoundingClientRect().width || 0;
       if (n > 1) row.style.setProperty('--back-overlap',`${Math.min(20, (row.clientWidth-cw-10)/(n-1))-cw}px`);
     });
   }
-  function specialNode(id,tag='button'){
+  function specialNode(id,tag='button',details=false){
     const c=E.specialById.get(id),el=text(tag,'','special-card');
     if(tag==='button')el.type='button';el.dataset.specialId=id;
-    el.append(text('span','専用','special-card-tag'),text('strong',c.name),text('span',c.text,'special-card-text'));
+    el.append(text('strong',c.name));
+    if(details){el.classList.add('special-details');el.append(text('span',c.text,'special-card-text'));}
     el.setAttribute('aria-label',`${c.name}：${c.text}`);el.title=c.text;return el;
   }
   function beginSpecial(id){
     if(busy||pending||!shown?.players[ownSeat]?.usableSpecials?.includes(id))return;
-    specialDraft={id,params:{}};helpOpen=false;drawSpecialDialog();
+    specialDraft={id,params:{}};helpOpen=false;selectionPeek=false;drawSpecialDialog();
   }
   function selectOption(button,callback){button.type='button';button.onclick=callback;return button;}
   function drawSpecialDialog(){
     const dialog=$('specialDialog'),choice=shown?.choice;
+    refreshControls();
+    if(choice&&choiceRevision!==choice.requestId){choiceRevision=choice.requestId;choiceSelection=null;selectionPeek=false;}
+    const hasSelection=Boolean(choice||specialDraft||helpOpen);
+    if(!hasSelection)selectionPeek=false;
+    $('selectionReturn').hidden=!hasSelection||!selectionPeek||busy;
     if(!shown||shown.presenting||busy){dialog.hidden=true;return;}
-    dialog.hidden=!(choice||specialDraft||helpOpen);if(dialog.hidden)return;
+    dialog.hidden=!hasSelection||selectionPeek;if(dialog.hidden)return;
     const options=$('specialOptions');options.replaceChildren();$('specialConfirm').disabled=false;
     $('specialClose').hidden=Boolean(choice);$('specialConfirm').hidden=false;
     if(helpOpen&&!choice&&!specialDraft){
       $('specialTitle').textContent='専用カードのルール';$('specialText').textContent='全員を通して重複なしで1人3枚。自分の通常配置前に1手番1枚まで。使用後は消費し、補充はありません。通常手札が0枚であがりです。';
-      E.specials.forEach(c=>options.append(specialNode(c.id,'div')));$('specialConfirm').hidden=true;return;
+      E.specials.forEach(c=>options.append(specialNode(c.id,'div',true)));$('specialConfirm').hidden=true;return;
     }
     if(choice){
-      if(choiceRevision!==choice.requestId){choiceRevision=choice.requestId;choiceSelection=null;}
       $('specialTitle').textContent=choice.title;
       $('specialText').textContent=choice.kind==='info'?'この情報はあなただけに表示されます。確認を終了すると再び隠されます。':'カードを1枚選んで確定してください。全員交換と公開授業は、全員の選択が揃うまで待ちます。';
       if(choice.kind==='info'){
@@ -179,7 +186,22 @@
       shown.players[ownSeat].hand.filter(c=>id!=='cunning'||E.canPlay(shown,c,true)).forEach(c=>{const b=cardNode(c,'button');b.setAttribute('aria-label',E.cardName(c));b.classList.toggle('selected',params.cardId===c.id);row.append(selectOption(b,()=>{params.cardId=c.id;drawSpecialDialog();}));});options.append(row);
     }
     $('specialConfirm').textContent=complete?'使用する':'対象を選んでください';$('specialConfirm').disabled=!complete;
-    $('specialConfirm').onclick=()=>{const action={type:'special',specialId:id,...params};specialDraft=null;perform(action);dialog.hidden=true;};
+    $('specialConfirm').onclick=()=>{const action={type:'special',specialId:id,...params};specialDraft=null;selectionPeek=false;perform(action);dialog.hidden=true;};
+  }
+  async function revealSpecial(before,after,token){
+    const event=after.lastSpecial;
+    if(!event||event.serial===before.lastSpecial?.serial)return;
+    const overlay=$('specialReveal'),card=$('specialRevealCard');
+    card.replaceChildren(specialNode(event.id,'div'));
+    $('specialRevealName').textContent=`${after.players[event.seat].name}：${E.specialById.get(event.id).name}`;
+    overlay.hidden=false;
+    const target=(event.seat===ownSeat?$('specialHand'):$(`opponentInfo${event.seat}`)).getBoundingClientRect(),rect=card.getBoundingClientRect();
+    card.style.setProperty('--play-target-x',`${target.x+target.width/2-rect.x-rect.width/2}px`);
+    card.style.setProperty('--play-target-y',`${target.y+target.height/2-rect.y-rect.height/2}px`);
+    const animation=card.animate(window.NarabeOriginalCard.playRevealFrames,{duration:1450,easing:'ease-in-out',fill:'forwards'});
+    activeMove=animation;
+    try{await animation.finished;}catch{}finally{overlay.hidden=true;card.replaceChildren();activeMove=null;}
+    if(token!==epoch)return;
   }
   async function deal(g, seat, token) {
     $('dealSource').hidden = false;
@@ -263,7 +285,7 @@
         if(token!==epoch)return;
         shown=next;
         if(socket)send({type:'dealt'});
-      } else { await movePlayedCard(shown,next,token); if(token!==epoch)return; shown=next;renderGame(next,seat); }
+      } else { await revealSpecial(shown,next,token);if(token!==epoch)return;await movePlayedCard(shown,next,token); if(token!==epoch)return; shown=next;renderGame(next,seat); }
       busy=false;renderGame(next,seat);refreshControls();drawSpecialDialog();
       if(local)scheduleCPU();
     }).catch(()=>{if(token===epoch){busy=false;pending=false;window.ChibattleDraw.cancel();refreshControls();status('演出を中断しました。開始画面からやり直してください。');}});
@@ -310,12 +332,12 @@
       b.dataset.cardId=c.id;b.setAttribute('aria-label',E.cardName(c));b.title=E.cardName(c)+' — '+(playable?'クリック、または場へドラッグして出す':'持つことはできますが、今は出せません');
       b.oncontextmenu=event=>{event.preventDefault();inspect(c);};
       cancelDrags.push(window.ChibattleHandDrag.bind(b,{
-        canLift:()=>!busy&&!pending&&!shown?.presenting,
+        canLift:()=>!busy&&!pending&&!shown?.presenting&&!specialDraft&&!shown?.choice,
         onStart:()=>select(c,b),
         onMove:event=>{const cell=document.elementFromPoint(event.clientX,event.clientY)?.closest('.slot');$('table').querySelectorAll('.drop-hover').forEach(el=>el.classList.remove('drop-hover'));if(cell?.dataset.cardId===String(c.id)&&myTurn()&&canPlace(c))cell.classList.add('drop-hover');},
         onDrop:event=>{const cell=document.elementFromPoint(event.clientX,event.clientY)?.closest('.slot');if(cell?.dataset.cardId===String(c.id)&&myTurn()&&canPlace(c))perform(placeAction(c));},
         onFinish:clearHints,
-        onClick:()=>{if(busy||pending)return;if(myTurn()&&canPlace(c))perform(placeAction(c));else{select(c,b);status(myTurn()?'そのカードは、つながり・配置禁止・追加配置の条件を満たしていません。':'ほかのプレイヤーの手番または選択中です。');}}
+        onClick:()=>{if(busy||pending)return;if(specialDraft||shown?.choice){inspect(c);return;}if(myTurn()&&canPlace(c))perform(placeAction(c));else{select(c,b);status(myTurn()?'そのカードは、つながり・配置禁止・追加配置の条件を満たしていません。':'ほかのプレイヤーの手番または選択中です。');}}
       }));$('hand').append(b);
     });
     $('selfName').textContent=mine.name;$('selfPasses').textContent=`パス：${mine.passes}回`;$('selfInfo').classList.toggle('active',operative);
@@ -336,10 +358,12 @@
   $('quit').onclick = () => { if ((local && !local.over || state?.game && !state.game.over) && !confirm('開始画面に戻りますか？ オンライン対戦中は脱落になります。')) return; disconnect(''); };
   $('resultBack').onclick=()=>disconnect('');
   $('pass').onclick = () => { if(busy||pending)return;const ending=shown?.turnState?.ordinary>0,free=shown?.turnState?.supplement;if(!ending&&!free&&shown?.players[ownSeat]?.passes>=3&&!confirm('4回目のパスで脱落します。よろしいですか？'))return;perform({type:ending?'end':'pass'}); };
-  $('specialClose').onclick=()=>{if(shown?.choice)return;specialDraft=null;helpOpen=false;$('specialDialog').hidden=true;};
-  $('specialHelp').onclick=()=>{specialDraft=null;helpOpen=true;drawSpecialDialog();};
+  $('specialClose').onclick=()=>{if(shown?.choice)return;specialDraft=null;helpOpen=false;selectionPeek=false;drawSpecialDialog();};
+  $('selectionPeek').onclick=()=>{selectionPeek=true;drawSpecialDialog();$('selectionReturn').focus();};
+  $('selectionReturn').onclick=()=>{selectionPeek=false;$('cardPreview').hidden=true;drawSpecialDialog();$('selectionPeek').focus();};
+  $('specialHelp').onclick=()=>{specialDraft=null;helpOpen=true;selectionPeek=false;drawSpecialDialog();};
   E.specials.forEach(c=>{$('specialRules').append(text('dt',c.name),text('dd',c.text));});
-  function drawer(which,open){const id=which==='menu'?'menuDrawer':'logDrawer',button=which==='menu'?'menuButton':'logButton';$(id).hidden=!open;$(button).setAttribute('aria-expanded',String(open));}
+  function drawer(which,open){const id=which==='menu'?'menuDrawer':'logDrawer',button=which==='menu'?'menuButton':'logButton';if(open)$('cardPreview').hidden=true;$(id).hidden=!open;$(button).setAttribute('aria-expanded',String(open));}
   $('menuButton').onclick=()=>{drawer('log',false);drawer('menu',$('menuDrawer').hidden);};$('logButton').onclick=()=>{drawer('menu',false);drawer('log',$('logDrawer').hidden);};
   $('menuClose').onclick=()=>drawer('menu',false);$('logClose').onclick=()=>drawer('log',false);
   $('previewClose').onclick=()=>{$('cardPreview').hidden=true;};

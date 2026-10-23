@@ -30,6 +30,10 @@
       return `${target}{${rule[1]}}`;
     }).join('\n');
     sheet.replaceSync(css+'\n'+costRules+'\n'+bridge);
+    // The same entrance, hold and departure keyframes as normal item use.
+    const reveal=css.match(/@keyframes revealToTrash\s*\{([\s\S]*?)\n    \}/)?.[1];
+    if(!reveal)throw Error('通常版の使用演出を読み込めませんでした。');
+    window.NarabeOriginalCard.playRevealFrames=[...reveal.matchAll(/([\d%,\s]+)\{([^}]+)\}/g)].flatMap(rule=>rule[1].trim().split(',').map(key=>({offset:parseFloat(key)/100,opacity:rule[2].match(/opacity:\s*([^;]+);/)[1],transform:rule[2].match(/transform:\s*([^;]+);/)[1]})));
   });
   const escape = value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   class OriginalCard extends HTMLElement {
