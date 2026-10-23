@@ -18,5 +18,5 @@ const server = http.createServer((req, res) => {
 });
 const wss = new WebSocketServer({ server, path: '/narabe', maxPayload: 4096 });
 wss.on('connection', ws => rooms.connect(ws));
-server.listen(port, '127.0.0.1', () => console.log(`チバトル並べ: http://127.0.0.1:${port}/narabe-test/`));
+server.listen(port, '127.0.0.1', () => console.log(`チバトル並べ: http://127.0.0.1:${port}/narabe/`));
 for (const signal of ['SIGTERM', 'SIGINT']) process.on(signal, () => { rooms.close(); wss.close(); server.close(() => process.exit(0)); });

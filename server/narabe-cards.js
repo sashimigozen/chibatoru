@@ -328,8 +328,8 @@
     "name": "ジョブズウッディ",
     "type": "vampire",
     "cost": 6,
-    "attack": 4,
-    "hp": 4
+    "attack": 3,
+    "hp": 3
   },
   {
     "baseId": "window_eater",

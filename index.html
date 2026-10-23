@@ -14280,6 +14280,13 @@
     .battle-screen .board-card.attack-ready { outline: 2px solid #16a356 !important; outline-offset: 1px; box-shadow: 0 0 10px rgba(22,163,86,.43) !important; }
     .battle-screen .board-card.attack-target-ready { outline: 2px solid #d33d45 !important; outline-offset: 2px; box-shadow: 0 0 11px rgba(211,61,69,.42) !important; }
     .battle-screen .board-card.selection-candidate { outline: 2px solid #317ee4 !important; outline-offset: 2px; box-shadow: 0 0 11px rgba(49,126,228,.42) !important; }
+    .battle-screen .seat-grid > .column-choice-layer { position:absolute; inset:0; z-index:24; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:2px; pointer-events:none; }
+    .battle-screen .column-choice-button { position:relative; min-width:0; height:100%; padding:0; border:2px solid #317ee4; border-radius:7px; background:rgba(49,126,228,.10); color:#234c7b; box-shadow:inset 0 0 16px rgba(49,126,228,.18),0 0 10px rgba(49,126,228,.42); cursor:pointer; pointer-events:auto; animation:column-choice-glow 1.4s ease-in-out infinite alternate; }
+    .battle-screen .column-choice-button > span { position:absolute; top:5px; left:50%; transform:translateX(-50%); padding:3px 6px; border-radius:5px; background:#f8fbfdeb; font-size:12px; font-weight:900; white-space:nowrap; }
+    .battle-screen .column-choice-button.column-selected { border:3px solid #235b9c; background:rgba(49,126,228,.27); box-shadow:inset 0 0 0 2px #f8fbfd,0 0 14px rgba(49,126,228,.6); }
+    .battle-screen .column-choice-button:focus-visible { outline:3px solid #233a53; outline-offset:2px; }
+    @keyframes column-choice-glow { to { box-shadow:inset 0 0 20px rgba(49,126,228,.28),0 0 16px rgba(49,126,228,.64); } }
+    @media(prefers-reduced-motion:reduce) { .battle-screen .column-choice-button { animation:none; } }
     /* Scale the selected card, not the slot or its internal card template. */
     .battle-screen .field-card.board-card.selected {
       scale: 1.08;
@@ -17852,8 +17859,8 @@
           <span class="online-match-sub">部屋コードを作る、または入力して入室します</span>
         </button>
         <button class="online-match-button" id="onlineFourMatchButton" type="button">
-          <span class="online-match-main">チバトル並べ <span class="online-match-coming-soon">テスト</span></span>
-          <span class="online-match-sub">七並べのテストサイトへ。1人でお試し・2〜6人でプレイ</span>
+          <span class="online-match-main">チバトル並べ</span>
+          <span class="online-match-sub">1人でCPUと対戦・2〜6人でオンライン対戦</span>
         </button>
         <button class="online-match-button" id="onlineSpectateButton" type="button">
           <span class="online-match-main">観戦</span>
@@ -19492,7 +19499,7 @@
       ittan: { name: "一旦", type: "item", cost: 8, target: "self", category: "common" },
       kakiage_teacher: { name: "かき揚げ教師", type: "teacher", cost: 6, attack: 2, hp: 4, keywords: ["陽気"], allowedZones: ["teacher"], category: "common" },
       window_eater: { name: "窓辺イーター", type: "vampire", cost: 9, attack: 4, hp: 5, allowedZones: ["teacher", "seat"], category: "cafeteria" },
-      jobs_woody: { name: "ジョブズウッディ", type: "vampire", cost: 6, attack: 4, hp: 4, allowedZones: ["teacher", "seat"], category: "cafeteria" },
+      jobs_woody: { name: "ジョブズウッディ", type: "vampire", cost: 6, attack: 3, hp: 3, allowedZones: ["teacher", "seat"], category: "cafeteria" },
       kashikashi: { name: "カシカシ", type: "item", cost: 2, target: "self", category: "common" },
       window_snipe_student: { name: "窓からスナイプ学生", type: "student", cost: 3, attack: 2, hp: 1, allowedZones: ["seat"], category: "common" },
       general_student: { name: "一般学生", type: "student", cost: 2, attack: 2, hp: 2, allowedZones: ["seat"] },
@@ -19915,18 +19922,19 @@
         version: "ver.0.31.0",
         versioning: "semver",
         date: "2026年10月23日",
-        summary: "チバトル並べ・専用カード18種類と通常版の新カード3枚を追加。「一旦」「見習いヴァンパイア」も調整。",
+        summary: "チバトル並べを正式モードとして追加。並べ専用カード18種類と通常版の新カード3枚を追加。「一旦」「見習いヴァンパイア」も調整。",
         changes: [
+          { category: "表示・操作改善", title: "効果による出席先・列の選択", after: "ジョブズウッディで見習いヴァンパイアを出席させる際は、既存の特殊出席と同じく講義室の空き席マスを直接選びます。食堂では1人ずつ出席先を選び、教卓や相手のマスは選べません。窓辺イーターは相手の講義室の列全体を光らせ、盤面上で列を選択・解除し、右側の「破壊する」で確定します。食堂では異なる2列を選びます。オンラインのゲストも自分の画面で選択できます。カード本文・能力値・出席人数・破壊範囲は変更していません。" },
           { category: "カード調整", title: "ジョブズウッディ",
             before: "ジョブズウッディ／ヴァンパイア／食堂／戦意6／攻撃力4／体力4\nこのカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
-            after: "ジョブズウッディ／ヴァンパイア／食堂／戦意6／攻撃力4／体力4\nこのカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。" },
+            after: "ジョブズウッディ／ヴァンパイア／食堂／戦意6／攻撃力3／体力3\nこのカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。" },
           { category: "表示・操作改善", title: "チバトル並べの手札と専用カード", after: "パスと自分の情報を盤面内の右下へ移し、通常手札の横幅を拡大。手札枚数に応じて重なりや段数を調整し、手札の横スクロールをなくしました。専用カードは白銀の縦長の短冊にカード名だけを表示し、効果本文は使用確認とルール一覧で確認できます。専用カードを使うと、通常版と同じ中央への拡大表示と退出演出を全員に表示します。効果の対象選択・確認中も「盤面を見る」で一時的に隠し、選択を保ったまま盤面・ログを確認して選択画面へ戻れます。" },
           { category: "カード調整", title: "全ロック",
             before: "全ロック／環境／妨害・LO／戦意8／攻撃力0／体力0\nお互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。",
             after: "全ロック／環境／妨害・LO／戦意7／攻撃力0／体力0\nお互いの場の空席マスには出席できない。このカードが出る前に出席者がいた席マスは、その出席者が場を離れてもこの効果は適用されない。" },
           { category: "新カード", title: "かき揚げ教師", after: "教師／共通カード／戦意6／攻撃力2／体力4\n[陽気]\nこのカードが教卓マスにいるかぎり、自分のターン終了時に自分本体の気力を1回復する。" },
           { category: "新カード", title: "窓辺イーター", after: "ヴァンパイア／食堂／戦意9／攻撃力4／体力5\nこのカードを手札から出席させたとき、相手の席マスの列を1つ選び、その列にいる出席者すべてを破壊する。環境が「食堂」なら、1つではなく2つの列を選ぶ。環境が「食堂」であるかぎり、このカードの戦意を-2する。" },
-          { category: "新カード", title: "ジョブズウッディ", after: "ヴァンパイア／食堂／戦意6／攻撃力4／体力4\nこのカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。" },
+          { category: "新カード", title: "ジョブズウッディ", after: "ヴァンパイア／食堂／戦意6／攻撃力3／体力3\nこのカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。" },
           { category: "カード調整", title: "一旦",
             before: "持ち物／共通カード／戦意7／攻撃力0／体力0\n自分本体に2ダメージを与える。その後、お互いの講義室にいる出席者すべてを破壊する。",
             after: "持ち物／共通カード／戦意8／攻撃力0／体力0\nお互いの講義室にいる出席者すべてを破壊する。" },
@@ -19951,7 +19959,7 @@
           {"category":"新カード","title":"チバトル並べ専用：特別補講","after":"専用カード／チバトル並べ限定\n配置可能な通常カードがない場合にのみ使用できる。このターン、通常カードを配置できない場合、使用済みパス回数を増やさずに手番を終了できる。"},
           {"category":"新カード","title":"チバトル並べ専用：一斉点呼","after":"専用カード／チバトル並べ限定\nプレイ中の全プレイヤーは、現在の手番のプレイヤーから現在の進行方向に、配置可能な通常カードがあれば1枚を選んで配置する。配置可能かは各プレイヤーの処理時に判定する。通常の手番は消費しない。"},
           {"category":"新カード","title":"チバトル並べ専用：自主休講","after":"専用カード／チバトル並べ限定\nこのターン、通常カードを配置せず、使用済みパス回数を増やさずに手番を終了する。"},
-          { category: "システム", title: "チバトル並べ（テスト）", after: "オンラインメニューの「チバトルふぉー」を「チバトル並べ」に変更。通常カード43枚を使い、5タイプごとに戦意5からつなげます。教師6にかき揚げ教師、ヴァンパイア6にジョブズウッディ、ヴァンパイア9に窓辺イーター、持ち物8に一旦を採用。環境7に全ロック、環境8にコートダジュールを採用。環境10は空席へ変更し、カードがない7マスは配置済みの空席とします。通常カードの能力・攻撃力・体力は判定に使いません。専用カードは18種類から全員を通して重複なしで1人3枚配り、補充なし。通常配置前に1手番1枚まで使えます。通常手札が0枚であがりです。CPU戦と2〜6人のオンラインに対応。専用手札と非公開の確認情報も対戦サーバーで管理し、通常のカードバトル・詳細対戦ログとは分離しています。公開には対戦サーバーの更新も必要です。" },
+          { category: "システム", title: "チバトル並べ", after: "オンラインメニューの「チバトルふぉー」の位置に、正式モード「チバトル並べ」を追加。テスト表記を外し、通常メニューからCPU戦・オンライン対戦へ進めます。旧テストURLからも正式ページへ自動的に移動します。通常カード43枚を使い、5タイプごとに戦意5からつなげます。教師6にかき揚げ教師、ヴァンパイア6にジョブズウッディ、ヴァンパイア9に窓辺イーター、持ち物8に一旦を採用。環境7に全ロック、環境8にコートダジュールを採用。環境10は空席へ変更し、カードがない7マスは配置済みの空席とします。通常カードの能力・攻撃力・体力は判定に使いません。専用カードは18種類から全員を通して重複なしで1人3枚配り、補充なし。通常配置前に1手番1枚まで使えます。通常手札が0枚であがりです。CPU戦と2〜6人のオンラインに対応。専用手札と非公開の確認情報も対戦サーバーで管理し、通常のカードバトル・詳細対戦ログとは分離しています。公開には対戦サーバーの更新も必要です。" },
           { category: "表示・操作改善", title: "チバトル並べの専用手札", after: "通常手札と同じエリア内を区切り、専用手札を右側に配置。既存5タイプやえースペのオレンジを避け、白銀色の枠にしました。対象・タイプ・通常カードを選んでから使用を確定できます。全員交換・公開授業・強制登校・一斉点呼では、対象本人の画面で選択します。情報収集と千里眼の確認内容は使用者だけに表示します。" },
           { category: "表示・操作改善", title: "七並べの対戦準備", after: "既存の教室背景・カード裏面・水色基調を使用。名前・人数・部屋番号・準備OKをまとめたマッチング画面を追加しました。" },
           { category: "表示・操作改善", title: "七並べの対戦画面", after: "相手の裏向きの手札と情報を左、広くした場を中央、自分の手札を下へ配置。手札の重なりを浅くし、名前・残り枚数・パス権は右下にコンパクトにまとめました。盤面は通常版の講義室と同じ淡い青白色にし、背景・情報欄も通常版の色合いに揃えています。カードは通常版と同じ描画部品・実際のスタイル・420×640の基準比率を再利用し、並べ専用の簡略デザインを使いません。戦意は通常版の手札と同じ大きな青い円で表示します。盤面は上から環境・教師・学生・ヴァンパイア・持ち物の順に並べ、全50マスを点線で表示し、カードのないマスには戦意の数字だけを表示。自分の手番に出せる手札を光らせます。MENUを左上、ログを右上に配置しました。最初の配札は拡縮・回転・確認位置への寄り道をせず、各プレイヤーへ同時に1枚ずつ43枚を配ります。その後、各プレイヤーの手札から戦意5を1枚ずつ場へ移す演出と枚数の変化を表示します。全員の開始演出が終わってから開始します。カードはつかんで対応する場へドラッグでき、出せない場所へ放した場合は手札へ戻ります。" }
@@ -26096,7 +26104,7 @@
         return;
       }
       if (message.type === "thinItemChoiceRequest" && message.privateChoiceKind === "fusion_effect_choice" && isOnlineGuest()) {
-        openCardChoice({ ...message, mode: "fusion_effect_online_response" });
+        openCardChoice({ ...message, context: onlineSwapOwnersDeep(message.context), mode: "fusion_effect_online_response" });
         return;
       }
       if (message.type === "thinItemChoiceResponse" && message.privateChoiceKind === "fusion_effect_choice" && isOnlineHost()) {
@@ -27971,12 +27979,14 @@
       if (state.screen !== "battle" || state.phase !== "battle" || state.gameOver) return true;
       if (state.lectureRoomCheck && !battleChoicePending()) return false;
       const choosingFusionEffect = ["fusion_effect_choice", "fusion_effect_online_response"].includes(state.pendingCardChoice?.mode);
-      const placingFusionCopy = state.pendingCopiedCard?.fusionCopyPlacement === true;
+      const placingEffectAttendee = state.pendingCopiedCard?.fusionCopyPlacement === true
+        || state.pendingCopiedCard?.specialAttendanceQueue === true;
       // The resolution task stays busy until the player confirms this choice.
       // Ignore that wait only here; actual animations and unrelated actions stay locked.
-      if (battlePresentationBusy({ ignoreFusionTasks: choosingFusionEffect || placingFusionCopy })) return false;
-      if (placingFusionCopy) return Boolean(target.closest(".slot, .multi-seat-board-card"));
+      if (battlePresentationBusy({ ignoreFusionTasks: choosingFusionEffect || placingEffectAttendee })) return false;
+      if (placingEffectAttendee) return Boolean(target.closest(".slot, .multi-seat-board-card"));
       if (state.pendingCardChoice || state.pendingThreeGestures) {
+        if (isBoardColumnChoice() && target.closest(".column-choice-button, #itemTargetConfirmButton")) return true;
         if (isBoardCardChoice() && target.closest(".board-card.selection-candidate, #itemTargetConfirmButton")) return true;
         return Boolean(target.closest("#threeGesturesStage, #mulliganStage, #selectionPeekReturnButton"));
       }
@@ -36239,8 +36249,13 @@
       return true;
     }
 
+    function isBoardColumnChoice(choice = state.pendingCardChoice) {
+      return Boolean(choice?.context?.kind === "destroy_columns" && choice.cards?.length
+        && ["player", "opponent"].includes(choice.context.targetOwner));
+    }
+
     function isBoardCardChoice(choice = state.pendingCardChoice) {
-      return Boolean(choice?.cards.length && choice.cards.every(card => ["player", "opponent"].flatMap(side => listBoardRefs(side))
+      return isBoardColumnChoice(choice) || Boolean(choice?.cards.length && choice.cards.every(card => ["player", "opponent"].flatMap(side => listBoardRefs(side))
         .some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId)));
     }
 
@@ -36272,7 +36287,7 @@
       } else if (selected.length < pending.max) {
         selected.push(instanceId);
       }
-      state.message = `${pending.title}：${pending.selectedIds.length}/${pending.max}枚を選択中。`;
+      state.message = `${pending.title}：${pending.selectedIds.length}/${pending.max}${isBoardColumnChoice(pending) ? "列" : "枚"}を選択中。`;
       render();
     }
 
@@ -37724,7 +37739,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (kind === "destroy_columns" || kind === "summon_seat") return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (kind === "destroy_columns") return (b.choiceScore || 0) - (a.choiceScore || 0);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
         return sorted.filter(card => !["buff","damage"].includes(kind) || (!isPadlocked(card) && !isAibenNyoteiEffectImmune(card)
@@ -37736,8 +37751,8 @@
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
         requestId, context: { kind }, confirmLabel: "確定" };
+      if (kind === "destroy_columns") options.context.targetOwner = oppositeSide(side);
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
-      if (kind === "summon_seat") options.message = "見習いヴァンパイアを出席させる空き席を1つ選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
         if (!onlineSend({ type: "thinItemChoiceRequest", privateChoiceKind: "fusion_effect_choice",
@@ -39929,21 +39944,32 @@
     function resolveJobsWoodyAttendance(side, source) {
       const count = isCafeteriaEnvironmentActive() ? 2 : 1;
       return queueFusionEffect(async () => {
+        const token = state.preBattleToken;
         for (let repeat = 0; repeat < count; repeat += 1) {
-          const choices = PLAYER_SEAT_ORDER.filter(index => isBoardSlotOpen(side, "seat", index))
-            .map(index => ({ instanceId: `jobs-woody-seat-${index}`, name: `${seatRow(index)}行${seatCol(index) + 1}列`,
-              type: "item", noCost: true, attendanceLocationChoice: true, choiceIndex: index,
-              choiceScore: scoreAiPlacementAuras(side, makePreviewCard("apprentice_vampire", side), "seat", index),
-              effect: "この空いている席マスに「見習いヴァンパイア」を1人出席させる。" }));
-          if (!choices.length) {
+          if (token !== state.preBattleToken || state.gameOver || state.screen !== "battle") return;
+          const seats = PLAYER_SEAT_ORDER.filter(index => isBoardSlotOpen(side, "seat", index));
+          if (!seats.length) {
             addLog(`${source.name}の効果：空き席がないため、見習いヴァンパイアを出席させませんでした。`);
             break;
           }
-          const [selected] = await chooseFusionEffectCards(side, source, choices, 1, "summon_seat");
-          if (!selected) return;
-          const summoned = makeBoardCard(createCardFromBase("apprentice_vampire", side));
-          if (attendCard(side, summoned, "seat", selected.choiceIndex, { attendanceSource: ATTENDANCE_SOURCE.GENERATED })) {
-            addLog(`${source.name}の効果：${selected.name}に見習いヴァンパイアを1人出席させました。`);
+          const summoned = createCardFromBase("apprentice_vampire", side);
+          if (isCpuControlledBattleSide(side)) {
+            const index = seats.sort((a, b) => scoreAiPlacementAuras(side, summoned, "seat", b)
+              - scoreAiPlacementAuras(side, summoned, "seat", a))[0];
+            attendCard(side, makeBoardCard(summoned), "seat", index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED });
+          } else {
+            // Reuse the same public board placement / guest response as other effect attendance.
+            await new Promise(resolve => {
+              const timer = window.setInterval(() => {
+                if (token !== state.preBattleToken || state.gameOver || state.screen !== "battle") {
+                  window.clearInterval(timer); resolve();
+                }
+              }, 100);
+              const onComplete = () => { window.clearInterval(timer); resolve(); };
+              startSpecialAttendanceQueue(side, [{ ...summoned, specialAttendanceSeatOnly: true }], {
+                attendanceSource: ATTENDANCE_SOURCE.GENERATED, seatOnly: true, label: source.name, onComplete
+              });
+            });
           }
           cleanupDestroyedCards(); applyBoardAuras(); render();
         }
@@ -43866,10 +43892,13 @@
         || (card.pendingMove ? ATTENDANCE_SOURCE.EFFECT : ATTENDANCE_SOURCE.COPY);
       if (!attendCard(side, card, zone, index, { owner, attendanceSource })) return false;
       state.pendingCopiedCard = null;
-      state.message = card.pendingMove ? `${card.name}を自分の場に移しました。` : `${card.name}のコピーを出席させました。`;
+      state.message = card.pendingMove ? `${card.name}を自分の場に移しました。`
+        : attendanceSource === ATTENDANCE_SOURCE.COPY ? `${card.name}のコピーを出席させました。`
+          : `${card.name}を特殊出席させました。`;
       addLog(card.pendingMove
         ? `${card.name}が${SIDES[side]}の場に移りました。`
-        : `${card.name}のコピーが${SIDES[side]}の場に出席しました。`);
+        : attendanceSource === ATTENDANCE_SOURCE.COPY ? `${card.name}のコピーが${SIDES[side]}の場に出席しました。`
+          : `${card.name}が${SIDES[side]}の場に特殊出席しました。`);
       applyBoardAuras();
       if (card.specialAttendanceQueue) {
         continueSpecialAttendanceQueue();
@@ -47267,7 +47296,9 @@
             ? "破壊する"
             : "対象を確定";
       if (boardChoice) {
-        elements.itemTargetConfirmButton.textContent = `対象を確定\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}`;
+        elements.itemTargetConfirmButton.textContent = isBoardColumnChoice()
+          ? `破壊する\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}列`
+          : `対象を確定\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}`;
       } else if (state.pendingMultiItem) {
         elements.itemTargetConfirmButton.textContent = `対象を確定\n${state.pendingMultiItem.targets.length}/${state.pendingMultiItem.maxTargets || 2}`;
       } else if (attendChoice || state.pendingPanpanItem || state.pendingDestroyItem || state.pendingKingGhidorahBed) {
@@ -49408,6 +49439,37 @@
         boardCard.style.gridColumn = `${Math.min(...cols)} / ${Math.max(...cols) + 1}`;
         multiSeatLayer.appendChild(boardCard);
       });
+      renderBoardColumnChoice(owner, seatGrid, order);
+    }
+
+    function renderBoardColumnChoice(owner, seatGrid, order) {
+      const choice = state.pendingCardChoice;
+      if (!isBoardColumnChoice(choice) || choice.context.targetOwner !== owner || isOnlineSpectator()) return;
+      const layer = document.createElement("div");
+      layer.className = "column-choice-layer";
+      layer.setAttribute("role", "group");
+      layer.setAttribute("aria-label", `${choice.title}：破壊する列を${choice.max}つ選択`);
+      choice.cards.forEach(card => {
+        const column = card.choiceIndex;
+        if (!Number.isInteger(column) || column < 0 || column > 2) return;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "column-choice-button selection-candidate";
+        button.dataset.column = String(column);
+        button.dataset.owner = owner;
+        button.style.gridColumn = String(order.findIndex(index => seatCol(index) === column) % 3 + 1);
+        button.style.gridRow = "1";
+        const selected = choice.selectedIds.includes(card.instanceId);
+        button.classList.toggle("column-selected", selected);
+        button.setAttribute("aria-label", `${owner === "opponent" ? "相手" : "自分"}の${column + 1}列目`);
+        button.setAttribute("aria-pressed", String(selected));
+        const label = document.createElement("span");
+        label.textContent = `${selected ? "✓ " : ""}${column + 1}列目`;
+        button.appendChild(label);
+        button.onclick = () => toggleCardChoiceCard(card.instanceId);
+        layer.appendChild(button);
+      });
+      seatGrid.appendChild(layer);
     }
 
     function renderLateZone(side, container) {

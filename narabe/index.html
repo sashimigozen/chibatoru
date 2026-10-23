@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>チバトル並べ｜チバトル</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../draw-animation.css">
+  <link rel="stylesheet" href="battle.css">
+  <script defer src="../hand-drag-visuals.js"></script>
+  <script defer src="../draw-animation.js"></script>
+  <script defer src="../card-face.js"></script>
+  <script defer src="original-card.js"></script>
+  <script defer src="../server/narabe-cards.js"></script><script defer src="../server/narabe-specials.js"></script><script defer src="../server/narabe-engine.js"></script><script defer src="app.js"></script>
+</head>
+<body>
+  <main>
+    <header><a class="back" href="../index.html">‹ チバトルへ</a><span class="mode-tag">チバトル並べ</span><span class="brand">チバトル</span></header>
+    <section id="lobby">
+      <div class="heading"><div><p class="eyebrow">みんなで、ひとならべ。</p><h1>チバトル並べ</h1><p>部屋番号で集まって、七並べを遊ぼう。</p></div><img src="../assets/home/nav-battle.png" alt="" class="battle-art"></div>
+      <div class="match-grid">
+        <section class="panel profile-panel">
+          <div class="panel-title"><span>プレイヤー</span><span class="small">専用カードあり</span></div>
+          <div class="avatar" aria-hidden="true"><span>◡</span></div>
+          <label for="name">あなたの名前</label><input id="name" maxlength="20" value="チバトル学生" autocomplete="nickname">
+          <label for="total">プレイ人数 <small>空いている席にはCPUが入ります</small></label>
+          <select id="total"><option value="2">2人</option><option value="3">3人</option><option value="4" selected>4人</option><option value="5">5人</option><option value="6">6人</option></select>
+          <button id="solo" class="primary" disabled>CPUと対戦 <small>あなた ＋ CPU</small></button>
+        </section>
+        <section class="panel room-panel">
+          <div class="panel-title"><span>プライベートマッチ</span><span class="small">2〜6人</span></div>
+          <div id="disconnected">
+            <h2>友だちと一緒に</h2><p>1人が部屋を作り、ほかの人は部屋番号で入室します。</p>
+            <button id="create" class="primary" disabled>部屋を作る</button><div class="divider">または</div>
+            <form id="joinForm"><label for="code">部屋番号</label><div class="join-row"><input id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6桁の部屋番号" required><button id="join" class="secondary" disabled>入室</button></div></form>
+          </div>
+          <div id="connected" hidden>
+            <div class="room-number"><span>部屋番号</span><button id="copy" title="部屋番号をコピー">------</button></div>
+            <div id="people" class="people"></div>
+            <div class="room-actions"><button id="ready" class="secondary">準備OK</button><button id="start" class="primary">開始</button></div>
+            <button id="leave" class="text-button">部屋を退出</button>
+          </div>
+          <p id="status" role="status" aria-live="polite">通常のチバトル対戦・対戦ログとは独立しています。</p>
+          <details><summary>接続先の設定</summary><label for="endpoint">七並べ用WebSocketサーバー</label><input id="endpoint" type="url"><p class="small">通常のオンライン対戦と同じサーバーを使います。接続先を変更する場合のみ設定してください。</p></details>
+        </section>
+      </div>
+      <section class="panel rules"><h2>チバトル並べのルール</h2><p>通常カード43枚を配り、戦意5の5枚を場に並べて残り38枚でプレイします。タイプごとに戦意順につなげます。環境10を含むカードのない7マスは配置済みの「空席」です。通常カードの能力・攻撃力・体力は判定に使いません。</p><p>専用カードは全18種類から重複なしで1人3枚。通常手札とは別に持ち、自分の手番の通常配置前に1枚まで使えます。使用後は消費し、補充はありません。専用カードが残っていても通常手札が0枚ならあがりです。</p><p>自分の番に通常カード1枚を配置するかパス。パスは合計3回まで、4回目で脱落し通常手札を場に並べます。配札で「狼(いっぴきおおかみ)」を持っていた人から開始します。戦意5を場へ移すため、開始時の通常手札枚数は人によって異なります。</p><details><summary>専用カード18種類の効果</summary><dl id="specialRules"></dl></details><p class="small">オンラインでは途中退出・切断を脱落として扱い、再接続は未対応です。通常のチバトル対戦には影響しません。</p></section>
+    </section>
+    <section id="battle" hidden aria-label="チバトル並べ対戦画面">
+      <button id="menuButton" class="battle-corner menu-button" type="button" aria-expanded="false" aria-controls="menuDrawer">MENU</button>
+      <div class="battle-title"><strong>チバトル並べ</strong><span id="turnEffects">パス制限 3回</span></div>
+      <button id="logButton" class="battle-corner log-button" type="button" aria-expanded="false" aria-controls="logDrawer">ログ</button>
+      <aside id="players" class="players" aria-label="相手の手札と情報"></aside>
+      <section class="table-panel" aria-label="七並べの場">
+        <div class="table-label"><span>場</span><span id="placedCount">5 / 39</span></div>
+        <div class="table-scroll"><div id="table" class="table"></div></div>
+        <div id="dealSource" class="deal-source" aria-label="配札元"><img src="../assets/card-back.png" alt=""><span>配札中</span></div>
+        <aside class="self-controls" aria-label="自分の情報とパス権">
+          <div id="selfInfo" class="self-info"><strong id="selfName"></strong><div><span id="selfPasses"></span><span id="handCount"></span></div></div>
+          <button id="pass" class="secondary">パス</button>
+        </aside>
+      </section>
+      <section class="self-area" aria-label="自分の手札と情報">
+        <div class="normal-hand-area"><span class="hand-label">通常カード</span><div class="hand-window"><div id="hand" class="hand"></div></div></div>
+        <div class="special-hand-area"><span class="hand-label" id="specialLabel">専用カード</span><div id="specialHand" class="special-hand"></div></div>
+      </section>
+      <button id="selectionReturn" class="selection-return" type="button" hidden>選択画面に戻る</button>
+      <div id="specialReveal" class="special-reveal" hidden aria-live="polite"><div id="specialRevealCard"></div><p id="specialRevealName"></p></div>
+      <div class="battle-message" aria-live="polite"><strong id="turn">あなたの番です</strong><span id="handHelp">出すカードを選んでください。</span><span id="gameStatus" role="status"></span></div>
+      <aside id="menuDrawer" class="battle-drawer menu-drawer" hidden aria-label="メニュー"><div class="drawer-head"><strong>MENU</strong><button id="menuClose" type="button">閉じる</button></div><button id="quit" class="secondary">開始画面へ</button><button id="specialHelp" class="secondary">専用カードのルール</button><p class="small">通常カードは戦意5からタイプごとにつなげます。専用カードは通常配置前に1枚まで使用可能です。通常手札が0枚であがり。空席は配置済みとして扱います。</p></aside>
+      <section id="specialDialog" class="special-overlay" hidden role="dialog" aria-modal="true" aria-labelledby="specialTitle"><div class="special-modal"><div class="drawer-head"><strong id="specialTitle"></strong><button id="selectionPeek" type="button" aria-label="盤面を見る" title="盤面を見る">◉ 盤面を見る</button><button id="specialClose" type="button">閉じる</button></div><p id="specialText"></p><div id="specialOptions" class="special-options"></div><div class="special-dialog-actions"><button id="specialConfirm" type="button" class="primary">使用する</button></div></div></section>
+      <aside id="logDrawer" class="battle-drawer log-drawer" hidden aria-label="ログ"><div class="drawer-head"><strong>ログ</strong><button id="logClose" type="button">閉じる</button></div><ol id="logs"></ol></aside>
+      <aside id="cardPreview" class="battle-drawer card-preview" hidden aria-label="カード確認"><div class="drawer-head"><strong>カード確認</strong><button id="previewClose" type="button">閉じる</button></div><div id="previewCard"></div><p id="previewName"></p><p class="small">能力は発動しません。攻撃力・体力も配置や勝敗の判定には使いません。</p></aside>
+      <section id="results" class="result-overlay" hidden><div class="panel"><h2>結果</h2><ol id="rankings"></ol><button id="resultBack" class="primary">開始画面へ</button></div></section>
+    </section>
+    <footer>CHIBATORU · チバトル並べ</footer>
+  </main>
+</body>
+</html>

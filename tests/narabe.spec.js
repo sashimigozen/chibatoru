@@ -1,9 +1,30 @@
 const { test, expect } = require('@playwright/test');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const url = 'http://127.0.0.1:8791/narabe-test/';
+const url = 'http://127.0.0.1:8791/narabe/';
 test.setTimeout(90000);
 test.beforeEach(async({page})=>{await page.addInitScript(()=>{Math.random=()=>.4;});});
+test('通常メニューから正式ページへ進み、名前と通常サーバー設定を引き継ぐ',async({page})=>{
+  await page.goto('http://127.0.0.1:8791/index.html');
+  await page.evaluate(()=>{
+    window.__chibattle.state.profile.username='並べ参加者';
+    localStorage.setItem('chibattle-online-server-url-v1','wss://example.com');
+  });
+  await page.locator('#homeNavBattleButton').click();
+  const button=page.locator('#onlineFourMatchButton');await expect(button).not.toContainText('テスト');
+  await button.click();await expect(page).toHaveURL(/\/narabe\/index.html$/);
+  await expect(page).toHaveTitle('チバトル並べ｜チバトル');
+  await expect(page.locator('#solo')).toBeEnabled();await expect(page.locator('#name')).toHaveValue('並べ参加者');
+  await expect(page.locator('#endpoint')).toHaveValue('wss://example.com/narabe');
+  await expect(page.locator('body')).not.toContainText('テスト版');
+  await page.screenshot({path:'/tmp/chibatoru-narabe-integrated-lobby.png'});
+  await page.locator('a.back').click();await expect(page.locator('#homeNavBattleButton')).toBeVisible();
+});
+test('旧テストURLから正式ページへ移動し、指定サーバーも保持する',async({page})=>{
+  await page.goto('http://127.0.0.1:8791/narabe-test/?ws=wss%3A%2F%2Fexample.com');
+  await expect(page).toHaveURL(/\/narabe\/index.html\?ws=/);
+  await expect(page.locator('#solo')).toBeEnabled();await expect(page.locator('#endpoint')).toHaveValue('wss://example.com/narabe');
+});
 async function reachTurn(page){
   await expect(page.locator('#dealSource')).toBeHidden({timeout:20000});
   for(let n=0;n<300;n++){
@@ -52,7 +73,7 @@ test('別々の3画面が同じ部屋で準備して七並べを開始できる'
   const contexts = await Promise.all([0,1,2].map(()=>browser.newContext()));
   try {
     const pages=await Promise.all(contexts.map(c=>c.newPage()));
-    for(let i=0;i<3;i++){await pages[i].goto('http://127.0.0.1:8791/narabe-test/');await pages[i].locator('#name').fill(`学生${i+1}`);}
+    for(let i=0;i<3;i++){await pages[i].goto('http://127.0.0.1:8791/narabe/');await pages[i].locator('#name').fill(`学生${i+1}`);}
     await pages[0].locator('#create').click(); await expect(pages[0].locator('#connected')).toBeVisible();
     const code=await pages[0].locator('#copy').textContent();
     for(const page of pages.slice(1)){await page.locator('#code').fill(code);await page.locator('#join').click();await expect(page.locator('#connected')).toBeVisible();}

@@ -1,5 +1,5 @@
 const {test,expect}=require('@playwright/test');
-const url='http://127.0.0.1:8791/narabe-test/';
+const url='http://127.0.0.1:8791/narabe/';
 test.use({reducedMotion:'reduce'});test.setTimeout(60000);
 async function setup(page,id='reverse',total){
   const errors=[];page.on('pageerror',e=>errors.push(e.message));

@@ -11,6 +11,16 @@
   function cancelDealFlights(){for(const flight of dealFlights)flight.animation.cancel();}
   const localHost = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   $('endpoint').value = localHost ? `ws://${location.host}/narabe` : 'wss://chibatoru-online.onrender.com/narabe';
+  try {
+    const server=new URLSearchParams(location.search).get('ws')||localStorage.getItem('chibattle-online-server-url-v1');
+    if(server){
+      const url=new URL(server.replace(/^https:/,'wss:').replace(/^http:/,'ws:').replace(/^(?!\w+:\/\/)/,'wss://'));
+      if(['ws:','wss:'].includes(url.protocol)){
+        if(url.hostname==='chibatoru-ws.onrender.com')url.hostname='chibatoru-online.onrender.com';
+        url.pathname='/narabe';url.search='';url.hash='';$('endpoint').value=url.href;
+      }
+    }
+  }catch{}
   try { $('name').value = sessionStorage.getItem('chibatoru-narabe-name') || 'チバトル学生'; } catch {}
   const text = (tag, content, cls) => { const el = document.createElement(tag); el.textContent = content; if (cls) el.className = cls; return el; };
   let cardsReady=false;
@@ -39,7 +49,7 @@
     if (!['ws:', 'wss:'].includes(url.protocol) || (location.protocol === 'https:' && url.protocol !== 'wss:')) { status('安全なWebSocket接続先を指定してください。'); return; }
     url.pathname = '/narabe'; url.search = ''; url.hash = '';
     connecting = true; const current = socket = new WebSocket(url); setConnectionUI(); status('接続中…（無料サーバーの起動に時間がかかる場合があります）');
-    helloTimer = setTimeout(() => { if (socket === current && !state) disconnect('接続できませんでした。七並べ対応サーバーへの更新、または接続先を確認してください。'); }, 65000);
+    helloTimer = setTimeout(() => { if (socket === current && !state) disconnect('接続できませんでした。接続先とネットワークを確認してください。'); }, 65000);
     current.addEventListener('message', event => {
       if (current !== socket) return;
       let m; try { m = JSON.parse(event.data); } catch { return; }
@@ -50,8 +60,8 @@
         status(m.game ? '' : '全員が準備OKになったら、ホストが開始します。'); if (m.game) queueGame(m.game, m.seat);
       }
     });
-    current.addEventListener('close', () => { if (current === socket) disconnect('接続が切れました。このテスト版では再接続できません。'); });
-    current.addEventListener('error', () => { if (current === socket) disconnect('接続できませんでした。接続先とサーバーの更新状況を確認してください。'); });
+    current.addEventListener('close', () => { if (current === socket) disconnect('接続が切れました。対戦中の切断は脱落になります。'); });
+    current.addEventListener('error', () => { if (current === socket) disconnect('接続できませんでした。接続先とネットワークを確認してください。'); });
   }
   function renderRoom() {
     $('copy').textContent = roomCode; $('people').replaceChildren();
@@ -371,5 +381,5 @@
   window.addEventListener('resize',()=>{if(shown){cancelDrags.forEach(cancel=>cancel());cancelDealFlights();activeMove?.cancel();fitCards();const panel=$('table').parentElement;panel.scrollLeft=Math.max(0,(panel.scrollWidth-panel.clientWidth)/2);}});
   $('copy').onclick = async () => { try { await navigator.clipboard.writeText(roomCode); status('部屋番号をコピーしました。'); } catch { status(`部屋番号：${roomCode}（コピーできない場合は手入力してください）`); } };
   window.addEventListener('pagehide', () => { epoch++;cancelDrags.forEach(cancel=>cancel());cancelDealFlights();activeMove?.cancel();window.ChibattleDraw.cancel();clearTimeout(cpuTimer); socket?.close(); });
-  window.NarabeOriginalCard.ready.then(()=>{cardsReady=true;setConnectionUI();}).catch(()=>status('通常版のカード表示を読み込めませんでした。テストサーバーから開き直してください。'));
+  window.NarabeOriginalCard.ready.then(()=>{cardsReady=true;setConnectionUI();}).catch(()=>status('通常版のカード表示を読み込めませんでした。チバトルのメニューから開き直してください。'));
 })();

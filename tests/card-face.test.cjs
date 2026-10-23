@@ -3,8 +3,8 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 const {render}=require('../card-face.js');
 test('並べのカード描画倍率は移動中の見かけの大きさではなくレイアウト寸法から計算する',async()=>{
   let Card,scale;const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
-  const context={URL,document:{baseURI:'http://localhost/narabe-test/'},HTMLElement:class{},CSSStyleSheet:class{replaceSync(){}},customElements:{define(_name,Type){Card=Type;}},fetch:async()=>({ok:true,text:async()=>source}),ResizeObserver:class{observe(){}disconnect(){}},window:{Narabe:{cards:[{baseId:'general_student',name:'一般学生',type:'student',cost:2,attack:2,hp:2}],types:[{id:'student',label:'学生'}]},ChibattleCardFace:{render:()=>''}}};
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../narabe-test/original-card.js'),'utf8'),context);
+  const context={URL,document:{baseURI:'http://localhost/narabe/'},HTMLElement:class{},CSSStyleSheet:class{replaceSync(){}},customElements:{define(_name,Type){Card=Type;}},fetch:async()=>({ok:true,text:async()=>source}),ResizeObserver:class{observe(){}disconnect(){}},window:{Narabe:{cards:[{baseId:'general_student',name:'一般学生',type:'student',cost:2,attack:2,hp:2}],types:[{id:'student',label:'学生'}]},ChibattleCardFace:{render:()=>''}}};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../narabe/original-card.js'),'utf8'),context);
   await context.window.NarabeOriginalCard.ready;
   const host=new Card();host.dataset={baseId:'general_student'};host.clientWidth=105;host.clientHeight=160;
   host.getBoundingClientRect=()=>{throw Error('変形後の寸法を描画倍率へ使ってはいけない');};
@@ -13,8 +13,8 @@ test('並べのカード描画倍率は移動中の見かけの大きさでは�
 });
 test('並べの戦意は通常の手札の大きい円表示を直接使い、二重表示しない',async()=>{
   const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');let css='';
-  const context={URL,document:{baseURI:'http://localhost/narabe-test/'},HTMLElement:class{},CSSStyleSheet:class{replaceSync(text){css=text;}},customElements:{define(){}},fetch:async()=>({ok:true,text:async()=>source}),window:{}};
-  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../narabe-test/original-card.js'),'utf8'),context);
+  const context={URL,document:{baseURI:'http://localhost/narabe/'},HTMLElement:class{},CSSStyleSheet:class{replaceSync(text){css=text;}},customElements:{define(){}},fetch:async()=>({ok:true,text:async()=>source}),window:{}};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../narabe/original-card.js'),'utf8'),context);
   await context.window.NarabeOriginalCard.ready;
   assert.match(css,/\.card\.deck-window-card \.hand-card-stats \.stat-cost\s*\{[^}]*width: 108px !important/);
   assert.match(css,/\.card\.deck-window-card \.hand-card-stats \.stat-cost\s*\{[^}]*font-size: 50px !important/);

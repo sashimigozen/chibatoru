@@ -39,7 +39,7 @@ test('新カードの能力値・所属・本文・戦意とサーバー登録',
     return { id, stats: [card.cost, card.attack ?? 0, card.hp ?? 0], category: card.category,
       normal, discounted, text: cardRulesText(card), deck: ALL_DECK_IDS.includes(id) };
   }));
-  expect(result.map(r => r.stats)).toEqual([[6,2,4],[9,4,5],[6,4,4],[8,0,0]]);
+  expect(result.map(r => r.stats)).toEqual([[6,2,4],[9,4,5],[6,3,3],[8,0,0]]);
   expect(result.map(r => r.discounted)).toEqual([6,7,5,8]);
   expect(result.map(r => r.category)).toEqual(['common','cafeteria','cafeteria','common']);
   expect(result.every(r => r.deck)).toBe(true);
@@ -79,10 +79,12 @@ for (const cafeteria of [false, true]) test(`ウッディは${cafeteria ? 2 : 1}
     attendCard('player', makeBoardCard(createCardFromBase('jobs_woody', 'player')), 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.HAND });
   }, cafeteria);
   for (const index of cafeteria ? [4, 8] : [4]) {
-    await expect.poll(() => page.evaluate(() => state.pendingCardChoice?.context?.kind)).toBe('summon_seat');
-    await page.evaluate(index => {
-      state.pendingCardChoice.selectedIds = [`jobs-woody-seat-${index}`]; confirmCardChoiceSelection();
-    }, index);
+    await expect.poll(() => page.evaluate(() => state.pendingCopiedCard?.baseId)).toBe('apprentice_vampire');
+    await expect(page.locator('#threeGesturesStage')).toHaveClass(/hidden/);
+    await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+    const selector=await page.evaluate(index=>tutorialRefSelector({owner:'player',zone:'seat',index}),index);
+    await page.locator(selector).click();
+    await expect.poll(()=>page.evaluate(index=>state.players.player.board.seats[index]?.baseId,index)).toBe('apprentice_vampire');
   }
   await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
   expect(await page.evaluate(() => state.players.player.board.seats.map((c, i) => c?.baseId === 'apprentice_vampire' ? i : -1).filter(i => i >= 0)))
@@ -153,8 +155,10 @@ test('空き席が1つなら食堂でも見習いは1人だけ出席する', asy
     for (let i = 0; i < 8; i++) state.players.player.board.seats[i] = makeBoardCard(createCardFromBase('general_student', 'player'));
     attendCard('player', makeBoardCard(createCardFromBase('jobs_woody', 'player')), 'teacher', null, { attendanceSource: ATTENDANCE_SOURCE.HAND });
   });
-  await expect.poll(() => page.evaluate(() => state.pendingCardChoice?.cards.length)).toBe(1);
-  await page.evaluate(() => { state.pendingCardChoice.selectedIds = ['jobs-woody-seat-8']; confirmCardChoiceSelection(); });
+  await expect.poll(() => page.evaluate(() => state.pendingCopiedCard?.baseId)).toBe('apprentice_vampire');
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+  const selector=await page.evaluate(()=>tutorialRefSelector({owner:'player',zone:'seat',index:8}));
+  await page.locator(selector).click();
   await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
   expect(await page.evaluate(() => listBoardRefs('player').map(getBoardCardFromRef).filter(c => c.baseId === 'apprentice_vampire').length)).toBe(1);
 });
@@ -193,12 +197,79 @@ test('列選択の表示とクリック確定', async ({ page }) => {
   await page.evaluate(() => {
     attendCard('player', makeBoardCard(createCardFromBase('window_eater', 'player')), 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.HAND });
   });
-  await expect(page.locator('#threeGesturesStage')).toBeVisible();
-  await expect(page.locator('#threeGesturesMessage')).toContainText('教卓マスは対象に含みません');
+  await expect(page.locator('#threeGesturesStage')).toHaveClass(/hidden/);
+  await expect(page.locator('.column-choice-button')).toHaveCount(3);
+  const geometry=await page.evaluate(()=>{
+    const grid=elements.opponentSeatGrid.getBoundingClientRect();
+    return [...document.querySelectorAll('.column-choice-button')].map(button=>({height:button.getBoundingClientRect().height,grid: grid.height,owner:button.dataset.owner}));
+  });
+  expect(geometry.every(c=>c.height>=c.grid-2&&c.owner==='opponent')).toBe(true);
   await expect.poll(() => page.evaluate(() => battlePresentationBusy({ ignoreFusionTasks: true }))).toBe(false);
-  await page.locator('[data-card-id="window-eater-column-1"]').click();
-  await expect(page.locator('#threeGesturesConfirmButton')).toBeEnabled();
+  await page.locator('.column-choice-button[data-column="1"]').click();
+  await expect(page.locator('#itemTargetConfirmButton')).toBeEnabled();
   await page.screenshot({ path: '/tmp/chibatoru-window-eater-choice.png' });
-  await page.locator('#threeGesturesConfirmButton').click();
+  await page.locator('#itemTargetConfirmButton').click();
   await expect.poll(() => page.evaluate(() => fusionTasksBusy())).toBe(false);
+});
+
+test('食堂では盤面の異なる2列を選択・解除でき、確定まで破壊しない',async({page})=>{
+  await page.setViewportSize({width:1440,height:900});
+  await page.evaluate(()=>{
+    state.environment=createCardFromBase('cafeteria','player');
+    for(let i=0;i<9;i++)state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));
+    state.players.opponent.board.teacher=makeBoardCard(createCardFromBase('general_teacher','opponent'));
+    attendCard('player',makeBoardCard(createCardFromBase('window_eater','player')),'seat',0,{attendanceSource:ATTENDANCE_SOURCE.HAND});
+  });
+  await expect(page.locator('.column-choice-button')).toHaveCount(3);
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+  await page.locator('.column-choice-button[data-column="0"]').click();
+  await expect(page.locator('#itemTargetConfirmButton')).toBeDisabled();
+  await page.locator('.column-choice-button[data-column="0"]').click();
+  await expect(page.locator('.column-selected')).toHaveCount(0);
+  await page.locator('.column-choice-button[data-column="1"]').click();
+  await page.locator('.column-choice-button[data-column="2"]').click();
+  await expect(page.locator('.column-selected')).toHaveCount(2);
+  expect(await page.evaluate(()=>state.players.opponent.board.seats.filter(Boolean).length)).toBe(9);
+  await page.screenshot({path:'/tmp/chibatoru-window-eater-two-columns.png'});
+  await page.locator('#itemTargetConfirmButton').click();
+  await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
+  expect(await page.evaluate(()=>[state.players.opponent.board.seats.map((c,i)=>c?i:-1).filter(i=>i>=0),!!state.players.opponent.board.teacher])).toEqual([[0,3,6],true]);
+});
+
+test('スマホでも席マスへ直接出席でき、教卓や相手側には置けない',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>attendCard('player',makeBoardCard(createCardFromBase('jobs_woody','player')),'seat',0,{attendanceSource:ATTENDANCE_SOURCE.HAND}));
+  await expect.poll(()=>page.evaluate(()=>state.pendingCopiedCard?.baseId)).toBe('apprentice_vampire');
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+  expect(await page.evaluate(()=>[isPendingCopiedCardPlacementLegal('player','teacher','player',null),isPendingCopiedCardPlacementLegal('player','seat','opponent',4),battleActionInputAllowed(elements.endTurnButton)])).toEqual([false,false,false]);
+  await page.screenshot({path:'/tmp/chibatoru-woody-seat-mobile.png'});
+  await page.locator('.slot[data-owner="player"][data-zone="seat"][data-index="4"]').click();
+  await expect.poll(()=>page.evaluate(()=>state.players.player.board.seats[4]?.baseId)).toBe('apprentice_vampire');
+});
+
+test('スマホでも列全体を光らせて直接選択できる',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.evaluate(()=>attendCard('player',makeBoardCard(createCardFromBase('window_eater','player')),'seat',0,{attendanceSource:ATTENDANCE_SOURCE.HAND}));
+  await expect(page.locator('.column-choice-button')).toHaveCount(3);
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+  await page.locator('.column-choice-button[data-column="2"]').click();
+  await expect(page.locator('.column-choice-button[data-column="2"]')).toHaveAttribute('aria-pressed','true');
+  await page.screenshot({path:'/tmp/chibatoru-window-eater-column-mobile.png'});
+  await page.locator('#itemTargetConfirmButton').click();
+  await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
+});
+
+test('ほかの効果も共通の出席処理で席を直接選び、出席制限を守る',async({page})=>{
+  await page.evaluate(()=>{
+    state.players.player.will=0;
+    startSpecialAttendanceQueue('player',[createCardFromBase('acting_out_woman','player'),createCardFromBase('general_student','player')],{attendanceSource:ATTENDANCE_SOURCE.GENERATED,seatOnly:true,label:'共通出席確認'});
+  });
+  await expect.poll(()=>page.evaluate(()=>Boolean(state.pendingCopiedCard))).toBe(true);
+  expect(await page.evaluate(()=>[isPendingCopiedCardPlacementLegal('player','seat','player',4),isPendingCopiedCardPlacementLegal('player','teacher','player',null)])).toEqual([false,false]);
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+  for(const index of [1,4]){
+    await page.locator(`.slot[data-owner="player"][data-zone="seat"][data-index="${index}"]`).click();
+    await expect.poll(()=>page.evaluate(index=>Boolean(state.players.player.board.seats[index]),index)).toBe(true);
+  }
+  expect(await page.evaluate(()=>[state.players.player.will,!!state.pendingCopiedCard,state.players.player.board.seats[4]?.lastAttendanceSource])).toEqual([0,false,'generated']);
 });
