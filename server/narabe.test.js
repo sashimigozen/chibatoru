@@ -5,16 +5,16 @@ const { createNarabeRooms } = require('./narabe-rooms');
 const { WebSocketServer, WebSocket } = require('ws');
 const http = require('node:http');
 
-test('配札演出は43枚を元の持ち主へ戻し、戦意5の5枚だけ公開して38枚の開始状態へ戻せる',()=>{
+test('配札演出は44枚を元の持ち主へ戻し、戦意5の5枚だけ公開して39枚の開始状態へ戻せる',()=>{
   for(let n=2;n<=6;n++)for(let run=0;run<20;run++){
     const g=E.create(Array.from({length:n},(_,i)=>`P${i}`)),saved=JSON.stringify(g);
     for(let seat=0;seat<n;seat++){
       const final=E.view(g,seat),initial=E.initialDealView(final,seat);
       assert.equal(final.startingCards.length,5);
       assert.ok(final.startingCards.every(x=>x.card.rank===5));
-      assert.equal(initial.players.reduce((sum,p)=>sum+p.count,0),43);
-      assert.deepEqual(initial.players.map(p=>p.count),Array.from({length:n},(_,i)=>Math.floor(43/n)+(i<43%n?1:0)));
-      assert.equal(initial.board.flat().filter(Boolean).length,7);
+      assert.equal(initial.players.reduce((sum,p)=>sum+p.count,0),44);
+      assert.deepEqual(initial.players.map(p=>p.count),Array.from({length:n},(_,i)=>Math.floor(44/n)+(i<44%n?1:0)));
+      assert.equal(initial.board.flat().filter(Boolean).length,6);
       initial.players.forEach((p,i)=>assert.equal(Array.isArray(p.hand),i===seat));
       for(const {seat:owner,card}of final.startingCards){
         initial.players[owner].count--;initial.board[card.suit][card.rank-1]=true;
@@ -26,13 +26,13 @@ test('配札演出は43枚を元の持ち主へ戻し、戦意5の5枚だけ公�
   }
 });
 
-test('固定43枚のうち戦意5を5枚公開、空席7マスを埋め、残り38枚で2〜6人全員の試合が終了する', () => {
+test('固定44枚のうち戦意5を5枚公開、空席6マスを埋め、残り39枚で2〜6人全員の試合が終了する', () => {
   for (let n = 2; n <= 6; n++) for (let run = 0; run < 40; run++) {
     const g = E.create(Array.from({ length: n }, (_, i) => `P${i}`));
     const ids = g.players.flatMap(p => p.hand.map(c => c.id));
-    assert.equal(ids.length,38);assert.equal(new Set(ids).size,38);
+    assert.equal(ids.length,39);assert.equal(new Set(ids).size,39);
     assert.equal(g.board.length,5);g.board.forEach(row=>assert.equal(row.length,10));
-    assert.equal(g.board.flat().filter(Boolean).length,12);
+    assert.equal(g.board.flat().filter(Boolean).length,11);
     assert.equal(E.cards.filter(c=>g.board[c.suit][c.rank-1]).length,5);
     assert.equal(g.players[g.turn].status,'playing');
     let turns = 0;
@@ -56,6 +56,11 @@ test('隣接制限・戦意5からの飛び越し禁止・他人のカード・�
 });
 test('空席は配られず、配置済みとして飛ばせるが、途中の実カードは飛ばせない',()=>{
   const g=E.create(['A','B']);
+  assert.equal(E.cardAt(3,10).baseId,'chotto_machii');
+  assert.equal(g.board[3][9],false);
+  assert.equal(E.canPlay(g,{suit:3,rank:10}),false);
+  for(let rank=6;rank<=9;rank++)g.board[3][rank-1]=true;
+  assert.equal(E.canPlay(g,{suit:3,rank:10}),true);
   // Teacher 6 is now real. Teacher 7 waits for it.
   assert.equal(g.board[1][5],false);assert.equal(E.cardAt(1,6).baseId,'kakiage_teacher');
   assert.equal(E.canPlay(g,{suit:1,rank:7}),false);
@@ -75,14 +80,14 @@ test('空席は配られず、配置済みとして飛ばせるが、途中の�
   assert.equal(E.act(g,0,{type:'play',cardId:49}),false);
   assert.equal(JSON.stringify({...g,turn:JSON.parse(before).turn}),before);
 });
-test('採用43枚のID・名前・戦意・タイプ・能力値は通常版のカード定義と一致する',()=>{
+test('採用44枚のID・名前・戦意・タイプ・能力値は通常版のカード定義と一致する',()=>{
   const fs=require('node:fs'),path=require('node:path');
   const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
   const begin=source.indexOf('const CARD_BASES = {'),end=source.indexOf('\n    };',begin);
   const lines=source.slice(begin,end).split('\n');
-  assert.equal(E.cards.length,43);assert.equal(new Set(E.cards.map(c=>c.id)).size,43);
+  assert.equal(E.cards.length,44);assert.equal(new Set(E.cards.map(c=>c.id)).size,44);
   const expected=[['aggro_student','general_student','yuta','elite_open_chatter','lone_wolf','seat_taking_group','spoon_wizard','loud_student','extra_people','infight_shogi'],['general_teacher','lightning_n','logic_hunter','kyoto_sound_i','thin_professor_h','ninety_three_teacher','president'],['zombie','cafeteria_lady','apprentice_vampire','chen_san','gigi_blood','vampire'],['ruler','environment_setup','onigiri_draw','thin_item','seriously_hit','abyss','greeting_3000','green_curry'],['classroom','cafeteria','gangi_fortress','academic_move','meguro_library','student_council','full_lock','chaos_world']];
-  expected[1].push('kakiage_teacher');expected[2].push('jobs_woody','window_eater');expected[3].push('ittan');expected[4]=expected[4].filter(id=>id!=='chaos_world');expected[4].push('cote_dazur');
+  expected[1].push('kakiage_teacher');expected[2].push('jobs_woody','window_eater');expected[3].push('chotto_machii','ittan');expected[4]=expected[4].filter(id=>id!=='chaos_world');expected[4].push('cote_dazur');
   E.types.forEach((_,suit)=>assert.deepEqual(E.cards.filter(c=>c.suit===suit).map(c=>c.baseId),expected[suit]));
   for(const card of E.cards){
     const line=lines.find(l=>l.trimStart().startsWith(card.baseId+': {'));
@@ -124,9 +129,16 @@ test('実際の3接続：準備・開始権限・非公開手札・手番・古�
   };
   const send = (c,m) => c.ws.send(JSON.stringify(m));
   const a = await connect(); send(a,{type:'create',name:'ホスト'}); const first = await wait(a,m=>m.type==='state');
+  assert.equal(first.total,4);
   const b = await connect(), c = await connect();
   send(b,{type:'join',code:first.code,name:'ゲスト1'}); send(c,{type:'join',code:first.code,name:'ゲスト2'});
   await wait(a,m=>m.people?.length===3);
+  // Seat expansion is host-owned, bounded and visible to every guest.
+  send(a,{type:'seats',total:5});await wait(b,m=>m.total===5);await wait(c,m=>m.total===5);
+  send(b,{type:'seats',total:6});await new Promise(r=>setTimeout(r,25));assert.equal(a.messages.at(-1).total,5);
+  send(a,{type:'seats',total:7});await wait(a,m=>m.type==='error');assert.equal(b.messages.at(-1).total,5);
+  send(a,{type:'seats',total:2});await wait(a,m=>m.type==='error');assert.equal(c.messages.at(-1).total,5);
+  send(a,{type:'seats',total:6});await wait(b,m=>m.total===6);
   send(b,{type:'start',total:3}); await new Promise(r=>setTimeout(r,25)); assert.equal(a.messages.some(m=>m.game), false);
   send(a,{type:'start',total:3}); await wait(a,m=>m.type==='error');
   for(const cl of clients)send(cl,{type:'ready'});
@@ -135,7 +147,7 @@ test('実際の3接続：準備・開始権限・非公開手札・手番・古�
   for (const cl of clients) {
     const snap=await wait(cl,m=>m.game);snap.game.players.forEach((p,i)=>assert.equal(Array.isArray(p.hand),i===snap.seat));
     assert.equal(snap.game.startingCards.length,5);assert.ok(snap.game.startingCards.every(x=>x.card.rank===5));
-    assert.equal(E.initialDealView(snap.game,snap.seat).players.reduce((sum,p)=>sum+p.count,0),43);
+    assert.equal(E.initialDealView(snap.game,snap.seat).players.reduce((sum,p)=>sum+p.count,0),44);
   }
   // No moves, including CPU moves, until every client finishes the shared deal animation.
   const earlyActor=clients[s.game.turn];send(earlyActor,{type:'action',revision:0,action:{type:'pass'}});

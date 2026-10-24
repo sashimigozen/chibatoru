@@ -252,6 +252,14 @@
     "hp": 0
   },
   {
+    "baseId": "chotto_machii",
+    "name": "ちょっと待ちぃ",
+    "type": "item",
+    "cost": 10,
+    "attack": 0,
+    "hp": 0
+  },
+  {
     "baseId": "classroom",
     "name": "一般教室",
     "type": "environment",

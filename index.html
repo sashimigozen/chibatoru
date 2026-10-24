@@ -17519,6 +17519,7 @@
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
 <link rel="stylesheet" href="cards-ui.css?v=0.23.18-cycle" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.26.0" />
+  <link rel="stylesheet" href="narabe-entry.css" />
   <link rel="stylesheet" href="gacha-ui.css?v=0.25.1-shop" />
 </head>
 <body>
@@ -19496,6 +19497,7 @@
     }
 
     const CARD_BASES = {
+      chotto_machii: { name: "ちょっと待ちぃ", type: "item", cost: 10, target: "self", category: "common" },
       ittan: { name: "一旦", type: "item", cost: 8, target: "self", category: "common" },
       kakiage_teacher: { name: "かき揚げ教師", type: "teacher", cost: 6, attack: 2, hp: 4, keywords: ["陽気"], allowedZones: ["teacher"], category: "common" },
       window_eater: { name: "窓辺イーター", type: "vampire", cost: 9, attack: 4, hp: 5, allowedZones: ["teacher", "seat"], category: "cafeteria" },
@@ -19886,6 +19888,9 @@
     ALL_DECK_IDS.push("ittan", "kashikashi", "window_snipe_student");
     SPECIALTY_CARD_IDS.common.push("ittan", "kashikashi", "window_snipe_student");
     IMMEDIATE_ITEM_IDS.push("ittan", "kashikashi");
+    ALL_DECK_IDS.push("chotto_machii");
+    SPECIALTY_CARD_IDS.common.push("chotto_machii");
+    IMMEDIATE_ITEM_IDS.push("chotto_machii");
     ALL_DECK_IDS.push("fusion_uma", "fusion_maibo", "fusion_bone", "fusion_where",
       "remote_participant_student", "information_tired_student", "corridor_student");
     SPECIALTY_CARD_IDS.gakuyukai_item.push("tiny_rhythm_student");
@@ -19918,6 +19923,15 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.32.0",
+        versioning: "semver",
+        date: "2026年10月24日",
+        summary: "新カード「ちょっと待ちぃ」を追加しました。",
+        changes: [
+          { category: "新カード", title: "ちょっと待ちぃ", after: "持ち物／共通カード／戦意10／攻撃力0／体力0\n自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。" }
+        ]
+      },
       {
         version: "ver.0.31.0",
         versioning: "semver",
@@ -22839,6 +22853,7 @@
       abyssTurns: 0,
       internTurnsRemaining: 0,
       effectUseLockTurnsRemaining: 0,
+      skipAllTurns: false,
       retainNextUsedItem: false,
       turnActionTaken: false,
       designTextbookBonus: 0,
@@ -29934,6 +29949,13 @@
         ));
     }
 
+    function scoreAiChottoMachii(side, item) {
+      if (item?.unusable || effectiveCardCost(item) > state.players[side].will
+        || arePlayedEffectsSuppressed(side) || state.players[oppositeSide(side)].skipAllTurns
+        || !aiCanSurviveSelfDamage(side, 19)) return 0;
+      return 80;
+    }
+
     function aiAttackTriggerHasValue(side, attacker, target = null) {
       if (!canUsePrintedCardEffects(attacker)) return false;
       if (attacker.baseId === "true_enemy") return state.players[side].deck.length > 0 && !isDeckToHandLocked();
@@ -31056,6 +31078,7 @@
       const targetSide = oppositeSide(side);
       const cost = effectiveCardCost(item);
       if (cost > ai.will) return -Infinity;
+      if (item.baseId === "chotto_machii") return scoreAiChottoMachii(side, item) || -Infinity;
       const crabPlan = getAiCrabVictoryPlan(side);
       if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return -Infinity;
       const crabDefenseBonus = crabPlan.active ? (crabPlan.countdownActive ? 26 : 16) : 0;
@@ -32779,6 +32802,7 @@
 
     function scoreAiItem(item, options = {}) {
       if (arePlayedEffectsSuppressed("opponent")) return 0;
+      if (item?.baseId === "chotto_machii") return scoreAiChottoMachii("opponent", item);
       if (item?.baseId === "ittan") {
         const value = side => listBoardRefs(side).map(getBoardCardFromRef)
           .filter(card => !isPadlocked(card) && !isAibenNyoteiEffectImmune(card))
@@ -34070,7 +34094,14 @@
           applyBoardAuras();
         }
         state.lectureRoomCheck = false;
-        state.currentSide = oppositeSide(endingSide);
+        const nextSide = oppositeSide(endingSide);
+        if (state.players[nextSide].skipAllTurns) {
+          // Do not run any start/end processing for a skipped turn.
+          addLog(`ちょっと待ちぃの効果：${SIDES[nextSide]}のターンを飛ばします。`);
+          state.currentSide = endingSide;
+        } else {
+          state.currentSide = nextSide;
+        }
         state.actionTurn += 1;
         startTurn(state.currentSide);
       } finally {
@@ -42928,6 +42959,14 @@
       if (item.baseId !== "donguri") showCardPlayAnimation(item, "trash");
       let resultText = "";
       let itemAlreadyMovedToTrash = false;
+      if (item.baseId === "chotto_machii") {
+        damagePlayer(side, 19, item);
+        resultText = "自分本体に19ダメージを与えました。";
+        if (state.players[side].life > 0 && !state.gameOver) {
+          state.players[oppositeSide(side)].skipAllTurns = true;
+          resultText += "この対戦中、相手のターンをすべて飛ばします。";
+        }
+      }
       if (item.baseId === "ittan") {
         const refs = ["player", "opponent"].flatMap(owner => listBoardRefs(owner));
         const destroyed = destroyBoardRefsToTrash(refs, { reason: item.name });
@@ -49972,10 +50011,11 @@
     }
 
     function playerActiveEffectLines(side) {
-      if (ongoingEffectsSuppressed()) return [];
       const player = state.players[side];
       if (!player) return [];
       const lines = [];
+      if (player.skipAllTurns) lines.push("ちょっと待ちぃ：この対戦中、自分のターンをすべて飛ばします。");
+      if (ongoingEffectsSuppressed()) return lines;
       if (player.retainNextUsedItem) {
         lines.push(`${CARD_BASES.jailbreak_tutuapp.name}：次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。`);
       }
@@ -55194,6 +55234,7 @@
         if (kingdomRules[card.baseId]) return formatCardRulesDisplayText(card, kingdomRules[card.baseId]);
       }
       const rules = {
+        chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
         kakiage_teacher: "陽気を持つ。このカードが教卓マスにいるかぎり、自分のターン終了時に自分本体の気力を1回復する。",
         window_eater: "このカードを手札から出席させたとき、相手の席マスの列を1つ選び、その列にいる出席者すべてを破壊する。環境が「食堂」なら、1つではなく2つの列を選ぶ。環境が「食堂」であるかぎり、このカードの戦意を-2する。",

@@ -4,26 +4,77 @@ const { pathToFileURL } = require('node:url');
 const url = 'http://127.0.0.1:8791/narabe/';
 test.setTimeout(90000);
 test.beforeEach(async({page})=>{await page.addInitScript(()=>{Math.random=()=>.4;});});
-test('通常メニューから正式ページへ進み、名前と通常サーバー設定を引き継ぐ',async({page})=>{
+test('通常メニューから同じURL内で並べへ切り替え、名前・接続設定・通常版の状態を保つ',async({page})=>{
   await page.goto('http://127.0.0.1:8791/index.html');
   await page.evaluate(()=>{
     window.__chibattle.state.profile.username='並べ参加者';
     localStorage.setItem('chibattle-online-server-url-v1','wss://example.com');
   });
   await page.locator('#homeNavBattleButton').click();
+  const originalURL=page.url();
+  const normalBefore=await page.evaluate(()=>JSON.stringify(state.deckBuilder.counts));
   const button=page.locator('#onlineFourMatchButton');await expect(button).not.toContainText('テスト');
-  await button.click();await expect(page).toHaveURL(/\/narabe\/index.html$/);
-  await expect(page).toHaveTitle('チバトル並べ｜チバトル');
-  await expect(page.locator('#solo')).toBeEnabled();await expect(page.locator('#name')).toHaveValue('並べ参加者');
-  await expect(page.locator('#endpoint')).toHaveValue('wss://example.com/narabe');
-  await expect(page.locator('body')).not.toContainText('テスト版');
+  await button.click();await expect(page).toHaveURL(originalURL);
+  await expect(page.locator('#appRoot')).toHaveAttribute('inert', '');
+  const mode=page.frameLocator('#narabeEmbeddedFrame');
+  await expect(mode.locator('#solo')).toBeEnabled();await expect(mode.locator('#name')).toHaveValue('並べ参加者');
+  await expect(mode.locator('#endpoint')).toHaveValue('wss://example.com/narabe');
+  await page.evaluate(()=>window.postMessage({type:'chibatoru-narabe-close'},location.origin));
+  await expect(page.locator('#narabeEmbeddedScreen')).toHaveCount(1);
+  await expect(mode.locator('body')).not.toContainText('テスト版');
   await page.screenshot({path:'/tmp/chibatoru-narabe-integrated-lobby.png'});
-  await page.locator('a.back').click();await expect(page.locator('#homeNavBattleButton')).toBeVisible();
+  await mode.locator('a.back').click();await expect(page.locator('#narabeEmbeddedScreen')).toHaveCount(0);
+  await expect(page.locator('#appRoot')).not.toHaveAttribute('inert', '');
+  await expect(page).toHaveURL(originalURL);await expect(button).toBeVisible();
+  expect(await page.evaluate(()=>JSON.stringify(state.deckBuilder.counts))).toBe(normalBefore);
+  await button.click();await expect(mode.locator('#solo')).toBeEnabled();
+  await expect(page.locator('#narabeEmbeddedFrame')).toHaveCount(1);
+  await mode.locator('a.back').click();
+  await page.locator('#onlinePrivateMatchButton').click();await expect(page.locator('#onlinePrivatePanel')).toBeVisible();
+});
+
+test('同じURL内の並べでCPU戦を開始し、終了後も並べの準備画面へ戻れる',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('http://127.0.0.1:8791/index.html?ws=ws%3A%2F%2F127.0.0.1%3A8791');
+  const originalURL=page.url();await page.locator('#homeNavBattleButton').click();await page.locator('#onlineFourMatchButton').click();
+  const mode=page.frameLocator('#narabeEmbeddedFrame');
+  await expect(mode.locator('#endpoint')).toHaveValue('ws://127.0.0.1:8791/narabe');
+  await mode.locator('#solo').click();await expect(mode.locator('#battle')).toBeVisible();
+  await expect(page).toHaveURL(originalURL);await expect(mode.locator('#table .slot')).toHaveCount(50);
+  await expect(mode.locator('#dealSource')).toBeHidden({timeout:20000});
+  await page.screenshot({path:'/tmp/chibatoru-narabe-embedded-mobile-battle.png'});
+  await mode.locator('#menuButton').click();
+  page.once('dialog',dialog=>dialog.accept());await mode.locator('#quit').click();
+  await expect(mode.locator('#lobby')).toBeVisible();
+  await mode.locator('a.back').click();await expect(page.locator('#narabeEmbeddedScreen')).toHaveCount(0);
+  await expect(page).toHaveURL(originalURL);
 });
 test('旧テストURLから正式ページへ移動し、指定サーバーも保持する',async({page})=>{
   await page.goto('http://127.0.0.1:8791/narabe-test/?ws=wss%3A%2F%2Fexample.com');
   await expect(page).toHaveURL(/\/narabe\/index.html\?ws=/);
   await expect(page.locator('#solo')).toBeEnabled();await expect(page.locator('#endpoint')).toHaveValue('wss://example.com/narabe');
+});
+
+test('同じURL内の2画面で部屋作成・準備OK・オンライン対戦を開始できる',async({browser})=>{
+  const contexts=await Promise.all([0,1].map(()=>browser.newContext()));
+  try{
+    const pages=await Promise.all(contexts.map(c=>c.newPage()));
+    const mainURL='http://127.0.0.1:8791/index.html?ws=ws%3A%2F%2F127.0.0.1%3A8791';
+    for(const page of pages){
+      await page.goto(mainURL);await page.locator('#homeNavBattleButton').click();await page.locator('#onlineFourMatchButton').click();
+    }
+    const [host,guest]=pages.map(p=>p.frameLocator('#narabeEmbeddedFrame'));
+    await host.locator('#total').selectOption('2');await host.locator('#create').click();
+    await expect(host.locator('#connected')).toBeVisible();
+    await guest.locator('#code').fill(await host.locator('#copy').textContent());await guest.locator('#join').click();
+    await expect(host.locator('#people .person')).toHaveCount(2);
+    for(const mode of [host,guest])await mode.locator('#ready').click();
+    await expect(host.locator('#start')).toBeEnabled();await host.locator('#start').click();
+    for(const [index,mode] of [host,guest].entries()){
+      await expect(mode.locator('#battle')).toBeVisible();await expect(mode.locator('#table .slot')).toHaveCount(50);
+      await expect(pages[index]).toHaveURL(mainURL);
+    }
+  }finally{for(const context of contexts)await context.close();}
 });
 async function reachTurn(page){
   await expect(page.locator('#dealSource')).toBeHidden({timeout:20000});
@@ -55,7 +106,7 @@ test('チバトル素材を使ったマッチング画面とCPU戦をPC・スマ
     await expect(page.locator('#narabeComputer')).toBeHidden();
     await expect(page.locator('#table .slot')).toHaveCount(50);
     expect(await page.locator('#table [data-row-label]').evaluateAll(rows=>rows.map(row=>row.dataset.rowLabel))).toEqual(['環境','教師','学生','ヴァンパイア','持ち物']);
-    await expect(page.locator('#table .empty-seat')).toHaveCount(7);
+    await expect(page.locator('#table .empty-seat')).toHaveCount(6);
     await expect(page.locator('#players .player')).toHaveCount(3);
     await reachTurn(page);
     await expect(page.locator('#specialHand .special-card')).toHaveCount(3);
@@ -83,7 +134,8 @@ test('別々の3画面が同じ部屋で準備して七並べを開始できる'
     await pages[0].locator('#create').click(); await expect(pages[0].locator('#connected')).toBeVisible();
     const code=await pages[0].locator('#copy').textContent();
     for(const page of pages.slice(1)){await page.locator('#code').fill(code);await page.locator('#join').click();await expect(page.locator('#connected')).toBeVisible();}
-    await expect(pages[0].locator('#people .person')).toHaveCount(3);
+    await expect(pages[0].locator('#people .person:not(.empty)')).toHaveCount(3);
+    await expect(pages[0].locator('#people .person.empty')).toHaveCount(1);
     for(const page of pages)await page.locator('#ready').click();
     await expect(pages[0].locator('#start')).toBeEnabled();await pages[0].locator('#start').click();
     for(const page of pages){await expect(page.locator('#battle')).toBeVisible();await expect(page.locator('#players .player')).toHaveCount(3);await expect(page.locator('#hand button')).not.toHaveCount(0);}

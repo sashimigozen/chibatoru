@@ -34,8 +34,8 @@ test("オンラインメニューの既存位置から正式モードのチバ�
   expect(colors.fourBorder).toBe(colors.privateBorder);
   expect(colors.fourColor).toBe(colors.privateColor);
   await fourButton.click();
-  await expect(page).toHaveURL(/narabe\/index.html$/);
-  await expect(page.locator('#lobby h1')).toHaveText('チバトル並べ');
+  await expect(page).toHaveURL(gameUrl);
+  await expect(page.frameLocator('#narabeEmbeddedFrame').locator('#lobby h1')).toHaveText('チバトル並べ');
 });
 
 test("ターン強度、隣接関係、共通敵得点を基準仕様どおり処理する", async ({ page }) => {

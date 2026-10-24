@@ -38,10 +38,10 @@
             <form id="joinForm"><label for="code">部屋番号</label><div class="join-row"><input id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6桁の部屋番号" required><button id="join" class="secondary" disabled>入室</button></div></form>
           </div>
           <div id="connected" hidden>
-            <div class="room-number"><span>部屋番号</span><button id="copy" title="部屋番号をコピー">------</button></div>
-            <div id="people" class="people"></div>
-            <div class="room-actions"><button id="ready" class="secondary">準備OK</button><button id="start" class="primary">開始</button></div>
-            <button id="leave" class="text-button">部屋を退出</button>
+            <div class="waiting-heading"><h2 id="roomTitle">みんなの部屋</h2><div class="waiting-meta"><span class="room-number"><span>部屋番号</span><button id="copy" title="部屋番号をコピー">------</button></span><span id="roomCount" aria-label="参加人数"></span></div></div>
+            <p id="roomHelp" class="waiting-help">他のプレイヤーを待っています。</p>
+            <div class="waiting-body"><div class="waiting-seats"><div id="people" class="people" aria-label="参加者と空席"></div><button id="addSeat" class="secondary add-seat" type="button" aria-label="席を1つ増やす">＋</button></div></div>
+            <div class="room-actions"><button id="ready" class="secondary">準備OK</button><button id="start" class="primary">ゲームスタート</button><button id="leave" class="secondary">退室</button></div>
           </div>
           <p id="status" role="status" aria-live="polite">通常のチバトル対戦・対戦ログとは独立しています。</p>
           <details><summary>接続先の設定</summary><label for="endpoint">七並べ用WebSocketサーバー</label><input id="endpoint" type="url"><p class="small">通常のオンライン対戦と同じサーバーを使います。接続先を変更する場合のみ設定してください。</p></details>
@@ -58,7 +58,7 @@
       <button id="logButton" class="battle-corner log-button" type="button" aria-expanded="false" aria-controls="logDrawer">ログ</button>
       <aside id="players" class="players" aria-label="相手の手札と情報"></aside>
       <section class="table-panel" aria-label="七並べの場">
-        <div class="table-label"><span>場</span><span id="placedCount">5 / 39</span></div>
+        <div class="table-label"><span>場</span><span id="placedCount"></span></div>
         <div class="table-scroll"><div id="table" class="table"></div></div>
         <div id="dealSource" class="deal-source" aria-label="配札元"><img src="../assets/card-back.png" alt=""><span>配札中</span></div>
         <aside class="self-controls" aria-label="自分の情報とパス権">

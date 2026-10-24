@@ -9,7 +9,7 @@ function createNarabeRooms({ cpuDelay = 650, random = Math.random } = {}) {
   function broadcast(room) {
     room.updated = Date.now();
     room.people.forEach((p, seat) => send(p.ws, { type: 'state', code: room.code, seat, host: seat === 0,
-      people: room.people.map(x => ({ name: x.name, ready: x.ready })), game: room.game ? { ...E.view(room.game, seat), presenting: Boolean(room.presenting) } : null }));
+      total: room.total, people: room.people.map(x => ({ name: x.name, ready: x.ready })), game: room.game ? { ...E.view(room.game, seat), presenting: Boolean(room.presenting) } : null }));
   }
   function cpu(room) {
     clearTimeout(room.timer);
@@ -45,22 +45,29 @@ function createNarabeRooms({ cpuDelay = 650, random = Math.random } = {}) {
           if (m.type === 'create') {
             if (rooms.size >= 200) throw Error('部屋が混み合っています。');
             let code; do { code = crypto.randomInt(100000, 1000000).toString(); } while (rooms.has(code));
-            room = { code, people: [], game: null, updated: Date.now(), timer: null }; rooms.set(code, room);
+            const requested=Number(m.total);
+            room = { code, people: [], total:Number.isInteger(requested)&&requested>=2&&requested<=6?requested:4, game: null, updated: Date.now(), timer: null }; rooms.set(code, room);
           } else {
             room = rooms.get(String(m.code || '').trim());
             if (!room) throw Error('部屋が見つかりません。');
             if (room.game || room.people.length >= 6) { room = null; throw Error('開始済み、または満員の部屋です。'); }
           }
           person = { ws, name: String(m.name || 'チバトル学生').trim().slice(0, 20) || 'チバトル学生', ready: false };
-          room.people.push(person); broadcast(room); return;
+          room.people.push(person); room.total=Math.max(room.total,room.people.length); broadcast(room); return;
         }
         const seat = room.people.indexOf(person);
         if (seat < 0) return;
         if (m.type === 'ready' && !room.game) { person.ready = !person.ready; broadcast(room); }
+        else if (m.type === 'seats' && seat === 0 && !room.game) {
+          const total=Number(m.total);
+          if(!Number.isInteger(total)||total<Math.max(2,room.people.length)||total>6)throw Error('人数は入室者以上の2〜6人を選んでください。');
+          room.total=total;broadcast(room);
+        }
         else if (m.type === 'start' && seat === 0 && !room.game) {
           const total = Number(m.total);
           if (!Number.isInteger(total) || total < Math.max(2, room.people.length) || total > 6) throw Error('人数は入室者以上の2〜6人を選んでください。');
           if (!room.people.every(p => p.ready)) throw Error('全員の準備OKを待ってください。');
+          room.total=total;
           const names = room.people.map(p => p.name);
           while (names.length < total) names.push(`CPU ${names.length - room.people.length + 1}`);
           room.game = E.create(names,random); room.presenting = true; room.dealReady = new Set();

@@ -13,7 +13,65 @@ body.computer-active:not(.narabe-playing) { overflow: hidden; }
   box-shadow: 0 12px 28px #0f172a1a;
 }
 body.narabe-playing #narabeComputer { display: none; }
+/* Waiting room: one broad panel, numbered seats and a bottom action bar. */
+#lobby.room-open > .heading, #lobby.room-open .profile-panel,
+#lobby.room-open .room-panel > .panel-title, #lobby.room-open .room-panel > details { display:none; }
+#lobby.room-open { padding-top:22px; }
+.narabe-lobby-content:has(#lobby.room-open) { max-width:1480px; }
+#lobby.room-open .match-grid { display:block; }
+#lobby.room-open .room-panel { padding:28px 34px 18px; background:#f3f7fb; }
+.waiting-heading { display:flex;align-items:center;justify-content:space-between;gap:24px;border-bottom:2px solid #d1e3ef;padding-bottom:18px; }
+.room-panel .waiting-heading h2 { margin:0;font-size:clamp(22px,2.6vw,32px);overflow-wrap:anywhere; }
+.waiting-meta { display:flex;align-items:center;gap:28px;flex-shrink:0; }
+.waiting-meta .room-number { margin:0;display:flex;align-items:center;gap:8px; }
+.waiting-meta .room-number button { font-size:20px;letter-spacing:.12em;padding:4px; }
+#roomCount { font-size:18px;font-weight:750;white-space:nowrap; }
+.room-panel .waiting-help { margin:22px 0 28px;font-size:15px; }
+.waiting-body { min-height:clamp(290px,40vh,480px); }
+.waiting-seats { width:52%;min-width:360px;max-width:580px; }
+#connected .people { gap:12px;min-height:0; }
+#connected .person { display:grid;grid-template-columns:26px minmax(0,1fr) auto;align-items:center;gap:12px;padding:15px 18px;min-height:62px;border:1px solid transparent;border-radius:8px; }
+#connected .person .seat-number { font-size:19px;color:#547389; }
+#connected .person .seat-name { font-size:17px;overflow-wrap:anywhere; }
+#connected .person .seat-status { font-size:12px;text-align:right; }
+#connected .person.empty { color:#8ba1ad;background:#ffffff9c; }
+#connected .person.empty .seat-name { font-weight:500; }
+#connected .person.is-ready { border-color:#87b6ce; }
+#connected .person.is-ready .seat-status { color:#206b8e;font-weight:750; }
+#connected .add-seat { width:100%;margin-top:12px;padding:4px;min-height:42px;font-size:28px;line-height:1;box-shadow:none;border-style:dashed; }
+#connected .room-actions { justify-content:flex-end;flex-wrap:wrap;border-top:2px solid #d1e3ef;padding-top:22px;margin-top:28px;gap:18px; }
+#connected .room-actions button { flex:0 1 190px;border-radius:6px;box-shadow:none; }
+#ready[aria-pressed="true"] { background:#d9ecf7;border-color:#3786ae; }
+#lobby.room-open #status { margin-bottom:0; }
+@media (min-width:851px) and (max-height:850px) {
+  .narabe-lobby-content:has(#lobby.room-open) { padding:12px 18px; }
+  .narabe-lobby-content:has(#lobby.room-open) header { padding:8px 14px; }
+  #lobby.room-open { padding-top:12px; }
+  #lobby.room-open .room-panel { padding:18px 22px 12px; }
+  .waiting-heading { padding-bottom:12px; }
+  .room-panel .waiting-heading h2 { font-size:24px; }
+  .room-panel .waiting-help { margin:14px 0 18px;font-size:14px; }
+  .waiting-body { min-height:0; }
+  #connected .people { gap:8px; }
+  #connected .person { min-height:48px;padding:10px 14px; }
+  #connected .add-seat { min-height:36px;margin-top:8px; }
+  #connected .room-actions { margin-top:18px;padding-top:14px; }
+  #connected .room-actions button { min-height:42px;padding:10px 16px; }
+}
+@media (max-width:850px) {
+  .waiting-heading { align-items:flex-start;flex-direction:column;gap:14px; }
+  .waiting-meta { width:100%;justify-content:space-between;gap:12px; }
+  .waiting-seats { width:100%;min-width:0; }
+  #lobby.room-open .room-panel { padding:20px; }
+}
 @media (max-width: 650px) {
   .narabe-lobby-content { padding: 12px; }
   .narabe-lobby-content header { padding: 12px; gap: 10px; }
+  #connected .person { padding:12px 10px;gap:8px;grid-template-columns:20px minmax(0,1fr); }
+  #connected .person .seat-status { grid-column:2;text-align:left; }
+  .waiting-body { min-height:0; }
+  #connected .room-actions { gap:10px;padding-top:16px;margin-top:22px; }
+  #connected .room-actions button { flex:1 1 100%; }
+  .waiting-meta .room-number { flex-wrap:wrap; }
+  .waiting-meta .room-number button { font-size:18px; }
 }

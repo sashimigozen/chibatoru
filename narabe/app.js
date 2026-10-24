@@ -28,6 +28,9 @@
   function send(data) { if (socket?.readyState === 1) socket.send(JSON.stringify(data)); }
   function setConnectionUI() {
     $('disconnected').hidden = Boolean(state); $('connected').hidden = !state;
+    const roomWasOpen=$('lobby').classList.contains('room-open');
+    $('lobby').classList.toggle('room-open', Boolean(state));
+    if(Boolean(state)!==roomWasOpen)document.querySelector('#narabeComputer .computer-content').scrollTop=0;
     $('solo').disabled = !cardsReady || Boolean(socket); $('total').disabled = Boolean(state && !state.host);
     $('name').disabled = Boolean(socket); $('create').disabled = !cardsReady || connecting; $('join').disabled = !cardsReady || connecting;
   }
@@ -42,6 +45,14 @@
     old?.close(); connecting = false; state = null; roomCode = ''; local = null;
     $('battle').hidden = true; $('lobby').hidden = false; setConnectionUI(); if (message) status(message);
   }
+  // Only the main app's embedded mode returns without navigating the parent.
+  // Direct /narabe/ links keep their existing back link.
+  if (window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1') {
+    document.querySelector('a.back').addEventListener('click', event => {
+      event.preventDefault(); disconnect();
+      window.parent.postMessage({ type: 'chibatoru-narabe-close' }, location.origin === 'null' ? '*' : location.origin);
+    });
+  }
   function connect(type) {
     if (!cardsReady || socket || connecting) return;
     const endpoint = $('endpoint').value.trim();
@@ -53,11 +64,11 @@
     current.addEventListener('message', event => {
       if (current !== socket) return;
       let m; try { m = JSON.parse(event.data); } catch { return; }
-      if (m.type === 'hello' && m.mode === 'narabe') send({ type, name: $('name').value, code: $('code').value });
+      if (m.type === 'hello' && m.mode === 'narabe') send({ type, name: $('name').value, code: $('code').value, total: Number($('total').value) });
       if (m.type === 'error') { pending=false;refreshControls();status(m.message); if (!state) disconnect(m.message); }
       if (m.type === 'state') {
         clearTimeout(helloTimer); connecting = false; state = m; roomCode = m.code; setConnectionUI(); renderRoom();
-        status(m.game ? '' : '全員が準備OKになったら、ホストが開始します。'); if (m.game) queueGame(m.game, m.seat);
+        status(''); if (m.game) queueGame(m.game, m.seat);
       }
     });
     current.addEventListener('close', () => { if (current === socket) disconnect('接続が切れました。対戦中の切断は脱落になります。'); });
@@ -65,10 +76,21 @@
   }
   function renderRoom() {
     $('copy').textContent = roomCode; $('people').replaceChildren();
-    state.people.forEach((p, i) => { const row = text('div', '', 'person'); row.append(text('strong', `${p.name}${i === state.seat ? '（あなた）' : ''}`), text('span', `${i === 0 ? 'ホスト · ' : ''}${p.ready ? '準備OK' : '準備中'}`)); $('people').append(row); });
+    const total = Math.max(state.total || Number($('total').value), state.people.length);
+    $('total').value = total;
+    $('roomTitle').textContent = `${state.people[0]?.name || 'みんな'}の部屋`;
+    $('roomCount').textContent = `${state.people.length} / ${total}人`;
+    $('roomHelp').textContent = state.host ? '全員が準備OKになったら、ゲームスタート。空いている席にはCPUが入ります。' : '準備OKを押して、ホストのゲームスタートを待ってください。空席にはCPUが入ります。';
+    for (let i=0;i<total;i++) {
+      const p=state.people[i], row=text('div','','person');
+      row.classList.toggle('empty',!p);row.classList.toggle('is-ready',Boolean(p?.ready));
+      row.append(text('span',`${i+1}.`,'seat-number'),text('strong',p ? `${p.name}${i===state.seat?'（あなた）':''}` : '空席','seat-name'),text('span',p ? `${i===0?'ホスト · ':''}${p.ready?'準備OK':'準備中'}` : 'CPUが参加','seat-status'));
+      $('people').append(row);
+    }
+    $('addSeat').hidden = !state.host || total>=6;
     $('ready').textContent = state.people[state.seat]?.ready ? '準備を解除' : '準備OK';
+    $('ready').setAttribute('aria-pressed',String(Boolean(state.people[state.seat]?.ready)));
     $('start').hidden = !state.host; $('start').disabled = !state.people.every(p => p.ready);
-    if (state.host && Number($('total').value) < state.people.length) $('total').value = state.people.length;
   }
   function perform(action) {
     if (busy || pending || shown?.presenting) return;
@@ -364,6 +386,8 @@
   $('create').onclick = () => connect('create');
   $('joinForm').onsubmit = e => { e.preventDefault(); connect('join'); };
   $('ready').onclick = () => send({ type: 'ready' }); $('start').onclick = () => send({ type: 'start', total: Number($('total').value) });
+  $('addSeat').onclick = () => { if(state?.host)send({type:'seats',total:Number($('total').value)+1}); };
+  $('total').onchange = () => { if(state?.host)send({type:'seats',total:Number($('total').value)}); };
   $('leave').onclick = () => disconnect('部屋を退出しました。');
   $('quit').onclick = () => { if ((local && !local.over || state?.game && !state.game.over) && !confirm('開始画面に戻りますか？ オンライン対戦中は脱落になります。')) return; disconnect(''); };
   $('resultBack').onclick=()=>disconnect('');

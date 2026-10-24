@@ -20,15 +20,15 @@ test('使用演出は成功した専用カードだけを公開し、通常配�
   E.forfeit(g,1);assert.deepEqual(g.lastSpecial,event);
 });
 
-test('18種類が全員重複なし・各人3枚。通常43枚・空席7・環境10は空席',()=>{
+test('18種類が全員重複なし・各人3枚。通常44枚・空席6・環境10は空席',()=>{
   for(let n=2;n<=6;n++)for(let k=0;k<30;k++){
     const g=E.create(Array.from({length:n},(_,i)=>`P${i}`));
     const ids=g.players.flatMap(p=>p.specials);assert.equal(ids.length,n*3);assert.equal(new Set(ids).size,n*3);
     assert.ok(g.players.every(p=>p.specials.length===3));
     for(let seat=0;seat<n;seat++)E.view(g,seat).players.forEach((p,i)=>{assert.equal(p.specials!==undefined,i===seat);assert.equal(p.hand!==undefined,i===seat);assert.equal(p.specialCount,3);});
   }
-  assert.equal(E.cards.length,43);assert.equal(E.specials.length,18);assert.equal(E.cardAt(4,10),undefined);
-  for(const [s,r,id]of[[1,6,'kakiage_teacher'],[2,6,'jobs_woody'],[2,9,'window_eater'],[3,8,'ittan']])assert.equal(c(s,r).baseId,id);
+  assert.equal(E.cards.length,44);assert.equal(E.specials.length,18);assert.equal(E.cardAt(4,10),undefined);
+  for(const [s,r,id]of[[1,6,'kakiage_teacher'],[2,6,'jobs_woody'],[2,9,'window_eater'],[3,8,'ittan'],[3,10,'chotto_machii']])assert.equal(c(s,r).baseId,id);
 });
 test('カオスは枚数を保ち通常と専用を混ぜない。使用したカードは戻らない',()=>{
   const g=E.create(['A','B','C','D','E','F']);g.turn=g.players.findIndex(p=>p.specials.includes('chaos'));const seat=g.turn;
