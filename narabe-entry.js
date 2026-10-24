@@ -17,6 +17,7 @@
     try { sessionStorage.setItem('chibatoru-narabe-name', window.__chibattle?.state?.profile?.username || 'チバトル学生'); } catch {}
     const destination=new URL('narabe/index.html',location.href);
     destination.searchParams.set('embedded', '1');
+    destination.searchParams.set('v', '0.32.0-room-2');
     const customServer=new URLSearchParams(location.search).get('ws');
     if(customServer)destination.searchParams.set('ws',customServer);
     screen = document.createElement('section');
