@@ -24,6 +24,35 @@
   try { $('name').value = sessionStorage.getItem('chibatoru-narabe-name') || 'チバトル学生'; } catch {}
   const text = (tag, content, cls) => { const el = document.createElement(tag); el.textContent = content; if (cls) el.className = cls; return el; };
   let cardsReady=false;
+  let directorySocket=null,directoryRetry=null,directoryRooms=[],directoryLoaded=false;
+  function stopDirectory(){clearTimeout(directoryRetry);const old=directorySocket;directorySocket=null;old?.close();}
+  function renderDirectory(){
+    $('roomListCount').textContent=`${directoryRooms.length}ルーム`;
+    $('roomList').replaceChildren();
+    for(const room of directoryRooms){
+      const row=text('div','','directory-room');
+      row.append(text('strong',room.name),text('span',room.code,'directory-code'),text('span',`${room.count} / ${room.total}人`));
+      const join=text('button',room.count>=room.total?'満員':'入室','secondary');join.type='button';
+      join.disabled=!cardsReady||Boolean(socket)||room.count>=room.total;
+      join.onclick=()=>{$('code').value=room.code;connect('join');};row.append(join);$('roomList').append(row);
+    }
+    if(!directoryRooms.length)$('roomList').append(text('p',directoryLoaded?'募集中の部屋はありません':'読込中…','directory-empty'));
+    $('quickMatch').disabled=!cardsReady||Boolean(socket)||!directoryLoaded;
+  }
+  function startDirectory(){
+    stopDirectory();if(state||local||socket)return;
+    directoryLoaded=false;directoryRooms=[];renderDirectory();
+    let url;try{url=new URL($('endpoint').value.trim());if(!['ws:','wss:'].includes(url.protocol)||(location.protocol==='https:'&&url.protocol!=='wss:'))throw Error();url.pathname='/narabe';url.search='';url.hash='';}catch{status('接続先URLを確認してください。');return;}
+    const current=directorySocket=new WebSocket(url);
+    current.addEventListener('message',event=>{
+      if(current!==directorySocket)return;let m;try{m=JSON.parse(event.data);}catch{return;}
+      if(m.type==='hello'&&m.mode==='narabe')current.send(JSON.stringify({type:'list'}));
+      if(m.type==='rooms'&&Array.isArray(m.rooms)){directoryLoaded=true;directoryRooms=m.rooms;status('');renderDirectory();}
+      if(m.type==='error'){$('roomList').replaceChildren(text('p','一覧を取得できません。更新してください。','directory-empty'));status(m.message);}
+    });
+    current.addEventListener('error',()=>{});
+    current.addEventListener('close',()=>{if(current!==directorySocket)return;directorySocket=null;directoryLoaded=false;directoryRooms=[];renderDirectory();$('roomList').replaceChildren(text('p','再接続中…','directory-empty'));directoryRetry=setTimeout(startDirectory,5000);});
+  }
   function status(message) { $('status').textContent = message; $('gameStatus').textContent = message; }
   function send(data) { if (socket?.readyState === 1) socket.send(JSON.stringify(data)); }
   function setConnectionUI() {
@@ -33,6 +62,8 @@
     if(Boolean(state)!==roomWasOpen)document.querySelector('#narabeComputer .computer-content').scrollTop=0;
     $('solo').disabled = !cardsReady || Boolean(socket); $('total').disabled = Boolean(state && !state.host);
     $('name').disabled = Boolean(socket); $('create').disabled = !cardsReady || connecting; $('join').disabled = !cardsReady || connecting;
+    $('quickMatch').disabled=!cardsReady||Boolean(socket)||!directoryLoaded;
+    $('refreshRooms').disabled=Boolean(socket);
   }
   function disconnect(message = '') {
     epoch++; window.ChibattleDraw.cancel();cancelDealFlights(); activeMove?.cancel(); activeMove = null;
@@ -43,13 +74,13 @@
     $('menuButton').setAttribute('aria-expanded','false'); $('logButton').setAttribute('aria-expanded','false');
     clearTimeout(cpuTimer); clearTimeout(helloTimer); const old = socket; socket = null;
     old?.close(); connecting = false; state = null; roomCode = ''; local = null;
-    $('battle').hidden = true; $('lobby').hidden = false; setConnectionUI(); if (message) status(message);
+    $('battle').hidden = true; $('lobby').hidden = false; setConnectionUI();startDirectory(); if (message) status(message);
   }
   // Only the main app's embedded mode returns without navigating the parent.
   // Direct /narabe/ links keep their existing back link.
   if (window.parent !== window && new URLSearchParams(location.search).get('embedded') === '1') {
     document.querySelector('a.back').addEventListener('click', event => {
-      event.preventDefault(); disconnect();
+      event.preventDefault(); disconnect();stopDirectory();
       window.parent.postMessage({ type: 'chibatoru-narabe-close' }, location.origin === 'null' ? '*' : location.origin);
     });
   }
@@ -59,7 +90,7 @@
     let url; try { url = new URL(endpoint); } catch { status('接続先URLを確認してください。'); return; }
     if (!['ws:', 'wss:'].includes(url.protocol) || (location.protocol === 'https:' && url.protocol !== 'wss:')) { status('安全なWebSocket接続先を指定してください。'); return; }
     url.pathname = '/narabe'; url.search = ''; url.hash = '';
-    connecting = true; const current = socket = new WebSocket(url); setConnectionUI(); status('接続中…（無料サーバーの起動に時間がかかる場合があります）');
+    stopDirectory();connecting = true; const current = socket = new WebSocket(url); setConnectionUI(); status('接続中…');
     helloTimer = setTimeout(() => { if (socket === current && !state) disconnect('接続できませんでした。接続先とネットワークを確認してください。'); }, 65000);
     current.addEventListener('message', event => {
       if (current !== socket) return;
@@ -76,15 +107,18 @@
   }
   function renderRoom() {
     $('copy').textContent = roomCode; $('people').replaceChildren();
-    const total = Math.max(state.total || Number($('total').value), state.people.length);
+    const total = Math.max(4,state.total || Number($('total').value), state.people.length);
     $('total').value = total;
     $('roomTitle').textContent = `${state.people[0]?.name || 'みんな'}の部屋`;
     $('roomCount').textContent = `${state.people.length} / ${total}人`;
-    $('roomHelp').textContent = state.host ? '全員が準備OKになったら、ゲームスタート。空いている席にはCPUが入ります。' : '準備OKを押して、ホストのゲームスタートを待ってください。空席にはCPUが入ります。';
     for (let i=0;i<total;i++) {
       const p=state.people[i], row=text('div','','person');
       row.classList.toggle('empty',!p);row.classList.toggle('is-ready',Boolean(p?.ready));
       row.append(text('span',`${i+1}.`,'seat-number'),text('strong',p ? `${p.name}${i===state.seat?'（あなた）':''}` : '空席','seat-name'),text('span',p ? `${i===0?'ホスト · ':''}${p.ready?'準備OK':'準備中'}` : 'CPUが参加','seat-status'));
+      if(i>=4&&state.host){
+        const remove=text('button','−','secondary remove-seat');remove.type='button';remove.setAttribute('aria-label',`${i+1}人目の席を減らす`);
+        remove.disabled=Boolean(p)||total-1<state.people.length;remove.onclick=()=>send({type:'seats',total:total-1});row.classList.add('has-seat-remove');row.append(remove);
+      }
       $('people').append(row);
     }
     $('addSeat').hidden = !state.host || total>=6;
@@ -382,8 +416,10 @@
     if (g.over) $('rankings').replaceChildren(...[...g.players].sort((a, b) => a.rank - b.rank).map(p => text('li', `${p.name}${p.status === 'eliminated' ? '（脱落）' : ''}`)));
     fitCards();
   }
-  $('solo').onclick = () => { if(!cardsReady)return;epoch++;shown=null;local = E.create(Array.from({ length: Number($('total').value) }, (_, i) => i ? `CPU ${i}` : $('name').value.trim() || 'あなた')); status(''); queueGame(E.view(local, 0), 0); };
+  $('solo').onclick = () => { if(!cardsReady)return;stopDirectory();epoch++;shown=null;local = E.create(Array.from({ length: Math.max(4,Number($('total').value)) }, (_, i) => i ? `CPU ${i}` : $('name').value.trim() || 'あなた')); status(''); queueGame(E.view(local, 0), 0); };
   $('create').onclick = () => connect('create');
+  $('quickMatch').onclick=()=>{const room=directoryRooms.find(r=>r.count<r.total);if(room)$('code').value=room.code;connect(room?'join':'create');};
+  $('refreshRooms').onclick=startDirectory;$('endpoint').onchange=startDirectory;
   $('joinForm').onsubmit = e => { e.preventDefault(); connect('join'); };
   $('ready').onclick = () => send({ type: 'ready' }); $('start').onclick = () => send({ type: 'start', total: Number($('total').value) });
   $('addSeat').onclick = () => { if(state?.host)send({type:'seats',total:Number($('total').value)+1}); };
@@ -403,6 +439,6 @@
   window.addEventListener('keydown',event=>{if(event.key==='Escape'){cancelDrags.forEach(cancel=>cancel());clearHints();drawer('menu',false);drawer('log',false);$('cardPreview').hidden=true;}});
   window.addEventListener('resize',()=>{if(shown){cancelDrags.forEach(cancel=>cancel());cancelDealFlights();activeMove?.cancel();fitCards();const panel=$('table').parentElement;panel.scrollLeft=Math.max(0,(panel.scrollWidth-panel.clientWidth)/2);}});
   $('copy').onclick = async () => { try { await navigator.clipboard.writeText(roomCode); status('部屋番号をコピーしました。'); } catch { status(`部屋番号：${roomCode}（コピーできない場合は手入力してください）`); } };
-  window.addEventListener('pagehide', () => { epoch++;cancelDrags.forEach(cancel=>cancel());cancelDealFlights();activeMove?.cancel();window.ChibattleDraw.cancel();clearTimeout(cpuTimer); socket?.close(); });
-  window.NarabeOriginalCard.ready.then(()=>{cardsReady=true;setConnectionUI();}).catch(()=>status('通常版のカード表示を読み込めませんでした。チバトルのメニューから開き直してください。'));
+  window.addEventListener('pagehide', () => { stopDirectory();epoch++;cancelDrags.forEach(cancel=>cancel());cancelDealFlights();activeMove?.cancel();window.ChibattleDraw.cancel();clearTimeout(cpuTimer); socket?.close(); });
+  window.NarabeOriginalCard.ready.then(()=>{cardsReady=true;setConnectionUI();startDirectory();}).catch(()=>status('通常版のカード表示を読み込めませんでした。チバトルのメニューから開き直してください。'));
 })();

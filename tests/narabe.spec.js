@@ -64,10 +64,11 @@ test('同じURL内の2画面で部屋作成・準備OK・オンライン対戦�
       await page.goto(mainURL);await page.locator('#homeNavBattleButton').click();await page.locator('#onlineFourMatchButton').click();
     }
     const [host,guest]=pages.map(p=>p.frameLocator('#narabeEmbeddedFrame'));
-    await host.locator('#total').selectOption('2');await host.locator('#create').click();
+    await host.locator('#total').selectOption('4');await host.locator('#create').click();
     await expect(host.locator('#connected')).toBeVisible();
-    await guest.locator('#code').fill(await host.locator('#copy').textContent());await guest.locator('#join').click();
-    await expect(host.locator('#people .person')).toHaveCount(2);
+    await guest.locator('.code-entry summary').click();await guest.locator('#code').fill(await host.locator('#copy').textContent());await guest.locator('#join').click();
+    await expect(host.locator('#people .person:not(.empty)')).toHaveCount(2);
+    await expect(host.locator('#people .person')).toHaveCount(4);
     for(const mode of [host,guest])await mode.locator('#ready').click();
     await expect(host.locator('#start')).toBeEnabled();await host.locator('#start').click();
     for(const [index,mode] of [host,guest].entries()){
@@ -133,7 +134,7 @@ test('別々の3画面が同じ部屋で準備して七並べを開始できる'
     for(let i=0;i<3;i++){await pages[i].goto('http://127.0.0.1:8791/narabe/');await pages[i].locator('#name').fill(`学生${i+1}`);}
     await pages[0].locator('#create').click(); await expect(pages[0].locator('#connected')).toBeVisible();
     const code=await pages[0].locator('#copy').textContent();
-    for(const page of pages.slice(1)){await page.locator('#code').fill(code);await page.locator('#join').click();await expect(page.locator('#connected')).toBeVisible();}
+    for(const page of pages.slice(1)){await page.locator('.code-entry summary').click();await page.locator('#code').fill(code);await page.locator('#join').click();await expect(page.locator('#connected')).toBeVisible();}
     await expect(pages[0].locator('#people .person:not(.empty)')).toHaveCount(3);
     await expect(pages[0].locator('#people .person.empty')).toHaveCount(1);
     for(const page of pages)await page.locator('#ready').click();

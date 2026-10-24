@@ -146,7 +146,7 @@ test('実際の6接続でも情報確認は使用者だけ、全員交換は手�
   const send=(c,m)=>c.ws.send(JSON.stringify(m));
   for(let i=0;i<6;i++){
     const ws=new WebSocket(`ws://127.0.0.1:${server.address().port}`),cl={ws,messages:[]};clients.push(cl);ws.on('message',raw=>cl.messages.push(JSON.parse(raw)));
-    await new Promise(r=>ws.once('open',r));send(cl,i?{type:'join',name:`P${i}`,code:(await wait(clients[0],m=>m.type==='state')).code}:{type:'create',name:'P0'});await wait(cl,m=>m.type==='state'&&m.people.length===i+1);
+    await new Promise(r=>ws.once('open',r));send(cl,i?{type:'join',name:`P${i}`,code:(await wait(clients[0],m=>m.type==='state')).code}:{type:'create',name:'P0',total:6});await wait(cl,m=>m.type==='state'&&m.people.length===i+1);
   }
   clients.forEach(cl=>send(cl,{type:'ready'}));await wait(clients[0],m=>m.people?.length===6&&m.people.every(p=>p.ready));send(clients[0],{type:'start',total:6});
   await wait(clients[0],m=>m.game);clients.forEach(cl=>send(cl,{type:'dealt'}));await wait(clients[0],m=>m.game&&!m.game.presenting);

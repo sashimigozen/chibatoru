@@ -114,7 +114,7 @@ test('手番外の切断処理で現在の手番を奪わない。相手の手�
   const v = E.view(g,current); assert.ok(v.players[current].hand); assert.equal(v.players[(current+2)%3].hand, undefined);
 });
 
-test('実際の3接続：準備・開始権限・非公開手札・手番・古い操作・切断', async t => {
+test('実際の4接続：準備・開始権限・非公開手札・手番・古い操作・切断', async t => {
   const server = http.createServer(), wss = new WebSocketServer({ server }), rooms = createNarabeRooms({ cpuDelay: 5 });
   wss.on('connection', ws => rooms.connect(ws)); await new Promise(r => server.listen(0,'127.0.0.1',r));
   const clients = [];
@@ -130,9 +130,9 @@ test('実際の3接続：準備・開始権限・非公開手札・手番・古�
   const send = (c,m) => c.ws.send(JSON.stringify(m));
   const a = await connect(); send(a,{type:'create',name:'ホスト'}); const first = await wait(a,m=>m.type==='state');
   assert.equal(first.total,4);
-  const b = await connect(), c = await connect();
-  send(b,{type:'join',code:first.code,name:'ゲスト1'}); send(c,{type:'join',code:first.code,name:'ゲスト2'});
-  await wait(a,m=>m.people?.length===3);
+  const b = await connect(), c = await connect(), d = await connect();
+  send(b,{type:'join',code:first.code,name:'ゲスト1'}); send(c,{type:'join',code:first.code,name:'ゲスト2'});send(d,{type:'join',code:first.code,name:'ゲスト3'});
+  await wait(a,m=>m.people?.length===4);
   // Seat expansion is host-owned, bounded and visible to every guest.
   send(a,{type:'seats',total:5});await wait(b,m=>m.total===5);await wait(c,m=>m.total===5);
   send(b,{type:'seats',total:6});await new Promise(r=>setTimeout(r,25));assert.equal(a.messages.at(-1).total,5);
@@ -142,7 +142,7 @@ test('実際の3接続：準備・開始権限・非公開手札・手番・古�
   send(b,{type:'start',total:3}); await new Promise(r=>setTimeout(r,25)); assert.equal(a.messages.some(m=>m.game), false);
   send(a,{type:'start',total:3}); await wait(a,m=>m.type==='error');
   for(const cl of clients)send(cl,{type:'ready'});
-  await wait(a,m=>m.people?.length===3 && m.people.every(p=>p.ready)); send(a,{type:'start',total:3});
+  await wait(a,m=>m.people?.length===4 && m.people.every(p=>p.ready)); send(a,{type:'start',total:4});
   const s = await wait(a,m=>m.game);
   for (const cl of clients) {
     const snap=await wait(cl,m=>m.game);snap.game.players.forEach((p,i)=>assert.equal(Array.isArray(p.hand),i===snap.seat));
@@ -160,7 +160,7 @@ test('実際の3接続：準備・開始権限・非公開手札・手番・古�
   send(active,{type:'action',revision:snap.game.revision,action}); await wait(a,m=>m.game?.revision===1);
   send(active,{type:'action',revision:0,action}); await new Promise(r=>setTimeout(r,25));
   assert.equal(a.messages.at(-1).game.revision,1);
-  c.ws.close(); const after=await wait(a,m=>m.game?.players[2].status==='eliminated'); assert.equal(after.game.players[2].rank,3);
+  c.ws.close(); const after=await wait(a,m=>m.game?.players[2].status==='eliminated'); assert.equal(after.game.players[2].rank,4);
 });
 
 test('通常サーバーでも /narabe を独立した部屋へ振り分ける', async t => {

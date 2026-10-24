@@ -5,14 +5,14 @@
   <title>チバトル並べ｜チバトル</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="../desktop-ui.css?v=0.26.0">
-  <link rel="stylesheet" href="lobby.css?v=0.32.0-room-2">
+  <link rel="stylesheet" href="lobby.css?v=0.32.0-room-3">
   <link rel="stylesheet" href="../draw-animation.css">
   <link rel="stylesheet" href="battle.css">
   <script defer src="../hand-drag-visuals.js"></script>
   <script defer src="../draw-animation.js"></script>
   <script defer src="../card-face.js"></script>
   <script defer src="original-card.js"></script>
-  <script defer src="../server/narabe-cards.js"></script><script defer src="../server/narabe-specials.js"></script><script defer src="../server/narabe-engine.js"></script><script defer src="app.js?v=0.32.0-room-2"></script>
+  <script defer src="../server/narabe-cards.js"></script><script defer src="../server/narabe-specials.js"></script><script defer src="../server/narabe-engine.js"></script><script defer src="app.js?v=0.32.0-room-3"></script>
 </head>
 <body class="computer-active">
   <main>
@@ -20,31 +20,21 @@
       <div class="computer-display"><div class="computer-content"><div class="narabe-lobby-content">
     <header><a class="back" href="../index.html">‹ チバトルへ</a><span class="mode-tag">チバトル並べ</span><span class="brand">チバトル</span></header>
     <section id="lobby">
-      <div class="heading"><div><p class="eyebrow">みんなで、ひとならべ。</p><h1>チバトル並べ</h1><p>部屋番号で集まって、七並べを遊ぼう。</p></div><img src="../assets/home/nav-battle.png" alt="" class="battle-art"></div>
       <div class="match-grid">
-        <section class="panel profile-panel">
-          <div class="panel-title"><span>プレイヤー</span><span class="small">専用カードあり</span></div>
-          <div class="avatar" aria-hidden="true"><span>◡</span></div>
-          <label for="name">あなたの名前</label><input id="name" maxlength="20" value="チバトル学生" autocomplete="nickname">
-          <label for="total">プレイ人数 <small>空いている席にはCPUが入ります</small></label>
-          <select id="total"><option value="2">2人</option><option value="3">3人</option><option value="4" selected>4人</option><option value="5">5人</option><option value="6">6人</option></select>
-          <button id="solo" class="primary" disabled>CPUと対戦 <small>あなた ＋ CPU</small></button>
-        </section>
         <section class="panel room-panel">
-          <div class="panel-title"><span>プライベートマッチ</span><span class="small">2〜6人</span></div>
           <div id="disconnected">
-            <h2>友だちと一緒に</h2><p>1人が部屋を作り、ほかの人は部屋番号で入室します。</p>
-            <button id="create" class="primary" disabled>部屋を作る</button><div class="divider">または</div>
-            <form id="joinForm"><label for="code">部屋番号</label><div class="join-row"><input id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6桁の部屋番号" required><button id="join" class="secondary" disabled>入室</button></div></form>
+            <div class="directory-toolbar"><h1>チバトル並べ</h1><button id="quickMatch" class="primary" disabled>すぐに対戦</button><button id="create" class="primary" disabled>部屋を作る</button><button id="solo" class="secondary" disabled>CPUと対戦</button><button id="refreshRooms" class="secondary" type="button">更新</button></div>
+            <div class="directory-meta"><label for="name">名前<input id="name" maxlength="20" value="チバトル学生" autocomplete="nickname"></label><label for="total">人数<select id="total"><option value="4" selected>4人</option><option value="5">5人</option><option value="6">6人</option></select></label><span id="roomListCount" aria-live="polite">0ルーム</span></div>
+            <div id="roomList" class="room-directory" aria-label="募集中の部屋"><p class="directory-empty">読込中…</p></div>
+            <details class="code-entry"><summary>部屋番号で入室</summary><form id="joinForm"><label for="code">部屋番号</label><div class="join-row"><input id="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6桁の部屋番号" required><button id="join" class="secondary" disabled>入室</button></div></form></details>
           </div>
           <div id="connected" hidden>
             <div class="waiting-heading"><h2 id="roomTitle">みんなの部屋</h2><div class="waiting-meta"><span class="room-number"><span>部屋番号</span><button id="copy" title="部屋番号をコピー">------</button></span><span id="roomCount" aria-label="参加人数"></span></div></div>
-            <p id="roomHelp" class="waiting-help">他のプレイヤーを待っています。</p>
             <div class="waiting-body"><div class="waiting-seats"><div id="people" class="people" aria-label="参加者と空席"></div><button id="addSeat" class="secondary add-seat" type="button" aria-label="席を1つ増やす">＋</button></div></div>
             <div class="room-actions"><button id="ready" class="secondary">準備OK</button><button id="start" class="primary">ゲームスタート</button><button id="leave" class="secondary">退室</button></div>
           </div>
-          <p id="status" role="status" aria-live="polite">通常のチバトル対戦・対戦ログとは独立しています。</p>
-          <details><summary>接続先の設定</summary><label for="endpoint">七並べ用WebSocketサーバー</label><input id="endpoint" type="url"><p class="small">通常のオンライン対戦と同じサーバーを使います。接続先を変更する場合のみ設定してください。</p></details>
+          <p id="status" role="status" aria-live="polite"></p>
+          <details id="connectionSettings"><summary>接続先の設定</summary><label for="endpoint">サーバーURL</label><input id="endpoint" type="url"></details>
         </section>
       </div>
     </section>

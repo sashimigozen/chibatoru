@@ -5,11 +5,16 @@ const E = require('./narabe-engine.js');
 // Completely separate room map and messages: no normal-battle state or learning logs.
 function createNarabeRooms({ cpuDelay = 650, random = Math.random } = {}) {
   const rooms = new Map();
+  const viewers = new Set();
+  let directorySnapshot='';
   const send = (ws, data) => { if (ws.readyState === 1) ws.send(JSON.stringify(data)); };
+  const directory = () => ({type:'rooms',rooms:[...rooms.values()].filter(r=>!r.game&&r.people.length).map(r=>({code:r.code,name:`${r.people[0].name}の部屋`,count:r.people.length,total:r.total}))});
+  function publishDirectory() { const listing=directory(),snapshot=JSON.stringify(listing);if(snapshot===directorySnapshot)return;directorySnapshot=snapshot;for(const ws of viewers)send(ws,listing); }
   function broadcast(room) {
     room.updated = Date.now();
     room.people.forEach((p, seat) => send(p.ws, { type: 'state', code: room.code, seat, host: seat === 0,
       total: room.total, people: room.people.map(x => ({ name: x.name, ready: x.ready })), game: room.game ? { ...E.view(room.game, seat), presenting: Boolean(room.presenting) } : null }));
+    publishDirectory();
   }
   function cpu(room) {
     clearTimeout(room.timer);
@@ -30,6 +35,7 @@ function createNarabeRooms({ cpuDelay = 650, random = Math.random } = {}) {
   const sweep = setInterval(() => {
     for (const [code, room] of rooms) if (Date.now() - room.updated > 2 * 60 * 60 * 1000) {
       clearTimeout(room.timer); clearTimeout(room.dealTimer); room.people.forEach(p => p.ws.close(1000, '部屋の有効期限が切れました')); rooms.delete(code);
+      publishDirectory();
     }
   }, 60000); sweep.unref?.();
   function connect(ws) {
@@ -40,32 +46,33 @@ function createNarabeRooms({ cpuDelay = 650, random = Math.random } = {}) {
         const now = Math.floor(Date.now() / 1000); if (second !== now) { second = now; count = 0; }
         if (++count > 30) return ws.close(1008);
         const m = JSON.parse(raw.toString());
+        if(m.type==='list'&&!room){viewers.add(ws);send(ws,directory());return;}
         if (!room) {
           if (!['create', 'join'].includes(m.type)) throw Error('部屋を作成、または入室してください。');
           if (m.type === 'create') {
             if (rooms.size >= 200) throw Error('部屋が混み合っています。');
             let code; do { code = crypto.randomInt(100000, 1000000).toString(); } while (rooms.has(code));
             const requested=Number(m.total);
-            room = { code, people: [], total:Number.isInteger(requested)&&requested>=2&&requested<=6?requested:4, game: null, updated: Date.now(), timer: null }; rooms.set(code, room);
+            room = { code, people: [], total:Number.isInteger(requested)&&requested>=4&&requested<=6?requested:4, game: null, updated: Date.now(), timer: null }; rooms.set(code, room);
           } else {
             room = rooms.get(String(m.code || '').trim());
             if (!room) throw Error('部屋が見つかりません。');
-            if (room.game || room.people.length >= 6) { room = null; throw Error('開始済み、または満員の部屋です。'); }
+            if (room.game || room.people.length >= room.total) { room = null; throw Error('開始済み、または満員の部屋です。'); }
           }
           person = { ws, name: String(m.name || 'チバトル学生').trim().slice(0, 20) || 'チバトル学生', ready: false };
-          room.people.push(person); room.total=Math.max(room.total,room.people.length); broadcast(room); return;
+          viewers.delete(ws);room.people.push(person); broadcast(room); return;
         }
         const seat = room.people.indexOf(person);
         if (seat < 0) return;
         if (m.type === 'ready' && !room.game) { person.ready = !person.ready; broadcast(room); }
         else if (m.type === 'seats' && seat === 0 && !room.game) {
           const total=Number(m.total);
-          if(!Number.isInteger(total)||total<Math.max(2,room.people.length)||total>6)throw Error('人数は入室者以上の2〜6人を選んでください。');
+          if(!Number.isInteger(total)||total<Math.max(4,room.people.length)||total>6)throw Error('人数は入室者以上の4〜6人を選んでください。');
           room.total=total;broadcast(room);
         }
         else if (m.type === 'start' && seat === 0 && !room.game) {
           const total = Number(m.total);
-          if (!Number.isInteger(total) || total < Math.max(2, room.people.length) || total > 6) throw Error('人数は入室者以上の2〜6人を選んでください。');
+          if (!Number.isInteger(total) || total < Math.max(4, room.people.length) || total > 6) throw Error('人数は入室者以上の4〜6人を選んでください。');
           if (!room.people.every(p => p.ready)) throw Error('全員の準備OKを待ってください。');
           room.total=total;
           const names = room.people.map(p => p.name);
@@ -86,14 +93,15 @@ function createNarabeRooms({ cpuDelay = 650, random = Math.random } = {}) {
     });
     ws.on('error', () => {});
     ws.on('close', () => {
+      viewers.delete(ws);
       if (!room || !person) return;
       const seat = room.people.indexOf(person); if (seat < 0) return;
       if (room.game) { E.forfeit(room.game, seat); releaseDeal(room); broadcast(room); cpu(room); }
       else { room.people.splice(seat, 1); room.people.forEach(p => { p.ready = false; }); broadcast(room); }
-      if (!room.people.some(p => p.ws.readyState === 1)) { clearTimeout(room.timer); clearTimeout(room.dealTimer); rooms.delete(room.code); }
+      if (!room.people.some(p => p.ws.readyState === 1)) { clearTimeout(room.timer); clearTimeout(room.dealTimer); rooms.delete(room.code); publishDirectory(); }
     });
     send(ws, { type: 'hello', mode: 'narabe', version: 1 });
   }
-  return { connect, close() { clearInterval(sweep); rooms.forEach(r => { clearTimeout(r.timer); clearTimeout(r.dealTimer); r.people.forEach(p => p.ws.close()); }); rooms.clear(); } };
+  return { connect, close() { clearInterval(sweep);for(const ws of viewers)ws.close();viewers.clear();rooms.forEach(r => { clearTimeout(r.timer); clearTimeout(r.dealTimer); r.people.forEach(p => p.ws.close()); }); rooms.clear(); } };
 }
 module.exports = { createNarabeRooms };

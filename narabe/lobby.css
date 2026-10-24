@@ -13,6 +13,29 @@ body.computer-active:not(.narabe-playing) { overflow: hidden; }
   box-shadow: 0 12px 28px #0f172a1a;
 }
 body.narabe-playing #narabeComputer { display: none; }
+.narabe-lobby-content { max-width:1480px; }
+#lobby { padding-top:22px; }
+#lobby .match-grid { display:block; }
+#lobby .room-panel { background:#f3f7fb; }
+.directory-toolbar { display:flex;align-items:center;gap:18px;flex-wrap:wrap; }
+.directory-toolbar h1 { font-size:20px;margin:0 auto 0 0;letter-spacing:0; }
+.directory-toolbar button { flex:0 1 190px; }
+.room-panel .directory-toolbar #create { width:auto;margin:0; }
+.directory-meta { display:flex;align-items:flex-end;gap:18px;margin:24px 0 14px; }
+.directory-meta label { margin:0;display:grid;gap:6px;font-size:12px; }
+.directory-meta input { max-width:220px; }
+.directory-meta select { min-width:100px; }
+#roomListCount { margin-left:auto;font-size:16px;font-weight:750;white-space:nowrap; }
+.room-directory { min-height:clamp(280px,52vh,650px);border:2px solid #b8d4e6;background:#fff; }
+.directory-empty { text-align:center;color:#607989;padding:30px 16px; }
+.directory-room { display:grid;grid-template-columns:minmax(0,1fr) 100px 90px 100px;align-items:center;gap:20px;padding:18px 22px;border-bottom:1px solid #d1e3ef; }
+.directory-room strong { overflow-wrap:anywhere;font-size:18px; }
+.directory-code { color:#607989;font-size:14px; }
+.directory-room button { min-height:42px;padding:8px 16px; }
+#connected .waiting-heading { margin-bottom:28px; }
+#connected .person.has-seat-remove { grid-template-columns:26px minmax(0,1fr) auto 40px; }
+#connected .remove-seat { min-width:40px;min-height:40px;box-shadow:none;padding:0;font-size:24px; }
+#status:empty { display:none; }
 /* Waiting room: one broad panel, numbered seats and a bottom action bar. */
 #lobby.room-open > .heading, #lobby.room-open .profile-panel,
 #lobby.room-open .room-panel > .panel-title, #lobby.room-open .room-panel > details { display:none; }
@@ -63,6 +86,13 @@ body.narabe-playing #narabeComputer { display: none; }
   .waiting-meta { width:100%;justify-content:space-between;gap:12px; }
   .waiting-seats { width:100%;min-width:0; }
   #lobby.room-open .room-panel { padding:20px; }
+  .directory-toolbar { gap:10px; }
+  .directory-toolbar h1 { flex-basis:100%; }
+  .directory-toolbar button { flex:1 1 42%; }
+  .directory-room { grid-template-columns:minmax(0,1fr) 80px;gap:8px 12px;padding:14px; }
+  .directory-room strong { grid-column:1; }
+  .directory-room .directory-code { grid-row:2; }
+  .directory-room button { grid-column:2;grid-row:2; }
 }
 @media (max-width: 650px) {
   .narabe-lobby-content { padding: 12px; }
@@ -74,4 +104,10 @@ body.narabe-playing #narabeComputer { display: none; }
   #connected .room-actions button { flex:1 1 100%; }
   .waiting-meta .room-number { flex-wrap:wrap; }
   .waiting-meta .room-number button { font-size:18px; }
+  .directory-meta { flex-wrap:wrap;gap:12px; }
+  .directory-meta label:first-child { flex:1;min-width:120px; }
+  .directory-meta input { max-width:none; }
+  #roomListCount { flex-basis:100%;text-align:right; }
+  #connected .person.has-seat-remove { grid-template-columns:20px minmax(0,1fr) 40px; }
+  #connected .person .remove-seat { grid-column:3;grid-row:1 / span 2; }
 }
