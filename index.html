@@ -19042,7 +19042,7 @@
       expansion: ["aggro_king", "aggro_queen", "brother_capital", "bust_suit", "college_student_vibe", "enemy_boss", "enemy_student", "extra_people", "extra_student", "intern", "kyushu_info_c", "loud_group", "midge", "night_pool", "night_pool_water", "organism", "pachin_uni", "perfect_mutant", "pro_k", "proliferating_enemy", "roar", "scout_student", "seat_taking_group", "single_cell", "sock_block", "suit_student", "ta_squad", "trpg_member", "true_enemy", "enemy_horde", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"],
       interference: ["aggro_student", "angry_maker", "baka_mac", "bounce_day", "building_12_classroom", "capture", "cynical_student", "destroy_dos_attack", "dobby", "dont_worry", "dos_attack", "elite_open_chatter", "france_asakura", "full_lock", "handmade_ctoc", "handy_jet_engine", "i_got_it", "kyoto_sound_i", "live_person", "logic_hunter", "meguro_library", "ninety_three_teacher", "peaceful_mind", "philosophy_cheating", "quiet_please", "seat_rules", "sniper", "student_comedy", "suspicious_document", "thanks_all_students", "thin_item", "thin_professor_h", "ttb", "yamanashi_minimum_wage", "suffix_sugi", "overfitting_student", "white_student"],
       shogi: ["aiben", "aiben_vs_nyotei_title_match", "forbidden_book", "furious_comeback", "gangi_fortress", "infight_shogi", "nyotei", "shogi_duel_field", "stand_up"],
-      big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "destructive_lie", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "pure_destruction", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer", "yabe", "plump_student", "apprentice_best_friend"],
+      big: ["ae_student", "best_friend", "big_laughter", "big_wall", "chigauyo", "cote_dazur", "crotch_febreze", "destructive_lie", "dorm_council", "favorite_number_s", "fire_touch", "go_home", "key", "lie_pekora", "loud_members", "lone_wolf", "loud_student", "one_eyed_peek", "padlock", "predator", "president", "protein_drinker", "pure_destruction", "rebirth_student", "seriously_hit", "small_omata", "smoke_flare", "super_ae_student", "ta_killer", "yabe", "plump_student", "apprentice_best_friend", "two_achievers"],
       vampire: []
     });
     const DUNGEON_CARD_STYLE_REWARDS = Object.freeze({
@@ -19636,6 +19636,7 @@
       variable_student: { name: "変数学生", type: "student", cost: 2, attack: 1, hp: 1, allowedZones: ["seat"], category: "design" },
       spoon_wizard: { name: "スプーンの魔術師", type: "student", cost: 7, attack: 2, hp: 3, allowedZones: ["seat"], category: "common" },
       adjective_vs_cynical: { name: "形容詞学生vs冷笑学生", type: "student", cost: 6, attack: 5, hp: 5, occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "common" },
+      two_achievers: { name: "2人で成し遂げた学生たち", type: "student", cost: 6, attack: 5, hp: 3, occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "big" },
       starbucks_student: { name: "片手にスタバ学生", type: "student", cost: 7, attack: 3, hp: 3, allowedZones: ["seat"], category: "design" },
       overfitting_student: { name: "過学習学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "interference" },
       loud_typing_student: { name: "バカでかいタイピング音の学生", type: "student", cost: 8, attack: 4, hp: 4, allowedZones: ["seat"], category: "big" },
@@ -19880,6 +19881,7 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("two_achievers");
     ALL_DECK_IDS.push("acting_out_man_2", "acting_out_woman", "hearty_grandma");
     ALL_DECK_IDS.push("kakiage_teacher", "window_eater", "jobs_woody");
     SPECIALTY_CARD_IDS.common.push("kakiage_teacher");
@@ -19923,6 +19925,15 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.33.0",
+        versioning: "semver",
+        date: "2026年10月26日",
+        summary: "新カード「2人で成し遂げた学生たち」を追加しました。",
+        changes: [
+          { category: "新カード", title: "2人で成し遂げた学生たち", after: "学生／バカでかい型／戦意6／攻撃力5／体力3\nこのカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。" }
+        ]
+      },
       {
         version: "ver.0.32.0",
         versioning: "semver",
@@ -30123,6 +30134,8 @@
             + (previewFinalDamageToCard(entry.card, damageFor(entry), card) >= entry.card.currentHp
               ? 12 + Math.max(0, entry.card.attack || 0) : 0), 0);
         return enemyValue - friendlyCost;
+      } else if (card.baseId === "two_achievers") {
+        return scoreAiDamageEffectTargets(side, card, targets, { damage: 1, randomHits: 4 });
       } else if (card.baseId === "cancel_student") {
         targets = targets.filter(({ card: target }) => target.type === "student");
         return scoreAiDamageEffectTargets(side, card, targets, { damage: 1, randomHits: 3 });
@@ -30710,6 +30723,7 @@
       if (!card || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
       const own = state.players[side];
       const drawable = count => isDeckToHandLocked() ? 0 : Math.min(count, own.deck.length) * 3;
+      if (card.baseId === "two_achievers") return Math.max(...twoAchieversChoiceCards(side).map(choice => choice.choiceScore));
       if (card.baseId === "information_tired_student") return horseMaterialCandidates(side).length ? 5 : 0;
       if (card.baseId === "corridor_student") return Math.min(2, horseMaterialCandidates(side).length) * 5;
       if (card.baseId === "gesture_student") return 4 + (own.deck.length >= 6 && own.will - effectiveCardCost(card) >= 4 ? 4 : 0);
@@ -37747,7 +37761,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (kind === "destroy_columns") return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
         return sorted.filter(card => !["buff","damage"].includes(kind) || (!isPadlocked(card) && !isAibenNyoteiEffectImmune(card)
@@ -37761,6 +37775,7 @@
         requestId, context: { kind }, confirmLabel: "確定" };
       if (kind === "destroy_columns") options.context.targetOwner = oppositeSide(side);
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
+      if (kind === "two_achievers") options.message = "次の効果から1つを選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
         if (!onlineSend({ type: "thinItemChoiceRequest", privateChoiceKind: "fusion_effect_choice",
@@ -39984,6 +39999,56 @@
       });
     }
 
+    function twoAchieversChoiceCards(side) {
+      const drawCount = isDeckToHandLocked() ? 0 : Math.min(2, state.players[side].deck.filter(card => card.type === "student").length);
+      const enemy = state.players[oppositeSide(side)];
+      const loadable = enemy.hand.filter(card => (Number(card.handLoadLevel) || 0) < 2).length;
+      const loadValue = Math.min(2, enemy.hand.length) * loadable / Math.max(1, enemy.hand.length)
+        * 6;
+      return [
+        { instanceId: "two-achievers-draw", name: "学生カードを手札に加える", type: "item", noCost: true,
+          twoAchieversChoice: true, choiceScore: drawCount * 4,
+          effect: "自分のデッキから学生カードをランダムに2枚まで手札に加える。" },
+        { instanceId: "two-achievers-load", name: "相手の手札に負荷を付与する", type: "item", noCost: true,
+          twoAchieversChoice: true, choiceScore: loadValue,
+          effect: "相手の手札からカードをランダムに2枚まで選び、負荷を付与する。" }
+      ];
+    }
+
+    function resolveTwoAchieversAttendance(side, source) {
+      return queueFusionEffect(async () => {
+        const token = state.preBattleToken;
+        // Each shot resolves independently so shields, destruction and auras are checked again.
+        let hits = 0;
+        for (let hit = 0; hit < 4 && !state.gameOver; hit += 1) {
+          const target = randomEffectTargetEntry(side, oppositeSide(side), card => card.currentHp > 0);
+          if (!target) break;
+          dealDamageToCard(target.card, 1, source);
+          hits += 1;
+          cleanupDestroyedCards(); applyBoardAuras();
+        }
+        addLog(`${source.name}の効果：相手の出席者へランダムに1ダメージを${hits}回与えました。`);
+        render();
+        // Send the resolved shots before asking the guest for the second effect.
+        if (isOnlineHost()) onlineBroadcastState(true);
+        if (!state.training.skipAnimations) await sleep(Math.max(0, nextDamageFeedbackAt - performance.now()) + 700);
+        while (token === state.preBattleToken && !state.gameOver && battlePresentationBusy({ ignoreFusionTasks: true })) {
+          await new Promise(resolve => window.setTimeout(resolve, 50));
+        }
+        if (token !== state.preBattleToken || state.gameOver) return;
+        const [choice] = await chooseFusionEffectCards(side, source, twoAchieversChoiceCards(side), 1, "two_achievers");
+        if (!choice || token !== state.preBattleToken || state.gameOver) return;
+        if (choice.instanceId === "two-achievers-draw") {
+          const count = pullRandomCardsFromDeck(side, card => card.type === "student", 2);
+          addLog(`${source.name}の効果：デッキから学生カードを${count}枚、ランダムに手札へ加えました。`);
+        } else {
+          const selected = shuffle(state.players[oppositeSide(side)].hand).slice(0, 2);
+          selected.forEach(addHandLoad);
+          addLog(`${source.name}の効果：相手の手札${selected.length}枚に負荷を付与しました。`);
+        }
+      });
+    }
+
     function resolveAttendEffects(side, card, zone, index, options = {}) {
       // This is the common local-attendance trigger. Shared listeners are
       // dispatched by attendCard separately, so suppressing a locked card's
@@ -40002,6 +40067,7 @@
       }
       if (card.baseId === "window_eater") resolveWindowEaterAttendance(side, card);
       if (card.baseId === "jobs_woody") resolveJobsWoodyAttendance(side, card);
+      if (card.baseId === "two_achievers") resolveTwoAchieversAttendance(side, card);
       if (card.baseId === "ultimate_yuta") {
         beginUltimateYutaVictory(side, card);
         return;
@@ -53357,7 +53423,15 @@
         opponent.board.teacher = null;
         opponent.board.seats[4] = makeOpponentTestAttendee("general_student");
       }
-      if (["folder_galaxy", "suffix_sugi", "overfitting_student", "white_student"].includes(baseId)) {
+      if (baseId === "two_achievers") {
+        player.board.seats.fill(null);
+        player.board.teacher = null;
+        player.deck.unshift(createCardFromBase("general_student", "player"), createCardFromBase("aggro_student", "player"));
+        opponent.board.seats.fill(null);
+        opponent.board.seats[0] = makeOpponentTestAttendee("strong_student");
+        opponent.board.teacher = makeOpponentTestAttendee("general_teacher");
+      }
+      if (["folder_galaxy", "suffix_sugi", "overfitting_student", "white_student", "two_achievers"].includes(baseId)) {
         opponent.hand = ["ruler", "bento", "general_student", "general_teacher", "cafeteria"]
           .map((testBaseId) => createCardFromBase(testBaseId, "opponent"));
       }
@@ -55215,7 +55289,7 @@
     }
 
     function cardRulesText(card) {
-      if (card.attendanceLocationChoice) return card.effect || "";
+      if (card.attendanceLocationChoice || card.twoAchieversChoice) return card.effect || "";
       if (card.generatedWithoutEffects) return "効果なし。";
       if (card.darkPresident) {
         const text = "このカードが出席したとき、この対戦中、環境「食堂」の効果を得る。このカードが教卓マスに出席したとき、相手の出席者すべてに3ダメージを与える。このカードが教卓マスにいるかぎり、お互いの場の他の出席者は眠気を持つ。";
@@ -55234,6 +55308,7 @@
         if (kingdomRules[card.baseId]) return formatCardRulesDisplayText(card, kingdomRules[card.baseId]);
       }
       const rules = {
+        two_achievers: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
         kakiage_teacher: "陽気を持つ。このカードが教卓マスにいるかぎり、自分のターン終了時に自分本体の気力を1回復する。",
