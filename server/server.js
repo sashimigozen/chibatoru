@@ -539,6 +539,7 @@ function normalizeAnalyticsLog(room, player, payload) {
   const events = Array.isArray(payload.events) ? payload.events : [];
   const gameId = String(payload.gameId || events.find((event) => event.gameId)?.gameId || room.sessionId || createSessionId()).slice(0, 160);
   const summary = summarizeAnalyticsEvents(events);
+  summary.playerNames = { ...room.battleLogPlayerNames };
   return {
     gameId,
     roomId: room.roomId,
@@ -568,7 +569,7 @@ function saveOnlineBattleLog(room, player, payload) {
   // A retry of an earlier batch must not roll the final event list backwards.
   if (previous?.events?.length > log.events.length) {
     log.events = previous.events;
-    log.summary = previous.summary;
+    log.summary = { ...previous.summary, playerNames: log.summary.playerNames };
     log.final = previous.final;
   }
   log.learning = Replay.learningEligibility(log);
@@ -620,7 +621,7 @@ async function handleCloudArchive(req, res, url) {
       return;
     }
     const page = await cloudLogStore.list((url.searchParams.get("cursor") || "").slice(0, 160));
-    const rows = page.logs.map(log => `<tr><td>${escapeHtml(log.gameId)}</td><td>${escapeHtml(log.receivedAt)}</td><td>${log.final ? "終了" : "途中"}</td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json">保存</a></td></tr>`).join("");
+    const rows = page.logs.map(log => `<tr><td>${escapeHtml(logMatchTitle(log))}<br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td>${log.final ? "終了" : "途中"}</td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json">保存</a></td></tr>`).join("");
     htmlResponse(res, 200, adminPageShell(`<section class="panel"><h1>クラウド保存済みログ</h1><p>サーバー再起動後もD1に残っている記録です。</p><a href="/admin/logs">管理画面に戻る</a><table><tbody>${rows || "<tr><td>記録はまだありません。</td></tr>"}</tbody></table>${page.nextCursor ? `<a href="/admin/logs/archive?cursor=${encodeURIComponent(page.nextCursor)}">次のページ</a>` : ""}</section>`));
   } catch { htmlResponse(res, 503, adminPageShell("<h1>クラウド記録を取得できませんでした</h1><p>設定・容量・通信を確認してください。接続情報は表示しません。</p>")); }
 }
@@ -705,11 +706,18 @@ function adminPageShell(body) {
 </html>`;
 }
 
+function logMatchTitle(log) {
+  const names = log.summary?.playerNames || log.playerNames || {};
+  const label = (name, fallback) => typeof name === "string"
+    ? name.trim().slice(0, PLAYER_PROFILE_USERNAME_MAX) || fallback : fallback;
+  return `${label(names.player, "プレイヤー")} vs ${label(names.opponent, "対戦相手")}`;
+}
+
 function renderAdminLogsPage() {
   const logs = listLogSummaries();
   const rows = logs.map((log) => `
     <tr>
-      <td><a href="/admin/logs/${encodeURIComponent(log.gameId)}">${escapeHtml(log.gameId)}</a></td>
+      <td><a href="/admin/logs/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td>
       <td>${escapeHtml(log.receivedAt)}</td>
       <td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終局" : "進行中"}</span></td>
       <td>${escapeHtml(log.winner || "-")}</td>
@@ -721,7 +729,7 @@ function renderAdminLogsPage() {
   return adminPageShell(`
     <section class="panel">
       <h1>チバトル オンライン対戦ログ</h1>
-      <p class="muted">管理者だけが見られるログ一覧です。プレイヤーの個人名は保存せず、カードバランス分析に必要な対戦イベントを保存します。</p>
+      <p class="muted">管理者だけが見られるログ一覧です。対戦を識別するプロフィール名と、カードバランス分析に必要な対戦イベントを保存します。</p>
       <p class="muted">保存先: <code>${escapeHtml(LOG_STORAGE_DIR)}</code></p>
       <p class="muted">クラウド保存: ${cloudLogQueue.status.configured ? `設定済み／待機 ${cloudLogQueue.status.pending}件／最終保存 ${escapeHtml(cloudLogQueue.status.lastSavedAt || "まだありません")}` : "未設定（端末保存・バックアップを利用してください）"} ${escapeHtml(cloudLogQueue.status.error)}</p>
       <p class="actions">
@@ -739,7 +747,7 @@ function renderAdminLogsPage() {
         <table>
           <thead>
             <tr>
-              <th>gameId</th><th>受信日時</th><th>状態</th><th>勝者</th><th>理由</th><th>デッキ</th><th>イベント数</th>
+              <th>対戦</th><th>受信日時</th><th>状態</th><th>勝者</th><th>理由</th><th>デッキ</th><th>イベント数</th>
             </tr>
           </thead>
           <tbody>${rows || `<tr><td colspan="7" class="muted">まだオンライン対戦ログはありません。</td></tr>`}</tbody>
@@ -867,7 +875,8 @@ function renderAdminLogDetail(log) {
   return adminPageShell(`
     <section class="panel">
       <p><a href="/admin/logs">ログ一覧へ戻る</a></p>
-      <h1>${escapeHtml(log.gameId)}</h1>
+      <h1>${escapeHtml(logMatchTitle(log))}</h1>
+      <p class="muted">gameId: ${escapeHtml(log.gameId)}</p>
       <p class="muted">受信日時: ${escapeHtml(log.receivedAt)} / 部屋: ${escapeHtml(log.roomId)}</p>
       <p>
         <a href="/admin/logs/${encodeURIComponent(log.gameId)}.json">JSONで開く</a>
@@ -1957,6 +1966,10 @@ function handleStartGame(ws, message) {
     return;
   }
   room.started = true;
+  room.battleLogPlayerNames = {
+    player: normalizePlayerProfile(hostOf(room)?.profile).username,
+    opponent: normalizePlayerProfile(guestOf(room)?.profile).username
+  };
   room.humanReplayMatch = !message.snapshot.state?.aiBattle?.active
     && !message.snapshot.state?.training?.active && !message.snapshot.state?.dungeon?.active
     && !message.snapshot.state?.testMode;

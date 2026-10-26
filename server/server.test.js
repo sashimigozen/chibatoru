@@ -993,8 +993,8 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   clients.push(host, guest);
 
   const deckCounts = createNormalDeckCounts();
-  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
-  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), ready: true });
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), profile: { username: "試験ホスト" }, ready: true });
+  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(deckCounts), profile: { username: "ゲスト<&>" }, ready: true });
   await waitFor(host, (message) => message.type === "deckUpdate");
   send(host, {
     type: "startGame",
@@ -1025,6 +1025,7 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   assert.equal(list.statusCode, 200);
   assert.match(list.body, /game-admin-test/);
   assert.match(list.body, /test win/);
+  assert.match(list.body, /試験ホスト vs ゲスト&lt;&amp;&gt;/);
   assert.match(list.body, /バックアップJSONをダウンロード/);
 
   const backup = await httpGet(port, "/admin/logs/backup.json", "secret");
@@ -1040,7 +1041,10 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   const parsed = JSON.parse(json.body);
   assert.equal(parsed.gameId, "game-admin-test");
   assert.equal(parsed.summary.winner, "player");
+  assert.deepEqual(parsed.summary.playerNames, { player: "試験ホスト", opponent: "ゲスト<&>" });
   assert.equal(parsed.events.length, 2);
+  const detail = await httpGet(port, "/admin/logs/game-admin-test", "secret");
+  assert.match(detail.body, /<h1>試験ホスト vs ゲスト&lt;&amp;&gt;<\/h1>/);
 
   const importPage = await httpGet(port, "/admin/logs/import", "secret");
   assert.equal(importPage.statusCode, 200);
@@ -1069,4 +1073,6 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   const importedParsed = JSON.parse(imported.body);
   assert.equal(importedParsed.gameId, "imported-log");
   assert.equal(importedParsed.summary.reason, "import win");
+  const importedDetail = await httpGet(port, "/admin/logs/imported-log", "secret");
+  assert.match(importedDetail.body, /<h1>プレイヤー vs 対戦相手<\/h1>/);
 });
