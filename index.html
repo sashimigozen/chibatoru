@@ -19935,6 +19935,9 @@
         date: "2026年10月26日",
         summary: "新カード「2人で成し遂げた学生たち」「グラサンTA」を追加。「プロ言の長」の強化対象を調整しました。",
         changes: [
+          { category: "カード調整", title: "ティッシュ配り",
+            before: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。",
+            after: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。この効果は重複しない。" },
           { category: "表示・操作改善", title: "タブアイコン", after: "ブラウザのタブに表示するアイコンを、コイントスで使っているスマイルの口に変更しました。" },
           { category: "新カード", title: "グラサンTA", after: "学生／共通カード／戦意3／攻撃力1／体力1\nこのカードを手札から出席させたとき、自分の講義室に「プロ言の長」がいるなら、相手の講義室にいる学生すべてに1ダメージを与える。" },
           { category: "カード調整", title: "プロ言の長",
@@ -31014,7 +31017,7 @@
         const vampireCount = listBoardRefs(side)
           .map((ref) => getBoardCardFromRef(ref))
           .filter((fieldCard) => fieldCard?.type === "vampire").length;
-        if (vampireCount > 0) return 800 + vampireCount * (isCafeteriaEnvironmentActive() ? 10 : 5);
+        if (vampireCount > 0 && friendlyTissueHpBonus(side) === 0) return 800 + vampireCount * (isCafeteriaEnvironmentActive() ? 10 : 5);
       }
       if (card.type === "environment") {
         const environmentScore = scoreAiEnvironment(card, side);
@@ -44681,11 +44684,11 @@
 
     function friendlyTissueHpBonus(owner) {
       if (!owner || ongoingEffectsSuppressed()) return 0;
-      const count = listBoardRefs(owner).filter((ref) => {
+      const active = listBoardRefs(owner).some((ref) => {
         const card = getBoardCardFromRef(ref);
         return card?.baseId === "tissue_distributor" && card.currentHp > 0 && canUsePrintedCardEffects(card);
-      }).length;
-      return count * (isCafeteriaEnvironmentActive() ? 2 : 1);
+      });
+      return active ? (isCafeteriaEnvironmentActive() ? 2 : 1) : 0;
     }
 
     function isAeNameCard(card) {
@@ -55435,7 +55438,7 @@
         hearty_grandma: "超吸血を持つ。環境が「食堂」であるかぎり、このカードの戦意を-2し、陽気を持つ。",
         curry_treater: "このカードが出席したとき、自分のデッキから「グリーンカレー」1枚を手札に加える。環境が「食堂」であるかぎり、このカードの攻撃力を+1、体力を+1し、陽気を与える。",
         chen_san: "このカードを手札から出席させたとき、相手の席マスにいる出席者1人をランダムに指名し、破壊する。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
-        tissue_distributor: "このカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。",
+        tissue_distributor: "このカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。この効果は重複しない。",
         apprentice_vampire: "このカードを手札から席マスに出席させたとき、隣の空き席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-3する。",
         fifty_ninth_paia: "このカードを手札から席マスに出席させたとき、右隣の空いている席マスにこのカードのコピーを1人出席させる。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
         vampire: "陽気を持つ。環境が「食堂」なら、このカードの陽気は超陽気として扱う。",

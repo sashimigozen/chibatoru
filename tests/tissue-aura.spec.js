@@ -18,10 +18,10 @@ test('全文・基本値・分類が一致し、全回復の本文はない', as
     return {text:cardRulesText(c), stats:[c.cost,c.attack,c.hp], specialty:SPECIALTY_CARD_IDS.cafeteria.includes(c.baseId)};
   });
   expect(result).toEqual({stats:[5,2,2], specialty:true,
-    text:'このカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。\n環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。'});
+    text:'このカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。\n環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。\nこの効果は重複しない。'});
 });
 for (const side of ['player','opponent']) {
-  test('自身・席・教卓へ重複し、食堂と出入りに追従 ' + side, async ({page}) => {
+  test('複数いても自身・席・教卓への強化は重複せず、食堂と出入りに追従 ' + side, async ({page}) => {
     const result = await page.evaluate(side => {
       const p = state.players[side], other = oppositeSide(side);
       const first = makeBoardCard(createCardFromBase('tissue_distributor',side)); p.board.seats[0]=first;
@@ -39,8 +39,8 @@ for (const side of ['player','opponent']) {
       p.board.seats[0]=null; applyBoardAuras();
       return {single,double,food,cost,removedFood,removedSecond,finalAlly:ally.maxHp};
     }, side);
-    expect(result).toEqual({single:[3,3,2,2],double:[4,4,2,2],food:[6,6,2,2],cost:3,
-      removedFood:[4,4,2,2],removedSecond:[3,3,2,2],finalAlly:2});
+    expect(result).toEqual({single:[3,3,2,2],double:[3,3,2,2],food:[4,4,2,2],cost:3,
+      removedFood:[3,3,2,2],removedSecond:[3,3,2,2],finalAlly:2});
   });
   test('出席しても全回復せず、後から出た味方にも継続強化 ' + side, async ({page}) => {
     const result = await page.evaluate(side => {
@@ -85,4 +85,40 @@ test('詳細の強化元・継続効果・オンラインの視点変換を確�
   expect(result.lines.join('')).toContain('ヴァンパイアすべての体力を+1');
   expect(result.lines.join('')).not.toContain('戦意');
   expect(result.guest).toEqual(['opponent',3,3]);
+});
+
+for (const side of ['player','opponent']) {
+  test('複数の効果元の一方が無効でも残る1人だけで強化する ' + side, async ({page}) => {
+    const result = await page.evaluate(side => {
+      const p = state.players[side];
+      const first = makeBoardCard(createCardFromBase('tissue_distributor', side));
+      const second = makeBoardCard(createCardFromBase('tissue_distributor', side));
+      p.board.seats[0] = first; p.board.teacher = second;
+      state.environment = createCardFromBase('cafeteria', side);
+      applyBoardAuras(); const both = friendlyTissueHpBonus(side);
+      first.padlockEquipment = {baseId:'padlock'};
+      applyBoardAuras(); const one = friendlyTissueHpBonus(side);
+      second.padlockEquipment = {baseId:'padlock'};
+      applyBoardAuras(); const none = friendlyTissueHpBonus(side);
+      second.padlockEquipment = null;
+      applyBoardAuras(); const restored = friendlyTissueHpBonus(side);
+      return {both,one,none,restored};
+    }, side);
+    expect(result).toEqual({both:2,one:2,none:0,restored:2});
+  });
+}
+
+test('AIは2人目の強化を追加分として優先しない', async ({page}) => {
+  const result = await page.evaluate(() => {
+    const side = 'player';
+    const hand = createCardFromBase('tissue_distributor', side);
+    state.players[side].board.seats[0] = makeBoardCard(createCardFromBase('hearty_grandma', side));
+    const first = trainingYocchanPlayPriority(side, hand);
+    state.players[side].board.seats[1] = makeBoardCard(createCardFromBase('tissue_distributor', side));
+    applyBoardAuras();
+    const second = trainingYocchanPlayPriority(side, hand);
+    return {first,second};
+  });
+  expect(result.first).toBeGreaterThanOrEqual(800);
+  expect(result.second).toBeLessThan(800);
 });
