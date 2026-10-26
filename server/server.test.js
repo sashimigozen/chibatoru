@@ -1026,7 +1026,7 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   assert.match(list.body, /game-admin-test/);
   assert.match(list.body, /test win/);
   assert.match(list.body, /試験ホスト vs ゲスト&lt;&amp;&gt;/);
-  assert.match(list.body, /バックアップJSONをダウンロード/);
+  assert.match(list.body, /まとめて保存/);
 
   const backup = await httpGet(port, "/admin/logs/backup.json", "secret");
   assert.equal(backup.statusCode, 200);

@@ -41,5 +41,36 @@ test('クラウド一覧も同じ対戦名を表示し、名前をHTMLとして�
   assert.ok(c.response.body.includes('&lt;b&gt;ホスト&lt;/b&gt; vs ゲスト&amp;友人'));
   assert.ok(c.response.body.includes('プレイヤー vs 対戦相手'));
   assert.ok(c.response.body.includes('/admin/logs/archive/cloud-new.json'));
+  assert.ok(c.response.body.includes('href="/admin/logs/archive/cloud-new"'));
+  assert.ok(c.response.body.includes('<th>状態</th>'));
+  assert.ok(!c.response.body.includes('サーバー再起動後'));
   assert.ok(!c.response.body.includes('<b>ホスト</b>'));
+});
+
+test('クラウドのログ選択は内容表示へ進み、保存用JSONはダウンロードのまま', async () => {
+  const c = setup();
+  const log = { gameId: 'saved', summary: {}, events: [] };
+  Object.assign(c, {
+    cloudLogStore: { get: async id => id === log.gameId ? log : null },
+    normalizeImportedLog: value => value,
+    renderAdminLogDetail: (value, options) => { c.detail = { value, options }; return 'ログの中身'; },
+    htmlResponse: (res, status, body) => { c.response = { status, body }; },
+    jsonResponse: (res, status, body) => { c.response = { status, body }; },
+    safeLogFileName: String,
+    adminPageShell: body => body
+  });
+  vm.runInContext(`async ${definition('handleCloudArchive')}`, c);
+  const headers = {};
+  const res = { setHeader: (key, value) => { headers[key] = value; } };
+  await c.handleCloudArchive({}, res, new URL('http://localhost/admin/logs/archive/saved'));
+  assert.equal(c.response.status, 200);
+  assert.equal(c.response.body, 'ログの中身');
+  assert.equal(c.detail.options.archive, true);
+  assert.equal(headers['content-disposition'], undefined);
+  await c.handleCloudArchive({}, res, new URL('http://localhost/admin/logs/archive/saved.json'));
+  assert.equal(c.response.body, log);
+  assert.equal(headers['content-disposition'], 'attachment; filename="saved.json"');
+  await c.handleCloudArchive({}, res, new URL('http://localhost/admin/logs/archive/missing'));
+  assert.equal(c.response.status, 404);
+  assert.ok(c.response.body.includes('一覧へ戻る'));
 });

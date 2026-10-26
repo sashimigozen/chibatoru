@@ -610,20 +610,27 @@ function handleDownloadBattleLog(ws, message) {
 }
 
 async function handleCloudArchive(req, res, url) {
-  if (!cloudLogStore) { htmlResponse(res, 503, adminPageShell('<h1>クラウド保存は未設定です</h1><p>RenderへD1の接続情報を設定してください。</p>')); return; }
+  if (!cloudLogStore) { htmlResponse(res, 503, adminPageShell('<section class="panel"><h1>クラウド保存は未設定です</h1><a href="/admin/logs?storage=local">一時保存ログ</a></section>')); return; }
   try {
     if (url.pathname.startsWith("/admin/logs/archive/")) {
+      const download = url.pathname.endsWith(".json");
       const id = decodeURIComponent(url.pathname.slice("/admin/logs/archive/".length).replace(/\.json$/, ""));
       const log = await cloudLogStore.get(id);
-      if (!log) { jsonResponse(res, 404, { error: "ログが見つかりません。" }); return; }
-      res.setHeader("content-disposition", `attachment; filename="${safeLogFileName(id)}.json"`);
-      jsonResponse(res, 200, log);
+      if (!log) {
+        if (download) jsonResponse(res, 404, { error: "ログが見つかりません。" });
+        else htmlResponse(res, 404, adminPageShell('<section class="panel"><h1>ログが見つかりません</h1><a href="/admin/logs">一覧へ戻る</a></section>'));
+        return;
+      }
+      if (download) {
+        res.setHeader("content-disposition", `attachment; filename="${safeLogFileName(id)}.json"`);
+        jsonResponse(res, 200, log);
+      } else htmlResponse(res, 200, renderAdminLogDetail(normalizeImportedLog(log), { archive: true }));
       return;
     }
     const page = await cloudLogStore.list((url.searchParams.get("cursor") || "").slice(0, 160));
-    const rows = page.logs.map(log => `<tr><td>${escapeHtml(logMatchTitle(log))}<br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td>${log.final ? "終了" : "途中"}</td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json">保存</a></td></tr>`).join("");
-    htmlResponse(res, 200, adminPageShell(`<section class="panel"><h1>クラウド保存済みログ</h1><p>サーバー再起動後もD1に残っている記録です。</p><a href="/admin/logs">管理画面に戻る</a><table><tbody>${rows || "<tr><td>記録はまだありません。</td></tr>"}</tbody></table>${page.nextCursor ? `<a href="/admin/logs/archive?cursor=${encodeURIComponent(page.nextCursor)}">次のページ</a>` : ""}</section>`));
-  } catch { htmlResponse(res, 503, adminPageShell("<h1>クラウド記録を取得できませんでした</h1><p>設定・容量・通信を確認してください。接続情報は表示しません。</p>")); }
+    const rows = page.logs.map(log => `<tr><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終了" : "途中"}</span></td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json" download>保存</a></td></tr>`).join("");
+    htmlResponse(res, 200, adminPageShell(`<section class="panel"><h1>クラウド保存ログ</h1><p class="actions"><a class="button secondary" href="/admin/logs?storage=local">一時保存ログ</a></p><div class="table-wrap"><table><thead><tr><th>対戦</th><th>保存日時</th><th>状態</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="4">ログはありません。</td></tr>'}</tbody></table></div>${page.nextCursor ? `<a href="/admin/logs/archive?cursor=${encodeURIComponent(page.nextCursor)}">次のページ</a>` : ""}</section>`));
+  } catch { htmlResponse(res, 503, adminPageShell('<section class="panel"><h1>クラウド記録を取得できませんでした</h1><a href="/admin/logs">再読み込み</a> ・ <a href="/admin/logs?storage=local">一時保存ログ</a></section>')); }
 }
 
 function listLogSummaries() {
@@ -728,18 +735,14 @@ function renderAdminLogsPage() {
   `).join("");
   return adminPageShell(`
     <section class="panel">
-      <h1>チバトル オンライン対戦ログ</h1>
-      <p class="muted">管理者だけが見られるログ一覧です。対戦を識別するプロフィール名と、カードバランス分析に必要な対戦イベントを保存します。</p>
-      <p class="muted">保存先: <code>${escapeHtml(LOG_STORAGE_DIR)}</code></p>
-      <p class="muted">クラウド保存: ${cloudLogQueue.status.configured ? `設定済み／待機 ${cloudLogQueue.status.pending}件／最終保存 ${escapeHtml(cloudLogQueue.status.lastSavedAt || "まだありません")}` : "未設定（端末保存・バックアップを利用してください）"} ${escapeHtml(cloudLogQueue.status.error)}</p>
+      <h1>一時保存ログ</h1>
       <p class="actions">
-        <a class="button backup" href="/admin/logs/backup.json" download>バックアップJSONをダウンロード</a>
-        <a class="button backup" href="/admin/logs/learning.json" download>人間同士の対戦・分析候補JSON</a>
-        <a class="button secondary" href="/admin/logs/archive">クラウド保存済みログ</a>
-        <a class="button secondary" href="/admin/logs.json">JSON一覧を開く</a>
-        <a class="button secondary" href="/admin/logs/import">JSONをインポート</a>
+        <a class="button secondary" href="/admin/logs/archive">クラウド保存ログ</a>
+        <a class="button secondary" href="/admin/logs/backup.json" download>まとめて保存</a>
+        <a class="button secondary" href="/admin/logs/learning.json" download>分析候補を保存</a>
+        <a class="button secondary" href="/admin/logs/import">ログを読み込む</a>
       </p>
-      <p class="muted">更新や再デプロイの前は、まずバックアップJSONを保存してください。</p>
+      ${cloudLogQueue.status.error ? `<p class="notice">${escapeHtml(cloudLogQueue.status.error)}</p>` : ""}
     </section>
     <section class="panel">
       <h2>保存済みログ ${logs.length}件</h2>
@@ -762,7 +765,6 @@ function renderAdminImportPage(message = "", kind = "muted") {
     <section class="panel">
       <p><a href="/admin/logs">ログ一覧へ戻る</a></p>
       <h1>ログJSONインポート</h1>
-      <p class="muted">「バックアップJSONをダウンロード」で保存したJSONの中身を貼り付けると、保存済みログを復元できます。</p>
       ${message ? `<p class="${kind === "ok" ? "notice" : "muted"}">${escapeHtml(message)}</p>` : ""}
     </section>
     <section class="panel">
@@ -771,10 +773,10 @@ function renderAdminImportPage(message = "", kind = "muted") {
           <input id="logFileInput" type="file" accept=".json,.jsonl,application/json,application/x-ndjson">
           <span>
             <strong>ログファイルをここにドロップ</strong>
-            JSON・JSONLファイルを選択する場合は、ここをクリック
+            ファイルを選択
           </span>
         </label>
-        <p class="file-status muted" id="logFileStatus" aria-live="polite">ファイルを読み込むと、下の欄で内容を確認できます。</p>
+        <p class="file-status muted" id="logFileStatus" aria-live="polite"></p>
         <p class="import-json-editor"><textarea id="logsJson" name="logsJson" spellcheck="false" placeholder='{"logs":[...]}'></textarea></p>
         <p class="actions">
           <button class="button" type="submit">インポートする</button>
@@ -830,7 +832,7 @@ function renderAdminImportPage(message = "", kind = "muted") {
             }
             textarea.value = JSON.stringify(payload, null, 2);
             dropZone.classList.add("loaded");
-            showStatus(file.name + " を読み込みました。内容を確認して「インポートする」を押してください。");
+            showStatus(file.name + " を読み込みました。");
             textarea.focus();
           } catch (error) {
             showStatus("ファイルを読み取れませんでした: " + error.message, true);
@@ -868,21 +870,19 @@ function renderAdminImportPage(message = "", kind = "muted") {
   `);
 }
 
-function renderAdminLogDetail(log) {
+function renderAdminLogDetail(log, { archive = false } = {}) {
+  const logBase = archive ? "/admin/logs/archive" : "/admin/logs";
+  const listUrl = archive || !cloudLogStore ? "/admin/logs" : "/admin/logs?storage=local";
   const topCards = (log.summary.frequentlyPlayedCards || [])
     .map((card) => `<span class="badge">${escapeHtml(card.name)} ${escapeHtml(card.count)}</span>`)
     .join(" ");
   return adminPageShell(`
     <section class="panel">
-      <p><a href="/admin/logs">ログ一覧へ戻る</a></p>
+      <p><a href="${listUrl}">ログ一覧へ戻る</a></p>
       <h1>${escapeHtml(logMatchTitle(log))}</h1>
       <p class="muted">gameId: ${escapeHtml(log.gameId)}</p>
       <p class="muted">受信日時: ${escapeHtml(log.receivedAt)} / 部屋: ${escapeHtml(log.roomId)}</p>
-      <p>
-        <a href="/admin/logs/${encodeURIComponent(log.gameId)}.json">JSONで開く</a>
-        ・
-        <a href="/admin/logs/${encodeURIComponent(log.gameId)}.jsonl">JSONLで開く</a>
-      </p>
+      <p><a class="button secondary" href="${logBase}/${encodeURIComponent(log.gameId)}.json" download>ログを保存</a></p>
     </section>
     <section class="panel">
       <h2>概要</h2>
@@ -1020,6 +1020,10 @@ function handleAdminLogsImport(req, res) {
 function handleAdminLogsRequest(req, res, url) {
   if (!requireAdmin(req, res)) return;
   if (url.pathname === "/admin/logs") {
+    if (cloudLogStore && url.searchParams.get("storage") !== "local") {
+      void handleCloudArchive(req, res, url);
+      return;
+    }
     htmlResponse(res, 200, renderAdminLogsPage());
     return;
   }
