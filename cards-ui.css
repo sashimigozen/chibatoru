@@ -126,7 +126,7 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
 .case-card-dialog .tooltip-effect { padding: 18px 0; color: #173246; font-size: 18px; line-height: 1.9; white-space: pre-line; }
 .case-card-dialog .tooltip-effect-label { display: none; }
 .case-card-dialog .battle-card-preview-term-description:not(:empty) { color: #173246; background: #dfeaf1; }
-.case-card-dialog .item-confirm-actions { margin: 0; flex: 0 0 auto; }
+.case-card-dialog .item-confirm-actions { margin: 0; flex: 0 0 auto; display: flex; justify-content: flex-end; }
 #deckEditorView { flex: 1; display: flex; flex-direction: column; min-height: 0; gap: 10px; }
 #deckEditorView > .panel-head, #deckEditorView > .deck-save-tools, #deckEditorView > .deck-actions, #deckEditorView > .used-deck { display: none; }
 .case-editor-head { display: flex; align-items: center; gap: 12px; }
@@ -202,3 +202,16 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
    Important overrides the older, screen-specific scrollbar decorations. */
 html, body, body * { scrollbar-width: none !important; scrollbar-gutter: auto !important; }
 html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+/* Keep the detail and its bottom-right test action readable on narrow screens. */
+@media (max-width: 760px) {
+  .case-card-dialog.item-confirm-dialog { width: calc(100vw - 24px); height: calc(100dvh - 24px); grid-template-columns: 22px minmax(0,1fr) 22px; grid-template-rows: 40px minmax(120px,.8fr) minmax(0,1fr); gap: 12px; padding: 0 12px 12px; }
+  .case-card-dialog #cardTestCard { grid-column: 2; grid-row: 2; }
+  .case-card-dialog .card-test-style-frame { height: 100%; width: auto; max-width: 100%; }
+  .case-card-dialog > .case-arrow:not(.previous) { grid-column: 3; }
+  .case-card-dialog .item-confirm-copy { grid-column: 1 / -1; grid-row: 3; }
+  .case-card-dialog .tooltip-title { font-size: 23px; }
+  .case-card-dialog .tooltip-meta { font-size: 13px; padding: 10px 0; }
+  .case-card-dialog .tooltip-effect { font-size: 15px; padding: 10px 0; }
+  .case-card-dialog #cardTestStartButton { white-space: nowrap; }
+}

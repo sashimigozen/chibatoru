@@ -53,8 +53,9 @@ test("能力・関連カード・カードテストと編集破棄の操作を�
   await page.locator("[data-editor-card-back]").click();
   await expect(page.locator("#caseEditorText .tooltip-title")).toHaveText("偽魏義ッ血");
   await page.locator("#caseEditorTest").click();
-  await expect(page.locator("#cardTestStartButton")).toBeVisible();
-  await page.locator("#cardTestCancelButton").click();
+  expect(await page.evaluate(() => state.testCardBaseId)).toBe("gigi_blood");
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+  await page.locator("#battleTestExitButton").click();
   await page.locator("#caseEditorPlus").click();
   await page.locator("#deckEditorBackButton").click();
   await page.locator("[data-discard-cancel]").click();

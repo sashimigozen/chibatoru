@@ -18568,7 +18568,7 @@
       </section>
     </div>
     <section class="expanded-hand-panel hidden" id="expandedHandPanel" aria-label="拡大した手札">
-      <div class="expanded-hand-heading"><span id="expandedHandCount">手札 0枚</span><button class="button secondary" type="button" id="handCollapseButton">元に戻す</button></div>
+      <div class="expanded-hand-heading"><span id="expandedHandCount">手札 0枚</span></div>
     </section>
     <div class="play-reveal-overlay hidden" id="playRevealOverlay" aria-hidden="true">
       <div class="play-reveal-card" id="playRevealCard"></div>
@@ -19954,7 +19954,8 @@
         date: "2026年10月27日",
         summary: "手札の拡大操作と枚数表示を調整しました。",
         changes: [
-          { category: "表示・操作改善", title: "手札の拡大と枚数", after: "手札エリアは長押しだけで拡大するように変更しました。手札の枚数は、自分の山札のすぐ上に小さく表示します。拡大中の融合・出席や、手札の外をクリックして元に戻す操作も引き続き使えます。" }
+          { category: "表示・操作改善", title: "手札の拡大と枚数", after: "手札エリアは長押しだけで拡大するように変更しました。手札の枚数は、自分の山札のすぐ上に小さく表示します。拡大中の融合・出席や、手札の外をクリックして元に戻す操作も引き続き使えます。" },
+          { category: "表示・操作改善", title: "カードテストと詳細画面", after: "デッキ編成の「カードテスト」は1回押すだけで開始します。カード一覧の詳細にも、説明欄の右下へ「テストする」を追加しました。詳細下部の閉じるボタンと、拡大した手札の「元に戻す」は削除しました。詳細は右上の×、手札は外側のクリックで閉じられます。" }
         ]
       },
       {
@@ -49070,7 +49071,6 @@
       document.addEventListener("keydown", event => {
         if (event.key === "Escape" && handExpanded) setHandExpanded(false);
       });
-      document.getElementById("handCollapseButton").addEventListener("click", () => setHandExpanded(false));
     }
 
     function setupHandScrollEvents() {
@@ -53119,7 +53119,10 @@
       startCardTest(baseId);
     }
 
+    let cardTestReturnView = "editor";
+
     function startCardTest(baseId) {
+      if (state.screen === "deck") cardTestReturnView = state.deckBuilder.view || "editor";
       state.kashikashiActionTurn = null;
       resetBattleDrawers();
       closeTeacherActionChoice();
@@ -53778,7 +53781,7 @@
       clearSelections();
       state.preBattleToken += 1;
       state.screen = "deck";
-      state.deckBuilder.view = "editor";
+      state.deckBuilder.view = cardTestReturnView;
       hideCardTooltip();
       hideBattleCardPreview();
       hideDeckInspectPrompt();

@@ -91,7 +91,8 @@ test('スマートフォンでもタッチ長押しで開き、多い手札は�
   await page.locator('#playerHand').evaluate(e => { e.scrollLeft = e.scrollWidth; });
   await expect(page.locator('#playerHand .hand-card').last()).toBeInViewport();
   await page.screenshot({path:test.info().outputPath('expanded-mobile.png')});
-  await page.locator('#handCollapseButton').click();
+  await expect(page.locator('#handCollapseButton')).toHaveCount(0);
+  await page.locator('#battleLogButton').click();
   await expect(page.locator('#expandedHandPanel')).toBeHidden();
 });
 

@@ -86,7 +86,9 @@
   const editorSearchRow = elements.deckSearchInput.closest(".deck-filter-row");
   editorCatalog.insertBefore(editorSearchRow, document.getElementById("deckFilterPanel"));
   document.getElementById("deckFilterPanel").querySelector("summary").textContent = "絞り込み";
-  document.getElementById("caseEditorTest").addEventListener("click", () => openCard(ui.editorCardId, ui.cardContext));
+  document.getElementById("caseEditorTest").addEventListener("click", () => {
+    if (CARD_BASES[ui.editorCardId]) startCardTest(ui.editorCardId);
+  });
   document.getElementById("caseEditorPlus").addEventListener("click", () => changeDeckCount(state.deckBuilder.activeSide, ui.editorCardId, 1));
   document.getElementById("caseEditorMinus").addEventListener("click", () => changeDeckCount(state.deckBuilder.activeSide, ui.editorCardId, -1));
   editorDetail.addEventListener("click", (event) => {
@@ -189,7 +191,7 @@
   detailBackdrop.addEventListener("click", (event) => { if (event.target === detailBackdrop) closeDeckDetail(); });
 
   // Use the game's existing interactive card-detail modal, including rarity and
-  // related-card history. Its test button is only shown in the editor.
+  // related-card history, and a direct test action in the catalog and editor.
   const cardDialog = elements.cardTestModal.querySelector(".item-confirm-dialog");
   cardDialog.classList.add("case-card-dialog");
   cardDialog.insertAdjacentHTML("afterbegin", `<header class="case-modal-head"><h2>カード詳細</h2><button class="case-close" type="button" aria-label="閉じる">×</button></header>${arrow("前のカード", true)}${arrow("次のカード")}`);
@@ -200,7 +202,7 @@
     const id = context[paginate(Math.max(0, current), index ? 1 : -1, context.length)];
     openCardTestConfirm(id);
   }));
-  elements.cardTestCancelButton.textContent = "閉じる";
+  elements.cardTestCancelButton.remove();
 
   function isDirty() {
     return state.screen === "deck" && view() === "editor"
@@ -461,7 +463,7 @@
   function renderCardDetail(baseId) {
     const card = makePreviewCard(baseId, "player"), text = elements.cardTestText;
     document.getElementById("cardTestTitle").textContent = "カード詳細";
-    elements.cardTestStartButton.classList.toggle("hidden", view() !== "editor");
+    elements.cardTestStartButton.classList.toggle("hidden", !["editor", "cards"].includes(view()));
     const title = text.querySelector(".tooltip-title");
     title.insertAdjacentHTML("afterend", `<button type="button" class="case-favorite" aria-label="好きなカードに設定" aria-pressed="${state.profile.favoriteCardId === baseId}" ${!ALL_DECK_IDS.includes(baseId) ? "disabled" : ""}>${state.profile.favoriteCardId === baseId ? "★" : "☆"}</button>`);
     text.querySelector(".case-favorite").addEventListener("click", () => {

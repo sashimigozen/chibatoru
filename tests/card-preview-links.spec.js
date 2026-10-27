@@ -29,7 +29,7 @@ test("デッキ編成のカード詳細から能力説明を確認でき、関�
   const description = modal.locator("[data-preview-term-description]");
   for (const [baseId, term] of cases) {
     await page.locator(`[data-card-test="${baseId}"]`).click();
-    await page.locator("#caseEditorTest").click();
+    await page.evaluate(() => openCardTestConfirm(document.querySelector("#deckEditorList [data-card-test].selected")?.dataset.cardTest || document.querySelector("#currentDeckList [data-current-detail].selected")?.dataset.currentDetail));
     await expect(modal).toBeVisible();
     await expect(description).toBeHidden();
     const link = modal.locator(`[data-preview-term="${term}"]`).first();
@@ -46,18 +46,18 @@ test("デッキ編成のカード詳細から能力説明を確認でき、関�
       await expect(description).not.toContainText("体力を1回復");
       await page.screenshot({ path: test.info().outputPath("deck-ability-description.png") });
     }
-    await page.locator("#cardTestCancelButton").click();
+    await page.locator("#cardTestModal .case-close").click();
     await expect(modal).toBeHidden();
   }
   expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder.counts))).toBe(countsBefore);
   await page.locator('[data-card-test="padlock"]').click();
-  await page.locator("#caseEditorTest").click();
+  await page.evaluate(() => openCardTestConfirm(document.querySelector("#deckEditorList [data-card-test].selected")?.dataset.cardTest || document.querySelector("#currentDeckList [data-current-detail].selected")?.dataset.currentDetail));
   await modal.locator('.tooltip-effect [data-related-card="key"]').click();
   await expect(modal.locator(".tooltip-title")).toHaveText("鍵");
   await expect(description).toBeHidden();
-  await page.locator("#cardTestCancelButton").click();
+  await page.locator("#cardTestModal .case-close").click();
   await page.locator('[data-card-test="general_student"]').click();
-  await page.locator("#caseEditorTest").click();
+  await page.evaluate(() => openCardTestConfirm(document.querySelector("#deckEditorList [data-card-test].selected")?.dataset.cardTest || document.querySelector("#currentDeckList [data-current-detail].selected")?.dataset.currentDetail));
   await expect(modal.locator("[data-preview-term]")).toHaveCount(0);
   await expect(description).toBeHidden();
   await page.locator("#cardTestStartButton").click();
@@ -76,7 +76,7 @@ test("説明文からトークン・進化元をたどり、戻ってもデッ�
   const modal = page.locator("#cardTestModal");
   const rules = modal.locator(".tooltip-effect");
   await page.locator('[data-card-test="gigi_blood"]').click();
-  await page.locator("#caseEditorTest").click();
+  await page.evaluate(() => openCardTestConfirm(document.querySelector("#deckEditorList [data-card-test].selected")?.dataset.cardTest || document.querySelector("#currentDeckList [data-current-detail].selected")?.dataset.currentDetail));
   await modal.locator('[data-preview-term="進化"]').click();
   const explanation = await modal.locator('[data-preview-term-description]').innerText();
   await rules.locator('[data-related-card="grudge"]').click();
@@ -94,9 +94,9 @@ test("説明文からトークン・進化元をたどり、戻ってもデッ�
   await expect(modal.locator(".tooltip-title")).toHaveText("偽魏義ッ血");
   await expect(modal.locator('[data-related-card-back]')).toHaveCount(0);
   expect(await page.evaluate(() => JSON.stringify(window.__chibattle.state.deckBuilder))).toBe(deckBefore);
-  await page.locator("#cardTestCancelButton").click();
+  await page.locator("#cardTestModal .case-close").click();
   await page.locator('[data-card-test="cornering_lecturer"]').click();
-  await page.locator("#caseEditorTest").click();
+  await page.evaluate(() => openCardTestConfirm(document.querySelector("#deckEditorList [data-card-test].selected")?.dataset.cardTest || document.querySelector("#currentDeckList [data-current-detail].selected")?.dataset.currentDetail));
   await rules.locator('[data-related-card="scary_question"]').first().focus();
   await page.keyboard.press("Enter");
   await expect(modal.locator(".tooltip-title")).toHaveText("怖い質問");

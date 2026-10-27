@@ -58,7 +58,7 @@ test("カードの二択・一覧・能力と関連カードの詳細・好き�
   await page.locator("[data-catalog-card='gigi_blood']").click();
   const modal = page.locator("#cardTestModal");
   await expect(modal).toBeVisible();
-  await expect(page.locator("#cardTestStartButton")).toBeHidden();
+  await expect(page.locator("#cardTestStartButton")).toBeVisible();
   await modal.locator('[data-preview-term="進化"]').click();
   await expect(modal.locator("[data-preview-term-description]")).toContainText("同じマス");
   await modal.locator('.tooltip-effect [data-related-card="grudge"]').click();
@@ -67,7 +67,7 @@ test("カードの二択・一覧・能力と関連カードの詳細・好き�
   await expect(modal.locator(".tooltip-title")).toHaveText("偽魏義ッ血");
   await modal.locator(".case-favorite").click();
   await expect(modal.locator(".case-favorite")).toHaveAttribute("aria-pressed", "true");
-  await page.locator("#cardTestCancelButton").click();
+  await page.locator("#cardTestModal .case-close").click();
   await page.reload();
   expect(await page.evaluate(() => window.__chibattle.state.profile.favoriteCardId)).toBe("gigi_blood");
   expect(errors).toEqual([]);
@@ -155,7 +155,7 @@ test("デッキ詳細は実際のカードと枚数を1画面に表示し、説�
     await expect(page.locator("#cardTestModal")).toBeVisible();
     await expect(page.locator("#cardTestText .tooltip-title")).toHaveText(await page.evaluate(id => CARD_BASES[id].name, ids.at(-1)));
     await expect(page.locator("#cardTestStartButton")).toBeHidden();
-    await page.locator("#cardTestCancelButton").click();
+    await page.locator("#cardTestModal .case-close").click();
     await expect(page.locator("#caseDeckDetailModal")).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`deck-card-contents-${size.width}.png`) });
   }
@@ -331,7 +331,7 @@ test("2本指スクロール相当の操作で一覧・詳細を送り、慣性�
   await page.mouse.wheel(0, 160);
   await expect.poll(() => page.locator("#cardTestText").evaluate(node => node.scrollTop)).toBeGreaterThan(0);
   await expect(title).toHaveText(previousCard);
-  await page.locator("#cardTestCancelButton").click();
+  await page.locator("#cardTestModal .case-close").click();
   await page.locator(".case-back").click();
   await page.locator('[data-case-view="library"]').click();
   await page.locator("#chaosDeckFormatButton").click();
@@ -412,9 +412,9 @@ test("デッキのダブルクリック、カードテストと戻る、破棄�
   await expect(page.locator("#deckSaveNameInput")).toHaveValue(name);
   await page.locator('[data-card-test="yuta"]').click();
   await page.locator('#caseEditorTest').click();
-  await expect(page.locator("#cardTestStartButton")).toBeVisible();
-  await page.locator("#cardTestStartButton").click();
+  await expect(page.locator("#cardTestModal")).toBeHidden();
   expect(await page.evaluate(() => window.__chibattle.state.screen)).toBe("battle");
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   await page.locator("#battleTestExitButton").click();
   await expect(page.locator("#deckEditorView")).toBeVisible();
   await page.locator("#deckSaveNameInput").fill("編集した名前");
@@ -463,7 +463,7 @@ test("専攻デッキの選択・登録制限とレアリティ切替を維持",
   });
   const rewardId = await page.evaluate(() => DUNGEON_CARD_STYLE_REWARDS.cafeteria.cardIds.find(id => getDeckEditorIds().includes(id)));
   await page.locator(`[data-card-test="${rewardId}"]`).click();
-  await page.locator('#caseEditorTest').click();
+  await page.evaluate(id => openCardTestConfirm(id), rewardId);
   await expect(page.locator("#cardTestModal")).toBeVisible();
   const modeBefore = await page.evaluate(id => localCardStyleMode(id), rewardId);
   await page.locator(`[data-card-style-cycle="${rewardId}"]`).click();
@@ -488,7 +488,7 @@ test("PCの複数サイズで一覧・詳細・編成とホームバーが画面
     const dialog = await page.locator(".case-card-dialog").boundingBox();
     expect(dialog.x).toBeGreaterThanOrEqual(0);
     expect(dialog.y + dialog.height).toBeLessThanOrEqual(size.height);
-    await page.locator("#cardTestCancelButton").click();
+    await page.locator("#cardTestModal .case-close").click();
     if (size.width === 1440) await page.screenshot({ path: test.info().outputPath("production-card-list.png") });
   }
   await page.locator(".case-back").click();

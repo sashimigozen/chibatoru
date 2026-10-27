@@ -35,7 +35,7 @@ test('編集左側・カード詳細・プロフィールは同じ回転アイ�
   expect(await page.evaluate(() => window.__chibattle.state.deckBuilder.counts.player)).toEqual(countsBefore);
   await editorButton.hover();
   await page.screenshot({ path: test.info().outputPath('editor-cycle-button.png') });
-  await page.locator('#caseEditorTest').click();
+  await page.evaluate(() => openCardTestConfirm('king_ghidorah_bed'));
   const detailButton = page.locator('#cardTestModal [data-card-style-cycle]');
   await expect(detailButton).toHaveClass('card-style-cycle-button');
   expect(await detailButton.locator('svg').evaluate(el => el.outerHTML)).toBe(icon);
@@ -51,7 +51,7 @@ test('編集左側・カード詳細・プロフィールは同じ回転アイ�
   // Return to R so the remaining profile check keeps the same starting style.
   await detailButton.click();
   await detailButton.click();
-  await page.locator('#cardTestCancelButton').click();
+  await page.locator('#cardTestModal .case-close').click();
   await page.locator('[data-card-test="general_student"]').click();
   await expect(page.locator('#caseEditorCard [data-editor-style]')).toHaveCount(0);
   await page.reload();
