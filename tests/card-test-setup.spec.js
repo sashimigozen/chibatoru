@@ -199,7 +199,7 @@ test("最新カードのテストに必要な手札・デッキ・盤面・校�
   expect(result.hat_man.opponentBoard).toEqual(["general_student", "strong_student"]);
   expect(result.academic_move.hand).toEqual(["academic_move", "general_student"]);
   expect(result.confucius_says.deckTop).toEqual([
-    "general_student", "general_teacher", "ruler", "cafeteria", "cafeteria_lady", "ruler"
+    "general_student", "aggro_student", "sunglasses_ta", "ruler", "general_teacher", "cafeteria"
   ]);
   expect(result.aggro_walk.board).toContain("aggro_student");
   for (const baseId of ["red_ideology", "contrarian_portal"]) {

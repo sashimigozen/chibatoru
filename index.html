@@ -19954,6 +19954,7 @@
         date: "2026年10月27日",
         summary: "新カード「微笑み講師」を追加し、手札とカードテストの操作を改善しました。",
         changes: [
+          { category: "表示・操作改善", title: "カードテストの開始状態", after: "最近追加・調整したカードのテスト用手札・デッキ・盤面を見直しました。回復前の気力、関連する環境や出席者、校外エリア、対象となる相手の手札などを用意し、各効果と条件の違いをすぐ試せるようにしました。" },
           { category: "新カード", title: "微笑み講師", after: "教師／共通カード／戦意4／攻撃力0／体力4\nこのカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。" },
           { category: "表示・操作改善", title: "手札の拡大と枚数", after: "手札エリアは長押しだけで拡大するように変更しました。手札の枚数は、自分の山札のすぐ上に小さく表示します。拡大中の融合・出席や、手札の外をクリックして元に戻す操作も引き続き使えます。" },
           { category: "表示・操作改善", title: "カードテストと詳細画面", after: "デッキ編成の「カードテスト」は1回押すだけで開始します。カード一覧の詳細にも、説明欄の右下へ「テストする」を追加しました。詳細下部の閉じるボタンと、拡大した手札の「元に戻す」は削除しました。詳細は右上の×、手札は外側のクリックで閉じられます。古い表示・操作が残る読み込みの問題も修正しました。" }
@@ -53144,6 +53145,181 @@
 
     let cardTestReturnView = "editor";
 
+    // Game-facing test fixtures: use real cards and rules, with the resources
+    // needed to exercise each effect through ordinary play.
+    const CARD_TEST_SCENARIOS = {
+      smiling_lecturer: {
+        hand: ["fire_touch", "onigiri_draw", "kashikashi"], life: 10,
+        own: { seats: [], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["onigiri_draw", "fire_touch", "smiling_lecturer", "general_student", "fluid_pasta"],
+        note: "気力10から微笑み講師を出席させ、回復の連鎖を確認できます。その後、「火に触れてしまう」で気力を減らし、おにぎりドローで再び回復できます。カシカシで連鎖が止まる場合も試せます。"
+      },
+      kakiage_teacher: {
+        hand: ["onigiri_draw", "general_student"], life: 12,
+        own: { seats: [[4, "general_student"]], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["kakiage_teacher", "general_student", "onigiri_draw", "ruler", "fluid_pasta"],
+        note: "教卓は空いています。かき揚げ教師の陽気による攻撃と、気力12からターン終了時の1回復を試せます。"
+      },
+      window_eater: {
+        hand: ["cafeteria", "classroom", "window_eater"],
+        own: { seats: [], teacher: null },
+        enemy: { seats: [[0, "general_student"], [3, "strong_student"], [1, "cafeteria_lady"], [4, "general_student"], [2, "zombie"], [8, "general_student"]], teacher: "general_teacher" },
+        deck: ["window_eater", "cafeteria", "classroom", "general_student", "onigiri_draw"],
+        note: "相手の3列に出席者を用意しました。通常は1列、先に食堂を置くと2列を選べます。教卓の教師が残ることも確認できます。"
+      },
+      jobs_woody: {
+        hand: ["cafeteria", "classroom", "jobs_woody", "apprentice_vampire"],
+        own: { seats: [[0, "general_student"]], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["jobs_woody", "cafeteria", "classroom", "apprentice_vampire", "onigiri_draw"],
+        note: "見習いヴァンパイアの出席先を直接選べる空き席を用意しました。通常は1人、食堂では2人。効果で出た見習いと、手札から出す見習いの違いも試せます。"
+      },
+      two_achievers: {
+        hand: ["two_achievers", "general_student"],
+        own: { seats: [], teacher: null }, enemy: { seats: [[4, "strong_student"]], teacher: "general_teacher" },
+        enemyHand: ["general_student", "general_teacher", "ruler", "cafeteria", "onigiri_draw"],
+        deck: ["general_student", "aggro_student", "sunglasses_ta", "two_achievers", "onigiri_draw"],
+        note: "横2マスの空き席、4回のダメージに耐える相手、相手の手札5枚、デッキ内の学生を用意しました。2枚目で別の選択肢も試せます。"
+      },
+      sunglasses_ta: {
+        hand: ["sunglasses_ta", "ruler", "ruler", "pro_k"],
+        own: { seats: [], teacher: "pro_k" }, enemy: { seats: [[0, "general_student"], [4, "cafeteria_lady"], [8, "strong_student"]], teacher: "enemy_student" },
+        deck: ["sunglasses_ta", "pro_k", "ruler", "general_student", "onigiri_draw"],
+        note: "プロ言の長と、相手の学生・ヴァンパイアを用意しました。学生だけへの1ダメージとTAの体力強化を確認でき、プロ言の長で相手の強靭な学生を攻撃し、退場後に2枚目のグラサンTAで条件がない場合も比較できます。"
+      },
+      chotto_machii: {
+        hand: ["general_student", "fluid_pasta", "onigiri_draw"], life: 20,
+        own: { seats: [[4, "general_student"]], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["general_student", "onigiri_draw", "fluid_pasta", "ruler", "chotto_machii"],
+        note: "気力20と使用後に使える回復カードを用意しました。使用後、ターン終了で相手の手番が飛び、自分の手番が続くことを確認できます。"
+      },
+      hearty_grandma: {
+        hand: ["cafeteria", "classroom", "hearty_grandma"], life: 10,
+        own: { seats: [], teacher: null }, enemy: { seats: [[0, "strong_student"], [4, "general_student"], [8, "general_student"]], teacher: null },
+        deck: ["hearty_grandma", "cafeteria", "classroom", "onigiri_draw", "general_student"],
+        note: "気力10から超吸血を試せます。食堂を置く前後の戦意と陽気を比較し、出席したターンの攻撃による気力回復を確認してください。"
+      },
+      acting_out_man: {
+        hand: ["acting_out_man_2", "acting_out_woman", "ruler"],
+        own: { seats: [[0, "acting_out_woman"], [2, "acting_out_man_2"], [4, "general_student"]], teacher: null },
+        enemy: { seats: [[0, "strong_student"], [6, "general_student"], [7, "cafeteria_lady"], [8, "general_student"]], teacher: "general_teacher" },
+        deck: ["acting_out_man", "acting_out_man_2", "acting_out_woman", "general_student", "ruler"],
+        note: "2号・ウーマンと自分の通常学生、相手3行目の学生とヴァンパイアを用意しました。出席時ダメージ、軽減、陽気、2回攻撃と学生への攻撃を続けて試せます。"
+      },
+      acting_out_man_2: {
+        hand: ["acting_out_man", "acting_out_woman", "ruler"],
+        own: { seats: [[1, "acting_out_man"]], teacher: null }, enemy: { seats: [[4, "strong_student"], [8, "general_student"]], teacher: null },
+        deck: ["acting_out_man_2", "acting_out_man", "acting_out_woman", "ruler", "general_student"],
+        note: "1行目の空き席と別のアクティングアウトを用意しました。2号の出席後に手札のマンを出して陽気を試せます。"
+      },
+      acting_out_woman: {
+        hand: ["acting_out_woman", "acting_out_man_2", "ruler"], life: 12,
+        own: { seats: [[1, "acting_out_man"], [4, "general_student"]], teacher: null }, enemy: { seats: [[0, "general_student"], [4, "strong_student"]], teacher: null },
+        deck: ["acting_out_woman", "acting_out_man_2", "acting_out_man", "ruler", "general_student"],
+        note: "別のアクティングアウトと通常学生を用意しました。相手学生の攻撃に対する本体・アクティングアウトの軽減と、通常学生との違いを確認できます。2枚目で重複しないことも試せます。"
+      },
+      tissue_distributor: {
+        hand: ["tissue_distributor", "cafeteria", "classroom", "apprentice_vampire"],
+        own: { seats: [[0, "zombie", 1], [4, "general_student"]], teacher: "apprentice_vampire" }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["tissue_distributor", "cafeteria", "classroom", "apprentice_vampire", "zombie"],
+        note: "席と教卓のヴァンパイア、通常学生、同名カード2枚を用意しました。食堂の前後、2人いても重複しない強化、後から出すヴァンパイアを比較できます。"
+      },
+      obon_mac: {
+        hand: ["hearty_grandma", "jobs_woody", "apprentice_vampire", "general_student", "cafeteria"],
+        own: { seats: [], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        trash: ["zombie", "cafeteria_lady", "apprentice_vampire", "hearty_grandma", "tissue_distributor"],
+        deck: ["obon_mac", "hearty_grandma", "jobs_woody", "apprentice_vampire", "cafeteria"],
+        note: "校外にヴァンパイア5枚を用意し、お盆macをすぐ使える状態にしました。手札のヴァンパイアの戦意だけが減ることを確認できます。"
+      },
+      ittan: {
+        hand: ["general_student", "general_teacher"],
+        own: { seats: [[0, "general_student"], [4, "zombie"]], teacher: "general_teacher" },
+        enemy: { seats: [[0, "strong_student"], [8, "cafeteria_lady"]], teacher: "general_teacher" }, environment: "cafeteria",
+        deck: ["ittan", "general_student", "general_teacher", "zombie", "onigiri_draw"],
+        note: "双方の席・教卓に出席者を用意しました。全員の破壊と校外への移動、環境が残ること、破壊後の再出席を確認できます。"
+      },
+      apprentice_vampire: {
+        hand: ["cafeteria", "classroom", "jobs_woody"],
+        own: { seats: [[0, "general_student"]], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["apprentice_vampire", "jobs_woody", "cafeteria", "classroom", "onigiri_draw"],
+        note: "隣へコピーできる空き席と食堂を用意しました。手札から席に出した場合と、ジョブズウッディの効果で出した場合を比較できます。"
+      },
+      full_lock: {
+        hand: ["ruler", "general_student", "general_teacher"],
+        own: { seats: [[0, "aggro_student"], [4, "general_student"]], teacher: null }, enemy: { seats: [[0, "general_student"], [8, "general_student"]], teacher: "general_teacher" },
+        deck: ["full_lock", "ruler", "general_student", "general_teacher", "onigiri_draw"],
+        note: "空席と出席済みの席を用意しました。全ロックの後にアグロ大学生で相手の一般学生を攻撃し、元から空いていた席と退場後に空いた席の出席可否を比較できます。"
+      },
+      confucius_says: {
+        hand: ["confucius_says"],
+        own: { seats: [], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
+        deck: ["general_student", "aggro_student", "sunglasses_ta", "ruler", "general_teacher", "cafeteria"],
+        note: "デッキ上3枚を学生にしました。学生を宣言して3枚まで加えられることを試せます。2枚目では別タイプや不一致の場合も確認できます。"
+      },
+      suit_student: {
+        hand: ["suit_student", "ruler"],
+        own: { seats: [[0, "suit_student"], [4, "general_student", 1]], teacher: null }, enemy: { seats: [[0, "suit_student"]], teacher: "general_teacher" },
+        deck: ["general_student", "suit_student", "ruler", "general_teacher", "onigiri_draw"], suitAttendanceCount: 2,
+        note: "両者にスーツを着た学生を1人ずつ配置しました。出席数による戦意減少、手札から出席した時のドロー、教師からのダメージ無効を試せます。"
+      },
+      trpg_member: {
+        hand: ["enemy_student", "general_student"],
+        own: { seats: [], teacher: null }, enemy: { seats: [[4, "enemy_student"]], teacher: null },
+        deck: ["general_student", "sunglasses_ta", "enemy_student", "trpg_member", "ruler", "general_teacher"],
+        note: "デッキに学生を十分に用意し、相手の講義室に敵を配置しました。学生2枚を加える効果と、相手の敵にかかる強化を確認できます。"
+      },
+      window_snipe_student: {
+        hand: ["window_snipe_student", "general_student"],
+        own: { seats: [[4, "general_student"]], teacher: null }, enemy: { seats: [[0, "general_student"], [4, "strong_student"]], teacher: "general_teacher" },
+        deck: ["window_snipe_student", "general_student", "ruler", "onigiri_draw", "general_teacher"],
+        note: "自分の3行3列を空け、相手に学生と教師を用意しました。3行3列での出席時ダメージと、別の席に出した時の違いを2枚で試せます。"
+      },
+      kashikashi: {
+        hand: ["ruler", "hearty_grandma", "classroom"],
+        own: { seats: [[0, "tissue_distributor"], [4, "cafeteria_lady"]], teacher: null },
+        enemy: { seats: [[0, "acting_out_woman"], [1, "acting_out_man"], [4, "general_student"]], teacher: null }, environment: "cafeteria",
+        deck: ["kashikashi", "ruler", "hearty_grandma", "cafeteria", "general_student"],
+        note: "食堂、ティッシュ配り、相手のウーマンとマンを配置しました。カシカシ前後で継続効果・戦意表示・ダメージ軽減が変わり、ターン終了後に戻ることを試せます。"
+      }
+    };
+
+    function applyCardTestScenario(baseId) {
+      const scenario = CARD_TEST_SCENARIOS[baseId];
+      if (!scenario) return;
+      const makeAttendee = (side, id, hp = null) => {
+        const card = makeBoardCard(createCardFromBase(id, side));
+        card.playedOnTurn = 0;
+        if (hp !== null) card.currentHp = hp;
+        return card;
+      };
+      for (const [side, board] of [["player", scenario.own], ["opponent", scenario.enemy]]) {
+        if (!board) continue;
+        state.players[side].board = {
+          seats: Array(9).fill(null),
+          teacher: board.teacher ? makeAttendee(side, board.teacher) : null
+        };
+        board.seats.forEach(([index, id, hp]) => { state.players[side].board.seats[index] = makeAttendee(side, id, hp ?? null); });
+      }
+      const player = state.players.player;
+      player.deck = createTestDeck("player", baseId);
+      state.players.opponent.deck = createTestDeck("opponent", baseId);
+      player.life = scenario.life ?? 20;
+      player.maxWill = scenario.will ?? 20;
+      player.will = player.maxWill;
+      if (scenario.trash) player.trash = scenario.trash.map(id => createCardFromBase(id, "player"));
+      if (scenario.enemyHand) state.players.opponent.hand = scenario.enemyHand.map(id => createCardFromBase(id, "opponent"));
+      if (scenario.environment) state.environment = makeBoardCard(createCardFromBase(scenario.environment, "player"));
+      if (scenario.suitAttendanceCount !== undefined) state.suitStudentAttendanceCount = scenario.suitAttendanceCount;
+      for (const side of ["player", "opponent"]) {
+        const testPlayer = state.players[side];
+        const cards = [...testPlayer.hand, ...testPlayer.deck, ...testPlayer.trash,
+          ...listBoardRefs(side).map(getBoardCardFromRef)];
+        testPlayer.originalDeckCounts = cards.reduce((counts, card) => {
+          counts[card.baseId] = (counts[card.baseId] || 0) + 1;
+          return counts;
+        }, {});
+      }
+    }
+
     function startCardTest(baseId) {
       if (state.screen === "deck") cardTestReturnView = state.deckBuilder.view || "editor";
       state.kashikashiActionTurn = null;
@@ -53690,12 +53866,13 @@
         );
       }
 
+      applyCardTestScenario(baseId);
       analyticsStartGame();
       analyticsPushEvent("battle_start", { firstSide: state.firstSide, boardSnapshot: analyticsBoardSnapshot() });
       applyBoardAuras();
       state.message = `${CARD_BASES[baseId].name}のテストプレイ。戦意${player.will}、初期手札は${testHandCardNames(baseId)}。`;
       addLog(`${CARD_BASES[baseId].name}のテストプレイを開始しました。`);
-      addLog(baseId === "scout_student"
+      addLog(CARD_TEST_SCENARIOS[baseId]?.note || (baseId === "scout_student"
         ? "斥候学生の超陽気を確認できるよう、相手の講義室を空にしています。"
         : baseId === "happy_blue_bird"
           ? "幸せの青い鳥の自動攻撃と増殖を確認できるよう、攻撃可能な青い鳥と体力1の一般学生を配置しています。"
@@ -53715,13 +53892,13 @@
             ? "来てなかった学生が校外エリアへ送られたときの効果を確認できるよう、自分の講義室に同名カード、相手の講義室に一般教師を配置しています。"
           : baseId === "strict_lateness_teacher"
             ? "遅刻に厳しい教師の効果を確認できるよう、お互いの講義室と遅刻ゾーンに遅刻を持つ学生を配置しています。"
-          : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。");
+          : "相手の場には、バカでかい声の学生、CITヴァンパイア、一般教師、一般学生をテスト用に配置しています。"));
       render();
       showTurnOverlay("player");
     }
 
     function testHandBaseIds(baseId) {
-      const companions = [...(TEST_HAND_COMPANIONS[baseId] || [])];
+      const companions = [...(CARD_TEST_SCENARIOS[baseId]?.hand || TEST_HAND_COMPANIONS[baseId] || [])];
       if (HORSE_MATERIAL_IDS.includes(baseId)) companions.push(...HORSE_MATERIAL_IDS.filter(id => id !== baseId));
       if (baseId === "remote_participant_student") companions.push("umaibo", "maibo_bone");
       if (baseId === "tiny_rhythm_student") companions.push("umaibo", "umaibo", "maibo_bone");
@@ -53737,6 +53914,12 @@
     }
 
     function createTestDeck(side, baseId, extraBaseIds = []) {
+      const scenario = CARD_TEST_SCENARIOS[baseId];
+      if (scenario) {
+        const ids = side === "player" ? scenario.deck
+          : (scenario.enemyDeck || ["general_student", "general_teacher", "ruler", "onigiri_draw"]);
+        return Array.from({ length: 45 }, (_, index) => createCardFromBase(ids[index % ids.length], side));
+      }
       if (side === "player" && ["information_tired_student", "corridor_student"].includes(baseId)) {
         return HORSE_MATERIAL_IDS.flatMap(id => [createCardFromBase(id, side), createCardFromBase(id, side)]);
       }
