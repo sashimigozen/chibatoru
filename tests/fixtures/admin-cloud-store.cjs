@@ -10,5 +10,21 @@ require('../../server/d1-log-store.js').createD1LogStore = () => ({
   async get(id) {
     return JSON.parse(fs.readFileSync(storagePath, 'utf8')).find(log => log.gameId === id) || null;
   },
-  async put() {}
+  async put(log) {
+    const logs = JSON.parse(fs.readFileSync(storagePath, 'utf8'));
+    const index = logs.findIndex(item => item.gameId === log.gameId);
+    if (index < 0) logs.push(log); else logs[index] = log;
+    fs.writeFileSync(storagePath, JSON.stringify(logs));
+  },
+  async closeInactive(cutoff) {
+    const logs = JSON.parse(fs.readFileSync(storagePath, 'utf8'));
+    for (const log of logs) if (!log.final && Date.parse(log.receivedAt) <= Date.parse(cutoff)) {
+      log.final = true; log.closedReason = 'inactive';
+    }
+    fs.writeFileSync(storagePath, JSON.stringify(logs));
+  },
+  async delete(id) {
+    const logs = JSON.parse(fs.readFileSync(storagePath, 'utf8'));
+    fs.writeFileSync(storagePath, JSON.stringify(logs.filter(log => log.gameId !== id)));
+  }
 });

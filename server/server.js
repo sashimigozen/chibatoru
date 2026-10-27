@@ -97,6 +97,8 @@ const MAX_IMPORT_BYTES = Number(process.env.MAX_IMPORT_BYTES || 8 * 1024 * 1024)
 const rooms = new Map();
 const randomMatchQueue = [];
 const onlineBattleLogs = new Map();
+const deletedLogIds = new Set();
+const LOG_INACTIVE_MS = 30 * 60 * 1000;
 let cloudLogStore = null;
 try { cloudLogStore = createD1LogStore(); } catch { console.warn("D1の接続設定が無効です。環境変数を確認してください。"); }
 const cloudLogQueue = createArchiveQueue(cloudLogStore);
@@ -426,16 +428,58 @@ function trimStoredLogs() {
   logs.slice(0, MAX_STORED_LOGS).forEach((log) => onlineBattleLogs.set(log.gameId, log));
 }
 
-function writeLogToDisk(log) {
-  cloudLogQueue.enqueue(log);
+const diskLogPending = new Map();
+let diskLogWriting = false;
+let diskLogFlush = Promise.resolve();
+function flushDiskLogs() {
+  if (diskLogWriting) return diskLogFlush;
+  diskLogFlush = runDiskLogFlush();
+  return diskLogFlush;
+}
+async function runDiskLogFlush() {
+  diskLogWriting = true;
   try {
     ensureLogDir();
-    const file = path.join(LOG_STORAGE_DIR, `${safeLogFileName(log.gameId)}.json`);
-    fs.writeFileSync(file, JSON.stringify(log, null, 2));
-  } catch (error) {
-    console.warn("online log disk write skipped", error.message);
-  }
+    for (const [id, log] of diskLogPending) {
+      diskLogPending.delete(id);
+      if (deletedLogIds.has(id)) continue;
+      const file = path.join(LOG_STORAGE_DIR, `${safeLogFileName(id)}.json`);
+      try {
+        await fs.promises.writeFile(`${file}.pending`, JSON.stringify(log));
+        if (deletedLogIds.has(id)) await fs.promises.rm(`${file}.pending`, { force: true });
+        else await fs.promises.rename(`${file}.pending`, file);
+      } catch (error) {
+        if (!deletedLogIds.has(id) && !diskLogPending.has(id)) diskLogPending.set(id, log);
+        throw error;
+      }
+      if (deletedLogIds.has(id)) await fs.promises.rm(file, { force: true });
+    }
+  } catch (error) { console.warn("online log disk write skipped", error.message); }
+  finally { diskLogWriting = false; }
 }
+function writeLogToDisk(log) {
+  if (deletedLogIds.has(log.gameId)) return;
+  cloudLogQueue.enqueue(log);
+  diskLogPending.set(log.gameId, log);
+  if (log.final) void flushDiskLogs();
+}
+setInterval(() => { void flushDiskLogs(); }, 1000).unref();
+
+function closeInactiveLog(log, currentTime = Date.now()) {
+  const updated = Date.parse(log.receivedAt);
+  if (log.final || !Number.isFinite(updated) || currentTime - updated < LOG_INACTIVE_MS) return false;
+  log.final = true;
+  log.closedReason = "inactive";
+  log.closedAt = new Date(updated + LOG_INACTIVE_MS).toISOString();
+  log.learning = Replay.learningEligibility(log);
+  return true;
+}
+async function closeInactiveLogs() {
+  for (const log of onlineBattleLogs.values()) if (closeInactiveLog(log)) writeLogToDisk(log);
+  try { await cloudLogStore?.closeInactive?.(new Date(Date.now() - LOG_INACTIVE_MS).toISOString()); }
+  catch { /* Keep the last saved log readable when the archive is unavailable. */ }
+}
+setInterval(() => { void closeInactiveLogs(); }, 60000).unref();
 
 function normalizeImportedLog(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
@@ -557,27 +601,49 @@ function normalizeAnalyticsLog(room, player, payload) {
 }
 
 function saveOnlineBattleLog(room, player, payload) {
-  const log = normalizeAnalyticsLog(room, player, payload || {});
+  const gameId = String(payload.gameId || "");
+  if (deletedLogIds.has(gameId)) return null;
+  const previous = onlineBattleLogs.get(gameId);
+  const sameRoom = previous?.roomSessionId === room.sessionId;
+  let events = Array.isArray(payload.events) ? payload.events : [];
+  if (Number.isSafeInteger(payload.eventOffset)) {
+    const existing = sameRoom ? previous.events : [];
+    if (payload.eventOffset < 0 || payload.eventOffset > existing.length) return false;
+    events = existing.slice(0, payload.eventOffset).concat(events);
+    // Retries cannot remove a newer suffix.
+    if (events.length < existing.length) events = existing;
+    const first = payload.trace?.entries?.[0]?.seq;
+    if (first > (sameRoom ? previous.trace?.entries?.length || 0 : 0) + 1) return false;
+  }
+  const chosenFirstSide = events.findLast(event => event.eventType === "order_choice")?.firstSide;
+  if (chosenFirstSide) events = events.map(event => event.eventType === "game_start" && event.game
+    ? { ...event, game: { ...event.game, firstSide: chosenFirstSide } } : event);
+  const log = normalizeAnalyticsLog(room, player, { ...payload, events });
   room.lastAnalyticsGameId = log.gameId;
-  const previous = onlineBattleLogs.get(log.gameId);
-  // Client flags alone never make an offline/CPU log a human match.
   const start = log.events.find(event => event.eventType === "game_start")?.game;
   log.source = "online-human-v1";
   log.serverVerifiedHumanMatch = Boolean(room.humanReplayMatch && start?.mode === "online"
     && start?.participants?.player === "human" && start?.participants?.opponent === "human");
   log.ruleId = room.ruleId;
-  log.trace = Replay.mergeTrace(previous?.roomSessionId === room.sessionId ? previous.trace : null, payload.trace);
+  log.trace = Replay.mergeTrace(sameRoom ? previous.trace : null, payload.trace, { mutate: true });
   log.incidents = [...(room.replayIncidents || [])];
-  // A retry of an earlier batch must not roll the final event list backwards.
-  if (previous?.events?.length > log.events.length) {
+  if (sameRoom && previous.events.length >= log.events.length) {
     log.events = previous.events;
     log.summary = { ...previous.summary, playerNames: log.summary.playerNames };
-    log.final = previous.final;
+    log.final = previous.final || log.final;
+    if (previous.closedReason) { log.closedReason = previous.closedReason; log.closedAt = previous.closedAt; }
   }
+  // Only new data refreshes the inactivity clock; retries are not activity.
+  const changed = !sameRoom || log.events.length > previous.events.length
+    || (payload.trace?.entries?.at(-1)?.seq || 0) > (previous.savedTraceSeq || 0)
+    || log.final !== previous.final;
+  if (sameRoom && !changed) log.receivedAt = previous.receivedAt;
+  else if (!payload.final) { delete log.closedReason; delete log.closedAt; log.final = Boolean(log.summary.winner); }
+  log.savedTraceSeq = log.trace.entries.length;
   log.learning = Replay.learningEligibility(log);
   onlineBattleLogs.set(log.gameId, log);
   trimStoredLogs();
-  writeLogToDisk(log);
+  if (changed) writeLogToDisk(log);
   return log;
 }
 
@@ -590,12 +656,16 @@ function handleAnalyticsLog(ws, message) {
   }
   if (!room.started) return;
   const log = saveOnlineBattleLog(room, player, message);
+  if (log === false) {
+    send(ws, { type: "analyticsLogResync", senderId: SERVER_ID, roomSessionId: room.sessionId, gameId: message.gameId });
+    return;
+  }
   send(ws, {
     type: "analyticsLogSaved",
     senderId: SERVER_ID,
     roomSessionId: room.sessionId,
-    gameId: log.gameId,
-    eventCount: log.summary.eventCount
+    gameId: message.gameId,
+    eventCount: log?.summary.eventCount || 0
   });
 }
 
@@ -623,19 +693,22 @@ async function handleCloudArchive(req, res, url) {
         else htmlResponse(res, 404, adminPageShell('<section class="panel"><h1>ログが見つかりません</h1><a href="/admin/logs">一覧へ戻る</a></section>'));
         return;
       }
+      if (closeInactiveLog(log)) await cloudLogStore.closeInactive?.(new Date(Date.now() - LOG_INACTIVE_MS).toISOString());
       if (download) {
         res.setHeader("content-disposition", `attachment; filename="${safeLogFileName(id)}.json"`);
         jsonResponse(res, 200, log);
       } else htmlResponse(res, 200, renderAdminLogDetail(normalizeImportedLog(log), { archive: true }));
       return;
     }
+    await closeInactiveLogs();
     const page = await cloudLogStore.list((url.searchParams.get("cursor") || "").slice(0, 160));
-    const rows = page.logs.map(log => `<tr><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終了" : "途中"}</span></td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json" download>保存</a></td></tr>`).join("");
+    const rows = page.logs.map(log => `<tr><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終了" : "途中"}</span></td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json" download>保存</a> ${logDeleteForm(log, true)}</td></tr>`).join("");
     htmlResponse(res, 200, adminPageShell(`<section class="panel"><h1>クラウド保存ログ</h1><p class="actions"><a class="button secondary" href="/admin/logs?storage=local">一時保存ログ</a></p><div class="table-wrap"><table><thead><tr><th>対戦</th><th>保存日時</th><th>状態</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="4">ログはありません。</td></tr>'}</tbody></table></div>${page.nextCursor ? `<a href="/admin/logs/archive?cursor=${encodeURIComponent(page.nextCursor)}">次のページ</a>` : ""}</section>`));
   } catch { htmlResponse(res, 503, adminPageShell('<section class="panel"><h1>クラウド記録を取得できませんでした</h1><a href="/admin/logs">再読み込み</a> ・ <a href="/admin/logs?storage=local">一時保存ログ</a></section>')); }
 }
 
 function listLogSummaries() {
+  for (const log of onlineBattleLogs.values()) if (closeInactiveLog(log)) writeLogToDisk(log);
   return [...onlineBattleLogs.values()]
     .sort((a, b) => String(b.receivedAt).localeCompare(String(a.receivedAt)))
     .map((log) => ({
@@ -645,6 +718,33 @@ function listLogSummaries() {
       final: log.final,
       ...log.summary
     }));
+}
+
+function logDeleteToken(gameId) {
+  return crypto.createHmac("sha256", LOG_ADMIN_PASSWORD).update(`delete-log:${gameId}`).digest("hex");
+}
+function logDeleteForm(log, archive = false) {
+  return `<form method="post" action="/admin/logs/${encodeURIComponent(log.gameId)}/delete" style="display:inline" onsubmit="return confirm('このログを削除しますか？')"><input type="hidden" name="token" value="${logDeleteToken(log.gameId)}"><input type="hidden" name="archive" value="${archive ? "1" : "0"}"><button type="submit" class="button secondary">削除</button></form>`;
+}
+function handleDeleteLog(req, res, url) {
+  if (req.method !== "POST") { jsonResponse(res, 405, { error: "POST required" }); return; }
+  const gameId = decodeURIComponent(url.pathname.slice("/admin/logs/".length, -"/delete".length));
+  if (!gameId || gameId.length > 160 || gameId.includes("/")) { jsonResponse(res, 400, { error: "Invalid log" }); return; }
+  readBody(req, (error, body) => {
+    const data = new URLSearchParams(body || "");
+    if (error || data.get("token") !== logDeleteToken(gameId)) { jsonResponse(res, 403, { error: "Forbidden" }); return; }
+    void (async () => {
+      try {
+        // Cancel queued/in-flight cloud writes before deleting either copy.
+        await cloudLogQueue.delete(gameId);
+        deletedLogIds.add(gameId);
+        diskLogPending.delete(gameId);
+        onlineBattleLogs.delete(gameId);
+        await fs.promises.rm(path.join(LOG_STORAGE_DIR, `${safeLogFileName(gameId)}.json`), { force: true });
+        res.writeHead(303, { location: data.get("archive") === "1" ? "/admin/logs" : "/admin/logs?storage=local", "cache-control": "no-store" }); res.end();
+      } catch { htmlResponse(res, 503, adminPageShell('<section class="panel"><h1>削除できませんでした</h1><a href="/admin/logs">一覧へ戻る</a></section>')); }
+    })();
+  });
 }
 
 function adminPageShell(body) {
@@ -768,11 +868,12 @@ function renderAdminLogsPage() {
     <tr>
       <td><a href="/admin/logs/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td>
       <td>${escapeHtml(log.receivedAt)}</td>
-      <td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終局" : "進行中"}</span></td>
+      <td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終了" : "途中"}</span></td>
       <td>${escapeHtml(log.winner || "-")}</td>
       <td>${escapeHtml(log.reason || "-")}</td>
       <td>${escapeHtml(log.deckNames?.player || "-")}<br><span class="muted">${escapeHtml(log.deckNames?.opponent || "-")}</span></td>
       <td>${escapeHtml(log.eventCount)}</td>
+      <td>${logDeleteForm(log)}</td>
     </tr>
   `).join("");
   return adminPageShell(`
@@ -792,10 +893,10 @@ function renderAdminLogsPage() {
         <table>
           <thead>
             <tr>
-              <th>対戦</th><th>受信日時</th><th>状態</th><th>勝者</th><th>理由</th><th>デッキ</th><th>イベント数</th>
+              <th>対戦</th><th>受信日時</th><th>状態</th><th>勝者</th><th>理由</th><th>デッキ</th><th>イベント数</th><th>操作</th>
             </tr>
           </thead>
-          <tbody>${rows || `<tr><td colspan="7" class="muted">まだオンライン対戦ログはありません。</td></tr>`}</tbody>
+          <tbody>${rows || `<tr><td colspan="8" class="muted">まだオンライン対戦ログはありません。</td></tr>`}</tbody>
         </table>
       </div>
     </section>
@@ -999,6 +1100,7 @@ function renderAdminLogDecks(log) {
 }
 
 function renderAdminLogDetail(log, { archive = false } = {}) {
+  if (closeInactiveLog(log) && !archive) writeLogToDisk(log);
   const logBase = archive ? "/admin/logs/archive" : "/admin/logs";
   const listUrl = archive || !cloudLogStore ? "/admin/logs" : "/admin/logs?storage=local";
   const topCards = (log.summary.frequentlyPlayedCards || [])
@@ -1010,10 +1112,11 @@ function renderAdminLogDetail(log, { archive = false } = {}) {
       <h1>${escapeHtml(logMatchTitle(log))}</h1>
       <p class="muted">gameId: ${escapeHtml(log.gameId)}</p>
       <p class="muted">受信日時: ${escapeHtml(log.receivedAt)} / 部屋: ${escapeHtml(log.roomId)}</p>
-      <p><a class="button secondary" href="${logBase}/${encodeURIComponent(log.gameId)}.json" download>ログを保存</a></p>
+      <div class="actions"><a class="button secondary" href="${logBase}/${encodeURIComponent(log.gameId)}.json" download>ログを保存</a> ${logDeleteForm(log, archive)}</div>
     </section>
     <section class="panel">
       <h2>概要</h2>
+      <p>状態: ${log.final ? "終了" : "途中"}${log.closedReason === "inactive" ? "（30分更新なし）" : ""}</p>
       <p>勝者: <strong>${escapeHtml(log.summary.playerNames?.[log.summary.winner] || ({player:"プレイヤー",opponent:"対戦相手",draw:"引き分け"}[log.summary.winner]) || log.summary.winner || "-")}</strong></p>
       <p>理由: ${escapeHtml(log.summary.reason || "-")}</p>
       <p>最終ターン: ${escapeHtml(log.summary.finalTurn ?? "-")} / リーサル: ${escapeHtml(log.summary.lethalCard || "-")}</p>
@@ -1153,6 +1256,7 @@ function handleAdminLogsImport(req, res) {
 
 function handleAdminLogsRequest(req, res, url) {
   if (!requireAdmin(req, res)) return;
+  if (url.pathname.endsWith("/delete")) { handleDeleteLog(req, res, url); return; }
   if (url.pathname === "/admin/logs/deck-cards.css") {
     const source = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
     const css = [...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(match => match[1]).join("\n").replaceAll(":root", ":host");
@@ -1614,14 +1718,31 @@ function hiddenHandPlaceholders(hand) {
   return Array.isArray(hand) ? hand.map(() => ({ hidden: true })) : [];
 }
 
+function mergeSnapshotAnalytics(previous, snapshot) {
+  const incoming = snapshot?.state?.analytics;
+  if (!Number.isSafeInteger(incoming?.eventOffset)) return snapshot;
+  const existing = previous?.state?.analytics?.game?.gameId === incoming.game?.gameId ? previous.state.analytics.events : [];
+  if (incoming.eventOffset < 0 || incoming.eventOffset > existing.length) return snapshot;
+  const analytics = { ...incoming, events: existing.slice(0, incoming.eventOffset).concat(incoming.events || []) };
+  delete analytics.eventOffset;
+  return { ...snapshot, state: { ...snapshot.state, analytics } };
+}
+
 function snapshotForRecipient(snapshot, recipient) {
   if (!snapshot || typeof snapshot !== "object") return snapshot;
   const hiddenSides = recipient?.role === "guest"
     ? ["player"]
     : [];
-  if (hiddenSides.length === 0) return snapshot;
-
-  const copy = JSON.parse(JSON.stringify(snapshot));
+  const analytics = snapshot.state?.analytics;
+  let transmitted = snapshot;
+  if (analytics?.events && recipient?.logDeltaSupported) {
+    const offset = recipient.analyticsGameId === analytics.game?.gameId ? recipient.analyticsCount || 0 : 0;
+    transmitted = { ...snapshot, state: { ...snapshot.state, analytics: { ...analytics,
+      eventOffset: offset, events: analytics.events.slice(offset) } } };
+    recipient.analyticsGameId = analytics.game?.gameId;
+    recipient.analyticsCount = analytics.events.length;
+  }
+  const copy = JSON.parse(JSON.stringify(transmitted));
   const players = copy?.state?.players;
   if (!players || typeof players !== "object") return copy;
   hiddenSides.forEach((side) => {
@@ -1735,6 +1856,7 @@ function refreshWaitingRoomTimer(room) {
 function roomPlayerJoinedMessage(room, player = null) {
   return {
     type: "playerJoined",
+    logDeltaSupported: true,
     senderId: SERVER_ID,
     roomId: room.roomId,
     roomSessionId: room.sessionId,
@@ -1899,6 +2021,7 @@ function joinRoom(ws, message) {
     deckCounts: role === "spectator" ? null : descriptor.deckCounts,
     cardStyles: role === "spectator" ? {} : normalizeCardStyles(message.cardStyles ?? existing?.cardStyles),
     profile,
+    logDeltaSupported: message.logDeltaSupported === true,
     joinedAt: existing?.joinedAt || now(),
     lastSeenAt: now()
   };
@@ -2120,7 +2243,7 @@ function handleStartGame(ws, message) {
     && !message.snapshot.state?.testMode;
   room.replayIncidents = [];
   clearWaitingRoomTimer(room);
-  room.state = message.snapshot;
+  room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
   room.currentTurn = snapshotCurrentTurn(message.snapshot);
   room.updatedAt = now();
@@ -2142,7 +2265,7 @@ function handleGameState(ws, message) {
   if (!room.started || !message.snapshot) return;
   const seq = Number(message.snapshot.seq) || 0;
   if (seq && seq < room.snapshotSeq) return;
-  room.state = message.snapshot;
+  room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
   room.snapshotSeq = Math.max(room.snapshotSeq, seq);
   room.currentTurn = snapshotCurrentTurn(message.snapshot) || room.currentTurn;
   room.updatedAt = now();
@@ -2362,7 +2485,7 @@ function routeMessage(ws, raw) {
       break;
     case "syncRequest": {
       const { room, player } = requireJoined(ws);
-      if (room?.state) sendSnapshotMessage(room, player, "gameState");
+      if (room?.state) { player.analyticsCount = 0; player.analyticsGameId = ""; sendSnapshotMessage(room, player, "gameState"); }
       break;
     }
     case "snapshotAck":
@@ -2469,6 +2592,14 @@ wss.on("connection", (ws, request) => {
 setInterval(cleanupRooms, 1000 * 60 * 10).unref();
 
 loadLogsFromDisk();
+void closeInactiveLogs();
+
+process.once("SIGTERM", async () => {
+  server.close();
+  await flushDiskLogs();
+  await cloudLogQueue.flush();
+  process.exit(0);
+});
 
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Chibatoru WebSocket server listening on ${PORT}`);

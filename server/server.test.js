@@ -101,13 +101,13 @@ function startServer(port, env = {}) {
   });
 }
 
-function connectClient(url, roomId, clientId, create = false) {
+function connectClient(url, roomId, clientId, create = false, logDeltaSupported = false) {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
     const client = { ws, messages: [] };
     const timer = setTimeout(() => reject(new Error(`join timeout: ${clientId}`)), 4000);
     ws.on("open", () => {
-      ws.send(JSON.stringify({ type: "joinRoom", protocol: 1, roomId, clientId, create }));
+      ws.send(JSON.stringify({ type: "joinRoom", protocol: 1, roomId, clientId, create, logDeltaSupported }));
     });
     ws.on("message", (raw) => {
       const message = JSON.parse(String(raw));
@@ -1076,3 +1076,34 @@ test("admin logs require a password and store host analytics logs", async (t) =>
   const importedDetail = await httpGet(port, "/admin/logs/imported-log", "secret");
   assert.match(importedDetail.body, /<h1>プレイヤー vs 対戦相手<\/h1>/);
 });
+
+ test('incremental logs survive retry and recover gaps; snapshot history survives reconnect', async(t)=>{
+  const port=await freePort(), dir=fs.mkdtempSync(path.join(os.tmpdir(),'chibatoru-delta-'));
+  const child=await startServer(port,{CHIBATORU_LOG_ADMIN_PASSWORD:'secret',CHIBATORU_LOG_DIR:dir});
+  const host=await connectClient(`ws://127.0.0.1:${port}`,'DELTA1','dh',true,true);
+  const guest=await connectClient(`ws://127.0.0.1:${port}`,'DELTA1','dg',false,true);
+  let reconnected;
+  t.after(()=>{host.ws.close();guest.ws.close();reconnected?.ws.close();child.kill('SIGTERM');fs.rmSync(dir,{recursive:true,force:true})});
+  for(const c of [host,guest]) send(c,{type:'deckUpdate',...normalDeckDescriptor(createNormalDeckCounts()),ready:true});
+  await waitFor(host,m=>m.type==='playerJoined'&&m.players?.filter(p=>p.ready).length===2);
+  const game={gameId:'delta',mode:'online',participants:{player:'human',opponent:'human'}};
+  const e1={eventType:'game_start',eventSeq:1,game},e2={eventType:'action',eventSeq:2,actionType:'attack_life',side:'player'};
+  const snapshot=(seq,eventOffset,events)=>({seq,state:{currentSide:'player',gameOver:false,analytics:{game,eventOffset,events},players:{player:{hand:[]},opponent:{hand:[]}}}});
+  send(host,{type:'startGame',snapshot:snapshot(1,0,[e1])});
+  await waitFor(guest,m=>m.type==='startGame');guest.messages=[];
+  send(host,{type:'gameState',snapshot:snapshot(2,1,[e2])});
+  const delta=(await waitFor(guest,m=>m.type==='gameState'&&m.snapshot.seq===2)).message.snapshot.state.analytics;
+  assert.equal(delta.eventOffset,1);assert.deepEqual(delta.events,[e2]);
+  const upload=(offset,events,entries=[])=>send(host,{type:'analyticsLog',gameId:'delta',eventOffset:offset,events,trace:{schemaVersion:1,entries}});
+  upload(0,[e1]);await waitFor(host,m=>m.type==='analyticsLogSaved');host.messages=[];
+  upload(1,[e2]);await waitFor(host,m=>m.type==='analyticsLogSaved');host.messages=[];
+  upload(0,[e1]);await waitFor(host,m=>m.type==='analyticsLogSaved');
+  let backup=JSON.parse((await httpGet(port,'/admin/logs/backup.json','secret')).body);
+  assert.deepEqual(backup.logs[0].events,[e1,e2]);
+  host.messages=[];upload(9,[e2]);await waitFor(host,m=>m.type==='analyticsLogResync');
+  assert.deepEqual(JSON.parse((await httpGet(port,'/admin/logs/backup.json','secret')).body).logs[0].events,[e1,e2]);
+  guest.ws.close();await waitFor(host,m=>m.type==='opponentDisconnected');
+  reconnected=await connectClient(`ws://127.0.0.1:${port}`,'DELTA1','dg',false,true);
+  const recovered=(await waitFor(reconnected,m=>m.type==='gameState')).message.snapshot.state.analytics;
+  assert.equal(recovered.eventOffset,0);assert.deepEqual(recovered.events,[e1,e2]);
+ });

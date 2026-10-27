@@ -22,9 +22,12 @@ test.afterAll(() => server?.kill());
 test('対戦サーバーのカード一覧・専攻・枚数制限は通常版と一致する', async ({ page }) => {
   await page.goto(game.href);
   expect(await page.evaluate(() => ({
-    specialties: SPECIALTY_CARD_IDS, direct: [...DIRECT_DECK_CARD_IDS].sort(),
+    specialties: Object.fromEntries(Object.entries(SPECIALTY_CARD_IDS).map(([key, ids])=>[key,[...ids].sort()])), direct: [...DIRECT_DECK_CARD_IDS].sort(),
     aces: [...ACE_CARD_IDS].sort(), copyLimits: CARD_COPY_LIMITS
-  }))).toEqual(catalog);
+  }))).toEqual({
+    specialties: Object.fromEntries(Object.entries(catalog.specialties).map(([key, ids])=>[key,[...ids].sort()])),
+    direct: [...catalog.direct].sort(), aces: [...catalog.aces].sort(), copyLimits: catalog.copyLimits
+  });
 });
 
 test('初期の使用不可デッキは有効な保存デッキを選択し、元の編成は変えない', async ({ page }) => {
@@ -86,6 +89,14 @@ test('新しい融合素材・出席者を含むデッキでも双方が準備OK
     await expect(host.locator('#coinControls')).toBeVisible();
     await expect.poll(() => guest.evaluate(() => state.phase)).toBe('coinToss');
     for (const page of pages) expect(await page.evaluate(() => Boolean(window.__newRules))).toBe(false);
+    expect(await host.evaluate(() => state.online.logDeltaSupported)).toBe(true);
+    await host.evaluate(() => { analyticsPushEvent('effect',{details:{marker:'delta-history-test'}}); onlineBroadcastState(true); });
+    await expect.poll(()=>guest.evaluate(()=>state.analytics.events.some(event=>event.details?.marker==='delta-history-test'))).toBe(true);
+    await expect.poll(()=>host.evaluate(()=>onlineSnapshotEventAck)).toBeGreaterThan(0);
+    expect(await host.evaluate(()=>onlineCreateSnapshot().state.analytics.events.length)).toBe(0);
+    await host.evaluate(() => { analyticsPushEvent('effect',{details:{marker:'second-delta-test'}}); onlineBroadcastState(true); });
+    await expect.poll(()=>guest.evaluate(()=>state.analytics.events.filter(event=>['delta-history-test','second-delta-test'].includes(event.details?.marker)).length)).toBe(2);
+
   } finally {
     for (const page of pages) await page.evaluate(() => onlineCloseConnection(false)).catch(() => {});
     for (const context of contexts) await context.close();

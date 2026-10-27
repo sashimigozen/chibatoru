@@ -63,3 +63,32 @@ test('D1 is disabled without credentials; malformed IDs cannot change the API de
   assert.equal(createD1LogStore({}), null);
   assert.throws(() => createD1LogStore({ ...env, CHIBATORU_D1_ACCOUNT_ID: '../example' }));
 });
+
+ test('inactive logs close after 30 minutes without inventing a result, and deleted logs never return', { skip: !DatabaseSync }, async () => {
+  const d = fakeD1();
+  try {
+    const events = [{ eventType: 'action', eventSeq: 1 }];
+    const old = { gameId: 'old', receivedAt: new Date(Date.now()-31*60000).toISOString(), final: false, events };
+    const recent = { gameId: 'recent', receivedAt: new Date(Date.now()-29*60000).toISOString(), final: false, events };
+    await d.store.put(old); await d.store.put(recent);
+    await d.store.closeInactive(new Date(Date.now()-30*60000).toISOString());
+    const closed = await d.store.get('old');
+    assert.equal(closed.final, true); assert.equal(closed.closedReason, 'inactive');
+    assert.deepEqual(closed.events, events); assert.equal(closed.summary?.winner, undefined);
+    assert.equal((await d.store.get('recent')).final, false);
+    await d.store.delete('old'); await d.store.put(old);
+    assert.equal(await d.store.get('old'), null);
+    assert.deepEqual((await d.store.list()).logs.map(log=>log.gameId), ['recent']);
+    assert.equal(d.db.prepare('SELECT COUNT(*) AS n FROM battle_log_parts WHERE game_id = ?').get('old').n, 0);
+  } finally { d.db.close(); }
+ });
+ test('delete waits for an in-flight archive write and cancels queued and late writes', async () => {
+  let release; const done = new Promise(resolve=>{release=resolve}); const operations=[];
+  const q=createArchiveQueue({put:async()=>{await done;operations.push('put')},delete:async()=>operations.push('delete')},{intervalMs:60000});
+  const log={gameId:'g',source:'online-human-v1',serverVerifiedHumanMatch:true};
+  try {
+    q.enqueue(log); const flushing=q.flush(); const deleting=q.delete('g'); q.enqueue(log);
+    release(); await flushing; await deleting; await q.flush();
+    assert.deepEqual(operations,['put','delete']);assert.equal(q.status.pending,0);
+  } finally {q.close()}
+ });

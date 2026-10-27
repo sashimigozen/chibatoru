@@ -1,6 +1,8 @@
 "use strict";
 const crypto = require("node:crypto");
-const { gzipSync, gunzipSync } = require("node:zlib");
+const { gzip, gunzipSync } = require("node:zlib");
+const { promisify } = require("node:util");
+const gzipAsync = promisify(gzip);
 const MAX_LOG_BYTES = 32 * 1024 * 1024;
 
 function createD1LogStore(env = process.env, fetchImpl = fetch) {
@@ -26,16 +28,19 @@ function createD1LogStore(env = process.env, fetchImpl = fetch) {
   function init() {
     if (!initialized) initialized = query({ batch: [
       { sql: "CREATE TABLE IF NOT EXISTS battle_log_manifest (game_id TEXT PRIMARY KEY, revision TEXT NOT NULL, parts INTEGER NOT NULL, updated_at TEXT NOT NULL, metadata TEXT NOT NULL)" },
-      { sql: "CREATE TABLE IF NOT EXISTS battle_log_parts (game_id TEXT NOT NULL, revision TEXT NOT NULL, part INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (game_id, revision, part))" }
+      { sql: "CREATE TABLE IF NOT EXISTS battle_log_parts (game_id TEXT NOT NULL, revision TEXT NOT NULL, part INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (game_id, revision, part))" },
+      { sql: "CREATE INDEX IF NOT EXISTS battle_log_pending_updates ON battle_log_manifest(updated_at) WHERE json_extract(metadata, '$.final') IS NOT 1 AND json_extract(metadata, '$.deleted') IS NOT 1" }
     ] }).catch(error => { initialized = null; throw error; });
     return initialized;
   }
   return {
     async put(log) {
       await init();
+      const current = (await query({ sql: "SELECT metadata FROM battle_log_manifest WHERE game_id = ?", params: [log.gameId] }))[0].results[0];
+      if (current && JSON.parse(current.metadata).deleted) return;
       const raw = Buffer.from(JSON.stringify(log));
       if (raw.length > MAX_LOG_BYTES) throw new Error("詳細ログが保存上限を超えています。端末へ保存してください。");
-      const packed = gzipSync(raw).toString("base64");
+      const packed = (await gzipAsync(raw)).toString("base64");
       const revision = crypto.createHash("sha256").update(raw).digest("hex");
       const chunks = packed.match(/.{1,131072}/g) || [""];
       for (let offset = 0; offset < chunks.length; offset += 20) {
@@ -44,7 +49,7 @@ function createD1LogStore(env = process.env, fetchImpl = fetch) {
           params: [log.gameId, revision, String(offset + i), data]
         })) });
       }
-      const metadata = JSON.stringify({ gameId: log.gameId, receivedAt: log.receivedAt, final: log.final, summary: log.summary, learning: log.learning });
+      const metadata = JSON.stringify({ gameId: log.gameId, receivedAt: log.receivedAt, final: log.final, closedReason: log.closedReason, closedAt: log.closedAt, summary: log.summary, learning: log.learning });
       // Publish the new revision only after every chunk succeeded; old data stays readable on failure.
       await query({ sql: "INSERT OR REPLACE INTO battle_log_manifest (game_id, revision, parts, updated_at, metadata) VALUES (?, ?, ?, ?, ?)",
         params: [log.gameId, revision, String(chunks.length), log.receivedAt || new Date().toISOString(), metadata] });
@@ -53,18 +58,35 @@ function createD1LogStore(env = process.env, fetchImpl = fetch) {
     async get(gameId) {
       await init();
       const meta = (await query({ sql: "SELECT * FROM battle_log_manifest WHERE game_id = ?", params: [gameId] }))[0].results[0];
-      if (!meta) return null;
+      if (!meta || JSON.parse(meta.metadata).deleted) return null;
       const rows = (await query({ sql: "SELECT part, data FROM battle_log_parts WHERE game_id = ? AND revision = ? ORDER BY part", params: [gameId, meta.revision] }))[0].results;
       if (rows.length !== Number(meta.parts) || rows.some((row, i) => Number(row.part) !== i)) throw new Error("クラウドの記録に不足があります。");
       const raw = gunzipSync(Buffer.from(rows.map(r => r.data).join(""), "base64"), { maxOutputLength: MAX_LOG_BYTES });
       if (crypto.createHash("sha256").update(raw).digest("hex") !== meta.revision) throw new Error("クラウドの記録が一致しません。");
-      return JSON.parse(raw);
+      const log = JSON.parse(raw);
+      const metadata = JSON.parse(meta.metadata);
+      if (metadata.closedReason === "inactive") Object.assign(log, { final: true, closedReason: "inactive", closedAt: metadata.closedAt });
+      return log;
+    },
+    async delete(gameId) {
+      await init();
+      // Retain a tiny tombstone so a late upload cannot resurrect a deleted game.
+      await query({ batch: [
+        { sql: "INSERT OR REPLACE INTO battle_log_manifest (game_id, revision, parts, updated_at, metadata) VALUES (?, ?, ?, ?, ?)",
+          params: [gameId, "deleted", "0", new Date().toISOString(), JSON.stringify({ gameId, deleted: true })] },
+        { sql: "DELETE FROM battle_log_parts WHERE game_id = ?", params: [gameId] }
+      ] });
+    },
+    async closeInactive(cutoff) {
+      await init();
+      await query({ sql: "UPDATE battle_log_manifest SET metadata = json_set(metadata, '$.final', json('true'), '$.closedReason', 'inactive', '$.closedAt', ?) WHERE updated_at <= ? AND json_extract(metadata, '$.final') IS NOT 1 AND json_extract(metadata, '$.deleted') IS NOT 1",
+        params: [new Date(Date.parse(cutoff) + 30 * 60 * 1000).toISOString(), cutoff] });
     },
     async list(cursor = "", limit = 50) {
       await init();
       const rows = (await query({ sql: cursor
-        ? "SELECT game_id, metadata FROM battle_log_manifest WHERE game_id < ? ORDER BY game_id DESC LIMIT ?"
-        : "SELECT game_id, metadata FROM battle_log_manifest ORDER BY game_id DESC LIMIT ?",
+        ? "SELECT game_id, metadata FROM battle_log_manifest WHERE game_id < ? AND json_extract(metadata, '$.deleted') IS NOT 1 ORDER BY game_id DESC LIMIT ?"
+        : "SELECT game_id, metadata FROM battle_log_manifest WHERE json_extract(metadata, '$.deleted') IS NOT 1 ORDER BY game_id DESC LIMIT ?",
         params: cursor ? [cursor, String(limit + 1)] : [String(limit + 1)] }))[0].results;
       return { logs: rows.slice(0, limit).map(row => JSON.parse(row.metadata)), nextCursor: rows.length > limit ? rows[limit - 1].game_id : "" };
     }
@@ -75,17 +97,25 @@ function createArchiveQueue(store, { intervalMs = 30000, finalDelayMs = 1200 } =
   const pending = new Map();
   const status = { configured: Boolean(store), pending: 0, lastSavedAt: "", error: "" };
   let running = false, finalTimer;
-  async function flush() {
-    if (!store || running) return;
+  let activeFlush = Promise.resolve();
+  const deleted = new Set();
+  function flush() {
+    if (!store || running) return activeFlush;
+    activeFlush = runFlush();
+    return activeFlush;
+  }
+  async function runFlush() {
     running = true;
     try {
       for (const [id, log] of [...pending]) {
+        if (pending.get(id) !== log) continue;
         pending.delete(id);
+        if (deleted.has(id)) continue;
         try {
           await store.put(log);
           status.lastSavedAt = new Date().toISOString(); status.error = "";
         } catch {
-          if (!pending.has(id)) pending.set(id, log);
+          if (!deleted.has(id) && !pending.has(id)) pending.set(id, log);
           status.error = "クラウドへ未保存のログがあります。設定・容量・通信を確認してください。";
           break;
         }
@@ -95,8 +125,13 @@ function createArchiveQueue(store, { intervalMs = 30000, finalDelayMs = 1200 } =
   const timer = setInterval(() => { void flush(); }, intervalMs); timer.unref();
   return {
     status, flush,
+    async delete(gameId) {
+      deleted.add(gameId); pending.delete(gameId); status.pending = pending.size;
+      await activeFlush;
+      await store?.delete(gameId);
+    },
     enqueue(log) {
-      if (!store || log.source !== "online-human-v1" || !log.serverVerifiedHumanMatch) return;
+      if (deleted.has(log.gameId) || !store || log.source !== "online-human-v1" || !log.serverVerifiedHumanMatch) return;
       pending.set(log.gameId, log); status.pending = pending.size;
       if (log.final) {
         clearTimeout(finalTimer);

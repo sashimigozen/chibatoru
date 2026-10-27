@@ -7,7 +7,7 @@
   const MAX_BYTES = 16 * 1024 * 1024;
   const clone = value => JSON.parse(JSON.stringify(value));
   function diffValues(before, after, path, patches) {
-    if (JSON.stringify(before) === JSON.stringify(after)) return;
+    if (before === after) return;
     if (before && after && typeof before === "object" && typeof after === "object"
       && Array.isArray(before) === Array.isArray(after)) {
       for (const key of Object.keys(after)) {
@@ -33,6 +33,7 @@
         entries.push(entry);
       },
       checkpoint(state, cause) {
+        if (truncated) return;
         const next = clone(state), changes = {}, removed = [], patches = [];
         for (const key of Object.keys(next)) {
           if (key === "players" && previous.players) diffValues(previous.players, next.players, ["players"], patches);
@@ -45,10 +46,11 @@
       }
     };
   }
-  function mergeTrace(oldTrace, incoming) {
-    const trace = oldTrace ? clone(oldTrace) : { schemaVersion: 1, entries: [], truncated: false };
+  const traceSizes = new WeakMap();
+  function mergeTrace(oldTrace, incoming, { mutate = false } = {}) {
+    const trace = oldTrace ? (mutate ? oldTrace : clone(oldTrace)) : { schemaVersion: 1, entries: [], truncated: false };
     if (!incoming || incoming.schemaVersion !== 1 || !Array.isArray(incoming.entries)) return trace;
-    let size = JSON.stringify(trace).length * 2;
+    let size = traceSizes.get(trace) ?? JSON.stringify(trace).length * 2;
     for (const raw of incoming.entries) {
       if (!Number.isSafeInteger(raw?.seq) || raw.seq < 1) { trace.invalid = true; continue; }
       if (raw.seq <= trace.entries.length) {
@@ -60,6 +62,7 @@
       if (size > MAX_BYTES) { trace.truncated = true; break; }
       trace.entries.push(clone(raw));
     }
+    traceSizes.set(trace, size);
     trace.truncated = trace.truncated || Boolean(incoming.truncated);
     return trace;
   }

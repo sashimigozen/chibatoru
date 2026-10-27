@@ -23037,6 +23037,9 @@
 
     let onlineReplayRecorder = null;
     let onlineReplaySentSeq = 0;
+    let onlineReplayEventSentCount = 0;
+    let onlineSnapshotEventAck = 0;
+    let onlineLogSubmitTimer = null;
 
     function onlineReplayEnabled() {
       return isOnlineHost() && state.online.connected && (state.online.started || state.online.startPending)
@@ -23096,6 +23099,8 @@
         state.analytics = createAnalyticsState();
         onlineReplayRecorder = onlineReplayEnabled() ? window.ChibattleOnlineReplay.createRecorder() : null;
         onlineReplaySentSeq = 0;
+        onlineReplayEventSentCount = 0;
+        onlineSnapshotEventAck = 0;
         const playerDeckList = analyticsCopyDeckList(state.players.player.originalDeckCounts);
         const opponentDeckList = analyticsCopyDeckList(state.players.opponent.originalDeckCounts);
         state.analytics.game = {
@@ -25362,32 +25367,51 @@
         if (final && state.online.lastAnalyticsLogFinal && state.online.lastAnalyticsLogGameId === gameId) return;
         if (!final && lastSeq <= (state.online.lastAnalyticsLogEventSeq || 0)
           && (onlineReplayRecorder?.entries.length || 0) <= onlineReplaySentSeq) return;
-        const pending = (onlineReplayRecorder?.entries || []).filter(entry => entry.seq > onlineReplaySentSeq);
+        const pending = (onlineReplayRecorder?.entries || []).slice(onlineReplaySentSeq);
+        const delta = state.online.logDeltaSupported === true;
+        const eventOffset = delta ? onlineReplayEventSentCount : 0;
+        const newEvents = events.slice(eventOffset);
         // Bound each message; the server merges numbered chunks and retry duplicates.
-        const batches = [[]];
+        const batches = [{ events: [], entries: [], eventOffset }];
         let batchBytes = 0;
-        for (const entry of pending) {
-          const bytes = JSON.stringify(entry).length * 2;
-          if (batchBytes + bytes > 128 * 1024 && batches.at(-1).length) { batches.push([]); batchBytes = 0; }
-          batches.at(-1).push(entry); batchBytes += bytes;
+        for (const [kind, values] of [["events", newEvents], ["entries", pending]]) {
+          for (const value of values) {
+            const bytes = JSON.stringify(value).length * 2;
+            if (delta && batchBytes + bytes > 128 * 1024 && (batches.at(-1).events.length || batches.at(-1).entries.length)) {
+              const previous = batches.at(-1);
+              batches.push({ events: [], entries: [], eventOffset: previous.eventOffset + previous.events.length });
+              batchBytes = 0;
+            } else if (!delta && kind === "entries" && batchBytes + bytes > 128 * 1024 && batches.at(-1).entries.length) {
+              batches.push({ events: [], entries: [], eventOffset: 0 }); batchBytes = 0;
+            }
+            batches.at(-1)[kind].push(value); batchBytes += bytes;
+          }
         }
-        for (const entries of batches) {
+        for (let i = 0; i < batches.length; i++) {
+          const batch = batches[i];
           const sent = onlineSend({
-            type: "analyticsLog",
-            reason,
-            gameId,
-            version: UPDATE_HISTORY[0].version,
-            final,
-            events,
-            trace: { schemaVersion: 1, entries, truncated: Boolean(onlineReplayRecorder?.truncated) }
+            type: "analyticsLog", reason, gameId, version: UPDATE_HISTORY[0].version,
+            final: final && i === batches.length - 1,
+            events: JSON.parse(JSON.stringify(delta ? batch.events : events)),
+            ...(delta ? { eventOffset: batch.eventOffset } : {}),
+            trace: { schemaVersion: 1, entries: batch.entries, truncated: Boolean(onlineReplayRecorder?.truncated) }
           }, { track: true });
           if (!sent) return;
-          if (entries.length) onlineReplaySentSeq = entries.at(-1).seq;
+          if (batch.entries.length) onlineReplaySentSeq = batch.entries.at(-1).seq;
+          onlineReplayEventSentCount = delta ? batch.eventOffset + batch.events.length : events.length;
         }
         state.online.lastAnalyticsLogEventSeq = lastSeq;
         state.online.lastAnalyticsLogGameId = gameId;
         if (final) state.online.lastAnalyticsLogFinal = true;
       });
+    }
+
+    function scheduleOnlineAnalyticsLog() {
+      if (!onlineReplayEnabled() || onlineLogSubmitTimer !== null) return;
+      onlineLogSubmitTimer = window.setTimeout(() => {
+        onlineLogSubmitTimer = null;
+        onlineSubmitAnalyticsLog("state_sync");
+      }, 250);
     }
 
     function onlineClearPendingMessagesByType(type) {
@@ -25403,6 +25427,11 @@
 
     function onlineHandleAck(ackId) {
       if (!ackId) return;
+      const pending = state.online.pendingMessages[ackId]?.message;
+      const analytics = pending?.snapshot?.state?.analytics;
+      if (analytics?.game?.gameId === state.analytics?.game?.gameId) {
+        onlineSnapshotEventAck = Math.max(onlineSnapshotEventAck, (analytics.eventOffset || 0) + (analytics.events?.length || 0));
+      }
       delete state.online.pendingMessages[ackId];
     }
 
@@ -25885,6 +25914,7 @@
         return;
       }
       if (message.type === "playerJoined") {
+        state.online.logDeltaSupported = message.logDeltaSupported === true;
         state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
         state.online.roomCode = message.roomId || state.online.roomCode;
         state.online.matchMode = message.matchType || state.online.matchMode || "private";
@@ -25950,6 +25980,15 @@
         onlineApplyCardStyles(players);
         onlineSetStatus(message.message || "相手の接続が切れました。再入室を待っています。", "bad");
         render();
+        return;
+      }
+      if (message.type === "analyticsLogResync") {
+        if (message.senderId !== "server" || message.roomSessionId !== state.online.roomSessionId || message.gameId !== state.analytics?.game?.gameId) return;
+        onlineClearPendingMessagesByType("analyticsLog");
+        onlineReplaySentSeq = 0; onlineReplayEventSentCount = 0;
+        state.online.lastAnalyticsLogFinal = false;
+        state.online.lastAnalyticsLogEventSeq = 0;
+        onlineSubmitAnalyticsLog("resync");
         return;
       }
       if (message.type === "battleLogDownload") {
@@ -26513,7 +26552,7 @@
       onlineClearPendingMessagesByType("gameState");
       onlineSend({ type: "gameState", snapshot, processedCommandId }, { track: true });
       flushOnlineOneEyedPeekReveal();
-      onlineSubmitAnalyticsLog("state_sync");
+      scheduleOnlineAnalyticsLog();
     }
 
     function queueOnlineOneEyedPeekReveal() {
@@ -27303,6 +27342,11 @@
         if (ONLINE_LOCAL_STATE_KEYS.has(key)) return;
         snapshotState[key] = state[key];
       });
+      if (state.online.logDeltaSupported && snapshotState.analytics) {
+        snapshotState.analytics = { ...snapshotState.analytics,
+          eventOffset: onlineSnapshotEventAck,
+          events: snapshotState.analytics.events.slice(onlineSnapshotEventAck) };
+      }
       if (onlineShouldHideSnapshotMessage()) {
         snapshotState.message = onlineHiddenSnapshotMessage();
       }
@@ -27401,6 +27445,19 @@
       const nextState = isOnlineSpectator()
         ? onlineTransformSnapshotForSpectator(snapshot.state)
         : onlineTransformSnapshotForGuest(snapshot.state);
+      if (Number.isSafeInteger(nextState.analytics?.eventOffset)) {
+        const incoming = nextState.analytics;
+        const existing = state.analytics?.game?.gameId === incoming.game?.gameId ? state.analytics.events : [];
+        if (incoming.eventOffset <= existing.length) {
+          incoming.events = existing.slice(0, incoming.eventOffset).concat(incoming.events);
+          const start = incoming.events.find(event => event.eventType === "game_start");
+          if (start?.game && incoming.game?.firstSide) start.game = { ...start.game, firstSide: incoming.game.firstSide };
+          delete incoming.eventOffset;
+        } else {
+          onlineSend({ type: "syncRequest" });
+          delete nextState.analytics;
+        }
+      }
       Object.keys(nextState).forEach((key) => {
         // Also ignore local-only fields sent by older clients.
         if (ONLINE_LOCAL_STATE_KEYS.has(key)) return;
@@ -56138,13 +56195,20 @@
       testButtons.forEach((button) => button?.classList.toggle("drawer-trigger-hidden", hasOpenDrawer));
     }
 
+    let renderedLogMessages = [];
     function renderLog() {
+      const messages = [...state.log].reverse();
+      const keepExisting = renderedLogMessages.length <= messages.length
+        && elements.log.childElementCount === renderedLogMessages.length
+        && renderedLogMessages.every((message, i) => message === messages[i]);
+      const from = keepExisting ? renderedLogMessages.length : 0;
+      if (keepExisting && from === messages.length) return;
       const hadEntries = elements.log.childElementCount > 0;
       const previousScrollTop = elements.log.scrollTop;
       const distanceFromBottom = elements.log.scrollHeight - elements.log.scrollTop - elements.log.clientHeight;
       const shouldFollowLatest = !hadEntries || distanceFromBottom <= 12;
-      elements.log.innerHTML = "";
-      [...state.log].reverse().forEach((message) => {
+      if (!keepExisting) elements.log.innerHTML = "";
+      messages.slice(from).forEach((message) => {
         const item = document.createElement("li");
         const text = String(message || "");
         if (/^(あなた|自分|プレイヤー1)/.test(text) || /(?:あなた|自分)が/.test(text)) {
@@ -56157,6 +56221,7 @@
         renderLogMessage(item, message);
         elements.log.appendChild(item);
       });
+      renderedLogMessages = messages;
       elements.log.scrollTop = shouldFollowLatest ? elements.log.scrollHeight : previousScrollTop;
     }
 

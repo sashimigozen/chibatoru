@@ -264,3 +264,28 @@ test('気力・戦意の横に各プレイヤーの講義室を描き、点の�
   const saved=await (await page.request.get(`${base}/admin/logs/mini-classroom.json`)).json();
   expect(saved.events[0].boardSnapshot).toEqual(boardSnapshot);
 });
+
+ test('30分更新なしは勝敗を付けず終了し、一覧と詳細から確認してログを削除できる', async({page})=>{
+  const oldId='timeout-delete',recentId='recent-delete';
+  await page.request.post(`${base}/admin/logs/import`,{data:{logs:[
+    {gameId:oldId,receivedAt:new Date(Date.now()-31*60000).toISOString(),final:false,events:[]},
+    {gameId:recentId,receivedAt:new Date(Date.now()-29*60000).toISOString(),final:false,events:[]}
+  ]}});
+  await page.goto(`${base}/admin/logs?storage=local`);
+  const oldRow=page.locator('tr').filter({has:page.getByRole('link',{name:'プレイヤー vs 対戦相手',exact:true})}).filter({hasText:oldId});
+  await expect(oldRow).toContainText('終了');
+  await expect(page.locator('tr').filter({hasText:recentId})).toContainText('途中');
+  const denied=await page.request.post(`${base}/admin/logs/${oldId}/delete`,{form:{token:'wrong'}});expect(denied.status()).toBe(403);
+  await oldRow.getByRole('link').click();
+  await expect(page.getByText('状態: 終了（30分更新なし）',{exact:true})).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('log-delete-detail.png'),fullPage:true});
+  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'削除',exact:true}).click();
+  await expect(page).toHaveURL(`${base}/admin/logs?storage=local`);
+  await expect(page.locator('tr').filter({hasText:oldId})).toHaveCount(0);
+  expect((await page.request.get(`${base}/admin/logs/${oldId}.json`)).status()).toBe(404);
+  await page.goto(`${base}/admin/logs`);
+  const cloud=page.locator('tr').filter({hasText:'cloud-old'});
+  page.once('dialog',dialog=>dialog.accept());await cloud.getByRole('button',{name:'削除',exact:true}).click();
+  await expect(page.locator('tr').filter({hasText:'cloud-old'})).toHaveCount(0);
+  expect((await page.request.get(`${base}/admin/logs/archive/cloud-old.json`)).status()).toBe(404);
+ });

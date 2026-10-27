@@ -25,6 +25,7 @@
         this.handlers.onOpen?.();
         this.send({
           type: "joinRoom",
+          logDeltaSupported: true,
           ...this.joinPayload
         });
       });
