@@ -202,7 +202,6 @@
     const id = context[paginate(Math.max(0, current), index ? 1 : -1, context.length)];
     openCardTestConfirm(id);
   }));
-  elements.cardTestCancelButton.remove();
 
   function isDirty() {
     return state.screen === "deck" && view() === "editor"
