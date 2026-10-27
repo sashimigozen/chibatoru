@@ -8,6 +8,7 @@ const path = require("path");
 const { WebSocketServer } = require("ws");
 const Replay = require("../online-replay.js");
 const CardFace = require("../card-face.js");
+const { renderTimeline } = require("./admin-log-timeline.js");
 const { createD1LogStore, createArchiveQueue } = require("./d1-log-store.js");
 const narabeRooms = require("./narabe-rooms.js").createNarabeRooms();
 
@@ -709,6 +710,26 @@ function adminPageShell(body) {
     .deck-dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 90vh; overflow: visible; }
     .deck-dialog::backdrop { background: rgba(15, 23, 42, .58); }
     body:has(.deck-dialog[open]) { overflow: hidden; }
+    .log-toc > div { display:flex; flex-wrap:wrap; gap:8px 16px; }
+    .log-toc a { font-size:14px; }
+    .log-section { scroll-margin-top:16px; }
+    .log-section h3 { margin:22px 0 8px; font-size:17px; }
+    .log-section h4 { margin:14px 0 6px; font-size:14px; color:var(--muted); }
+    .log-turn-player { color:var(--muted); font-weight:700; }
+    .log-cards { list-style:none; display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:8px 0 16px; }
+    .log-cards li { border:1px solid var(--line); background:var(--panel-soft); border-radius:6px; padding:4px 9px; overflow-wrap:anywhere; }
+    .log-metrics, .log-board { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0; }
+    .log-metrics > div, .log-board > div { background:var(--panel-soft); border:1px solid var(--line); border-radius:6px; padding:10px 12px; min-width:0; overflow-wrap:anywhere; }
+    .log-metrics strong, .log-metrics span { display:block; }
+    .log-metrics span { font-size:14px; }
+    .log-board ul { margin:6px 0; padding-left:20px; font-size:14px; }
+    .log-actions { list-style:none; padding:0; margin:8px 0 18px; }
+    .log-actions li { display:flex; gap:10px; border-bottom:1px solid var(--line); padding:10px 0; overflow-wrap:anywhere; }
+    .log-event-seq { flex-shrink:0; min-width:32px; font-size:12px; color:var(--muted); padding-top:3px; }
+    .log-check { margin:16px 0; background:var(--panel-soft); border:1px solid var(--line); border-radius:6px; padding:12px; }
+    .log-check summary, .log-raw summary { cursor:pointer; font-weight:800; }
+    .log-to-top { font-size:13px; }
+    @media(max-width:600px) { .log-metrics, .log-board { grid-template-columns:1fr; } }
     .muted { color: var(--muted); }
   </style>
 </head>
@@ -977,7 +998,7 @@ function renderAdminLogDetail(log, { archive = false } = {}) {
     </section>
     <section class="panel">
       <h2>概要</h2>
-      <p>勝者: <strong>${escapeHtml(log.summary.winner || "-")}</strong></p>
+      <p>勝者: <strong>${escapeHtml(log.summary.playerNames?.[log.summary.winner] || ({player:"プレイヤー",opponent:"対戦相手",draw:"引き分け"}[log.summary.winner]) || log.summary.winner || "-")}</strong></p>
       <p>理由: ${escapeHtml(log.summary.reason || "-")}</p>
       <p>最終ターン: ${escapeHtml(log.summary.finalTurn ?? "-")} / リーサル: ${escapeHtml(log.summary.lethalCard || "-")}</p>
       <p>デッキ: ${["player", "opponent"].map(side => {
@@ -988,8 +1009,9 @@ function renderAdminLogDetail(log, { archive = false } = {}) {
       <p>よく使われたカード: ${topCards || '<span class="muted">なし</span>'}</p>
     </section>
     ${renderAdminLogDecks(log)}
-    <section class="panel">
-      <h2>イベント</h2>
+    ${renderTimeline(log)}
+    <details class="panel log-raw" id="log-raw">
+      <summary>元データ（イベント一覧）</summary>
       <div class="table-wrap">
         <table>
           <thead><tr><th>#</th><th>種類</th><th>ターン</th><th>side</th><th>カード</th><th>内容</th></tr></thead>
@@ -1005,7 +1027,7 @@ function renderAdminLogDetail(log, { archive = false } = {}) {
           `).join("")}</tbody>
         </table>
       </div>
-    </section>
+    </details>
   `);
 }
 

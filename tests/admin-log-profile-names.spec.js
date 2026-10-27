@@ -80,7 +80,7 @@ test('最初にクラウド一覧を表示し、対戦名から中身を開い�
   await page.getByRole('link', { name: 'クラウド太郎 vs クラウド花子', exact: true }).click();
   await expect(page).toHaveURL(`${base}/admin/logs/archive/cloud-match`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('クラウド太郎 vs クラウド花子');
-  await expect(page.getByRole('cell', { name: '一般学生', exact: true }).first()).toBeVisible();
+  await expect(page.getByText('クラウド太郎：出席「一般学生」',{exact:true})).toBeVisible();
   await expect(page.locator('[data-deck-side="player"]')).not.toBeVisible();
   await page.getByRole('button',{name:'クラウド学生',exact:true}).click();
   await expect(page.locator('[data-deck-side="player"]')).toBeVisible();
@@ -180,4 +180,33 @@ test('通常版と同じカード面・配色を使い、多いデッキも画�
   await expect(dialog).not.toBeVisible();
   await expect(page.getByRole('button',{name:'多数カード',exact:true})).toBeFocused();
   await game.close();
+});
+
+test('目次からターン・講義室チェックへ移動でき、手札と効果を読みやすく表示する',async({page})=>{
+  const log=require('./fixtures/readable-log.cjs')();
+  await page.request.post(`${base}/admin/logs/import`,{data:log});
+  const before=await (await page.request.get(`${base}/admin/logs/readable-match.json`)).json();
+  await page.goto(`${base}/admin/logs/readable-match`);
+  await expect(page.getByRole('navigation',{name:'ログの目次'})).toBeVisible();
+  const turn=page.locator('#log-turn-2');
+  await page.getByRole('link',{name:'後攻1ターン目',exact:true}).click();
+  await expect(page).toHaveURL(/#log-turn-2$/);
+  await expect(turn.getByText('一般学生',{exact:true})).toBeVisible();
+  await expect(turn.getByText('定規',{exact:true})).toBeVisible();
+  await expect(turn).toContainText('太郎：ドロー「定規」');
+  await expect(turn).not.toContainText('気力へのダメージ');
+  const check=page.locator('#log-turn-2-check');
+  await page.getByRole('link',{name:'講義室チェック（後攻1ターン目の後）',exact:true}).click();
+  await expect(check).toContainText('気力へのダメージ → 花子の気力／2ダメージ');
+  await check.getByText('最終記録時点の状態',{exact:true}).click();
+  await expect(check).toContainText('1行1列：一般学生');
+  await page.screenshot({path:test.info().outputPath('readable-log-desktop.png'),fullPage:true});
+  await page.setViewportSize({width:390,height:844});
+  await page.locator('#log-turn-2').scrollIntoViewIfNeeded();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:test.info().outputPath('readable-log-mobile.png')});
+  const after=await (await page.request.get(`${base}/admin/logs/readable-match.json`)).json();
+  expect(after).toEqual(before);
+  await page.getByText('元データ（イベント一覧）',{exact:true}).click();
+  await expect(page.locator('#log-raw').getByRole('columnheader',{name:'種類',exact:true})).toBeVisible();
 });
