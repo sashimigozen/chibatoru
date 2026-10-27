@@ -7,6 +7,7 @@ const os = require("os");
 const path = require("path");
 const { WebSocketServer } = require("ws");
 const Replay = require("../online-replay.js");
+const CardFace = require("../card-face.js");
 const { createD1LogStore, createArchiveQueue } = require("./d1-log-store.js");
 const narabeRooms = require("./narabe-rooms.js").createNarabeRooms();
 
@@ -704,14 +705,10 @@ function adminPageShell(body) {
     .file-status.error { color: #b42318; }
     .import-json-editor { margin-top: 18px; }
     .notice { border: 1px solid #9ec5fe; border-left: 5px solid var(--accent); border-radius: 8px; background: #eef6ff; color: #14356f; padding: 10px 12px; }
-    .deck-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-    .deck-panel { min-width: 0; }
-    .deck-panel h3 { margin: 0 0 4px; overflow-wrap: anywhere; }
-    .deck-panel p { margin-bottom: 8px; overflow-wrap: anywhere; }
-    .deck-table { min-width: 0; table-layout: fixed; }
-    .deck-table th:last-child, .deck-table td:last-child { width: 64px; text-align: right; }
-    .deck-table td { overflow-wrap: anywhere; }
-    @media (max-width: 700px) { .deck-grid { grid-template-columns: 1fr; } }
+    .deck-link { border: 0; padding: 0; background: none; color: var(--accent); font: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; overflow-wrap: anywhere; }
+    .deck-dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 90vh; overflow: visible; }
+    .deck-dialog::backdrop { background: rgba(15, 23, 42, .58); }
+    body:has(.deck-dialog[open]) { overflow: hidden; }
     .muted { color: var(--muted); }
   </style>
 </head>
@@ -897,21 +894,71 @@ function renderAdminLogDecks(log) {
     const counts = deck.deckList;
     const cards = counts && typeof counts === "object" && !Array.isArray(counts)
       ? Object.entries(counts).filter(([, count]) => Number.isSafeInteger(count) && count > 0)
-        .map(([id, count]) => ({ id, count, name: recordedNames.get(id) || CARD_CATALOG.names?.[id] || id }))
-        .sort((a, b) => String(a.name).localeCompare(String(b.name), "ja")) : [];
+        .map(([id, count]) => ({ id, count, name: recordedNames.get(id) || CARD_CATALOG.names?.[id] || id })) : [];
     const label = typeof names[side] === "string" && names[side].trim()
       ? names[side].trim().slice(0, PLAYER_PROFILE_USERNAME_MAX) : side === "player" ? "プレイヤー" : "対戦相手";
     const deckName = deck.deckName || log.summary?.deckNames?.[side] || "デッキ名なし";
-    return `<article class="deck-panel" data-deck-side="${side}">
-      <h3>${escapeHtml(label)}</h3>
-      <p>${escapeHtml(deckName)}</p>
-      ${cards.length ? `<p class="muted">${cards.reduce((sum, card) => sum + card.count, 0)}枚・${cards.length}種類</p>
-      <div class="table-wrap"><table class="deck-table"><thead><tr><th>カード</th><th>枚数</th></tr></thead>
-      <tbody>${cards.map(card => `<tr><td>${escapeHtml(card.name)}</td><td>${card.count}</td></tr>`).join("")}</tbody></table></div>`
-      : '<p class="muted">デッキ内容の記録がありません。</p>'}
-    </article>`;
+    const typeLabels = { student: "学生", teacher: "教師", vampire: "吸血", item: "持物", environment: "環境" };
+    // Keep the game's catalog order, just like openDeckWindow / deckDetailHtml.
+    const order = Object.keys(CARD_CATALOG.names || {});
+    cards.sort((a, b) => (order.indexOf(a.id) < 0 ? Infinity : order.indexOf(a.id)) - (order.indexOf(b.id) < 0 ? Infinity : order.indexOf(b.id)));
+    const cardGrid = cards.map(card => {
+      const base = CARD_CATALOG.display?.[card.id];
+      const type = typeLabels[base?.type] ? base.type : "student";
+      const hasStats = base && !["item", "environment"].includes(type);
+      const badge = (kind, value) => `<span class="card-stat stat-${kind}"${kind === "cost" ? ` aria-label="戦意${escapeHtml(value)}"` : ""}>${escapeHtml(value)}</span>`;
+      const markup = CardFace.render({ nameHtml: escapeHtml(card.name),
+        typeHtml: base ? `<div class="card-type" title="${type === "vampire" ? "ヴァンパイア" : type === "item" ? "持ち物" : typeLabels[type]}">${typeLabels[type]}</div>` : "",
+        costBadge: base && !base.noCost ? badge("cost", base.cost ?? 0) : "",
+        attackBadge: hasStats ? badge("attack", base.attack ?? 0) : "",
+        hpBadge: hasStats ? badge("hp", base.hp ?? 0) : "",
+        defenseBadge: hasStats && base.defense > 0 ? badge("defense", `防${base.defense}`) : "" });
+      return `<div class="card deck-window-card ${type}" role="img" aria-label="${escapeHtml(card.name)} ${card.count}枚" data-card-id="${escapeHtml(card.id)}">${markup}<span class="deck-copy-badge">x${card.count}</span></div>`;
+    }).join("");
+    return `<dialog class="deck-dialog" id="deck-${side}" aria-label="${escapeHtml(deckName)}" data-deck-side="${side}">
+      <div class="deck-view-host"><template>
+        <link rel="stylesheet" href="/admin/logs/deck-cards.css?v=1">
+        <style>
+          :host { display:block; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+          .deck-window { box-sizing:border-box; max-width:96vw; }
+          .deck-window-head h2 { overflow-wrap:anywhere; }
+          .deck-window-grid { min-height:0; }
+          .card.deck-window-card { cursor:default; }
+          .card.deck-window-card .hand-card-stats { display:none; }
+        </style>
+        <section class="deck-window">
+          <div class="deck-window-head"><div><h2>${escapeHtml(deckName)}</h2>
+          <div class="small-info">${escapeHtml(label)} · ${cards.reduce((sum, card) => sum + card.count, 0)}枚・${cards.length}種類</div></div>
+          <button class="button secondary" type="button" data-close>閉じる</button></div>
+          ${cards.length ? `<div class="deck-window-grid">${cardGrid}</div>` : '<p>デッキ内容の記録がありません。</p>'}
+        </section>
+      </template></div>
+    </dialog>`;
   });
-  return `<section class="panel"><h2>使用デッキ</h2><div class="deck-grid">${decks.join("")}</div></section>`;
+  return `${decks.join("")}
+    <script>
+      document.querySelectorAll('.deck-dialog').forEach(dialog => {
+        const host = dialog.querySelector('.deck-view-host');
+        const template = host.querySelector('template');
+        const root = host.attachShadow({mode:'open'});
+        root.append(template.content.cloneNode(true));
+        template.remove();
+        root.querySelector('[data-close]').addEventListener('click', () => dialog.close());
+        dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
+        const sync = () => root.querySelectorAll('.card-scale-stage').forEach(stage => {
+          const card = stage.parentElement;
+          stage.style.setProperty('--card-template-scale', String(Math.min(card.clientWidth / 420, card.clientHeight / 640)));
+        });
+        const resize = new ResizeObserver(sync);
+        root.querySelectorAll('.deck-window-card').forEach(card => resize.observe(card));
+        document.querySelector('[data-open-deck="' + dialog.id + '"]').addEventListener('click', () => {
+          dialog.showModal();
+          sync();
+          root.querySelector('[data-close]').focus();
+        });
+      });
+    </script>`;
+
 }
 
 function renderAdminLogDetail(log, { archive = false } = {}) {
@@ -933,7 +980,11 @@ function renderAdminLogDetail(log, { archive = false } = {}) {
       <p>勝者: <strong>${escapeHtml(log.summary.winner || "-")}</strong></p>
       <p>理由: ${escapeHtml(log.summary.reason || "-")}</p>
       <p>最終ターン: ${escapeHtml(log.summary.finalTurn ?? "-")} / リーサル: ${escapeHtml(log.summary.lethalCard || "-")}</p>
-      <p>デッキ: ${escapeHtml(log.summary.deckNames?.player || "-")} vs ${escapeHtml(log.summary.deckNames?.opponent || "-")}</p>
+      <p>デッキ: ${["player", "opponent"].map(side => {
+        const game = log.events.find(event => event.eventType === "game_start")?.game || log.game || {};
+        const name = game.decks?.[side]?.deckName || log.summary.deckNames?.[side] || "デッキ名なし";
+        return `<button type="button" class="deck-link" data-open-deck="deck-${side}" aria-haspopup="dialog">${escapeHtml(name)}</button>`;
+      }).join(" vs ")}</p>
       <p>よく使われたカード: ${topCards || '<span class="muted">なし</span>'}</p>
     </section>
     ${renderAdminLogDecks(log)}
@@ -1064,6 +1115,13 @@ function handleAdminLogsImport(req, res) {
 
 function handleAdminLogsRequest(req, res, url) {
   if (!requireAdmin(req, res)) return;
+  if (url.pathname === "/admin/logs/deck-cards.css") {
+    const source = fs.readFileSync(path.join(__dirname, "../index.html"), "utf8");
+    const css = [...source.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(match => match[1]).join("\n").replaceAll(":root", ":host");
+    res.writeHead(200, { "content-type": "text/css; charset=utf-8", "cache-control": "private, max-age=0, must-revalidate" });
+    res.end(css);
+    return;
+  }
   if (url.pathname === "/admin/logs") {
     if (cloudLogStore && url.searchParams.get("storage") !== "local") {
       void handleCloudArchive(req, res, url);
