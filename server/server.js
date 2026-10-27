@@ -899,8 +899,8 @@ function renderAdminLogDecks(log) {
       ? names[side].trim().slice(0, PLAYER_PROFILE_USERNAME_MAX) : side === "player" ? "プレイヤー" : "対戦相手";
     const deckName = deck.deckName || log.summary?.deckNames?.[side] || "デッキ名なし";
     const typeLabels = { student: "学生", teacher: "教師", vampire: "吸血", item: "持物", environment: "環境" };
-    // Keep the game's catalog order, just like openDeckWindow / deckDetailHtml.
-    const order = Object.keys(CARD_CATALOG.names || {});
+    // Use the normal deck viewer's type / cost / evolution order.
+    const order = CARD_CATALOG.deckOrder || [];
     cards.sort((a, b) => (order.indexOf(a.id) < 0 ? Infinity : order.indexOf(a.id)) - (order.indexOf(b.id) < 0 ? Infinity : order.indexOf(b.id)));
     const cardGrid = cards.map(card => {
       const base = CARD_CATALOG.display?.[card.id];

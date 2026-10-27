@@ -151,6 +151,8 @@ test('通常版と同じカード面・配色を使い、多いデッキも画�
   await game.goto(require('node:url').pathToFileURL(path.join(__dirname, '../index.html')).href);
   const display = await game.evaluate(() => Object.fromEntries(Object.entries(CARD_BASES).map(([id,c]) => [id, {type:c.type,cost:c.cost,noCost:!!c.noCost,attack:c.attack,hp:c.hp,defense:c.defense}])));
   expect(JSON.parse(JSON.stringify(display))).toEqual(catalog.display);
+  const normalOrder = await game.evaluate(() => getDeckEditorIds(''));
+  expect(catalog.deckOrder).toEqual(normalOrder);
   await game.evaluate(() => { state.players.player.originalDeckCounts = {general_student:3}; openDeckWindow(); });
   const gameCard = game.locator('#deckWindowGrid .card');
   const normalMarkup = await gameCard.locator('.card-face').innerHTML();
@@ -162,6 +164,8 @@ test('通常版と同じカード面・配色を使い、多いデッキも画�
   await page.goto(`${base}/admin/logs/large-deck`);
   await page.getByRole('button',{name:'多数カード',exact:true}).click();
   const dialog=page.locator('#deck-player');
+  const actualOrder = await dialog.locator('[data-card-id]').evaluateAll(cards=>cards.map(card=>card.dataset.cardId));
+  expect(actualOrder).toEqual(normalOrder.filter(id=>counts[id]>0));
   const card=dialog.locator('[data-card-id="general_student"]');
   await expect(card).toBeVisible();
   expect(await card.locator('.card-face').innerHTML()).toBe(normalMarkup);
