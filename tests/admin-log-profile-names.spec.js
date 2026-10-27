@@ -17,7 +17,8 @@ test.beforeAll(async () => {
   fs.writeFileSync(cloudFile, JSON.stringify([
     { gameId: 'cloud-match', final: true, receivedAt: '2026-10-26T10:00:00.000Z',
       summary: { playerNames: { player: 'クラウド太郎', opponent: 'クラウド花子' }, winner: 'player' },
-      events: [{ eventType: 'action', eventSeq: 1, turn: 2, cardName: '一般学生', actionType: 'play_card', side: 'player' }] },
+      events: [{eventType:'game_start', game:{decks:{player:{deckName:'クラウド学生',deckList:{general_student:3,ruler:2}},opponent:{deckName:'クラウド教師',deckList:{general_teacher:2,smiling_lecturer:1}}}}},
+        { eventType: 'action', eventSeq: 1, turn: 2, cardName: '一般学生', actionType: 'play_card', side: 'player' }] },
     { gameId: 'cloud-old', final: false, summary: {}, events: [] }
   ]));
   server = spawn(process.execPath, ['--require', path.join(__dirname, 'fixtures/admin-cloud-store.cjs'), 'server.js'], { cwd: path.join(__dirname, '../server'),
@@ -35,7 +36,10 @@ test.afterAll(() => { server?.kill('SIGTERM'); if (logDir) fs.rmSync(logDir, { r
 test('保存済みログの一覧と詳細をプロフィール名の対戦見出しで表示する', async ({ page }) => {
   const imported = await page.request.post(`${base}/admin/logs/import`, { data: { logs: [
     { gameId: 'profile-match', final: true, summary: { playerNames: { player: 'あさまる', opponent: 'チバトル太郎' },
-      deckNames: { player: 'デッキA', opponent: 'デッキB' } }, events: [] },
+      deckNames: { player: 'デッキA', opponent: 'デッキB' } }, events: [
+        {eventType:'game_start',game:{decks:{player:{deckName:'デッキA',deckList:{general_student:3,ruler:2,smiling_lecturer:1}},opponent:{deckName:'デッキB',deckList:{general_teacher:2,retired_card:1}}}}},
+        {eventType:'game_end',final:{cardStats:[{side:'opponent',cardId:'retired_card',cardName:'当時のカード名'}]}}
+      ] },
     { gameId: 'legacy-match', final: true, events: [] }
   ] } });
   expect(imported.ok()).toBeTruthy();
@@ -47,6 +51,13 @@ test('保存済みログの一覧と詳細をプロフィール名の対戦見�
   await page.getByRole('link', { name: 'あさまる vs チバトル太郎', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('あさまる vs チバトル太郎');
   await expect(page.getByText('gameId: profile-match', { exact: true })).toBeVisible();
+  const own=page.locator('[data-deck-side="player"]');
+  await expect(own).toContainText('6枚・3種類');
+  await expect(own.getByRole('row').filter({hasText:'一般学生'})).toHaveText('一般学生3');
+  await expect(own).toContainText('微笑み講師');
+  const enemy=page.locator('[data-deck-side="opponent"]');
+  await expect(enemy).toContainText('3枚・2種類');
+  await expect(enemy).toContainText('当時のカード名');
   await page.screenshot({ path: test.info().outputPath('profile-log-detail.png'), fullPage: true });
 });
 
@@ -62,7 +73,9 @@ test('最初にクラウド一覧を表示し、対戦名から中身を開い�
   await page.getByRole('link', { name: 'クラウド太郎 vs クラウド花子', exact: true }).click();
   await expect(page).toHaveURL(`${base}/admin/logs/archive/cloud-match`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('クラウド太郎 vs クラウド花子');
-  await expect(page.getByRole('cell', { name: '一般学生', exact: true })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '一般学生', exact: true }).first()).toBeVisible();
+  await expect(page.locator('[data-deck-side="player"]')).toContainText('5枚・2種類');
+  await expect(page.locator('[data-deck-side="opponent"]')).toContainText('微笑み講師');
   await expect(page.getByRole('link', { name: 'ログを保存', exact: true })).toHaveAttribute('href', '/admin/logs/archive/cloud-match.json');
   await page.screenshot({ path: test.info().outputPath('cloud-log-detail.png'), fullPage: true });
   const saved = await page.request.get(`${base}/admin/logs/archive/cloud-match.json`);
@@ -79,4 +92,30 @@ test('クラウド一覧と中身は管理者認証が必要で、存在しな�
     await response.text();
   }
   expect((await page.request.get(`${base}/admin/logs/archive/missing`)).status()).toBe(404);
+});
+
+
+test('古い記録にデッキ内容がなければ推測せず未記録と表示する',async({page})=>{
+  await page.request.post(`${base}/admin/logs/import`,{data:{gameId:'no-deck',events:[]}});
+  await page.goto(`${base}/admin/logs/no-deck`);
+  await expect(page.getByText('デッキ内容の記録がありません。',{exact:true})).toHaveCount(2);
+});
+
+test('スマホでも両者の内訳を確認でき、ログ内の名前をHTMLとして実行しない',async({page})=>{
+  await page.request.post(`${base}/admin/logs/import`,{data:{gameId:'safe-deck',events:[
+    {eventType:'game_start',game:{decks:{player:{deckName:'<script>bad</script>',deckList:{old_card:2,general_student:3,unknown_id:1,ruler:-1,invalid:'3'}},opponent:{deckList:{general_teacher:1}}}}},
+    {eventType:'game_end',final:{cardStats:[{side:'player',cardId:'old_card',cardName:'<img src=x onerror=alert(1)>'}]}}
+  ]}});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(`${base}/admin/logs/safe-deck`);
+  const own=page.locator('[data-deck-side="player"]');
+  await expect(own).toContainText('6枚・3種類');
+  await expect(own).toContainText('<script>bad</script>');
+  await expect(own).toContainText('<img src=x onerror=alert(1)>');
+  await expect(own).toContainText('unknown_id');
+  await expect(own.locator('img,script')).toHaveCount(0);
+  const [a,b]=await Promise.all([own.boundingBox(),page.locator('[data-deck-side="opponent"]').boundingBox()]);
+  expect(b.y).toBeGreaterThan(a.y+a.height);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+  await page.screenshot({path:test.info().outputPath('deck-detail-mobile.png'),fullPage:true});
 });

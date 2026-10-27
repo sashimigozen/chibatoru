@@ -704,6 +704,14 @@ function adminPageShell(body) {
     .file-status.error { color: #b42318; }
     .import-json-editor { margin-top: 18px; }
     .notice { border: 1px solid #9ec5fe; border-left: 5px solid var(--accent); border-radius: 8px; background: #eef6ff; color: #14356f; padding: 10px 12px; }
+    .deck-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .deck-panel { min-width: 0; }
+    .deck-panel h3 { margin: 0 0 4px; overflow-wrap: anywhere; }
+    .deck-panel p { margin-bottom: 8px; overflow-wrap: anywhere; }
+    .deck-table { min-width: 0; table-layout: fixed; }
+    .deck-table th:last-child, .deck-table td:last-child { width: 64px; text-align: right; }
+    .deck-table td { overflow-wrap: anywhere; }
+    @media (max-width: 700px) { .deck-grid { grid-template-columns: 1fr; } }
     .muted { color: var(--muted); }
   </style>
 </head>
@@ -870,6 +878,42 @@ function renderAdminImportPage(message = "", kind = "muted") {
   `);
 }
 
+function renderAdminLogDecks(log) {
+  const events = Array.isArray(log.events) ? log.events : [];
+  const game = events.find(event => event.eventType === "game_start")?.game || log.game || {};
+  const final = [...events].reverse().find(event => event.eventType === "game_end")?.final || log.finalResult || {};
+  const names = log.summary?.playerNames || log.playerNames || {};
+  const decks = ["player", "opponent"].map(side => {
+    const deck = game.decks?.[side] || {};
+    const recordedNames = new Map();
+    for (const card of Array.isArray(final.cardStats) ? final.cardStats : []) {
+      if (card?.side === side && card.cardId && card.cardName) recordedNames.set(card.cardId, card.cardName);
+    }
+    for (const event of events) {
+      if (event.side === side && event.cardId && event.cardName && !recordedNames.has(event.cardId)) {
+        recordedNames.set(event.cardId, event.cardName);
+      }
+    }
+    const counts = deck.deckList;
+    const cards = counts && typeof counts === "object" && !Array.isArray(counts)
+      ? Object.entries(counts).filter(([, count]) => Number.isSafeInteger(count) && count > 0)
+        .map(([id, count]) => ({ id, count, name: recordedNames.get(id) || CARD_CATALOG.names?.[id] || id }))
+        .sort((a, b) => String(a.name).localeCompare(String(b.name), "ja")) : [];
+    const label = typeof names[side] === "string" && names[side].trim()
+      ? names[side].trim().slice(0, PLAYER_PROFILE_USERNAME_MAX) : side === "player" ? "プレイヤー" : "対戦相手";
+    const deckName = deck.deckName || log.summary?.deckNames?.[side] || "デッキ名なし";
+    return `<article class="deck-panel" data-deck-side="${side}">
+      <h3>${escapeHtml(label)}</h3>
+      <p>${escapeHtml(deckName)}</p>
+      ${cards.length ? `<p class="muted">${cards.reduce((sum, card) => sum + card.count, 0)}枚・${cards.length}種類</p>
+      <div class="table-wrap"><table class="deck-table"><thead><tr><th>カード</th><th>枚数</th></tr></thead>
+      <tbody>${cards.map(card => `<tr><td>${escapeHtml(card.name)}</td><td>${card.count}</td></tr>`).join("")}</tbody></table></div>`
+      : '<p class="muted">デッキ内容の記録がありません。</p>'}
+    </article>`;
+  });
+  return `<section class="panel"><h2>使用デッキ</h2><div class="deck-grid">${decks.join("")}</div></section>`;
+}
+
 function renderAdminLogDetail(log, { archive = false } = {}) {
   const logBase = archive ? "/admin/logs/archive" : "/admin/logs";
   const listUrl = archive || !cloudLogStore ? "/admin/logs" : "/admin/logs?storage=local";
@@ -892,6 +936,7 @@ function renderAdminLogDetail(log, { archive = false } = {}) {
       <p>デッキ: ${escapeHtml(log.summary.deckNames?.player || "-")} vs ${escapeHtml(log.summary.deckNames?.opponent || "-")}</p>
       <p>よく使われたカード: ${topCards || '<span class="muted">なし</span>'}</p>
     </section>
+    ${renderAdminLogDecks(log)}
     <section class="panel">
       <h2>イベント</h2>
       <div class="table-wrap">
