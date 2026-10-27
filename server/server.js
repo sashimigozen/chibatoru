@@ -702,7 +702,7 @@ async function handleCloudArchive(req, res, url) {
     }
     await closeInactiveLogs();
     const page = await cloudLogStore.list((url.searchParams.get("cursor") || "").slice(0, 160));
-    const rows = page.logs.map(log => `<tr><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終了" : "途中"}</span></td><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json" download>保存</a> ${logDeleteForm(log, true)}</td></tr>`).join("");
+    const rows = page.logs.map(log => `<tr><td><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}">${escapeHtml(logMatchTitle(log))}</a><br><span class="muted">${escapeHtml(log.gameId)}</span></td><td>${escapeHtml(log.receivedAt)}</td><td><span class="badge ${log.final ? "" : "pending"}">${log.final ? "終了" : "途中"}</span></td><td><div class="log-row-actions"><a href="/admin/logs/archive/${encodeURIComponent(log.gameId)}.json" download>保存</a>${logDeleteForm(log, true)}</div></td></tr>`).join("");
     htmlResponse(res, 200, adminPageShell(`<section class="panel"><h1>クラウド保存ログ</h1><p class="actions"><a class="button secondary" href="/admin/logs?storage=local">一時保存ログ</a></p><div class="table-wrap"><table><thead><tr><th>対戦</th><th>保存日時</th><th>状態</th><th>操作</th></tr></thead><tbody>${rows || '<tr><td colspan="4">ログはありません。</td></tr>'}</tbody></table></div>${page.nextCursor ? `<a href="/admin/logs/archive?cursor=${encodeURIComponent(page.nextCursor)}">次のページ</a>` : ""}</section>`));
   } catch { htmlResponse(res, 503, adminPageShell('<section class="panel"><h1>クラウド記録を取得できませんでした</h1><a href="/admin/logs">再読み込み</a> ・ <a href="/admin/logs?storage=local">一時保存ログ</a></section>')); }
 }
@@ -724,7 +724,8 @@ function logDeleteToken(gameId) {
   return crypto.createHmac("sha256", LOG_ADMIN_PASSWORD).update(`delete-log:${gameId}`).digest("hex");
 }
 function logDeleteForm(log, archive = false) {
-  return `<form method="post" action="/admin/logs/${encodeURIComponent(log.gameId)}/delete" style="display:inline" onsubmit="return confirm('このログを削除しますか？')"><input type="hidden" name="token" value="${logDeleteToken(log.gameId)}"><input type="hidden" name="archive" value="${archive ? "1" : "0"}"><button type="submit" class="button secondary">削除</button></form>`;
+  const menuId = `log-menu-${archive ? "cloud" : "local"}-${crypto.createHash("sha256").update(log.gameId).digest("hex").slice(0, 16)}`;
+  return `<div class="log-more"><button type="button" class="log-more-trigger" popovertarget="${menuId}" aria-label="ログの操作" title="ログの操作">…</button><div id="${menuId}" class="log-more-menu" popover><form method="post" action="/admin/logs/${encodeURIComponent(log.gameId)}/delete" onsubmit="return confirm('このログを削除しますか？')"><input type="hidden" name="token" value="${logDeleteToken(log.gameId)}"><input type="hidden" name="archive" value="${archive ? "1" : "0"}"><button type="submit" class="log-delete-action">削除する</button></form></div></div>`;
 }
 function handleDeleteLog(req, res, url) {
   if (req.method !== "POST") { jsonResponse(res, 405, { error: "POST required" }); return; }
@@ -795,6 +796,13 @@ function adminPageShell(body) {
     .actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
     .button { display: inline-flex; min-height: 38px; align-items: center; justify-content: center; border: 1px solid var(--accent); border-radius: 7px; background: var(--accent); color: #ffffff; padding: 8px 14px; font: inherit; font-weight: 800; cursor: pointer; text-decoration: none; }
     .button.secondary { background: var(--accent-soft); color: var(--accent); }
+    .log-row-actions { display: flex; align-items: center; justify-content: space-between; gap: 40px; min-width: 130px; }
+    .log-more { margin-left: auto; width: 32px; flex: 0 0 32px; }
+    .log-more-trigger { display: flex; width: 32px; height: 32px; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 800 24px/1 sans-serif; cursor: pointer; }
+    .log-more-trigger:hover, .log-more-trigger:focus-visible { background: var(--accent-soft); color: var(--ink); }
+    .log-more-menu { position: fixed; inset: auto; margin: 0; padding: 4px; width: 132px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); box-shadow: var(--shadow); }
+    .log-delete-action { width: 100%; border: 0; border-radius: 4px; padding: 8px 12px; background: transparent; color: #b42318; font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+    .log-delete-action:hover, .log-delete-action:focus-visible { background: #fff1f0; }
     .button.backup { min-height: 46px; background: var(--teal); border-color: var(--teal); font-size: 17px; box-shadow: 0 8px 18px rgba(15, 118, 110, 0.18); }
     textarea { width: 100%; min-height: 320px; border: 1px solid var(--line); border-radius: 8px; background: #ffffff; color: var(--ink); padding: 12px; font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
     .file-drop-zone { display: grid; min-height: 176px; place-items: center; border: 2px dashed #8aa7cd; border-radius: 8px; background: #f4f8ff; color: #29486f; padding: 24px; text-align: center; cursor: pointer; transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease; }
@@ -851,6 +859,16 @@ function adminPageShell(body) {
 </head>
 <body>
   <main class="page">${body}</main>
+  <script>
+    document.querySelectorAll('.log-more-menu').forEach(menu => {
+      menu.addEventListener('beforetoggle', event => {
+        if (event.newState !== 'open') return;
+        const rect = menu.previousElementSibling.getBoundingClientRect();
+        menu.style.left = Math.max(8, Math.min(rect.right - 132, innerWidth - 140)) + 'px';
+        menu.style.top = Math.max(8, Math.min(rect.bottom + 4, innerHeight - 60)) + 'px';
+      });
+    });
+  </script>
 </body>
 </html>`;
 }

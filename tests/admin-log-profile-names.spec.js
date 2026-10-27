@@ -279,13 +279,34 @@ test('気力・戦意の横に各プレイヤーの講義室を描き、点の�
   await oldRow.getByRole('link').click();
   await expect(page.getByText('状態: 終了（30分更新なし）',{exact:true})).toBeVisible();
   await page.screenshot({path:test.info().outputPath('log-delete-detail.png'),fullPage:true});
-  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'削除',exact:true}).click();
+  await expect(page.getByRole('button',{name:'削除する',exact:true})).toBeHidden();
+  await page.getByRole('button',{name:'ログの操作',exact:true}).click();
+  page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'削除する',exact:true}).click();
   await expect(page).toHaveURL(`${base}/admin/logs?storage=local`);
   await expect(page.locator('tr').filter({hasText:oldId})).toHaveCount(0);
   expect((await page.request.get(`${base}/admin/logs/${oldId}.json`)).status()).toBe(404);
   await page.goto(`${base}/admin/logs`);
   const cloud=page.locator('tr').filter({hasText:'cloud-old'});
-  page.once('dialog',dialog=>dialog.accept());await cloud.getByRole('button',{name:'削除',exact:true}).click();
+  await cloud.getByRole('button',{name:'ログの操作',exact:true}).click();
+  page.once('dialog',dialog=>dialog.accept());await cloud.getByRole('button',{name:'削除する',exact:true}).click();
   await expect(page.locator('tr').filter({hasText:'cloud-old'})).toHaveCount(0);
   expect((await page.request.get(`${base}/admin/logs/archive/cloud-old.json`)).status()).toBe(404);
+ });
+
+ test('右端の三点メニューから削除を開き、外側クリックとEscapeで閉じる', async({page})=>{
+  await page.goto(`${base}/admin/logs`);
+  const row=page.locator('tr').filter({hasText:'cloud-match'});
+  const trigger=row.getByRole('button',{name:'ログの操作',exact:true});
+  const save=row.getByRole('link',{name:'保存',exact:true});
+  const remove=row.getByRole('button',{name:'削除する',exact:true});
+  await expect(remove).toBeHidden();
+  const buttonBox=await trigger.boundingBox(),saveBox=await save.boundingBox();
+  expect(buttonBox.width).toBeLessThanOrEqual(34);expect(buttonBox.x-(saveBox.x+saveBox.width)).toBeGreaterThanOrEqual(35);
+  await trigger.click();await expect(remove).toBeVisible();
+  await page.screenshot({path:test.info().outputPath('log-more-desktop.png'),fullPage:true});
+  await page.keyboard.press('Escape');await expect(remove).toBeHidden();
+  await trigger.click();await page.getByRole('heading',{level:1}).click();await expect(remove).toBeHidden();
+  await page.setViewportSize({width:390,height:844});await trigger.scrollIntoViewIfNeeded();await trigger.click();await expect(remove).toBeVisible();
+  const menu=await row.locator('.log-more-menu').boundingBox();expect(menu.x).toBeGreaterThanOrEqual(0);expect(menu.x+menu.width).toBeLessThanOrEqual(390);
+  await page.screenshot({path:test.info().outputPath('log-more-mobile.png'),fullPage:true});
  });
