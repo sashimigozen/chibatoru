@@ -722,6 +722,23 @@ function adminPageShell(body) {
     .log-metrics > div, .log-board > div { background:var(--panel-soft); border:1px solid var(--line); border-radius:6px; padding:10px 12px; min-width:0; overflow-wrap:anywhere; }
     .log-metrics strong, .log-metrics span { display:block; }
     .log-metrics span { font-size:14px; }
+    .log-metric-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; }
+    .log-metric-copy { min-width:0; }
+    .log-mini-classroom { --occupant-color:#2563eb; position:relative; width:108px; margin:0; font-size:11px; line-height:1.4; }
+    .log-mini-classroom.opponent { --occupant-color:#d44857; }
+    .log-mini-classroom figcaption { color:var(--muted); text-align:center; margin-bottom:4px; }
+    .log-mini-teacher { display:flex; justify-content:center; align-items:center; gap:4px; margin-bottom:4px; }
+    .log-mini-label { color:var(--muted); font-size:10px !important; }
+    .log-mini-seats { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
+    .log-mini-slot { display:flex !important; align-items:center; justify-content:center; width:100%; height:25px; padding:0; border:1px solid var(--line); border-radius:2px; background:#fff; }
+    .log-mini-teacher .log-mini-slot { width:34px; }
+    .log-mini-slot.occupied { cursor:help; }
+    .log-mini-dot { display:block; width:11px; height:11px; background:var(--occupant-color); border-radius:50%; }
+    .log-mini-slot:focus-visible { outline:2px solid var(--occupant-color); outline-offset:2px; }
+    .log-mini-tooltip { display:none !important; position:absolute; z-index:4; right:0; bottom:calc(100% + 5px); width:max-content; max-width:min(240px,70vw); padding:6px 9px; background:var(--ink); color:white; font:12px/1.5 sans-serif !important; border-radius:5px; box-shadow:var(--shadow); pointer-events:none; }
+    .log-mini-slot:hover .log-mini-tooltip, .log-mini-slot:focus .log-mini-tooltip { display:block !important; }
+    .log-mini-missing { color:var(--muted); width:108px; text-align:center; font-size:12px; }
+
     .log-board ul { margin:6px 0; padding-left:20px; font-size:14px; }
     .log-actions { list-style:none; padding:0; margin:8px 0 18px; }
     .log-actions li { display:flex; gap:10px; border-bottom:1px solid var(--line); padding:10px 0; overflow-wrap:anywhere; }

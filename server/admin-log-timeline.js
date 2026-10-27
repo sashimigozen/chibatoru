@@ -52,10 +52,20 @@ function renderTimeline(log) {
       return `<div><strong>${esc(who(side))}</strong>${cards.length ? `<ul>${cards.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`:'<p class="muted">出席者なし</p>'}</div>`;
     }).join('')}</div>`;
   };
+  const miniClassroom = (board,side) => {
+    if (!board || !Array.isArray(board.seats)) return '<div class="log-mini-missing">講義室<br>記録なし</div>';
+    const slot = (card,zone,index) => {
+      const position=seat(zone,index);
+      const label=`${position}：${card ? cardName(card) : '空席'}`;
+      return card ? `<button type="button" class="log-mini-slot occupied" aria-label="${esc(label)}"><span class="log-mini-dot" aria-hidden="true"></span><span class="log-mini-tooltip" role="tooltip">${esc(label)}</span></button>`
+        : `<span class="log-mini-slot" role="img" aria-label="${esc(label)}"></span>`;
+    };
+    return `<figure class="log-mini-classroom ${side}" aria-label="${esc(who(side))}の講義室"><figcaption>講義室</figcaption><div class="log-mini-teacher"><span class="log-mini-label">教卓</span>${slot(board.teacher,'teacher',null)}</div><div class="log-mini-seats">${Array.from({length:9},(_,i)=>slot(board.seats[i],'seat',i)).join('')}</div></figure>`;
+  };
   const countText = n => n == null ? '記録なし' : `${n}枚`;
   const metrics = (state,event) => `<div class="log-metrics">${['player','opponent'].map(side=>{
     const p=state?.players?.[side] || (event?.side===side ? event : {});
-    return `<div><strong>${esc(who(side))}</strong><span>気力 ${esc(value(p.life))}</span><span>戦意 ${esc(value(p.will))}／${esc(value(p.maxWill))}</span><span>手札 ${esc(countText(Array.isArray(p.hand)?p.hand.length:p.handCount))}</span><span>山札 ${esc(countText(Array.isArray(p.deck)?p.deck.length:p.deckCount))}</span></div>`;
+    return `<div class="log-metric-card"><div class="log-metric-copy"><strong>${esc(who(side))}</strong><span>気力 ${esc(value(p.life))}</span><span>戦意 ${esc(value(p.will))}／${esc(value(p.maxWill))}</span><span>手札 ${esc(countText(Array.isArray(p.hand)?p.hand.length:p.handCount))}</span><span>山札 ${esc(countText(Array.isArray(p.deck)?p.deck.length:p.deckCount))}</span></div>${miniClassroom(state?.players?.[side]?.board || event?.boardSnapshot?.[side],side)}</div>`;
   }).join('')}</div>`;
   const actions={draw:'ドロー',play_card:'出席',play_environment:'環境を配置',reserve_late:'遅刻ゾーンへ',evolve:'進化',use_item:'持ち物を使用',attack_card:'出席者へ攻撃',attack_life:'本体へ攻撃',lecture:'講義',fusion:'融合'};
   const effects={attendance:'効果による出席',late_resolve:'遅刻処理',damage_card:'出席者へのダメージ',damage_life:'気力へのダメージ',distributed_damage:'ランダムダメージ',heal_card:'出席者の回復',heal_life:'気力の回復',board_leave:'場を離れる'};
