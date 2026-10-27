@@ -19518,6 +19518,7 @@
     const CARD_BASES = {
       chotto_machii: { name: "ちょっと待ちぃ", type: "item", cost: 10, target: "self", category: "common" },
       ittan: { name: "一旦", type: "item", cost: 8, target: "self", category: "common" },
+      smiling_lecturer: { name: "微笑み講師", type: "teacher", cost: 4, attack: 0, hp: 4, noLecture: true, allowedZones: ["teacher"], category: "common" },
       kakiage_teacher: { name: "かき揚げ教師", type: "teacher", cost: 6, attack: 2, hp: 4, keywords: ["陽気"], allowedZones: ["teacher"], category: "common" },
       window_eater: { name: "窓辺イーター", type: "vampire", cost: 9, attack: 4, hp: 5, allowedZones: ["teacher", "seat"], category: "cafeteria" },
       jobs_woody: { name: "ジョブズウッディ", type: "vampire", cost: 6, attack: 3, hp: 3, allowedZones: ["teacher", "seat"], category: "cafeteria" },
@@ -19905,8 +19906,8 @@
     ALL_DECK_IDS.push("sunglasses_ta");
     SPECIALTY_CARD_IDS.common.push("sunglasses_ta");
     ALL_DECK_IDS.push("acting_out_man_2", "acting_out_woman", "hearty_grandma");
-    ALL_DECK_IDS.push("kakiage_teacher", "window_eater", "jobs_woody");
-    SPECIALTY_CARD_IDS.common.push("kakiage_teacher");
+    ALL_DECK_IDS.push("smiling_lecturer", "kakiage_teacher", "window_eater", "jobs_woody");
+    SPECIALTY_CARD_IDS.common.push("smiling_lecturer", "kakiage_teacher");
     SPECIALTY_CARD_IDS.cafeteria.push("window_eater", "jobs_woody");
     SPECIALTY_CARD_IDS.common.push("acting_out_man_2", "acting_out_woman");
     ALL_DECK_IDS.push("ittan", "kashikashi", "window_snipe_student");
@@ -19948,11 +19949,12 @@
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
       {
-        version: "ver.0.33.1",
+        version: "ver.0.34.0",
         versioning: "semver",
         date: "2026年10月27日",
-        summary: "手札の拡大操作と枚数表示を調整しました。",
+        summary: "新カード「微笑み講師」を追加し、手札とカードテストの操作を改善しました。",
         changes: [
+          { category: "新カード", title: "微笑み講師", after: "教師／共通カード／戦意4／攻撃力0／体力4\nこのカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。" },
           { category: "表示・操作改善", title: "手札の拡大と枚数", after: "手札エリアは長押しだけで拡大するように変更しました。手札の枚数は、自分の山札のすぐ上に小さく表示します。拡大中の融合・出席や、手札の外をクリックして元に戻す操作も引き続き使えます。" },
           { category: "表示・操作改善", title: "カードテストと詳細画面", after: "デッキ編成の「カードテスト」は1回押すだけで開始します。カード一覧の詳細にも、説明欄の右下へ「テストする」を追加しました。詳細下部の閉じるボタンと、拡大した手札の「元に戻す」は削除しました。詳細は右上の×、手札は外側のクリックで閉じられます。古い表示・操作が残る読み込みの問題も修正しました。" }
         ]
@@ -32529,6 +32531,9 @@
         score += enemyRefs.length ? 9 : 0;
       }
 
+      if (card.baseId === "smiling_lecturer") {
+        score += 6 + Math.max(0, currentLifeCap("opponent") - state.players.opponent.life) * 2;
+      }
       if (zone !== "teacher") return score;
       const enemyStudents = enemyRefs.filter((ref) => getBoardCardFromRef(ref)?.type === "student");
       const enemyThirdRowStudents = enemyStudents.filter((ref) => ref.zone === "seat" && seatRow(ref.index) === 3);
@@ -40119,6 +40124,10 @@
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
       }
+      if (card.baseId === "smiling_lecturer") {
+        healPlayer(side, 1);
+        addLog(`${card.name}の出席時効果：自分の気力を1回復しました。`);
+      }
       if (card.baseId === "window_eater") resolveWindowEaterAttendance(side, card);
       if (card.baseId === "jobs_woody") resolveJobsWoodyAttendance(side, card);
       if (card.baseId === "two_achievers") resolveTwoAchieversAttendance(side, card);
@@ -45273,19 +45282,35 @@
 
     function healPlayer(side, amount) {
       if (amount <= 0) return 0;
-      const before = state.players[side].life;
-      state.players[side].life = Math.min(currentLifeCap(side), state.players[side].life + amount);
-      const healed = state.players[side].life - before;
-      if (healed > 0) {
+      // Resolve recovery triggers in a queue: each +1 is a new recovery event,
+      // including those caused by another smiling lecturer. Zero recovery at
+      // the life cap creates no new triggers, so the chain always terminates.
+      const recoveries = [{ amount, source: null }];
+      let initialHealed = 0;
+      for (let index = 0; index < recoveries.length; index += 1) {
+        const recovery = recoveries[index];
+        const before = state.players[side].life;
+        state.players[side].life = Math.min(currentLifeCap(side), before + recovery.amount);
+        const healed = state.players[side].life - before;
+        if (index === 0) initialHealed = healed;
+        if (healed <= 0) continue;
         analyticsRecordEffect({
           side,
+          ...(recovery.source ? { source: recovery.source } : {}),
           effectType: "heal_life",
           chosenTargets: [{ side, lifeBefore: before, lifeAfter: state.players[side].life }],
           details: { targetSide: side, before, after: state.players[side].life, healed }
         });
         showFloatingTextForLife(side, `+${healed}`, "heal");
+        if (recovery.source) addLog(`${recovery.source.name}の効果：自分の気力を1回復しました。`);
+        listBoardRefs(side).forEach((ref) => {
+          const source = getBoardCardFromRef(ref);
+          if (source?.baseId === "smiling_lecturer" && source.currentHp > 0 && canUseOngoingCardEffects(source)) {
+            recoveries.push({ amount: 1, source });
+          }
+        });
       }
-      return healed;
+      return initialHealed;
     }
 
     function currentLifeCap(side = null) {
@@ -55453,6 +55478,7 @@
         two_achievers: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
+        smiling_lecturer: "このカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。",
         kakiage_teacher: "陽気を持つ。このカードが教卓マスにいるかぎり、自分のターン終了時に自分本体の気力を1回復する。",
         window_eater: "このカードを手札から出席させたとき、相手の席マスの列を1つ選び、その列にいる出席者すべてを破壊する。環境が「食堂」なら、1つではなく2つの列を選ぶ。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
         jobs_woody: "このカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。",
