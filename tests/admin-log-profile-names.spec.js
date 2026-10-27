@@ -225,6 +225,7 @@ test('気力・戦意の横に各プレイヤーの講義室を描き、点の�
   const turn=page.locator('#log-turn-1');
   const own=turn.getByRole('figure',{name:'太郎の講義室',exact:true});
   const enemy=turn.getByRole('figure',{name:'花子の講義室',exact:true});
+  await expect(own.locator('.log-mini-label')).toHaveCount(0);
   await expect(own.locator('.log-mini-seats > *')).toHaveCount(9);
   await expect(enemy.locator('.log-mini-seats > *')).toHaveCount(9);
   await expect(own.locator('.log-mini-teacher .log-mini-dot')).toHaveCount(1);

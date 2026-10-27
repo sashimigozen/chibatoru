@@ -728,7 +728,6 @@ function adminPageShell(body) {
     .log-mini-classroom.opponent { --occupant-color:#d44857; }
     .log-mini-classroom figcaption { color:var(--muted); text-align:center; margin-bottom:4px; }
     .log-mini-teacher { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:center; gap:2px; margin-bottom:4px; }
-    .log-mini-label { grid-column:1; text-align:right; color:var(--muted); font-size:10px !important; }
     .log-mini-seats { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
     .log-mini-slot { display:flex !important; align-items:center; justify-content:center; width:100%; height:25px; padding:0; border:1px solid var(--line); border-radius:2px; background:#fff; }
     .log-mini-teacher .log-mini-slot { grid-column:2; }

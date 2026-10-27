@@ -60,7 +60,7 @@ function renderTimeline(log) {
       return card ? `<button type="button" class="log-mini-slot occupied" aria-label="${esc(label)}"><span class="log-mini-dot" aria-hidden="true"></span><span class="log-mini-tooltip" role="tooltip">${esc(label)}</span></button>`
         : `<span class="log-mini-slot" role="img" aria-label="${esc(label)}"></span>`;
     };
-    return `<figure class="log-mini-classroom ${side}" aria-label="${esc(who(side))}の講義室"><figcaption>講義室</figcaption><div class="log-mini-teacher"><span class="log-mini-label">教卓</span>${slot(board.teacher,'teacher',null)}</div><div class="log-mini-seats">${Array.from({length:9},(_,i)=>slot(board.seats[i],'seat',i)).join('')}</div></figure>`;
+    return `<figure class="log-mini-classroom ${side}" aria-label="${esc(who(side))}の講義室"><figcaption>講義室</figcaption><div class="log-mini-teacher">${slot(board.teacher,'teacher',null)}</div><div class="log-mini-seats">${Array.from({length:9},(_,i)=>slot(board.seats[i],'seat',i)).join('')}</div></figure>`;
   };
   const countText = n => n == null ? '記録なし' : `${n}枚`;
   const metrics = (state,event) => `<div class="log-metrics">${['player','opponent'].map(side=>{
