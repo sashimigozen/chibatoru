@@ -727,11 +727,11 @@ function adminPageShell(body) {
     .log-mini-classroom { --occupant-color:#2563eb; position:relative; width:108px; margin:0; font-size:11px; line-height:1.4; }
     .log-mini-classroom.opponent { --occupant-color:#d44857; }
     .log-mini-classroom figcaption { color:var(--muted); text-align:center; margin-bottom:4px; }
-    .log-mini-teacher { display:flex; justify-content:center; align-items:center; gap:4px; margin-bottom:4px; }
-    .log-mini-label { color:var(--muted); font-size:10px !important; }
+    .log-mini-teacher { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:center; gap:2px; margin-bottom:4px; }
+    .log-mini-label { grid-column:1; text-align:right; color:var(--muted); font-size:10px !important; }
     .log-mini-seats { display:grid; grid-template-columns:repeat(3,1fr); gap:2px; }
     .log-mini-slot { display:flex !important; align-items:center; justify-content:center; width:100%; height:25px; padding:0; border:1px solid var(--line); border-radius:2px; background:#fff; }
-    .log-mini-teacher .log-mini-slot { width:34px; }
+    .log-mini-teacher .log-mini-slot { grid-column:2; }
     .log-mini-slot.occupied { cursor:help; }
     .log-mini-dot { display:block; width:11px; height:11px; background:var(--occupant-color); border-radius:50%; }
     .log-mini-slot:focus-visible { outline:2px solid var(--occupant-color); outline-offset:2px; }

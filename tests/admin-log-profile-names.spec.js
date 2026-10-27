@@ -232,6 +232,15 @@ test('気力・戦意の横に各プレイヤーの講義室を描き、点の�
   await expect(own.locator('.log-mini-seats .log-mini-dot')).toHaveCount(5);
   const student=own.getByRole('button',{name:'1行1列：一般学生',exact:true});
   const teacher=own.getByRole('button',{name:'教卓マス：一般教師',exact:true});
+  const expectCentered = async () => {
+    for (const classroom of [own,enemy]) {
+      const desk=await classroom.locator('.log-mini-teacher .log-mini-slot').boundingBox();
+      const middle=await classroom.locator('.log-mini-seats > *').nth(1).boundingBox();
+      expect(Math.abs(desk.x-middle.x)).toBeLessThan(0.5);
+      expect(Math.abs(desk.width-middle.width)).toBeLessThan(0.5);
+    }
+  };
+  await expectCentered();
   await student.hover();
   await expect(student.getByRole('tooltip')).toBeVisible();
   await expect(student.getByRole('tooltip')).toHaveText('1行1列：一般学生');
@@ -246,6 +255,7 @@ test('気力・戦意の横に各プレイヤーの講義室を描き、点の�
   await turn.scrollIntoViewIfNeeded();
   await page.screenshot({path:test.info().outputPath('mini-classroom-desktop.png')});
   await page.setViewportSize({width:390,height:844});
+  await expectCentered();
   await student.focus();
   await expect(student.getByRole('tooltip')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
