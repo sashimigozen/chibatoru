@@ -17513,8 +17513,9 @@
     }
 
     /* Expanded hand keeps the actual interactive cards, outside the scaled playmat. */
-    .hand-expand-prompt { min-width: 156px; display: grid; gap: 6px; z-index: 220; }
-    .hand-expand-prompt .hand-expand-count { padding: 4px 8px; color: #314b64; font-weight: 800; }
+    .battle-screen .player-hand-zone #playerHandInfo { display: none !important; }
+    .battle-screen #playerDeckPile { overflow: visible !important; }
+    .battle-screen #playerDeckPile .hand-count-above-deck { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: max-content; color: #314b64; font-size: 11px; font-weight: 800; line-height: 1.2; white-space: nowrap; pointer-events: none; }
     .battle-screen .expanded-hand-panel { position: fixed; z-index: 85; left: 12px; right: 12px; bottom: 12px; padding: 12px 18px 8px; border: 1px solid #9fb9cc; border-radius: 12px; background: #e3eef5; box-shadow: 0 -8px 28px #24445b33; }
     .expanded-hand-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; color: #24445b; font-weight: 800; }
     .battle-screen .expanded-hand-panel #playerHand { position: relative !important; inset: auto !important; display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; align-items: flex-start !important; width: 100% !important; min-width: 0 !important; max-width: none !important; height: 200px !important; padding: 12px 8px 10px !important; overflow-x: auto !important; overflow-y: hidden !important; transform: none !important; touch-action: pan-x; }
@@ -18481,6 +18482,7 @@
           <div class="hand-table player-hand-table">
             <div class="hand player-hand" id="playerHand"></div>
             <button class="deck-pile player-deck-pile" id="playerDeckPile" type="button" aria-label="自分の山札">
+              <span class="hand-count-above-deck" id="playerHandDeckCount">手札 5枚</span>
               <span class="deck-stack"></span>
               <span class="deck-label">山札</span>
               <span class="deck-count-pill" id="playerDeckPileCount">35</span>
@@ -18574,11 +18576,6 @@
     </section>
   </main>
   <div class="card-tooltip hidden" id="cardTooltip" role="tooltip"></div>
-  <div class="deck-inspect-prompt hand-expand-prompt hidden" id="handExpandPrompt">
-    <span class="hand-expand-count" id="handExpandCount">手札 0枚</span>
-    <button class="button" id="handExpandButton" type="button">拡大する</button>
-    <button class="button secondary hidden" id="handExpandInspectButton" type="button">カード確認</button>
-  </div>
   <div class="deck-inspect-prompt hidden" id="deckInspectPrompt">
     <button class="button" id="deckInspectButton" type="button">デッキ確認</button>
   </div>
@@ -19951,6 +19948,15 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        version: "ver.0.33.1",
+        versioning: "semver",
+        date: "2026年10月27日",
+        summary: "手札の拡大操作と枚数表示を調整しました。",
+        changes: [
+          { category: "表示・操作改善", title: "手札の拡大と枚数", after: "手札エリアは長押しだけで拡大するように変更しました。手札の枚数は、自分の山札のすぐ上に小さく表示します。拡大中の融合・出席や、手札の外をクリックして元に戻す操作も引き続き使えます。" }
+        ]
+      },
       {
         version: "ver.0.33.0",
         versioning: "semver",
@@ -28004,7 +28010,7 @@
     function battleInspectionAllowed(target) {
       if (target.closest("[data-room-code-copy]")) return true;
       if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
-      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #handExpandPrompt, #expandedHandPanel .expanded-hand-heading, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
+      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #expandedHandPanel .expanded-hand-heading, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
 
     function battleInputAllowed(target) {
@@ -28061,6 +28067,7 @@
 
     ["click", "dblclick", "pointerdown", "pointermove", "mouseover", "mousemove", "keydown", "dragstart", "drop", "contextmenu", "wheel"].forEach(type => {
       document.addEventListener(type, event => {
+        if (type === "pointerdown") handExpandReleaseClickPending = false;
         if (type === "click") {
           handleHandExpansionClick(event);
           if (event.defaultPrevented) return;
@@ -48790,7 +48797,7 @@
       clearPlayerHandCardHoverOverlay();
       elements.playerHandInfo.textContent = `${player.hand.length}枚`;
       document.getElementById("expandedHandCount").textContent = `手札 ${player.hand.length}枚`;
-      document.getElementById("handExpandCount").textContent = `手札 ${player.hand.length}枚`;
+      document.getElementById("playerHandDeckCount").textContent = `手札 ${player.hand.length}枚`;
       elements.playerHand.innerHTML = "";
       // Ten cards occupy the agreed hand lane. Further cards reduce only the
       // horizontal step, keeping every card inside the lane instead of letting
@@ -48999,29 +49006,15 @@
     let handExpanded = false;
     let expandedHandBattleToken = null;
     let handExpandPress = null;
-    let handExpandHeldCard = null;
-    let handExpandClickBlockedUntil = 0;
-    const handExpandPrompt = document.getElementById("handExpandPrompt");
+    let handExpandReleaseClickPending = false;
     const expandedHandPanel = document.getElementById("expandedHandPanel");
     const normalHandTable = elements.playerHand.parentElement;
 
-    function hideHandExpandPrompt() {
-      handExpandPrompt.classList.add("hidden");
-      handExpandHeldCard = null;
-    }
-
-    function showHandExpandPrompt(card = null) {
+    function expandHandFromPress() {
       if (state.screen !== "battle" || isOnlineSpectator()) return;
-      clearPlayerHandCardHoverOverlay();
-      handExpandHeldCard = card;
-      document.getElementById("handExpandCount").textContent = `手札 ${state.players.player.hand.length}枚`;
-      document.getElementById("handExpandInspectButton").classList.toggle("hidden", !card);
-      const rect = elements.playerHand.getBoundingClientRect();
-      handExpandPrompt.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 190))}px`;
-      handExpandPrompt.classList.remove("hidden");
-      handExpandPrompt.style.top = `${Math.max(8, Math.min(rect.top - handExpandPrompt.offsetHeight - 10, window.innerHeight - handExpandPrompt.offsetHeight - 8))}px`;
-      handExpandClickBlockedUntil = Date.now() + 700;
+      handExpandReleaseClickPending = true;
       handDragCandidate = null;
+      setHandExpanded(true);
     }
 
     function setHandExpanded(expanded) {
@@ -49032,7 +49025,6 @@
       if (handExpanded) expandedHandPanel.appendChild(elements.playerHand);
       else normalHandTable.insertBefore(elements.playerHand, elements.playerDeckPile);
       expandedHandPanel.classList.toggle("hidden", !handExpanded);
-      hideHandExpandPrompt();
       elements.playerHand.scrollLeft = 0;
       scheduleCardTemplateScaleSync();
     }
@@ -49040,7 +49032,6 @@
     function syncExpandedHand() {
       if (state.screen !== "battle" || isOnlineSpectator() || (handExpanded && expandedHandBattleToken !== state.preBattleToken)) {
         if (handExpanded) setHandExpanded(false);
-        hideHandExpandPrompt();
       }
     }
 
@@ -49050,14 +49041,12 @@
     }
 
     function handleHandExpansionClick(event) {
-      if (Date.now() < handExpandClickBlockedUntil && event.target.closest("#playerHand, .player-hand-zone")) {
-        handExpandClickBlockedUntil = 0;
+      if (handExpandReleaseClickPending) {
+        handExpandReleaseClickPending = false;
         const card = event.target.closest("[data-detail-pressed]");
         if (card) card.dataset.detailPressed = "false";
         event.preventDefault(); event.stopImmediatePropagation(); return;
       }
-      if (event.target.closest("#handExpandPrompt")) return;
-      if (!handExpandPrompt.classList.contains("hidden")) hideHandExpandPrompt();
       if (handExpanded && !event.target.closest("#expandedHandPanel, #battleCardPreview, #cardTooltip, #threeGesturesStage, #selectionPeekReturnButton")
         && Date.now() >= handDragClickBlockedUntil) setHandExpanded(false);
     }
@@ -49070,7 +49059,7 @@
         handExpandPress = { x: event.clientX, y: event.clientY, timer: window.setTimeout(() => {
           handExpandPress = null;
           finishHandScrollDrag();
-          showHandExpandPrompt();
+          expandHandFromPress();
         }, DETAIL_LONG_PRESS_MS) };
       });
       document.addEventListener("pointermove", event => {
@@ -49079,15 +49068,9 @@
       document.addEventListener("pointerup", cancelHandExpandPress, true);
       document.addEventListener("pointercancel", cancelHandExpandPress, true);
       document.addEventListener("keydown", event => {
-        if (event.key === "Escape") { hideHandExpandPrompt(); if (handExpanded) setHandExpanded(false); }
+        if (event.key === "Escape" && handExpanded) setHandExpanded(false);
       });
-      document.getElementById("handExpandButton").addEventListener("click", () => setHandExpanded(true));
       document.getElementById("handCollapseButton").addEventListener("click", () => setHandExpanded(false));
-      document.getElementById("handExpandInspectButton").addEventListener("click", () => {
-        const card = handExpandHeldCard;
-        hideHandExpandPrompt();
-        if (card) showBattleCardPreview(card);
-      });
     }
 
     function setupHandScrollEvents() {
@@ -54489,7 +54472,7 @@
       detailPressTimer = window.setTimeout(() => {
         detailPressTimer = null;
         element.dataset.detailPressed = "true";
-        if (element.closest("#playerHand") && !handExpanded && !isOnlineSpectator()) showHandExpandPrompt(card);
+        if (element.closest("#playerHand") && !handExpanded && !isOnlineSpectator()) expandHandFromPress();
         else showCardTooltip(card, event);
       }, DETAIL_LONG_PRESS_MS);
     }

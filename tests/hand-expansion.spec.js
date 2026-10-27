@@ -22,10 +22,10 @@ async function expand(page) {
   const box = await card.boundingBox();
   await page.mouse.move(box.x + 15, box.y + 45);
   await page.mouse.down();
-  await expect(page.locator('#handExpandPrompt')).toBeVisible();
+  await expect(page.locator('#expandedHandPanel')).toBeVisible();
   await page.mouse.up();
-  await expect(page.locator('#handExpandCount')).toHaveText('手札 10枚');
-  await page.locator('#handExpandButton').click();
+  await expect(page.locator('#playerHandDeckCount')).toHaveText('手札 10枚');
+  await expect(page.locator('#handExpandButton')).toHaveCount(0);
   await expect(page.locator('#expandedHandPanel')).toBeVisible();
 }
 
@@ -52,6 +52,7 @@ test('拡大した実カードをドラッグして融合でき、枚数も更�
   await page.mouse.up();
   await expect.poll(() => page.evaluate(() => state.players.player.hand.some(c => c.baseId === 'double_diamond'))).toBe(true);
   await expect(page.locator('#expandedHandCount')).toHaveText('手札 9枚');
+  await expect(page.locator('#playerHandDeckCount')).toHaveText('手札 9枚');
   await expect(page.locator('#expandedHandPanel')).toBeVisible();
 });
 
@@ -63,18 +64,18 @@ test('拡大中も通常のカード選択から出席できる', async ({page})
   await expect(page.locator('#expandedHandPanel')).toBeHidden();
 });
 
-test('移動した押下では拡大メニューを出さず、山札の長押しも維持する', async ({page}) => {
+test('移動した押下では拡大せず、山札の長押しも維持する', async ({page}) => {
   await prepare(page);
   const card = page.locator('#playerHand .hand-card').first();
   const box = await card.boundingBox();
   await card.dispatchEvent('pointerdown', {pointerType:'touch',pointerId:5,clientX:box.x+10,clientY:box.y+45});
   await card.dispatchEvent('pointermove', {pointerType:'touch',pointerId:5,clientX:box.x+40,clientY:box.y+5});
   await page.waitForTimeout(600);
-  await expect(page.locator('#handExpandPrompt')).toBeHidden();
+  await expect(page.locator('#expandedHandPanel')).toBeHidden();
   await card.dispatchEvent('pointercancel', {pointerType:'touch',pointerId:5});
   await page.locator('#playerDeckPile').dispatchEvent('pointerdown', {pointerType:'touch',pointerId:6});
   await expect(page.locator('#deckInspectPrompt')).toBeVisible();
-  await expect(page.locator('#handExpandPrompt')).toBeHidden();
+  await expect(page.locator('#expandedHandPanel')).toBeHidden();
 });
 
 test('スマートフォンでもタッチ長押しで開き、多い手札は横に確認できる', async ({page}) => {
@@ -82,9 +83,8 @@ test('スマートフォンでもタッチ長押しで開き、多い手札は�
   const card = page.locator('#playerHand .hand-card').first();
   const box = await card.boundingBox();
   await card.dispatchEvent('pointerdown', {pointerType:'touch',pointerId:7,clientX:box.x+10,clientY:box.y+40});
-  await expect(page.locator('#handExpandPrompt')).toBeVisible();
+  await expect(page.locator('#expandedHandPanel')).toBeVisible();
   await card.dispatchEvent('pointerup', {pointerType:'touch',pointerId:7});
-  await page.locator('#handExpandButton').click();
   const panel = await page.locator('#expandedHandPanel').boundingBox();
   expect(panel.x).toBeGreaterThanOrEqual(0); expect(panel.x+panel.width).toBeLessThanOrEqual(390);
   expect(await page.locator('#playerHand').evaluate(e => e.scrollWidth > e.clientWidth)).toBe(true);
@@ -114,11 +114,30 @@ test('手札の余白の長押しでも開き、ゲストの表示を変えて�
   const zone = page.locator('.player-hand-zone');
   const before = await page.evaluate(() => JSON.stringify(onlineCreateSnapshot().state.players.player.hand));
   await zone.dispatchEvent('pointerdown', {pointerType:'touch',pointerId:9,clientX:300,clientY:850});
-  await expect(page.locator('#handExpandPrompt')).toBeVisible();
+  await expect(page.locator('#expandedHandPanel')).toBeVisible();
   await zone.dispatchEvent('pointerup', {pointerType:'touch',pointerId:9});
-  await page.locator('#handExpandButton').click();
   await expect(page.locator('#expandedHandPanel')).toBeVisible();
   expect(await page.evaluate(() => JSON.stringify(onlineCreateSnapshot().state.players.player.hand))).toBe(before);
   await page.evaluate(() => { state.online.role='spectator'; render(); });
   await expect(page.locator('#expandedHandPanel')).toBeHidden();
 });
+
+
+for (const [width,height] of [[1440,960],[390,844]]) {
+  test(`山札の上に小さく手札枚数を表示し、ドロー後にも追従 ${width}`, async ({page}) => {
+    await prepare(page,width,height);
+    const count = page.locator('#playerHandDeckCount');
+    await expect(count).toBeVisible();
+    await expect(count).toHaveText('手札 10枚');
+    const label = await count.boundingBox(), deck = await page.locator('#playerDeckPile').boundingBox();
+    expect(label.y + label.height).toBeLessThan(deck.y);
+    expect(Math.abs(label.x + label.width/2 - deck.x - deck.width/2)).toBeLessThan(2);
+    expect(label.x).toBeGreaterThanOrEqual(0);
+    expect(label.x+label.width).toBeLessThanOrEqual(width);
+    await page.evaluate(() => {
+      state.players.player.hand.push(createCardFromBase('general_student','player')); render();
+    });
+    await expect(count).toHaveText('手札 11枚');
+    await page.screenshot({path:test.info().outputPath('hand-count.png')});
+  });
+}
