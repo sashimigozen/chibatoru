@@ -17511,6 +17511,20 @@
       65%, 82% { opacity: 1; transform: scale(1); }
       100% { opacity: 0; transform: translate(var(--fusion-hand-x, 0px), var(--fusion-hand-y, 240px)) scale(.45); }
     }
+
+    /* Expanded hand keeps the actual interactive cards, outside the scaled playmat. */
+    .hand-expand-prompt { min-width: 156px; display: grid; gap: 6px; z-index: 220; }
+    .hand-expand-prompt .hand-expand-count { padding: 4px 8px; color: #314b64; font-weight: 800; }
+    .battle-screen .expanded-hand-panel { position: fixed; z-index: 85; left: 12px; right: 12px; bottom: 12px; padding: 12px 18px 8px; border: 1px solid #9fb9cc; border-radius: 12px; background: #e3eef5; box-shadow: 0 -8px 28px #24445b33; }
+    .expanded-hand-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; color: #24445b; font-weight: 800; }
+    .battle-screen .expanded-hand-panel #playerHand { position: relative !important; inset: auto !important; display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; align-items: flex-start !important; width: 100% !important; min-width: 0 !important; max-width: none !important; height: 200px !important; padding: 12px 8px 10px !important; overflow-x: auto !important; overflow-y: hidden !important; transform: none !important; touch-action: pan-x; }
+    .battle-screen .expanded-hand-panel #playerHand .hand-card:nth-child(n) { flex: 0 0 112px !important; width: 112px !important; min-width: 112px !important; height: 170.667px !important; min-height: 170.667px !important; margin: 0 !important; transform: none !important; touch-action: none; }
+    .battle-screen .expanded-hand-panel #playerHand .hand-card.hand-card-hover-source { transform: translateY(-4px) !important; margin-right: 0 !important; }
+    .battle-screen .expanded-hand-panel #playerHand .hand-card .hand-card-stats .card-stat { width: 108px !important; min-width: 108px !important; height: 108px !important; font-size: 50px !important; border-width: 4px !important; }
+    .battle-screen .expanded-hand-panel #playerHand .hand-card .hand-card-stats .stat-cost { top: -18px !important; left: -18px !important; }
+    .battle-screen .expanded-hand-panel #playerHand .hand-card .hand-card-stats .stat-attack { top: 124px !important; left: -18px !important; }
+    .battle-screen .expanded-hand-panel #playerHand .hand-card .hand-card-stats .stat-hp { top: 266px !important; left: -18px !important; }
+    @media (max-height: 540px) { .battle-screen .expanded-hand-panel #playerHand { height: 144px !important; } .battle-screen .expanded-hand-panel #playerHand .hand-card:nth-child(n) { flex-basis: 78px !important; width: 78px !important; min-width: 78px !important; height: 118.857px !important; min-height: 118.857px !important; } }
   </style>
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
@@ -18551,12 +18565,20 @@
         </div>
       </section>
     </div>
+    <section class="expanded-hand-panel hidden" id="expandedHandPanel" aria-label="拡大した手札">
+      <div class="expanded-hand-heading"><span id="expandedHandCount">手札 0枚</span><button class="button secondary" type="button" id="handCollapseButton">元に戻す</button></div>
+    </section>
     <div class="play-reveal-overlay hidden" id="playRevealOverlay" aria-hidden="true">
       <div class="play-reveal-card" id="playRevealCard"></div>
     </div>
     </section>
   </main>
   <div class="card-tooltip hidden" id="cardTooltip" role="tooltip"></div>
+  <div class="deck-inspect-prompt hand-expand-prompt hidden" id="handExpandPrompt">
+    <span class="hand-expand-count" id="handExpandCount">手札 0枚</span>
+    <button class="button" id="handExpandButton" type="button">拡大する</button>
+    <button class="button secondary hidden" id="handExpandInspectButton" type="button">カード確認</button>
+  </div>
   <div class="deck-inspect-prompt hidden" id="deckInspectPrompt">
     <button class="button" id="deckInspectButton" type="button">デッキ確認</button>
   </div>
@@ -19935,6 +19957,7 @@
         date: "2026年10月26日",
         summary: "新カード「2人で成し遂げた学生たち」「グラサンTA」を追加。「プロ言の長」の強化対象を調整しました。",
         changes: [
+          { category: "表示・操作改善", title: "手札の拡大", after: "手札エリアを長押しすると、現在の枚数と「拡大する」を表示します。拡大中はカードの重なりを広げ、融合や出席などもそのまま操作できます。手札の外をクリックすると元の表示へ戻ります。" },
           { category: "カード調整", title: "ティッシュ配り",
             before: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。",
             after: "ヴァンパイア／食堂／戦意5／攻撃力2／体力2\nこのカードが自分の講義室にいるかぎり、自分の講義室にいるヴァンパイアすべての体力を+1する。環境が「食堂」であるかぎり、このカードの戦意を-2し、自分の講義室にいるヴァンパイアすべての体力をさらに+1する。この効果は重複しない。" },
@@ -27981,7 +28004,7 @@
     function battleInspectionAllowed(target) {
       if (target.closest("[data-room-code-copy]")) return true;
       if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
-      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
+      return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #handExpandPrompt, #expandedHandPanel .expanded-hand-heading, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
 
     function battleInputAllowed(target) {
@@ -28038,6 +28061,10 @@
 
     ["click", "dblclick", "pointerdown", "pointermove", "mouseover", "mousemove", "keydown", "dragstart", "drop", "contextmenu", "wheel"].forEach(type => {
       document.addEventListener(type, event => {
+        if (type === "click") {
+          handleHandExpansionClick(event);
+          if (event.defaultPrevented) return;
+        }
         if (type === "pointermove" || type === "mousemove" || type === "pointerdown") {
           battlePointerPosition = { x: event.clientX, y: event.clientY };
         }
@@ -46597,6 +46624,7 @@
         pendingAnimations.length = 0;
         return;
       }
+      syncExpandedHand();
       renderScreen();
       syncBattleLayout();
       renderHomeNavigation();
@@ -48761,6 +48789,8 @@
       const player = state.players.player;
       clearPlayerHandCardHoverOverlay();
       elements.playerHandInfo.textContent = `${player.hand.length}枚`;
+      document.getElementById("expandedHandCount").textContent = `手札 ${player.hand.length}枚`;
+      document.getElementById("handExpandCount").textContent = `手札 ${player.hand.length}枚`;
       elements.playerHand.innerHTML = "";
       // Ten cards occupy the agreed hand lane. Further cards reduce only the
       // horizontal step, keeping every card inside the lane instead of letting
@@ -48964,6 +48994,100 @@
     function cancelHandPointerDrag() {
       handDragCandidate = null;
       finishHandDrag();
+    }
+
+    let handExpanded = false;
+    let expandedHandBattleToken = null;
+    let handExpandPress = null;
+    let handExpandHeldCard = null;
+    let handExpandClickBlockedUntil = 0;
+    const handExpandPrompt = document.getElementById("handExpandPrompt");
+    const expandedHandPanel = document.getElementById("expandedHandPanel");
+    const normalHandTable = elements.playerHand.parentElement;
+
+    function hideHandExpandPrompt() {
+      handExpandPrompt.classList.add("hidden");
+      handExpandHeldCard = null;
+    }
+
+    function showHandExpandPrompt(card = null) {
+      if (state.screen !== "battle" || isOnlineSpectator()) return;
+      clearPlayerHandCardHoverOverlay();
+      handExpandHeldCard = card;
+      document.getElementById("handExpandCount").textContent = `手札 ${state.players.player.hand.length}枚`;
+      document.getElementById("handExpandInspectButton").classList.toggle("hidden", !card);
+      const rect = elements.playerHand.getBoundingClientRect();
+      handExpandPrompt.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - 190))}px`;
+      handExpandPrompt.classList.remove("hidden");
+      handExpandPrompt.style.top = `${Math.max(8, Math.min(rect.top - handExpandPrompt.offsetHeight - 10, window.innerHeight - handExpandPrompt.offsetHeight - 8))}px`;
+      handExpandClickBlockedUntil = Date.now() + 700;
+      handDragCandidate = null;
+    }
+
+    function setHandExpanded(expanded) {
+      clearPlayerHandCardHoverOverlay();
+      handExpanded = Boolean(expanded && state.screen === "battle" && !isOnlineSpectator());
+      expandedHandBattleToken = handExpanded ? state.preBattleToken : null;
+      elements.playerHand.querySelectorAll("[data-detail-pressed]").forEach(card => { card.dataset.detailPressed = "false"; });
+      if (handExpanded) expandedHandPanel.appendChild(elements.playerHand);
+      else normalHandTable.insertBefore(elements.playerHand, elements.playerDeckPile);
+      expandedHandPanel.classList.toggle("hidden", !handExpanded);
+      hideHandExpandPrompt();
+      elements.playerHand.scrollLeft = 0;
+      scheduleCardTemplateScaleSync();
+    }
+
+    function syncExpandedHand() {
+      if (state.screen !== "battle" || isOnlineSpectator() || (handExpanded && expandedHandBattleToken !== state.preBattleToken)) {
+        if (handExpanded) setHandExpanded(false);
+        hideHandExpandPrompt();
+      }
+    }
+
+    function cancelHandExpandPress() {
+      if (handExpandPress) window.clearTimeout(handExpandPress.timer);
+      handExpandPress = null;
+    }
+
+    function handleHandExpansionClick(event) {
+      if (Date.now() < handExpandClickBlockedUntil && event.target.closest("#playerHand, .player-hand-zone")) {
+        handExpandClickBlockedUntil = 0;
+        const card = event.target.closest("[data-detail-pressed]");
+        if (card) card.dataset.detailPressed = "false";
+        event.preventDefault(); event.stopImmediatePropagation(); return;
+      }
+      if (event.target.closest("#handExpandPrompt")) return;
+      if (!handExpandPrompt.classList.contains("hidden")) hideHandExpandPrompt();
+      if (handExpanded && !event.target.closest("#expandedHandPanel, #battleCardPreview, #cardTooltip, #threeGesturesStage, #selectionPeekReturnButton")
+        && Date.now() >= handDragClickBlockedUntil) setHandExpanded(false);
+    }
+
+    function setupHandExpansionEvents() {
+      elements.playerHandZone.addEventListener("pointerdown", event => {
+        if (event.target.closest(".hand-card, #playerDeckPile") || (event.pointerType === "mouse" && event.button !== 0)
+          || state.screen !== "battle" || isOnlineSpectator() || handExpanded) return;
+        cancelHandExpandPress();
+        handExpandPress = { x: event.clientX, y: event.clientY, timer: window.setTimeout(() => {
+          handExpandPress = null;
+          finishHandScrollDrag();
+          showHandExpandPrompt();
+        }, DETAIL_LONG_PRESS_MS) };
+      });
+      document.addEventListener("pointermove", event => {
+        if (handExpandPress && Math.hypot(event.clientX - handExpandPress.x, event.clientY - handExpandPress.y) > 10) cancelHandExpandPress();
+      }, true);
+      document.addEventListener("pointerup", cancelHandExpandPress, true);
+      document.addEventListener("pointercancel", cancelHandExpandPress, true);
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape") { hideHandExpandPrompt(); if (handExpanded) setHandExpanded(false); }
+      });
+      document.getElementById("handExpandButton").addEventListener("click", () => setHandExpanded(true));
+      document.getElementById("handCollapseButton").addEventListener("click", () => setHandExpanded(false));
+      document.getElementById("handExpandInspectButton").addEventListener("click", () => {
+        const card = handExpandHeldCard;
+        hideHandExpandPrompt();
+        if (card) showBattleCardPreview(card);
+      });
     }
 
     function setupHandScrollEvents() {
@@ -54365,7 +54489,8 @@
       detailPressTimer = window.setTimeout(() => {
         detailPressTimer = null;
         element.dataset.detailPressed = "true";
-        showCardTooltip(card, event);
+        if (element.closest("#playerHand") && !handExpanded && !isOnlineSpectator()) showHandExpandPrompt(card);
+        else showCardTooltip(card, event);
       }, DETAIL_LONG_PRESS_MS);
     }
 
@@ -56520,6 +56645,7 @@
     window.addEventListener("resize", refreshTutorialSpotlight);
     window.addEventListener("scroll", refreshTutorialSpotlight, true);
     setupHandScrollEvents();
+    setupHandExpansionEvents();
 
     // Shared staging for manual, CPU and host-authoritative item resolution.
     // Donguri evolution and Uta fusion retain their dedicated presentations.
