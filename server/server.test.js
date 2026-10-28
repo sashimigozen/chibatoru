@@ -424,22 +424,29 @@ test("チバトルふぉーは4席の部屋、手番操作、手札非公開を�
   assert.deepEqual(relayed.message.action, { type: "endTurn" });
 });
 
-test("smoke flare allows three normal-deck copies but still rejects four", async (t) => {
+test("former ace cards allow three normal-deck copies but reject four and retired cafeteria", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
   t.after(() => child.kill("SIGTERM"));
   const host = await connectClient(`ws://127.0.0.1:${port}`, "SMOKE1", "smoke-host", true);
   t.after(() => host.ws.close());
-  const counts = createNormalDeckCounts();
-  delete counts.general_student;
-  counts.smoke_flare = 3;
-  send(host, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
-  await waitFor(host, message => message.type === "playerJoined" && message.players?.some(player => player.clientId === "smoke-host" && player.ready));
+  for (const id of ["smoke_flare", "tokyo_tech_bro", "forbidden_book", "think_so", "philosophy_cheating", "namen_tenno", "brother_capital"]) {
+    const counts = createNormalDeckCounts();
+    delete counts.general_student;
+    counts[id] = 3;
+    const acceptedStart = host.messages.length;
+    send(host, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
+    await waitFor(host, message => message.type === "playerJoined" && message.players?.some(player => player.clientId === "smoke-host" && player.ready), acceptedStart);
+    const start = host.messages.length;
+    counts[id] = 4;
+    send(host, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
+    const rejected = await waitFor(host, message => message.type === "error" && message.code === "invalid_deck", start);
+    assert.match(rejected.message.message, /同名/, id);
+  }
   const start = host.messages.length;
-  counts.smoke_flare = 4;
-  send(host, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
-  const rejected = await waitFor(host, message => message.type === "error" && message.code === "invalid_deck", start);
-  assert.match(rejected.message.message, /同名/);
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor({ ...createNormalDeckCounts(), illegal_cafeteria: 1 }), ready: true });
+  const retired = await waitFor(host, message => message.type === "error" && message.code === "invalid_deck", start);
+  assert.match(retired.message.message, /直接編成/);
 });
 
 test("host-owned room rules synchronize and enforce normal, chaos, and specialty decks", async (t) => {
@@ -477,21 +484,15 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
   const normalInvalid = await waitFor(host, (message) => message.type === "error" && message.code === "invalid_deck", normalInvalidStart);
   assert.match(normalInvalid.message.message, /同名/);
 
-  const oneAceInvalidStart = guest.messages.length;
-  const oneAce = createNormalDeckCounts();
-  oneAce.general_student -= 1;
-  oneAce.think_so = 1;
-  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(oneAce), ready: true });
-  const oneAceInvalid = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", oneAceInvalidStart);
-  assert.equal(oneAceInvalid.message.message, "エースぺは通常ルールでは使用できません。");
-
-  const multipleAcesInvalidStart = guest.messages.length;
-  const multipleAces = createNormalDeckCounts();
-  multipleAces.general_student -= 2;
-  multipleAces.think_so = 2;
-  send(guest, { type: "deckUpdate", ...normalDeckDescriptor(multipleAces), ready: true });
-  const multipleAcesInvalid = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", multipleAcesInvalidStart);
-  assert.equal(multipleAcesInvalid.message.message, "エースぺは通常ルールでは使用できません。");
+  for (const copies of [1, 2, 3]) {
+    const start = host.messages.length;
+    const counts = createNormalDeckCounts();
+    counts.general_student -= copies;
+    counts.think_so = copies;
+    send(guest, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
+    const updated = await waitFor(host, message => message.type === "deckUpdate" && message.senderId === "guest-rule" && message.ready === true, start);
+    assert.equal(updated.message.deckValid, true);
+  }
 
   const chaosUpdateStart = guest.messages.length;
   send(host, { type: "setRoomRule", ruleId: "chaos" });
@@ -611,7 +612,7 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
   const specialtyTwoAcesCounts = createLateSpecialtyDeckCounts();
   specialtyTwoAcesCounts.general_student -= 2;
   specialtyTwoAcesCounts.tokyo_tech_bro = 2;
-  const specialtyTwoAcesStart = guest.messages.length;
+  const specialtyTwoAcesStart = host.messages.length;
   send(guest, {
     type: "deckUpdate",
     deckCounts: specialtyTwoAcesCounts,
@@ -619,8 +620,8 @@ test("host-owned room rules synchronize and enforce normal, chaos, and specialty
     specialtyId: "late",
     ready: true
   });
-  const specialtyTwoAces = await waitFor(guest, (message) => message.type === "error" && message.code === "invalid_deck", specialtyTwoAcesStart);
-  assert.equal(specialtyTwoAces.message.message, "エースぺは1デッキにつき1種類・1枚までです。");
+  const specialtyTwoAces = await waitFor(host, message => message.type === "deckUpdate" && message.senderId === "guest-rule" && message.ready === true, specialtyTwoAcesStart);
+  assert.equal(specialtyTwoAces.message.deckValid, true);
 
   const specialtyDeck = createLateSpecialtyDeckCounts();
   const finalSpecialtyDeckStart = host.messages.length;
@@ -743,7 +744,7 @@ test("reward card styles are shared with the opponent and spectators", async (t)
   assert.equal(guestPublicState.cardStyles.salt_to_enemy, "rare");
   assert.equal(guestPublicState.cardStyles["invalid/id"], undefined);
   assert.equal(guestPublicState.cardStyles.invalid_mode, undefined);
-  assert.equal(Object.keys(guestPublicState.cardStyles).length, 255);
+  assert.equal(Object.keys(guestPublicState.cardStyles).length, 254);
   assert.equal(guestPublicState.profile.favoriteCardStyle, "secretRare");
 
   send(host, {
