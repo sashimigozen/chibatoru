@@ -19517,6 +19517,13 @@
 
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const CARD_BASES = {
+      short_sleeve_student: {"name": "半袖の学生", "type": "student", "cost": 2, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      pinige: {"name": "ピニゲ", "type": "item", "cost": 3, "attack": 0, "hp": 0, "target": "self", "pointKillSource": true, "category": "common"},
+      gecko_carrier_student: {"name": "ヤモリを背負う学生", "type": "student", "cost": 7, "attack": 4, "hp": 4, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      lucky_man: {"name": "福男", "type": "student", "cost": 5, "attack": 2, "hp": 3, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      long_sleeve_student: {"name": "長袖の学生", "type": "student", "cost": 4, "attack": 1, "hp": 3, "keywords": ["陽気"], "attackLimit": 2, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      group_sniper: {"name": "集団スナイパー", "type": "student", "cost": 5, "attack": 2, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      could_not_escape_student: {"name": "逃げられなかった学生", "type": "student", "cost": 9, "attack": 4, "hp": 5, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       wonton_greeting: {"name": "万豚記～挨拶シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 0},
       wonton_stall: {"name": "万豚記～屋台シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 1},
       wonton_fever: {"name": "紅の万豚記～熱狂シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 2},
@@ -19894,7 +19901,7 @@
     Object.values(CARD_BASES).forEach((base) => { base.attendanceTrigger = ATTENDANCE_TRIGGER.HAND; });
     [
       "midge", "organism", "perfect_mutant", "adjective_student", "cancel_student",
-      "big_omata", "wonton_ki"
+      "big_omata", "wonton_ki", "group_sniper"
     ].forEach((baseId) => {
       if (CARD_BASES[baseId]) CARD_BASES[baseId].attendanceTrigger = ATTENDANCE_TRIGGER.ANY;
     });
@@ -19912,6 +19919,10 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    const POINT_CARD_IDS = ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "long_sleeve_student", "group_sniper", "could_not_escape_student"];
+    ALL_DECK_IDS.push(...POINT_CARD_IDS);
+    SPECIALTY_CARD_IDS.common.push(...POINT_CARD_IDS);
+    IMMEDIATE_ITEM_IDS.push("pinige");
     ALL_DECK_IDS.push("wonton_ki", "female_highball", "male_highball");
     SPECIALTY_CARD_IDS.common.push("wonton_ki", "female_highball", "male_highball");
     IMMEDIATE_ITEM_IDS.push("female_highball", "male_highball");
@@ -19965,7 +19976,7 @@
         "version": "ver.0.35.0",
         "versioning": "semver",
         "date": "2026年10月28日",
-        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。",
+        "summary": "新能力「提出」「点数」と、関連する新カードを追加しました。",
         "changes": [
           {
             "category": "システム",
@@ -20016,6 +20027,46 @@
             "category": "新カード",
             "title": "恋の万豚記～卒業シリーズ～",
             "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。\n生成専用カード。"
+          },
+          {
+            "category": "システム",
+            "title": "点数・単位",
+            "after": "［点数］を持つカードとピニゲによる相手の出席者の撃破で、自分の点数を1獲得します。攻撃・反撃・能力のダメージ・直接破壊が対象です。10点で単位取得済みとなり、以後は加点しません。10点目では福男の点数獲得時効果を発動しません。継続効果欄に進行状況を表示し、単位取得後はカード本文の強化後の効果を先に表示します。新カードごとのテスト用の手札・デッキ・盤面を用意し、通常効果、単位取得後、加点とオンライン同期の確認を追加しました。"
+          },
+          {
+            "category": "新カード",
+            "title": "半袖の学生",
+            "after": "半袖の学生 / 学生 / 共通カード / 戦意2 / 攻撃力1 / 体力1\n[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。"
+          },
+          {
+            "category": "新カード",
+            "title": "ピニゲ",
+            "after": "ピニゲ / 持ち物 / 共通カード / 戦意3 / 攻撃力0 / 体力0\n次の4つの効果から1つを選ぶ。単位取得済みなら、1つではなく3つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。\n3. 自分のデッキから「ピニゲ」1枚をランダムに手札に加える。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。"
+          },
+          {
+            "category": "新カード",
+            "title": "ヤモリを背負う学生",
+            "after": "ヤモリを背負う学生 / 学生 / 共通カード / 戦意7 / 攻撃力4 / 体力4\n[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。単位取得済みなら、1つではなく2つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。"
+          },
+          {
+            "category": "新カード",
+            "title": "福男",
+            "after": "福男 / 学生 / 共通カード / 戦意5 / 攻撃力2 / 体力3\n[点数]\nこのカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりにこのカードを手札から出席させたとき、次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」"
+          },
+          {
+            "category": "新カード",
+            "title": "長袖の学生",
+            "after": "長袖の学生 / 学生 / 共通カード / 戦意4 / 攻撃力1 / 体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+2される。"
+          },
+          {
+            "category": "新カード",
+            "title": "集団スナイパー",
+            "after": "集団スナイパー / 学生 / 共通カード / 戦意5 / 攻撃力2 / 体力1\n[点数]\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスすべてに「集団スナイパー」を1人ずつ出席させる。\nこのカードが出席したとき、相手の出席者1人を指名し、1ダメージを与える。\n単位取得済みなら、代わりに相手本体か相手の出席者1人を指名し、2ダメージを与える。"
+          },
+          {
+            "category": "新カード",
+            "title": "逃げられなかった学生",
+            "after": "逃げられなかった学生 / 学生 / 共通カード / 戦意9 / 攻撃力4 / 体力5\n[点数]\nこのカードを手札から出席させたとき、相手の出席者3人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+1する。"
           }
         ]
       },
@@ -22980,6 +23031,8 @@
       effectUseLockTurnsRemaining: 0,
       skipAllTurns: false,
       submissionCounters: {},
+      pointScore: 0,
+      pointSystemActive: false,
       retainNextUsedItem: false,
       turnActionTaken: false,
       designTextbookBonus: 0,
@@ -23167,6 +23220,10 @@
     }
 
     function analyticsStartGame() {
+      for (const side of ["player", "opponent"]) {
+        const player = state.players[side];
+        player.pointSystemActive ||= Object.entries(player.originalDeckCounts || {}).some(([id, count]) => count > 0 && (CARD_BASES[id]?.hasPoint || CARD_BASES[id]?.pointKillSource));
+      }
       analyticsSafe(() => {
         state.analytics = createAnalyticsState();
         onlineReplayRecorder = onlineReplayEnabled() ? window.ChibattleOnlineReplay.createRecorder() : null;
@@ -26261,7 +26318,7 @@
         return;
       }
       if (message.type === "thinItemChoiceRequest" && message.privateChoiceKind === "fusion_effect_choice" && isOnlineGuest()) {
-        openCardChoice({ ...message, context: onlineSwapOwnersDeep(message.context), mode: "fusion_effect_online_response" });
+        openCardChoice({ ...message, cards: message.cards.map(card => card.pointLifeTarget ? onlineSwapOwnersDeep(card) : card), context: onlineSwapOwnersDeep(message.context), mode: "fusion_effect_online_response" });
         return;
       }
       if (message.type === "thinItemChoiceResponse" && message.privateChoiceKind === "fusion_effect_choice" && isOnlineHost()) {
@@ -28163,6 +28220,7 @@
       if (state.pendingCardChoice || state.pendingThreeGestures) {
         if (isBoardColumnChoice() && target.closest(".column-choice-button, #itemTargetConfirmButton")) return true;
         if (isBoardCardChoice() && target.closest(".board-card.selection-candidate, #itemTargetConfirmButton")) return true;
+        if (isBoardCardChoice() && target.closest("[data-life-target]") && state.pendingCardChoice.cards.some(card => card.pointLifeTarget && card.owner === target.closest("[data-life-target]").dataset.lifeTarget)) return true;
         return Boolean(target.closest("#threeGesturesStage, #mulliganStage, #selectionPeekReturnButton"));
       }
       if (pendingCourseRegistrationConsent) return Boolean(target.closest("#courseRegistrationConsentModal"));
@@ -32455,6 +32513,15 @@
         const support = state.players.opponent.hand.some(c => ["tokyo_tech_bro", "substitute_attendance"].includes(c.baseId));
         score -= card.late * (support ? 0.5 : context.ownLife <= 8 ? 3 : 1.2);
       }
+      if (card.hasPoint && !arePlayedEffectsSuppressed("opponent")) {
+        const unit = hasAcquiredUnit("opponent");
+        const targets = effectTargetEntries("opponent","player");
+        if (card.baseId === "short_sleeve_student" || card.baseId === "group_sniper") score += Math.max(0,...targets.map(e=>scoreAiNonCombatEffectTarget("opponent",card,e,{damage: unit ? (card.baseId === "group_sniper" ? 2 : 3) : (card.baseId === "group_sniper" ? 1 : 2)})));
+        if (["gecko_carrier_student","group_sniper"].includes(card.baseId) && zone === "seat") score += [index-1,index+1].filter(i=>i>=0 && i<9 && Math.floor(i/3)===Math.floor(index/3) && isBoardSlotOpen("opponent","seat",i)).length*7;
+        if (card.baseId === "could_not_escape_student") score += targets.filter(e=>!isPadlocked(e.card)).sort((a,b)=>(b.card.attack+b.card.currentHp)-(a.card.attack+a.card.currentHp)).slice(0,3).reduce((v,e)=>v+e.card.attack+e.card.currentHp*.7,0);
+        if (card.baseId === "long_sleeve_student") score += unit ? 10 : 3;
+        if (card.baseId === "lucky_man") score += unit ? 12 : Math.min(6,listBoardRefs("opponent").filter(r=>getBoardCardFromRef(r)?.hasPoint).length*3);
+      }
       score += scoreAiPlacementAuras("opponent", card, zone, index);
       if (["student", "teacher", "vampire"].includes(card.type)) {
         const boardNeed = aiBoardNeedScore(context);
@@ -33011,6 +33078,7 @@
 
     function scoreAiItem(item, options = {}) {
       if (arePlayedEffectsSuppressed("opponent")) return 0;
+      if (item?.baseId === "pinige") return pointModeCards("opponent",item).map(c=>c.choiceScore).sort((a,b)=>b-a).slice(0,hasAcquiredUnit("opponent") ? 3 : 1).reduce((a,b)=>a+b,0) - 2;
       if (["female_highball", "male_highball"].includes(item?.baseId)) {
         if (!canUseHighball("opponent", item)) return 0;
         const series = highballDiscardCandidates("opponent", item).some(card => card.submissionCounter);
@@ -36481,7 +36549,7 @@
     }
 
     function isBoardCardChoice(choice = state.pendingCardChoice) {
-      return isBoardColumnChoice(choice) || Boolean(choice?.cards.length && choice.cards.every(card => ["player", "opponent"].flatMap(side => listBoardRefs(side))
+      return isBoardColumnChoice(choice) || Boolean(choice?.cards.length && choice.cards.every(card => card.pointLifeTarget || ["player", "opponent"].flatMap(side => listBoardRefs(side))
         .some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId)));
     }
 
@@ -37955,8 +38023,8 @@
       const max = Math.min(count, cards.length);
       if (isCpuControlledBattleSide(side)) {
         const sorted = [...cards].sort((a, b) => {
-          if (kind === "damage") {
-            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:source.baseId === "male_highball" ? 4 : source.baseId === "maibo_bone" ? 3 : 2});
+          if (kind === "damage" || kind === "point_damage") {
+            const value = card => card.pointLifeTarget ? (state.players[card.owner].life <= choiceOptions.damage ? 10000 : choiceOptions.damage * 1.3) : scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:choiceOptions.damage || (source.baseId === "male_highball" ? 4 : source.baseId === "maibo_bone" ? 3 : 2)});
             return value(b)-value(a);
           }
           if (kind === "buff") {
@@ -37965,7 +38033,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
@@ -37974,13 +38042,14 @@
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
-      const min = choiceOptions.required ? max : ["buff", "damage", "attendance_optional", "material_optional"].includes(kind) ? 0 : max;
+      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "material_optional"].includes(kind) ? 0 : max;
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
         requestId, context: { kind }, confirmLabel: "確定" };
       if (kind === "destroy_columns") options.context.targetOwner = oppositeSide(side);
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
       if (kind === "submission_discard") options.message = "校外エリアへ送る手札1枚を選んでください。";
+      if (kind === "point_modes") options.message = `異なる効果を${max}つ選んでください。番号順に処理します。`;
       if (kind === "two_achievers") options.message = "次の効果から1つを選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
@@ -39167,6 +39236,7 @@
       const boardCard = {
         ...card,
         handLoadLevel: 0,
+        pointLethalSource: null,
         baseAttack: card.statModifiers?.some(entry => entry.adjectiveWeakening) ? card.baseAttack : card.attack ?? null,
         baseMaxHp: card.hp ?? null,
         baseDefense: card.defense ?? 0,
@@ -40256,6 +40326,149 @@
       });
     }
 
+
+    function hasAcquiredUnit(side) {
+      return (state.players[side]?.pointScore || 0) >= 10;
+    }
+
+    function pointSourceSnapshot(source) {
+      if (!source || !(source.hasPoint || source.pointKillSource) || !canUsePrintedCardEffects(source)) return null;
+      return { baseId: source.baseId, instanceId: source.instanceId, owner: source.owner, name: source.name, type: source.type, pointKillEligible: true };
+    }
+
+    function awardDefeatPoint(source, defeatedOwner) {
+      if (!source?.pointKillEligible || !state.players[source.owner] || source.owner === defeatedOwner) return;
+      const side = source.owner, player = state.players[side];
+      if (hasAcquiredUnit(side)) return;
+      player.pointSystemActive = true;
+      player.pointScore = Math.min(10, (player.pointScore || 0) + 1);
+      const unit = hasAcquiredUnit(side);
+      addLog(`${SIDES[side]}は${source.name}の撃破で点数を1獲得しました。${unit ? "単位取得！" : `${player.pointScore}/10`}`);
+      analyticsRecordEffect({side, source, effectType: unit ? "unit_acquired" : "point_gain", details: {pointScore: player.pointScore}});
+      if (unit) {
+        showSharedCenterAnnouncement("単位取得", "heal");
+        return;
+      }
+      // Capture listeners now. The tenth point never dispatches this event.
+      const listeners = listBoardRefs(side).map(getBoardCardFromRef).filter(card => card.baseId === "lucky_man"
+        && card.currentHp > 0 && card.instanceId !== source.instanceId && canUseOngoingCardEffects(card));
+      for (const listener of listeners) queueFusionEffect(async () => {
+        if (!isCardCurrentlyOnBoard(listener) || listener.currentHp <= 0 || !canUseOngoingCardEffects(listener)) return;
+        pointRandomDamage(side, listener, 3);
+        healPlayer(side, 2);
+      });
+    }
+
+    function pointRandomDamage(side, source, amount) {
+      const target = randomEffectTargetEntry(side, oppositeSide(side), card => card.currentHp > 0);
+      if (target) dealDamageToCard(target.card, amount, source);
+      cleanupDestroyedCards(); applyBoardAuras();
+    }
+
+    function pointAdjacentSeats(side, source) {
+      const ref = listBoardRefs(side).find(ref => getBoardCardFromRef(ref)?.instanceId === source.instanceId);
+      if (!ref || ref.zone !== "seat") return [];
+      return [ref.index - 1, ref.index + 1].filter(index => index >= 0 && index < 9
+        && Math.floor(index / 3) === Math.floor(ref.index / 3) && isBoardSlotOpen(side, "seat", index));
+    }
+
+    function pointSummon(side, baseId, index, options = {}) {
+      const summoned = createCardFromBase(baseId, side);
+      if (options.attackBonus) summoned.attack += options.attackBonus;
+      if (options.jolly) addKeyword(summoned, "陽気", CARD_BASES[baseId].name);
+      const card = makeBoardCard(summoned);
+      if (attendCard(side, card, "seat", index, {attendanceSource: ATTENDANCE_SOURCE.GENERATED})) showCardPlayAnimation(card, "board");
+    }
+
+    async function pointChooseDamage(side, source, amount, count = 1, includeLife = false, optional = false) {
+      const cards = effectTargetEntries(side, oppositeSide(side), card => card.currentHp > 0)
+        .map(({card, ref}) => ({...card, choiceRef: ref}));
+      if (includeLife && !listSuperAttentionCards(oppositeSide(side)).length) cards.push({
+        instanceId: `point-life-${oppositeSide(side)}`, baseId: "point_life_target", name: "相手本体",
+        owner: oppositeSide(side), pointLifeTarget: true, type: "item", cost: 0, attack: 0, hp: 0,
+        twoAchieversChoice: true, effect: `${amount}ダメージを与える。`
+      });
+      const selected = await chooseFusionEffectCards(side, source, cards, count, "point_damage", {required: !optional, damage: amount});
+      for (const chosen of selected) {
+        if (chosen.pointLifeTarget) damagePlayer(oppositeSide(side), amount, source);
+        else {
+          const target = getBoardCardFromRef(chosen.choiceRef);
+          if (target?.instanceId === chosen.instanceId && target.currentHp > 0 && isAllowedEffectTarget(side, target)) dealDamageToCard(target, amount, source);
+        }
+        cleanupDestroyedCards(); applyBoardAuras(); checkLifeVictory();
+      }
+    }
+
+    function pointModeCards(side, source, gecko = false) {
+      const labels = gecko ? ["左右に出席", "超陽気を得る"] : ["戦意を1回復", "点数カードを2枚探す", "ピニゲを1枚探す", "ランダムに3ダメージ"];
+      return labels.map((name, index) => ({instanceId:`point-mode-${index+1}`, name, type:"item", cost:0,
+        pointMode:index+1, twoAchieversChoice:true, effect: name,
+        choiceScore: gecko ? (index === 0 ? pointAdjacentSeats(side,source).length * 8 : 7)
+          : index === 0 ? 2 : index === 1 ? Math.min(2,state.players[side].deck.filter(c=>c.hasPoint).length)*4
+          : index === 2 ? (state.players[side].deck.some(c=>c.baseId === "pinige") ? 3 : 0)
+          : Math.max(0,...effectTargetEntries(side,oppositeSide(side)).map(e=>scoreAiNonCombatEffectTarget(side,source,e,{damage:3})))}));
+    }
+
+    function resolvePointAttendance(side, card, attendanceSource) {
+      const unit = hasAcquiredUnit(side); // Resolve the ability that triggered, even if these kills reach ten.
+      if (card.baseId === "short_sleeve_student") queueFusionEffect(async () => {
+        if (unit) await pointChooseDamage(side,card,3,2,false,true);
+        else pointRandomDamage(side,card,2);
+      });
+      if (card.baseId === "gecko_carrier_student") queueFusionEffect(async () => {
+        const chosen = await chooseFusionEffectCards(side,card,pointModeCards(side,card,true),unit ? 2 : 1,"point_modes",{required:true});
+        for (const mode of chosen.sort((a,b)=>a.pointMode-b.pointMode)) {
+          if (mode.pointMode === 1) for (const index of pointAdjacentSeats(side,card)) pointSummon(side,card.baseId,index,{jolly:true});
+          if (mode.pointMode === 2 && isCardCurrentlyOnBoard(card)) addKeyword(card,"超陽気",card.name);
+        }
+      });
+      if (card.baseId === "lucky_man" && unit) queueFusionEffect(async () => {
+        for (let i=0;i<2 && !state.gameOver;i++) {
+          await pointChooseDamage(side,card,3);
+          healPlayer(side,2);
+        }
+      });
+      if (card.baseId === "group_sniper") {
+        if (attendanceSource === ATTENDANCE_SOURCE.HAND) queueFusionEffect(async () => {
+          for (const index of pointAdjacentSeats(side,card)) pointSummon(side,card.baseId,index);
+        });
+        queueFusionEffect(() => pointChooseDamage(side,card,unit ? 2 : 1,1,unit));
+      }
+      if (card.baseId === "could_not_escape_student") queueFusionEffect(async () => {
+        const targets = shuffle(effectTargetEntries(side,oppositeSide(side),c=>c.currentHp>0)).slice(0,3);
+        const pointSource = pointSourceSnapshot(card);
+        for (const {card:target,ref} of targets) {
+          if (getBoardCardFromRef(ref)?.instanceId === target.instanceId) destroyBoardCard(ref,{pointSource,reason:card.name});
+        }
+        if (unit) for (const index of [0,1,2]) if (isBoardSlotOpen(side,"seat",index)) pointSummon(side,"ae_student",index,{attackBonus:1});
+      });
+    }
+
+    function castPinige(side, item, renderAfter = true) {
+      if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side,item,renderAfter);
+      const unit = hasAcquiredUnit(side);
+      if (!payForItem(side,item)) return false;
+      const source = {...item};
+      moveHandCardToTrash(side,item);
+      clearSelections();
+      queueFusionEffect(async () => {
+        const chosen = await chooseFusionEffectCards(side,source,pointModeCards(side,source),unit ? 3 : 1,"point_modes",{required:true});
+        for (const mode of chosen.sort((a,b)=>a.pointMode-b.pointMode)) {
+          if (mode.pointMode === 1) state.players[side].will = Math.min(state.players[side].maxWill,state.players[side].will+1);
+          if (mode.pointMode === 2) pullRandomCardsFromDeck(side,c=>c.hasPoint,2);
+          if (mode.pointMode === 3) pullRandomCardsFromDeck(side,c=>c.baseId === "pinige",1);
+          if (mode.pointMode === 4) pointRandomDamage(side,source,3);
+          addLog(`${source.name}の効果${mode.pointMode}：${mode.name}。`);
+        }
+      });
+      if (renderAfter) render();
+      return true;
+    }
+
+    function pointUnitStatBonus(card) {
+      return card?.baseId === "long_sleeve_student" && hasAcquiredUnit(card.owner) && canUseOngoingCardEffects(card) ? 2 : 0;
+    }
+
     function hasProKInLectureRoom(side) {
       return listBoardRefs(side).some(ref => getBoardCardFromRef(ref)?.baseId === "pro_k");
     }
@@ -40276,6 +40489,7 @@
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
       }
+      if (POINT_CARD_IDS.includes(card.baseId)) resolvePointAttendance(side, card, attendanceSource);
       if (card.baseId === "wonton_ki" && zone === "environment") {
         const counters = state.players[side].submissionCounters ||= {};
         counters["万豚記カウント"] ??= 0;
@@ -42007,6 +42221,8 @@
     }
 
     function attackLife(targetSide) {
+      const lifeChoice = state.pendingCardChoice?.cards.find(card => card.pointLifeTarget && card.owner === targetSide);
+      if (lifeChoice && isBoardCardChoice() && !isOnlineSpectator() && !battlePresentationBusy({ignoreFusionTasks:true})) { toggleCardChoiceCard(lifeChoice.instanceId); return; }
       if (battleNewActionBlocked()) return;
       if (isOnlineSpectator()) return;
       if (state.resolvingOrderedAttendance) return;
@@ -43165,6 +43381,7 @@
     }
 
     function castImmediateItem(side, item, renderAfter, options = {}) {
+      if (item?.baseId === "pinige") return castPinige(side, item, renderAfter);
       if (["female_highball", "male_highball"].includes(item?.baseId)) return castHighball(side, item, renderAfter);
       if (item?.baseId === "obon_mac" && !canUseObonMac(side)) {
         addLog(`${item.name}は自分の校外エリアにヴァンパイアが5枚以上ある場合にのみ使えます。`);
@@ -45038,6 +45255,8 @@
           }
           let newAttack = card.baseAttack ?? card.attack;
           let newMaxHp = card.baseMaxHp ?? card.maxHp;
+          newAttack += pointUnitStatBonus(card);
+          newMaxHp += pointUnitStatBonus(card);
           if (card.baseId === "best_friend" && canUsePrintedCardEffects(card)) {
             if (isAdjacentToBakadekai(card)) {
               newAttack += 2;
@@ -45122,8 +45341,8 @@
         applyAibenNyoteiEffectImmuneBaseStats(card);
         return;
       }
-      const baseAttack = card.baseAttack ?? card.attack;
-      const baseMaxHp = card.baseMaxHp ?? card.maxHp;
+      const baseAttack = (card.baseAttack ?? card.attack) + pointUnitStatBonus(card);
+      const baseMaxHp = (card.baseMaxHp ?? card.maxHp) + pointUnitStatBonus(card);
       const coteBonus = isAeNameCard(card) && ongoingEnvironmentBaseId() === "cote_dazur" ? 10 : 0;
       const aibenNyoteiBonus = aibenNyoteiStatBonus(card);
       let newAttack = baseAttack + (ongoingEnvironmentBaseId() === "dark_student_council" ? 2 : 0) + coteBonus + aibenNyoteiBonus.attack;
@@ -45309,6 +45528,7 @@
       if (!ignoreWeakness && isVampireDestroyedByDoubleDiamond(card, source)) {
         showFloatingTextForCard(card, "破壊", "destroy");
         card.pendingDirectDestruction = true;
+        if (beforeHp > 0) card.pointLethalSource = pointSourceSnapshot(source);
         card.currentHp = 0;
         if (source) {
           card.lastDamageSource = analyticsCardInfo(source);
@@ -45331,6 +45551,7 @@
       const reducedDamage = Math.max(0, finalDamage - defense - actingOutStudentDamageReduction(card.owner, source, card));
       showFloatingTextForCard(card, reducedDamage > 0 ? `-${reducedDamage}` : "0", reducedDamage > 0 ? "damage" : "heal");
       card.currentHp -= reducedDamage;
+      if (beforeHp > 0 && card.currentHp <= 0) card.pointLethalSource = pointSourceSnapshot(source);
       const dealt = Math.min(beforeHp, reducedDamage);
       if (source) {
         card.lastDamageSource = analyticsCardInfo(source);
@@ -46336,6 +46557,7 @@
       const showDestroyFeedback = trashOptions.showDestroyFeedback !== false;
       // 表示を省く体力0・まとめ破壊も破壊。通常の校外送りでは素材を生成しない。
       const isDestruction = trashOptions.isDestruction ?? (showDestroyFeedback || trashOptions.reason === "体力0");
+      const defeatSource = isDestruction ? (trashOptions.pointSource || card.pointLethalSource) : null;
       const fusionMaterials = isDestruction && !card.tokenVanished ? horseFusionMaterialEntries(card).map(entry => entry.baseId) : [];
       const triggersAbsentStudent = !isTokenCard(card) && card.baseId === "absent_student" && canUsePrintedCardEffects(card);
       if (showDestroyFeedback) showFloatingTextForCard(card, isTokenCard(card) ? "消滅" : "破壊", "destroy");
@@ -46365,6 +46587,8 @@
           sourceZone: "generated", reason: "融合素材", suppressToast: true
         });
       });
+      if (isDestruction) awardDefeatPoint(defeatSource, ref.owner);
+      delete card.pointLethalSource;
       if (triggersAbsentStudent) resolveAbsentStudentTrashTrigger(ref.owner, card);
       return card;
     }
@@ -50373,7 +50597,9 @@
         const selected = getSelectedHandCard();
         const enemyItemTarget = !hasPeekableSelectionOverlay() && canDropHandCardOnLife(selected, targetSide);
         const attackTarget = canSelectedAttackerTargetLife(targetSide);
-        button.classList.toggle("enemy-target", enemyItemTarget || attackTarget);
+        const lifeChoice = isBoardCardChoice() && state.pendingCardChoice.cards.find(card => card.pointLifeTarget && card.owner === targetSide);
+        button.classList.toggle("enemy-target", Boolean(lifeChoice) || enemyItemTarget || attackTarget);
+        markEffectTargetSelection(button, lifeChoice && state.pendingCardChoice.selectedIds.includes(lifeChoice.instanceId));
         button.classList.toggle("attack-target-ready", attackTarget);
         button.classList.toggle("has-active-effects", playerActiveEffectLines(targetSide).length > 0);
         setupLifeTargetDropEvents(button, targetSide);
@@ -50435,6 +50661,7 @@
     // 講義室にいる間、他の出席者・プレイヤー・講義室へ及ぼす効果だけを掲載。
     // 出席時だけの効果や、自身だけの強化・耐性・攻撃時能力は掲載しない。
     const BOARD_ONGOING_RULE_STARTS = Object.freeze({
+      lucky_man: "このカードが自分の講義室にいるかぎり",
       proliferating_enemy: "このカードが自分の講義室にいるかぎり",
       variable_student: "このカードが講義室にいるかぎり",
       acting_out_man_2: "このカードが自分の講義室にいるかぎり",
@@ -50470,6 +50697,7 @@
         if (card.baseId === "aggro_king" && (!hasAggroKingdomTrio(side) || ref.zone !== "seat" || ref.index !== 6)) return [];
         if (card.baseId === "aggro_queen" && (ref.zone !== "seat" || ref.index !== 5)) return [];
         if (card.baseId === "acting_out_woman" && !actingOutWomanEffectActive(card)) return [];
+        if (card.baseId === "lucky_man" && hasAcquiredUnit(side)) return [];
         const start = BOARD_ONGOING_RULE_STARTS[card.baseId];
         if (!start) return [];
         const text = cardRulesText(card);
@@ -50477,6 +50705,7 @@
         if (index < 0) return [];
         if (start.includes("教卓マスにいるかぎり") && ref.zone !== "teacher") return [];
         let detail = text.slice(index).trim();
+        if (card.baseId === "lucky_man") detail = detail.split("\n[単位]")[0];
         // 複数能力のうち、自身にしか作用しない部分は表示から除外する。
         if (card.baseId === "tissue_distributor") {
           detail = detail.replace("このカードの戦意を-2し、", "");
@@ -50492,6 +50721,7 @@
       if (!player) return [];
       const lines = [];
       if (player.skipAllTurns) lines.push("ちょっと待ちぃ：この対戦中、自分のターンをすべて飛ばします。");
+      if (player.pointSystemActive || player.pointScore > 0) lines.push(hasAcquiredUnit(side) ? "[単位] 取得済み" : `[点数] ${player.pointScore || 0}/10`);
       Object.entries(player.submissionCounters || {}).forEach(([name, count]) => lines.push(`${name}：${count}`));
       if (ongoingEffectsSuppressed()) return lines;
       if (player.retainNextUsedItem) {
@@ -50562,6 +50792,7 @@
 
     function activeEffectLineParts(line) {
       const text = String(line || "");
+      if (/^\[(?:点数|単位)\]/.test(text)) return { name: text, detail: "" };
       const separator = text.indexOf("：");
       if (separator < 0) return { name: "継続効果", detail: text };
       return {
@@ -51372,14 +51603,14 @@
     function displayedCardAttack(card) {
       if (!card) return null;
       if (isCardCurrentlyOnBoard(card)) return card.attack;
-      return (card.attack ?? 0) + (hasActiveCafeteriaVampireBuff(card) ? 1 : 0);
+      return (card.attack ?? 0) + pointUnitStatBonus(card) + (hasActiveCafeteriaVampireBuff(card) ? 1 : 0);
     }
 
     function displayedCardHp(card) {
       if (!card) return null;
       if (isCardCurrentlyOnBoard(card)) return card.currentHp;
       const hpBonus = card.baseId === "cafeteria_lady" ? 2 : 1;
-      return (card.hp ?? 0) + (hasActiveCafeteriaVampireBuff(card) ? hpBonus : 0);
+      return (card.hp ?? 0) + pointUnitStatBonus(card) + (hasActiveCafeteriaVampireBuff(card) ? hpBonus : 0);
     }
 
     function displayedCardMaxHp(card) {
@@ -53403,6 +53634,14 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      short_sleeve_student: {"hand": ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      pinige: {"hand": ["pinige", "short_sleeve_student", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      gecko_carrier_student: {"hand": ["gecko_carrier_student", "short_sleeve_student", "pinige", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      lucky_man: {"hand": ["lucky_man", "short_sleeve_student", "pinige", "gecko_carrier_student", "classroom"], "life": 10, "will": 20, "pointScore": 8, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student", 1]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "福男は点数8から開始します。ほかの点数カードで倒すと通常のダメージ・回復を試せます。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で体力1の相手を倒し、10点まで進めてください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      long_sleeve_student: {"hand": ["long_sleeve_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      group_sniper: {"hand": ["group_sniper", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      could_not_escape_student: {"hand": ["could_not_escape_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+
       wonton_ki: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": null, "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
@@ -53570,6 +53809,7 @@
       player.life = scenario.life ?? 20;
       player.maxWill = scenario.will ?? 20;
       player.will = player.maxWill;
+      if (scenario.pointScore !== undefined) { player.pointScore = scenario.pointScore; player.pointSystemActive = true; }
       if (scenario.submissionCount !== undefined) player.submissionCounters = { "万豚記カウント": scenario.submissionCount };
       if (scenario.trash) player.trash = scenario.trash.map(id => createCardFromBase(id, "player"));
       if (scenario.enemyHand) state.players.opponent.hand = scenario.enemyHand.map(id => createCardFromBase(id, "opponent"));
@@ -55197,6 +55437,8 @@
       "遅刻": "手札から出した後、指定された回数の自分のターンを待ってから出席する。",
       "負荷": "手札に持ったまま自分のターンを終了すると、自分本体に1ダメージ。同じカードに再び負荷が付くと高負荷になる。",
       "高負荷": "このカードの戦意を+1する。手札に持ったまま自分のターンを終了すると、自分本体に2ダメージ。効果で手札から校外エリアへ送れず、負荷も追加されない。",
+      "点数": "この能力を持つ自分のカードが、攻撃・反撃・能力のダメージ・直接破壊で相手の出席者を倒すたび、点数を1獲得する。ピニゲの撃破でも獲得する。点数はプレイヤーで共有し、10点で単位へ変化する。",
+      "単位": "点数を10獲得した状態。この対戦中は取得済みとなり、点数は10で止まる。10点目は点数獲得時の能力を発動しない。",
       "進化": "指定された進化元を、同じマスで進化後のカードに変える。通常は進化元を出席させた次のターン以降に、進化後のカードの戦意を使って行う。進化元が受けていたダメージと攻撃状態を引き継ぐ。",
       "特殊進化": "カードの効果で条件を満たしたとき、戦意を使わずに進化する。進化元が受けていたダメージと攻撃状態を引き継ぎ、出席回数には数えない。",
       "装備": "出席者につけて継続的に効果を与える。装備カードは通常、出席者1人につき1枚までつけられる。",
@@ -55851,6 +56093,7 @@
       const fusionMatch = String(rawText || "").match(/^融合(?:：「([^」]+)」([^。]*))?(?:。|\n)/);
       const hasEquipmentDeclaration = /^(?:装備カード。|装備(?:。|\n))/.test(String(rawText || ""));
       const hasLectureDeclaration = String(rawText || "").startsWith("講義。");
+      if (base.hasPoint) push("点数");
       if (evolutionMatch) push(`進化：「${evolutionMatch[1]}」`);
       if (fusionMatch) push(`融合${fusionMatch[1] ? `：「${fusionMatch[1]}」${fusionMatch[2] || ""}` : ""}`);
       if (hasEquipmentDeclaration) push("装備");
@@ -55873,6 +56116,7 @@
           changed = true;
           return true;
         };
+        if (base.hasPoint && removeMatch(text.match(/^\[点数\]\s*/))) continue;
         if (base.evolutionFrom && removeMatch(text.match(/^進化：「[^」]+」。/))) continue;
         if (abilities.some((ability) => ability.startsWith("融合")) && removeMatch(text.match(/^融合(?:：「[^」]+」[^。]*)?(?:。|\n)/))) continue;
         if (abilities.includes("装備") && removeMatch(text.match(/^(?:装備カード。|装備(?:。|\n))/))) continue;
@@ -55900,9 +56144,25 @@
       const abilityLine = abilities
         .filter((ability) => ability !== evolutionAbility)
         .map((ability) => `[${ability}]`)
-        .join(" ");
+        .join(CARD_BASES[card?.baseId]?.hasPoint ? "\n" : " ");
       const evolutionLine = evolutionAbility ? `[進化]${evolutionAbility.slice("進化".length)}` : "";
       return [abilityLine, evolutionLine, formattedBody, flavorMatch?.[0]].filter(Boolean).join("\n");
+    }
+
+    function pointRulesForDisplay(card, text) {
+      if (!card.hasPoint || !hasAcquiredUnit(card.owner)) return text;
+      const at = text.indexOf("\n単位取得済みなら、");
+      if (at < 0) return text;
+      const header = text.startsWith("[点数]\n") ? "[点数]\n" : "";
+      let normal = text.slice(header.length, at);
+      let abilities = "";
+      if (normal.startsWith("陽気を持つ。")) { abilities = "陽気を持つ。"; normal = normal.slice(abilities.length); }
+      // The sniper's hand-only deployment is independent of the upgraded damage ability.
+      if (card.baseId === "group_sniper") {
+        const split = normal.indexOf("\n");
+        return header + normal.slice(0,split) + text.slice(at) + "\n" + normal.slice(split+1);
+      }
+      return header + abilities + text.slice(at).trimStart() + "\n" + normal;
     }
 
     function cardRulesText(card) {
@@ -55928,6 +56188,13 @@
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
+        short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
+        pinige: "次の4つの効果から1つを選ぶ。単位取得済みなら、1つではなく3つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。\n3. 自分のデッキから「ピニゲ」1枚をランダムに手札に加える。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。",
+        gecko_carrier_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。単位取得済みなら、1つではなく2つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。",
+        lucky_man: "[点数]\nこのカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりにこのカードを手札から出席させたとき、次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
+        long_sleeve_student: "[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+2される。",
+        group_sniper: "[点数]\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスすべてに「集団スナイパー」を1人ずつ出席させる。\nこのカードが出席したとき、相手の出席者1人を指名し、1ダメージを与える。\n単位取得済みなら、代わりに相手本体か相手の出席者1人を指名し、2ダメージを与える。",
+        could_not_escape_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者3人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+1する。",
         wonton_greeting: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。",
         wonton_stall: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。",
         wonton_fever: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。",
@@ -56242,7 +56509,7 @@
         strict_lateness_teacher: "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
         ta: "カードの効果によって出席される学生トークン。"
       };
-      const rawText = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
+      const rawText = pointRulesForDisplay(card, normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。")));
       let text = formatCardRulesDisplayText(card, rawText);
       const handLoad = Math.min(2, Number(card.handLoadLevel) || 0);
       if (handLoad > 0 && state.players[card.owner]?.hand.some((entry) => entry.instanceId === card.instanceId)) {
