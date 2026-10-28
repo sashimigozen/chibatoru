@@ -20178,6 +20178,25 @@
             "title": "点数の獲得条件",
             "before": "［点数］を持つ自分のカードとピニゲが、攻撃・反撃・能力のダメージ・直接破壊で相手の出席者を倒すと、双方のターンで加点する。",
             "after": "自分のターン中、［点数］を持つ自分のカードが相手の出席者を倒したときだけ加点する。ピニゲは加点対象外。反撃・能力・直接破壊を含め、相手ターン中の撃破では加点しない。関連する表示とテストも更新しました。"
+          },
+          {
+            "category": "カード調整",
+            "title": "ピニゲ",
+            "before": "持ち物／共通カード／戦意3／攻撃力0／体力0\n次の4つの効果から1つを選ぶ。単位取得済みなら、1つではなく3つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。\n3. 自分のデッキから「ピニゲ」1枚をランダムに手札に加える。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。",
+            "after": "持ち物／共通カード／戦意3／攻撃力0／体力0\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。",
+            "beforeHighlights": [
+              "自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。",
+              "自分のデッキから「ピニゲ」1枚をランダムに手札に加える。"
+            ],
+            "afterHighlights": [
+              "自分のデッキから[点数]を持つカードを2枚引く。",
+              "自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。"
+            ]
+          },
+          {
+            "category": "システム",
+            "title": "ピニゲの点数獲得とテスト",
+            "after": "効果③の2点は1回の点数獲得として処理します。10点で止まり、単位取得時は福男を発動しません。単位取得済みでも、その後のピニゲのサーチは行います。CPUの選択判断とカードテストを調整し、加点・補充・単位への変化・オンライン同期を確認するテストを追加しました。"
           }
         ]
       },
@@ -40501,13 +40520,18 @@
 
     function awardDefeatPoint(source, defeatedOwner) {
       if (!source?.pointKillEligible || !state.players[source.owner] || source.owner === defeatedOwner || source.owner !== state.currentSide) return;
-      const side = source.owner, player = state.players[side];
-      if (hasAcquiredUnit(side)) return;
+      gainPoints(source.owner, source, 1, "撃破");
+    }
+
+    function gainPoints(side, source, amount, reason = "効果") {
+      const player = state.players[side];
+      if (!player || hasAcquiredUnit(side) || amount <= 0) return;
       player.pointSystemActive = true;
-      player.pointScore = Math.min(10, (player.pointScore || 0) + 1);
+      const beforeScore = player.pointScore || 0;
+      player.pointScore = Math.min(10, beforeScore + amount);
       const unit = hasAcquiredUnit(side);
-      addLog(`${SIDES[side]}は${source.name}の撃破で点数を1獲得しました。${unit ? "単位取得！" : `${player.pointScore}/10`}`);
-      analyticsRecordEffect({side, source, effectType: unit ? "unit_acquired" : "point_gain", details: {pointScore: player.pointScore}});
+      addLog(`${SIDES[side]}は${source.name}の${reason}で点数を${player.pointScore - beforeScore}獲得しました。${unit ? "単位取得！" : `${player.pointScore}/10`}`);
+      analyticsRecordEffect({side, source, effectType: unit ? "unit_acquired" : "point_gain", details: {pointScore: player.pointScore, amount: player.pointScore - beforeScore}});
       if (unit) {
         showSharedCenterAnnouncement("単位取得", "heal");
         return;
@@ -40563,12 +40587,12 @@
     }
 
     function pointModeCards(side, source, gecko = false) {
-      const labels = gecko ? ["左右に出席", "超陽気を得る"] : ["戦意を1回復", "点数カードを2枚探す", "ピニゲを1枚探す", "ランダムに3ダメージ"];
+      const labels = gecko ? ["左右に出席", "超陽気を得る"] : ["戦意を1回復", "点数カードを2枚引く", "点数を2獲得し、ピニゲを1枚引く", "ランダムに3ダメージ"];
       return labels.map((name, index) => ({instanceId:`point-mode-${index+1}`, name, type:"item", cost:0,
         pointMode:index+1, twoAchieversChoice:true, effect: name,
         choiceScore: gecko ? (index === 0 ? pointAdjacentSeats(side,source).length * 8 : 7)
           : index === 0 ? 2 : index === 1 ? Math.min(2,state.players[side].deck.filter(c=>c.hasPoint).length)*4
-          : index === 2 ? (state.players[side].deck.some(c=>c.baseId === "pinige") ? 3 : 0)
+          : index === 2 ? (hasAcquiredUnit(side) ? 0 : (state.players[side].pointScore || 0) >= 8 ? 8 : 4) + (state.players[side].deck.some(c=>c.baseId === "pinige") ? 3 : 0)
           : Math.max(0,...effectTargetEntries(side,oppositeSide(side)).map(e=>scoreAiNonCombatEffectTarget(side,source,e,{damage:3})))}));
     }
 
@@ -40639,7 +40663,11 @@
         for (const mode of chosen.sort((a,b)=>a.pointMode-b.pointMode)) {
           if (mode.pointMode === 1) state.players[side].will = Math.min(state.players[side].maxWill,state.players[side].will+1);
           if (mode.pointMode === 2) pullRandomCardsFromDeck(side,c=>c.hasPoint,2);
-          if (mode.pointMode === 3) pullRandomCardsFromDeck(side,c=>c.baseId === "pinige",1);
+          if (mode.pointMode === 3) {
+            gainPoints(side,source,2);
+            applyBoardAuras();
+            pullRandomCardsFromDeck(side,c=>c.baseId === "pinige",1);
+          }
           if (mode.pointMode === 4) pointRandomDamage(side,source,3);
           addLog(`${source.name}の効果${mode.pointMode}：${mode.name}。`);
         }
@@ -53854,7 +53882,7 @@
     const CARD_TEST_SCENARIOS = {
       secretly_mocked_student: {"hand": ["secretly_mocked_student", "bento", "onigiri_draw", "short_sleeve_student"], "pointScore": 9, "life": 10, "will": 20, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "yuta", 1], [4, "yuta"]], "teacher": null}, "enemyHand": ["onigiri_draw"], "enemyDeck": ["yuta", "general_student", "onigiri_draw"], "deck": ["secretly_mocked_student", "short_sleeve_student", "bento", "long_sleeve_student", "onigiri_draw"], "note": "3行3列に女学生を出席させ、相手のU太が体力1の間は攻撃できなくなることを試せます。U太は自分のターン終了時に余裕で体力を回復し、2以上なら攻撃可能になります。単位取得後を試す場合は先に長袖の学生で体力1のU太を倒してください。点数9から開始します。"},
       short_sleeve_student: {"hand": ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
-      pinige: {"hand": ["pinige", "short_sleeve_student", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      pinige: {"hand": ["pinige", "pinige", "short_sleeve_student", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 7, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数7から開始します。③で点数を2獲得してピニゲを引き、続けて③を使うと単位を取得できます。先に長袖の学生で体力1の一般学生を倒せば8点から③で単位取得できます。単位取得後は3つ選べます。①の戦意回復、②の点数カード補充、④のダメージに必要な盤面とデッキも用意しています。"},
       gecko_carrier_student: {"hand": ["gecko_carrier_student", "short_sleeve_student", "pinige", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
       lucky_man: {"hand": ["lucky_man", "short_sleeve_student", "pinige", "gecko_carrier_student", "classroom"], "life": 10, "will": 20, "pointScore": 8, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student", 1]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "福男は点数8から開始します。ほかの点数カードで倒すと通常のダメージ・回復を試せます。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で体力1の相手を倒し、10点まで進めてください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
       long_sleeve_student: {"hand": ["long_sleeve_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
@@ -56406,7 +56434,7 @@
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
-        pinige: "次の4つの効果から1つを選ぶ。単位取得済みなら、1つではなく3つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。\n3. 自分のデッキから「ピニゲ」1枚をランダムに手札に加える。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。",
+        pinige: "次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。",
         gecko_carrier_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
         lucky_man: "[点数]\nこのカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりにこのカードを手札から出席させたとき、次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
         long_sleeve_student: "[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+2される。",
