@@ -6,6 +6,15 @@ const C = require('../gacha-core.js');
 const fixed = n => () => n;
 const rich = () => { const s = C.initial(); s.cp = 10000; return s; };
 const complete = s => { s.pending = null; return s; };
+test('retired cafeteria is excluded from new packs but old ownership and pending results still load', () => {
+  assert.ok(C.PACKS.every(p => !p.cards.includes('illegal_cafeteria')));
+  const s = C.purchase(rich(), 'awakening', 1, fixed(.2), 'legacy-cafeteria');
+  s.owned.illegal_cafeteria = { rare: true };
+  s.pending.results[0][0] = { baseId: 'illegal_cafeteria', mode: 'rare' };
+  assert.equal(C.validate(s).owned.illegal_cafeteria.rare, true);
+  s.pending.results[0][0].mode = 'ultraRare';
+  assert.throws(() => C.validate(s));
+});
 test('Cynical UR correction preserves old ownership and pending results but new exchange uses Aggro Student', () => {
   const s=C.purchase(rich(),'cynical',1,()=>.99999,'old-results');
   s.pending.results[0][0]={baseId:'general_student',mode:'ultraRare'};
@@ -41,7 +50,7 @@ test('personal CP gift is file-triggered, additive, and received once', () => {
   assert.equal(C.validate(s).cp,1010000);
   assert.throws(()=>C.receivePersonalGift(s,{...file,amount:2000000}));
 });
-test('official pools are 255 unique existing cards, 24 specified URs; tokens excluded', () => {
+test('official pools are 254 unique existing cards, 24 specified URs; tokens and retired cards excluded', () => {
   const pool=C.PACKS.find(p=>p.id==='cynical');
   assert.ok(pool.ur.includes('aggro_student'));
   assert.ok(!pool.ur.includes('general_student'));
@@ -50,11 +59,11 @@ test('official pools are 255 unique existing cards, 24 specified URs; tokens exc
   const start = source.indexOf('const CARD_BASES =');
   const end = source.indexOf('\n    };', start) + 7;
   const bases = vm.runInNewContext(source.slice(start, end) + ';CARD_BASES');
-  assert.equal(new Set(C.PACKS.flatMap(p => p.cards)).size, 255);
+  assert.equal(new Set(C.PACKS.flatMap(p => p.cards)).size, 254);
   assert.equal(C.PACKS.flatMap(p => p.ur).length, 24);
   C.PACKS.forEach(p => {
     assert.equal(p.cards.length, p.count);
-    p.cards.forEach(id => assert.ok(bases[id] && !bases[id].token && !bases[id].generated, id));
+    p.cards.forEach(id => assert.ok(bases[id] && !bases[id].token && !bases[id].generated && !bases[id].retired, id));
     p.ur.forEach(id => assert.ok(p.cards.includes(id)));
   });
 });
