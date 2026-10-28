@@ -101,7 +101,7 @@ test("盤面の出席者の効果を各サイドに表示し、無効化・退�
   await expect(page.locator("#battleDrawerInspector")).not.toContainText("ウマの骨");
   await page.locator("#battleLogCloseButton").click();
   await page.locator("#playerActiveEffectsButton").click();
-  await expect(page.locator("#battleDrawerInspector")).toContainText("攻撃力を+1");
+  await expect(page.locator("#battleDrawerInspector")).toContainText("自分のターン終了時、自分の講義室にいる融合で生成されていない出席者を2人まで指名し、それらの体力を+1する。");
   await expect(page.locator("#battleDrawerInspector")).toContainText("TTB");
   await expect(page.locator("#battleDrawerInspector")).not.toContainText("2枚ずつ生成");
   await expect(page.locator("#battleDrawerInspector")).not.toContainText("TRPGサークルメンバー");
@@ -134,7 +134,7 @@ test("継続効果は複数マスで重複せず、別個体は別件・教卓�
   expect(result.mismatches).toEqual([]);
   expect(result.lines).toHaveLength(3);
   expect(result.lines.filter(line => line.startsWith("ウマイボ："))).toHaveLength(2);
-  expect(result.lines.join("\n")).toContain("TAすべての体力を+1");
+  expect(result.lines).toContain("プロ言の長：このカードが教卓マスにいるかぎり、自分の講義室にいる「TA」とつく出席者すべての体力を+1する。");
   expect(result.lines.join("\n")).not.toContain("手札に生成");
   expect(result.lines.join("\n")).not.toContain("学長：");
 });
