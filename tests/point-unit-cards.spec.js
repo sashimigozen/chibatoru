@@ -79,11 +79,17 @@ test('ピニゲ③で同名を検索、②でピニゲを点数カードと誤�
 test('長袖は陽気、通常操作で2回攻撃し3回目は禁止',async({page})=>{
  await attend(page,'long_sleeve_student');await settle(page);expect(await page.evaluate(()=>{const c=state.players.player.board.seats[4];const before=cardAttacksUsedThisTurn(c);markCardAttackUsed(c);const first=cardAttacksUsedThisTurn(c);markCardAttackUsed(c);return [hasKeyword(c,'陽気'),before,first,cardAttacksUsedThisTurn(c),c.hasAttacked];})).toEqual([true,0,1,2,true]);
 });
-test('本文は単位取得後に上下を入れ替え、通常文も残す',async({page})=>{
- const r=await page.evaluate(()=>{state.players.player.pointScore=10;return ['short_sleeve_student','lucky_man','long_sleeve_student','group_sniper','could_not_escape_student'].map(id=>cardRulesText(createCardFromBase(id,'player')));});
- for(const t of r){expect(t).toMatch(/^\[点数\]\n/);expect(t).toContain('[単位]取得済みなら、');}
- expect(r[0].indexOf('それぞれに3')).toBeLessThan(r[0].indexOf('ランダムに選び'));expect(r[2]).toMatch(/^\[点数\]\n\[陽気\]\n\[単位\]/);expect(r[3].indexOf('2ダメージ')).toBeLessThan(r[3].indexOf('1ダメージ'));
+test('点数カードの本文は単位取得前後とも元の効果、単位取得済みならの順に固定する',async({page})=>{
+ const result=await page.evaluate(()=>[0,10].map(score=>{state.players.player.pointScore=score;return POINT_CARD_IDS.filter(id=>CARD_BASES[id].hasPoint).map(id=>({id,text:cardRulesText(createCardFromBase(id,'player'))}));}));
+ expect(result[1]).toEqual(result[0]);
+ for(const {id,text} of result[1]){
+  expect(text).toMatch(/^\[点数\]\n/);
+  const unit=text.indexOf('[単位]取得済みなら、');expect(unit).toBeGreaterThan(0);
+  const ordinary={short_sleeve_student:'ランダムに選び、2ダメージ',lucky_man:'点数]を獲得したとき',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
+  expect(text.indexOf(ordinary)).toBeGreaterThan(-1);expect(text.indexOf(ordinary)).toBeLessThan(unit);
+ }
 });
+
 for(const id of ids)test(`実際のテストボタンで専用の開始状態から効果を使える ${id}`,async({page})=>{
  await page.goto(url);await page.locator('#homeNavDeckButton').click();await page.locator('[data-case-view="cards"]').click();
  await page.locator('#cardsCatalogSearch').fill(await page.evaluate(id=>CARD_BASES[id].name,id));await page.locator(`[data-catalog-card="${id}"]`).click();

@@ -20060,7 +20060,7 @@
           {
             "category": "システム",
             "title": "点数・単位",
-            "after": "［点数］を持つカードとピニゲによる相手の出席者の撃破で、自分の点数を1獲得します。攻撃・反撃・能力のダメージ・直接破壊が対象です。10点で単位取得済みとなり、以後は加点しません。10点目では福男の点数獲得時効果を発動しません。継続効果欄に進行状況を表示し、単位取得後はカード本文の強化後の効果を先に表示します。新カードごとのテスト用の手札・デッキ・盤面を用意し、通常効果、単位取得後、加点とオンライン同期の確認を追加しました。"
+            "after": "［点数］を持つカードとピニゲによる相手の出席者の撃破で、自分の点数を1獲得します。攻撃・反撃・能力のダメージ・直接破壊が対象です。10点で単位取得済みとなり、以後は加点しません。10点目では福男の点数獲得時効果を発動しません。継続効果欄に進行状況を表示し、カード本文は単位取得前後とも、通常の効果、単位取得済みの効果の順に表示します。新カードごとのテスト用の手札・デッキ・盤面を用意し、通常効果、単位取得後、加点とオンライン同期の確認を追加しました。"
           },
           {
             "category": "新カード",
@@ -20075,7 +20075,7 @@
           {
             "category": "新カード",
             "title": "ヤモリを背負う学生",
-            "after": "ヤモリを背負う学生 / 学生 / 共通カード / 戦意7 / 攻撃力4 / 体力4\n[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。単位取得済みなら、1つではなく2つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。"
+            "after": "ヤモリを背負う学生 / 学生 / 共通カード / 戦意7 / 攻撃力4 / 体力4\n[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。"
           },
           {
             "category": "新カード",
@@ -20096,6 +20096,11 @@
             "category": "新カード",
             "title": "逃げられなかった学生",
             "after": "逃げられなかった学生 / 学生 / 共通カード / 戦意9 / 攻撃力4 / 体力5\n[点数]\nこのカードを手札から出席させたとき、相手の出席者3人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+1する。"
+          },
+          {
+            "category": "表示・操作改善",
+            "title": "点数カードの本文順",
+            "after": "［点数］を持つカードの本文を、単位取得前後とも「元から持つ効果 → 単位取得済みなら」の順に固定しました。選択肢のあるカードも通常の選択肢を先に記載します。表示順の確認を更新し、能力値や効果の処理は変更していません。"
           }
         ]
       },
@@ -56189,22 +56194,6 @@
       return [abilityLine, evolutionLine, formattedBody, flavorMatch?.[0]].filter(Boolean).join("\n");
     }
 
-    function pointRulesForDisplay(card, text) {
-      if (!card.hasPoint || !hasAcquiredUnit(card.owner)) return text;
-      const at = text.indexOf("\n単位取得済みなら、");
-      if (at < 0) return text;
-      const header = text.startsWith("[点数]\n") ? "[点数]\n" : "";
-      let normal = text.slice(header.length, at);
-      let abilities = "";
-      if (normal.startsWith("陽気を持つ。")) { abilities = "陽気を持つ。"; normal = normal.slice(abilities.length); }
-      // The sniper's hand-only deployment is independent of the upgraded damage ability.
-      if (card.baseId === "group_sniper") {
-        const split = normal.indexOf("\n");
-        return header + normal.slice(0,split) + text.slice(at) + "\n" + normal.slice(split+1);
-      }
-      return header + abilities + text.slice(at).trimStart() + "\n" + normal;
-    }
-
     function cardRulesText(card) {
       if (card.attendanceLocationChoice || card.twoAchieversChoice) return card.effect || "";
       if (card.generatedWithoutEffects) return "効果なし。";
@@ -56230,7 +56219,7 @@
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
         pinige: "次の4つの効果から1つを選ぶ。単位取得済みなら、1つではなく3つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。\n3. 自分のデッキから「ピニゲ」1枚をランダムに手札に加える。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。",
-        gecko_carrier_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。単位取得済みなら、1つではなく2つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。",
+        gecko_carrier_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
         lucky_man: "[点数]\nこのカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりにこのカードを手札から出席させたとき、次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
         long_sleeve_student: "[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+2される。",
         group_sniper: "[点数]\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスすべてに「集団スナイパー」を1人ずつ出席させる。\nこのカードが出席したとき、相手の出席者1人を指名し、1ダメージを与える。\n単位取得済みなら、代わりに相手本体か相手の出席者1人を指名し、2ダメージを与える。",
@@ -56549,7 +56538,7 @@
         strict_lateness_teacher: "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
         ta: "カードの効果によって出席される学生トークン。"
       };
-      const rawText = pointRulesForDisplay(card, normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。")));
+      const rawText = normalizeLectureRoomText(attendanceRuleText(card, rules[card.baseId] || "効果なし。"));
       let text = formatCardRulesDisplayText(card, rawText);
       const handLoad = Math.min(2, Number(card.handLoadLevel) || 0);
       if (handLoad > 0 && state.players[card.owner]?.hand.some((entry) => entry.instanceId === card.instanceId)) {
