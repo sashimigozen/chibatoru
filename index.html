@@ -19516,13 +19516,14 @@
     }
 
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
+    const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
-      wonton_greeting: {"name": "万豚記～挨拶シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 0},
-      wonton_stall: {"name": "万豚記～屋台シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 1},
-      wonton_fever: {"name": "紅の万豚記～熱狂シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 2},
-      wonton_rebellion: {"name": "叛逆の万豚記～敵地を玉砕～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 3},
-      wonton_final_battle: {"name": "燃えよ！万豚記～決戦シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 4},
-      wonton_graduation: {"name": "恋の万豚記～卒業シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 5},
+      wonton_greeting: {"name": "万豚記～挨拶シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
+      wonton_stall: {"name": "万豚記～屋台シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
+      wonton_fever: {"name": "紅の万豚記～熱狂シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
+      wonton_rebellion: {"name": "叛逆の万豚記～敵地を玉砕～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
+      wonton_final_battle: {"name": "燃えよ！万豚記～決戦シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
+      wonton_graduation: {"name": "恋の万豚記～卒業シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
       wonton_ki: { name: "万豚記", type: "environment", cost: 4, attack: 0, hp: 0, allowedZones: ["environment"], category: "common" },
       female_highball: { name: "女のハイボール", type: "item", cost: 3, attack: 0, hp: 0, target: "self", category: "common" },
       male_highball: { name: "男のハイボール", type: "item", cost: 3, attack: 0, hp: 0, target: "self", category: "common" },
@@ -19965,12 +19966,12 @@
         "version": "ver.0.35.0",
         "versioning": "semver",
         "date": "2026年10月28日",
-        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。",
+        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。「提出」の共通発動条件と、万豚記カウントの固有效果を分離しました。",
         "changes": [
           {
             "category": "システム",
             "title": "提出",
-            "after": "使用・場への配置・効果で手札から校外エリアへ送られたとき、指定された自分のカウントを1増やし、その後「提出したとき」の効果を発動します。同じ使用・効果処理では1回だけ発動し、遅刻ゾーンへの移動や通常使用後の校外送りでは重ねて発動しません。"
+            "after": "使用・場への配置・効果で手札から校外エリアへ送られたとき、カードに書かれた「提出」の効果を発動します。同じプレイでは1回だけ発動し、遅刻ゾーンへの移動や通常使用後の校外送りでは重ねて発動しません。万豚記カウントの増加・参照・リセットは万豚記シリーズ固有の効果として処理し、各カードの本文にも明記しました。"
           },
           {
             "category": "新カード",
@@ -19990,32 +19991,32 @@
           {
             "category": "新カード",
             "title": "万豚記～挨拶シリーズ～",
-            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。\n生成専用カード。"
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。\n生成専用カード。"
           },
           {
             "category": "新カード",
             "title": "万豚記～屋台シリーズ～",
-            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。\n生成専用カード。"
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。\n生成専用カード。"
           },
           {
             "category": "新カード",
             "title": "紅の万豚記～熱狂シリーズ～",
-            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。\n生成専用カード。"
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。\n生成専用カード。"
           },
           {
             "category": "新カード",
             "title": "叛逆の万豚記～敵地を玉砕～",
-            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。\n生成専用カード。"
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。\n生成専用カード。"
           },
           {
             "category": "新カード",
             "title": "燃えよ！万豚記～決戦シリーズ～",
-            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。\n生成専用カード。"
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。\n生成専用カード。"
           },
           {
             "category": "新カード",
             "title": "恋の万豚記～卒業シリーズ～",
-            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。\n生成専用カード。"
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。\n生成専用カード。"
           }
         ]
       },
@@ -32824,13 +32825,13 @@
 
     function scoreAiEnvironment(card, side = "opponent") {
       if (!arePlayedEffectsSuppressed(side)) {
-        if (card.baseId === "wonton_ki") return ongoingEnvironmentBaseId() === "wonton_ki" ? -100 : 8 + state.players[side].hand.filter(c=>c.submissionCounter).length * 4;
-        if (card.submissionCounter) {
+        if (card.baseId === "wonton_ki") return ongoingEnvironmentBaseId() === "wonton_ki" ? -100 : 8 + state.players[side].hand.filter(c=>c.submission).length * 4;
+        if (WONTON_SERIES_IDS.includes(card.baseId)) {
           if (card.baseId === "wonton_graduation") {
-            const damage = Math.min(10, ((state.players[side].submissionCounters?.[card.submissionCounter] || 0) + 1) * 2);
+            const damage = Math.min(10, (wontonCount(side) + 1) * 2);
             return damage >= state.players[oppositeSide(side)].life ? 1000 : damage * 2;
           }
-          return 6 + (card.submissionStage === 4 ? listBoardRefs(side).length * 2 : 0);
+          return 6 + (card.baseId === "wonton_final_battle" ? listBoardRefs(side).length * 2 : 0);
         }
       }
       if (ongoingEnvironmentBaseId() === card.baseId && card.baseId !== "seat_rules") return -100;
@@ -33013,7 +33014,7 @@
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (["female_highball", "male_highball"].includes(item?.baseId)) {
         if (!canUseHighball("opponent", item)) return 0;
-        const series = highballDiscardCandidates("opponent", item).some(card => card.submissionCounter);
+        const series = highballDiscardCandidates("opponent", item).some(card => card.submission);
         return (series ? 12 : 1) + (item.baseId === "female_highball" ? Math.max(0, Math.min(2, currentLifeCap("opponent") - state.players.opponent.life)) * 2 + 3 : 6);
       }
       if (item?.baseId === "chotto_machii") return scoreAiChottoMachii("opponent", item);
@@ -43086,49 +43087,60 @@
     }
 
     function submissionDiscardValue(side, card) {
-      if (card?.submissionCounter && canUsePrintedCardEffects(card)) {
-        const count = Number(state.players[side].submissionCounters?.[card.submissionCounter]) || 0;
+      if (WONTON_SERIES_IDS.includes(card?.baseId) && canUsePrintedCardEffects(card)) {
+        const count = wontonCount(side);
         return card.baseId === "wonton_graduation" ? Math.min(10, (count + 1) * 2) * 4 : 20;
       }
       return -trainingAiChoiceCardScore(side, card);
     }
 
     function triggerSubmission(side, card, cause) {
-      if (!card?.submissionCounter || !canUsePrintedCardEffects(card)) return false;
+      if (!(card?.submission || CARD_BASES[card?.baseId]?.submission) || !canUsePrintedCardEffects(card)) return false;
+      const effect = SUBMISSION_EFFECT_HANDLERS[card.baseId];
+      if (typeof effect !== "function") return false;
       const source = { ...card };
       queueFusionEffect(async () => {
-        const counters = state.players[side].submissionCounters ||= {};
-        counters[source.submissionCounter] = Math.max(0, Number(counters[source.submissionCounter]) || 0) + 1;
-        const count = counters[source.submissionCounter];
-        analyticsRecordEffect({ side, source, effectType: "submission", details: { counter: source.submissionCounter, count, cause } });
-        addLog(`[提出]：${SIDES[side]}の${source.submissionCounter}は${count}になりました。`);
-        showSharedCenterAnnouncement(`提出 ${count}`, "");
-        const stage = WONTON_SERIES_IDS.indexOf(source.baseId);
-        if (stage < 0) return;
-        if (stage < 5) generateWontonCard(side, WONTON_SERIES_IDS[stage + 1], source);
-        if (stage === 0) drawUpTo(side, 1);
-        if (stage === 1) healPlayer(side, 2);
-        if (stage === 2) {
-          const entry = randomEffectTargetEntry(side, oppositeSide(side));
-          if (entry) dealDamageToCard(entry.card, 3, source);
-        }
-        if (stage === 3) effectTargetEntries(side, oppositeSide(side)).forEach(entry => dealDamageToCard(entry.card, 1, source));
-        if (stage === 4) {
-          const cards = boardCardsForChoice(side, card => !isAibenNyoteiEffectImmune(card));
-          const [chosen] = await chooseFusionEffectCards(side, source, cards, 1, "buff", { required: true });
-          const target = chosen ? getBoardCardFromRef(chosen.choiceRef) : null;
-          if (target && target.instanceId === chosen.instanceId) applyPermanentStatBuff(target, 2, 2, 0, source.name);
-        }
-        if (stage === 5) {
-          const damage = Math.min(10, count * 2);
-          damagePlayer(oppositeSide(side), damage, source);
-          counters[source.submissionCounter] = 0;
-          addLog(`${source.name}の効果：相手本体に${damage}ダメージ。${source.submissionCounter}を0にしました。`);
-          analyticsRecordEffect({ side, source, effectType: "submission_reset", details: { counter: source.submissionCounter, damage, count: 0 } });
-          checkLifeVictory();
-        }
+        analyticsRecordEffect({ side, source, effectType: "submission", details: { cause } });
+        addLog(`[提出]：${SIDES[side]}の「${source.name}」の効果が発動しました。`);
+        showSharedCenterAnnouncement("提出", "");
+        await effect(side, source, cause);
       });
       return true;
+    }
+
+    function wontonCount(side) {
+      return Math.max(0, Number(state.players[side].submissionCounters?.["万豚記カウント"]) || 0);
+    }
+
+    async function resolveWontonSubmission(side, source) {
+      const stage = WONTON_SERIES_IDS.indexOf(source.baseId);
+      if (stage < 0) return;
+      const counters = state.players[side].submissionCounters ||= {};
+      const count = counters["万豚記カウント"] = wontonCount(side) + 1;
+      analyticsRecordEffect({ side, source, effectType: "wonton_counter", details: { counter: "万豚記カウント", count } });
+      addLog(`${source.name}の効果：${SIDES[side]}の万豚記カウントは${count}になりました。`);
+      if (stage < 5) generateWontonCard(side, WONTON_SERIES_IDS[stage + 1], source);
+      if (stage === 0) drawUpTo(side, 1);
+      if (stage === 1) healPlayer(side, 2);
+      if (stage === 2) {
+        const entry = randomEffectTargetEntry(side, oppositeSide(side));
+        if (entry) dealDamageToCard(entry.card, 3, source);
+      }
+      if (stage === 3) effectTargetEntries(side, oppositeSide(side)).forEach(entry => dealDamageToCard(entry.card, 1, source));
+      if (stage === 4) {
+        const cards = boardCardsForChoice(side, card => !isAibenNyoteiEffectImmune(card));
+        const [chosen] = await chooseFusionEffectCards(side, source, cards, 1, "buff", { required: true });
+        const target = chosen ? getBoardCardFromRef(chosen.choiceRef) : null;
+        if (target && target.instanceId === chosen.instanceId) applyPermanentStatBuff(target, 2, 2, 0, source.name);
+      }
+      if (stage === 5) {
+        const damage = Math.min(10, count * 2);
+        damagePlayer(oppositeSide(side), damage, source);
+        counters["万豚記カウント"] = 0;
+        addLog(`${source.name}の効果：相手本体に${damage}ダメージ。万豚記カウントを0にしました。`);
+        analyticsRecordEffect({ side, source, effectType: "wonton_counter_reset", details: { counter: "万豚記カウント", damage, count: 0 } });
+        checkLifeVictory();
+      }
     }
 
     function highballDiscardCandidates(side, item) {
@@ -53403,15 +53415,15 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
-      wonton_ki: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": null, "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_greeting: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_stall: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_fever: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_rebellion: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_final_battle: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_graduation: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 4, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_ki: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": null, "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_greeting: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_stall: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_fever: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_rebellion: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_final_battle: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_graduation: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 4, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
 
       smiling_lecturer: {
         hand: ["fire_touch", "onigiri_draw", "kashikashi"], life: 10,
@@ -55186,7 +55198,7 @@
     }
 
     const BATTLE_CARD_TERM_DESCRIPTIONS = {
-      "提出": "このカードを使用したとき、場に出たとき、または効果で手札から校外エリアへ送られたとき、指定された自分のカウントを1増やし、その後「提出したとき」の効果を発動する。同じ使用・効果処理では1回だけ発動する。出席・環境マスへの配置・装備を含み、遅刻ゾーンへの移動や通常使用後の校外送りでは発動しない。",
+      "提出": "このカードを使用したとき、場に出たとき、または効果で手札から校外エリアへ送られたとき、以下の効果を発動する。同じプレイで複数の条件を満たしても、発動は1回だけ。場に出るとは出席・環境マスへの配置・装備を指す。遅刻ゾーンへの移動や通常使用後の校外送りでは重ねて発動しない。",
       "超吸血": "攻撃で与えたダメージの分だけ、自分本体の気力を回復する。この出席者自身の体力は回復しない。",
       "超陽気": "出席したターンでも、出席者と相手本体のどちらにも攻撃できる。",
       "陽気": "出席したターンでも出席者を攻撃できる。相手本体は攻撃できない。",
@@ -55928,12 +55940,12 @@
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
-        wonton_greeting: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。",
-        wonton_stall: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。",
-        wonton_fever: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。",
-        wonton_rebellion: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。",
-        wonton_final_battle: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。",
-        wonton_graduation: "[提出]「万豚記カウント」\n提出したとき、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。",
+        wonton_greeting: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。",
+        wonton_stall: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。",
+        wonton_fever: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。",
+        wonton_rebellion: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。",
+        wonton_final_battle: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。",
+        wonton_graduation: "[提出]\n自分の万豚記カウントを1増やす。その後、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。",
         two_achievers: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
