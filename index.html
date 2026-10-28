@@ -19966,7 +19966,7 @@
         "version": "ver.0.35.0",
         "versioning": "semver",
         "date": "2026年10月28日",
-        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。「提出」の共通発動条件と、万豚記カウントの固有效果を分離し、継続効果の自動チェックを現行の説明文に合わせて修正しました。",
+        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。「提出」の共通発動条件と、万豚記カウントの固有效果を分離し、継続効果の自動チェックを現行の説明文に合わせて修正しました。「微笑み講師」の自身の回復による連鎖も修正しました。",
         "changes": [
           {
             "category": "システム",
@@ -19977,6 +19977,13 @@
             "category": "不具合修正",
             "title": "継続効果の自動チェック",
             "after": "「プロ言の長」と「ウマの骨」の効果・表示文を照合し、古い文面を参照していた自動チェックを修正しました。「TA」とつく出席者への体力強化、強化解除、オンライン同期も確認しました。カードの能力値や効果内容は変更していません。"
+          },
+          {
+            "category": "不具合修正",
+            "title": "微笑み講師",
+            "before": "教師／共通カード／戦意4／攻撃力0／体力4\nこのカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。",
+            "after": "教師／共通カード／戦意4／攻撃力0／体力4\nこのカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、「微笑み講師」の効果以外で自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。",
+            "afterHighlights": ["「微笑み講師」の効果以外で"]
           },
           {
             "category": "新カード",
@@ -40288,7 +40295,7 @@
         generateWontonCard(side, "wonton_greeting", card);
       }
       if (card.baseId === "smiling_lecturer") {
-        healPlayer(side, 1);
+        healPlayer(side, 1, card);
         addLog(`${card.name}の出席時効果：自分の気力を1回復しました。`);
       }
       if (card.baseId === "window_eater") resolveWindowEaterAttendance(side, card);
@@ -45543,12 +45550,11 @@
       showFloatingTextForLife(side, `-${amount}`, "damage");
     }
 
-    function healPlayer(side, amount) {
+    function healPlayer(side, amount, source = null) {
       if (amount <= 0) return 0;
-      // Resolve recovery triggers in a queue: each +1 is a new recovery event,
-      // including those caused by another smiling lecturer. Zero recovery at
-      // the life cap creates no new triggers, so the chain always terminates.
-      const recoveries = [{ amount, source: null }];
+      // Lecturer-originated recovery never triggers another lecturer, including
+      // the source's attendance recovery and additional recovery from other copies.
+      const recoveries = [{ amount, source }];
       let initialHealed = 0;
       for (let index = 0; index < recoveries.length; index += 1) {
         const recovery = recoveries[index];
@@ -45565,7 +45571,8 @@
           details: { targetSide: side, before, after: state.players[side].life, healed }
         });
         showFloatingTextForLife(side, `+${healed}`, "heal");
-        if (recovery.source) addLog(`${recovery.source.name}の効果：自分の気力を1回復しました。`);
+        if (index > 0 && recovery.source) addLog(`${recovery.source.name}の効果：自分の気力を1回復しました。`);
+        if (recovery.source?.baseId === "smiling_lecturer") continue;
         listBoardRefs(side).forEach((ref) => {
           const source = getBoardCardFromRef(ref);
           if (source?.baseId === "smiling_lecturer" && source.currentHp > 0 && canUseOngoingCardEffects(source)) {
@@ -53434,7 +53441,7 @@
         hand: ["fire_touch", "onigiri_draw", "kashikashi"], life: 10,
         own: { seats: [], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
         deck: ["onigiri_draw", "fire_touch", "smiling_lecturer", "general_student", "fluid_pasta"],
-        note: "気力10から微笑み講師を出席させ、回復の連鎖を確認できます。その後、「火に触れてしまう」で気力を減らし、おにぎりドローで再び回復できます。カシカシで連鎖が止まる場合も試せます。"
+        note: "気力10から微笑み講師を出席させ、気力が1だけ回復することを確認できます。その後、「火に触れてしまう」で気力を減らし、おにぎりドローの2回復に追加の1回復が発動することを試せます。微笑み講師自身の効果による回復では再発動しません。カシカシで追加回復が止まる場合も比較できます。"
       },
       kakiage_teacher: {
         hand: ["onigiri_draw", "general_student"], life: 12,
@@ -55954,7 +55961,7 @@
         two_achievers: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
-        smiling_lecturer: "このカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。",
+        smiling_lecturer: "このカードを手札から出席させたとき、自分の気力を1回復する。このカードが自分の講義室にいるかぎり、「微笑み講師」の効果以外で自分の気力が回復したとき、自分の気力を1回復する。このカードは講義を持たない。",
         kakiage_teacher: "陽気を持つ。このカードが教卓マスにいるかぎり、自分のターン終了時に自分本体の気力を1回復する。",
         window_eater: "このカードを手札から出席させたとき、相手の席マスの列を1つ選び、その列にいる出席者すべてを破壊する。環境が「食堂」なら、1つではなく2つの列を選ぶ。環境が「食堂」であるかぎり、このカードの戦意を-2する。",
         jobs_woody: "このカードを手札から出席させたとき、自分の空いている席マス1つを選び、そこに「見習いヴァンパイア」を1人出席させる。環境が「食堂」なら、この効果をもう一度発動する。環境が「食堂」であるかぎり、このカードの戦意を-1する。",
