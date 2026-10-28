@@ -206,7 +206,7 @@ test("効果のある環境を両者の継続効果へ表示し、上書きす�
     api.state.players.player.internTurnsRemaining = 0;
     api.state.players.opponent.effectUseLockTurnsRemaining = 0;
     api.state.fullLockSeatBlocks = ["player", "opponent"].flatMap((owner) => [0, 1, 2].map((index) => ({ owner, index })));
-    return Object.entries(api.CARD_BASES).filter(([, card]) => card.type === "environment" && card.name !== "一般教室")
+    return Object.entries(api.CARD_BASES).filter(([, card]) => card.type === "environment" && card.name !== "一般教室" && !card.submissionCounter)
       .map(([id, card]) => ({ id, name: card.name }));
   });
   for (const environment of environments) {

@@ -19515,7 +19515,17 @@
       return IMMEDIATE_ITEM_IDS.includes(baseId) || CRAB_SET_IDS.includes(baseId);
     }
 
+    const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const CARD_BASES = {
+      wonton_greeting: {"name": "万豚記～挨拶シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 0},
+      wonton_stall: {"name": "万豚記～屋台シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 1},
+      wonton_fever: {"name": "紅の万豚記～熱狂シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 2},
+      wonton_rebellion: {"name": "叛逆の万豚記～敵地を玉砕～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 3},
+      wonton_final_battle: {"name": "燃えよ！万豚記～決戦シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 4},
+      wonton_graduation: {"name": "恋の万豚記～卒業シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submissionCounter": "万豚記カウント", "submissionStage": 5},
+      wonton_ki: { name: "万豚記", type: "environment", cost: 4, attack: 0, hp: 0, allowedZones: ["environment"], category: "common" },
+      female_highball: { name: "女のハイボール", type: "item", cost: 3, attack: 0, hp: 0, target: "self", category: "common" },
+      male_highball: { name: "男のハイボール", type: "item", cost: 3, attack: 0, hp: 0, target: "self", category: "common" },
       chotto_machii: { name: "ちょっと待ちぃ", type: "item", cost: 10, target: "self", category: "common" },
       ittan: { name: "一旦", type: "item", cost: 8, target: "self", category: "common" },
       smiling_lecturer: { name: "微笑み講師", type: "teacher", cost: 4, attack: 0, hp: 4, noLecture: true, allowedZones: ["teacher"], category: "common" },
@@ -19884,7 +19894,7 @@
     Object.values(CARD_BASES).forEach((base) => { base.attendanceTrigger = ATTENDANCE_TRIGGER.HAND; });
     [
       "midge", "organism", "perfect_mutant", "adjective_student", "cancel_student",
-      "big_omata"
+      "big_omata", "wonton_ki"
     ].forEach((baseId) => {
       if (CARD_BASES[baseId]) CARD_BASES[baseId].attendanceTrigger = ATTENDANCE_TRIGGER.ANY;
     });
@@ -19902,6 +19912,9 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("wonton_ki", "female_highball", "male_highball");
+    SPECIALTY_CARD_IDS.common.push("wonton_ki", "female_highball", "male_highball");
+    IMMEDIATE_ITEM_IDS.push("female_highball", "male_highball");
     ALL_DECK_IDS.push("two_achievers");
     ALL_DECK_IDS.push("sunglasses_ta");
     SPECIALTY_CARD_IDS.common.push("sunglasses_ta");
@@ -19948,6 +19961,64 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        "version": "ver.0.35.0",
+        "versioning": "semver",
+        "date": "2026年10月28日",
+        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。",
+        "changes": [
+          {
+            "category": "システム",
+            "title": "提出",
+            "after": "使用・場への配置・効果で手札から校外エリアへ送られたとき、指定された自分のカウントを1増やし、その後「提出したとき」の効果を発動します。同じ使用・効果処理では1回だけ発動し、遅刻ゾーンへの移動や通常使用後の校外送りでは重ねて発動しません。"
+          },
+          {
+            "category": "新カード",
+            "title": "万豚記",
+            "after": "環境／共通カード／戦意4／攻撃力0／体力0\nこのカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。"
+          },
+          {
+            "category": "新カード",
+            "title": "女のハイボール",
+            "after": "持ち物／共通カード／戦意3／攻撃力0／体力0\nこのカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。"
+          },
+          {
+            "category": "新カード",
+            "title": "男のハイボール",
+            "after": "持ち物／共通カード／戦意3／攻撃力0／体力0\nこのカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。"
+          },
+          {
+            "category": "新カード",
+            "title": "万豚記～挨拶シリーズ～",
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。\n生成専用カード。"
+          },
+          {
+            "category": "新カード",
+            "title": "万豚記～屋台シリーズ～",
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。\n生成専用カード。"
+          },
+          {
+            "category": "新カード",
+            "title": "紅の万豚記～熱狂シリーズ～",
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。\n生成専用カード。"
+          },
+          {
+            "category": "新カード",
+            "title": "叛逆の万豚記～敵地を玉砕～",
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。\n生成専用カード。"
+          },
+          {
+            "category": "新カード",
+            "title": "燃えよ！万豚記～決戦シリーズ～",
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。\n生成専用カード。"
+          },
+          {
+            "category": "新カード",
+            "title": "恋の万豚記～卒業シリーズ～",
+            "after": "環境／共通カード／戦意8／攻撃力0／体力0\n[提出]「万豚記カウント」\n提出したとき、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。\n生成専用カード。"
+          }
+        ]
+      },
       {
         version: "ver.0.34.0",
         versioning: "semver",
@@ -22908,6 +22979,7 @@
       internTurnsRemaining: 0,
       effectUseLockTurnsRemaining: 0,
       skipAllTurns: false,
+      submissionCounters: {},
       retainNextUsedItem: false,
       turnActionTaken: false,
       designTextbookBonus: 0,
@@ -32751,6 +32823,16 @@
     }
 
     function scoreAiEnvironment(card, side = "opponent") {
+      if (!arePlayedEffectsSuppressed(side)) {
+        if (card.baseId === "wonton_ki") return ongoingEnvironmentBaseId() === "wonton_ki" ? -100 : 8 + state.players[side].hand.filter(c=>c.submissionCounter).length * 4;
+        if (card.submissionCounter) {
+          if (card.baseId === "wonton_graduation") {
+            const damage = Math.min(10, ((state.players[side].submissionCounters?.[card.submissionCounter] || 0) + 1) * 2);
+            return damage >= state.players[oppositeSide(side)].life ? 1000 : damage * 2;
+          }
+          return 6 + (card.submissionStage === 4 ? listBoardRefs(side).length * 2 : 0);
+        }
+      }
       if (ongoingEnvironmentBaseId() === card.baseId && card.baseId !== "seat_rules") return -100;
       const targetSide = oppositeSide(side);
       const friendlySeats = state.players[side].board.seats;
@@ -32929,6 +33011,11 @@
 
     function scoreAiItem(item, options = {}) {
       if (arePlayedEffectsSuppressed("opponent")) return 0;
+      if (["female_highball", "male_highball"].includes(item?.baseId)) {
+        if (!canUseHighball("opponent", item)) return 0;
+        const series = highballDiscardCandidates("opponent", item).some(card => card.submissionCounter);
+        return (series ? 12 : 1) + (item.baseId === "female_highball" ? Math.max(0, Math.min(2, currentLifeCap("opponent") - state.players.opponent.life)) * 2 + 3 : 6);
+      }
       if (item?.baseId === "chotto_machii") return scoreAiChottoMachii("opponent", item);
       if (item?.baseId === "ittan") {
         const value = side => listBoardRefs(side).map(getBoardCardFromRef)
@@ -34139,7 +34226,7 @@
           openCardChoice({
             mode: "meguro_online_end_turn",
             title: "校外エリアへ送るカードを選んでください",
-            message: "目黒区図書館の効果で、手札1枚を校外エリアへ送ります。",
+            message: `${state.environment.name}の効果で、手札1枚を校外エリアへ送ります。`,
             cards: state.players.player.hand.filter((card) => !isHighLoadHandCard(card)),
             min: 1,
             max: 1,
@@ -34156,14 +34243,16 @@
       const endingSide = state.currentSide;
       if (fromAi && needsMeguroHandChoice(endingSide) && !options.meguroDiscardId) {
         const discard = state.players[endingSide].hand.filter((card) => !isHighLoadHandCard(card))
-          .sort((a, b) => trainingAiChoiceCardScore(endingSide, a) - trainingAiChoiceCardScore(endingSide, b))[0];
+          .sort((a, b) => ongoingEnvironmentBaseId() === "wonton_ki"
+            ? submissionDiscardValue(endingSide, b) - submissionDiscardValue(endingSide, a)
+            : trainingAiChoiceCardScore(endingSide, a) - trainingAiChoiceCardScore(endingSide, b))[0];
         options = { ...options, meguroDiscardId: discard?.instanceId || null };
       }
       if (endingSide === "player" && needsMeguroHandChoice("player") && !options.meguroDiscardId) {
         openCardChoice({
           mode: "meguro_end_turn",
           title: "校外エリアへ送るカードを選んでください",
-          message: "目黒区図書館の効果で、手札1枚を校外エリアへ送ります。",
+          message: `${state.environment.name}の効果で、手札1枚を校外エリアへ送ります。`,
           cards: state.players.player.hand.filter((card) => !isHighLoadHandCard(card)),
           min: 1,
           max: 1,
@@ -34238,8 +34327,8 @@
 
     function needsMeguroHandChoice(side) {
       if (ongoingEffectsSuppressed()) return false;
-      return ongoingEnvironmentBaseId() === "meguro_library"
-        && state.environment.owner === side
+      return (ongoingEnvironmentBaseId() === "wonton_ki"
+        || (ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side))
         && state.players[side].hand.some((card) => !isHighLoadHandCard(card));
     }
 
@@ -34529,12 +34618,14 @@
           addLog(`ドア前戦争の効果：このターンに${SIDES[side]}が出席させた${target.name}に1ダメージ。`);
         }
       }
-      if (ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side) {
+      if (ongoingEnvironmentBaseId() === "wonton_ki"
+        || (ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side)) {
+        const environmentName = state.environment.name;
         const discarded = discardOneHandCardForMeguro(side, options.meguroDiscardId);
         if (discarded) {
-          addLog(`目黒区図書館の効果：${SIDES[side]}は手札1枚を校外エリアへ送りました。`);
+          addLog(`${environmentName}の効果：${SIDES[side]}は手札1枚を校外エリアへ送りました。`);
         } else {
-          addLog("目黒区図書館の効果：手札がないため校外エリアへ送れませんでした。");
+          addLog(`${environmentName}の効果：手札がないため校外エリアへ送れませんでした。`);
         }
       }
       resolveDormCouncilEndTurnDraw(side);
@@ -35028,7 +35119,7 @@
         index = hand.findIndex((card) => card.instanceId === chosen.instanceId);
       }
       const [discarded] = hand.splice(index, 1);
-      moveToTrash(side, discarded);
+      moveToTrash(side, discarded, { sourceZone: "hand", effectDiscard: true });
       return discarded;
     }
 
@@ -35175,7 +35266,7 @@
             }
           });
         } else {
-          moveToTrash(side, entry.card);
+          moveToTrash(side, entry.card, { sourceZone: "late" });
           addLog(`${entry.card.name}は出席先が埋まり、校外エリアへ移動しました。`);
           analyticsRecordEffect({
             side,
@@ -35218,7 +35309,7 @@
         });
       } else {
         player.late.splice(entryIndex, 1);
-        moveToTrash(side, entry.card);
+        moveToTrash(side, entry.card, { sourceZone: "late" });
         addLog(`${entry.card.name}は出席先が埋まり、校外エリアへ移動しました。`);
         analyticsRecordEffect({
           side,
@@ -35282,7 +35373,7 @@
         beta.createdActionTurn = state.actionTurn;
         nextHand.push(beta);
         showCardPlayAnimation(card, "trash");
-        moveToTrash(side, card, { handRevealShown: true });
+        moveToTrash(side, card, { handRevealShown: true, sourceZone: "hand" });
         addLog(`${SIDES[side]}のアルファの効果：「ベータ」を手札に加え、アルファを校外エリアへ送りました。`);
       });
       const resolvedHand = [];
@@ -35306,7 +35397,7 @@
         }
         showCardPlayAnimation(card, "trash");
         resolvedHand.push(publicHandCard("gamma", side));
-        moveToTrash(side, card, { handRevealShown: true });
+        moveToTrash(side, card, { handRevealShown: true, sourceZone: "hand" });
         addLog(`${SIDES[side]}のベータの効果：「ガンマ」を手札に加え、ベータを校外エリアへ送りました。`);
       });
       player.hand = resolvedHand;
@@ -36230,7 +36321,7 @@
       const moved = state.players[targetSide].hand.filter((card) => card.type === "item" && !isHighLoadHandCard(card) && selected.has(card.instanceId)).slice(0, 2);
       const movedIds = new Set(moved.map((card) => card.instanceId));
       state.players[targetSide].hand = state.players[targetSide].hand.filter((card) => !movedIds.has(card.instanceId));
-      moved.forEach((card) => moveToTrash(targetSide, card, { reason: item.name }));
+      moved.forEach((card) => moveToTrash(targetSide, card, { reason: item.name, sourceZone: "hand" }));
       showCardPlayAnimation(item, "trash");
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}で相手の手札の持ち物${moved.length}枚を校外エリアへ送りました。`);
@@ -37661,7 +37752,7 @@
       });
       const discardIds = new Set(discardCards.map((card) => card.instanceId));
       player.hand = player.hand.filter((card) => !discardIds.has(card.instanceId));
-      moveCardsToTrash(side, discardCards, { title: "〇〇デッキ〇〇抜きで校外へ送られたカード" });
+      moveCardsToTrash(side, discardCards, { title: "〇〇デッキ〇〇抜きで校外へ送られたカード", sourceZone: "hand" });
       moveHandCardToTrash(side, item);
       const movedText = trashDetailCountText(side, discardCards, "〇〇デッキ〇〇抜きで校外へ送られたカード");
       addLog(`${SIDES[side]}は〇〇デッキ〇〇抜きを使い、デッキを2枚引き、手札から${movedText}を校外エリアへ送りました。`);
@@ -37859,13 +37950,13 @@
       return fusionEffectTail;
     }
 
-    async function chooseFusionEffectCards(side, source, cards, count, kind) {
+    async function chooseFusionEffectCards(side, source, cards, count, kind, choiceOptions = {}) {
       if (!cards.length) return [];
       const max = Math.min(count, cards.length);
       if (isCpuControlledBattleSide(side)) {
         const sorted = [...cards].sort((a, b) => {
           if (kind === "damage") {
-            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:source.baseId === "maibo_bone" ? 3 : 2});
+            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:source.baseId === "male_highball" ? 4 : source.baseId === "maibo_bone" ? 3 : 2});
             return value(b)-value(a);
           }
           if (kind === "buff") {
@@ -37875,19 +37966,21 @@
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
           if (["destroy_columns", "two_achievers"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
         return sorted.filter(card => !["buff","damage"].includes(kind) || (!isPadlocked(card) && !isAibenNyoteiEffectImmune(card)
-          && (kind !== "damage" || !aiShouldPreserveEnemyTrpg(side,card)))).slice(0, max);
+          && (kind !== "damage" || choiceOptions.required || !aiShouldPreserveEnemyTrpg(side,card)))).slice(0, max);
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
-      const min = ["buff", "damage", "attendance_optional", "material_optional"].includes(kind) ? 0 : max;
+      const min = choiceOptions.required ? max : ["buff", "damage", "attendance_optional", "material_optional"].includes(kind) ? 0 : max;
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
         requestId, context: { kind }, confirmLabel: "確定" };
       if (kind === "destroy_columns") options.context.targetOwner = oppositeSide(side);
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
+      if (kind === "submission_discard") options.message = "校外エリアへ送る手札1枚を選んでください。";
       if (kind === "two_achievers") options.message = "次の効果から1つを選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
@@ -39904,6 +39997,7 @@
       const skipLocalEffects = options.skipLocalAttendEffects === true || card.skipAttendEffectsOnPlacement === true;
       delete card.skipAttendEffectsOnPlacement;
       if (!skipLocalEffects) {
+        if (!arePlayedEffectsSuppressed(owner)) triggerSubmission(owner, card, "field");
         resolveAttendEffects(owner, card, zone, index, {
           ...options,
           attendanceSource,
@@ -40181,6 +40275,11 @@
       if (arePlayedEffectsSuppressed(side)) {
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
+      }
+      if (card.baseId === "wonton_ki" && zone === "environment") {
+        const counters = state.players[side].submissionCounters ||= {};
+        counters["万豚記カウント"] ??= 0;
+        generateWontonCard(side, "wonton_greeting", card);
       }
       if (card.baseId === "smiling_lecturer") {
         healPlayer(side, 1);
@@ -40578,7 +40677,7 @@
           const discardedIndex = Math.floor(battleRandom() * opponentHand.length);
           const discarded = opponentHand[discardedIndex];
           state.players[opponent].hand = state.players[opponent].hand.filter((handCard) => handCard.instanceId !== discarded.instanceId);
-          moveToTrash(opponent, discarded, { handRevealShown: true });
+          moveToTrash(opponent, discarded, { handRevealShown: true, sourceZone: "hand" });
           showCardPlayAnimation(discarded, "trash");
           addLog(`${card.name}の効果：相手の手札から「${discarded.name}」1枚をランダムに選び、校外エリアへ送りました。`);
         } else {
@@ -41396,7 +41495,7 @@
         player.hand = player.hand.filter((entry) => entry.instanceId !== card.instanceId);
         moved.push(card);
       }
-      moveCardsToTrash(side, moved);
+      moveCardsToTrash(side, moved, { sourceZone: "hand" });
       return moved;
     }
 
@@ -41466,7 +41565,7 @@
       });
       const movedIds = new Set(moved.map((card) => card.instanceId));
       player.hand = player.hand.filter((card) => !movedIds.has(card.instanceId));
-      moveCardsToTrash(side, moved, { title });
+      moveCardsToTrash(side, moved, { title, sourceZone: "hand" });
       return moved;
     }
 
@@ -41565,7 +41664,7 @@
       let index = hand.findIndex((card) => card.instanceId === instanceId && !isHighLoadHandCard(card));
       if (index < 0) index = hand.findIndex((card) => card.instanceId === eligible[Math.floor(battleRandom() * eligible.length)].instanceId);
       const [discarded] = hand.splice(index, 1);
-      moveToTrash(opponent, discarded, { handRevealShown: true });
+      moveToTrash(opponent, discarded, { handRevealShown: true, sourceZone: "hand" });
       showCardPlayAnimation(discarded, "trash");
       addLog(`${source?.name || "効果"}：相手の手札1枚を校外エリアへ送りました。`);
       if (renderAfter) render();
@@ -42978,7 +43077,95 @@
       return hasReachedSecondPlayerSeventhTurn() ? 2 : 1;
     }
 
+    function generateWontonCard(side, baseId, source) {
+      const card = createCardFromBase(baseId, side);
+      state.players[side].hand.push(card);
+      analyticsRecordEffect({ side, source, effectType: "generate_hand", details: { card: analyticsCardInfo(card) } });
+      addLog(`${source.name}の効果：${SIDES[side]}の手札に「${card.name}」1枚を生成しました。`);
+      return card;
+    }
+
+    function submissionDiscardValue(side, card) {
+      if (card?.submissionCounter && canUsePrintedCardEffects(card)) {
+        const count = Number(state.players[side].submissionCounters?.[card.submissionCounter]) || 0;
+        return card.baseId === "wonton_graduation" ? Math.min(10, (count + 1) * 2) * 4 : 20;
+      }
+      return -trainingAiChoiceCardScore(side, card);
+    }
+
+    function triggerSubmission(side, card, cause) {
+      if (!card?.submissionCounter || !canUsePrintedCardEffects(card)) return false;
+      const source = { ...card };
+      queueFusionEffect(async () => {
+        const counters = state.players[side].submissionCounters ||= {};
+        counters[source.submissionCounter] = Math.max(0, Number(counters[source.submissionCounter]) || 0) + 1;
+        const count = counters[source.submissionCounter];
+        analyticsRecordEffect({ side, source, effectType: "submission", details: { counter: source.submissionCounter, count, cause } });
+        addLog(`[提出]：${SIDES[side]}の${source.submissionCounter}は${count}になりました。`);
+        showSharedCenterAnnouncement(`提出 ${count}`, "");
+        const stage = WONTON_SERIES_IDS.indexOf(source.baseId);
+        if (stage < 0) return;
+        if (stage < 5) generateWontonCard(side, WONTON_SERIES_IDS[stage + 1], source);
+        if (stage === 0) drawUpTo(side, 1);
+        if (stage === 1) healPlayer(side, 2);
+        if (stage === 2) {
+          const entry = randomEffectTargetEntry(side, oppositeSide(side));
+          if (entry) dealDamageToCard(entry.card, 3, source);
+        }
+        if (stage === 3) effectTargetEntries(side, oppositeSide(side)).forEach(entry => dealDamageToCard(entry.card, 1, source));
+        if (stage === 4) {
+          const cards = boardCardsForChoice(side, card => !isAibenNyoteiEffectImmune(card));
+          const [chosen] = await chooseFusionEffectCards(side, source, cards, 1, "buff", { required: true });
+          const target = chosen ? getBoardCardFromRef(chosen.choiceRef) : null;
+          if (target && target.instanceId === chosen.instanceId) applyPermanentStatBuff(target, 2, 2, 0, source.name);
+        }
+        if (stage === 5) {
+          const damage = Math.min(10, count * 2);
+          damagePlayer(oppositeSide(side), damage, source);
+          counters[source.submissionCounter] = 0;
+          addLog(`${source.name}の効果：相手本体に${damage}ダメージ。${source.submissionCounter}を0にしました。`);
+          analyticsRecordEffect({ side, source, effectType: "submission_reset", details: { counter: source.submissionCounter, damage, count: 0 } });
+          checkLifeVictory();
+        }
+      });
+      return true;
+    }
+
+    function highballDiscardCandidates(side, item) {
+      return state.players[side].hand.filter(card => card.instanceId !== item.instanceId && !isHighLoadHandCard(card));
+    }
+
+    function canUseHighball(side, item) {
+      return highballDiscardCandidates(side, item).length > 0
+        && (item.baseId !== "male_highball" || effectTargetEntries(side, oppositeSide(side)).length > 0);
+    }
+
+    function castHighball(side, item, renderAfter = true) {
+      if (!canUseHighball(side, item)) return false;
+      if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
+      if (!payForItem(side, item)) return false;
+      moveHandCardToTrash(side, item);
+      clearSelections();
+      queueFusionEffect(async () => {
+        const [selected] = await chooseFusionEffectCards(side, item, highballDiscardCandidates(side, item), 1, "submission_discard", { required: true });
+        const card = selected && getHandCard(side, selected.instanceId);
+        if (!card || !moveHandCardToTrash(side, card, { effectDiscard: true })) return;
+        if (item.baseId === "female_highball") {
+          drawUpTo(side, 1); healPlayer(side, 2);
+        } else {
+          const cards = effectTargetEntries(side, oppositeSide(side)).map(({card, ref}) => ({ ...card, choiceRef: ref }));
+          const [chosen] = await chooseFusionEffectCards(side, item, cards, 1, "damage", { required: true });
+          const target = chosen && getBoardCardFromRef(chosen.choiceRef);
+          if (target && target.instanceId === chosen.instanceId && isAllowedEffectTarget(side, target)) dealDamageToCard(target, 4, item);
+        }
+        addLog(`${SIDES[side]}は${item.name}で「${card.name}」を校外エリアへ送りました。`);
+      });
+      if (renderAfter) render();
+      return true;
+    }
+
     function castImmediateItem(side, item, renderAfter, options = {}) {
+      if (["female_highball", "male_highball"].includes(item?.baseId)) return castHighball(side, item, renderAfter);
       if (item?.baseId === "obon_mac" && !canUseObonMac(side)) {
         addLog(`${item.name}は自分の校外エリアにヴァンパイアが5枚以上ある場合にのみ使えます。`);
         if (renderAfter) render();
@@ -43972,13 +44159,13 @@
       }
       showCardPlayAnimation(item, "trash");
       state.players[side].hand = state.players[side].hand.filter((card) => card.instanceId !== target.instanceId);
-      moveToTrash(side, target);
+      moveToTrash(side, target, { sourceZone: "hand" });
       const opponent = oppositeSide(side);
       const opponentHandIndex = state.players[opponent].hand.findIndex((card) => !isHighLoadHandCard(card) && (card.baseId === target.baseId || card.name === target.name));
       let opponentDiscarded = 0;
       if (opponentHandIndex >= 0) {
         const [opponentCard] = state.players[opponent].hand.splice(opponentHandIndex, 1);
-        moveToTrash(opponent, opponentCard);
+        moveToTrash(opponent, opponentCard, { sourceZone: "hand" });
         opponentDiscarded = 1;
       }
       moveHandCardToTrash(side, item);
@@ -44240,6 +44427,7 @@
       }
       if (side === "player") pushTestHistoryBeforeAction();
       item.usedFromHand = true;
+      if (!arePlayedEffectsSuppressed(side)) triggerSubmission(side, item, "use");
       state.players[side].will -= playCost;
       const candidates = analyticsItemCandidates(side, item);
       analyticsRecordAction({
@@ -46286,6 +46474,8 @@
         addLog(`${card.name}は高負荷のため、効果で手札から校外エリアへ送れません。`);
         return false;
       }
+      const submissionSource = { ...card };
+      const submissionFromHand = options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId);
       const vanishes = isTokenCard(card);
       const wasUsedFromHand = card.usedFromHand === true;
       const fromHand = options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId)
@@ -46383,6 +46573,9 @@
           reason: "装備解除", sourceZone: "equipment"
         });
       }
+      if ((options.sourceZone ? options.sourceZone === "hand"
+        : submissionFromHand || (fromHand && !Number.isFinite(submissionSource.playedOnTurn)))
+        && !options.playedFromHand && !wasUsedFromHand) triggerSubmission(owner, submissionSource, "discard");
       return card;
     }
 
@@ -48236,6 +48429,7 @@
       if (item.baseId === "forbidden_book") return state.players.player.life <= 10;
       if (item.baseId === "contrarian_portal") return !listBoardRefs("player")
         .some((ref) => getBoardCardFromRef(ref)?.occupiedSeatSize?.rows > 1);
+      if (["female_highball", "male_highball"].includes(item.baseId)) return canUseHighball("player", item);
       if (isImmediateItemBaseId(item.baseId)) return true;
       if (item.target === "global") return true;
       if (item.baseId === "paired_existence") {
@@ -50197,9 +50391,12 @@
         lines.push(`アカデミックムーブ：効果を受けた自分の出席者${academicMarked}人は、自分のターン終了時に校外エリアへ送られます。`);
       }
       // 食堂・無法の食堂・図書館・遅刻無効は、残存期間や所有者も含めて既存処理で表示する。
-      if (!environment || ["classroom", "cafeteria", "illegal_cafeteria", "meguro_library", "no_late_time"].includes(environment.baseId)) return lines;
+      if (!environment || WONTON_SERIES_IDS.includes(environment.baseId) || ["classroom", "cafeteria", "illegal_cafeteria", "meguro_library", "no_late_time"].includes(environment.baseId)) return lines;
       let detail;
       switch (environment.baseId) {
+        case "wonton_ki":
+          detail = "自分のターン終了時、手札1枚を選び、校外エリアへ送ります。";
+          break;
         case "academic_move":
           detail = cardRulesText(environment);
           break;
@@ -50295,6 +50492,7 @@
       if (!player) return [];
       const lines = [];
       if (player.skipAllTurns) lines.push("ちょっと待ちぃ：この対戦中、自分のターンをすべて飛ばします。");
+      Object.entries(player.submissionCounters || {}).forEach(([name, count]) => lines.push(`${name}：${count}`));
       if (ongoingEffectsSuppressed()) return lines;
       if (player.retainNextUsedItem) {
         lines.push(`${CARD_BASES.jailbreak_tutuapp.name}：次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。`);
@@ -53205,6 +53403,16 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      wonton_ki: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": null, "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_greeting: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_stall: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_fever: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_rebellion: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_final_battle: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_graduation: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 4, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出によるカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+
       smiling_lecturer: {
         hand: ["fire_touch", "onigiri_draw", "kashikashi"], life: 10,
         own: { seats: [], teacher: null }, enemy: { seats: [[4, "general_student"]], teacher: null },
@@ -53362,6 +53570,7 @@
       player.life = scenario.life ?? 20;
       player.maxWill = scenario.will ?? 20;
       player.will = player.maxWill;
+      if (scenario.submissionCount !== undefined) player.submissionCounters = { "万豚記カウント": scenario.submissionCount };
       if (scenario.trash) player.trash = scenario.trash.map(id => createCardFromBase(id, "player"));
       if (scenario.enemyHand) state.players.opponent.hand = scenario.enemyHand.map(id => createCardFromBase(id, "opponent"));
       if (scenario.environment) state.environment = makeBoardCard(createCardFromBase(scenario.environment, "player"));
@@ -54977,6 +55186,7 @@
     }
 
     const BATTLE_CARD_TERM_DESCRIPTIONS = {
+      "提出": "このカードを使用したとき、場に出たとき、または効果で手札から校外エリアへ送られたとき、指定された自分のカウントを1増やし、その後「提出したとき」の効果を発動する。同じ使用・効果処理では1回だけ発動する。出席・環境マスへの配置・装備を含み、遅刻ゾーンへの移動や通常使用後の校外送りでは発動しない。",
       "超吸血": "攻撃で与えたダメージの分だけ、自分本体の気力を回復する。この出席者自身の体力は回復しない。",
       "超陽気": "出席したターンでも、出席者と相手本体のどちらにも攻撃できる。",
       "陽気": "出席したターンでも出席者を攻撃できる。相手本体は攻撃できない。",
@@ -55715,6 +55925,15 @@
         if (kingdomRules[card.baseId]) return formatCardRulesDisplayText(card, kingdomRules[card.baseId]);
       }
       const rules = {
+        wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
+        female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
+        male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
+        wonton_greeting: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。",
+        wonton_stall: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。",
+        wonton_fever: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。",
+        wonton_rebellion: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。",
+        wonton_final_battle: "[提出]「万豚記カウント」\n提出したとき、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。",
+        wonton_graduation: "[提出]「万豚記カウント」\n提出したとき、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。",
         two_achievers: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
