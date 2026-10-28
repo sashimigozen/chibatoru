@@ -48,9 +48,9 @@ test('カード確認のテストから気力回復と再回復を順に試せ�
   expect(await page.evaluate(()=>state.players.player.life)).toBe(10);
   await page.screenshot({path:'/tmp/chibatoru-card-test-smiling-ready.png'});
   await play(page,'smiling_lecturer','teacher',null);
-  expect(await page.evaluate(()=>state.players.player.life)).toBe(20);
-  await item(page,'fire_touch');expect(await page.evaluate(()=>state.players.player.life)).toBe(16);
-  await item(page,'onigiri_draw');expect(await page.evaluate(()=>state.players.player.life)).toBe(20);
+  expect(await page.evaluate(()=>state.players.player.life)).toBe(11);
+  await item(page,'fire_touch');expect(await page.evaluate(()=>state.players.player.life)).toBe(7);
+  await item(page,'onigiri_draw');expect(await page.evaluate(()=>state.players.player.life)).toBe(10);
 });
 
 test('かき揚げ教師を教卓へ出し、ターン終了時の回復を試せる',async({page})=>{

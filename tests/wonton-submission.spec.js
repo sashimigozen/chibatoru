@@ -20,14 +20,117 @@ test.beforeEach(async({page})=>{
 });
 test('9枚の能力値・本文・生成専用登録と管理ログ表示情報を同期',async({page})=>{
   const catalog=require('../server/card-catalog.json');
+  const ledger=JSON.parse(fs.readFileSync(path.join(__dirname,'../カード管理台帳.html'),'utf8').match(/const CARDS = (\[[^\r\n]*\]);/)[1]);
+  expect(await page.evaluate(() => Object.entries(CARD_BASES).filter(([,card])=>card.submission).map(([id])=>id))).toEqual(series);
   const data=await page.evaluate(ids=>ids.map(id=>{const c=CARD_BASES[id];return {id,name:c.name,stats:[c.cost,c.attack,c.hp],text:cardRulesText(createCardFromBase(id,'player')),direct:DIRECT_DECK_CARD_IDS.has(id),generated:!!c.generated};}),ids);
   for(const [i,c]of data.entries()){
     expect(c.stats).toEqual([i===0?4:i<3?3:8,0,0]);expect(c.direct).toBe(i<3);expect(c.generated).toBe(i>=3);
     expect(catalog.names[c.id]).toBe(c.name);expect(catalog.display[c.id].cost).toBe(c.stats[0]);
     const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8').split('\n').find(line=>line.trimStart().startsWith(c.id+':')).trim().replace(/^[^:]+: /,'').replace(/,$/,''));
     expect(c.text.replaceAll('\n','')).toBe(raw.replace('提出したとき','[提出]したとき').replaceAll('\n',''));
-    if(i>=3){expect(c.text).toMatch(/^\[提出\]「万豚記カウント」\n\[提出\]したとき、/);}
+    expect(ledger.find(card=>card.id===c.id).effect).toBe(raw);
+    if(i>=3){expect(c.text).toMatch(/^\[提出\]\n自分の万豚記カウントを1増やす。その後、/);}
   }
+});
+test('提出を持たない通常カードでは出席・使用・手札捨て・装備をしても提出しない', async ({ page }) => {
+  await page.evaluate(() => {
+    window.unexpectedSubmissions = [];
+    for (const id of ['general_student', 'general_teacher', 'vampire', 'peaceful_mind', 'earphones']) {
+      if (CARD_BASES[id].submission) throw new Error('通常カードに提出が付いている: ' + id);
+      SUBMISSION_EFFECT_HANDLERS[id] = () => unexpectedSubmissions.push(id);
+    }
+    state.players.player.submissionCounters = { '万豚記カウント': 4 };
+    for (const [id, zone, index] of [['general_student', 'seat', 0], ['general_teacher', 'teacher', null], ['vampire', 'seat', 1]]) {
+      attendCard('player', makeBoardCard(createCardFromBase(id, 'player')), zone, index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED });
+    }
+    const discarded = createCardFromBase('general_student', 'player');
+    const item = createCardFromBase('peaceful_mind', 'player');
+    const equipment = createCardFromBase('earphones', 'player');
+    state.players.player.hand = [discarded, item, equipment];
+    moveHandCardToTrash('player', discarded, { effectDiscard: true });
+    castImmediateItem('player', item, false);
+    castItemOnCard('player', equipment, 'player', 'seat', 0, false);
+  });
+  await settle(page);
+  expect(await page.evaluate(() => [unexpectedSubmissions, state.players.player.submissionCounters]))
+    .toEqual([[], { '万豚記カウント': 4 }]);
+});
+test('用語台帳では提出の共通条件と万豚記固有のカウントを別項目にする', () => {
+  const rules=JSON.parse(fs.readFileSync(path.join(__dirname,'../ルール・用語管理台帳.html'),'utf8').match(/const RULES = (\[[^\r\n]*\]);/)[1]);
+  const submission=rules.find(rule=>rule.id==='submission');
+  expect(submission.body).toContain('同じプレイで複数の条件を満たしても、発動は1回だけ');
+  expect(submission.body).not.toContain('カウント');
+  expect(rules.find(rule=>rule.id==='wonton_counter').body).toContain('万豚記シリーズのカード本文に従って増加・参照・リセットする');
+});
+for (const [baseId, zone] of [['general_student', 'seat'], ['general_teacher', 'teacher'], ['vampire', 'seat']]) {
+  test(`テストで提出を付けた${baseId}はカウントなしで出席時効果を発動できる`, async ({ page }) => {
+    await page.evaluate(({ baseId, zone }) => {
+      CARD_BASES[baseId].submission = true;
+      window.submissionCalls = [];
+      SUBMISSION_EFFECT_HANDLERS[baseId] = (side, source, cause) => {
+        submissionCalls.push([source.baseId, cause]);
+        healPlayer(side, 1);
+      };
+      state.players.player.submissionCounters = { '別のカウント': 7 };
+      const card = makeBoardCard(createCardFromBase(baseId, 'player'));
+      attendCard('player', card, zone, zone === 'seat' ? 0 : null, { attendanceSource: ATTENDANCE_SOURCE.GENERATED });
+    }, { baseId, zone });
+    await settle(page);
+    expect(await page.evaluate(() => ({
+      calls: submissionCalls,
+      counters: state.players.player.submissionCounters,
+      life: state.players.player.life
+    }))).toEqual({ calls: [[baseId, 'field']], counters: { '別のカウント': 7 }, life: 11 });
+  });
+}
+test('万豚記以外の提出は効果による手札捨てでも発動し、カウントを増やさない', async ({ page }) => {
+  await page.evaluate(() => {
+    CARD_BASES.general_student.submission = true;
+    window.submissionCalls = [];
+    SUBMISSION_EFFECT_HANDLERS.general_student = (side, source, cause) => {
+      submissionCalls.push(cause);
+      healPlayer(side, 1);
+    };
+    state.players.player.submissionCounters = { '万豚記カウント': 4 };
+    const card = createCardFromBase('general_student', 'player');
+    state.players.player.hand = [card];
+    moveHandCardToTrash('player', card, { effectDiscard: true });
+  });
+  await settle(page);
+  expect(await page.evaluate(() => [submissionCalls, state.players.player.submissionCounters, state.players.player.life]))
+    .toEqual([['discard'], { '万豚記カウント': 4 }, 11]);
+});
+test('提出を持つ持ち物は使用で1回だけ発動し、手札に残って再使用した場合はもう1回発動する', async ({ page }) => {
+  await page.evaluate(() => {
+    CARD_BASES.peaceful_mind.submission = true;
+    window.submissionCalls = [];
+    SUBMISSION_EFFECT_HANDLERS.peaceful_mind = (side, source, cause) => submissionCalls.push(cause);
+    state.players.player.retainNextUsedItem = true;
+    const card = createCardFromBase('peaceful_mind', 'player');
+    state.players.player.hand = [card];
+    castImmediateItem('player', card, false);
+  });
+  await settle(page);
+  expect(await page.evaluate(() => [submissionCalls, state.players.player.hand.map(card => card.baseId)]))
+    .toEqual([['use'], ['peaceful_mind']]);
+  await page.evaluate(() => castImmediateItem('player', state.players.player.hand[0], false));
+  await settle(page);
+  expect(await page.evaluate(() => [submissionCalls, state.players.player.hand.length, state.players.player.submissionCounters]))
+    .toEqual([['use', 'use'], 0, {}]);
+});
+test('提出を持つ装備は使用から装備までの1プレイで1回だけ発動する', async ({ page }) => {
+  await page.evaluate(() => {
+    CARD_BASES.earphones.submission = true;
+    window.submissionCalls = [];
+    SUBMISSION_EFFECT_HANDLERS.earphones = (side, source, cause) => submissionCalls.push(cause);
+    state.players.player.board.seats[0] = makeBoardCard(createCardFromBase('general_student', 'player'));
+    const card = createCardFromBase('earphones', 'player');
+    state.players.player.hand = [card];
+    castItemOnCard('player', card, 'player', 'seat', 0, false);
+  });
+  await settle(page);
+  expect(await page.evaluate(() => [submissionCalls, isEarphoneEquipped(state.players.player.board.seats[0]), state.players.player.submissionCounters]))
+    .toEqual([['use'], true, {}]);
 });
 for(const id of series)test(`提出の各効果・カウント先行・生成 ${id}`,async({page})=>{
   await page.evaluate(id=>{
