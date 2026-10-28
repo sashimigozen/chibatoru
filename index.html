@@ -19518,8 +19518,9 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
+      secretly_mocked_student: {"name": "密かに冷笑される女学生", "type": "student", "cost": 4, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedSeatIndex": 8, "allowedZones": ["seat"]},
       short_sleeve_student: {"name": "半袖の学生", "type": "student", "cost": 2, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
-      pinige: {"name": "ピニゲ", "type": "item", "cost": 3, "attack": 0, "hp": 0, "target": "self", "pointKillSource": true, "category": "common"},
+      pinige: {"name": "ピニゲ", "type": "item", "cost": 3, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       gecko_carrier_student: {"name": "ヤモリを背負う学生", "type": "student", "cost": 7, "attack": 4, "hp": 4, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       lucky_man: {"name": "福男", "type": "student", "cost": 5, "attack": 2, "hp": 3, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       long_sleeve_student: {"name": "長袖の学生", "type": "student", "cost": 4, "attack": 1, "hp": 3, "keywords": ["陽気"], "attackLimit": 2, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
@@ -19920,7 +19921,7 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
-    const POINT_CARD_IDS = ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "long_sleeve_student", "group_sniper", "could_not_escape_student"];
+    const POINT_CARD_IDS = ["secretly_mocked_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "long_sleeve_student", "group_sniper", "could_not_escape_student"];
     ALL_DECK_IDS.push(...POINT_CARD_IDS);
     SPECIALTY_CARD_IDS.common.push(...POINT_CARD_IDS);
     IMMEDIATE_ITEM_IDS.push("pinige");
@@ -20060,7 +20061,7 @@
           {
             "category": "システム",
             "title": "点数・単位",
-            "after": "［点数］を持つカードとピニゲによる相手の出席者の撃破で、自分の点数を1獲得します。攻撃・反撃・能力のダメージ・直接破壊が対象です。10点で単位取得済みとなり、以後は加点しません。10点目では福男の点数獲得時効果を発動しません。継続効果欄に進行状況を表示し、カード本文は単位取得前後とも、通常の効果、単位取得済みの効果の順に表示します。新カードごとのテスト用の手札・デッキ・盤面を用意し、通常効果、単位取得後、加点とオンライン同期の確認を追加しました。"
+            "after": "自分のターン中、［点数］を持つ自分のカードが相手の出席者を倒すと、点数を1獲得します。攻撃・能力のダメージ・直接破壊が対象です。相手ターン中の反撃やピニゲなど、［点数］を持たないカードによる撃破は加点しません。10点で単位取得済みとなり、以後は加点しません。10点目では福男の点数獲得時効果を発動しません。カード本文は常に通常の効果、単位取得済みの効果の順です。カードごとのテスト環境と、加点・オンライン同期の確認を用意しています。"
           },
           {
             "category": "新カード",
@@ -20101,6 +20102,17 @@
             "category": "表示・操作改善",
             "title": "点数カードの本文順",
             "after": "［点数］を持つカードの本文を、単位取得前後とも「元から持つ効果 → 単位取得済みなら」の順に固定しました。選択肢のあるカードも通常の選択肢を先に記載します。表示順の確認を更新し、能力値や効果の処理は変更していません。"
+          },
+          {
+            "category": "新カード",
+            "title": "密かに冷笑される女学生",
+            "after": "学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。"
+          },
+          {
+            "category": "システム",
+            "title": "点数の獲得条件",
+            "before": "［点数］を持つ自分のカードとピニゲが、攻撃・反撃・能力のダメージ・直接破壊で相手の出席者を倒すと、双方のターンで加点する。",
+            "after": "自分のターン中、［点数］を持つ自分のカードが相手の出席者を倒したときだけ加点する。ピニゲは加点対象外。反撃・能力・直接破壊を含め、相手ターン中の撃破では加点しない。関連する表示とテストも更新しました。"
           }
         ]
       },
@@ -23256,7 +23268,7 @@
     function analyticsStartGame() {
       for (const side of ["player", "opponent"]) {
         const player = state.players[side];
-        player.pointSystemActive ||= Object.entries(player.originalDeckCounts || {}).some(([id, count]) => count > 0 && (CARD_BASES[id]?.hasPoint || CARD_BASES[id]?.pointKillSource));
+        player.pointSystemActive ||= Object.entries(player.originalDeckCounts || {}).some(([id, count]) => count > 0 && CARD_BASES[id]?.hasPoint);
       }
       analyticsSafe(() => {
         state.analytics = createAnalyticsState();
@@ -32553,6 +32565,12 @@
         if (card.baseId === "short_sleeve_student" || card.baseId === "group_sniper") score += Math.max(0,...targets.map(e=>scoreAiNonCombatEffectTarget("opponent",card,e,{damage: unit ? (card.baseId === "group_sniper" ? 2 : 3) : (card.baseId === "group_sniper" ? 1 : 2)})));
         if (["gecko_carrier_student","group_sniper"].includes(card.baseId) && zone === "seat") score += [index-1,index+1].filter(i=>i>=0 && i<9 && Math.floor(i/3)===Math.floor(index/3) && isBoardSlotOpen("opponent","seat",i)).length*7;
         if (card.baseId === "could_not_escape_student") score += targets.filter(e=>!isPadlocked(e.card)).sort((a,b)=>(b.card.attack+b.card.currentHp)-(a.card.attack+a.card.currentHp)).slice(0,3).reduce((v,e)=>v+e.card.attack+e.card.currentHp*.7,0);
+        if (card.baseId === "secretly_mocked_student" && targets.length) {
+          const values = targets.map(entry => isPadlocked(entry.card) ? 0 : unit
+            ? Math.max(0,scoreAiNonCombatEffectTarget("opponent",card,entry,{destroy:true}))
+            : Math.max(0,entry.card.currentHp-1)*1.5 + (isOneHpAttackLocked(entry.card) ? 0 : Math.max(0,entry.card.attack||0)*2) - (hasKeyword(entry.card,"余裕") ? 2 : 0));
+          score += unit ? Math.max(...values) : values.reduce((a,b)=>a+b,0)/values.length;
+        }
         if (card.baseId === "long_sleeve_student") score += unit ? 10 : 3;
         if (card.baseId === "lucky_man") score += unit ? 12 : Math.min(6,listBoardRefs("opponent").filter(r=>getBoardCardFromRef(r)?.hasPoint).length*3);
       }
@@ -38059,6 +38077,10 @@
             const value = card => card.pointLifeTarget ? (state.players[card.owner].life <= choiceOptions.damage ? 10000 : choiceOptions.damage * 1.3) : scoreAiNonCombatEffectTarget(side,source,{card,ref:listBoardRefs(card.owner).find(ref=>getBoardCardFromRef(ref)?.instanceId===card.instanceId)}, {damage:choiceOptions.damage || (source.baseId === "male_highball" ? 4 : source.baseId === "maibo_bone" ? 3 : 2)});
             return value(b)-value(a);
           }
+          if (kind === "point_destroy") {
+            const value = card => scoreAiNonCombatEffectTarget(side,source,{card,ref:card.choiceRef},{destroy:true});
+            return value(b)-value(a);
+          }
           if (kind === "buff") {
             const value = card => isPadlocked(card) || isAibenNyoteiEffectImmune(card) ? -100
               : Math.min(3,card.attackLimit||1)*3 + Math.min(5,Math.max(0,card.currentHp||0))*0.5;
@@ -39411,6 +39433,7 @@
 
     function canPlaceCard(side, card, zone, owner, index, options = {}) {
       if (!card || state.phase !== "battle" || state.gameOver) return false;
+      if (Number.isInteger(card.allowedSeatIndex) && (zone !== "seat" || index !== card.allowedSeatIndex)) return false;
       if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return false;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return false;
       if (zone !== "environment" && owner !== side) return false;
@@ -40012,6 +40035,7 @@
 
     function attendCard(side, card, zone, index = null, options = {}) {
       if (!card || !["seat", "teacher", "environment"].includes(zone)) return null;
+      if (Number.isInteger(card.allowedSeatIndex) && (zone !== "seat" || index !== card.allowedSeatIndex)) return null;
       if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return null;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return null;
       const owner = options.owner || side;
@@ -40364,12 +40388,12 @@
     }
 
     function pointSourceSnapshot(source) {
-      if (!source || !(source.hasPoint || source.pointKillSource) || !canUsePrintedCardEffects(source)) return null;
+      if (!source?.hasPoint || source.owner !== state.currentSide || !canUsePrintedCardEffects(source)) return null;
       return { baseId: source.baseId, instanceId: source.instanceId, owner: source.owner, name: source.name, type: source.type, pointKillEligible: true };
     }
 
     function awardDefeatPoint(source, defeatedOwner) {
-      if (!source?.pointKillEligible || !state.players[source.owner] || source.owner === defeatedOwner) return;
+      if (!source?.pointKillEligible || !state.players[source.owner] || source.owner === defeatedOwner || source.owner !== state.currentSide) return;
       const side = source.owner, player = state.players[side];
       if (hasAcquiredUnit(side)) return;
       player.pointSystemActive = true;
@@ -40443,6 +40467,26 @@
 
     function resolvePointAttendance(side, card, attendanceSource) {
       const unit = hasAcquiredUnit(side); // Resolve the ability that triggered, even if these kills reach ten.
+      if (card.baseId === "secretly_mocked_student") queueFusionEffect(async () => {
+        if (unit) {
+          const cards = effectTargetEntries(side, oppositeSide(side), target => target.currentHp > 0)
+            .map(({card: target, ref}) => ({...target, choiceRef: ref}));
+          const [chosen] = await chooseFusionEffectCards(side, card, cards, 1, "point_destroy", {required: true});
+          const target = chosen && getBoardCardFromRef(chosen.choiceRef);
+          if (target?.instanceId === chosen.instanceId && isAllowedEffectTarget(side, target)) {
+            destroyBoardCard(chosen.choiceRef, {pointSource: pointSourceSnapshot(card), reason: card.name});
+          }
+        } else {
+          const entry = randomEffectTargetEntry(side, oppositeSide(side), target => target.currentHp > 0);
+          if (!entry || isPadlocked(entry.card)) return;
+          const target = entry.card, beforeHp = target.currentHp;
+          target.currentHp = 1;
+          target.oneHpAttackLockSource = card.name;
+          showFloatingTextForCard(target, "体力1", "debuff");
+          analyticsRecordEffect({side, source: card, effectType: "set_hp_attack_lock", chosenTargets: [analyticsCardInfo(target)], details: {beforeHp, currentHp: 1, attackLockedAtHp: 1}});
+          addLog(`${card.name}の効果：${target.name}の体力を1にしました。その出席者は体力が1の間、攻撃できません。`);
+        }
+      });
       if (card.baseId === "short_sleeve_student") queueFusionEffect(async () => {
         if (unit) await pointChooseDamage(side,card,3,2,false,true);
         else pointRandomDamage(side,card,2);
@@ -44784,9 +44828,14 @@
       return true;
     }
 
+    function isOneHpAttackLocked(card) {
+      return Boolean(card?.oneHpAttackLockSource && card.currentHp === 1);
+    }
+
     function isAttackLocked(card, actionTurn = state.actionTurn) {
       return Boolean(isPadlocked(card)
         || card?.attackLockedPermanently
+        || isOneHpAttackLocked(card)
         || (card?.attackLockedThroughTurn && card.attackLockedThroughTurn >= actionTurn)
         || (card?.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
         || isSameNameAttackLocked(card));
@@ -44886,7 +44935,7 @@
         state.message = "目黒区図書館の効果で、このターンは攻撃できません。";
         return false;
       }
-      if (card.attackLockedPermanently) {
+      if (card.attackLockedPermanently || isOneHpAttackLocked(card)) {
         state.message = `${card.name}は効果により攻撃できません。`;
         return false;
       }
@@ -49987,6 +50036,7 @@
         buffs: buffKeywords.filter((keyword) => hasKeyword(card, keyword)),
         debuffs: debuffKeywords.filter((keyword) => hasKeyword(card, keyword)),
         attackLocked: Boolean(card?.attackLockedPermanently
+          || isOneHpAttackLocked(card)
           || (card?.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
           || (card?.attackLockedUntilOwnerTurnsTaken && state.players[card.owner]?.turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
           || isSameNameAttackLocked(card)
@@ -51127,6 +51177,7 @@
       button.classList.toggle("sick", card.playedOnTurn === state.actionTurn && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気"));
       button.classList.toggle("attack-locked", Boolean(
         card.attackLockedPermanently
+        || isOneHpAttackLocked(card)
         || (card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn)
         || (card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken)
         || isSameNameAttackLocked(card)
@@ -51379,6 +51430,7 @@
       if (!boardCard) return [];
       const otherParts = [];
       if (boardCard && card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気") && !hasKeyword(card, "超陽気")) otherParts.push({ icon: "酔", title: "召喚酔い" });
+      if (isOneHpAttackLocked(card)) otherParts.push({ icon: "止", title: "体力1：攻撃不可" });
       if (boardCard && card.attackLockedPermanently) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedThroughTurn && card.attackLockedThroughTurn >= state.actionTurn) otherParts.push({ icon: "止", title: "攻撃不可" });
       if (boardCard && card.attackLockedUntilOwnerTurnsTaken && state.players[card.owner].turnsTaken <= card.attackLockedUntilOwnerTurnsTaken) otherParts.push({ icon: "止", title: "攻撃不可" });
@@ -53677,6 +53729,7 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      secretly_mocked_student: {"hand": ["secretly_mocked_student", "bento", "onigiri_draw", "short_sleeve_student"], "pointScore": 9, "life": 10, "will": 20, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "yuta", 1], [4, "yuta"]], "teacher": null}, "enemyHand": ["onigiri_draw"], "enemyDeck": ["yuta", "general_student", "onigiri_draw"], "deck": ["secretly_mocked_student", "short_sleeve_student", "bento", "long_sleeve_student", "onigiri_draw"], "note": "3行3列に女学生を出席させ、相手のU太が体力1の間は攻撃できなくなることを試せます。U太は自分のターン終了時に余裕で体力を回復し、2以上なら攻撃可能になります。単位取得後を試す場合は先に長袖の学生で体力1のU太を倒してください。点数9から開始します。"},
       short_sleeve_student: {"hand": ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
       pinige: {"hand": ["pinige", "short_sleeve_student", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
       gecko_carrier_student: {"hand": ["gecko_carrier_student", "short_sleeve_student", "pinige", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
@@ -55482,7 +55535,7 @@
       "遅刻": "手札から出した後、指定された回数の自分のターンを待ってから出席する。",
       "負荷": "手札に持ったまま自分のターンを終了すると、自分本体に1ダメージ。同じカードに再び負荷が付くと高負荷になる。",
       "高負荷": "このカードの戦意を+1する。手札に持ったまま自分のターンを終了すると、自分本体に2ダメージ。効果で手札から校外エリアへ送れず、負荷も追加されない。",
-      "点数": "この能力を持つ自分のカードが、攻撃・反撃・能力のダメージ・直接破壊で相手の出席者を倒すたび、点数を1獲得する。ピニゲの撃破でも獲得する。点数はプレイヤーで共有し、10点で単位へ変化する。",
+      "点数": "自分のターン中、この能力を持つ自分のカードが相手の出席者を倒すたび、点数を1獲得する。攻撃・能力のダメージ・直接破壊が対象。相手のターン中や、点数を持たないカードによる撃破では獲得しない。点数はプレイヤーで共有し、10点で単位へ変化する。",
       "単位": "点数を10獲得した状態。この対戦中は取得済みとなり、点数は10で止まる。10点目は点数獲得時の能力を発動しない。",
       "進化": "指定された進化元を、同じマスで進化後のカードに変える。通常は進化元を出席させた次のターン以降に、進化後のカードの戦意を使って行う。進化元が受けていたダメージと攻撃状態を引き継ぐ。",
       "特殊進化": "カードの効果で条件を満たしたとき、戦意を使わずに進化する。進化元が受けていたダメージと攻撃状態を引き継ぎ、出席回数には数えない。",
@@ -55865,6 +55918,7 @@
         const remaining = Math.max(1, card.attackLockedUntilOwnerTurnsTaken - state.players[card.owner].turnsTaken + 1);
         entries.push({ label: `攻撃不可：自分のターンをあと${remaining}回`, lines: [`${source}により、攻撃できない。`] });
       }
+      if (card.oneHpAttackLockSource) entries.push({ label: "攻撃制限：体力1", lines: [`${card.oneHpAttackLockSource}により、体力が1であるかぎり攻撃できない。`] });
       if (isSameNameAttackLocked(card)) entries.push({ label: "攻撃不可：同名ロック", lines: ["相手の場に同名の出席者がいる間、攻撃できない。"] });
       if (card.playedOnTurn === state.actionTurn && card.type !== "environment" && !hasKeyword(card, "陽気")) entries.push({ label: "出席ターン", lines: ["出席したターンは攻撃できない。"] });
       if (card.destroyAtActionTurn && card.destroyAtActionTurn > state.actionTurn) entries.push({ label: "破壊予約", lines: ["指定されたターンに破壊される。"] });
@@ -56217,6 +56271,7 @@
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
+        secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
         pinige: "次の4つの効果から1つを選ぶ。単位取得済みなら、1つではなく3つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカード2枚をランダムに手札に加える。\n3. 自分のデッキから「ピニゲ」1枚をランダムに手札に加える。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。",
         gecko_carrier_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",

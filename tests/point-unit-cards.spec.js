@@ -21,21 +21,21 @@ test('7枚の定義、登録、管理ログ、本文を同期',async({page})=>{
  }
  expect(r[4].text).toMatch(/^\[点数\]\n\[陽気\]\n/);expect(r[1].base.hasPoint).toBeUndefined();
 });
-for(const id of ['short_sleeve_student','pinige'])test(`撃破で加点、味方・非致死・追加被弾では増えない ${id}`,async({page})=>{
+for(const id of ['short_sleeve_student','pinige'])test(`点数カードだけ撃破で加点し、味方・非致死・追加被弾では増えない ${id}`,async({page})=>{
  await page.evaluate(id=>{const source=createCardFromBase(id,'player');const target=makeBoardCard(createCardFromBase('general_student','opponent'));state.players.opponent.board.seats[0]=target;dealDamageToCard(target,1,source);cleanupDestroyedCards();if(state.players.player.pointScore)throw Error('非致死で加点');dealDamageToCard(target,1,source);dealDamageToCard(target,1,createCardFromBase('general_student','player'));cleanupDestroyedCards();const ally=makeBoardCard(createCardFromBase('general_student','player'));state.players.player.board.seats[0]=ally;dealDamageToCard(ally,2,source);cleanupDestroyedCards();},id);
- expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(1);
+ expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(id==='pinige'?0:1);
 });
 test('非点数カードがとどめを刺すと加点しない',async({page})=>{await page.evaluate(()=>{const c=makeBoardCard(createCardFromBase('general_student','opponent'));state.players.opponent.board.seats[0]=c;dealDamageToCard(c,1,createCardFromBase('short_sleeve_student','player'));dealDamageToCard(c,1,createCardFromBase('general_student','player'));cleanupDestroyedCards();});expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(0);});
-test('実際の反撃でも加点する',async({page})=>{
+test('相手のターン中の反撃では加点しない',async({page})=>{
  await page.evaluate(()=>{const c=makeBoardCard(createCardFromBase('long_sleeve_student','player'));c.playedOnTurn=0;state.players.player.board.seats[0]=c;const enemy=makeBoardCard(createCardFromBase('aggro_student','opponent'));enemy.playedOnTurn=0;state.players.opponent.board.seats[0]=enemy;state.currentSide='opponent';resolveCardAttackWithBoardCleanup(enemy,{owner:'player',zone:'seat',index:0});});
- expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(1);
+ expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(0);
 });
 test('直接破壊も人数分加点、通常の校外送りは加点しない',async({page})=>{
  await page.evaluate(()=>{for(const i of [0,1,2])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));});await attend(page,'could_not_escape_student');await settle(page);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(3);
  await page.evaluate(()=>{state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));destroyBoardCard({owner:'opponent',zone:'seat',index:0},{isDestruction:false,pointSource:pointSourceSnapshot(createCardFromBase('short_sleeve_student','player'))});});expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(3);
 });
 test('複数マスの出席者は1点、無効化されたカードは加点しない',async({page})=>{
- await page.evaluate(()=>{const c=makeBoardCard(createCardFromBase('two_achievers','opponent'));state.players.opponent.board.seats[0]=c;state.players.opponent.board.seats[1]=c;dealDamageToCard(c,10,createCardFromBase('pinige','player'));cleanupDestroyedCards();const t=makeBoardCard(createCardFromBase('general_student','opponent'));state.players.opponent.board.seats[0]=t;const source=createCardFromBase('short_sleeve_student','player');source.generatedWithoutEffects=true;dealDamageToCard(t,3,source);cleanupDestroyedCards();});expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(1);
+ await page.evaluate(()=>{const c=makeBoardCard(createCardFromBase('two_achievers','opponent'));state.players.opponent.board.seats[0]=c;state.players.opponent.board.seats[1]=c;dealDamageToCard(c,10,createCardFromBase('group_sniper','player'));cleanupDestroyedCards();const t=makeBoardCard(createCardFromBase('general_student','opponent'));state.players.opponent.board.seats[0]=t;const source=createCardFromBase('short_sleeve_student','player');source.generatedWithoutEffects=true;dealDamageToCard(t,3,source);cleanupDestroyedCards();});expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(1);
 });
 test('10点目は福男を発動せず単位に変化、10で停止、長袖は即時+2/+2で重複しない',async({page})=>{
  await page.evaluate(()=>{state.players.player.pointScore=9;state.players.player.pointSystemActive=true;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));state.players.player.board.seats[1]=makeBoardCard(createCardFromBase('long_sleeve_student','player'));state.players.player.board.seats[1].currentHp=2;for(const i of [0,1])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));const t=state.players.opponent.board.seats[0];dealDamageToCard(t,2,createCardFromBase('short_sleeve_student','player'));cleanupDestroyedCards();applyBoardAuras();applyBoardAuras();});await settle(page);
@@ -68,10 +68,10 @@ test('逃げられなかった学生は単位取得後のみ1行目を1/4あえ�
 test('出席時破壊で10点になっても、同じ出席効果を途中から単位版に変えない',async({page})=>{
  await page.evaluate(()=>{state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));});await attend(page,'could_not_escape_student',4,9);await settle(page);expect(await page.evaluate(()=>[state.players.player.pointScore,listBoardRefs('player').length])).toEqual([10,1]);
 });
-for(const score of [0,10])test(`ピニゲは${score===10?3:1}択、重複なし、番号順、検索と加点`,async({page})=>{
+for(const score of [0,10])test(`ピニゲは${score===10?3:1}択、重複なし、番号順、検索するが加点しない`,async({page})=>{
  await page.evaluate(score=>{state.players.player.pointScore=score;state.players.player.deck=['short_sleeve_student','long_sleeve_student','pinige'].map(id=>createCardFromBase(id,'player'));state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));const c=createCardFromBase('pinige','player');state.players.player.hand=[c];castImmediateItem('player',c,false);},score);
  await choose(page,score===10?[4,2,1]:[4]);await settle(page);
- expect(await page.evaluate(()=>[state.players.player.will,state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId).sort(),listBoardRefs('opponent').length])).toEqual(score===10?[18,10,['long_sleeve_student','short_sleeve_student'],0]:[17,1,[],0]);
+ expect(await page.evaluate(()=>[state.players.player.will,state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId).sort(),listBoardRefs('opponent').length])).toEqual(score===10?[18,10,['long_sleeve_student','short_sleeve_student'],0]:[17,0,[],0]);
 });
 test('ピニゲ③で同名を検索、②でピニゲを点数カードと誤認しない',async({page})=>{
  for(const mode of [2,3]){await page.evaluate(()=>{state.players.player.deck=[createCardFromBase('pinige','player')];const c=createCardFromBase('pinige','player');state.players.player.hand=[c];castImmediateItem('player',c,false);});await choose(page,[mode]);await settle(page);expect(await page.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(mode===2?[]:['pinige']);}
@@ -85,7 +85,7 @@ test('点数カードの本文は単位取得前後とも元の効果、単位�
  for(const {id,text} of result[1]){
   expect(text).toMatch(/^\[点数\]\n/);
   const unit=text.indexOf('[単位]取得済みなら、');expect(unit).toBeGreaterThan(0);
-  const ordinary={short_sleeve_student:'ランダムに選び、2ダメージ',lucky_man:'点数]を獲得したとき',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
+  const ordinary={short_sleeve_student:'ランダムに選び、2ダメージ',lucky_man:'点数]を獲得したとき',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',secretly_mocked_student:'その出席者は体力が1',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
   expect(text.indexOf(ordinary)).toBeGreaterThan(-1);expect(text.indexOf(ordinary)).toBeLessThan(unit);
  }
 });
@@ -101,14 +101,14 @@ for(const id of ids)test(`実際のテストボタンで専用の開始状態か
  await settle(page);expect(await page.evaluate(id=>state.players.player.hand.filter(c=>c.baseId===id).length,id)).toBe(before[3].filter(x=>x===id).length-1);
 });
 
-test('開始時の継続効果表示はデッキに点数カードかピニゲがある側だけ',async({page})=>{
- expect(await page.evaluate(()=>{state.players.player.originalDeckCounts={short_sleeve_student:0,general_student:40};state.players.opponent.originalDeckCounts={pinige:3,general_student:37};analyticsStartGame();return ['player','opponent'].map(s=>playerActiveEffectLines(s));})).toEqual([[],['[点数] 0/10']]);
+test('開始時の継続効果表示は点数カードのある側だけで、ピニゲだけでは表示しない',async({page})=>{
+ expect(await page.evaluate(()=>{state.players.player.originalDeckCounts={short_sleeve_student:0,pinige:3,general_student:37};state.players.opponent.originalDeckCounts={group_sniper:3,general_student:37};analyticsStartGame();return ['player','opponent'].map(s=>playerActiveEffectLines(s));})).toEqual([[],['[点数] 0/10']]);
 });
 test('CPUは選択を自動解決し、展開できる席を評価する',async({page})=>{
  await page.evaluate(()=>{state.currentSide='opponent';state.players.opponent.pointScore=10;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('strong_student','player'));state.players.opponent.deck=[createCardFromBase('long_sleeve_student','opponent')];const c=createCardFromBase('pinige','opponent');state.players.opponent.hand=[c];if(!Number.isFinite(scoreAiItem(c)))throw Error('AI item');castImmediateItem('opponent',c,false);attendCard('opponent',makeBoardCard(createCardFromBase('gecko_carrier_student','opponent')),'seat',4,{attendanceSource:ATTENDANCE_SOURCE.HAND});});await settle(page);
  expect(await page.evaluate(()=>[listBoardRefs('opponent').length,hasKeyword(state.players.opponent.board.seats[4],'超陽気'),state.pendingCardChoice])).toEqual([3,true,null]);
 });
-test('ゲストのピニゲ選択、撃破と単位の切替が同期する',async({page:host,browser})=>{
+test('ゲストのピニゲ選択は撃破しても点数を増やさず同期する',async({page:host,browser})=>{
  const guest=await browser.newPage();
  async function relay(from,to){for(const m of await from.evaluate(()=>outbox.splice(0)))await to.evaluate(m=>onlineHandleMessage({...m,type:m.command?'command':m.type,protocol:ONLINE_PROTOCOL_VERSION}),m);}
  try{
@@ -118,7 +118,7 @@ test('ゲストのピニゲ選択、撃破と単位の切替が同期する',asy
   const snap=await host.evaluate(()=>{state.currentSide='opponent';state.players.opponent.pointScore=9;state.players.opponent.pointSystemActive=true;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('general_student','player'));state.players.opponent.hand=[createCardFromBase('pinige','opponent')];return onlineCreateSnapshot();});
   await guest.evaluate(snapshot=>onlineHandleMessage({type:'gameState',protocol:ONLINE_PROTOCOL_VERSION,snapshot}),snap);await expect.poll(()=>guest.evaluate(()=>battlePresentationBusy())).toBe(false);
   await guest.evaluate(()=>beginItemUse(state.players.player.hand[0]));await relay(guest,host);await expect.poll(()=>host.evaluate(()=>state.pendingRemoteHandTrim?.mode)).toBe('fusion_effect_choice');await relay(host,guest);await choose(guest,[4]);await relay(guest,host);await settle(host);await relay(host,guest);
-  expect(await host.evaluate(()=>[state.players.opponent.pointScore,listBoardRefs('player').length])).toEqual([10,0]);expect(await guest.evaluate(()=>[state.players.player.pointScore,playerActiveEffectLines('player')[0],listBoardRefs('opponent').length])).toEqual([10,'[単位] 取得済み',0]);
+  expect(await host.evaluate(()=>[state.players.opponent.pointScore,listBoardRefs('player').length])).toEqual([9,0]);expect(await guest.evaluate(()=>[state.players.player.pointScore,playerActiveEffectLines('player')[0],listBoardRefs('opponent').length])).toEqual([9,'[点数] 9/10',0]);
  }finally{await guest.close();}
 });
 test('ゲストの単位スナイパーで本体を選び、同じ対象のダメージが同期する',async({page:host,browser})=>{
