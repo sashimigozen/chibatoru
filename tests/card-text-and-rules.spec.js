@@ -67,7 +67,7 @@ test("確定したカードテキストが表示データに反映されてい�
     "遅刻3。このカードが自分の講義室から校外エリアへ送られたとき、相手の講義室にいる教師1人をランダムに指名し、破壊する。",
     "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
     "相手プレイヤーに効果の了承を得る。了承を得た場合、お互いは自身のデッキから好きなカードを5枚、引く順番を決めて選ぶ。以降の5ターンはお互いドローの代わりに、選んだカードを選んだ順番で1枚ずつ手札に加える。拒否された場合、戦意を2回復する。",
-    "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
+    "自分のデッキから1枚引く。この効果で引いたカードのコストを1減らす。ただし、1未満にはならない。",
     "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
     "お互いの講義室にいる出席者数が同じ場合のみ使用できる。お互いの講義室にいる出席者を対応するマスごと入れ替える。",
     "自分の講義室の1行目の学生2人を指名する。それらは「注目」を持ち、体力を+2する。",
@@ -666,6 +666,7 @@ test("保留カード確認後の文章と処理が確定仕様に一致する",
       state.gameOver = false;
       state.aiThinking = false;
       state.actionTurn = 1;
+      state.training.skipAnimations = true;
       state.pendingCardPlay = null;
       state.pendingRaptorTemple = null;
       state.environment = null;
@@ -718,14 +719,12 @@ test("保留カード確認後の文章と処理が確定仕様に一致する",
       api.castImmediateItem("player", smoke, false);
       smokeResults[maxWill] = {
         maxWill: state.players.player.maxWill,
-        handCount: state.players.player.hand.length
+        handCount: state.players.player.hand.length,
+        cost: api.effectiveCardCost(state.players.player.hand[0])
       };
     });
-    checks.smokeFlareCapsAtTen = Object.values(smokeResults).every((entry) => entry.maxWill <= 10);
-    checks.smokeFlareDrawsOnlyAtTen = smokeResults[7].handCount === 0
-      && smokeResults[8].handCount === 1
-      && smokeResults[9].handCount === 1
-      && smokeResults[10].handCount === 1;
+    checks.smokeFlareDoesNotIncreaseMaxWill = Object.entries(smokeResults).every(([maxWill, entry]) => entry.maxWill === Number(maxWill));
+    checks.smokeFlareAlwaysDrawsAndDiscounts = Object.values(smokeResults).every((entry) => entry.handCount === 1 && entry.cost === 1);
 
     resetBattle();
     const laughterAtThree = card("big_laughter");

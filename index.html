@@ -19729,7 +19729,7 @@
       brother_capital: { name: "お兄ちゃんの資本力", type: "item", cost: 5, target: "self", ace: true },
       padlock: { name: "南京錠", type: "item", cost: 3, target: "friendlyAny" },
       crotch_febreze: { name: "股間ファブリーズ", type: "item", cost: 2, target: "self" },
-      smoke_flare: { name: "発煙筒の光の中で", type: "item", cost: 2, target: "self", ace: true },
+      smoke_flare: { name: "発煙筒の光の中で", type: "item", cost: 2, target: "self" },
       one_eyed_peek: { name: "片目カンニング", type: "item", cost: 1, target: "self" },
       big_laughter: { name: "バカでかい笑い", type: "item", cost: 1, target: "self" },
       lie_pekora: { name: "嘘ぺこよね？", type: "item", cost: 7, target: "self" },
@@ -19966,8 +19966,16 @@
         "version": "ver.0.35.0",
         "versioning": "semver",
         "date": "2026年10月28日",
-        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。「提出」の共通発動条件と、万豚記カウントの固有效果を分離し、継続効果の自動チェックを現行の説明文に合わせて修正しました。「微笑み講師」の自身の回復による連鎖も修正しました。",
+        "summary": "新能力「提出」と「万豚記」シリーズ、2種類のハイボールを追加しました。「提出」の共通発動条件と、万豚記カウントの固有效果を分離し、継続効果の自動チェックを現行の説明文に合わせて修正しました。「微笑み講師」の自身の回復による連鎖も修正しました。「発煙筒の光の中で」をドローとコスト軽減の効果に変更し、エースぺ指定を解除しました。",
         "changes": [
+          {
+            "category": "カード調整",
+            "title": "発煙筒の光の中で",
+            "before": "持ち物／バカでかい型／戦意2／攻撃力0／体力0／エースぺ\n自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
+            "after": "持ち物／バカでかい型／戦意2／攻撃力0／体力0／デッキ投入上限3枚\n自分のデッキから1枚引く。この効果で引いたカードのコストを1減らす。ただし、1未満にはならない。",
+            "beforeHighlights": ["エースぺ", "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、"],
+            "afterHighlights": ["デッキ投入上限3枚", "この効果で引いたカードのコストを1減らす。ただし、1未満にはならない。"]
+          },
           {
             "category": "システム",
             "title": "提出",
@@ -33067,9 +33075,7 @@
       const enemyEntries = listBoardRefs(enemySide).map(ref => ({ ref, card: getBoardCardFromRef(ref) })).filter(e => e.card);
       const bodyValue = card => Math.max(0, card.attack || 0) * 1.2 + Math.max(0, card.currentHp || card.hp || 0) * 0.6;
       if (item.baseId === "smoke_flare") {
-        const gain = Math.min(2, Math.max(0, 10 - own.maxWill));
-        const draws = own.maxWill + gain === 10 && !isDeckToHandLocked();
-        plan.score = draws && own.deck.length === 0 ? 0 : gain * 4 + (draws ? 3 : 0);
+        plan.score = own.deck.length > 0 && !isDeckToHandLocked() ? 4 : 0;
       }
       if (item.baseId === "think_so") plan.score = 5 + (!isDeckToHandLocked() && own.deck.some(c => c.baseId === "yuta") ? 4 : 0)
         + own.hand.filter(c => c.baseId === "yuta" && effectiveCardCost(c) > 0).length;
@@ -43556,14 +43562,13 @@
       }
       if (item.baseId === "smoke_flare") {
         const player = state.players[side];
-        if (Number.isFinite(player.padPresentNaturalMaxWill)) {
-          player.padPresentNaturalMaxWill = Math.min(10, Math.max(0, player.padPresentNaturalMaxWill + 2));
-          syncPadPresentCreatorWillLimit(side);
+        const drawn = player.deck[0];
+        if (drawOne(side, false)) {
+          drawn.smokeFlareCostReduction = (Number(drawn.smokeFlareCostReduction) || 0) + 1;
+          resultText = "デッキから1枚引き、そのカードのコストを1減らしました（下限1）。";
         } else {
-          player.maxWill = Math.min(10, Math.max(0, (player.maxWill || 0) + 2));
+          resultText = "デッキからカードを引けませんでした。";
         }
-        const drawn = player.maxWill === 10 && drawOne(side, false) ? 1 : 0;
-        resultText = `自分の戦意最大値を+2しました（現在${player.maxWill}）。${drawn ? "戦意最大値が10のため1枚引きました。" : ""}`;
       }
       if (item.baseId === "forbidden_book") {
         damagePlayer(side, 3);
@@ -51314,6 +51319,7 @@
     function effectiveCardCost(card, zone = null, index = null) {
       if (!card || card.noCost || isChaosBattle()) return 0;
       const highLoadIncrease = isHighLoadHandCard(card) ? 1 : 0;
+      const applyDrawDiscount = (cost) => Math.max(Math.min(1, cost), cost - (Number(card.smokeFlareCostReduction) || 0));
       let discount = 0;
       const inBattle = state.screen === "battle" && state.phase === "battle";
       if (inBattle && isCafeteriaEnvironmentActive()) {
@@ -51345,17 +51351,17 @@
       }
       if (inBattle && card.baseId === "spoon_wizard" && card.owner
         && state.players[oppositeSide(card.owner)].trash.some((entry) => entry.baseId === "green_curry")) {
-        return highLoadIncrease;
+        return applyDrawDiscount(highLoadIncrease);
       }
       if (inBattle && card.baseId === "attitude" && card.owner
         && listBoardRefs(card.owner).some((ref) => String(getBoardCardFromRef(ref)?.name || "").includes("デザイン"))) {
-        return highLoadIncrease;
+        return applyDrawDiscount(highLoadIncrease);
       }
       if (inBattle
         && card.baseId === "pure_destruction"
         && card.owner
         && hasSixPlusStudentInClassroom(card.owner)) {
-        return highLoadIncrease;
+        return applyDrawDiscount(highLoadIncrease);
       }
       const tax = inBattle
         && card.owner
@@ -51364,21 +51370,21 @@
         : 0;
       const intrinsicCost = card.summerTeacherChoiceCost ?? card.cost ?? 0;
       if (inBattle && card.baseId === "thin_item" && card.owner) {
-        return Math.max(4, state.players[oppositeSide(card.owner)].hand.length - 4 - discount + tax) + highLoadIncrease;
+        return applyDrawDiscount(Math.max(4, state.players[oppositeSide(card.owner)].hand.length - 4 - discount + tax) + highLoadIncrease);
       }
       if (inBattle
         && card.baseId === "small_omata"
         && card.owner
         && state.players[card.owner]?.will >= 10) {
-        return 10 + highLoadIncrease;
+        return applyDrawDiscount(10 + highLoadIncrease);
       }
       if (inBattle
         && card.baseId === "king_ghidorah_bed"
         && card.owner
         && state.players[card.owner]?.will >= 8) {
-        return 8 + highLoadIncrease;
+        return applyDrawDiscount(8 + highLoadIncrease);
       }
-      return Math.max(0, intrinsicCost - discount + tax) + highLoadIncrease;
+      return applyDrawDiscount(Math.max(0, intrinsicCost - discount + tax) + highLoadIncrease);
     }
 
     function hasActiveCafeteriaVampireBuff(card) {
@@ -53947,9 +53953,12 @@
         );
       }
       if (baseId === "smoke_flare") {
-        player.maxWill = 8;
-        player.will = 8;
-        player.deck.unshift(createCardFromBase("general_student", "player"));
+        player.hand.push(createCardFromBase("smoke_flare", "player"), createCardFromBase("smoke_flare", "player"));
+        player.deck.unshift(
+          createCardFromBase("general_teacher", "player"),
+          createCardFromBase("general_student", "player"),
+          createCardFromBase("aggro_student", "player")
+        );
       }
       if (["one_eyed_peek", "philosophy_cheating"].includes(baseId)) {
         opponent.hand = [
@@ -56141,7 +56150,7 @@
         brother_capital: "自分のデッキから戦意2以下の出席者を好きなだけ選び、自分の講義室に特殊出席させる。（エースぺ）",
         padlock: "装備カード。自分の出席者1人に装備できる。装備者はすべての効果を失い、攻撃と講義と進化を行えず、ダメージを受けず、効果で破壊されない。注目・超注目は無視して攻撃対象を選べる。このカードを装備したとき、「鍵」1枚を手札に生成する。",
         crotch_febreze: "自分の「あえー」と名のつく出席者がいる場合に使用できる。好きな人数の体力を1にし、その人数まで相手教師を選ぶ。選んだ教師の出席時効果だけを相手に対して使用する。",
-        smoke_flare: "自分の戦意最大値を+2する。その後、自分の戦意最大値が10なら、自分のデッキから1枚引く。",
+        smoke_flare: "自分のデッキから1枚引く。この効果で引いたカードのコストを1減らす。ただし、1未満にはならない。",
         big_laughter: "自分の講義室のマスが4つ以上埋まっているなら使用できる。自分の気力を埋まっているマスの数だけ回復する。その後、自分の講義室の学生すべてに1ダメージ。",
         lie_pekora: "お互いの講義室にいる出席者数が同じ場合のみ使用できる。お互いの講義室にいる出席者を対応するマスごと入れ替える。",
         big_wall: "自分の講義室の1行目の学生2人を指名する。それらは「注目」を持ち、体力を+2する。",

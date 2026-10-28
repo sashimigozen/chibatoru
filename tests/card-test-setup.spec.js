@@ -95,7 +95,8 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   ]));
   expect(result.crotch_febreze.playerBoard.filter((card) => card.baseId.includes("ae_student"))).toHaveLength(2);
   expect(result.crotch_febreze.opponentBoard.filter((card) => card.type === "teacher").length).toBeGreaterThanOrEqual(2);
-  expect(result.smoke_flare.maxWill).toBe(8);
+  expect(result.smoke_flare.hand.filter((id) => id === "smoke_flare")).toHaveLength(3);
+  expect(result.smoke_flare.deck.slice(0, 3)).toEqual(["general_teacher", "general_student", "aggro_student"]);
   expect(result.one_eyed_peek.opponentHand.length).toBeGreaterThan(0);
   expect(result.aggro_kingdom.hand).toEqual(expect.arrayContaining([
     "aggro_kingdom", "aggro_student", "aggro_king", "aggro_queen"

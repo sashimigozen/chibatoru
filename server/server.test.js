@@ -424,6 +424,24 @@ test("チバトルふぉーは4席の部屋、手番操作、手札非公開を�
   assert.deepEqual(relayed.message.action, { type: "endTurn" });
 });
 
+test("smoke flare allows three normal-deck copies but still rejects four", async (t) => {
+  const port = await freePort();
+  const child = await startServer(port);
+  t.after(() => child.kill("SIGTERM"));
+  const host = await connectClient(`ws://127.0.0.1:${port}`, "SMOKE1", "smoke-host", true);
+  t.after(() => host.ws.close());
+  const counts = createNormalDeckCounts();
+  delete counts.general_student;
+  counts.smoke_flare = 3;
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
+  await waitFor(host, message => message.type === "playerJoined" && message.players?.some(player => player.clientId === "smoke-host" && player.ready));
+  const start = host.messages.length;
+  counts.smoke_flare = 4;
+  send(host, { type: "deckUpdate", ...normalDeckDescriptor(counts), ready: true });
+  const rejected = await waitFor(host, message => message.type === "error" && message.code === "invalid_deck", start);
+  assert.match(rejected.message.message, /同名/);
+});
+
 test("host-owned room rules synchronize and enforce normal, chaos, and specialty decks", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
