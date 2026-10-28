@@ -19518,12 +19518,13 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
-      secretly_mocked_student: {"name": "密かに冷笑される女学生", "type": "student", "cost": 4, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedSeatIndex": 8, "allowedZones": ["seat"]},
+      sports_spectator_student: {"name": "スポーツを観戦する学生", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      secretly_mocked_student: {"name": "謎多き女学生", "type": "student", "cost": 4, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedSeatIndex": 8, "allowedZones": ["seat"]},
       short_sleeve_student: {"name": "半袖の学生", "type": "student", "cost": 2, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       pinige: {"name": "ピニゲ", "type": "item", "cost": 3, "attack": 0, "hp": 0, "target": "self", "category": "common"},
-      gecko_carrier_student: {"name": "ヤモリを背負う学生", "type": "student", "cost": 7, "attack": 4, "hp": 4, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
-      lucky_man: {"name": "福男", "type": "student", "cost": 5, "attack": 2, "hp": 3, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
-      long_sleeve_student: {"name": "長袖の学生", "type": "student", "cost": 4, "attack": 1, "hp": 3, "keywords": ["陽気"], "attackLimit": 2, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      gecko_carrier_student: {"name": "ヤモリを背負う学生", "type": "student", "cost": 7, "attack": 4, "hp": 4, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"], "keywords": ["陽気"]},
+      lucky_man: {"name": "福男", "type": "student", "cost": 5, "attack": 2, "hp": 2, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
+      long_sleeve_student: {"name": "長袖の学生", "type": "student", "cost": 4, "attack": 1, "hp": 1, "keywords": ["陽気"], "attackLimit": 2, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       group_sniper: {"name": "集団スナイパー", "type": "student", "cost": 5, "attack": 2, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       could_not_escape_student: {"name": "逃げられなかった学生", "type": "student", "cost": 9, "attack": 4, "hp": 5, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       wonton_greeting: {"name": "万豚記～挨拶シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
@@ -19921,7 +19922,7 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
-    const POINT_CARD_IDS = ["secretly_mocked_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "long_sleeve_student", "group_sniper", "could_not_escape_student"];
+    const POINT_CARD_IDS = ["sports_spectator_student", "secretly_mocked_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "long_sleeve_student", "group_sniper", "could_not_escape_student"];
     ALL_DECK_IDS.push(...POINT_CARD_IDS);
     SPECIALTY_CARD_IDS.common.push(...POINT_CARD_IDS);
     IMMEDIATE_ITEM_IDS.push("pinige");
@@ -19974,6 +19975,92 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        "version": "ver.0.36.0",
+        "versioning": "semver",
+        "date": "2026年10月29日",
+        "summary": "「スポーツを観戦する学生」を追加し、点数軸のカードを調整しました。「密かに冷笑される女学生」を「謎多き女学生」へ名称変更しました。",
+        "changes": [
+          {
+            "category": "新カード",
+            "title": "スポーツを観戦する学生",
+            "after": "スポーツを観戦する学生／学生／共通カード／戦意3／攻撃力1／体力1\n[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。"
+          },
+          {
+            "category": "カード調整",
+            "title": "謎多き女学生",
+            "after": "謎多き女学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
+            "before": "密かに冷笑される女学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
+            "beforeHighlights": [
+              "密かに冷笑される女学生"
+            ],
+            "afterHighlights": [
+              "謎多き女学生"
+            ]
+          },
+          {
+            "category": "カード調整",
+            "title": "ヤモリを背負う学生",
+            "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
+            "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
+            "beforeHighlights": [
+              "それらは陽気を持つ。"
+            ],
+            "afterHighlights": [
+              "\n陽気を持つ。"
+            ]
+          },
+          {
+            "category": "カード調整",
+            "title": "福男",
+            "after": "福男／学生／共通カード／戦意5／攻撃力2／体力2\n[点数]\nこのカードを手札から出席させたとき、相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりに次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
+            "before": "福男／学生／共通カード／戦意5／攻撃力2／体力3\n[点数]\nこのカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりにこのカードを手札から出席させたとき、次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
+            "beforeHighlights": [
+              "体力3",
+              "このカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、",
+              "代わりにこのカードを手札から出席させたとき、次の効果を2回行う。"
+            ],
+            "afterHighlights": [
+              "体力2",
+              "このカードを手札から出席させたとき、相手の出席者1人を指名し、",
+              "代わりに次の効果を2回行う。"
+            ]
+          },
+          {
+            "category": "カード調整",
+            "title": "長袖の学生",
+            "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。",
+            "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+2される。",
+            "beforeHighlights": [
+              "体力3",
+              "+2される。"
+            ],
+            "afterHighlights": [
+              "体力1",
+              "+3される。"
+            ]
+          },
+          {
+            "category": "カード調整",
+            "title": "逃げられなかった学生",
+            "after": "逃げられなかった学生／学生／共通カード／戦意9／攻撃力4／体力5\n[点数]\nこのカードを手札から出席させたとき、相手の出席者4人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+2する。",
+            "before": "逃げられなかった学生／学生／共通カード／戦意9／攻撃力4／体力5\n[点数]\nこのカードを手札から出席させたとき、相手の出席者3人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+1する。",
+            "beforeHighlights": [
+              "3人まで",
+              "+1する。"
+            ],
+            "afterHighlights": [
+              "4人まで",
+              "+2する。"
+            ]
+          },
+          {
+            "category": "システム",
+            "title": "点数カードの効果・テスト",
+            "after": "スポーツを観戦する学生のランダムダメージは1回ごとに破壊と対象を確認し直します。単位取得後は①→②→①→②の順に処理します。福男の点数獲得時の継続効果は削除しました。変更カードのAI・カードテスト・管理ログの表示を更新し、ホスト・ゲストの選択と効果結果の同期の確認を追加しました。集団スナイパーの能力値と効果は変更していません。"
+          }
+        ]
+      },
       {
         "version": "ver.0.35.0",
         "versioning": "semver",
@@ -32653,7 +32740,7 @@
         const targets = effectTargetEntries("opponent","player");
         if (card.baseId === "short_sleeve_student" || card.baseId === "group_sniper") score += Math.max(0,...targets.map(e=>scoreAiNonCombatEffectTarget("opponent",card,e,{damage: unit ? (card.baseId === "group_sniper" ? 2 : 3) : (card.baseId === "group_sniper" ? 1 : 2)})));
         if (["gecko_carrier_student","group_sniper"].includes(card.baseId) && zone === "seat") score += [index-1,index+1].filter(i=>i>=0 && i<9 && Math.floor(i/3)===Math.floor(index/3) && isBoardSlotOpen("opponent","seat",i)).length*7;
-        if (card.baseId === "could_not_escape_student") score += targets.filter(e=>!isPadlocked(e.card)).sort((a,b)=>(b.card.attack+b.card.currentHp)-(a.card.attack+a.card.currentHp)).slice(0,3).reduce((v,e)=>v+e.card.attack+e.card.currentHp*.7,0);
+        if (card.baseId === "could_not_escape_student") score += targets.filter(e=>!isPadlocked(e.card)).sort((a,b)=>(b.card.attack+b.card.currentHp)-(a.card.attack+a.card.currentHp)).slice(0,4).reduce((v,e)=>v+e.card.attack+e.card.currentHp*.7,0);
         if (card.baseId === "secretly_mocked_student" && targets.length) {
           const values = targets.map(entry => isPadlocked(entry.card) ? 0 : unit
             ? Math.max(0,scoreAiNonCombatEffectTarget("opponent",card,entry,{destroy:true}))
@@ -32661,7 +32748,11 @@
           score += unit ? Math.max(...values) : values.reduce((a,b)=>a+b,0)/values.length;
         }
         if (card.baseId === "long_sleeve_student") score += unit ? 10 : 3;
-        if (card.baseId === "lucky_man") score += unit ? 12 : Math.min(6,listBoardRefs("opponent").filter(r=>getBoardCardFromRef(r)?.hasPoint).length*3);
+        if (card.baseId === "lucky_man") score += (unit ? 2 : 1) * (Math.max(0,...targets.map(entry => scoreAiNonCombatEffectTarget("opponent",card,entry,{damage:3}))) + Math.min(2,Math.max(0,20-state.players.opponent.life)));
+        if (card.baseId === "sports_spectator_student") {
+          const values = sportsSpectatorModes("opponent", card).map(choice => choice.choiceScore);
+          score += unit ? values.reduce((a,b)=>a+b,0)*2 : Math.max(...values);
+        }
       }
       score += scoreAiPlacementAuras("opponent", card, zone, index);
       if (["student", "teacher", "vampire"].includes(card.type)) {
@@ -40536,14 +40627,7 @@
         showSharedCenterAnnouncement("単位取得", "heal");
         return;
       }
-      // Capture listeners now. The tenth point never dispatches this event.
-      const listeners = listBoardRefs(side).map(getBoardCardFromRef).filter(card => card.baseId === "lucky_man"
-        && card.currentHp > 0 && card.instanceId !== source.instanceId && canUseOngoingCardEffects(card));
-      for (const listener of listeners) queueFusionEffect(async () => {
-        if (!isCardCurrentlyOnBoard(listener) || listener.currentHp <= 0 || !canUseOngoingCardEffects(listener)) return;
-        pointRandomDamage(side, listener, 3);
-        healPlayer(side, 2);
-      });
+
     }
 
     function pointRandomDamage(side, source, amount) {
@@ -40596,8 +40680,33 @@
           : Math.max(0,...effectTargetEntries(side,oppositeSide(side)).map(e=>scoreAiNonCombatEffectTarget(side,source,e,{damage:3})))}));
     }
 
+    function sportsSpectatorModes(side, source) {
+      const targets = effectTargetEntries(side, oppositeSide(side), card => card.currentHp > 0);
+      const damageValue = targets.length === 1
+        ? Math.max(0, scoreAiNonCombatEffectTarget(side, source, targets[0], {damage: 2}))
+        : targets.reduce((sum, target) => sum + Math.max(0, scoreAiNonCombatEffectTarget(side, source, target, {damage: 1})), 0) * 2 / Math.max(1, targets.length);
+      return [
+        {instanceId: "sports-mode-1", name: "ランダムに1ダメージを2回", pointMode: 1, choiceScore: damageValue},
+        {instanceId: "sports-mode-2", name: "攻撃力と体力を+2", pointMode: 2, choiceScore: 6}
+      ].map(choice => ({...choice, type: "item", cost: 0, twoAchieversChoice: true, effect: choice.name}));
+    }
+
     function resolvePointAttendance(side, card, attendanceSource) {
       const unit = hasAcquiredUnit(side); // Resolve the ability that triggered, even if these kills reach ten.
+      if (card.baseId === "sports_spectator_student") queueFusionEffect(async () => {
+        const chosen = await chooseFusionEffectCards(side, card, sportsSpectatorModes(side, card), unit ? 2 : 1, "point_modes", {required: true});
+        const modes = chosen.sort((a, b) => a.pointMode - b.pointMode);
+        for (let round = 0; round < (unit ? 2 : 1) && !state.gameOver; round++) {
+          for (const mode of modes) {
+            if (mode.pointMode === 1) for (let hit = 0; hit < 2 && !state.gameOver; hit++) pointRandomDamage(side, card, 1);
+            if (mode.pointMode === 2 && isCardCurrentlyOnBoard(card)) {
+              applyPermanentStatBuff(card, 2, 2, 0, card.name);
+              applyBoardAuras();
+            }
+            addLog(`${card.name}の効果${mode.pointMode}：${mode.name}。`);
+          }
+        }
+      });
       if (card.baseId === "secretly_mocked_student") queueFusionEffect(async () => {
         if (unit) {
           const cards = effectTargetEntries(side, oppositeSide(side), target => target.currentHp > 0)
@@ -40625,12 +40734,12 @@
       if (card.baseId === "gecko_carrier_student") queueFusionEffect(async () => {
         const chosen = await chooseFusionEffectCards(side,card,pointModeCards(side,card,true),unit ? 2 : 1,"point_modes",{required:true});
         for (const mode of chosen.sort((a,b)=>a.pointMode-b.pointMode)) {
-          if (mode.pointMode === 1) for (const index of pointAdjacentSeats(side,card)) pointSummon(side,card.baseId,index,{jolly:true});
+          if (mode.pointMode === 1) for (const index of pointAdjacentSeats(side,card)) pointSummon(side,card.baseId,index);
           if (mode.pointMode === 2 && isCardCurrentlyOnBoard(card)) addKeyword(card,"超陽気",card.name);
         }
       });
-      if (card.baseId === "lucky_man" && unit) queueFusionEffect(async () => {
-        for (let i=0;i<2 && !state.gameOver;i++) {
+      if (card.baseId === "lucky_man") queueFusionEffect(async () => {
+        for (let i=0;i<(unit ? 2 : 1) && !state.gameOver;i++) {
           await pointChooseDamage(side,card,3);
           healPlayer(side,2);
         }
@@ -40642,12 +40751,12 @@
         queueFusionEffect(() => pointChooseDamage(side,card,unit ? 2 : 1,1,unit));
       }
       if (card.baseId === "could_not_escape_student") queueFusionEffect(async () => {
-        const targets = shuffle(effectTargetEntries(side,oppositeSide(side),c=>c.currentHp>0)).slice(0,3);
+        const targets = shuffle(effectTargetEntries(side,oppositeSide(side),c=>c.currentHp>0)).slice(0,4);
         const pointSource = pointSourceSnapshot(card);
         for (const {card:target,ref} of targets) {
           if (getBoardCardFromRef(ref)?.instanceId === target.instanceId) destroyBoardCard(ref,{pointSource,reason:card.name});
         }
-        if (unit) for (const index of [0,1,2]) if (isBoardSlotOpen(side,"seat",index)) pointSummon(side,"ae_student",index,{attackBonus:1});
+        if (unit) for (const index of [0,1,2]) if (isBoardSlotOpen(side,"seat",index)) pointSummon(side,"ae_student",index,{attackBonus:2});
       });
     }
 
@@ -40677,7 +40786,7 @@
     }
 
     function pointUnitStatBonus(card) {
-      return card?.baseId === "long_sleeve_student" && hasAcquiredUnit(card.owner) && canUseOngoingCardEffects(card) ? 2 : 0;
+      return card?.baseId === "long_sleeve_student" && hasAcquiredUnit(card.owner) && canUseOngoingCardEffects(card) ? 3 : 0;
     }
 
     function hasProKInLectureRoom(side) {
@@ -50903,7 +51012,6 @@
     // 講義室にいる間、他の出席者・プレイヤー・講義室へ及ぼす効果だけを掲載。
     // 出席時だけの効果や、自身だけの強化・耐性・攻撃時能力は掲載しない。
     const BOARD_ONGOING_RULE_STARTS = Object.freeze({
-      lucky_man: "このカードが自分の講義室にいるかぎり",
       proliferating_enemy: "このカードが自分の講義室にいるかぎり",
       variable_student: "このカードが講義室にいるかぎり",
       acting_out_man_2: "このカードが自分の講義室にいるかぎり",
@@ -50939,7 +51047,6 @@
         if (card.baseId === "aggro_king" && (!hasAggroKingdomTrio(side) || ref.zone !== "seat" || ref.index !== 6)) return [];
         if (card.baseId === "aggro_queen" && (ref.zone !== "seat" || ref.index !== 5)) return [];
         if (card.baseId === "acting_out_woman" && !actingOutWomanEffectActive(card)) return [];
-        if (card.baseId === "lucky_man" && hasAcquiredUnit(side)) return [];
         const start = BOARD_ONGOING_RULE_STARTS[card.baseId];
         if (!start) return [];
         const text = cardRulesText(card);
@@ -50947,7 +51054,6 @@
         if (index < 0) return [];
         if (start.includes("教卓マスにいるかぎり") && ref.zone !== "teacher") return [];
         let detail = text.slice(index).trim();
-        if (card.baseId === "lucky_man") detail = detail.split("\n[単位]")[0];
         // 複数能力のうち、自身にしか作用しない部分は表示から除外する。
         if (card.baseId === "tissue_distributor") {
           detail = detail.replace("このカードの戦意を-2し、", "");
@@ -53880,14 +53986,15 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      sports_spectator_student: {"hand": ["sports_spectator_student", "pinige", "pinige", "onigiri_draw"], "life": 10, "will": 20, "pointScore": 8, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 2], [4, "strong_student"]], "teacher": null}, "deck": ["sports_spectator_student", "pinige", "sports_spectator_student", "short_sleeve_student", "onigiri_draw"], "enemyHand": ["general_student"], "note": "通常は①のランダム1ダメージ2回、または②の+2/+2を選べます。ピニゲ③で点数8から単位を取得すると、①→②→①→②を試せます。別のスポーツを観戦する学生とピニゲを手札・デッキに用意しています。"},
       secretly_mocked_student: {"hand": ["secretly_mocked_student", "bento", "onigiri_draw", "short_sleeve_student"], "pointScore": 9, "life": 10, "will": 20, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "yuta", 1], [4, "yuta"]], "teacher": null}, "enemyHand": ["onigiri_draw"], "enemyDeck": ["yuta", "general_student", "onigiri_draw"], "deck": ["secretly_mocked_student", "short_sleeve_student", "bento", "long_sleeve_student", "onigiri_draw"], "note": "3行3列に女学生を出席させ、相手のU太が体力1の間は攻撃できなくなることを試せます。U太は自分のターン終了時に余裕で体力を回復し、2以上なら攻撃可能になります。単位取得後を試す場合は先に長袖の学生で体力1のU太を倒してください。点数9から開始します。"},
       short_sleeve_student: {"hand": ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
       pinige: {"hand": ["pinige", "pinige", "short_sleeve_student", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 7, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数7から開始します。③で点数を2獲得してピニゲを引き、続けて③を使うと単位を取得できます。先に長袖の学生で体力1の一般学生を倒せば8点から③で単位取得できます。単位取得後は3つ選べます。①の戦意回復、②の点数カード補充、④のダメージに必要な盤面とデッキも用意しています。"},
-      gecko_carrier_student: {"hand": ["gecko_carrier_student", "short_sleeve_student", "pinige", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
-      lucky_man: {"hand": ["lucky_man", "short_sleeve_student", "pinige", "gecko_carrier_student", "classroom"], "life": 10, "will": 20, "pointScore": 8, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student", 1]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "福男は点数8から開始します。ほかの点数カードで倒すと通常のダメージ・回復を試せます。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で体力1の相手を倒し、10点まで進めてください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
-      long_sleeve_student: {"hand": ["long_sleeve_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      gecko_carrier_student: {"hand": ["gecko_carrier_student", "short_sleeve_student", "pinige", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。ヤモリは本体も最初から陽気を持ち、①で左右の空席に陽気を持つ同名の出席者を出せます。生成したヤモリは増員効果を発動しません。先にピニゲ③か長袖の攻撃で単位を取得すると、増員と超陽気を両方試せます。"},
+      lucky_man: {"hand": ["lucky_man", "short_sleeve_student", "pinige", "gecko_carrier_student", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student", 1]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。福男を手札から出席させ、相手への指定3ダメージと気力2回復を試せます。先に長袖の学生で体力1の一般学生を倒すか、ピニゲ③を使うと単位を取得し、指名と回復を2回試せます。点数を獲得しただけでは福男は発動しません。"},
+      long_sleeve_student: {"hand": ["long_sleeve_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。通常は1/1・陽気・2回攻撃です。ピニゲ③で単位を取得すると4/4になります。体力1の一般学生を攻撃しても単位を取得できますが、反撃で長袖も倒れるため、強化を残したい場合はピニゲ③を使ってください。"},
       group_sniper: {"hand": ["group_sniper", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
-      could_not_escape_student: {"hand": ["could_not_escape_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
+      could_not_escape_student: {"hand": ["could_not_escape_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。相手の4人の出席者と教師からランダムに4人まで破壊します。先にピニゲ③で単位を取得すると、1行目の空席に攻撃力+2のあえー学生を出席させます。"},
       wonton_ki: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": null, "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
@@ -55697,7 +55804,7 @@
       "負荷": "手札に持ったまま自分のターンを終了すると、自分本体に1ダメージ。同じカードに再び負荷が付くと高負荷になる。",
       "高負荷": "このカードの戦意を+1する。手札に持ったまま自分のターンを終了すると、自分本体に2ダメージ。効果で手札から校外エリアへ送れず、負荷も追加されない。",
       "点数": "自分のターン中、この能力を持つ自分のカードが相手の出席者を倒すたび、点数を1獲得する。攻撃・能力のダメージ・直接破壊が対象。相手のターン中や、点数を持たないカードによる撃破では獲得しない。点数はプレイヤーで共有し、10点で単位へ変化する。",
-      "単位": "点数を10獲得した状態。この対戦中は取得済みとなり、点数は10で止まる。10点目は点数獲得時の能力を発動しない。",
+      "単位": "点数を10獲得した状態。この対戦中は取得済みとなり、点数は10で止まる。",
       "進化": "指定された進化元を、同じマスで進化後のカードに変える。通常は進化元を出席させた次のターン以降に、進化後のカードの戦意を使って行う。進化元が受けていたダメージと攻撃状態を引き継ぐ。",
       "特殊進化": "カードの効果で条件を満たしたとき、戦意を使わずに進化する。進化元が受けていたダメージと攻撃状態を引き継ぎ、出席回数には数えない。",
       "装備": "出席者につけて継続的に効果を与える。装備カードは通常、出席者1人につき1枚までつけられる。",
@@ -56432,14 +56539,15 @@
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
+        sports_spectator_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
         pinige: "次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。",
-        gecko_carrier_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。それらは陽気を持つ。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
-        lucky_man: "[点数]\nこのカードが自分の講義室にいるかぎり、このカード以外の自分のカードによって点数を獲得したとき、相手の出席者1人をランダムに選び、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりにこのカードを手札から出席させたとき、次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
-        long_sleeve_student: "[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+2される。",
+        gecko_carrier_student: "[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
+        lucky_man: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりに次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",
+        long_sleeve_student: "[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。",
         group_sniper: "[点数]\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスすべてに「集団スナイパー」を1人ずつ出席させる。\nこのカードが出席したとき、相手の出席者1人を指名し、1ダメージを与える。\n単位取得済みなら、代わりに相手本体か相手の出席者1人を指名し、2ダメージを与える。",
-        could_not_escape_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者3人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+1する。",
+        could_not_escape_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者4人までをランダムに選び、破壊する。\n単位取得済みなら、さらに自分の1行目の空いている席マスすべてに「あえー学生」を1人ずつ出席させる。それらの攻撃力を+2する。",
         wonton_greeting: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「万豚記～屋台シリーズ～」1枚を生成する。その後、自分のデッキからカードを1枚引く。",
         wonton_stall: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「紅の万豚記～熱狂シリーズ～」1枚を生成する。その後、自分の気力を2回復する。",
         wonton_fever: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。",

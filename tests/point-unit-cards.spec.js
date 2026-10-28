@@ -13,7 +13,7 @@ test.beforeEach(async({page})=>{await page.goto(url);await page.evaluate(()=>{
  });});
 test('7枚の定義、登録、管理ログ、本文を同期',async({page})=>{
  const r=await page.evaluate(ids=>ids.map(id=>({id,base:CARD_BASES[id],direct:DIRECT_DECK_CARD_IDS.has(id),text:cardRulesText(createCardFromBase(id,'player'))})),ids);const catalog=require('../server/card-catalog.json');
- const stats=[[2,1,1],[3,0,0],[7,4,4],[5,2,3],[4,1,3],[5,2,1],[9,4,5]];
+ const stats=[[2,1,1],[3,0,0],[7,4,4],[5,2,2],[4,1,1],[5,2,1],[9,4,5]];
  for(const [i,c] of r.entries()){
   expect([c.base.cost,c.base.attack,c.base.hp]).toEqual(stats[i]);expect(c.direct).toBe(true);expect(catalog.names[c.id]).toBe(c.base.name);expect(catalog.display[c.id].cost).toBe(c.base.cost);
   const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8').split('\n').find(l=>l.trimStart().startsWith(c.id+':')).trim().replace(/^[^:]+: /,'').replace(/,$/,''));
@@ -37,13 +37,13 @@ test('直接破壊も人数分加点、通常の校外送りは加点しない',
 test('複数マスの出席者は1点、無効化されたカードは加点しない',async({page})=>{
  await page.evaluate(()=>{const c=makeBoardCard(createCardFromBase('two_achievers','opponent'));state.players.opponent.board.seats[0]=c;state.players.opponent.board.seats[1]=c;dealDamageToCard(c,10,createCardFromBase('group_sniper','player'));cleanupDestroyedCards();const t=makeBoardCard(createCardFromBase('general_student','opponent'));state.players.opponent.board.seats[0]=t;const source=createCardFromBase('short_sleeve_student','player');source.generatedWithoutEffects=true;dealDamageToCard(t,3,source);cleanupDestroyedCards();});expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(1);
 });
-test('10点目は福男を発動せず単位に変化、10で停止、長袖は即時+2/+2で重複しない',async({page})=>{
- await page.evaluate(()=>{state.players.player.pointScore=9;state.players.player.pointSystemActive=true;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));state.players.player.board.seats[1]=makeBoardCard(createCardFromBase('long_sleeve_student','player'));state.players.player.board.seats[1].currentHp=2;for(const i of [0,1])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));const t=state.players.opponent.board.seats[0];dealDamageToCard(t,2,createCardFromBase('short_sleeve_student','player'));cleanupDestroyedCards();applyBoardAuras();applyBoardAuras();});await settle(page);
- expect(await page.evaluate(()=>({score:state.players.player.pointScore,life:state.players.player.life,hp:state.players.opponent.board.seats[1].currentHp,stats:[state.players.player.board.seats[1].attack,state.players.player.board.seats[1].maxHp,state.players.player.board.seats[1].currentHp],lines:playerActiveEffectLines('player')}))).toMatchObject({score:10,life:10,hp:2,stats:[3,5,4],lines:['[単位] 取得済み']});
+test('10点で単位に変化し停止、長袖は即時+3/+3で重複しない',async({page})=>{
+ await page.evaluate(()=>{state.players.player.pointScore=9;state.players.player.pointSystemActive=true;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));state.players.player.board.seats[1]=makeBoardCard(createCardFromBase('long_sleeve_student','player'));state.players.player.board.seats[1].currentHp=1;for(const i of [0,1])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));const t=state.players.opponent.board.seats[0];dealDamageToCard(t,2,createCardFromBase('short_sleeve_student','player'));cleanupDestroyedCards();applyBoardAuras();applyBoardAuras();});await settle(page);
+ expect(await page.evaluate(()=>({score:state.players.player.pointScore,life:state.players.player.life,hp:state.players.opponent.board.seats[1].currentHp,stats:[state.players.player.board.seats[1].attack,state.players.player.board.seats[1].maxHp,state.players.player.board.seats[1].currentHp],lines:playerActiveEffectLines('player')}))).toMatchObject({score:10,life:10,hp:2,stats:[4,4,4],lines:['[単位] 取得済み']});
  await page.evaluate(()=>{dealDamageToCard(state.players.opponent.board.seats[1],4,createCardFromBase('pinige','player'));cleanupDestroyedCards();});expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(10);
 });
-test('福男は自分以外の撃破に反応し、続く自身の撃破には自己連鎖しない',async({page})=>{
- await page.evaluate(()=>{state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));for(const i of [0,1])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));dealDamageToCard(state.players.opponent.board.seats[0],2,createCardFromBase('short_sleeve_student','player'));cleanupDestroyedCards();});await settle(page);expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,listBoardRefs('opponent').length])).toEqual([2,12,0]);
+test('福男は点数獲得だけではダメージも回復も発動しない',async({page})=>{
+ await page.evaluate(()=>{state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));for(const i of [0,1])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('general_student','opponent'));dealDamageToCard(state.players.opponent.board.seats[0],2,createCardFromBase('short_sleeve_student','player'));cleanupDestroyedCards();});await settle(page);expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,listBoardRefs('opponent').length])).toEqual([1,10,1]);
 });
 test('半袖の通常はランダム2、単位後は2人まで選べる',async({page})=>{
  await page.evaluate(()=>{for(const i of [0,1,2])state.players.opponent.board.seats[i]=makeBoardCard(createCardFromBase('strong_student','opponent'));});await attend(page,'short_sleeve_student');await settle(page);expect(await page.evaluate(()=>listBoardRefs('opponent').map(getBoardCardFromRef).reduce((sum,c)=>sum+c.currentHp,0))).toBe(19);
@@ -62,8 +62,8 @@ test('単位後のスナイパーは本体を盤面から選べる',async({page}
 test('福男の単位取得後は手札出席で2回指名・回復、生成では発動しない',async({page})=>{
  await page.evaluate(()=>{state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('strong_student','opponent'));});await attend(page,'lucky_man',4,10);await choose(page);await choose(page);await settle(page);expect(await page.evaluate(()=>[state.players.opponent.board.seats[0].currentHp,state.players.player.life])).toEqual([1,14]);await attend(page,'lucky_man',3,10,'player','generated');await settle(page);expect(await page.evaluate(()=>state.players.player.life)).toBe(14);
 });
-test('逃げられなかった学生は単位取得後のみ1行目を1/4あえーで埋める',async({page})=>{
- await attend(page,'could_not_escape_student',4,10);await settle(page);expect(await page.evaluate(()=>state.players.player.board.seats.slice(0,3).map(c=>[c.baseId,c.attack,c.currentHp]))).toEqual(Array(3).fill(['ae_student',1,4]));
+test('逃げられなかった学生は単位取得後のみ1行目を2/4あえーで埋める',async({page})=>{
+ await attend(page,'could_not_escape_student',4,10);await settle(page);expect(await page.evaluate(()=>state.players.player.board.seats.slice(0,3).map(c=>[c.baseId,c.attack,c.currentHp]))).toEqual(Array(3).fill(['ae_student',2,4]));
 });
 test('出席時破壊で10点になっても、同じ出席効果を途中から単位版に変えない',async({page})=>{
  await page.evaluate(()=>{state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));});await attend(page,'could_not_escape_student',4,9);await settle(page);expect(await page.evaluate(()=>[state.players.player.pointScore,listBoardRefs('player').length])).toEqual([10,1]);
@@ -85,7 +85,7 @@ test('点数カードの本文は単位取得前後とも元の効果、単位�
  for(const {id,text} of result[1]){
   expect(text).toMatch(/^\[点数\]\n/);
   const unit=text.indexOf('[単位]取得済みなら、');expect(unit).toBeGreaterThan(0);
-  const ordinary={short_sleeve_student:'ランダムに選び、2ダメージ',lucky_man:'点数]を獲得したとき',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',secretly_mocked_student:'その出席者は体力が1',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
+  const ordinary={sports_spectator_student:'2. このカードの攻撃力と体力を+2する。',short_sleeve_student:'ランダムに選び、2ダメージ',lucky_man:'その後、自分の気力を2回復する。',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',secretly_mocked_student:'その出席者は体力が1',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
   expect(text.indexOf(ordinary)).toBeGreaterThan(-1);expect(text.indexOf(ordinary)).toBeLessThan(unit);
  }
 });
@@ -94,10 +94,11 @@ for(const id of ids)test(`実際のテストボタンで専用の開始状態か
  await page.goto(url);await page.locator('#homeNavDeckButton').click();await page.locator('[data-case-view="cards"]').click();
  await page.locator('#cardsCatalogSearch').fill(await page.evaluate(id=>CARD_BASES[id].name,id));await page.locator(`[data-catalog-card="${id}"]`).click();
  await page.locator('#cardTestStartButton').click();await page.evaluate(()=>{scheduleOpponentAI=()=>{};state.training.skipAnimations=true;});await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
- const before=await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,state.players.player.deck.map(c=>c.baseId),state.players.player.hand.map(c=>c.baseId)]);expect(before[0]).toBe(id==='lucky_man'?8:id==='pinige'?7:9);expect(before[1]).toBe(10);expect(before[2]).toContain('pinige');expect(before[3]).toContain(id);
+ const before=await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,state.players.player.deck.map(c=>c.baseId),state.players.player.hand.map(c=>c.baseId)]);expect(before[0]).toBe(id==='pinige'?7:9);expect(before[1]).toBe(10);expect(before[2]).toContain('pinige');expect(before[3]).toContain(id);
  await page.evaluate(id=>{const c=state.players.player.hand.find(c=>c.baseId===id);if(c.type==='item')castImmediateItem('player',c,false);else playCard(c.instanceId,'seat','player',4);},id);
  if(['pinige','gecko_carrier_student'].includes(id))await choose(page,[1]);
  if(id==='group_sniper')for(let i=0;i<3;i++)await choose(page);
+ if(id==='lucky_man')await choose(page);
  await settle(page);expect(await page.evaluate(id=>state.players.player.hand.filter(c=>c.baseId===id).length,id)).toBe(before[3].filter(x=>x===id).length-1);
 });
 
@@ -139,7 +140,7 @@ for(const id of ids)test(`カードテストの通常操作で単位を取得し
  await page.goto(url);await page.locator('#homeNavDeckButton').click();await page.locator('[data-case-view="cards"]').click();await page.locator('#cardsCatalogSearch').fill(await page.evaluate(id=>CARD_BASES[id].name,id));await page.locator(`[data-catalog-card="${id}"]`).click();await page.locator('#cardTestStartButton').click();
  await page.evaluate(()=>{scheduleOpponentAI=()=>{};state.training.skipAnimations=true;});await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
  if(id==='pinige'){for(let i=0;i<2;i++){await page.evaluate(()=>castImmediateItem('player',state.players.player.hand.find(c=>c.baseId==='pinige'),false));await choose(page,[3]);await settle(page);}}
- for(const target of id==='pinige'?[]:id==='lucky_man'?[0,8]:[0]){await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);await page.evaluate(async target=>{handleBoardCardClick('player','seat',6);await attackCard('opponent','seat',target);},target);await settle(page);}
+ for(const target of id==='pinige'?[]:[0]){await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);await page.evaluate(async target=>{handleBoardCardClick('player','seat',6);await attackCard('opponent','seat',target);},target);await settle(page);}
  expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(10);
  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
  await page.evaluate(id=>{const c=state.players.player.hand.find(c=>c.baseId===id);if(c.type==='item')castImmediateItem('player',c,false);else playCard(c.instanceId,'seat','player',4);},id);
@@ -151,7 +152,7 @@ for(const id of ids)test(`カードテストの通常操作で単位を取得し
  await settle(page);
  const r=await page.evaluate(()=>({score:state.players.player.pointScore,life:state.players.player.life,own:listBoardRefs('player').map(getBoardCardFromRef).map(c=>[c.baseId,c.attack,c.currentHp]),enemy:listBoardRefs('opponent').length,hand:state.players.player.hand.map(c=>c.baseId)}));
  expect(r.score).toBe(10);
- if(id==='long_sleeve_student')expect(r.own).toContainEqual([id,3,5]);
+ if(id==='long_sleeve_student')expect(r.own).toContainEqual([id,4,4]);
  if(id==='gecko_carrier_student'||id==='group_sniper')expect(r.own.filter(c=>c[0]===id)).toHaveLength(3);
  if(id==='lucky_man')expect(r.life).toBe(14);
  if(id==='could_not_escape_student')expect(r.own.filter(c=>c[0]==='ae_student')).toHaveLength(3);
@@ -162,11 +163,11 @@ for(const id of ids)test(`カードテストの通常操作で単位を取得し
 for(const score of [0,7,8,9,10])test(`ピニゲ③は2点を一括獲得し10点で止まり、その後もサーチする ${score}`,async({page})=>{
  await page.evaluate(score=>{state.players.player.pointScore=score;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('long_sleeve_student','player'));state.players.player.deck=[createCardFromBase('pinige','player')];const item=createCardFromBase('pinige','player');state.players.player.hand=[item];castImmediateItem('player',item,false);},score);
  await choose(page,score===10?[3,1,2]:[3]);await settle(page);
- expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId),state.players.player.board.seats[0].attack])).toEqual([Math.min(10,score+2),['pinige'],score>=8?3:1]);
+ expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId),state.players.player.board.seats[0].attack])).toEqual([Math.min(10,score+2),['pinige'],score>=8?4:1]);
 });
-for(const score of [0,8])test(`ピニゲ③の2点で福男は一度だけ反応し、単位取得時は反応しない ${score}`,async({page})=>{
+for(const score of [0,8])test(`ピニゲ③の2点でも福男の旧継続効果は発動しない ${score}`,async({page})=>{
  await page.evaluate(score=>{state.players.player.pointScore=score;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('strong_student','opponent'));const item=createCardFromBase('pinige','player');state.players.player.hand=[item];castImmediateItem('player',item,false);},score);await choose(page,[3]);await settle(page);
- expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,state.players.opponent.board.seats[0].currentHp])).toEqual(score===8?[10,10,7]:[2,12,4]);
+ expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,state.players.opponent.board.seats[0].currentHp])).toEqual(score===8?[10,10,7]:[2,10,7]);
 });
 test('ピニゲ③はサーチできなくても加点、単位取得済みではサーチだけ、③④の撃破では増えない',async({page})=>{
  await page.evaluate(()=>{state.players.player.pointScore=9;state.players.player.deck=[createCardFromBase('pinige','player')];state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));const item=createCardFromBase('pinige','player');state.players.player.hand=[item];castImmediateItem('player',item,false);});await choose(page,[3]);await settle(page);
