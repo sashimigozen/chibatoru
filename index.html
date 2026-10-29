@@ -17531,6 +17531,7 @@
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
   <link rel="stylesheet" href="draw-animation.css?v=0.23.19" />
+  <link rel="stylesheet" href="wonton-animation.css?v=0.36.0" />
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
 <link rel="stylesheet" href="cards-ui.css?v=0.33.1-card-detail" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.26.0" />
@@ -19979,8 +19980,26 @@
         "version": "ver.0.36.0",
         "versioning": "semver",
         "date": "2026年10月29日",
-        "summary": "「スポーツを観戦する学生」を追加し、点数軸のカードを調整しました。「密かに冷笑される女学生」を「謎多き女学生」へ名称変更しました。",
+        "summary": "「スポーツを観戦する学生」を追加し、点数軸のカードを調整しました。「密かに冷笑される女学生」を「謎多き女学生」へ名称変更しました。万豚記シリーズに書物を読む演出を追加し、卒業シリーズはカウントを増やさずにダメージを計算するようにしました。",
         "changes": [
+          {
+            "category": "表示・操作改善",
+            "title": "万豚記シリーズの読書演出",
+            "after": "万豚記カウントが増えると、毛筆の「万豚記シリーズ」と豚の墨絵がある書物を開き、古い和紙のページをめくって「+1」を表示します。卒業シリーズでは最終ページに毛筆の「完」が現れ、紙片が相手本体へ届くタイミングでダメージとカウントのリセットを行います。ホスト・ゲスト・観戦で演出を共有し、スマートフォン・演出スキップ・動きを減らす設定にも対応しました。"
+          },
+          {
+            "category": "カード調整",
+            "title": "恋の万豚記～卒業シリーズ～",
+            "before": "恋の万豚記～卒業シリーズ～／環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n自分の万豚記カウントを1増やす。その後、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。\n生成専用カード。",
+            "after": "恋の万豚記～卒業シリーズ～／環境／共通カード／戦意8／攻撃力0／体力0\n[提出]\n相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。\n生成専用カード。",
+            "beforeHighlights": ["自分の万豚記カウントを1増やす。その後、"],
+            "afterHighlights": []
+          },
+          {
+            "category": "システム",
+            "title": "万豚記シリーズの効果・テスト",
+            "after": "卒業シリーズのAI判断を増加前のカウントに合わせました。カウント0・1・4・上限超過時のダメージ、環境への配置と効果による校外送り、二重発動防止、オンラインの演出共有と再受信、画面切り替え時の後片付けを確認する自動テストを追加しました。卒業以外のシリーズの能力値・効果内容は変更していません。"
+          },
           {
             "category": "不具合修正",
             "title": "小刻みリズム学生のAI使用",
@@ -28046,6 +28065,13 @@
           window.setTimeout(() => showCenterAnnouncement(event.text, event.variant || ""), delay);
           return;
         }
+        if (event.target === "wonton-book") {
+          const token = state.preBattleToken;
+          window.setTimeout(() => {
+            if (state.screen === "battle" && token === state.preBattleToken) playWontonBookEffect(event.owner, event);
+          }, delay);
+          return;
+        }
         if (event.target === "bingo-lines") {
           window.setTimeout(() => appendQuickQuizClickEffect(event.instanceIds || []), delay);
           return;
@@ -28299,6 +28325,7 @@
         || state.attackInProgress || state.attackQueue.length
         || window.ChibattleDraw?.isBusy()
         || window.ChibattleHandTrash?.isBusy()
+        || window.ChibattleWonton?.isBusy()
         || queuedBattlePresentations > 0
         || pendingAnimations.some(animation => animation.type === "draw" && animation.phase === "battle")
         || !elements.playRevealOverlay.classList.contains("hidden")
@@ -33141,7 +33168,7 @@
         if (card.baseId === "wonton_ki") return ongoingEnvironmentBaseId() === "wonton_ki" ? -100 : 8 + state.players[side].hand.filter(c=>c.submission).length * 4;
         if (WONTON_SERIES_IDS.includes(card.baseId)) {
           if (card.baseId === "wonton_graduation") {
-            const damage = Math.min(10, (wontonCount(side) + 1) * 2);
+            const damage = Math.min(10, wontonCount(side) * 2);
             return damage >= state.players[oppositeSide(side)].life ? 1000 : damage * 2;
           }
           return 6 + (card.baseId === "wonton_final_battle" ? listBoardRefs(side).length * 2 : 0);
@@ -43639,7 +43666,7 @@
     function submissionDiscardValue(side, card) {
       if (WONTON_SERIES_IDS.includes(card?.baseId) && canUsePrintedCardEffects(card)) {
         const count = wontonCount(side);
-        return card.baseId === "wonton_graduation" ? Math.min(10, (count + 1) * 2) * 4 : 20;
+        return card.baseId === "wonton_graduation" ? Math.min(10, count * 2) * 4 : 20;
       }
       return -trainingAiChoiceCardScore(side, card);
     }
@@ -43652,7 +43679,7 @@
       queueFusionEffect(async () => {
         analyticsRecordEffect({ side, source, effectType: "submission", details: { cause } });
         addLog(`[提出]：${SIDES[side]}の「${source.name}」の効果が発動しました。`);
-        showSharedCenterAnnouncement("提出", "");
+        if (!WONTON_SERIES_IDS.includes(source.baseId)) showSharedCenterAnnouncement("提出", "");
         await effect(side, source, cause);
       });
       return true;
@@ -43662,13 +43689,46 @@
       return Math.max(0, Number(state.players[side].submissionCounters?.["万豚記カウント"]) || 0);
     }
 
+    function playWontonBookEffect(owner, payload) {
+      const immediate = () => ({ impact: Promise.resolve(true), finished: Promise.resolve(true) });
+      if (state.training.skipAnimations || trainingFastSimulation() || state.screen !== "battle" || !window.ChibattleWonton) return immediate();
+      const token = state.preBattleToken;
+      return window.ChibattleWonton.play({
+        ...payload, owner,
+        speed: state.training.active ? Math.max(1, Number(state.training.speed) || 1) : 1,
+        isVisualBusy: () => !elements.playRevealOverlay.classList.contains("hidden")
+          || window.ChibattleHandTrash?.isBusy() || window.ChibattleDraw?.isBusy(),
+        isCurrent: () => state.screen === "battle" && state.preBattleToken === token
+      });
+    }
+
     async function resolveWontonSubmission(side, source) {
       const stage = WONTON_SERIES_IDS.indexOf(source.baseId);
       if (stage < 0) return;
+      const token = state.preBattleToken;
       const counters = state.players[side].submissionCounters ||= {};
-      const count = counters["万豚記カウント"] = wontonCount(side) + 1;
-      analyticsRecordEffect({ side, source, effectType: "wonton_counter", details: { counter: "万豚記カウント", count } });
-      addLog(`${source.name}の効果：${SIDES[side]}の万豚記カウントは${count}になりました。`);
+      const beforeCount = wontonCount(side);
+      const count = stage === 5 ? beforeCount : beforeCount + 1;
+      const payload = { target: "wonton-book", owner: side, beforeCount, count, graduation: stage === 5 };
+      recordOnlineEffectFeedback(payload);
+      const presentation = playWontonBookEffect(side, payload);
+      if (isOnlineHost()) onlineBroadcastState(true);
+      if (!await presentation.impact || token !== state.preBattleToken || state.screen !== "battle") return;
+      if (stage < 5) {
+        counters["万豚記カウント"] = count;
+        analyticsRecordEffect({ side, source, effectType: "wonton_counter", details: { counter: "万豚記カウント", count } });
+        addLog(`${source.name}の効果：${SIDES[side]}の万豚記カウントは${count}になりました。`);
+      } else {
+        const damage = Math.min(10, count * 2);
+        damagePlayer(oppositeSide(side), damage, source);
+        counters["万豚記カウント"] = 0;
+        addLog(`${source.name}の効果：相手本体に${damage}ダメージ。万豚記カウントを0にしました。`);
+        analyticsRecordEffect({ side, source, effectType: "wonton_counter_reset", details: { counter: "万豚記カウント", damage, count: 0 } });
+      }
+      render();
+      if (isOnlineHost()) onlineBroadcastState(true);
+      await presentation.finished;
+      if (token !== state.preBattleToken || state.screen !== "battle") return;
       if (stage < 5) generateWontonCard(side, WONTON_SERIES_IDS[stage + 1], source);
       if (stage === 0) drawUpTo(side, 1);
       if (stage === 1) healPlayer(side, 2);
@@ -43684,11 +43744,6 @@
         if (target && target.instanceId === chosen.instanceId) applyPermanentStatBuff(target, 2, 2, 0, source.name);
       }
       if (stage === 5) {
-        const damage = Math.min(10, count * 2);
-        damagePlayer(oppositeSide(side), damage, source);
-        counters["万豚記カウント"] = 0;
-        addLog(`${source.name}の効果：相手本体に${damage}ダメージ。万豚記カウントを0にしました。`);
-        analyticsRecordEffect({ side, source, effectType: "wonton_counter_reset", details: { counter: "万豚記カウント", damage, count: 0 } });
         checkLifeVictory();
       }
     }
@@ -47484,6 +47539,7 @@
       if (pendingItemPresentation && (state.screen !== "battle" || pendingItemPresentation.token !== state.preBattleToken)) pendingItemPresentation = null;
       if (state.screen !== "battle" || state.lectureRoomCheckToken !== state.preBattleToken) state.lectureRoomCheck = false;
       if (state.screen !== "battle") window.ChibattleDraw?.cancel();
+      if (state.screen !== "battle") window.ChibattleWonton?.cancel();
       // Covers all navigation paths, including Cards and Shop's direct screen changes.
       // Entering an actual online battle is not a cancellation.
       if (state.online.matchMode === "random" && !state.online.started && !onlineIsRandomMatchScreen()) {
@@ -54020,7 +54076,7 @@
       wonton_fever: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       wonton_rebellion: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       wonton_final_battle: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_graduation: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 4, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_graduation: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 4, "note": "万豚記カウント4から開始します。卒業シリーズを環境マスに置くか、万豚記やハイボールの効果で手札から校外へ送ると、カウントを増やさず相手本体に8ダメージを与え、その後0にします。毛筆の「完」がある最終ページと、相手本体へ向かう紙片の演出を比較できます。"},
 
       smiling_lecturer: {
         hand: ["fire_touch", "onigiri_draw", "kashikashi"], life: 10,
@@ -56570,7 +56626,7 @@
         wonton_fever: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「叛逆の万豚記～敵地を玉砕～」1枚を生成する。その後、相手の出席者1人をランダムに選び、3ダメージを与える。",
         wonton_rebellion: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「燃えよ！万豚記～決戦シリーズ～」1枚を生成する。その後、相手の出席者すべてに1ダメージを与える。",
         wonton_final_battle: "[提出]\n自分の万豚記カウントを1増やす。その後、自分の手札に「恋の万豚記～卒業シリーズ～」1枚を生成する。その後、自分の出席者1人を指名し、攻撃力と体力を+2する。",
-        wonton_graduation: "[提出]\n自分の万豚記カウントを1増やす。その後、相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。",
+        wonton_graduation: "[提出]\n相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。",
         two_achievers: "このカードは横に連続した席マスを2つ使用する。このカードを手札から出席させたとき、相手の講義室にいる出席者1人をランダムに選び、1ダメージを与える。これを4回行う。その後、次の効果から1つを選ぶ。\n1. 自分のデッキから学生カードをランダムに2枚まで手札に加える。\n2. 相手の手札からカードをランダムに2枚まで選び、負荷を付与する。",
         chotto_machii: "自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。",
         ittan: "お互いの講義室にいる出席者すべてを破壊する。",
@@ -58024,6 +58080,7 @@
 <script src="cards-ui.js?v=0.33.1-card-detail"></script>
   <script src="desktop-ui.js?v=0.26.0"></script>
 <script src="draw-animation.js?v=0.23.19-video-tempo"></script>
+<script src="wonton-animation.js?v=0.36.0"></script>
 <script src="hand-trash-animation.js?v=0.23.19-deck"></script>
 <script src="gacha-ui.js?v=0.25.1-shop"></script>
   <script src="four-mode.js"></script>

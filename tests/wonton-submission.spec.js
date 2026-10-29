@@ -29,7 +29,8 @@ test('9枚の能力値・本文・生成専用登録と管理ログ表示情報�
     const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8').split('\n').find(line=>line.trimStart().startsWith(c.id+':')).trim().replace(/^[^:]+: /,'').replace(/,$/,''));
     expect(c.text.replaceAll('\n','')).toBe(raw.replace('提出したとき','[提出]したとき').replaceAll('\n',''));
     expect(ledger.find(card=>card.id===c.id).effect).toBe(raw);
-    if(i>=3){expect(c.text).toMatch(/^\[提出\]\n自分の万豚記カウントを1増やす。その後、/);}
+    if(i>=3&&c.id!=='wonton_graduation'){expect(c.text).toMatch(/^\[提出\]\n自分の万豚記カウントを1増やす。その後、/);}
+    if(c.id==='wonton_graduation')expect(c.text).toBe('[提出]\n相手本体に、自分の万豚記カウントの2倍のダメージを与える（最大10）。その後、自分の万豚記カウントを0にする。');
   }
 });
 test('提出を持たない通常カードでは出席・使用・手札捨て・装備をしても提出しない', async ({ page }) => {
@@ -150,11 +151,11 @@ for(const id of series)test(`提出の各効果・カウント先行・生成 ${
   if(i===2)expect(r.enemyHp).toBe(4);
   if(i===3)expect(r.enemyHp).toBe(6);
   if(i===4)expect(r.own).toEqual([4,4]);
-  if(i===5)expect(r.enemyLife).toBe(0);
+  if(i===5)expect(r.enemyLife).toBe(2);
 });
-for(const n of [0,1,8])test(`卒業は増加後に計算し最大10、初期${n}`,async({page})=>{
+for(const n of [0,1,4,8])test(`卒業はカウントを増やさず計算し最大10、初期${n}`,async({page})=>{
   await page.evaluate(n=>{state.players.opponent.life=20;state.players.player.submissionCounters={'万豚記カウント':n};const c=createCardFromBase('wonton_graduation','player');state.players.player.hand=[c];moveHandCardToTrash('player',c,{effectDiscard:true});},n);
-  await settle(page);expect(await page.evaluate(()=>[state.players.opponent.life,state.players.player.submissionCounters['万豚記カウント']])).toEqual([20-Math.min(10,(n+1)*2),0]);
+  await settle(page);expect(await page.evaluate(()=>[state.players.opponent.life,state.players.player.submissionCounters['万豚記カウント']])).toEqual([20-Math.min(10,n*2),0]);
 });
 test('直接配置と効果配置、環境の置き換えで二重発動・カウント消失しない',async({page})=>{
   await page.evaluate(()=>{const c=createCardFromBase('wonton_greeting','player');state.players.player.hand=[c];state.players.player.deck=[createCardFromBase('general_student','player')];state.players.player.hand=[];attendCard('player',makeBoardCard(c),'environment',null,{attendanceSource:ATTENDANCE_SOURCE.HAND});});
