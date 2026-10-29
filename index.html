@@ -19982,6 +19982,11 @@
         "summary": "「スポーツを観戦する学生」を追加し、点数軸のカードを調整しました。「密かに冷笑される女学生」を「謎多き女学生」へ名称変更しました。",
         "changes": [
           {
+            "category": "不具合修正",
+            "title": "小刻みリズム学生のAI使用",
+            "after": "AIがコピーを出席させた後、出席完了と効果完了を互いに待って進行しなくなる不具合を修正しました。コピーを順番に出席させて処理を完了します。AIが1人・3人をコピーしてターンを返すこと、空き席不足時とオンラインでの配置も確認しました。カード本文・能力値・効果内容は変更していません。"
+          },
+          {
             "category": "新カード",
             "title": "スポーツを観戦する学生",
             "after": "スポーツを観戦する学生／学生／共通カード／戦意3／攻撃力1／体力1\n[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。"
@@ -44916,8 +44921,10 @@
           boardCard.specialAttendanceSeatOnly = pending.seatOnly === true;
           if (isCpuControlledBattleSide(side) && !isOnlineBattle()) {
             placeCopiedCardInFirstOpenSlot(side, boardCard);
+            // Rhythm's copy queue is awaited by its own fusion task; waiting for
+            // that task here would stop after the first copy and never complete.
             if (state.pendingSpecialAttendanceQueue !== pending || state.pendingCardChoice || state.pendingAttendTarget
-              || state.resolvingOrderedAttendance || fusionTasksBusy()) return true;
+              || state.resolvingOrderedAttendance || (fusionTasksBusy() && !boardCard.fusionCopyPlacement)) return true;
             continue;
           }
           setPendingCopiedCardForPlacement(boardCard, `${pending.label}：${boardCard.name}を出席させる場所を選んでください。`);
