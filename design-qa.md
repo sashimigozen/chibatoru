@@ -2,6 +2,25 @@
 
 final result: passed
 
+## Latest Follow-Up: One-Second Cover And No Footer
+
+- Request: shorten the cover to one second and remove the count/+1 text below
+  the book. Page calligraphy, book sizing and game rules are unchanged.
+- Same-state mobile comparison: `/tmp/wonton-footer-removal-comparison.png`,
+  390 x 844 per view, DPR 1. Left is the prior published scene; right is the new
+  page-count scene. No rescaling or density normalization was needed.
+- New desktop/mobile captures: `/tmp/chibatoru-wonton-1s-tests/`, including
+  `kanji-count-1440.png`, `kanji-count-390.png` and both `cover` captures.
+- Typography, paper/cover images, colors and book geometry are preserved. The
+  requested footer is absent in normal and graduation scenes. The underlying
+  board is no longer obscured by that text. Accessible count descriptions remain.
+- Cover timeline: 1000ms total, fade-in 0-80ms, fade-out 920-1000ms. No count
+  increase or game-effect change is introduced by this timing adjustment.
+- All 16 focused Playwright cases pass. Tests measure the cover lifetime on
+  desktop/mobile, intercept canvas text drawing to assert the footer is absent,
+  and retain page-pixel, graduation, skip, reduced-motion and online checks.
+- No P0/P1/P2 visual findings; no repair iteration needed.
+
 ## Follow-Up: Brush Counts, Cover Hold And Larger Books
 
 - Brief: write the updated count in kanji on the turned page; show the 4-cost

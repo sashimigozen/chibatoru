@@ -58,7 +58,7 @@
       : `万豚記シリーズ。万豚記カウント${beforeCount}から${count}、1増加。めくったページに毛筆で「${kanjiCount}」。`);
     const ctx = canvas.getContext('2d');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = coverOnly ? 2400 : reduced ? 320 : graduation ? 2400 : 1400;
+    const duration = coverOnly ? 1000 : reduced ? 320 : graduation ? 2400 : 1400;
     const impactAt = coverOnly ? 0 : reduced ? 160 : graduation ? 1850 : 570;
     const rate = Number.isFinite(speed) && speed > 0 ? speed : 1;
     let frame, impactTimer, finishTimer, loadTimer, stopped = false, startedAt = 0;
@@ -185,7 +185,7 @@
       const target = anchor(`[data-life-target="${targetOwner}"]`, { x: width * .85, y: height * .2 });
       const counter = anchor(`#${owner}ActiveEffectsButton`, { x: width * .85, y: height * .75 });
       if (coverOnly) {
-        const alpha = reduced ? 1 : Math.min(ease(part(t, 0, 180)), 1 - part(t, 2200, 2400));
+        const alpha = reduced ? 1 : Math.min(ease(part(t, 0, 80)), 1 - part(t, 920, 1000));
         book(x, y, size, 0, 0, false, alpha);
       } else if (reduced) {
         book(x, y, size, 1, 0, graduation, 1, graduation ? '' : kanjiCount);
@@ -217,14 +217,6 @@
           t >= 570 ? kanjiCount : '', part(t, 570, 820));
       }
       const reached = t >= impactAt;
-      const displayed = graduation ? (reached ? 0 : beforeCount) : (reached ? count : beforeCount);
-      if (!coverOnly) {
-        ctx.save(); ctx.globalAlpha = reduced ? 1 : 1 - part(t, duration - 160, duration);
-        text('万豚記カウント', x, y + size * .8, 14);
-        if (graduation || !reached) text(String(displayed), x, y + size * .8 + 32, 30);
-        else text('+1', x, y + size * .8 + 32, 22, red);
-        ctx.restore();
-      }
       canvas.dataset.time = String(Math.round(t));
       canvas.dataset.phase = coverOnly ? 'cover' : reached ? graduation ? 'impact' : 'page-count'
         : graduation && t >= 1100 ? 'end-page' : 'reading';

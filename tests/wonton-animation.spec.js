@@ -30,6 +30,14 @@ async function setup(page, id = 'wonton_graduation') {
   }, id);
   await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   await page.evaluate(() => window.ChibattleWonton.ready);
+  await page.evaluate(() => {
+    window.wontonTextCalls = [];
+    const original = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (label, ...args) {
+      wontonTextCalls.push(String(label));
+      return original.call(this, label, ...args);
+    };
+  });
 }
 async function useTestCard(page) {
   await page.evaluate(() => playCard(state.players.player.hand[0].instanceId, 'environment', 'player'));
@@ -74,6 +82,8 @@ for (const width of [1440, 390]) {
       return [wontonCount('player'), state.players.opponent.life, Math.max(...wontonCounts)];
     })).toEqual([0, 12, 4]);
     await expect(effect).toHaveCount(0);
+    expect(await page.evaluate(() => wontonTextCalls)).not.toContain('万豚記カウント');
+    expect(await page.evaluate(() => wontonTextCalls)).not.toContain('+1');
     expect(errors).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
@@ -106,6 +116,8 @@ for (const width of [1440, 390]) test(`通常シリーズは毛筆の漢数字�
   await settle(page);
   expect(await page.evaluate(() => [wontonCount('player'), state.players.player.hand.some(c => c.baseId === 'wonton_stall')])).toEqual([1, true]);
   await expect(effect).toHaveCount(0);
+  expect(await page.evaluate(() => wontonTextCalls)).not.toContain('万豚記カウント');
+  expect(await page.evaluate(() => wontonTextCalls)).not.toContain('+1');
 });
 
 test('漢数字は十・百・千・万・億・兆を使って正しく表す', async ({ page }) => {
@@ -116,21 +128,30 @@ test('漢数字は十・百・千・万・億・兆を使って正しく表す',
   expect(await page.evaluate(cases => cases.map(([n]) => window.ChibattleWonton.formatCount(n)), cases)).toEqual(cases.map(([,label]) => label));
 });
 
-for (const width of [1440, 390]) test(`4コストの万豚記は大きい表紙を約2秒見せ、カウントを増やさない ${width}`, async ({ page }) => {
+for (const width of [1440, 390]) test(`4コストの万豚記は大きい表紙を約1秒見せ、カウントを増やさない ${width}`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
   await setup(page, 'wonton_ki');
+  await page.evaluate(() => {
+    window.coverLifetime = {};
+    new MutationObserver(records => records.forEach(record => {
+      for (const node of record.addedNodes) if (node.classList?.contains('wonton-book-effect')) coverLifetime.start = performance.now();
+      for (const node of record.removedNodes) if (node.classList?.contains('wonton-book-effect')) coverLifetime.end = performance.now();
+    })).observe(document.body, { childList: true });
+  });
   await useTestCard(page);
   const effect = page.locator('.wonton-book-effect');
   await expect(effect).toBeVisible();
   await expect(effect).toHaveAttribute('data-cover-only', 'true');
   await expect(effect).toHaveAttribute('aria-label', '万豚記シリーズの表紙。');
-  await page.waitForFunction(() => Number(document.querySelector('.wonton-book-effect')?.dataset.time) >= 1800);
+  await page.waitForFunction(() => Number(document.querySelector('.wonton-book-effect')?.dataset.time) >= 650);
   await expect(effect).toBeVisible();
   expect(await effect.evaluate(canvasHasArt)).toBe(true);
   expect(await page.evaluate(() => [wontonCount('player'), state.players.player.hand.filter(c => c.baseId === 'wonton_greeting').length])).toEqual([0,2]);
   await page.screenshot({ path: test.info().outputPath(`cover-${width}.png`) });
   await settle(page);
   await expect(effect).toHaveCount(0);
+  expect(await page.evaluate(() => coverLifetime.end - coverLifetime.start)).toBeGreaterThanOrEqual(900);
+  expect(await page.evaluate(() => coverLifetime.end - coverLifetime.start)).toBeLessThan(1400);
 });
 
 test('320pxでも複数文字の毛筆カウントがページ内に収まる', async ({ page }) => {
