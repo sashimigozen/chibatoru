@@ -79,15 +79,70 @@ for (const width of [1440, 390]) {
   });
 }
 
-test('通常シリーズは1ページめくってからカウントを1増やし、生成・ドローを維持する', async ({ page }) => {
+for (const width of [1440, 390]) test(`通常シリーズは毛筆の漢数字をページに書き入れ、生成・ドローを維持する ${width}`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
   await setup(page, 'wonton_greeting');
   await useTestCard(page);
   const effect = page.locator('.wonton-book-effect');
   await expect(effect).toBeVisible();
   await expect(effect).toHaveAttribute('aria-label', /0から1、1増加/);
+  await expect(effect).toHaveAttribute('data-kanji-count', '一');
   expect(await page.evaluate(() => wontonCount('player'))).toBe(0);
+  await page.waitForFunction(() => {
+    const t = Number(document.querySelector('.wonton-book-effect')?.dataset.time);
+    return t >= 850 && t < 1100;
+  });
+  expect(await effect.evaluate(canvas => {
+    const size = Number(canvas.dataset.bookSize), ratio = canvas.width / innerWidth;
+    const pixels = canvas.getContext('2d').getImageData(
+      (innerWidth / 2 + 8) * ratio, (innerHeight * .44 - size * .615 + 8) * ratio,
+      (size * .78 - 16) * ratio, (size * 1.23 - 16) * ratio).data;
+    let ink = 0;
+    for (let i = 0; i < pixels.length; i += 4) if (pixels[i + 3] > 200 && pixels[i] < 90 && pixels[i + 1] < 90 && pixels[i + 2] < 90) ink++;
+    return ink > 100;
+  })).toBe(true);
+  expect(await effect.evaluate(c => Number(c.dataset.bookSize))).toBeGreaterThan(width === 390 ? 117 : 180);
+  await page.screenshot({ path: test.info().outputPath(`kanji-count-${width}.png`) });
   await settle(page);
   expect(await page.evaluate(() => [wontonCount('player'), state.players.player.hand.some(c => c.baseId === 'wonton_stall')])).toEqual([1, true]);
+  await expect(effect).toHaveCount(0);
+});
+
+test('漢数字は十・百・千・万・億・兆を使って正しく表す', async ({ page }) => {
+  await setup(page);
+  const cases = [[0,'零'],[1,'一'],[4,'四'],[9,'九'],[10,'十'],[11,'十一'],[20,'二十'],[21,'二十一'],
+    [99,'九十九'],[100,'百'],[101,'百一'],[110,'百十'],[1000,'千'],[1010,'千十'],[10000,'一万'],
+    [10001,'一万一'],[12345,'一万二千三百四十五'],[100000000,'一億'],[1000000000000,'一兆']];
+  expect(await page.evaluate(cases => cases.map(([n]) => window.ChibattleWonton.formatCount(n)), cases)).toEqual(cases.map(([,label]) => label));
+});
+
+for (const width of [1440, 390]) test(`4コストの万豚記は大きい表紙を約2秒見せ、カウントを増やさない ${width}`, async ({ page }) => {
+  await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
+  await setup(page, 'wonton_ki');
+  await useTestCard(page);
+  const effect = page.locator('.wonton-book-effect');
+  await expect(effect).toBeVisible();
+  await expect(effect).toHaveAttribute('data-cover-only', 'true');
+  await expect(effect).toHaveAttribute('aria-label', '万豚記シリーズの表紙。');
+  await page.waitForFunction(() => Number(document.querySelector('.wonton-book-effect')?.dataset.time) >= 1800);
+  await expect(effect).toBeVisible();
+  expect(await effect.evaluate(canvasHasArt)).toBe(true);
+  expect(await page.evaluate(() => [wontonCount('player'), state.players.player.hand.filter(c => c.baseId === 'wonton_greeting').length])).toEqual([0,2]);
+  await page.screenshot({ path: test.info().outputPath(`cover-${width}.png`) });
+  await settle(page);
+  await expect(effect).toHaveCount(0);
+});
+
+test('320pxでも複数文字の毛筆カウントがページ内に収まる', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 740 });
+  await setup(page);
+  await page.evaluate(() => { window.visualOnlyCount = playWontonBookEffect('player', { beforeCount: 20, count: 21 }); });
+  const effect = page.locator('.wonton-book-effect');
+  await expect(effect).toHaveAttribute('data-kanji-count', '二十一');
+  await page.waitForFunction(() => Number(document.querySelector('.wonton-book-effect')?.dataset.time) >= 850);
+  await page.screenshot({ path: test.info().outputPath('kanji-21-mobile.png') });
+  expect(await effect.evaluate(c => Number(c.dataset.bookSize) * .78 * 2 + 32 <= innerWidth)).toBe(true);
+  await page.evaluate(() => visualOnlyCount.finished);
   await expect(effect).toHaveCount(0);
 });
 
@@ -152,7 +207,7 @@ test('ver.0.36.0のお知らせに卒業の変更前後・読書演出・検証�
   await expect(release).toContainText('万豚記シリーズの効果・テスト');
 });
 
-test('ゲスト側の卒業をホスト・ゲスト・観戦で共有し、再送で二重再生しない', async ({ page: host, browser }) => {
+for (const cover of [false, true]) test(`ゲスト側の${cover ? '表紙' : '卒業'}をホスト・ゲスト・観戦で共有し、再送で二重再生しない`, async ({ page: host, browser }) => {
   test.setTimeout(60000);
   const guest = await browser.newPage(), spectator = await browser.newPage();
   async function deliver(snapshot) {
@@ -175,28 +230,35 @@ test('ゲスト側の卒業をホスト・ゲスト・観戦で共有し、再�
         }))).observe(document.body, { childList: true });
       }, role);
     }
-    await host.evaluate(() => {
+    await host.evaluate(cover => {
       state.currentSide = 'opponent';
       state.players.opponent.submissionCounters = { '万豚記カウント': 4 };
       state.players.player.life = 20;
-      state.players.opponent.hand = [createCardFromBase('wonton_graduation', 'opponent')];
+      state.players.opponent.hand = [createCardFromBase(cover ? 'wonton_ki' : 'wonton_graduation', 'opponent')];
       render();
-    });
+    }, cover);
     await deliver(await host.evaluate(() => onlineCreateSnapshot()));
     for (const p of [host, guest, spectator]) await settle(p);
-    await host.evaluate(() => { moveHandCardToTrash('opponent', state.players.opponent.hand[0], { effectDiscard: true }); render(); });
+    await host.evaluate(cover => {
+      if (cover) {
+        const card = state.players.opponent.hand.pop();
+        attendCard('opponent', makeBoardCard(card), 'environment', null, { attendanceSource: ATTENDANCE_SOURCE.HAND });
+      } else moveHandCardToTrash('opponent', state.players.opponent.hand[0], { effectDiscard: true });
+      render();
+    }, cover);
     await expect.poll(() => host.evaluate(() => outbox.some(m => m.snapshot?.state.effectFeedbackEvents.some(e => e.target === 'wonton-book')))).toBe(true);
     await relay();
     for (const [p, owner] of [[host, 'opponent'], [guest, 'player'], [spectator, 'opponent']]) {
       await expect(p.locator('.wonton-book-effect')).toHaveAttribute('data-owner', owner, { timeout: 15000 });
       await expect(p.locator('.wonton-book-effect')).toHaveAttribute('data-count', '4');
+      await expect(p.locator('.wonton-book-effect')).toHaveAttribute('data-cover-only', String(cover));
     }
     await settle(host);
     await relay();
     await deliver(await host.evaluate(() => onlineCreateSnapshot()));
     for (const p of [guest, spectator]) await settle(p);
     for (const [p, owner, target] of [[host, 'opponent', 'player'], [guest, 'player', 'opponent'], [spectator, 'opponent', 'player']]) {
-      expect(await p.evaluate(({ owner, target }) => [wontonCount(owner), state.players[target].life, bookAppearances], { owner, target })).toEqual([0, 12, 1]);
+      expect(await p.evaluate(({ owner, target }) => [wontonCount(owner), state.players[target].life, bookAppearances], { owner, target })).toEqual(cover ? [4, 20, 1] : [0, 12, 1]);
       await expect(p.locator('.wonton-book-effect')).toHaveCount(0);
     }
   } finally { await guest.close(); await spectator.close(); }

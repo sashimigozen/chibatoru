@@ -5,7 +5,8 @@
   const ready = Promise.all(Object.entries({
     cover: 'assets/wonton/series-cover.jpg',
     paper: 'assets/wonton/old-paper.jpg',
-    ending: 'assets/wonton/ending-brush.png'
+    ending: 'assets/wonton/ending-brush.png',
+    count: 'assets/wonton/count-brush.png'
   }).map(([key, src]) => new Promise(resolve => {
     const image = images[key] = new Image();
     image.onload = image.onerror = resolve;
@@ -17,8 +18,28 @@
   const ink = '#251e1b';
   const red = '#ba302c';
   let endingStamp;
+  const countGlyphs = '零一二三四五六七八九十百千万億兆';
 
-  function play({ owner, beforeCount, count, graduation, isCurrent, isVisualBusy, speed = 1 }) {
+  function formatCount(value) {
+    let number = Number(value);
+    number = Number.isFinite(number) ? clamp(Math.trunc(number), 0, Number.MAX_SAFE_INTEGER) : 0;
+    if (!number) return '零';
+    const digits = '零一二三四五六七八九', largeUnits = ['', '万', '億', '兆'];
+    let result = '', group = 0;
+    while (number > 0) {
+      let remainder = number % 10000, text = '';
+      for (const [place, unit] of [[1000, '千'], [100, '百'], [10, '十'], [1, '']]) {
+        const digit = Math.floor(remainder / place);
+        if (digit) text += (digit === 1 && place > 1 ? '' : digits[digit]) + unit;
+        remainder %= place;
+      }
+      if (text) result = text + largeUnits[group] + result;
+      number = Math.floor(number / 10000); group++;
+    }
+    return result;
+  }
+
+  function play({ owner, beforeCount, count, graduation, coverOnly = false, isCurrent, isVisualBusy, speed = 1 }) {
     let resolveImpact, resolveFinished;
     const impact = new Promise(resolve => { resolveImpact = resolve; });
     const finished = new Promise(resolve => { resolveFinished = resolve; });
@@ -26,16 +47,19 @@
     canvas.className = 'wonton-book-effect';
     canvas.dataset.owner = owner;
     canvas.dataset.graduation = String(Boolean(graduation));
+    canvas.dataset.coverOnly = String(coverOnly);
     canvas.dataset.beforeCount = String(beforeCount);
     canvas.dataset.count = String(count);
+    const kanjiCount = formatCount(count);
+    canvas.dataset.kanjiCount = coverOnly || graduation ? '' : kanjiCount;
     canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', graduation
+    canvas.setAttribute('aria-label', coverOnly ? '万豚記シリーズの表紙。' : graduation
       ? `万豚記シリーズ、完。万豚記カウント${beforeCount}を参照し、0にする。`
-      : `万豚記シリーズ。万豚記カウント${beforeCount}から${count}、1増加。`);
+      : `万豚記シリーズ。万豚記カウント${beforeCount}から${count}、1増加。めくったページに毛筆で「${kanjiCount}」。`);
     const ctx = canvas.getContext('2d');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = reduced ? 320 : graduation ? 2400 : 900;
-    const impactAt = reduced ? 160 : graduation ? 1850 : 570;
+    const duration = coverOnly ? 2400 : reduced ? 320 : graduation ? 2400 : 1400;
+    const impactAt = coverOnly ? 0 : reduced ? 160 : graduation ? 1850 : 570;
     const rate = Number.isFinite(speed) && speed > 0 ? speed : 1;
     let frame, impactTimer, finishTimer, loadTimer, stopped = false, startedAt = 0;
     let impacted = false, width = 0, height = 0;
@@ -83,7 +107,25 @@
         ctx.drawImage(endingStamp, x - size / 2, y - size / 2, size, size);
       } else text('完', x, y, size * .6);
     }
-    function book(x, y, size, open, flip, final, alpha) {
+    function pageCount(x, y, w, h, label, progress) {
+      const rows = Math.min(4, label.length), columns = Math.ceil(label.length / rows);
+      const cell = Math.min(w * .92 / columns, h * .85 / rows);
+      const sourceCell = images.count.naturalWidth / 4;
+      for (const [i, glyph] of [...label].entries()) {
+        const written = clamp(progress * label.length - i);
+        if (!written) continue;
+        const column = Math.floor(i / rows), row = i % rows;
+        const dx = x + w / 2 + (columns / 2 - column - 1) * cell;
+        const dy = y + (h - rows * cell) / 2 + row * cell;
+        ctx.save();ctx.beginPath();ctx.rect(dx, dy, cell, cell * ease(written));ctx.clip();
+        const index = countGlyphs.indexOf(glyph);
+        if (sourceCell && index >= 0) ctx.drawImage(images.count, (index % 4) * sourceCell, Math.floor(index / 4) * sourceCell,
+          sourceCell, sourceCell, dx, dy, cell, cell);
+        else text(glyph, dx + cell / 2, dy + cell / 2, cell * .7);
+        ctx.restore();
+      }
+    }
+    function book(x, y, size, open, flip, final, alpha, writtenCount = '', writing = 1) {
       ctx.save(); ctx.globalAlpha *= alpha;
       const page = size * .78, tall = size * 1.23;
       ctx.translate(x - page * (1 - open) / 2, y);
@@ -100,6 +142,7 @@
         ctx.restore();
       }
       if (final) ending(page / 2, 0, page * .98);
+      else if (writtenCount && open > .5) pageCount(0, -tall / 2, page, tall, writtenCount, writing);
       else if (open < .3 && images.cover.naturalWidth) {
         ctx.save(); ctx.globalAlpha *= 1 - open / .3;
         ctx.drawImage(images.cover, 0, -tall / 2, page, tall); ctx.restore();
@@ -136,12 +179,16 @@
       }
       ctx.clearRect(0, 0, width, height);
       const x = width / 2, y = height * .44;
-      const size = Math.min(180, width * .3, height * .27);
+      const size = Math.min(260, width * .44, height * .32);
+      canvas.dataset.bookSize = String(size);
       const targetOwner = owner === 'player' ? 'opponent' : 'player';
       const target = anchor(`[data-life-target="${targetOwner}"]`, { x: width * .85, y: height * .2 });
       const counter = anchor(`#${owner}ActiveEffectsButton`, { x: width * .85, y: height * .75 });
-      if (reduced) {
-        book(x, y, size, 1, 0, graduation, 1);
+      if (coverOnly) {
+        const alpha = reduced ? 1 : Math.min(ease(part(t, 0, 180)), 1 - part(t, 2200, 2400));
+        book(x, y, size, 0, 0, false, alpha);
+      } else if (reduced) {
+        book(x, y, size, 1, 0, graduation, 1, graduation ? '' : kanjiCount);
       } else if (graduation) {
         const open = t < 350 ? ease(part(t, 0, 350)) : 1 - ease(part(t, 1450, 1650));
         book(x, y, size, open, t >= 350 && t < 1100 ? ((t - 350) / 150) % 1 : 0,
@@ -164,19 +211,23 @@
           ctx.restore();
         }
       } else {
-        const leave = ease(part(t, 740, 900)), appear = ease(part(t, 0, 180));
+        const leave = ease(part(t, 1100, 1400)), appear = ease(part(t, 0, 180));
         book(x + (counter.x - x) * leave, y + (counter.y - y) * leave,
-          size * (.7 + .3 * appear) * (1 - leave * .85), 1, part(t, 180, 570), false, 1 - leave);
+          size * (.7 + .3 * appear) * (1 - leave * .85), 1, part(t, 180, 570), false, 1 - leave,
+          t >= 570 ? kanjiCount : '', part(t, 570, 820));
       }
       const reached = t >= impactAt;
       const displayed = graduation ? (reached ? 0 : beforeCount) : (reached ? count : beforeCount);
-      ctx.save(); ctx.globalAlpha = reduced ? 1 : 1 - part(t, duration - 160, duration);
-      text('万豚記カウント', x, y + size * .8, 14);
-      text(String(displayed), x, y + size * .8 + 32, 30);
-      if (!graduation && reached) text('+1', x + 42, y + size * .8 + 32, 22, red);
-      ctx.restore();
+      if (!coverOnly) {
+        ctx.save(); ctx.globalAlpha = reduced ? 1 : 1 - part(t, duration - 160, duration);
+        text('万豚記カウント', x, y + size * .8, 14);
+        if (graduation || !reached) text(String(displayed), x, y + size * .8 + 32, 30);
+        else text('+1', x, y + size * .8 + 32, 22, red);
+        ctx.restore();
+      }
       canvas.dataset.time = String(Math.round(t));
-      canvas.dataset.phase = reached ? 'impact' : graduation && t >= 1100 ? 'end-page' : 'reading';
+      canvas.dataset.phase = coverOnly ? 'cover' : reached ? graduation ? 'impact' : 'page-count'
+        : graduation && t >= 1100 ? 'end-page' : 'reading';
     }
     function tick(now) {
       if (stopped) return;
@@ -206,6 +257,6 @@
     return { impact, finished };
   }
   function cancel() { [...active].forEach(run => run.cancel()); }
-  window.ChibattleWonton = { play, cancel, ready, isBusy: () => active.size > 0 };
+  window.ChibattleWonton = { play, cancel, ready, formatCount, isBusy: () => active.size > 0 };
   window.addEventListener('pagehide', cancel);
 })();

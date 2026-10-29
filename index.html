@@ -19985,7 +19985,7 @@
           {
             "category": "表示・操作改善",
             "title": "万豚記シリーズの読書演出",
-            "after": "万豚記カウントが増えると、毛筆の「万豚記シリーズ」と豚の墨絵がある書物を開き、古い和紙のページをめくって「+1」を表示します。卒業シリーズでは最終ページに毛筆の「完」が現れ、紙片が相手本体へ届くタイミングでダメージとカウントのリセットを行います。ホスト・ゲスト・観戦で演出を共有し、スマートフォン・演出スキップ・動きを減らす設定にも対応しました。"
+            "after": "万豚記カウントが増えると、古い和紙のページをめくり、更新後の数を「一」「二」「三」などの漢数字の毛筆で書き入れて「+1」を表示します。4コストの環境「万豚記」を置いたときは、毛筆の「万豚記シリーズ」と豚の墨絵の表紙を約2秒見せます。本は全体的に大きくし、スマートフォンでも画面内に収めます。卒業シリーズでは最終ページに毛筆の「完」が現れ、紙片が相手本体へ届くタイミングでダメージとカウントのリセットを行います。ホスト・ゲスト・観戦で演出を共有し、演出スキップ・動きを減らす設定にも対応しました。"
           },
           {
             "category": "カード調整",
@@ -19998,7 +19998,7 @@
           {
             "category": "システム",
             "title": "万豚記シリーズの効果・テスト",
-            "after": "卒業シリーズのAI判断を増加前のカウントに合わせました。カウント0・1・4・上限超過時のダメージ、環境への配置と効果による校外送り、二重発動防止、オンラインの演出共有と再受信、画面切り替え時の後片付けを確認する自動テストを追加しました。卒業以外のシリーズの能力値・効果内容は変更していません。"
+            "after": "卒業シリーズのAI判断を増加前のカウントに合わせました。カウント0・1・4・上限超過時のダメージ、環境への配置と効果による校外送り、二重発動防止、オンラインの演出共有と再受信、画面切り替え時の後片付けを確認する自動テストを追加しました。漢数字の変換・ページへの表示、表紙の表示時間、PC・スマートフォンでの拡大表示も確認しました。卒業以外のシリーズの能力値・効果内容は変更していません。"
           },
           {
             "category": "不具合修正",
@@ -40334,6 +40334,7 @@
       if (zone === "environment" && card.baseId === "academic_move") {
         delete card.academicMoveLastAttendanceTurn;
       }
+      if (zone === "environment" && card.baseId === "wonton_ki") queueWontonCoverEffect(owner);
       card.lastAttendanceSource = attendanceSource;
       card.attendanceSource = attendanceSource;
       card.attendanceEvent = {
@@ -43699,6 +43700,17 @@
         isVisualBusy: () => !elements.playRevealOverlay.classList.contains("hidden")
           || window.ChibattleHandTrash?.isBusy() || window.ChibattleDraw?.isBusy(),
         isCurrent: () => state.screen === "battle" && state.preBattleToken === token
+      });
+    }
+
+    function queueWontonCoverEffect(owner) {
+      queueFusionEffect(async () => {
+        const count = wontonCount(owner);
+        const payload = { target: "wonton-book", owner, beforeCount: count, count, coverOnly: true };
+        recordOnlineEffectFeedback(payload);
+        const presentation = playWontonBookEffect(owner, payload);
+        if (isOnlineHost()) onlineBroadcastState(true);
+        await presentation.finished;
       });
     }
 
@@ -58080,7 +58092,7 @@
 <script src="cards-ui.js?v=0.33.1-card-detail"></script>
   <script src="desktop-ui.js?v=0.26.0"></script>
 <script src="draw-animation.js?v=0.23.19-video-tempo"></script>
-<script src="wonton-animation.js?v=0.36.0"></script>
+<script src="wonton-animation.js?v=0.36.0-kanji-cover"></script>
 <script src="hand-trash-animation.js?v=0.23.19-deck"></script>
 <script src="gacha-ui.js?v=0.25.1-shop"></script>
   <script src="four-mode.js"></script>

@@ -2,6 +2,38 @@
 
 final result: passed
 
+## Follow-Up: Brush Counts, Cover Hold And Larger Books
+
+- Brief: write the updated count in kanji on the turned page; show the 4-cost
+  Wonton environment's cover for a few seconds; enlarge books throughout.
+- Before captures: `/tmp/wonton-kanji-before-1440.png` and
+  `/tmp/wonton-kanji-before-390.png`.
+- After captures: `/tmp/chibatoru-wonton-kanji-tests/`, the `kanji-count-1440.png`,
+  `kanji-count-390.png`, `cover-1440.png`, `cover-390.png`, and
+  `kanji-21-mobile.png` test attachments.
+- Full-view comparison: `/tmp/wonton-kanji-comparison.png` places the before and
+  after captures side by side at the same 390 x 844 viewport and DPR 1. The state
+  is the first count increment after turning a page. The larger book and the
+  page's brush numeral are intentional requested changes, not layout drift.
+- Typography/image check: inspected the 16-cell brush atlas on white, confirmed
+  all glyphs and their row-major order, then inspected the rendered "一" and
+  vertically composed "二十一". Original cover and final-page assets are retained.
+- Layout: the book size increases from 180 to 260px on desktop, with width/height
+  constraints at 390 and 320px. Page lettering fits within the right page. The
+  overlay remains temporary and pointer-transparent; no controls are added.
+- Colors and copy: black brush numerals on the existing aged paper; the red final
+  glyph is unchanged. Normal counts increment once. The cover has no +1 and does
+  not change counts. Graduation still does not increment its count.
+- Timing: the count is written after the page turns, held briefly, then returned
+  to the counter. Cover fade-in ends at 180ms and fade-out starts at 2200ms,
+  leaving just over two seconds for reading at normal playback speed.
+- Validation: all 56 submission/animation Playwright cases pass, including
+  desktop/mobile pixels, kanji unit boundaries through trillion, cover duration,
+  host/guest/spectator cover sharing, snapshot deduplication, and existing
+  graduation behavior. No new P0/P1/P2 findings; no visual repair iteration needed.
+
+## Initial Rollout Evidence
+
 ## Visual Target And Evidence
 
 - Target: the user-approved `wonton-motion-storyboard.html` in the thread's
