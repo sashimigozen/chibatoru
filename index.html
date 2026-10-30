@@ -19525,8 +19525,8 @@
       tomoyo_mou: {"name": "友よ、もう", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       shukii: {"name": "しゅきー", "type": "item", "cost": 1, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       past_campus: {"name": "過去のキャンパス", "type": "environment", "cost": 2, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common"},
-      private_teacher: { name: "二等兵講師", type: "teacher", cost: 4, attack: 2, hp: 2, allowedZones: ["teacher"], category: "common", handFusionLimit: 1 },
-      chugidesu: {"name": "チュギデス", "type": "student", "cost": 6, "attack": 3, "hp": 5, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 2},
+      private_teacher: { name: "二等兵講師", type: "teacher", cost: 4, attack: 2, hp: 2, allowedZones: ["teacher"], category: "common", handFusionLimit: 2 },
+      chugidesu: {"name": "チュギデス", "type": "student", "cost": 6, "attack": 3, "hp": 5, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 2, "handFusionLimit": 3},
       exploding_student: {"name": "爆発する学生", "type": "student", "cost": 2, "attack": 3, "hp": 3, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 1, "keywords": ["陽気"], "generated": true, "token": true},
       sports_spectator_student: {"name": "スポーツを観戦する学生", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       secretly_mocked_student: {"name": "謎多き女学生", "type": "student", "cost": 4, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedSeatIndex": 8, "allowedZones": ["seat"]},
@@ -19696,7 +19696,7 @@
       white_student: { name: "白い学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"], category: "interference" },
       true_enemy: { name: "真の敵", type: "student", cost: 6, attack: 1, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "expansion" },
       enemy_horde: { name: "敵の群れ", type: "student", cost: 4, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
-      rear_queen: {"name": "後ろにいるクイーン", "type": "student", "cost": 4, "attack": 2, "hp": 2, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 1},
+      rear_queen: {"name": "後ろにいるクイーン", "type": "student", "cost": 4, "attack": 2, "hp": 2, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 2},
       enemy_enemy: { name: "敵の敵", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       enemy_revive: { name: "復活の敵", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       triple_enemy: { name: "三敵", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
@@ -19996,7 +19996,7 @@
         "version": "ver.0.37.0",
         "versioning": "semver",
         "date": "2026年10月30日",
-        "summary": "手札を素材に融合するカードと関連カードを追加し、「後ろにいるクイーン」「無法の食堂」を調整しました。「二等兵講師」を追加し、「チュギデス」の戦意を6に変更しました。",
+        "summary": "手札を素材に融合するカードと関連カードを追加し、「後ろにいるクイーン」「無法の食堂」を調整しました。「二等兵講師」を追加し、「チュギデス」の戦意を6に変更しました。クイーン・チュギデス・二等兵講師の融合枚数と出席時効果を調整しました。",
         "changes": [
           {
             "category": "新カード",
@@ -20128,7 +20128,11 @@
             "category": "表示・操作改善",
             "title": "融合の表記を統一",
             "after": "能力名を［融合］に統一し、素材枚数は本文で示します。二等兵講師には融合が1回のみであることを明記しました。能力値・素材枚数・融合できる回数・出席条件などの効果処理は変更していません。表示文と管理台帳の一致を確認しました。"
-          }
+          },
+          {"category": "カード調整", "title": "後ろにいるクイーンの融合条件・出席時効果", "before": "後ろにいるクイーン／学生／共通カード／戦意4／攻撃力2／体力2\n[融合]\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。", "after": "後ろにいるクイーン／学生／共通カード／戦意4／攻撃力2／体力2\n[融合]\n自分の手札のカードを合計2枚まで、このカードに融合できる。このカードは2枚融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。", "beforeHighlights": ["1", "を"], "afterHighlights": ["を合計2", "まで", "2枚"]},
+          {"category": "カード調整", "title": "チュギデスの融合条件・出席時効果", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを2枚まで、このカードに融合できる。このカードは2枚融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、自分のデッキからカードを2枚引く。その後、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["2", "く。その後"], "afterHighlights": ["合計3", "以上", "左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、", "き"]},
+          {"category": "カード調整", "title": "二等兵講師の融合条件・出席時効果", "before": "二等兵講師／教師／共通カード／戦意4／攻撃力2／体力2\n[融合]\n自分の手札のカード1枚を、このカードに融合できる。このカードへの融合は1回のみ。\n融合したとき、これの攻撃力と体力を+2し、陽気を持つ。\nこのカードを手札から出席させたとき、自分の手札に「爆発する学生」2枚を生成する。", "after": "二等兵講師／教師／共通カード／戦意4／攻撃力2／体力2\n[融合]\n自分の手札のカードを合計2枚まで、このカードに融合できる。\n2枚目を融合したとき、これの攻撃力と体力を+2し、陽気を持つ。\nこのカードを手札から出席させたとき、自分の手札に「爆発する学生」2枚を生成する。", "beforeHighlights": ["1", "を", "このカードへの融合は1回のみ。"], "afterHighlights": ["を合計2", "まで", "2枚目を"]},
+          {"category": "システム", "title": "融合カードのテスト", "after": "1枚ずつの融合、合計枚数による出席・強化条件、チュギデスの2枚・3枚融合と空き席不足時の処理を確認できるカードテストへ更新しました。AIは融合素材を使う前に必要な融合を行い、出席させる人数に応じて左右の空き席を評価します。オンライン対戦でも同じ条件・効果を使用します。"}
         ]
       },
       {
@@ -30205,6 +30209,7 @@
         render();
         return;
       }
+      while (tryFuseAnyHandCardForAi("opponent")) { render(); await waitForBattlePresentation(); }
       await tryUseAiItems({ timing: "beforeBoard" });
       await waitForOrderedAttendance();
       await waitForAiTimedEffects();
@@ -31384,6 +31389,9 @@
       const own = state.players[side];
       const drawable = count => isDeckToHandLocked() ? 0 : Math.min(count, own.deck.length) * 3;
       if (card.baseId === "private_teacher") return 6;
+      if (card.baseId === "chugidesu" && (card.handFusionStored || []).length >= 3) {
+        return drawable(2) + Math.min(2, Math.max(0, currentLifeCap(side) - own.life)) * 2;
+      }
       if (card.baseId === "two_achievers") return Math.max(...twoAchieversChoiceCards(side).map(choice => choice.choiceScore));
       if (card.baseId === "information_tired_student") return horseMaterialCandidates(side).length ? 5 : 0;
       if (card.baseId === "corridor_student") return Math.min(2, horseMaterialCandidates(side).length) * 5;
@@ -31734,7 +31742,8 @@
         }
         const seatPriority = card.baseId === "back_question_student" ? [6, 7, 8] : AI_SEAT_PRIORITY;
         const seatIndex = seatPriority.filter((index) => canPlaceCard(side, card, "seat", side, index))
-          .map((index) => ({ index, score: scoreAiPlacementAuras(side, card, "seat", index) }))
+          .map((index) => ({ index, score: scoreAiPlacementAuras(side, card, "seat", index)
+            + scoreAiExplodingAttendance(side, card, "seat", index) }))
           .sort((a, b) => b.score - a.score)[0]?.index;
         if (seatIndex !== undefined) return { card, zone: "seat", owner: side, index: seatIndex };
         if (card.baseId === "back_question_student") continue;
@@ -31984,6 +31993,7 @@
       state.message = "左側CPUが行動を考えています。";
       render();
       await sleep(AI_START_DELAY);
+      while (tryFuseAnyHandCardForAi("player")) { render(); await waitForBattlePresentation(); }
       await tryUseTrainingYocchanItems("player");
       resolveTrainingAiPendingSelections("player");
       while (tryFuseHorseForAi("player")) { render(); await waitForBattlePresentation(); }
@@ -32919,6 +32929,16 @@
       return candidates[0]?.index;
     }
 
+    function scoreAiExplodingAttendance(side, card, zone, index) {
+      if (!["rear_queen", "chugidesu"].includes(card.baseId) || zone !== "seat"
+        || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
+      const count = card.baseId === "chugidesu" && (card.handFusionStored || []).length >= 3 ? 2 : 1;
+      const token = createCardFromBase("exploding_student", side);
+      const seats = [index-1,index+1].filter(i=>i>=0&&i<9&&Math.floor(i/3)===Math.floor(index/3)
+        && canPlaceCard(side,token,"seat",side,i));
+      return Math.min(count,seats.length) * 9;
+    }
+
     function scoreAiPlacement(card, zone, index) {
       const context = getAiDecisionContext();
       const lethalForecast = getAiLethalForecast();
@@ -32926,7 +32946,8 @@
       const friendlyRefs = context.friendlyRefs;
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
       let score = bodyScore + (zone === "seat" ? 2 : 0);
-      score += aiCardResourceValue("opponent", card) + aiRecurringCardValue("opponent", card);
+      score += aiCardResourceValue("opponent", card) + aiRecurringCardValue("opponent", card)
+        + scoreAiExplodingAttendance("opponent", card, zone, index);
       score += aiDeckPlanCardBonus("opponent", card);
       if (card.baseId === "window_snipe_student" && zone === "seat" && index === 8
         && !arePlayedEffectsSuppressed("opponent")) {
@@ -38511,7 +38532,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers", "point_modes"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes", "attendance_count"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
@@ -38528,6 +38549,7 @@
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
       if (kind === "submission_discard") options.message = "校外エリアへ送る手札1枚を選んでください。";
       if (kind === "point_modes") options.message = `異なる効果を${max}つ選んでください。番号順に処理します。`;
+      if (kind === "attendance_count") options.message = "出席させる人数を選んでください。その後、講義室の席マスを選びます。";
       if (kind === "two_achievers") options.message = "次の効果から1つを選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
@@ -38867,7 +38889,7 @@
     }
 
     function handFusionCapacity(card) {
-      return card?.handFusionRequired || card?.handFusionLimit || 0;
+      return card?.handFusionLimit || card?.handFusionRequired || 0;
     }
 
     function handFusionFull(card) {
@@ -38875,7 +38897,7 @@
     }
 
     function applyHandFusionBonus(card) {
-      if (card?.baseId !== "private_teacher" || card.handFusionEnhanced || !(card.handFusionStored || []).length) return;
+      if (card?.baseId !== "private_teacher" || card.handFusionEnhanced || (card.handFusionStored || []).length < 2) return;
       card.handFusionEnhanced = true;
       applyPermanentStatBuff(card, 2, 2, 0, card.name, { beforeAttendance: true });
       card.hp = (card.hp || 0) + 2;
@@ -38931,14 +38953,30 @@
         const need = handFusionCapacity(target) - (target.handFusionStored || []).length;
         const materials = state.players[side].hand.filter(c => canFuseAnyHandCard(side, target, c))
           .sort((a,b) => trainingAiChoiceCardScore(side,a) - trainingAiChoiceCardScore(side,b));
-        if (materials.length >= need) return fuseAnyHandCards(side, target.instanceId, materials.slice(0,need).map(c=>c.instanceId), false);
+        const minimum = Math.max(0, (target.handFusionRequired || handFusionCapacity(target)) - (target.handFusionStored || []).length);
+        const count = materials.length >= need ? need : minimum;
+        if (count > 0 && materials.length >= count) return fuseAnyHandCards(side, target.instanceId, materials.slice(0,count).map(c=>c.instanceId), false);
       }
       return false;
     }
 
-    function queueExplodingStudents(side, source, count, allowedSeats = null) {
+    function queueExplodingStudents(side, source, count, allowedSeats = null, options = {}) {
       return queueFusionEffect(async () => {
         const token = state.preBattleToken;
+        if (options.optional) {
+          const probe = createCardFromBase("exploding_student", side);
+          probe.effectAllowedSeats = [...allowedSeats];
+          const maximum = Math.min(count, allowedSeats.filter(index => canPlaceCard(side, probe, "seat", side, index)).length);
+          if (maximum > 0) {
+            const choices = Array.from({length: maximum + 1}, (_, number) => ({
+              instanceId: `exploding-count-${number}`, name: `${number}人出席させる`,
+              type: "item", attendanceCount: number, choiceScore: number
+            }));
+            const [choice] = await chooseFusionEffectCards(side, source, choices, 1, "attendance_count", {required: true});
+            if (!choice || token !== state.preBattleToken || state.gameOver) return;
+            count = choice.attendanceCount;
+          } else count = 0;
+        }
         for (let i=0;i<count;i++) {
           if (token !== state.preBattleToken || state.gameOver) return;
           const card = createCardFromBase("exploding_student", side);
@@ -38955,6 +38993,7 @@
             if(!startSpecialAttendanceQueue(side,[card],{attendanceSource:ATTENDANCE_SOURCE.GENERATED,seatOnly:true,label:source.name,onComplete}))onComplete();
           });
         }
+        if (token === state.preBattleToken && !state.gameOver && typeof options.onComplete === "function") options.onComplete();
       });
     }
 
@@ -41157,10 +41196,13 @@
         }
         addLog(`${card.name}の出席時効果：手札に「爆発する学生」2枚を生成しました。`);
       }
-      if (card.baseId === "chugidesu") {drawCards(side,2);healPlayer(side,2,card);}
-      if (card.baseId === "rear_queen" && zone === "seat") {
+      if (["rear_queen", "chugidesu"].includes(card.baseId) && zone === "seat") {
         const seats=[index-1,index+1].filter(i=>i>=0&&i<9&&Math.floor(i/3)===Math.floor(index/3));
-        queueExplodingStudents(side,card,1,seats);
+        const enhanced = card.baseId === "chugidesu" && (card.handFusionStored || []).length >= 3;
+        queueExplodingStudents(side,card,enhanced ? 2 : 1,seats, enhanced ? {
+          optional: true,
+          onComplete: () => { drawCards(side,2); healPlayer(side,2,card); }
+        } : {});
       }
       if (POINT_CARD_IDS.includes(card.baseId)) resolvePointAttendance(side, card, attendanceSource);
       if (card.baseId === "wonton_ki" && zone === "environment") {
@@ -54411,12 +54453,12 @@
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
       tomoyo_mou: {"hand": ["tomoyo_mou", "general_student", "ruler", "onigiri_draw", "shukii"], "will": 4, "life": 12, "deck": ["tomoyo_mou", "general_student", "tomoyo_mou", "past_campus"], "note": "戦意4で2人を出席させ、低戦意の手札から自動融合する様子を試せます。手札が空でも使用可能です。次のターン以降に戦意8で使うと4人になります。出席先は席マスを直接選びます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
-      rear_queen: {"hand": ["general_student", "ruler", "tomoyo_mou"], "will": 12, "life": 12, "deck": ["rear_queen", "general_student", "shukii", "past_campus"], "note": "カード確認の融合するから素材1枚を選ぶか、手札同士をドラッグして融合します。中央列に出席させると左右の空き席から爆発する学生の出席先を選べます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      rear_queen: {"hand": ["general_student", "ruler", "tomoyo_mou"], "will": 12, "life": 12, "deck": ["rear_queen", "general_student", "shukii", "past_campus"], "note": "1枚ずつ融合でき、合計2枚で出席できます。カード確認の融合するか、手札同士のドラッグで融合します。中央列に出席させると左右の空き席から爆発する学生の出席先を選べます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       illegal_cafeteria: {"hand": ["illegal_cafeteria", "cafeteria", "onigiri_draw"], "will": 12, "life": 12, "deck": ["cafeteria", "onigiri_draw", "cafeteria", "general_student"], "note": "持ち物として使用するとデッキの「食堂」1枚だけの戦意が1下がります。手札の食堂や他の食堂カテゴリーのカードには影響しません。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       shukii: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 12, "deck": ["dark_yuta", "organism", "general_student"], "note": "手札1枚を選んで校外へ送り、デッキから進化カード1枚を引きます。進化元のU太を自分の講義室に用意しています。", "own": {"seats": [[6, "yuta"]], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       past_campus: {"hand": ["general_student", "ruler"], "will": 12, "life": 12, "deck": ["general_student", "ruler", "onigiri_draw", "general_teacher", "past_campus"], "enemyHand": ["general_student"], "enemyDeck": ["general_student", "ruler", "onigiri_draw", "general_teacher", "general_student"], "note": "環境マスに置いてターンを終了すると、手札が3枚以下のプレイヤーは自分の手番終了時に5枚まで引きます。4枚以上なら発動しません。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
-      private_teacher: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 12, "deck": ["private_teacher", "ruler", "general_student", "onigiri_draw", "ittan"], "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}, "note": "融合せずに2/2で出席するか、手札1枚を融合して4/4・陽気にしてから出席できます。出席すると爆発する学生が手札に2枚生成されます。定規などを融合して出席する流れを試せます。融合は1回だけです。"},
-      chugidesu: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 10, "deck": ["general_student", "ruler", "past_campus", "onigiri_draw"], "note": "カード確認の融合するから素材を2枚選びます。1枚ずつ融合することもできます。融合完了後に手札から出席させると2枚引いて気力を2回復します。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      private_teacher: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 12, "deck": ["private_teacher", "ruler", "general_student", "onigiri_draw", "ittan"], "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}, "note": "融合せずに2/2で出席するか、合計2枚を融合して4/4・陽気にしてから出席できます。1枚だけでは強化されません。出席すると爆発する学生が手札に2枚生成されます。定規などを融合して出席する流れを試せます。融合は1枚ずつでも可能で、合計2枚までです。"},
+      chugidesu: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 10, "deck": ["general_student", "ruler", "past_campus", "onigiri_draw"], "note": "1枚ずつ融合でき、2枚で出席できます。2枚なら左右の空き席に1人、3枚なら2人まで出席させた後、2枚引いて気力を2回復します。中央の席に出すと両側を試せます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       exploding_student: {"hand": ["general_student", "ruler", "ittan"], "will": 12, "life": 12, "deck": ["general_student", "ruler", "onigiri_draw"], "note": "素材1枚を融合して出席させ、陽気による攻撃と破壊時の本体2ダメージを試せます。一旦も用意しています。効果で出席させる場合は融合不要です。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       sports_spectator_student: {"hand": ["sports_spectator_student", "pinige", "pinige", "onigiri_draw"], "life": 10, "will": 20, "pointScore": 8, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 2], [4, "strong_student"]], "teacher": null}, "deck": ["sports_spectator_student", "pinige", "sports_spectator_student", "short_sleeve_student", "onigiri_draw"], "enemyHand": ["general_student"], "note": "通常は①のランダム1ダメージ2回、または②の+2/+2を選べます。ピニゲ③で点数8から単位を取得すると、①→②→①→②を試せます。別のスポーツを観戦する学生とピニゲを手札・デッキに用意しています。"},
       secretly_mocked_student: {"hand": ["secretly_mocked_student", "bento", "onigiri_draw", "short_sleeve_student"], "pointScore": 9, "life": 10, "will": 20, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "yuta", 1], [4, "yuta"]], "teacher": null}, "enemyHand": ["onigiri_draw"], "enemyDeck": ["yuta", "general_student", "onigiri_draw"], "deck": ["secretly_mocked_student", "short_sleeve_student", "bento", "long_sleeve_student", "onigiri_draw"], "note": "3行3列に女学生を出席させ、相手のU太が体力1の間は攻撃できなくなることを試せます。U太は自分のターン終了時に余裕で体力を回復し、2以上なら攻撃可能になります。単位取得後を試す場合は先に長袖の学生で体力1のU太を倒してください。点数9から開始します。"},
@@ -56977,8 +57019,8 @@
         tomoyo_mou: "このカードを使用したとき、自分の手札から戦意が低い順にカードを2枚まで、このカードに融合する。同じ戦意のカードはランダムに選ぶ。その後、自分の空いている席マスに「爆発する学生」を2人出席させる。\n自分の戦意が8以上なら、このカードの戦意は8になり、融合する枚数と出席させる人数はそれぞれ4になる。",
         shukii: "自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキから進化カード1枚をランダムに選び、手札に加える。",
         past_campus: "このカードが環境マスにあるかぎり、各プレイヤーは自分のターン終了時、手札が3枚以下なら、手札が5枚になるまで自分のデッキからカードを引く。",
-        private_teacher: "[融合]\n自分の手札のカード1枚を、このカードに融合できる。このカードへの融合は1回のみ。\n融合したとき、これの攻撃力と体力を+2し、陽気を持つ。\nこのカードを手札から出席させたとき、自分の手札に「爆発する学生」2枚を生成する。",
-        chugidesu: "[融合]\n自分の手札のカードを2枚まで、このカードに融合できる。このカードは2枚融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、自分のデッキからカードを2枚引く。その後、自分の気力を2回復する。",
+        private_teacher: "[融合]\n自分の手札のカードを合計2枚まで、このカードに融合できる。\n2枚目を融合したとき、これの攻撃力と体力を+2し、陽気を持つ。\nこのカードを手札から出席させたとき、自分の手札に「爆発する学生」2枚を生成する。",
+        chugidesu: "[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。",
         exploding_student: "[融合]\n陽気を持つ。\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードが破壊されたとき、相手本体に2ダメージを与える。",
         sports_spectator_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
@@ -57150,7 +57192,7 @@
         white_student: "このカードを手札から出席させたとき、相手の手札にある負荷を持つカード1枚をランダムに選び、それに負荷を付与する。",
         true_enemy: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。それが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。自分の空いている席マスがあるなら、そのカードを手札から出席させ、超陽気を付与する。",
         enemy_horde: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
-        rear_queen: "[融合]\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。",
+        rear_queen: "[融合]\n自分の手札のカードを合計2枚まで、このカードに融合できる。このカードは2枚融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。",
         enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の自分の講義室にいる「敵」とつく出席者すべてをデッキに戻してシャッフルする。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
         triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。出席させなかったカードは手札に残す。",

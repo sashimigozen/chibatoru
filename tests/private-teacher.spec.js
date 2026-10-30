@@ -30,6 +30,10 @@ for (const fused of [false, true]) test(`二等兵講師は融合が任意で、
       toggleCardChoiceCard(state.pendingCardChoice.cards.find(c => c.baseId === 'general_student').instanceId);
       confirmCardChoiceSelection();
     });
+    expect(await page.evaluate(() => { const c=state.players.player.hand.find(c=>c.baseId==='private_teacher'); return [c.attack,c.hp,hasKeyword(c,'陽気')]; })).toEqual([2,2,false]);
+    await page.evaluate(() => showBattleCardPreview(state.players.player.hand.find(c => c.baseId === 'private_teacher')));
+    await page.locator('[data-preview-any-hand-fusion]').click();
+    await page.evaluate(() => { toggleCardChoiceCard(state.pendingCardChoice.cards.find(c=>c.baseId==='onigiri_draw').instanceId); confirmCardChoiceSelection(); });
     await page.evaluate(() => showBattleCardPreview(state.players.player.hand.find(c => c.baseId === 'private_teacher')));
     await expect(page.locator('[data-preview-any-hand-fusion]')).toBeDisabled();
     await page.evaluate(() => hideBattleCardPreview());
@@ -55,17 +59,18 @@ for (const fused of [false, true]) test(`二等兵講師は融合が任意で、
   })).toEqual([false, true]);
 });
 
-test('融合は1回だけで、コピーと校外での素材分解も保つ', async ({ page }) => {
+test('融合は合計2枚までで、コピーと校外での素材分解も保つ', async ({ page }) => {
   await start(page);
   expect(await page.evaluate(() => {
     const p = state.players.player, c = p.hand.find(c => c.baseId === 'private_teacher');
     fuseAnyHandCards('player', c.instanceId, [p.hand.find(c => c.baseId === 'ruler').instanceId], false);
-    const twice = fuseAnyHandCards('player', c.instanceId, [p.hand.find(c => c.baseId === 'general_student').instanceId], false);
+    fuseAnyHandCards('player', c.instanceId, [p.hand.find(c => c.baseId === 'general_student').instanceId], false);
+    const twice = fuseAnyHandCards('player', c.instanceId, [p.hand.find(c => c.baseId === 'onigiri_draw').instanceId], false);
     const copy = copyHorseFusionProgress(c, createCardFromBase(c.baseId, 'player'));
     const stats = [copy.attack, copy.hp, hasKeyword(copy, '陽気')];
     moveToTrash('player', copy, { sourceZone: 'generated' });
     return [twice, stats, c.handFusionStored.length, p.trash.map(c => c.baseId).sort()];
-  })).toEqual([false, [4, 4, true], 1, ['private_teacher', 'ruler']]);
+  })).toEqual([false, [4, 4, true], 2, ['general_student', 'private_teacher', 'ruler']]);
 });
 
 test('効果による出席では生成しない', async ({ page }) => {
@@ -108,7 +113,7 @@ test('AIは教卓に融合済みの二等兵講師を出してターンを返す
     state.currentSide = 'opponent';
     state.aiThinking = true;
     const p = state.players.opponent;
-    p.hand = ['private_teacher', 'ruler'].map(id => createCardFromBase(id, 'opponent'));
+    p.hand = ['private_teacher', 'ruler', 'general_student'].map(id => createCardFromBase(id, 'opponent'));
     p.will = p.maxWill = 4;
     runOpponentAI();
   });
