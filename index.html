@@ -8628,6 +8628,17 @@
       background: #edf2f5;
     }
 
+    .online-hand-limit-control { display: grid; gap: 5px; margin: 10px 0; color: #36586a; }
+    .online-hand-limit-control > label { font-size: 12px; font-weight: 800; }
+    .online-hand-limit-stepper { display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .online-hand-limit-stepper .button { min-width: 34px; width: 34px; height: 32px; padding: 0; font-size: 20px; }
+    .online-hand-limit-stepper input { width: 94px; min-width: 0; height: 32px; border: 1px solid #7e929e; border-radius: 4px; background: #fff; color: #18364a; text-align: center; font-family: inherit; font-size: 15px; font-weight: 800; appearance: textfield; }
+    .online-hand-limit-stepper input::-webkit-inner-spin-button,
+    .online-hand-limit-stepper input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+    .online-hand-limit-stepper > span { font-size: 12px; }
+    .online-hand-limit-stepper :disabled { opacity: .55; cursor: default; }
+    .online-random-layout .online-hand-limit-control { margin: 3px 0 0; }
+    .online-random-layout .training-versus { margin-top: 3px; margin-bottom: 3px; }
     .online-random-center-title { margin-bottom: 24px !important; }
     .online-random-rule-select { appearance: none; text-align: center; font-weight: 1000; }
     .online-random-ready-button {
@@ -17922,6 +17933,7 @@
             <label class="training-setting-label" for="onlineRandomRuleSelect">ルール</label>
             <select class="training-cycle-button online-random-rule-select" id="onlineRandomRuleSelect" aria-label="ランダムマッチの対戦ルール"></select>
             <p class="training-rule-description" id="onlineRandomRuleDescription"></p>
+            <div class="online-hand-limit-control"><label for="onlineRandomHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineRandomHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineRandomHandLimit" type="number" min="9" step="1" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineRandomHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
             <div class="training-versus">VS</div>
             <button class="online-random-ready-button" id="onlineRandomReadyButton" type="button" disabled>準備OK</button>
             <p class="online-random-status" id="onlineRandomStatusText">対戦相手を探しています</p>
@@ -17990,6 +18002,7 @@
           <select class="control" id="onlineDeckSelect" aria-label="オンライン用デッキ">
             <option value="__current">現在のあなたデッキ</option>
           </select>
+          <div class="online-hand-limit-control"><label for="onlineHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineHandLimit" type="number" min="9" step="1" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
           <div class="online-ready-row">
             <button class="button" id="onlineReadyButton" type="button">準備OK</button>
             <button class="button warning" id="onlineStartButton" type="button">対戦開始</button>
@@ -19998,6 +20011,7 @@
         "date": "2026年10月30日",
         "summary": "手札を素材に融合するカードと関連カードを追加し、「後ろにいるクイーン」「無法の食堂」を調整しました。「二等兵講師」を追加し、「チュギデス」の戦意を6に変更しました。クイーン・チュギデス・二等兵講師の融合枚数と出席時効果を調整しました。",
         "changes": [
+          {"category": "システム", "title": "オンライン対戦の手札上限", "after": "対戦準備画面のルールの下に、手札上限の「−・枚数入力・＋」を追加しました。初期値・最低値は9枚で、設定できる枚数の上限はありません。空欄は上限なしです。ホストが設定し、両プレイヤーに同じ上限を適用します。設定変更時は双方の準備OKを解除します。引く・生成するなどで手札に加える際、入りきらないカードは校外エリアへ送ります。これは手札から捨てる処理や破壊ではなく、提出・破壊時効果は発動しません。設定同期・超過処理・上限なしを確認するテストを追加しました。カードの能力値・本文は変更していません。"},
           {
             "category": "新カード",
             "title": "友よ、もう",
@@ -22532,6 +22546,7 @@
       message: "",
       log: [],
       battleRuleId: "normal",
+      battleHandLimit: null,
       analytics: createAnalyticsState(),
       deckBuilder: {
         activeSide: "player",
@@ -22614,6 +22629,7 @@
         localReady: false,
         remoteReady: false,
         roomRuleId: "normal",
+        handLimit: 9,
         localDeckName: "__current",
         remoteDeckName: "",
         localDeckCounts: null,
@@ -23092,6 +23108,9 @@
       onlineRandomDeckConfirmButton: document.getElementById("onlineRandomDeckConfirmButton"),
       onlineRandomDeckSelect: document.getElementById("onlineRandomDeckSelect"),
       onlineRandomRuleSelect: document.getElementById("onlineRandomRuleSelect"),
+      onlineRandomHandLimit: document.getElementById("onlineRandomHandLimit"),
+      onlineRandomHandLimitMinus: document.getElementById("onlineRandomHandLimitMinus"),
+      onlineRandomHandLimitPlus: document.getElementById("onlineRandomHandLimitPlus"),
       onlineRandomRuleDescription: document.getElementById("onlineRandomRuleDescription"),
       onlineRandomReadyButton: document.getElementById("onlineRandomReadyButton"),
       onlineRandomStatusText: document.getElementById("onlineRandomStatusText"),
@@ -23125,6 +23144,9 @@
       onlineServerUrlInput: document.getElementById("onlineServerUrlInput"),
       onlineSaveServerUrlButton: document.getElementById("onlineSaveServerUrlButton"),
       onlineRuleSelect: document.getElementById("onlineRuleSelect"),
+      onlineHandLimit: document.getElementById("onlineHandLimit"),
+      onlineHandLimitMinus: document.getElementById("onlineHandLimitMinus"),
+      onlineHandLimitPlus: document.getElementById("onlineHandLimitPlus"),
       onlineRuleDescription: document.getElementById("onlineRuleDescription"),
       onlineDeckSelect: document.getElementById("onlineDeckSelect"),
       onlineDeckInfo: document.getElementById("onlineDeckInfo"),
@@ -25245,7 +25267,26 @@
       return descriptor;
     }
 
-    function onlineApplyRoomRuleId(ruleId) {
+    function normalizeHandLimit(value) {
+      if (value === null || String(value ?? "").trim() === "") return null;
+      const number = Number(value);
+      return Number.isFinite(number) && Number.isInteger(number) && number >= 9 ? number : 9;
+    }
+
+    function onlineUpdateHandLimit(value) {
+      if (!isOnlineHost() || !state.online.conn?.open || !state.online.lastSeenAt || state.online.started || state.online.startPending) return;
+      const handLimit = normalizeHandLimit(value);
+      if (handLimit === state.online.handLimit) { render(); return; }
+      state.online.handLimit = handLimit;
+      state.online.localReady = false;
+      state.online.remoteReady = false;
+      onlineClearPendingMessagesByType("setHandLimit");
+      onlineSend({type: "setHandLimit", handLimit}, {track: true});
+      render();
+    }
+
+    function onlineApplyRoomRuleId(ruleId, handLimit) {
+      if (handLimit !== undefined) state.online.handLimit = normalizeHandLimit(handLimit);
       const receivedRuleId = String(ruleId || "").trim();
       // Deck/ready messages from an older server may omit ruleId. Such a
       // message must not roll an already selected room rule back to normal.
@@ -25866,7 +25907,7 @@
 
     function onlineSend(message, options = {}) {
       const conn = state.online.conn;
-      const canSetRoomRuleBeforeOpponent = message?.type === "setRoomRule"
+      const canSetRoomRuleBeforeOpponent = ["setRoomRule", "setHandLimit"].includes(message?.type)
         && isOnlineHost()
         && Boolean(state.online.lastSeenAt);
       if (!conn || (!state.online.connected && !canSetRoomRuleBeforeOpponent) || conn.open === false) return false;
@@ -26014,6 +26055,7 @@
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.online.roomRuleId = "normal";
+      state.online.handLimit = 9;
       state.online.startPending = false;
       state.online.remoteDeckName = "";
       onlineClearRemoteDeckCounts();
@@ -26076,6 +26118,7 @@
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.online.roomRuleId = "normal";
+      state.online.handLimit = 9;
       state.online.startPending = false;
       state.online.remoteDeckName = "";
       onlineClearRemoteDeckCounts();
@@ -26457,7 +26500,7 @@
         state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
         state.online.roomCode = message.roomId || state.online.roomCode;
         state.online.matchMode = message.matchType || state.online.matchMode || "private";
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         const players = Array.isArray(message.players) ? message.players : [];
         onlineUpdateSpectatorCount(message.players);
         const self = players.find((player) => player.clientId === state.online.clientId) || message.you;
@@ -26500,7 +26543,7 @@
       }
       if (message.type === "opponentDisconnected") {
         state.profileViewer = null;
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         const players = Array.isArray(message.players) ? message.players : [];
         onlineUpdateSpectatorCount(message.players);
         const host = players.find((player) => player.role === "host");
@@ -26541,7 +26584,7 @@
       }
       if (message.type === "startGame") {
         state.profileViewer = null;
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         if (isOnlineHost()) {
           onlineConfirmPendingStart();
         } else if (isOnlineGuest() || isOnlineSpectator()) {
@@ -26551,7 +26594,7 @@
       }
       if (message.type === "gameState") {
         if (isOnlineGuest() || isOnlineSpectator()) {
-          onlineApplyRoomRuleId(message.ruleId);
+          onlineApplyRoomRuleId(message.ruleId, message.handLimit);
           onlineApplySnapshot(message.snapshot);
           if (message.processedCommandId && message.processedCommandId === state.online.pendingTurnCommandId) {
             state.online.pendingTurnCommandId = "";
@@ -26628,7 +26671,7 @@
       if (message.type === "roomRuleChanged") {
         state.online.roomSessionId = message.roomSessionId || state.online.roomSessionId;
         state.online.matchMode = message.matchType || state.online.matchMode || "private";
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         const players = Array.isArray(message.players) ? message.players : [];
         onlineUpdateSpectatorCount(message.players);
         const self = players.find((player) => player.clientId === state.online.clientId);
@@ -26660,13 +26703,13 @@
         return;
       }
       if (message.type === "privateDeckUpdate" && isOnlineHost()) {
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         if (onlineApplyPrivateRemoteDeckUpdate(message) && !state.online.started) onlineSendRoomState();
         render();
         return;
       }
       if (message.type === "hello" && isOnlineHost()) {
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         onlineApplyPrivateRemoteDeckUpdate(message);
         if (state.online.started) {
           onlineBroadcastState(true);
@@ -26677,7 +26720,7 @@
         return;
       }
       if (message.type === "deckUpdate" && isOnlineHost()) {
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         onlineApplyPrivateRemoteDeckUpdate(message);
         onlineSendRoomState();
         render();
@@ -26687,7 +26730,7 @@
         if (message.roomStateSeq && message.roomStateSeq <= (state.online.roomStateSeq || 0)) return;
         state.online.roomStateSeq = message.roomStateSeq || state.online.roomStateSeq || 0;
         state.online.roomSessionId = message.roomSessionId || messageSessionId || state.online.roomSessionId;
-        onlineApplyRoomRuleId(message.ruleId);
+        onlineApplyRoomRuleId(message.ruleId, message.handLimit);
         const localIsHost = isOnlineHost();
         const players = Array.isArray(message.players) ? message.players : [];
         onlineUpdateSpectatorCount(message.players);
@@ -29235,6 +29278,7 @@
         ? "normal"
         : normalizeOnlineRuleId(options.ruleId || (onlineHost ? state.online.roomRuleId : state.battleRuleId));
       state.battleRuleId = ruleId;
+      state.battleHandLimit = onlineHost ? normalizeHandLimit(state.online.handLimit) : null;
       SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
@@ -29613,6 +29657,22 @@
       }
     }
 
+    function addHandCards(side, cards, sourceZone = "generated") {
+      const player = state.players[side];
+      const limit = state.battleHandLimit;
+      let added = 0;
+      for (const card of cards) {
+        if (!card) continue;
+        if (limit !== null && limit !== undefined && player.hand.length >= limit) {
+          moveToTrash(side, card, {sourceZone, handOverflow: true, reason: "手札上限超過"});
+          continue;
+        }
+        player.hand.push(card);
+        added += 1;
+      }
+      return added;
+    }
+
     function drawCards(side, count, loseOnEmpty) {
       for (let i = 0; i < count; i += 1) {
         if (!drawOne(side, loseOnEmpty)) return false;
@@ -29629,21 +29689,21 @@
       }
       const card = player.deck.shift();
       card.handTurns = 0;
-      player.hand.push(card);
+      const addedToHand = addHandCards(side, [card], "deck") > 0;
       analyticsRecordAction({
         side,
         actionType: "draw",
         card,
         cost: null,
         sourceZone: "deck",
-        targetZone: "hand",
+        targetZone: addedToHand ? "hand" : "trash",
         details: {
           loseOnEmpty,
           handCountAfter: player.hand.length,
           deckCountAfter: player.deck.length
         }
       });
-      queueAnimation("draw", side, 1);
+      if (addedToHand) queueAnimation("draw", side, 1);
       return true;
     }
 
@@ -29703,7 +29763,7 @@
       if (drawn) {
         drawn.owner = side;
         drawn.handTurns = 0;
-        state.players[side].hand.push(drawn);
+        addHandCards(side, [drawn], "deck");
         if (registration.pools) {
           registration.pools[side] = (registration.pools[side] || []).filter((id) => id !== drawn.instanceId);
         }
@@ -31232,7 +31292,7 @@
       const insertAt = Math.floor(battleRandom() * (deck.length + 1));
       deck.splice(insertAt, 0, president);
       for (let i = 0; i < 3; i += 1) {
-        state.players.opponent.hand.push(createCardFromBase("president_tea_room", "opponent"));
+        addHandCards("opponent", [createCardFromBase("president_tea_room", "opponent")], "generated");
       }
       addLog("10階のフロア規則：相手のデッキのランダムな位置に闇学長を1枚生成し、手札に学長の茶室を3枚生成しました。");
     }
@@ -31241,7 +31301,7 @@
       if (isDungeonFloorRuleActive(7) && side === "opponent") {
         const baseId = DUNGEON_UTA_EQUIPMENT_IDS[Math.floor(battleRandom() * DUNGEON_UTA_EQUIPMENT_IDS.length)];
         const generated = createCardFromBase(baseId, "opponent");
-        state.players.opponent.hand.push(generated);
+        addHandCards("opponent", [generated], "generated");
         addLog(`7階のフロア規則：相手は${generated.name}を手札に生成しました。`);
       }
       if (isDungeonFloorRuleActive(8) && side === "player") {
@@ -36510,7 +36570,7 @@
         if (card) {
           player.deck = player.deck.filter((entry) => entry.instanceId !== card.instanceId);
           card.handTurns = 0;
-          player.hand.push(card);
+          addHandCards(side, [card], "generated");
           shuffleDeckAfterSearch(side);
           queueAnimation("draw", side, 1);
           addLog(`${item.name}の効果：${SIDES[side]}はデッキから環境カード1枚を手札に加えました。`);
@@ -36520,7 +36580,7 @@
         if (card) {
           player.trash = player.trash.filter((entry) => entry.instanceId !== card.instanceId);
           card.handTurns = 0;
-          player.hand.push(card);
+          addHandCards(side, [card], "generated");
           addLog(`${item.name}の効果：${SIDES[side]}は校外エリアから環境カード1枚を手札に戻しました。`);
         }
       }
@@ -38259,7 +38319,7 @@
         if (keepSet.has(card.instanceId)) {
           card.owner = side;
           card.handTurns = 0;
-          state.players[side].hand.push(card);
+          addHandCards(side, [card], "deck");
           kept += 1;
         } else {
           sentToTrash.push(card);
@@ -38296,7 +38356,7 @@
       drawn.forEach((card) => {
         card.owner = side;
         card.handTurns = 0;
-        player.hand.push(card);
+        addHandCards(side, [card], "deck");
       });
       queueAnimation("draw", side, drawn.length);
       const selectedSet = new Set(selectedIds);
@@ -38401,7 +38461,7 @@
         if (picked) {
           picked.owner = side;
           picked.handTurns = 0;
-          player.hand.push(picked);
+          addHandCards(side, [picked], "deck");
           queueAnimation("draw", side, 1);
           pickedNames.push(picked.name);
         }
@@ -38675,11 +38735,11 @@
       if (source.baseId === "information_tired_student") {
         const target = shuffle([...state.players[side].deck, ...state.players[side].hand]
           .filter(card => HORSE_MATERIAL_IDS.includes(card.baseId)))[0];
-        if (target) state.players[side].hand.push(copiedHorseMaterialCard(target, side, source));
+        if (target) addHandCards(side, [copiedHorseMaterialCard(target, side, source)], "generated");
       }
       if (source.baseId === "corridor_student") queueFusionEffect(async () => {
         const targets = shuffle(horseMaterialCandidates(side)).slice(0, 2);
-        targets.forEach(card => state.players[side].hand.push(copiedHorseMaterialCard(card, side, source)));
+        targets.forEach(card => addHandCards(side, [copiedHorseMaterialCard(card, side, source)], "generated"));
       });
       if (source.baseId === "tiny_rhythm_student") queueFusionEffect(async () => {
         const capacity = PLAYER_SEAT_ORDER.filter(index => isBoardSlotOpen(side, "seat", index)).length;
@@ -38704,7 +38764,7 @@
       });
       if (source.baseId === "remote_participant_student") queueFusionEffect(async () => {
         const materials = await chooseFusionEffectCards(side, source, horseMaterialCandidates(side), 2, "material_optional");
-        materials.forEach(card => state.players[side].hand.push(copiedHorseMaterialCard(card, side, source)));
+        materials.forEach(card => addHandCards(side, [copiedHorseMaterialCard(card, side, source)], "generated"));
         if (materials.length) render();
         const candidates = state.players[side].hand.filter(card => card.type !== "item"
           && (card.fusionResult || (card.baseId === "ultimate_yuta" && utaFusionMaterialEntries(card).length === 4))
@@ -38762,7 +38822,7 @@
       result.fusionMaterials = plan.materialIds.map(baseId => ({ baseId }));
       result.fusionVisualAddition = true;
       state.players[side].hand = state.players[side].hand.filter(card => !ids.includes(card.instanceId));
-      state.players[side].hand.push(result);
+      addHandCards(side, [result], "generated");
       analyticsRecordAction({ side, actionType: "fusion", cardId: resultId, cardName: result.name,
         sourceZone: "hand", targetZone: "hand", details: { materials: materials.map(analyticsCardInfo) } });
       showFusionAnimation(visualMaterials, result);
@@ -40298,7 +40358,7 @@
       }
       if (evolved.baseId === "recovered_dark_yuta") return resolveRecoveredYutaEvolution(side, evolved);
       if (evolved.baseId === "dark_yuta") {
-        state.players[side].hand.push(publicHandCard("yuta", side));
+        addHandCards(side, [publicHandCard("yuta", side)], "generated");
         addLog(`${evolved.name}の効果：「U太」を1枚手札に生成しました。`);
       } else if (evolved.baseId === "success_student") {
         resolveSuccessStudentEvolutionEffect(side, evolved);
@@ -40838,7 +40898,7 @@
       deck.push(...revealed.filter((entry) => !isEnemyNamedAttendee(entry)));
       const order = Array.isArray(orderIds) ? orderIds : matches.map((entry) => entry.instanceId);
       const ordered = order.map((id) => matches.find((entry) => entry.instanceId === id)).filter(Boolean);
-      state.players[side].hand.push(...matches);
+      addHandCards(side, [...matches], "deck");
       continueTripleEnemyAttendance({ side, name: card.name, matchCount: matches.length,
         commandId: card.tripleEnemyCommandId || "",
         summoned: 0, remaining: ordered });
@@ -41191,7 +41251,7 @@
       if (card.baseId === "private_teacher") {
         for (let i = 0; i < 2; i++) {
           const generated = createCardFromBase("exploding_student", side);
-          state.players[side].hand.push(generated);
+          addHandCards(side, [generated], "generated");
           analyticsRecordEffect({ side, source: card, effectType: "generate_hand", details: { card: analyticsCardInfo(generated) } });
         }
         addLog(`${card.name}の出席時効果：手札に「爆発する学生」2枚を生成しました。`);
@@ -41250,7 +41310,7 @@
         addLog(`${card.name}の出席時効果：お互いの席マスにいる他の出席者${seatAffected}人に1ダメージ、教卓マスにいる出席者${teacherAffected}人に2ダメージ。`);
       }
       if (card.baseId === "gesture_student") {
-        for (let i = 0; i < 2; i += 1) state.players[side].hand.push(publicHandCard("three_gestures", side));
+        for (let i = 0; i < 2; i += 1) addHandCards(side, [publicHandCard("three_gestures", side)], "generated");
         addLog(`${card.name}の効果：「３つジェスチャー」を2枚手札に生成しました。`);
       }
       if (["information_tired_student", "corridor_student", "remote_participant_student", "tiny_rhythm_student", "where_uma_bone_maibo"].includes(card.baseId)) resolveHorseAttendance(side, card);
@@ -41348,7 +41408,7 @@
         if (matchIndex >= 0) {
           const [drawn] = deck.splice(matchIndex, 1);
           drawn.handTurns = 0;
-          state.players[side].hand.push(drawn);
+          addHandCards(side, [drawn], "generated");
           queueAnimation("draw", side, 1);
           shuffleDeckAfterSearch(side);
           addLog(`${card.name}の効果：デッキから${drawn.name}を1枚引きました。`);
@@ -41358,7 +41418,7 @@
         }
       }
       if (card.baseId === "enemy_horde") {
-        state.players[side].hand.push(publicHandCard("enemy_student", side));
+        addHandCards(side, [publicHandCard("enemy_student", side)], "generated");
         summonToRandomOpenSeat(side, "enemy_student", card.name);
       }
       if (card.baseId === "enemy_enemy") {
@@ -41412,7 +41472,7 @@
         });
       }
       if (card.baseId === "wood_gitch") {
-        state.players[side].hand.push(createGeneratedWoodGitch(side));
+        addHandCards(side, [createGeneratedWoodGitch(side)], "generated");
         addLog(`${card.name}の効果：自分の手札に「木っち（ぎっち）」1枚を生成しました。`);
       }
       if (card.baseId === "small_omata") {
@@ -41819,11 +41879,11 @@
         startOrderedAttendance(
           orderedAttendanceEntries(side, seatIndexes, () => createCardFromBase("ta", side))
         );
-        state.players[side].hand.push(publicHandCard("roar", side));
+        addHandCards(side, [publicHandCard("roar", side)], "generated");
         addLog(`${card.name}の効果：TAを出席させ、咆哮を生成。教卓マスにいる間、自分の「TA」とつく出席者すべての体力+1。`);
       }
       if (card.baseId === "lightning_n") {
-        state.players[side].hand.push(publicHandCard("ruler", side));
+        addHandCards(side, [publicHandCard("ruler", side)], "generated");
         const pulled = zone === "teacher" ? pullCardsFromDeck(side, "ruler", 1) : 0;
         addLog(zone === "teacher"
           ? `${card.name}の効果：定規を1枚生成し、デッキから${pulled}枚引きました。`
@@ -42014,7 +42074,7 @@
       state.players[side].deck = state.players[side].deck.filter((deckCard) => {
         if (deckCard.baseId === baseId && pulled < count) {
           deckCard.handTurns = 0;
-          state.players[side].hand.push(deckCard);
+          addHandCards(side, [deckCard], "deck");
           pulled += 1;
           return false;
         }
@@ -42099,7 +42159,7 @@
       player.deck = player.deck.filter((card) => !selectedIds.has(card.instanceId));
       selected.forEach((card) => {
         card.handTurns = 0;
-        player.hand.push(card);
+        addHandCards(side, [card], "deck");
       });
       if (selected.length > 0) queueAnimation("draw", side, selected.length);
       shuffleDeckAfterSearch(side);
@@ -42227,7 +42287,7 @@
       discarded.forEach((card) => moveToTrash(side, card));
       dust.owner = side;
       dust.handTurns = 0;
-      player.hand.push(dust);
+      addHandCards(side, [dust], "generated");
       addLog(`${SIDES[side]}は手札2枚を校外エリアへ送り、${dust.name}を手札に戻しました。`);
       clearSelections();
       if (renderAfter) render();
@@ -42679,7 +42739,7 @@
         const [picked] = deck.splice(index, 1);
         picked.owner = side;
         picked.handTurns = 0;
-        state.players[side].hand.push(picked);
+        addHandCards(side, [picked], "generated");
         queueAnimation("draw", side, 1);
         pulled = 1;
       }
@@ -43223,7 +43283,7 @@
       setBoardCard(targetRef.owner, targetRef.zone, targetRef.index, null);
       const returned = createCardFromBase(returnedBaseId, targetRef.owner);
       returned.handTurns = 0;
-      state.players[targetRef.owner].hand.push(returned);
+      addHandCards(targetRef.owner, [returned], "generated");
       destroyBoardCard(attackerRef, { reason: "バウンスディ", showDestroyFeedback: false });
       analyticsRecordAction({
         side: attacker.owner,
@@ -43457,7 +43517,7 @@
       if (item.baseId === "padlock") {
         if (!attachPadlock(target, item)) return false;
         state.players[side].hand = state.players[side].hand.filter((handCard) => handCard.instanceId !== item.instanceId);
-        state.players[side].hand.push(publicHandCard("key", side));
+        addHandCards(side, [publicHandCard("key", side)], "generated");
         // Remove any continuously-derived stats and effects immediately,
         // rather than waiting for the next turn-end aura recalculation.
         applyBoardAuras();
@@ -43528,7 +43588,7 @@
       if (item.baseId === "go_home") {
         const returnedBaseId = target.baseId;
         clearBoardCardFromField(targetOwner, targetZone, targetIndex, target);
-        state.players[side].hand.push(publicHandCard(returnedBaseId, side));
+        addHandCards(side, [publicHandCard(returnedBaseId, side)], "generated");
         moveHandCardToTrash(side, item);
         addLog(`${SIDES[side]}は帰っていいぞを使い、${target.name}を手札に戻しました。`);
         cleanupDestroyedCards();
@@ -43578,7 +43638,7 @@
       if (item.baseId === "favorite_number_s") {
         const copiedBaseId = target.baseId;
         destroyBoardCard({ owner: targetOwner, zone: targetZone, index: targetIndex });
-        state.players[side].hand.push(publicHandCard(copiedBaseId, side));
+        addHandCards(side, [publicHandCard(copiedBaseId, side)], "generated");
       }
       if (item.baseId === "handmade_ctoc") {
         target.sameNameAttackLocked = true;
@@ -44010,7 +44070,7 @@
 
     function generateWontonCard(side, baseId, source) {
       const card = createCardFromBase(baseId, side);
-      state.players[side].hand.push(card);
+      addHandCards(side, [card], "generated");
       analyticsRecordEffect({ side, source, effectType: "generate_hand", details: { card: analyticsCardInfo(card) } });
       addLog(`${source.name}の効果：${SIDES[side]}の手札に「${card.name}」1枚を生成しました。`);
       return card;
@@ -44499,7 +44559,7 @@
       if (item.baseId === "aggro_army") {
         const generatedBaseIds = ["aggro_student", "aggro_king", "aggro_queen"];
         generatedBaseIds.forEach((baseId) => {
-          state.players[side].hand.push(publicHandCard(baseId, side));
+          addHandCards(side, [publicHandCard(baseId, side)], "generated");
         });
         resultText = "「アグロ大学生」「アグロキング」「アグロクイーン」を1枚ずつ手札に生成しました。";
       }
@@ -44709,7 +44769,7 @@
         resultText = `U太を${pulled}枚引きました。`;
       }
       if (item.baseId === "yoyu_announce") {
-        state.players[side].hand.push(publicHandCard("yuta", side));
+        addHandCards(side, [publicHandCard("yuta", side)], "generated");
         const drawn = drawOne(side, false) ? 1 : 0;
         resultText = `U太を1枚生成し、カードを${drawn}枚ドローしました。`;
       }
@@ -44731,7 +44791,7 @@
         const [yutaCard] = state.players[side].trash.splice(trashIndex, 1);
         yutaCard.owner = side;
         yutaCard.handTurns = 0;
-        state.players[side].hand.push(yutaCard);
+        addHandCards(side, [yutaCard], "generated");
         resultText = "校外エリアから「U太」を1枚手札に加えました。";
       }
       if (item.baseId === "smart_me") {
@@ -44785,7 +44845,7 @@
           revealed.forEach((card, index) => {
             if (keepSet.has(index)) {
               card.handTurns = 0;
-              state.players[side].hand.push(card);
+              addHandCards(side, [card], "generated");
               kept += 1;
             } else {
               sentToTrash.push(card);
@@ -44858,7 +44918,7 @@
       if (item.baseId === "ikemasu") {
         const generated = publicHandCard("general_student", side);
         addKeyword(generated, "陽気", item.name);
-        state.players[side].hand.push(generated);
+        addHandCards(side, [generated], "generated");
         resultText = "陽気を持つ「一般学生」を1枚手札に生成しました。";
       }
       if (item.baseId === "president_tea_room") {
@@ -44942,7 +45002,7 @@
       showCardPlayAnimation(item, "trash");
       state.players[side].deck.splice(0, revealed.length);
       const chosen = isDeckToHandLocked() ? [] : revealed.filter((card) => selectedIds.includes(card.instanceId));
-      state.players[side].hand.push(...chosen);
+      addHandCards(side, [...chosen], "deck");
       state.players[side].deck = shuffle([...state.players[side].deck, ...revealed.filter((card) => !chosen.includes(card))]);
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}で${declaredType}を宣言し、公開した${revealed.map((card) => card.name).join("・") || "0枚"}から${chosen.length}枚を手札に加えました。`);
@@ -45119,7 +45179,7 @@
       picked.filter(Boolean).forEach((card) => {
         card.owner = side;
         card.handTurns = 0;
-        player.hand.push(card);
+        addHandCards(side, [card], "generated");
       });
       shuffleDeckAfterSearch(side);
       return picked.length;
@@ -45163,7 +45223,7 @@
       recovered.forEach((card) => {
         card.owner = side;
         card.handTurns = 0;
-        player.hand.push(card);
+        addHandCards(side, [card], "generated");
       });
       return recovered.length;
     }
@@ -45381,7 +45441,7 @@
       context.retainedItem = null;
       delete retained.item.usedFromHand;
       if (!state.players[retained.side].hand.some(card => card.instanceId === retained.item.instanceId)) {
-        state.players[retained.side].hand.push(retained.item);
+        addHandCards(retained.side, [retained.item], "generated");
       }
       addLog(`${retained.item.name}はジェイルブレイクソフトの効果で手札に残りました。`);
       if (state.screen === "battle") render();
@@ -45512,7 +45572,7 @@
       const result = createCardFromBase("double_diamond", side);
       result.fusionMaterials = materials.map(card => ({ baseId: card.baseId, instanceId: card.instanceId }));
       result.fusionVisualAddition = true;
-      player.hand.push(result);
+      addHandCards(side, [result], "generated");
       showFusionAnimation(materials, result);
       analyticsRecordAction({
         side,
@@ -45603,7 +45663,7 @@
             const summoned = makeBoardCard(drawn);
             addKeyword(summoned, "超陽気", card.name);
             if (!attendCard(side, summoned, "seat", index, { attendanceSource: ATTENDANCE_SOURCE.HAND, ignoreAttendanceLimit: true })) {
-              state.players[side].hand.push(drawn);
+              addHandCards(side, [drawn], "deck");
             } else showCardPlayAnimation(summoned, "board");
           }
           card.trueEnemyExtraAttack = (card.trueEnemyExtraAttack || 0) + 1;
@@ -47490,7 +47550,7 @@
     function moveToTrash(owner, card, options = {}) {
       if (itemResolutionContext?.itemId === card.instanceId
         && itemResolutionContext.itemMoved) return true;
-      if (isHighLoadHandCard(card) && !options.playedFromHand && options.sourceZone !== "deck") {
+      if (isHighLoadHandCard(card) && !options.handOverflow && !options.playedFromHand && options.sourceZone !== "deck") {
         if (!state.players[owner].hand.some((entry) => entry.instanceId === card.instanceId)) {
           state.players[owner].hand.push(card);
         }
@@ -47505,7 +47565,7 @@
       const fusedCards = [...(card.handFusionStored || [])];
       delete card.handFusionStored;
       const submissionSource = { ...card };
-      const submissionFromHand = options.sourceZone !== "fusion" && (options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId));
+      const submissionFromHand = !options.handOverflow && options.sourceZone !== "fusion" && (options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId));
       for(const material of fusedCards) moveToTrash(owner, material, {sourceZone:"fusion",playedFromHand:true,reason:"融合素材",suppressToast:options.suppressToast});
       for(const entry of nestedRecipe) moveToTrash(owner,createCardFromBase(entry.baseId,owner),{sourceZone:"fusion",playedFromHand:true,reason:"融合素材",suppressToast:options.suppressToast});
       const vanishes = isTokenCard(card);
@@ -48508,6 +48568,13 @@
         || !state.online.lastSeenAt
         || state.online.started
         || state.online.startPending;
+      for (const prefix of ["online", "onlineRandom"]) {
+        const input = elements[`${prefix}HandLimit`];
+        if (document.activeElement !== input || disabled) input.value = state.online.handLimit ?? "";
+        input.disabled = disabled;
+        elements[`${prefix}HandLimitMinus`].disabled = disabled || state.online.handLimit === 9;
+        elements[`${prefix}HandLimitPlus`].disabled = disabled;
+      }
       elements.onlineRuleSelect.disabled = disabled;
       if (elements.onlineRandomRuleSelect) elements.onlineRandomRuleSelect.disabled = disabled;
       if (elements.onlineRuleDescription) {
@@ -54654,6 +54721,7 @@
     }
 
     function startCardTest(baseId) {
+      state.battleHandLimit = null;
       if (state.screen === "deck") cardTestReturnView = state.deckBuilder.view || "editor";
       state.kashikashiActionTurn = null;
       resetBattleDrawers();
@@ -55791,6 +55859,7 @@
     }
 
     function startTutorialBattle(chapterId = "basic", options = {}) {
+      state.battleHandLimit = null;
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === chapterId);
       if (!chapter?.steps) return;
       clearTutorialQuizCoachTimer();
@@ -57860,6 +57929,13 @@
     elements.onlineServerUrlInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") persistOnlineServerUrl();
     });
+    for (const prefix of ["online", "onlineRandom"]) {
+      const input = elements[`${prefix}HandLimit`];
+      input.addEventListener("change", () => { input.value = normalizeHandLimit(input.value) ?? ""; onlineUpdateHandLimit(input.value); });
+      input.addEventListener("keydown", event => { if (event.key === "Enter") input.blur(); });
+      elements[`${prefix}HandLimitMinus`].addEventListener("click", () => onlineUpdateHandLimit(Math.max(9, (state.online.handLimit ?? 10) - 1)));
+      elements[`${prefix}HandLimitPlus`].addEventListener("click", () => onlineUpdateHandLimit((state.online.handLimit ?? 8) + 1));
+    }
     elements.onlineRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRuleSelect));
     elements.onlineRandomRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRandomRuleSelect));
     elements.onlineDeckSelect.addEventListener("change", () => onlineUpdateDeckSelection(elements.onlineDeckSelect));

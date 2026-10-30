@@ -1413,6 +1413,7 @@ function privateDeckUpdateMessage(room, deckOwner) {
     roomId: room.roomId,
     roomSessionId: room.sessionId,
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     playerId: deckOwner.clientId,
     deckOwnerId: deckOwner.clientId,
     deckName: deckOwner.deckName || "__current",
@@ -1461,6 +1462,7 @@ function publicRoomState(room) {
     roomId: room.roomId,
     matchType: room.matchType || "private",
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     roomRule: publicRoomRule(room.ruleId),
     started: Boolean(room.started),
     players: battlePlayers(room).length,
@@ -1507,6 +1509,7 @@ function createRoom(roomId, sessionId = "", matchType = "private") {
     sessionId: sessionId || createSessionId(),
     matchType,
     ruleId: DEFAULT_ROOM_RULE_ID,
+    handLimit: 9,
     players: new Map(),
     started: false,
     state: null,
@@ -1880,6 +1883,7 @@ function roomPlayerJoinedMessage(room, player = null) {
     roomSessionId: room.sessionId,
     matchType: room.matchType || "private",
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     roomRule: publicRoomRule(room.ruleId),
     you: player ? playerPublicState(player, room) : null,
     players: roomPlayers(room),
@@ -1900,6 +1904,7 @@ function roomStateMessage(room, options = {}) {
     roomSessionId: room.sessionId,
     matchType: room.matchType || "private",
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     roomRule: publicRoomRule(room.ruleId),
     players: roomPlayers(room),
     hostReady: Boolean(host?.ready),
@@ -2138,6 +2143,7 @@ function handleDeckUpdate(ws, message) {
     roomSessionId: room.sessionId,
     roomId: room.roomId,
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     roomRule: publicRoomRule(room.ruleId),
     deckName: player.deckName,
     deckFormat: player.deckFormat,
@@ -2172,6 +2178,20 @@ function handleProfileUpdate(ws, message) {
   });
 }
 
+function handleSetHandLimit(ws, message) {
+  const {room, player} = requireJoined(ws);
+  if (!room || !player) return;
+  if (player.role !== "host") return sendError(ws, "手札上限はホストだけが変更できます。", "forbidden");
+  if (room.started) return sendError(ws, "対戦開始後に手札上限は変更できません。", "game_started");
+  const value = message.handLimit;
+  if (value !== null && (!Number.isFinite(value) || !Number.isInteger(value) || value < 9)) return sendError(ws, "手札上限は9枚以上か空欄にしてください。", "invalid_hand_limit");
+  if (room.handLimit === value) return;
+  room.handLimit = value;
+  for (const entry of battlePlayers(room)) entry.ready = false;
+  room.updatedAt = now();
+  broadcastRoomState(room, {status: `手札上限を${value === null ? "上限なし" : `${value}枚`}に変更しました。`});
+}
+
 function handleSetRoomRule(ws, message) {
   const { room, player } = requireJoined(ws);
   if (!room || !player) return;
@@ -2201,6 +2221,7 @@ function handleSetRoomRule(ws, message) {
     roomSessionId: room.sessionId,
     matchType: room.matchType || "private",
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     roomRule: publicRoomRule(room.ruleId),
     players: roomPlayers(room),
     hostReady: Boolean(host?.ready),
@@ -2262,11 +2283,13 @@ function handleStartGame(ws, message) {
   room.replayIncidents = [];
   clearWaitingRoomTimer(room);
   room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
+  if (room.state?.state) room.state.state.battleHandLimit = room.handLimit;
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
   room.currentTurn = snapshotCurrentTurn(message.snapshot);
   room.updatedAt = now();
   broadcastSnapshotMessage(room, "startGame", {
     ruleId: room.ruleId,
+    handLimit: room.handLimit,
     roomRule: publicRoomRule(room.ruleId),
     players: roomPlayers(room)
   });
@@ -2284,6 +2307,7 @@ function handleGameState(ws, message) {
   const seq = Number(message.snapshot.seq) || 0;
   if (seq && seq < room.snapshotSeq) return;
   room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
+  if (room.state?.state) room.state.state.battleHandLimit = room.handLimit;
   room.snapshotSeq = Math.max(room.snapshotSeq, seq);
   room.currentTurn = snapshotCurrentTurn(message.snapshot) || room.currentTurn;
   room.updatedAt = now();
@@ -2468,6 +2492,9 @@ function routeMessage(ws, raw) {
       break;
     case "profileUpdate":
       handleProfileUpdate(ws, message);
+      break;
+    case "setHandLimit":
+      handleSetHandLimit(ws, message);
       break;
     case "setRoomRule":
       handleSetRoomRule(ws, message);
