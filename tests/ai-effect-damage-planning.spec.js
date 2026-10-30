@@ -112,7 +112,7 @@ test("アグロクイーンのランダム対象は撃破予約せず、反撃�
   expect(result).toEqual({ reservedTargets: 0, unsafeAttack: false, hasAttackTarget: true });
 });
 
-test("後ろにいるクイーンが全学生を確実に倒せるときも攻撃を控える", async ({ page }) => {
+test("調整後のクイーンの旧終了時ダメージを撃破予定に含めない", async ({ page }) => {
   await setup(page, "player");
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
@@ -131,8 +131,8 @@ test("後ろにいるクイーンが全学生を確実に倒せるときも攻�
     };
   });
   expect(result).toEqual({
-    reservedTarget: true,
-    preservesQueen: true,
+    reservedTarget: false,
+    preservesQueen: false,
     attackTarget: null
   });
 });

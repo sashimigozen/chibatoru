@@ -228,7 +228,7 @@ test("最新カードのテストに必要な手札・デッキ・盤面・校�
   for (const baseId of ["true_enemy", "triple_enemy"]) {
     expect(result[baseId].deckTop.slice(0, 3)).toEqual(["enemy_student", "true_enemy", "enemy_horde"]);
   }
-  expect(result.rear_queen.opponentBoard).toEqual(["strong_student", "strong_student", "strong_student"]);
+  expect(result.rear_queen.opponentBoard).toEqual(["general_student", "strong_student"]);
   expect(result.enemy_enemy.board).toEqual(["enemy_student", "enemy_student", "enemy_student"]);
   expect(result.enemy_revive.trash).toEqual(expect.arrayContaining(["enemy_student", "true_enemy", "enemy_horde"]));
   expect(result.efficient_experiment_method.deckTop.slice(0, 3)).toEqual(["general_student", "general_teacher", "ruler"]);

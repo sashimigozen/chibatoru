@@ -1016,7 +1016,7 @@ test("任意枚数の選択UIから出席を確定できる", async ({ page }) =
     reviveMode: "enemy_revive", revived: true });
 });
 
-test("克服後の進化で病がなければ強化せず、後ろにいるクイーンは終了時に4ダメージ", async ({ page }) => {
+test("克服後の進化で病がなければ強化せず、調整後のクイーンは終了時にダメージを与えない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const evolved = api.makeBoardCard(api.createCardFromBase("recovered_dark_yuta", "player"));
@@ -1030,5 +1030,5 @@ test("克服後の進化で病がなければ強化せず、後ろにいるク�
     api.resolveStudentEndTurnEffects("player");
     return { illnessCount, queenDamage: hpBefore - student.currentHp };
   });
-  expect(result).toEqual({ illnessCount: 0, queenDamage: 4 });
+  expect(result).toEqual({ illnessCount: 0, queenDamage: 0 });
 });

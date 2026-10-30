@@ -201,8 +201,8 @@ for (const side of ["player", "opponent"]) {
       const result = await page.evaluate((owner) => {
         const api = window.__chibattle;
         const enemy = owner === "player" ? "opponent" : "player";
-        const source = api.makeBoardCard(api.createCardFromBase("rear_queen", owner));
-        api.state.players[owner].board.seats[0] = source;
+        const source = api.makeBoardCard(api.createCardFromBase("aggro_queen", owner));
+        api.state.players[owner].board.seats[5] = source;
         const rebirth = api.makeBoardCard(api.createCardFromBase("rebirth_student", enemy));
         rebirth.currentHp = 1;
         const locked = api.makeBoardCard(api.createCardFromBase("general_student", enemy));
@@ -217,7 +217,6 @@ for (const side of ["player", "opponent"]) {
           rebirthReserved: plan.targetIds.has(rebirth.instanceId),
           lockedReserved: plan.targetIds.has(locked.instanceId),
           rebirthSurvived: api.state.players[enemy].board.seats[0]?.currentHp > 0,
-          rebirthUsed: rebirth.rebirthUsed,
           lockedHp: locked.currentHp
         };
       }, side);
@@ -225,7 +224,6 @@ for (const side of ["player", "opponent"]) {
         rebirthReserved: false,
         lockedReserved: false,
         rebirthSurvived: true,
-        rebirthUsed: true,
         lockedHp: 1
       });
     });

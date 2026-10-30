@@ -424,7 +424,7 @@ test("チバトルふぉーは4席の部屋、手番操作、手札非公開を�
   assert.deepEqual(relayed.message.action, { type: "endTurn" });
 });
 
-test("former ace cards allow three normal-deck copies but reject four and retired cafeteria", async (t) => {
+test("former ace cards allow three copies, reject four, and accept the reworked cafeteria item", async (t) => {
   const port = await freePort();
   const child = await startServer(port);
   t.after(() => child.kill("SIGTERM"));
@@ -445,8 +445,7 @@ test("former ace cards allow three normal-deck copies but reject four and retire
   }
   const start = host.messages.length;
   send(host, { type: "deckUpdate", ...normalDeckDescriptor({ ...createNormalDeckCounts(), illegal_cafeteria: 1 }), ready: true });
-  const retired = await waitFor(host, message => message.type === "error" && message.code === "invalid_deck", start);
-  assert.match(retired.message.message, /直接編成/);
+  await waitFor(host, message => message.type === "playerJoined" && message.players?.some(player => player.clientId === "smoke-host" && player.ready), start);
 });
 
 test("host-owned room rules synchronize and enforce normal, chaos, and specialty decks", async (t) => {

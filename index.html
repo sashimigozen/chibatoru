@@ -19375,6 +19375,8 @@
       ii_daro_tte: ["yuta", "tsurai_nara", "company_one_day", "enough_to_fly"],
       single_cell: ["single_cell", "single_cell", "single_cell", "single_cell", "single_cell", "single_cell", "night_pool"],
       night_pool: ["single_cell"],
+      tomoyo_mou: ["exploding_student"],
+      rear_queen: ["exploding_student"],
       suzaku: ["popular_c"],
       ai_chan: ["oni_shima_ai"],
       oni_shima_ai: ["ai_chan"],
@@ -19421,7 +19423,7 @@
       proliferating_enemy: [],
       yamanashi_minimum_wage: ["onigiri_draw", "environment_setup"]
       ,summer_teacher: []
-      ,illegal_cafeteria: ["classroom"]
+      ,illegal_cafeteria: ["cafeteria"]
       ,raptor_temple: ["bird_a", "demon_a_plus", "popular_c"]
       ,enemy_boss: ["enemy_student", "enemy_student"]
       ,pachin_uni: ["general_student"]
@@ -19519,6 +19521,11 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
+      tomoyo_mou: {"name": "友よ、もう", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
+      shukii: {"name": "しゅきー", "type": "item", "cost": 1, "attack": 0, "hp": 0, "target": "self", "category": "common"},
+      past_campus: {"name": "過去のキャンパス", "type": "environment", "cost": 2, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common"},
+      chugidesu: {"name": "チュギデス", "type": "student", "cost": 8, "attack": 3, "hp": 5, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 2},
+      exploding_student: {"name": "爆発する学生", "type": "student", "cost": 2, "attack": 3, "hp": 3, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 1, "keywords": ["陽気"], "generated": true, "token": true},
       sports_spectator_student: {"name": "スポーツを観戦する学生", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
       secretly_mocked_student: {"name": "謎多き女学生", "type": "student", "cost": 4, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedSeatIndex": 8, "allowedZones": ["seat"]},
       short_sleeve_student: {"name": "半袖の学生", "type": "student", "cost": 2, "attack": 1, "hp": 1, "category": "common", "hasPoint": true, "allowedZones": ["seat", "teacher"]},
@@ -19687,7 +19694,7 @@
       white_student: { name: "白い学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"], category: "interference" },
       true_enemy: { name: "真の敵", type: "student", cost: 6, attack: 1, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "expansion" },
       enemy_horde: { name: "敵の群れ", type: "student", cost: 4, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
-      rear_queen: { name: "後ろにいるクイーン", type: "student", cost: 7, attack: 2, hp: 2, allowedZones: ["seat"], category: "design" },
+      rear_queen: {"name": "後ろにいるクイーン", "type": "student", "cost": 4, "attack": 2, "hp": 2, "allowedZones": ["seat"], "category": "common", "handFusionRequired": 1},
       enemy_enemy: { name: "敵の敵", type: "student", cost: 2, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       enemy_revive: { name: "復活の敵", type: "student", cost: 5, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
       triple_enemy: { name: "三敵", type: "student", cost: 3, attack: 1, hp: 2, allowedZones: ["seat"], category: "expansion" },
@@ -19761,7 +19768,7 @@
       chameleon: { name: "カメレオン", type: "item", cost: 1, target: "friendlyAny" },
       yuta_umbrella: { name: "U太の傘", type: "item", cost: 0, target: "friendlyAny" },
       red_happi: { name: "赤はっぴ", type: "item", cost: 1, target: "friendlyAny" },
-      illegal_cafeteria: { name: "無法の食堂", type: "environment", cost: 3, allowedZones: ["environment"], retired: true },
+      illegal_cafeteria: {"name": "無法の食堂", "type": "item", "cost": 3, "attack": 0, "hp": 0, "target": "self", "category": "cafeteria"},
       circle_crab: { name: "○○○ガニ", type: "item", cost: 4, target: "self" },
       hair_crab: { name: "毛蟹", type: "item", cost: 4, target: "self" },
       homeless_crab: { name: "どこにも居場所がないカニ", type: "item", cost: 4, target: "self" },
@@ -19897,6 +19904,9 @@
       if (CARD_BASES[baseId]) CARD_BASES[baseId].category = category;
     });
 
+    CARD_BASES.rear_queen.category = "common";
+    CARD_BASES.illegal_cafeteria.category = "cafeteria";
+
     // Attendance trigger policy is card data, not inferred from a zone after
     // movement. New cards default to hand-only; only cards whose printed
     // effects intentionally trigger from every attendance source opt into
@@ -19947,6 +19957,10 @@
     ALL_DECK_IDS.push("fusion_uma", "fusion_maibo", "fusion_bone", "fusion_where",
       "remote_participant_student", "information_tired_student", "corridor_student");
     SPECIALTY_CARD_IDS.gakuyukai_item.push("tiny_rhythm_student");
+    ALL_DECK_IDS.push("tomoyo_mou", "shukii", "past_campus", "chugidesu", "illegal_cafeteria");
+    SPECIALTY_CARD_IDS.design.splice(SPECIALTY_CARD_IDS.design.indexOf("rear_queen"), 1);
+    SPECIALTY_CARD_IDS.common.push("tomoyo_mou", "shukii", "past_campus", "chugidesu", "rear_queen");
+    IMMEDIATE_ITEM_IDS.push("tomoyo_mou", "shukii", "illegal_cafeteria");
     ALL_DECK_IDS = [...new Set(ALL_DECK_IDS)].filter((baseId) => {
       const base = CARD_BASES[baseId];
       // Evolution cards are deck-buildable cards.  Their allowedZones setting
@@ -19976,6 +19990,74 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {
+        "version": "ver.0.37.0",
+        "versioning": "semver",
+        "date": "2026年10月30日",
+        "summary": "手札を素材に融合するカードと関連カードを追加し、「後ろにいるクイーン」「無法の食堂」を調整しました。",
+        "changes": [
+          {
+            "category": "新カード",
+            "title": "友よ、もう",
+            "after": "友よ、もう／持ち物／共通カード／戦意4／攻撃力0／体力0\nこのカードを使用したとき、自分の手札から戦意が低い順にカードを2枚まで、このカードに融合する。同じ戦意のカードはランダムに選ぶ。その後、自分の空いている席マスに「爆発する学生」を2人出席させる。\n自分の戦意が8以上なら、このカードの戦意は8になり、融合する枚数と出席させる人数はそれぞれ4になる。"
+          },
+          {
+            "category": "新カード",
+            "title": "しゅきー",
+            "after": "しゅきー／持ち物／共通カード／戦意1／攻撃力0／体力0\n自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキから進化カード1枚をランダムに選び、手札に加える。"
+          },
+          {
+            "category": "新カード",
+            "title": "過去のキャンパス",
+            "after": "過去のキャンパス／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、各プレイヤーは自分のターン終了時、手札が3枚以下なら、手札が5枚になるまで自分のデッキからカードを引く。"
+          },
+          {
+            "category": "新カード",
+            "title": "チュギデス",
+            "after": "チュギデス／学生／共通カード／戦意8／攻撃力3／体力5\n[融合]2\n自分の手札のカードを2枚まで、このカードに融合できる。このカードは2枚融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、自分のデッキからカードを2枚引く。その後、自分の気力を2回復する。"
+          },
+          {
+            "category": "新カード",
+            "title": "爆発する学生",
+            "after": "爆発する学生／学生／共通カード／戦意2／攻撃力3／体力3\n[融合]1\n陽気を持つ。\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードが破壊されたとき、相手本体に2ダメージを与える。"
+          },
+          {
+            "category": "カード調整",
+            "title": "後ろにいるクイーン",
+            "after": "後ろにいるクイーン／学生／共通カード／戦意4／攻撃力2／体力2\n[融合]1\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。",
+            "before": "後ろにいるクイーン／学生／デザイン／戦意7／攻撃力2／体力2\n自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
+            "beforeHighlights": [
+              "デザイン",
+              "戦意7",
+              "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。"
+            ],
+            "afterHighlights": [
+              "共通カード",
+              "戦意4",
+              "[融合]1\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。"
+            ]
+          },
+          {
+            "category": "カード調整",
+            "title": "無法の食堂",
+            "after": "無法の食堂／持ち物／食堂／戦意3／攻撃力0／体力0\n自分のデッキから「食堂」1枚をランダムに選び、その戦意を-1する。",
+            "before": "無法の食堂／環境／食堂／戦意3／攻撃力0／体力0\nお互いのプレイヤーは、自分のターン終了時、自分の講義室にいるヴァンパイアすべての体力を1回復する。ヴァンパイアの効果を処理する際、環境を「食堂」としても扱う。このカードが他の環境に上書きされた後も、2ターンの間、この効果は継続する。",
+            "beforeHighlights": [
+              "／環境／",
+              "お互いのプレイヤーは、自分のターン終了時、自分の講義室にいるヴァンパイアすべての体力を1回復する。ヴァンパイアの効果を処理する際、環境を「食堂」としても扱う。このカードが他の環境に上書きされた後も、2ターンの間、この効果は継続する。"
+            ],
+            "afterHighlights": [
+              "／持ち物／",
+              "自分のデッキから「食堂」1枚をランダムに選び、その戦意を-1する。"
+            ]
+          },
+          {
+            "category": "システム",
+            "title": "手札融合とカードテスト",
+            "after": "種類・戦意を問わない手札素材の融合、必要枚数による手札からの出席制限、素材の確認表示と校外への分解を追加しました。効果による出席は融合不要です。対象カードのカードテスト・AI・オンライン同期・管理ログ表示を整備しました。"
+          }
+        ]
+      },
       {
         "version": "ver.0.36.0",
         "versioning": "semver",
@@ -28457,7 +28539,7 @@
 
     function battleInspectionAllowed(target) {
       if (target.closest("[data-room-code-copy]")) return true;
-      if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion]")) return false;
+      if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion], [data-preview-any-hand-fusion]")) return false;
       return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #expandedHandPanel .expanded-hand-heading, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
 
@@ -28810,6 +28892,7 @@
         if (command.type === "fuse") {
           fuseRulersForSide("opponent", true, payload.sourceInstanceId || null, payload.targetInstanceId || null);
         }
+        if (command.type === "anyHandFusion") fuseAnyHandCards("opponent", payload.targetId, payload.materialIds || [], true);
         if (command.type === "horseFusion") fuseHorseMaterials("opponent", payload.ids || [], true);
         if (command.type === "raptorTemple") {
           const source = onlineMapRefForHost(payload.source);
@@ -30093,6 +30176,7 @@
     }
 
     async function playAiBoardMoves() {
+      while (tryFuseAnyHandCardForAi("opponent")) {render();await waitForBattlePresentation();}
       let safety = 0;
       const moveLimit = isEarlyDungeonAi() ? 5 : 8;
       while (safety < moveLimit && isOpponentAiActive()) {
@@ -31210,7 +31294,6 @@
       if (card.baseId === "where_maibo") return scoreAiDamageEffectTargets(side, card, enemy, { damage: 7, random: true });
       if (card.baseId === "where_bone") return aiLifeDamagePrevented(oppositeSide(side), state.actionTurn, side) ? 0
         : state.players[oppositeSide(side)].life <= 3 ? 60 : 9;
-      if (card.baseId === "rear_queen") return scoreAiDamageEffectTargets(side, card, enemy.filter(e => e.card.type === "student"), { damage: 4, random: true }) * Math.min(3, enemy.filter(e => e.card.type === "student").length);
       if (card.baseId === "sick_yuta") return enemy.filter(e => canEquipIllness({ ...e.card }) && e.card.baseId !== "yuta").length ? 4 : 0;
       if (card.baseId === "protein_drinker") return 3;
       return 0;
@@ -31539,7 +31622,7 @@
       const refill = planAiYakitori(side);
       if (refill.setup && aiBoardFaceDamage(side, { readyOnly: true }).guaranteed < state.players[oppositeSide(side)].life) return refill.setup;
       const candidates = player.hand
-        .filter((card) => card.type !== "item"
+        .filter((card) => card.type !== "item" && handFusionReady(card)
           && effectiveCardCost(card) <= player.will
           && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi(side, card))))
         .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) }))
@@ -31596,6 +31679,8 @@
       const targetSide = oppositeSide(side);
       const cost = effectiveCardCost(item);
       if (cost > ai.will) return -Infinity;
+      const fusionBatchScore=scoreAiFusionBatchItem(side,item);
+      if(fusionBatchScore!==null)return fusionBatchScore||-Infinity;
       if (item.baseId === "chotto_machii") return scoreAiChottoMachii(side, item) || -Infinity;
       const crabPlan = getAiCrabVictoryPlan(side);
       if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return -Infinity;
@@ -31838,6 +31923,7 @@
             continue;
           }
         }
+        while (tryFuseAnyHandCardForAi("player")) {render();await waitForBattlePresentation();}
         const move = findTrainingAiPlayMove("player");
         if (!move) break;
         placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
@@ -32610,7 +32696,7 @@
       const opponent = state.players.opponent;
       const refill = planAiYakitori("opponent");
       if (refill.setup && !getAiGuaranteedBoardLethalPlan()) return refill.setup;
-      const affordable = opponent.hand.filter((card) => card.type !== "item"
+      const affordable = opponent.hand.filter((card) => card.type !== "item" && handFusionReady(card)
         && effectiveCardCost(card) <= opponent.will
         && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi("opponent", card))));
       const moves = [];
@@ -33164,6 +33250,7 @@
     }
 
     function scoreAiEnvironment(card, side = "opponent") {
+      if (card.baseId === "past_campus") return state.players[side].hand.length <= 4 ? 12 : 2;
       if (!arePlayedEffectsSuppressed(side)) {
         if (card.baseId === "wonton_ki") return ongoingEnvironmentBaseId() === "wonton_ki" ? -100 : 8 + state.players[side].hand.filter(c=>c.submission).length * 4;
         if (WONTON_SERIES_IDS.includes(card.baseId)) {
@@ -33350,7 +33437,18 @@
       }
     }
 
+    function scoreAiFusionBatchItem(side,item) {
+      if (!["tomoyo_mou","shukii","illegal_cafeteria"].includes(item?.baseId)) return null;
+      if (arePlayedEffectsSuppressed(side)) return 0;
+      const own=state.players[side];
+      if(item.baseId==="tomoyo_mou")return Math.min(own.will>=8?4:2,PLAYER_SEAT_ORDER.filter(i=>isBoardSlotOpen(side,"seat",i)).length)*9;
+      if(item.baseId==="shukii")return own.hand.some(c=>c.instanceId!==item.instanceId&&!isHighLoadHandCard(c))&&own.deck.some(c=>c.evolutionFrom)?6:0;
+      return own.deck.some(c=>c.baseId==="cafeteria"&&c.cost>0)?4:0;
+    }
+
     function scoreAiItem(item, options = {}) {
+      const fusionBatchScore = scoreAiFusionBatchItem("opponent",item);
+      if (fusionBatchScore !== null) return fusionBatchScore;
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (item?.baseId === "pinige") return pointModeCards("opponent",item).map(c=>c.choiceScore).sort((a,b)=>b-a).slice(0,hasAcquiredUnit("opponent") ? 3 : 1).reduce((a,b)=>a+b,0) - 2;
       if (["female_highball", "male_highball"].includes(item?.baseId)) {
@@ -33932,7 +34030,7 @@
       const urgent = ({ ref, card }) => removesCounterLethal(futureFaceDamage(card, targetSide, state.actionTurn + 1))
         || (canUsePrintedCardEffects(card) && (
           Object.values(CARD_BASES).some((base) => base.evolutionFrom === card.baseId)
-          || ["ttb", "proliferating_enemy", "cynical_student", "tissue_distributor", "pro_k", "protein_drinker", "aggro_queen", "rear_queen"].includes(card.baseId)
+          || ["ttb", "proliferating_enemy", "cynical_student", "tissue_distributor", "pro_k", "protein_drinker", "aggro_queen"].includes(card.baseId)
         ))
         || (card.currentHp >= 3 && card.attack >= (ai.turnsTaken >= 7 ? 3 : 4))
         || (ref.zone === "teacher" && card.type === "teacher" && card.attack >= 3);
@@ -34312,7 +34410,7 @@
         tissue_distributor: 8,
         pro_k: 7,
         umaibo: 6, uma_bone: 7, where_uma: 7, maibo_bone: 10, where_maibo: 10, where_bone: 12,
-        rear_queen: 12, sick_yuta: 8, protein_drinker: 5, acting_out_man: 8
+        sick_yuta: 8, protein_drinker: 5, acting_out_man: 8
       };
       let score = Math.max(0, card.attack || 0) * 1.4
         + Math.max(0, card.currentHp || 0) * 0.35
@@ -34498,14 +34596,6 @@
         // インターンによって先に変化する可能性がある出席者は、効果源として予約しない。
         if (state.players[side].internTurnsRemaining > 0 && source.type === "student"
           && source.baseId !== "suit_student" && !isAibenNyoteiEffectImmune(source)) return;
-        if (source.baseId === "rear_queen") {
-          const targets = listBoardRefs(targetSide)
-            .map((targetRef) => ({ ref: targetRef, card: getBoardCardFromRef(targetRef) }))
-            .filter(({ card }) => card?.type === "student");
-          if (targets.length <= 3) {
-            targets.forEach((entry) => addGuaranteedDamage(entry, 4, source));
-          }
-        }
         if (source.baseId === "maibo_bone") {
           const targets = effectTargetEntries(side,targetSide)
             .filter(e=>!isPadlocked(e.card)&&!isAibenNyoteiEffectImmune(e.card)&&!aiShouldPreserveEnemyTrpg(side,e.card))
@@ -34905,11 +34995,7 @@
             equipRandomIllness(opponent, side);
           }
           if (!ongoingEffectsSuppressed() && Object.values(HORSE_PAIR_RESULTS).includes(card.baseId)) resolveHorseEndTurn(side, card);
-          if (!ongoingEffectsSuppressed() && card.baseId === "rear_queen") {
-            const targets = shuffle(listBoardRefs(opponent).filter((targetRef) => getBoardCardFromRef(targetRef)?.type === "student")).slice(0, 3);
-            targets.forEach((targetRef) => dealDamageToCard(getBoardCardFromRef(targetRef), 4, card));
-            addLog(`${card.name}の効果：相手の学生${targets.length}人に4ダメージ。`);
-          }
+
         });
       });
       listBoardRefs(side).forEach((ref) => {
@@ -34971,6 +35057,10 @@
         } else {
           addLog(`${environmentName}の効果：手札がないため校外エリアへ送れませんでした。`);
         }
+      }
+      if (ongoingEnvironmentBaseId() === "past_campus" && state.players[side].hand.length <= 3) {
+        drawCards(side,Math.max(0,5-state.players[side].hand.length));
+        addLog(`過去のキャンパスの効果：${SIDES[side]}は手札が5枚になるように引きました。`);
       }
       resolveDormCouncilEndTurnDraw(side);
       resolveCouncilEnvironmentCycle(side);
@@ -36922,6 +37012,7 @@
           requestId: pending.requestId, selectedIds }, { track: true });
         render(); return;
       }
+      if (mode === "any_hand_fusion") { fuseAnyHandCards("player", itemId, selectedIds); return; }
       if (mode === "horse_fusion") {
         if (!fuseHorseMaterials("player", [itemId, ...selectedIds], true)) {
           state.pendingCardChoice = pending;
@@ -38546,6 +38637,10 @@
     }
 
     function copyHorseFusionProgress(original, copy) {
+      if (original.handFusionStored) {
+        copy.handFusionStored = original.handFusionStored.map(c=>copyHorseFusionProgress(c,createCardFromBase(c.baseId,copy.owner)));
+        copy.fusionResult = original.fusionResult === true;
+      }
       if (Array.isArray(original.horseFusionExtraMaterials)) {
         copy.horseFusionExtraMaterials = original.horseFusionExtraMaterials.map(entry => ({ ...entry }));
       }
@@ -38696,7 +38791,115 @@
         .filter((card) => card.baseId === "ruler" && card.instanceId !== sourceCard.instanceId);
     }
 
+    function handFusionReady(card) {
+      return !card?.handFusionRequired || (card.handFusionStored || []).length >= card.handFusionRequired;
+    }
+
+    function canFuseAnyHandCard(side, target, material) {
+      return Boolean(target?.handFusionRequired && !handFusionReady(target) && material
+        && material.instanceId !== target.instanceId && getHandCard(side, target.instanceId)
+        && getHandCard(side, material.instanceId));
+    }
+
+    function fuseAnyHandCards(side, targetId, materialIds, renderAfter = true) {
+      if (state.phase !== "battle" || state.currentSide !== side || state.gameOver) return false;
+      const target = getHandCard(side, targetId);
+      const ids = [...new Set(materialIds || [])];
+      if (!target || !ids.length || ids.length > target.handFusionRequired - (target.handFusionStored || []).length
+        || ids.some(id => !canFuseAnyHandCard(side, target, getHandCard(side, id)))) return false;
+      if (side === "player" && onlineCanSendCommand()) {
+        onlineSendCommand("anyHandFusion", { targetId, materialIds: ids }); clearSelections(); render(); return true;
+      }
+      if (side === "player") pushTestHistoryBeforeAction();
+      const materials = ids.map(id => getHandCard(side, id));
+      state.players[side].hand = state.players[side].hand.filter(c => !ids.includes(c.instanceId));
+      (target.handFusionStored ||= []).push(...materials);
+      target.fusionResult = true;
+      showFusionAnimation(materials, target);
+      addLog(`${target.name}に${materials.map(c => c.name).join("・")}を融合しました。`);
+      analyticsRecordEffect({side, source: target, effectType: "hand_fusion", details: {materials: materials.map(analyticsCardInfo)}});
+      clearSelections(); if (renderAfter) render(); return true;
+    }
+
+    function openAnyHandFusionChoice(card) {
+      const target = getHandCard("player", card?.instanceId);
+      if (!target || handFusionReady(target) || battleNewActionBlocked()) return false;
+      const cards = state.players.player.hand.filter(c => canFuseAnyHandCard("player", target, c));
+      if (!cards.length) return false;
+      hideBattleCardPreview();
+      return openCardChoice({mode: "any_hand_fusion", itemId: target.instanceId, title: target.name,
+        message: "このカードに融合する手札を選んでください。", cards, min: 1,
+        max: Math.min(cards.length, target.handFusionRequired - (target.handFusionStored || []).length), confirmLabel: "融合する"});
+    }
+
+    function tryFuseAnyHandCardForAi(side) {
+      for (const target of state.players[side].hand) {
+        if (!target.handFusionRequired || handFusionReady(target) || effectiveCardCost(target) > state.players[side].will) continue;
+        if (!PLAYER_SEAT_ORDER.some(index => canPlaceCard(side, target, "seat", side, index))) continue;
+        const need = target.handFusionRequired - (target.handFusionStored || []).length;
+        const materials = state.players[side].hand.filter(c => canFuseAnyHandCard(side, target, c))
+          .sort((a,b) => trainingAiChoiceCardScore(side,a) - trainingAiChoiceCardScore(side,b));
+        if (materials.length >= need) return fuseAnyHandCards(side, target.instanceId, materials.slice(0,need).map(c=>c.instanceId), false);
+      }
+      return false;
+    }
+
+    function queueExplodingStudents(side, source, count, allowedSeats = null) {
+      return queueFusionEffect(async () => {
+        const token = state.preBattleToken;
+        for (let i=0;i<count;i++) {
+          if (token !== state.preBattleToken || state.gameOver) return;
+          const card = createCardFromBase("exploding_student", side);
+          if (allowedSeats) card.effectAllowedSeats = [...allowedSeats];
+          card.specialAttendanceSeatOnly = true;
+          const seats = PLAYER_SEAT_ORDER.filter(index => canPlaceCard(side, card, "seat", side, index));
+          if (!seats.length) break;
+          if (isCpuControlledBattleSide(side)) {
+            const index = seats.sort((a,b)=>scoreAiPlacementAuras(side,card,"seat",b)-scoreAiPlacementAuras(side,card,"seat",a))[0];
+            attendCard(side,makeBoardCard(card),"seat",index,{attendanceSource:ATTENDANCE_SOURCE.GENERATED});
+          } else await new Promise(resolve => {
+            const timer = window.setInterval(()=>{if(token!==state.preBattleToken||state.gameOver||state.screen!=="battle"){window.clearInterval(timer);resolve();}},100);
+            const onComplete=()=>{window.clearInterval(timer);resolve();};
+            if(!startSpecialAttendanceQueue(side,[card],{attendanceSource:ATTENDANCE_SOURCE.GENERATED,seatOnly:true,label:source.name,onComplete}))onComplete();
+          });
+        }
+      });
+    }
+
+    function castTomoyoMou(side, item, renderAfter) {
+      const count = state.players[side].will >= 8 ? 4 : 2;
+      const materials = [];
+      if (!payForItem(side,item,{onPaid:()=>{
+        const pool = state.players[side].hand.filter(c=>c.instanceId!==item.instanceId);
+        for(let i=0;i<count&&pool.length;i++) {
+          const lowest=Math.min(...pool.map(c=>effectiveCardCost(c)));
+          const tied=pool.filter(c=>effectiveCardCost(c)===lowest);
+          const chosen=tied[Math.floor(battleRandom()*tied.length)]; materials.push(chosen);pool.splice(pool.indexOf(chosen),1);
+        }
+        state.players[side].hand=state.players[side].hand.filter(c=>!materials.includes(c));
+        (item.handFusionStored ||= []).push(...materials);
+        if(materials.length)showFusionAnimation(materials,item);
+      }})) return false;
+      addLog(`${item.name}に${materials.length}枚を融合し、爆発する学生を${count}人出席させます。`);
+      queueExplodingStudents(side,item,count);
+      moveHandCardToTrash(side,item);clearSelections();if(renderAfter)render();return true;
+    }
+
+    function castShukii(side, item, renderAfter) {
+      if(!state.players[side].hand.some(c=>c.instanceId!==item.instanceId&&!isHighLoadHandCard(c)))return false;
+      if(!payForItem(side,item))return false;
+      queueFusionEffect(async()=>{
+        const cards=state.players[side].hand.filter(c=>c.instanceId!==item.instanceId&&!isHighLoadHandCard(c));
+        const [chosen]=await chooseFusionEffectCards(side,item,cards,1,"submission_discard",{required:true});
+        if(!chosen||!getHandCard(side,chosen.instanceId))return;
+        if(moveHandCardToTrash(side,chosen,{effectDiscard:true,reason:item.name}))pullRandomCardsFromDeck(side,c=>Boolean(c.evolutionFrom),1);
+      });
+      moveHandCardToTrash(side,item);clearSelections();if(renderAfter)render();return true;
+    }
+
     function handFusionType(side, sourceCard, targetCard) {
+      if (canFuseAnyHandCard(side, targetCard, sourceCard)) return "any_hand";
+      if (canFuseAnyHandCard(side, sourceCard, targetCard)) return "any_hand_reverse";
       if (sourceCard && targetCard && sourceCard.instanceId !== targetCard.instanceId
         && getHandCard(side, sourceCard.instanceId) && getHandCard(side, targetCard.instanceId)
         && horseFusionResult([sourceCard, targetCard])) return "horse";
@@ -39324,7 +39527,7 @@
       if (state.pendingCardPlay && !options.revealAlreadyShown) return false;
       const player = state.players[side];
       const card = getHandCard(side, instanceId);
-      if (!card) return false;
+      if (!card || !handFusionReady(card)) return false;
       card.spoonDestroyIds = Array.isArray(options.spoonDestroyIds) ? options.spoonDestroyIds : [];
       card.enemyReviveIds = Array.isArray(options.enemyReviveIds) ? options.enemyReviveIds : [];
       if (card.baseId === "triple_enemy") {
@@ -39692,6 +39895,7 @@
 
     function canPlaceCard(side, card, zone, owner, index, options = {}) {
       if (!card || state.phase !== "battle" || state.gameOver) return false;
+      if (card.effectAllowedSeats && (zone !== "seat" || !card.effectAllowedSeats.includes(index))) return false;
       if (Number.isInteger(card.allowedSeatIndex) && (zone !== "seat" || index !== card.allowedSeatIndex)) return false;
       if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return false;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return false;
@@ -40293,6 +40497,7 @@
     }
 
     function attendCard(side, card, zone, index = null, options = {}) {
+      delete card.effectAllowedSeats;
       if (!card || !["seat", "teacher", "environment"].includes(zone)) return null;
       if (Number.isInteger(card.allowedSeatIndex) && (zone !== "seat" || index !== card.allowedSeatIndex)) return null;
       if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return null;
@@ -40851,6 +41056,11 @@
       if (arePlayedEffectsSuppressed(side)) {
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
+      }
+      if (card.baseId === "chugidesu") {drawCards(side,2);healPlayer(side,2,card);}
+      if (card.baseId === "rear_queen" && zone === "seat") {
+        const seats=[index-1,index+1].filter(i=>i>=0&&i<9&&Math.floor(i/3)===Math.floor(index/3));
+        queueExplodingStudents(side,card,1,seats);
       }
       if (POINT_CARD_IDS.includes(card.baseId)) resolvePointAttendance(side, card, attendanceSource);
       if (card.baseId === "wonton_ki" && zone === "environment") {
@@ -43794,6 +44004,15 @@
     }
 
     function castImmediateItem(side, item, renderAfter, options = {}) {
+      if (!arePlayedEffectsSuppressed(side) && item?.baseId === "tomoyo_mou") return castTomoyoMou(side,item,renderAfter);
+      if (!arePlayedEffectsSuppressed(side) && item?.baseId === "shukii") return castShukii(side,item,renderAfter);
+      if (!arePlayedEffectsSuppressed(side) && item?.baseId === "illegal_cafeteria") {
+        if(!payForItem(side,item))return false;
+        const cards=state.players[side].deck.filter(c=>c.baseId==="cafeteria");
+        const target=cards[Math.floor(battleRandom()*cards.length)];
+        if(target){target.cost=Math.max(0,target.cost-1);addLog(`${item.name}の効果：デッキの食堂1枚の戦意を-1しました。`);}
+        moveHandCardToTrash(side,item);clearSelections();if(renderAfter)render();return true;
+      }
       if (item?.baseId === "pinige") return castPinige(side, item, renderAfter);
       if (["female_highball", "male_highball"].includes(item?.baseId)) return castHighball(side, item, renderAfter);
       if (item?.baseId === "obon_mac" && !canUseObonMac(side)) {
@@ -45026,7 +45245,7 @@
       if (state.screen === "battle") render();
     }
 
-    function payForItem(side, item) {
+    function payForItem(side, item, options = {}) {
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) {
         state.message = "ちがうよはお互いの最大戦意がそれぞれ10の場合にのみ使えます。";
         return false;
@@ -45074,6 +45293,7 @@
       item.usedFromHand = true;
       if (!arePlayedEffectsSuppressed(side)) triggerSubmission(side, item, "use");
       state.players[side].will -= playCost;
+      options.onPaid?.();
       const candidates = analyticsItemCandidates(side, item);
       analyticsRecordAction({
         side,
@@ -46992,6 +47212,7 @@
       const isDestruction = trashOptions.isDestruction ?? (showDestroyFeedback || trashOptions.reason === "体力0");
       const defeatSource = isDestruction ? (trashOptions.pointSource || card.pointLethalSource) : null;
       const fusionMaterials = isDestruction && !card.tokenVanished ? horseFusionMaterialEntries(card).map(entry => entry.baseId) : [];
+      const triggersExplosion = isDestruction && card.baseId === "exploding_student" && canUsePrintedCardEffects(card);
       const triggersAbsentStudent = !isTokenCard(card) && card.baseId === "absent_student" && canUsePrintedCardEffects(card);
       if (showDestroyFeedback) showFloatingTextForCard(card, isTokenCard(card) ? "消滅" : "破壊", "destroy");
       recordRecentBoardTrash(ref.owner, card, ref);
@@ -47020,6 +47241,9 @@
           sourceZone: "generated", reason: "融合素材", suppressToast: true
         });
       });
+      if (triggersExplosion) {
+        damagePlayer(oppositeSide(ref.owner),2,card);checkLifeVictory();
+      }
       if (isDestruction) awardDefeatPoint(defeatSource, ref.owner);
       delete card.pointLethalSource;
       if (triggersAbsentStudent) resolveAbsentStudentTrashTrigger(ref.owner, card);
@@ -47131,8 +47355,17 @@
         addLog(`${card.name}は高負荷のため、効果で手札から校外エリアへ送れません。`);
         return false;
       }
+      // A fused material may itself be an older fusion result. Release its
+      // recipe only on this material-disposal path; ordinary trash rules stay intact.
+      const nestedRecipe = options.sourceZone === "fusion"
+        ? (horseFusionMaterialEntries(card).length ? horseFusionMaterialEntries(card)
+          : utaFusionMaterialEntries(card).length ? utaFusionMaterialEntries(card) : card.fusionMaterials || []) : [];
+      const fusedCards = [...(card.handFusionStored || [])];
+      delete card.handFusionStored;
       const submissionSource = { ...card };
-      const submissionFromHand = options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId);
+      const submissionFromHand = options.sourceZone !== "fusion" && (options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId));
+      for(const material of fusedCards) moveToTrash(owner, material, {sourceZone:"fusion",playedFromHand:true,reason:"融合素材",suppressToast:options.suppressToast});
+      for(const entry of nestedRecipe) moveToTrash(owner,createCardFromBase(entry.baseId,owner),{sourceZone:"fusion",playedFromHand:true,reason:"融合素材",suppressToast:options.suppressToast});
       const vanishes = isTokenCard(card);
       const wasUsedFromHand = card.usedFromHand === true;
       const fromHand = options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId)
@@ -49029,12 +49262,14 @@
     }
 
     function canPlaceCardSomewhere(card) {
+      if (!handFusionReady(card)) return false;
       if (card.type === "environment") return canPlaceCard("player", card, "environment", null, null);
       if (canPlaceCard("player", card, "teacher", "player", null)) return true;
       return PLAYER_SEAT_ORDER.some((index) => canPlaceCard("player", card, "seat", "player", index));
     }
 
     function canUseItemNow(item) {
+      if (item?.baseId === "shukii") return state.players.player.hand.some(c=>c.instanceId!==item.instanceId&&!isHighLoadHandCard(c));
       if (HORSE_MATERIAL_IDS.includes(item?.baseId)) return handFusionEligibleTargets("player", item).length > 0;
       if (item?.baseId === "thin_item" && !canUseThinItem()) return false;
       if (item?.baseId === "chigauyo" && !canUseChigauyo()) return false;
@@ -49684,6 +49919,7 @@
       const notes = [];
       if (card.copiedFusionMaterialSource) notes.push(`${card.copiedFusionMaterialSource}で複製された融合素材`);
       if (card.horseFusionExtraMaterials?.length) notes.push(`追加融合済み：${card.horseFusionExtraMaterials.map(entry => CARD_BASES[entry.baseId]?.name).filter(Boolean).join("・")}`);
+      if ((card.handFusionStored || []).length) notes.push(`融合済み：${card.handFusionStored.map(c=>c.name).join("・")}`);
       if (utaFusionMaterialEntries(card).length) notes.push(utaFusionChoiceStatusText(card));
       battleCardGrantedKeywordEntries(card).forEach(entry => notes.push(`${entry.keyword}：${entry.source}`));
       battleCardStatEffectEntries(card).forEach(entry => notes.push(entry.label));
@@ -50202,6 +50438,8 @@
       const source = getHandCard("player", instanceId);
       const target = getHandCard("player", targetInstanceId);
       const fusionType = handFusionType("player", source, target);
+      if (fusionType === "any_hand") return fuseAnyHandCards("player", targetInstanceId, [instanceId]);
+      if (fusionType === "any_hand_reverse") return fuseAnyHandCards("player", instanceId, [targetInstanceId]);
       if (fusionType === "horse") return fuseHorseMaterials("player", [instanceId, targetInstanceId], true);
       if (fusionType === "uta") {
         if (onlineCanSendCommand()) {
@@ -51113,7 +51351,7 @@
       president: "このカードが教卓マスにいるかぎり",
       tissue_distributor: "このカードが自分の講義室にいるかぎり",
       sick_yuta: "自分のターン終了時",
-      rear_queen: "自分のターン終了時",
+
       pad_present_creator: "このカードがある限り",
       umaibo: "自分のターン終了時",
       uma_bone: "自分のターン終了時",
@@ -51960,6 +52198,7 @@
         - (Number(card.smokeFlareCostReduction) || 0) - (Number(card.thinkSoCostReduction) || 0));
       let discount = 0;
       const inBattle = state.screen === "battle" && state.phase === "battle";
+      if(inBattle && card.baseId === "tomoyo_mou" && state.players[card.owner]?.will >= 8) return 8 + highLoadIncrease;
       if (inBattle && isCafeteriaEnvironmentActive()) {
         if (card.baseId === "window_eater") discount += 2;
         if (card.baseId === "jobs_woody") discount += 1;
@@ -54071,6 +54310,13 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      tomoyo_mou: {"hand": ["tomoyo_mou", "general_student", "ruler", "onigiri_draw", "shukii"], "will": 4, "life": 12, "deck": ["tomoyo_mou", "general_student", "tomoyo_mou", "past_campus"], "note": "戦意4で2人を出席させ、低戦意の手札から自動融合する様子を試せます。手札が空でも使用可能です。次のターン以降に戦意8で使うと4人になります。出席先は席マスを直接選びます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      rear_queen: {"hand": ["general_student", "ruler", "tomoyo_mou"], "will": 12, "life": 12, "deck": ["rear_queen", "general_student", "shukii", "past_campus"], "note": "カード確認の融合するから素材1枚を選ぶか、手札同士をドラッグして融合します。中央列に出席させると左右の空き席から爆発する学生の出席先を選べます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      illegal_cafeteria: {"hand": ["illegal_cafeteria", "cafeteria", "onigiri_draw"], "will": 12, "life": 12, "deck": ["cafeteria", "onigiri_draw", "cafeteria", "general_student"], "note": "持ち物として使用するとデッキの「食堂」1枚だけの戦意が1下がります。手札の食堂や他の食堂カテゴリーのカードには影響しません。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      shukii: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 12, "deck": ["dark_yuta", "organism", "general_student"], "note": "手札1枚を選んで校外へ送り、デッキから進化カード1枚を引きます。進化元のU太を自分の講義室に用意しています。", "own": {"seats": [[6, "yuta"]], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      past_campus: {"hand": ["general_student", "ruler"], "will": 12, "life": 12, "deck": ["general_student", "ruler", "onigiri_draw", "general_teacher", "past_campus"], "enemyHand": ["general_student"], "enemyDeck": ["general_student", "ruler", "onigiri_draw", "general_teacher", "general_student"], "note": "環境マスに置いてターンを終了すると、手札が3枚以下のプレイヤーは自分の手番終了時に5枚まで引きます。4枚以上なら発動しません。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      chugidesu: {"hand": ["general_student", "ruler", "onigiri_draw"], "will": 12, "life": 10, "deck": ["general_student", "ruler", "past_campus", "onigiri_draw"], "note": "カード確認の融合するから素材を2枚選びます。1枚ずつ融合することもできます。融合完了後に手札から出席させると2枚引いて気力を2回復します。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
+      exploding_student: {"hand": ["general_student", "ruler", "ittan"], "will": 12, "life": 12, "deck": ["general_student", "ruler", "onigiri_draw"], "note": "素材1枚を融合して出席させ、陽気による攻撃と破壊時の本体2ダメージを試せます。一旦も用意しています。効果で出席させる場合は融合不要です。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       sports_spectator_student: {"hand": ["sports_spectator_student", "pinige", "pinige", "onigiri_draw"], "life": 10, "will": 20, "pointScore": 8, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 2], [4, "strong_student"]], "teacher": null}, "deck": ["sports_spectator_student", "pinige", "sports_spectator_student", "short_sleeve_student", "onigiri_draw"], "enemyHand": ["general_student"], "note": "通常は①のランダム1ダメージ2回、または②の+2/+2を選べます。ピニゲ③で点数8から単位を取得すると、①→②→①→②を試せます。別のスポーツを観戦する学生とピニゲを手札・デッキに用意しています。"},
       secretly_mocked_student: {"hand": ["secretly_mocked_student", "bento", "onigiri_draw", "short_sleeve_student"], "pointScore": 9, "life": 10, "will": 20, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "yuta", 1], [4, "yuta"]], "teacher": null}, "enemyHand": ["onigiri_draw"], "enemyDeck": ["yuta", "general_student", "onigiri_draw"], "deck": ["secretly_mocked_student", "short_sleeve_student", "bento", "long_sleeve_student", "onigiri_draw"], "note": "3行3列に女学生を出席させ、相手のU太が体力1の間は攻撃できなくなることを試せます。U太は自分のターン終了時に余裕で体力を回復し、2以上なら攻撃可能になります。単位取得後を試す場合は先に長袖の学生で体力1のU太を倒してください。点数9から開始します。"},
       short_sleeve_student: {"hand": ["short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
@@ -54655,7 +54901,7 @@
         cheapUta.cost = 1;
         player.hand.push(createCardFromBase("yuta", "player"), cheapUta);
       }
-      if (baseId === "illegal_cafeteria") {
+      if (baseId === "illegal_cafeteria" && !CARD_TEST_SCENARIOS[baseId]) {
         const ownVampire = makePlayerTestAttendee("cafeteria_lady");
         ownVampire.currentHp = 1;
         player.board.seats[0] = ownVampire;
@@ -54777,7 +55023,7 @@
           createCardFromBase("enemy_horde", "player")
         );
       }
-      if (baseId === "rear_queen") {
+      if (baseId === "rear_queen" && !CARD_TEST_SCENARIOS[baseId]) {
         opponent.board.seats.fill(null);
         [0, 4, 8].forEach((index) => {
           opponent.board.seats[index] = makeOpponentTestAttendee("strong_student");
@@ -55740,7 +55986,9 @@
         : "";
       const horseFusionMarkup = (HORSE_MATERIAL_IDS.includes(card.baseId) || isHorseFusionIntermediate(card)) && getHandCard("player", card.instanceId)
         ? `<button class="button" type="button" data-preview-horse-fusion="true"${battleNewActionBlocked() || !handFusionEligibleTargets("player", card).length ? " disabled" : ""}>融合する</button>` : "";
-      const previewActions = [rulerFusionMarkup, diamondDustRecoveryMarkup, utaFusionMarkup, horseFusionMarkup].filter(Boolean);
+      const genericFusionMarkup = card.handFusionRequired && getHandCard("player",card.instanceId)
+        ? `<button class="button" type="button" data-preview-any-hand-fusion="true"${handFusionReady(card)||battleNewActionBlocked()||!state.players.player.hand.some(c=>canFuseAnyHandCard("player",card,c))?" disabled":""}>融合する</button>` : "";
+      const previewActions = [rulerFusionMarkup, diamondDustRecoveryMarkup, utaFusionMarkup, horseFusionMarkup, genericFusionMarkup].filter(Boolean);
       const actionMarkup = previewActions.length > 0
         ? `<div class="battle-card-preview-actions${previewActions.length === 1 ? " single" : ""}">${previewActions.join("")}</div>`
         : "";
@@ -56075,6 +56323,7 @@
         addDetailChip(`融合済み：${name}`, "equipment", `融合済み：${name}`, ["このU太に融合されているカード"]);
       });
 
+      (card.handFusionStored || []).forEach(material=>addDetailChip(`融合済み：${material.name}`,"equipment",`融合済み：${material.name}`,["このカードに融合されている素材"]));
       horseFusionMaterialEntries(card).forEach((material) => {
         const name = CARD_BASES[material.baseId]?.name || material.baseId;
         addDetailChip(`融合済み：${name}`, "equipment", `融合済み：${name}`, ["この出席者に融合されている素材"]);
@@ -56624,6 +56873,11 @@
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
+        tomoyo_mou: "このカードを使用したとき、自分の手札から戦意が低い順にカードを2枚まで、このカードに融合する。同じ戦意のカードはランダムに選ぶ。その後、自分の空いている席マスに「爆発する学生」を2人出席させる。\n自分の戦意が8以上なら、このカードの戦意は8になり、融合する枚数と出席させる人数はそれぞれ4になる。",
+        shukii: "自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキから進化カード1枚をランダムに選び、手札に加える。",
+        past_campus: "このカードが環境マスにあるかぎり、各プレイヤーは自分のターン終了時、手札が3枚以下なら、手札が5枚になるまで自分のデッキからカードを引く。",
+        chugidesu: "[融合]2\n自分の手札のカードを2枚まで、このカードに融合できる。このカードは2枚融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、自分のデッキからカードを2枚引く。その後、自分の気力を2回復する。",
+        exploding_student: "[融合]1\n陽気を持つ。\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードが破壊されたとき、相手本体に2ダメージを与える。",
         sports_spectator_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
@@ -56794,7 +57048,7 @@
         white_student: "このカードを手札から出席させたとき、相手の手札にある負荷を持つカード1枚をランダムに選び、それに負荷を付与する。",
         true_enemy: "このカードが攻撃するとき、自分のデッキからカードを1枚引く。それが「敵」とつく出席者カードなら、このカードはもう一度攻撃できる。自分の空いている席マスがあるなら、そのカードを手札から出席させ、超陽気を付与する。",
         enemy_horde: "このカードを手札から出席させたとき、自分の手札に「敵」1枚を生成する。その後、自分の空いている席マスに「敵」1人をランダムに出席させる。",
-        rear_queen: "自分のターン終了時、このカードが講義室にいるなら、相手の学生をランダムに3人まで指名し、それぞれに4ダメージを与える。",
+        rear_queen: "[融合]1\n自分の手札のカード1枚を、このカードに融合できる。このカードは融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。",
         enemy_enemy: "このカードを手札から出席させたとき、自分の講義室にいる「敵」とつく出席者の人数だけカードを引く。その後、このカード以外の自分の講義室にいる「敵」とつく出席者すべてをデッキに戻してシャッフルする。",
         enemy_revive: "このカードを手札から出席させたとき、自分の校外エリアにある「敵」を好きな人数だけ選び、自分の空いている席マスへ出席させる。",
         triple_enemy: "このカードを手札から出席させたとき、自分のデッキの上から3枚を見る。その中の「敵」とつく出席者カードすべてを手札に加え、残りをデッキの下に置く。その後、加えたカードの中から好きな人数を選び、選んだ順に自分のランダムな空き席マスへ手札から出席させてもよい。出席させなかったカードは手札に残す。",
@@ -56830,7 +57084,7 @@
         philosophy_cheating: "相手の手札を見て、その中のカード1枚を選び、負荷を与える。",
         think_so: "自分のデッキから「U太」1枚を手札に加える。その後、自分の手札にある「U太」すべてのコストを1減らす。ただし、1未満にはならない。",
         key: "お互いの講義室から「南京錠」を装備している出席者1人を指名し、その「南京錠」を校外へ送る。",
-        illegal_cafeteria: "お互いのプレイヤーは、自分のターン終了時、自分の講義室にいるヴァンパイアすべての体力を1回復する。ヴァンパイアの効果を処理する際、環境を「食堂」としても扱う。このカードが他の環境に上書きされた後も、2ターンの間、この効果は継続する。",
+        illegal_cafeteria: "自分のデッキから「食堂」1枚をランダムに選び、その戦意を-1する。",
         sock_block: "相手の場の3行目を1ターン出席不可にする。すでに3行目にいる出席者は校外エリアへ送る。",
         go_home: "自分の学生1人を指名し、そのカードを手札に戻す。",
         deck_without: "自分のデッキを上から2枚引く。その後、自分の手札を2枚選び、校外エリアへ送る。",
@@ -57738,6 +57992,7 @@
         if (card) openUtaFusionChoice(card);
         return;
       }
+      if (event.target.closest("[data-preview-any-hand-fusion]")) { openAnyHandFusionChoice(elements.battleCardPreview._previewCard); return; }
       if (event.target.closest("[data-preview-horse-fusion]")) {
         event.stopPropagation();
         openHorseFusionChoice(elements.battleCardPreview._previewCard);

@@ -35,7 +35,7 @@ test("7枚の本文・能力値・専攻・3枚制限・台帳・お知らせ・
     return { id, cost: card.cost, text: cardRulesText(card).replaceAll("\n", ""), ace: isAceCard(card),
       limit: maxCopiesForCard(id), direct: DIRECT_DECK_CARD_IDS.has(id),
       categories: Object.entries(SPECIALTY_CARD_IDS).filter(([, entries]) => entries.includes(id)).map(([category]) => category),
-      update: UPDATE_HISTORY[0].changes.find(change => change.title === card.name) };
+      update: UPDATE_HISTORY.find(entry => entry.version === "ver.0.35.0").changes.find(change => change.title === card.name) };
   }), Object.keys(cards));
   const ledger = fs.readFileSync(path.join(__dirname, "..", "card_rules.txt"), "utf8");
   for (const entry of result) {
@@ -52,20 +52,20 @@ test("7枚の本文・能力値・専攻・3枚制限・台帳・お知らせ・
   expect(await page.evaluate(() => getDeckEditorIds(""))).toEqual(catalog.deckOrder);
 });
 
-test("無法の食堂は一覧・編成・生成デッキから除外され、内部定義は維持する", async ({ page }) => {
+test("無法の食堂は持ち物として再登録され、一覧と編成で使える", async ({ page }) => {
   await page.goto(gameUrl);
   expect(await page.evaluate(() => ({
-    retired: CARD_BASES.illegal_cafeteria.retired, ace: isAceCard(createCardFromBase("illegal_cafeteria", "player")),
+    retired: Boolean(CARD_BASES.illegal_cafeteria.retired), ace: isAceCard(createCardFromBase("illegal_cafeteria", "player")),
     direct: DIRECT_DECK_CARD_IDS.has("illegal_cafeteria"), editor: getDeckEditorIds("").includes("illegal_cafeteria"),
     imported: createDeckCountsFromEntries({ illegal_cafeteria: 3 }).illegal_cafeteria || 0,
-    built: createDeckFromCounts("player", { general_student: 3, illegal_cafeteria: 3 }).map(card => card.baseId)
-  }))).toEqual({ retired: true, ace: false, direct: false, editor: false, imported: 0, built: ["general_student", "general_student", "general_student"] });
-  expect(catalog.direct).not.toContain("illegal_cafeteria");
-  expect(catalog.deckOrder).not.toContain("illegal_cafeteria");
+    built: createDeckFromCounts("player", { general_student: 3, illegal_cafeteria: 3 }).map(card => card.baseId).sort()
+  }))).toEqual({ retired: false, ace: false, direct: true, editor: true, imported: 3, built: ["general_student", "general_student", "general_student", "illegal_cafeteria", "illegal_cafeteria", "illegal_cafeteria"] });
+  expect(catalog.direct).toContain("illegal_cafeteria");
+  expect(catalog.deckOrder).toContain("illegal_cafeteria");
   await page.locator("#homeNavDeckButton").click();
   await page.locator('[data-case-view="cards"]').click();
   await page.locator("#cardsCatalogSearch").fill("無法の食堂");
-  await expect(page.locator('[data-catalog-card="illegal_cafeteria"]')).toHaveCount(0);
+  await expect(page.locator('[data-catalog-card="illegal_cafeteria"]')).toHaveCount(1);
 });
 
 for (const side of ["player", "opponent"]) {
