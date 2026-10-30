@@ -31,18 +31,18 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
   for(const p of [host,guest]){await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);await p.evaluate(()=>{state.deckBuilder.counts.player=createAutoDeckCounts();document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
   const actor=actorSide==='player'?host:guest;
-  for(const id of ['chugidesu','rear_queen','tomoyo_mou','shukii']){
+  for(const id of ['private_teacher','chugidesu','rear_queen','tomoyo_mou','shukii']){
    const setup=await host.evaluate(({side,id})=>{
     startCardTest(id);state.testMode=false;state.training.skipAnimations=true;state.currentSide=side;state.environment=null;
     for(const owner of ['player','opponent'])Object.assign(state.players[owner],{board:{teacher:null,seats:Array(9).fill(null)},hand:[],deck:[],trash:[],late:[],will:id==='tomoyo_mou'?4:12,maxWill:12,life:10});
     const own=state.players[side];own.hand=[id,...(id==='chugidesu'?['ruler','general_student']:['general_student'])].map(id=>createCardFromBase(id,side));own.deck=['dark_yuta','ruler','ruler','general_student'].map(id=>createCardFromBase(id,side));render();return{seq:state.online.lastSnapshotSeq};
    },{side:actorSide,id});
    await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);
-   if(['chugidesu','rear_queen'].includes(id)){
+   if(['private_teacher','chugidesu','rear_queen'].includes(id)){
     await actor.evaluate(id=>openAnyHandFusionChoice(state.players.player.hand.find(c=>c.baseId===id)),id);
     await actor.evaluate(()=>{for(const c of state.pendingCardChoice.cards)toggleCardChoiceCard(c.instanceId);confirmCardChoiceSelection();});
     for(const p of [host,guest]){const side=p===host?actorSide:actorSide==='player'?'opponent':'player';await expect.poll(()=>p.evaluate(side=>state.players[side].hand.length,side)).toBe(1);await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);}
-    await actor.evaluate(id=>playCard(state.players.player.hand.find(c=>c.baseId===id).instanceId,'seat','player',4),id);
+    await actor.evaluate(id=>playCard(state.players.player.hand.find(c=>c.baseId===id).instanceId,id==='private_teacher'?'teacher':'seat','player',id==='private_teacher'?null:4),id);
    }else await actor.evaluate(id=>beginItemUse(state.players.player.hand.find(c=>c.baseId===id)),id);
    if(id==='shukii'){
     await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);await actor.evaluate(()=>{toggleCardChoiceCard(state.pendingCardChoice.cards[0].instanceId);confirmCardChoiceSelection();});
@@ -55,8 +55,9 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
    await expect.poll(()=>host.evaluate(()=>fusionTasksBusy())).toBe(false);
    for(const p of [host,guest]){
     const side=p===host?actorSide:actorSide==='player'?'opponent':'player';
-    await expect.poll(()=>p.evaluate(({side,id})=>{const own=state.players[side];return[listBoardRefs(side).length,own.hand.length,own.life,own.trash.length];},{side,id})).toEqual(id==='chugidesu'?[1,2,12,0]:id==='rear_queen'?[2,0,10,0]:id==='tomoyo_mou'?[2,0,10,2]:[0,1,10,2]);
+    await expect.poll(()=>p.evaluate(({side,id})=>{const own=state.players[side];return[listBoardRefs(side).length,own.hand.length,own.life,own.trash.length];},{side,id})).toEqual(id==='private_teacher'?[1,2,10,0]:id==='chugidesu'?[1,2,12,0]:id==='rear_queen'?[2,0,10,0]:id==='tomoyo_mou'?[2,0,10,2]:[0,1,10,2]);
    }
+   if(id==='private_teacher') for(const p of [host,guest]) {const side=p===host?actorSide:actorSide==='player'?'opponent':'player';expect(await p.evaluate(side=>{const c=state.players[side].board.teacher;return [c.attack,c.currentHp,hasKeyword(c,'陽気'),c.handFusionStored.length];},side)).toEqual([4,4,true,1]);}
   }
   expect(errors).toEqual([]);
  }finally{await Promise.all(contexts.map(c=>c.close()));}
