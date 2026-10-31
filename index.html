@@ -20018,7 +20018,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}, {"category": "システム", "title": "AIの手札管理", "after": "手札の空き枚数と、次ターン開始時の1枚ドロー・終了時の補充を考慮するよう改善しました。可能なら先にカードを使用して空きを作り、溢れるドローや生成の優先度を下げます。回復・除去・勝利につながる行動は、溢れる場合も状況に応じて選びます。手札上限なしの場合の評価と、カードの能力値・本文は変更していません。関連する判断と実際の手札・校外エリアの結果を自動テストで確認しました。"}, {"category": "表示・操作改善", "title": "手札上限の枚数表示", "after": "自分・相手の手札枚数が設定上限に達したとき、枚数表示を赤みのあるオレンジに変更します。手札拡大中にも適用し、上限未満または上限なしでは通常色に戻ります。カードの能力値・本文は変更していません。"}]},
+      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}, {"category": "システム", "title": "AIの手札管理", "after": "手札の空き枚数と、次ターン開始時の1枚ドロー・終了時の補充を考慮するよう改善しました。可能なら先にカードを使用して空きを作り、溢れるドローや生成の優先度を下げます。回復・除去・勝利につながる行動は、溢れる場合も状況に応じて選びます。手札上限なしの場合の評価と、カードの能力値・本文は変更していません。関連する判断と実際の手札・校外エリアの結果を自動テストで確認しました。"}, {"category": "表示・操作改善", "title": "手札上限の枚数表示", "after": "自分・相手の手札枚数が設定上限に達したとき、枚数表示を赤みのあるオレンジに変更します。手札拡大中にも適用し、上限未満または上限なしでは通常色に戻ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "チュギデスの効果による出席", "after": "3枚融合時も、人数選択の画面を挟まず、講義室の光った左右の空き席を直接選んで0〜2人で確定する操作に統一しました。出席後のドロー・回復、AIとオンライン双方の処理を確認しました。カード本文・能力値・効果の対象と人数は変更していません。"}]},
       {
         "version": "ver.0.37.0",
         "versioning": "semver",
@@ -28739,6 +28739,7 @@
       if (battlePresentationBusy({ ignoreFusionTasks: choosingFusionEffect || placingEffectAttendee })) return false;
       if (placingEffectAttendee) return Boolean(target.closest(".slot, .multi-seat-board-card"));
       if (state.pendingCardChoice || state.pendingThreeGestures) {
+        if (isBoardSeatChoice() && target.closest(".slot.selection-candidate, #itemTargetConfirmButton")) return true;
         if (isBoardColumnChoice() && target.closest(".column-choice-button, #itemTargetConfirmButton")) return true;
         if (isBoardCardChoice() && target.closest(".board-card.selection-candidate, #itemTargetConfirmButton")) return true;
         if (isBoardCardChoice() && target.closest("[data-life-target]") && state.pendingCardChoice.cards.some(card => card.pointLifeTarget && card.owner === target.closest("[data-life-target]").dataset.lifeTarget)) return true;
@@ -37248,13 +37249,24 @@
       return true;
     }
 
+    function isBoardSeatChoice(choice = state.pendingCardChoice) {
+      return Boolean(choice?.context?.kind === "attendance_seats" && choice.cards?.length
+        && ["player", "opponent"].includes(choice.context.targetOwner));
+    }
+
+    function boardSeatChoiceCandidate(zone, owner, index) {
+      const choice = state.pendingCardChoice;
+      return zone === "seat" && isBoardSeatChoice(choice) && choice.context.targetOwner === owner
+        ? choice.cards.find(card => card.choiceIndex === index) : null;
+    }
+
     function isBoardColumnChoice(choice = state.pendingCardChoice) {
       return Boolean(choice?.context?.kind === "destroy_columns" && choice.cards?.length
         && ["player", "opponent"].includes(choice.context.targetOwner));
     }
 
     function isBoardCardChoice(choice = state.pendingCardChoice) {
-      return isBoardColumnChoice(choice) || Boolean(choice?.cards.length && choice.cards.every(card => card.pointLifeTarget || ["player", "opponent"].flatMap(side => listBoardRefs(side))
+      return isBoardSeatChoice(choice) || isBoardColumnChoice(choice) || Boolean(choice?.cards.length && choice.cards.every(card => card.pointLifeTarget || ["player", "opponent"].flatMap(side => listBoardRefs(side))
         .some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId)));
     }
 
@@ -37286,7 +37298,7 @@
       } else if (selected.length < pending.max) {
         selected.push(instanceId);
       }
-      state.message = `${pending.title}：${pending.selectedIds.length}/${pending.max}${isBoardColumnChoice(pending) ? "列" : "枚"}を選択中。`;
+      state.message = `${pending.title}：${pending.selectedIds.length}/${pending.max}${isBoardColumnChoice(pending) ? "列" : isBoardSeatChoice(pending) ? "席" : "枚"}を選択中。`;
       render();
     }
 
@@ -38757,7 +38769,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers", "point_modes", "attendance_count"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
@@ -38766,7 +38778,7 @@
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
-      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "material_optional"].includes(kind) ? 0 : max;
+      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional"].includes(kind) ? 0 : max;
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
         requestId, context: { kind }, confirmLabel: "確定" };
@@ -38774,7 +38786,10 @@
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
       if (kind === "submission_discard") options.message = "校外エリアへ送る手札1枚を選んでください。";
       if (kind === "point_modes") options.message = `異なる効果を${max}つ選んでください。番号順に処理します。`;
-      if (kind === "attendance_count") options.message = "出席させる人数を選んでください。その後、講義室の席マスを選びます。";
+      if (kind === "attendance_seats") {
+        options.context.targetOwner = side;
+        options.message = `出席させる空き席マスを${max}つまで直接選んでください。0人でも確定できます。`;
+      }
       if (kind === "two_achievers") options.message = "次の効果から1つを選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
@@ -39191,16 +39206,23 @@
         if (options.optional) {
           const probe = createCardFromBase("exploding_student", side);
           probe.effectAllowedSeats = [...allowedSeats];
-          const maximum = Math.min(count, allowedSeats.filter(index => canPlaceCard(side, probe, "seat", side, index)).length);
-          if (maximum > 0) {
-            const choices = Array.from({length: maximum + 1}, (_, number) => ({
-              instanceId: `exploding-count-${number}`, name: `${number}人出席させる`,
-              type: "item", attendanceCount: number, choiceScore: number
-            }));
-            const [choice] = await chooseFusionEffectCards(side, source, choices, 1, "attendance_count", {required: true});
-            if (!choice || token !== state.preBattleToken || state.gameOver) return;
-            count = choice.attendanceCount;
-          } else count = 0;
+          const choices = allowedSeats.filter(index => canPlaceCard(side, probe, "seat", side, index))
+            .map(index => ({ instanceId: `exploding-seat-${index}`, name: `${seatRow(index)}行${seatCol(index) + 1}列`,
+              type: "item", noCost: true, choiceIndex: index, attendanceLocationChoice: true,
+              choiceScore: 1 + scoreAiPlacementAuras(side, probe, "seat", index) }));
+          const selected = await chooseFusionEffectCards(side, source, choices, count, "attendance_seats");
+          if (token !== state.preBattleToken || state.gameOver) return;
+          for (const choice of selected.sort((a,b) => a.choiceIndex - b.choiceIndex)) {
+            if (token !== state.preBattleToken || state.gameOver) return;
+            const card = createCardFromBase("exploding_student", side);
+            card.effectAllowedSeats = [...allowedSeats];
+            if (canPlaceCard(side, card, "seat", side, choice.choiceIndex)) {
+              const attendee = makeBoardCard(card);
+              if (attendCard(side, attendee, "seat", choice.choiceIndex, {attendanceSource: ATTENDANCE_SOURCE.GENERATED})) showCardPlayAnimation(attendee, "board");
+            }
+          }
+          if (token === state.preBattleToken && !state.gameOver && typeof options.onComplete === "function") options.onComplete();
+          return;
         }
         for (let i=0;i<count;i++) {
           if (token !== state.preBattleToken || state.gameOver) return;
@@ -48991,7 +49013,9 @@
             ? "破壊する"
             : "対象を確定";
       if (boardChoice) {
-        elements.itemTargetConfirmButton.textContent = isBoardColumnChoice()
+        elements.itemTargetConfirmButton.textContent = isBoardSeatChoice()
+          ? `出席させる\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}人`
+          : isBoardColumnChoice()
           ? `破壊する\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}列`
           : `対象を確定\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}`;
       } else if (state.pendingMultiItem) {
@@ -52059,6 +52083,8 @@
         finishHandDrag();
       };
       slot.onclick = () => {
+        const seatChoice = boardSeatChoiceCandidate(zone, owner, index);
+        if (seatChoice) { toggleCardChoiceCard(seatChoice.instanceId); return; }
         if (hasPeekableSelectionOverlay()) return;
         const selected = getSelectedHandCard();
         if (selected && selected.type !== "item" && !tutorialAllowsPlacement(selected, zone, owner, index)) {
@@ -52075,6 +52101,16 @@
         }
         if (state.selectedHandId) playCard(state.selectedHandId, zone, owner, index);
       };
+      const seatChoice = boardSeatChoiceCandidate(zone, owner, index);
+      if (seatChoice && !isOnlineSpectator()) {
+        const selected = state.pendingCardChoice.selectedIds.includes(seatChoice.instanceId);
+        slot.classList.add("click-ready", "selection-candidate");
+        slot.classList.toggle("placement-valid", selected);
+        slot.setAttribute("role", "button");
+        slot.setAttribute("aria-label", `出席先：${seatChoice.name}`);
+        markEffectTargetSelection(slot, selected);
+        return;
+      }
       if (hasPeekableSelectionOverlay()) {
         slot.classList.remove("click-ready");
         return;

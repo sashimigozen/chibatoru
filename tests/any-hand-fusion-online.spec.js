@@ -49,10 +49,13 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
     await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);await actor.evaluate(()=>{toggleCardChoiceCard(state.pendingCardChoice.cards[0].instanceId);confirmCardChoiceSelection();});
    }
    if(id==='chugidesu'&&materials===3){
-    await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);
-    await actor.evaluate(()=>{toggleCardChoiceCard(state.pendingCardChoice.cards.find(c=>c.name==='2人出席させる').instanceId);confirmCardChoiceSelection();});
+    await expect.poll(()=>actor.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('attendance_seats');
+    await expect(actor.locator('#threeGesturesStage')).toBeHidden();
+    await expect.poll(()=>actor.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+    for(const index of [3,5])await actor.locator(`#playerSeatGrid .slot.selection-candidate[data-index="${index}"]`).click();
+    await actor.locator('#itemTargetConfirmButton').click();
    }
-   if(['rear_queen','chugidesu','tomoyo_mou'].includes(id))for(let i=0;i<(id==='tomoyo_mou'||materials===3?2:1);i++){
+   if(['rear_queen','chugidesu','tomoyo_mou'].includes(id)&&!(id==='chugidesu'&&materials===3))for(let i=0;i<(id==='tomoyo_mou'||materials===3?2:1);i++){
     await expect.poll(()=>actor.evaluate(()=>!!state.pendingCopiedCard)).toBe(true);await expect.poll(()=>actor.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
     await expect.poll(()=>actor.evaluate(()=>PLAYER_SEAT_ORDER.some(i=>isPendingCopiedCardPlacementLegal('player','seat','player',i)))).toBe(true);
     expect(await actor.evaluate(()=>{const index=PLAYER_SEAT_ORDER.find(i=>isPendingCopiedCardPlacementLegal('player','seat','player',i));return placePendingCopiedCard('seat','player',index);})).toBe(true);
