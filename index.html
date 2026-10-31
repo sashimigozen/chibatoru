@@ -20013,7 +20013,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}]},
+      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}, {"category": "システム", "title": "AIの手札管理", "after": "手札の空き枚数と、次ターン開始時の1枚ドロー・終了時の補充を考慮するよう改善しました。可能なら先にカードを使用して空きを作り、溢れるドローや生成の優先度を下げます。回復・除去・勝利につながる行動は、溢れる場合も状況に応じて選びます。手札上限なしの場合の評価と、カードの能力値・本文は変更していません。関連する判断と実際の手札・校外エリアの結果を自動テストで確認しました。"}]},
       {
         "version": "ver.0.37.0",
         "versioning": "semver",
@@ -31500,6 +31500,92 @@
       return names.size >= 3 ? 18 : names.size ? 10 : 4;
     }
 
+    // Read-only hand forecasts use counts and search conditions, never the hidden deck order.
+    function aiHandGainPlan(side, card) {
+      const own = state.players[side];
+      const inHand = own.hand.some(c => c.instanceId === card.instanceId);
+      const consumed = inHand && !(card.type === "item" && own.retainNextUsedItem) ? 1 : 0;
+      const plan = { incoming: 0, beforeGain: inHand ? 1 : 0, consumed };
+      if (arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card) || card.late) return plan;
+      const draw = n => isDeckToHandLocked() ? 0 : Math.min(n, own.deck.length);
+      const search = (predicate, n = 1) => isDeckToHandLocked() ? 0 : Math.min(n, own.deck.filter(predicate).length);
+      const draws = { hondara: 1, wet_meal_ticket: 1, smoke_flare: 1, onigiri_draw: 2,
+        fire_touch: 3, gamma: 3, destructive_lie: 2, suit_student: 1, angry_maker: 2 };
+      if (draws[card.baseId]) plan.incoming = draw(draws[card.baseId]);
+      if (card.baseId === "trpg_member") plan.incoming = search(c => c.type === "student", 2);
+      if (card.baseId === "environment_setup") plan.incoming = search(c => c.type === "environment");
+      if (card.baseId === "iv_pack") plan.incoming = search(c => c.type === "vampire", 2);
+      if (card.baseId === "childhood_memory_tutuapp") plan.incoming = search(c => c.type === "item");
+      if (card.baseId === "efficient_experiment_method") plan.incoming = ["student", "teacher", "item"]
+        .reduce((n, type) => n + search(c => c.type === type), 0);
+      if (["sexual_eye", "think_so"].includes(card.baseId)) plan.incoming = search(c => c.baseId === "yuta");
+      if (card.baseId === "dry_meal_ticket" && isCafeteriaEnvironmentActive()) plan.incoming =
+        search(c => c.baseId === "onigiri_draw") + search(c => c.baseId === "fluid_pasta");
+      if (card.baseId === "pure_destruction") plan.incoming = search(c => c.type === "student" && effectiveCardCost(c) >= 6);
+      if (card.baseId === "best_friend") plan.incoming = search(c => c.name.includes("バカでかい"));
+      if (card.baseId === "music_detergent") plan.incoming = Math.min(draw(1 + countFriendlyDesignTeachers(side)),
+        (uniqueDesignDeckCandidates(side).length ? 1 : 0) + draw(countFriendlyDesignTeachers(side)));
+      if (card.baseId === "three_gestures") plan.incoming = draw(3);
+      if (card.baseId === "scary_question" && effectTargetEntries(side, oppositeSide(side)).length) plan.incoming = draw(1);
+      if (card.baseId === "aggro_army") plan.incoming = 3;
+      if (["ikemasu", "enemy_horde", "wood_gitch", "wonton_ki"].includes(card.baseId)) plan.incoming = 1;
+      if (["gesture_student", "private_teacher"].includes(card.baseId)) plan.incoming = 2;
+      if (card.baseId === "yoyu_announce") plan.incoming = 1 + draw(1);
+      if (card.baseId === "information_tired_student") plan.incoming = Math.min(1, horseMaterialCandidates(side).length);
+      if (card.baseId === "corridor_student") plan.incoming = Math.min(2, horseMaterialCandidates(side).length);
+      if (card.baseId === "water_2l") plan.incoming = Math.min(2, own.trash.filter(c => CRAB_SET_IDS.includes(c.baseId)).length);
+      if (card.baseId === "go_home") plan.incoming = 1;
+      if (card.baseId === "chugidesu" && (card.handFusionStored || []).length >= 3) plan.incoming = draw(2);
+      if (card.baseId === "female_highball") { plan.incoming = draw(1); plan.beforeGain = consumed + 1; plan.consumed += 1; }
+      if (card.baseId === "word_increaser") {
+        plan.beforeGain = own.hand.length;
+        plan.consumed = own.hand.length;
+        plan.incoming = isDeckToHandLocked() ? 0 : Math.min(7, own.deck.length + Math.max(0, own.hand.length - consumed));
+      }
+      return plan;
+    }
+
+    function aiHandSpaceForecast(side, card) {
+      const own = state.players[side], limit = state.battleHandLimit;
+      const plan = aiHandGainPlan(side, card);
+      if (!Number.isFinite(limit)) return { ...plan, burned: 0, futureBurn: 0, existingFutureBurn: 0 };
+      const nextDrawLocked = !ongoingEffectsSuppressed() && (state.deckToHandLocks || []).some(lock =>
+        !(lock.owner === side && lock.releaseAtActionTurn <= state.actionTurn + 2));
+      const nextDraw = own.deck.length > 0 && !nextDrawLocked ? 1 : 0;
+      const endDraw = ongoingEnvironmentBaseId() === "dorm_council" && !isDeckToHandLocked()
+        && own.deck.some(c => hasKeyword(c, "注目")) ? 1 : 0;
+      const before = Math.max(0, own.hand.length - plan.beforeGain);
+      const burned = Math.max(0, before + plan.incoming - limit);
+      const after = Math.max(0, own.hand.length - plan.consumed + plan.incoming - burned);
+      const future = Math.min(own.deck.length, nextDraw + endDraw);
+      return { ...plan, burned, futureBurn: Math.max(0, after + future - limit),
+        existingFutureBurn: Math.max(0, own.hand.length + future - limit) };
+    }
+
+    function aiHandSpaceAdjustment(side, card) {
+      if (!Number.isFinite(state.battleHandLimit)) return 0;
+      const forecast = aiHandSpaceForecast(side, card);
+      // Lost cards are a cost, not a prohibition: tactical/healing/lethal scores still compete.
+      return -forecast.burned * 12 - Math.max(0, forecast.futureBurn - forecast.existingFutureBurn) * 3
+        + Math.min(1, Math.max(0, forecast.existingFutureBurn - forecast.futureBurn)) * 2;
+    }
+
+    function shouldAiMakeHandSpaceFirst(side, card) {
+      if (!Number.isFinite(state.battleHandLimit)) return false;
+      const forecast = aiHandSpaceForecast(side, card);
+      if (!forecast.incoming || (!forecast.burned && forecast.futureBurn <= forecast.existingFutureBurn)) return false;
+      // Keep both plays affordable and require an actual legal placement. Re-evaluate after it resolves.
+      const own = state.players[side];
+      return own.hand.some(other => other.instanceId !== card.instanceId && other.type !== "item"
+        && !other.unusable && !other.late && handFusionReady(other)
+        && effectiveCardCost(other) + effectiveCardCost(card) <= own.will
+        && aiHandSpaceForecast(side, other).incoming === 0
+        && (other.evolutionFrom ? Boolean(findEvolveTarget(side, other))
+          : other.type === "environment" ? scoreAiEnvironment(other, side) > 0 && canPlaceCard(side, other, "environment", null, null)
+          : canPlaceCard(side, other, "teacher", side, null)
+            || AI_SEAT_PRIORITY.some(index => canPlaceCard(side, other, "seat", side, index))));
+    }
+
     function aiCardResourceValue(side, card) {
       if (!card || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
       const own = state.players[side];
@@ -31823,7 +31909,7 @@
         .filter((card) => card.type !== "item" && handFusionReady(card)
           && effectiveCardCost(card) <= player.will
           && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi(side, card))))
-        .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) }))
+        .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) + aiHandSpaceAdjustment(side, card) * 10 }))
         .filter((entry) => entry.priority > -900)
         .sort((a, b) => b.priority - a.priority
           || effectiveCardCost(b.card) - effectiveCardCost(a.card)
@@ -31869,6 +31955,15 @@
     }
 
     function scoreTrainingYocchanItem(side, item) {
+      const score = scoreTrainingYocchanItemWithoutHandLimit(side, item);
+      if (!Number.isFinite(score) || score <= 0 || score >= 900) return score;
+      const urgent = aiLifeHealingValue(item) > 0 && getAiLethalForecast(side).opponentCounterLethal;
+      if (!urgent && shouldAiMakeHandSpaceFirst(side, item)) return -Infinity;
+      const adjusted = score + aiHandSpaceAdjustment(side, item) * 4;
+      return urgent ? Math.max(score * 0.5, adjusted) : adjusted;
+    }
+
+    function scoreTrainingYocchanItemWithoutHandLimit(side, item) {
       if (item?.type !== "item" || item.unusable) return -Infinity;
       if (item.baseId === "aggro_walk" && !aiCanSurviveSelfDamage(side, 2)) return -Infinity;
       if (item.baseId === "thin_item" && !canUseThinItem()) return -Infinity;
@@ -32727,6 +32822,8 @@
           && effectiveCardCost(trpg) <= ai.will;
         if (needsTurnThreeTrpg && willAfterItem < effectiveCardCost(trpg)) return false;
       }
+      const urgentHealing = aiLifeHealingValue(item) > 0 && getAiLethalForecast("opponent").opponentCounterLethal;
+      if (!urgentHealing && shouldAiMakeHandSpaceFirst("opponent", item)) return false;
       if (timing !== "beforeBoard") return true;
       const deckOutPriority = getAiDeckOutPriorityState("opponent");
       if (deckOutPriority.active && AI_DECK_OUT_MILL_ITEM_IDS.has(item.baseId)) {
@@ -32935,7 +33032,8 @@
       // Calculate against unchanged scores, so enumeration order cannot affect
       // another candidate's follow-up value. Re-evaluate after every real move.
       const strategyForecast = getAiLethalForecast("opponent");
-      const adjustedScores = moves.map(move => move.score + aiPlacementStrategyAdjustment(move, moves, strategyForecast));
+      const adjustedScores = moves.map(move => move.score + aiPlacementStrategyAdjustment(move, moves, strategyForecast)
+        + aiHandSpaceAdjustment("opponent", move.card));
       moves.forEach((move, index) => { move.score = adjustedScores[index]; });
       moves.sort((a, b) => b.score - a.score || effectiveCardCost(b.card) - effectiveCardCost(a.card));
       if (!(moves[0]?.score > 0)) return null;
@@ -33658,6 +33756,12 @@
     }
 
     function scoreAiItem(item, options = {}) {
+      const score = scoreAiItemWithoutHandLimit(item, options);
+      if (score <= 0 || score >= 900) return score;
+      return score + aiHandSpaceAdjustment("opponent", item);
+    }
+
+    function scoreAiItemWithoutHandLimit(item, options = {}) {
       const fusionBatchScore = scoreAiFusionBatchItem("opponent",item);
       if (fusionBatchScore !== null) return fusionBatchScore;
       if (arePlayedEffectsSuppressed("opponent")) return 0;
@@ -41052,7 +41156,8 @@
         * 6;
       return [
         { instanceId: "two-achievers-draw", name: "学生カードを手札に加える", type: "item", noCost: true,
-          twoAchieversChoice: true, choiceScore: drawCount * 4,
+          twoAchieversChoice: true, choiceScore: drawCount * 4
+            - (Number.isFinite(state.battleHandLimit) ? Math.max(0, state.players[side].hand.length + drawCount - state.battleHandLimit) * 12 : 0),
           effect: "自分のデッキから学生カードをランダムに2枚まで手札に加える。" },
         { instanceId: "two-achievers-load", name: "相手の手札に負荷を付与する", type: "item", noCost: true,
           twoAchieversChoice: true, choiceScore: loadValue,
