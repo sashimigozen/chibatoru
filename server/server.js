@@ -110,6 +110,13 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, rooms: rooms.size, onlineLogs: onlineBattleLogs.size }));
     return;
   }
+  if (url.pathname === "/waiting-rooms.json") {
+    publicJsonResponse(res, 200, { rooms: [...rooms.values()]
+      .filter(room => room.matchType === "private" && !room.started && hostOf(room))
+      .sort((a,b) => b.updatedAt-a.updatedAt).slice(0,100)
+      .map(room => ({...publicRoomState(room), hostName: normalizePlayerProfile(hostOf(room).profile).username})), generatedAt: now() });
+    return;
+  }
   if (url.pathname === "/rooms.json") {
     handlePublicRoomsJson(res);
     return;
@@ -2283,7 +2290,7 @@ function handleStartGame(ws, message) {
   room.replayIncidents = [];
   clearWaitingRoomTimer(room);
   room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
-  if (room.state?.state) room.state.state.battleHandLimit = room.handLimit;
+  if (room.state?.state) room.state.state.battleHandLimit = room.ruleId === "normal" ? room.handLimit : null;
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
   room.currentTurn = snapshotCurrentTurn(message.snapshot);
   room.updatedAt = now();
@@ -2307,7 +2314,7 @@ function handleGameState(ws, message) {
   const seq = Number(message.snapshot.seq) || 0;
   if (seq && seq < room.snapshotSeq) return;
   room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
-  if (room.state?.state) room.state.state.battleHandLimit = room.handLimit;
+  if (room.state?.state) room.state.state.battleHandLimit = room.ruleId === "normal" ? room.handLimit : null;
   room.snapshotSeq = Math.max(room.snapshotSeq, seq);
   room.currentTurn = snapshotCurrentTurn(message.snapshot) || room.currentTurn;
   room.updatedAt = now();

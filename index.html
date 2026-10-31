@@ -8628,6 +8628,31 @@
       background: #edf2f5;
     }
 
+    .online-private-directory { display: block; }
+    .online-private-directory > .online-room-card { background: #f3f7fb; padding: 24px; }
+    .private-directory-toolbar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .private-directory-toolbar h2 { font-size: 20px; margin: 0 auto 0 0; }
+    .private-directory-toolbar .button { flex: 0 1 190px; min-height: 48px; background: #dceef8; color: #204557; border: 2px solid #7b9bad; border-radius: 8px; }
+    .private-directory-meta { display: flex; justify-content: flex-end; margin: 18px 0 12px; font-size: 16px; font-weight: 800; }
+    .private-room-directory { min-height: clamp(220px, 35vh, 460px); border: 2px solid #b8d4e6; background: #fff; }
+    .private-directory-empty { text-align: center; color: #607989; padding: 30px 16px; }
+    .private-directory-room { display: grid; grid-template-columns: minmax(0,1fr) 100px 70px 100px; gap: 20px; align-items: center; padding: 18px 22px; border-bottom: 1px solid #d1e3ef; }
+    .private-directory-room strong { overflow-wrap: anywhere; font-size: 18px; }
+    .private-directory-room small { display: block; color: #607989; font-size: 12px; margin-top: 4px; }
+    .private-directory-room .button { min-height: 42px; background: #e3f1f9; color: #204557; }
+    .private-code-entry, .private-connection-settings { margin-top: 14px; font-size: 13px; }
+    .private-code-entry summary, .private-connection-settings summary { cursor: pointer; font-weight: 800; }
+    .private-code-entry .online-code-row { margin-top: 10px; }
+    .online-private-directory #onlineStatusText { background: transparent; border: 0; font-size: 12px; padding: 8px 0 0; margin: 8px 0 0; }
+    .online-private-ready-controls .online-ready-row { display: grid; grid-template-columns: 1fr; gap: 8px; width: min(100%, 190px); margin: auto; }
+    .online-private-ready-controls .button { min-height: 46px; border: 2px solid #7590a0; background: #e3f1f9; color: #18364a; }
+    .online-private-ready-controls .button:disabled { opacity: .5; }
+    @media(max-width: 850px) {
+      .private-directory-toolbar { gap: 10px; }
+      .private-directory-toolbar h2 { flex-basis: 100%; }
+      .private-directory-toolbar .button { flex: 1; }
+      .private-directory-room { grid-template-columns: minmax(0,1fr) 80px; gap: 10px; padding: 14px; }
+    }
     .online-hand-limit-control { display: grid; gap: 5px; margin: 10px 0; color: #36586a; }
     .online-hand-limit-control > label { font-size: 12px; font-weight: 800; }
     .online-hand-limit-stepper { display: flex; align-items: center; justify-content: center; gap: 7px; }
@@ -17831,6 +17856,7 @@
           <label class="training-setting-label">ルール</label>
           <button class="training-cycle-button" id="soloRuleCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloRuleCycleLabel">通常ルール</strong></button>
           <select class="control training-native-select" id="soloRuleSelect" aria-label="ソロバトルの対戦ルール"></select>
+          <div class="online-hand-limit-control"><label for="soloHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="soloHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="soloHandLimit" type="number" min="9" step="1" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="soloHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
           <label class="training-setting-label">手番</label>
           <button class="training-cycle-button" id="soloInitiativeCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloInitiativeLabel">ランダム</strong></button>
           <div class="training-versus">VS</div>
@@ -17936,6 +17962,10 @@
             <div class="online-hand-limit-control"><label for="onlineRandomHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineRandomHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineRandomHandLimit" type="number" min="9" step="1" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineRandomHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
             <div class="training-versus">VS</div>
             <button class="online-random-ready-button" id="onlineRandomReadyButton" type="button" disabled>準備OK</button>
+          <div class="online-private-ready-controls hidden" id="onlinePrivateReadyControls"><div class="online-ready-row">
+            <button class="button" id="onlineReadyButton" type="button">準備OK</button>
+            <button class="button warning" id="onlineStartButton" type="button">対戦開始</button>
+          </div></div>
             <p class="online-random-status" id="onlineRandomStatusText">対戦相手を探しています</p>
           </article>
 
@@ -17957,39 +17987,20 @@
           </article>
         </section>
       </section>
-      <div class="online-layout hidden" id="onlinePrivatePanel">
+      <div class="online-layout online-private-directory hidden" id="onlinePrivatePanel">
         <section class="online-panel online-room-card">
-          <div class="panel-head">
-            <h2 id="onlineRoomPanelTitle">プライベートマッチ</h2>
-            <span class="small-info" id="onlineRoleText">未接続</span>
-          </div>
-          <div class="online-actions">
-            <button class="button" id="onlineCreateRoomButton" type="button">部屋を作る</button>
-            <button class="button secondary" id="onlineLeaveRoomButton" type="button">退出</button>
-          </div>
-          <div class="online-code-row">
-            <input class="control" id="onlineRoomInput" type="text" maxlength="12" placeholder="部屋コード">
-            <button class="button" id="onlineJoinRoomButton" type="button">入室</button>
-          </div>
-          <div class="online-code" id="onlineRoomCode">------</div>
-          <div class="online-status warn" id="onlineStatusText">部屋を作るか、部屋コードを入力してください。</div>
-          <div class="online-connection-mode">
-            <div>
-              接続方式
-              <span id="onlineConnectionModeText">対戦サーバーで別端末接続を安定させます</span>
-            </div>
-            <label class="online-relay-toggle">
-              <input id="onlineRelayModeToggle" type="checkbox" checked>
-              WS同期
-            </label>
-          </div>
-          <div class="online-server-row">
-            <input class="control" id="onlineServerUrlInput" type="url" placeholder="wss://あなたのRenderサービス.onrender.com">
-            <button class="button secondary" id="onlineSaveServerUrlButton" type="button">保存</button>
-          </div>
-          </section>
-
-        <section class="online-panel">
+          <div class="private-directory-toolbar"><h2 id="onlineRoomPanelTitle">プライベートマッチ</h2><button class="button" id="onlineCreateRoomButton" type="button">部屋を作る</button><button class="button secondary" id="onlinePrivateRefreshButton" type="button">更新</button></div>
+          <div class="private-directory-meta"><span id="onlinePrivateRoomCount" aria-live="polite">0ルーム</span></div>
+          <div id="onlinePrivateRoomList" class="private-room-directory" aria-label="募集中の部屋"><p class="private-directory-empty">読込中…</p></div>
+          <details class="private-code-entry"><summary>部屋番号で入室</summary><div class="online-code-row"><input class="control" id="onlineRoomInput" type="text" maxlength="12" placeholder="部屋番号" aria-label="入室する部屋番号"><button class="button" id="onlineJoinRoomButton" type="button">入室</button></div></details>
+          <div class="online-status warn" id="onlineStatusText" role="status">部屋を作るか、部屋番号を入力してください。</div>
+          <details class="private-connection-settings"><summary>接続先の設定</summary>
+            <div class="online-connection-mode"><div>接続方式<span id="onlineConnectionModeText"></span></div><label class="online-relay-toggle"><input id="onlineRelayModeToggle" type="checkbox" checked>WS同期</label></div>
+            <div class="online-server-row"><input class="control" id="onlineServerUrlInput" type="url" placeholder="wss://あなたのRenderサービス.onrender.com"><button class="button secondary" id="onlineSaveServerUrlButton" type="button">保存</button></div>
+          </details>
+          <div class="hidden"><span id="onlineRoleText"></span><span id="onlineRoomCode"></span><button id="onlineLeaveRoomButton" type="button">退出</button></div>
+        </section>
+        <section class="online-panel hidden" aria-hidden="true">
           <div class="panel-head">
             <h2>準備</h2>
             <span class="small-info" id="onlineDeckInfo">デッキ未選択</span>
@@ -18003,10 +18014,7 @@
             <option value="__current">現在のあなたデッキ</option>
           </select>
           <div class="online-hand-limit-control"><label for="onlineHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineHandLimit" type="number" min="9" step="1" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
-          <div class="online-ready-row">
-            <button class="button" id="onlineReadyButton" type="button">準備OK</button>
-            <button class="button warning" id="onlineStartButton" type="button">対戦開始</button>
-          </div>
+
           <div class="online-player-list">
             <div class="online-player-row">
               <div class="online-player-identity">
@@ -20005,6 +20013,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}]},
       {
         "version": "ver.0.37.0",
         "versioning": "semver",
@@ -22546,7 +22555,7 @@
       message: "",
       log: [],
       battleRuleId: "normal",
-      battleHandLimit: null,
+      battleHandLimit: 9,
       analytics: createAnalyticsState(),
       deckBuilder: {
         activeSide: "player",
@@ -22573,6 +22582,7 @@
         }
       },
       soloSelection: {
+        handLimit: 9,
         mode: "training",
         ruleId: "normal",
         activeSide: "player",
@@ -23122,6 +23132,10 @@
       onlineRandomMainText: document.getElementById("onlineRandomMainText"),
       onlineRandomSubText: document.getElementById("onlineRandomSubText"),
       onlinePrivateMatchButton: document.getElementById("onlinePrivateMatchButton"),
+      onlinePrivateRefreshButton: document.getElementById("onlinePrivateRefreshButton"),
+      onlinePrivateRoomCount: document.getElementById("onlinePrivateRoomCount"),
+      onlinePrivateRoomList: document.getElementById("onlinePrivateRoomList"),
+      onlinePrivateReadyControls: document.getElementById("onlinePrivateReadyControls"),
       onlineFourMatchButton: document.getElementById("onlineFourMatchButton"),
       onlineSpectateButton: document.getElementById("onlineSpectateButton"),
       onlinePrivatePanel: document.getElementById("onlinePrivatePanel"),
@@ -23170,6 +23184,9 @@
       soloTrainingButton: document.getElementById("soloTrainingButton"),
       soloDeckBackHomeButton: document.getElementById("soloDeckBackHomeButton"),
       soloRuleSelect: document.getElementById("soloRuleSelect"),
+      soloHandLimit: document.getElementById("soloHandLimit"),
+      soloHandLimitMinus: document.getElementById("soloHandLimitMinus"),
+      soloHandLimitPlus: document.getElementById("soloHandLimitPlus"),
       soloRuleCycleButton: document.getElementById("soloRuleCycleButton"),
       soloRuleCycleLabel: document.getElementById("soloRuleCycleLabel"),
       soloInitiativeCycleButton: document.getElementById("soloInitiativeCycleButton"),
@@ -26191,13 +26208,50 @@
       render();
     }
 
+    let onlinePrivateDirectoryTimer = null;
+    let onlinePrivateDirectoryRequest = 0;
+
+    async function onlineRefreshPrivateRooms() {
+      const request = ++onlinePrivateDirectoryRequest;
+      try {
+        const response = await fetch(`${onlineServerHttpUrl("/waiting-rooms.json")}?t=${Date.now()}`, {cache: "no-store"});
+        if (!response.ok) throw new Error("部屋一覧を取得できませんでした。");
+        const data = await response.json();
+        if (request !== onlinePrivateDirectoryRequest || state.online.role) return;
+        const rooms = Array.isArray(data.rooms) ? data.rooms : [];
+        elements.onlinePrivateRoomCount.textContent = `${rooms.length}ルーム`;
+        elements.onlinePrivateRoomList.innerHTML = rooms.length ? rooms.map(room => `
+          <div class="private-directory-room"><div><strong>${escapeHtml(room.hostName || "プレイヤー")}の部屋</strong><small>${escapeHtml(onlineRuleDefinition(room.ruleId).name)}</small></div>
+          <span>${escapeHtml(room.roomId)}</span><span>${Number(room.players)||0}/2人</span>
+          <button class="button secondary" type="button" data-private-join-room="${escapeHtml(room.roomId)}" ${room.players >= 2 ? "disabled" : ""}>${room.players >= 2 ? "満員" : "入室"}</button></div>`).join("")
+          : '<p class="private-directory-empty">募集中の部屋はありません。</p>';
+      } catch (error) {
+        if (request !== onlinePrivateDirectoryRequest || state.online.role) return;
+        elements.onlinePrivateRoomCount.textContent = "—";
+        elements.onlinePrivateRoomList.innerHTML = '<p class="private-directory-empty">部屋一覧を取得できませんでした。更新してください。</p>';
+      }
+    }
+
+    function onlineUpdatePrivateDirectoryTimer(show) {
+      if (!show) {
+        window.clearInterval(onlinePrivateDirectoryTimer); onlinePrivateDirectoryTimer = null;
+        onlinePrivateDirectoryRequest += 1;
+      } else if (!onlinePrivateDirectoryTimer) {
+        onlineRefreshPrivateRooms();
+        onlinePrivateDirectoryTimer = window.setInterval(() => {
+          if (state.screen === "online" && state.online.lobbyView === "private" && !state.online.role && state.online.matchMode !== "random") onlineRefreshPrivateRooms();
+          else onlineUpdatePrivateDirectoryTimer(false);
+        }, 5000);
+      }
+    }
+
     function onlineSelectPrivateMatch() {
       if (state.online.role) return;
       state.online.lobbyView = "private";
       state.online.matchMode = "private";
-      onlineSetStatus("プライベートマッチは、部屋を作るか部屋コードを入力して入室してください。", "warn");
+      onlineSetStatus("", "warn");
       render();
-      elements.onlineRoomInput?.focus();
+
     }
 
     function onlineReturnToMenu() {
@@ -29278,7 +29332,9 @@
         ? "normal"
         : normalizeOnlineRuleId(options.ruleId || (onlineHost ? state.online.roomRuleId : state.battleRuleId));
       state.battleRuleId = ruleId;
-      state.battleHandLimit = onlineHost ? normalizeHandLimit(state.online.handLimit) : null;
+      state.battleHandLimit = ruleId === "normal"
+        ? normalizeHandLimit(onlineHost ? state.online.handLimit : options.handLimit === undefined ? 9 : options.handLimit)
+        : null;
       SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
@@ -48383,6 +48439,14 @@
     function renderOnlineRandomSetup(randomWaiting, localValidation) {
       if (!elements.onlineRandomSetupPanel) return;
       const connected = Boolean(state.online.connected);
+      const privateMatch = state.online.matchMode !== "random";
+      elements.onlineRandomSetupPanel.setAttribute("aria-label", privateMatch ? "プライベートマッチ対戦準備" : "ランダムマッチ対戦準備");
+      elements.onlineRandomDeckSelect.setAttribute("aria-label", "オンライン対戦で使用するデッキ");
+      elements.onlineRandomRuleSelect.setAttribute("aria-label", "オンライン対戦のルール");
+      elements.onlinePrivateReadyControls.classList.toggle("hidden", !privateMatch);
+      elements.onlineRandomReadyButton.classList.toggle("hidden", privateMatch);
+      elements.onlineRandomWaitingText.textContent = privateMatch ? "入室待ち…" : "マッチング中…";
+      elements.onlineRandomBackButton.querySelector("span").textContent = privateMatch ? "部屋一覧" : "マルチ";
       const descriptor = onlineLocalDeckDescriptor();
       const bothReady = connected && state.online.localReady && state.online.remoteReady;
       const localProfile = normalizePlayerProfile(state.profile);
@@ -48415,11 +48479,11 @@
         : state.online.localReady ? "準備解除" : "準備OK";
       elements.onlineRandomReadyButton.classList.toggle("ready", state.online.localReady);
       elements.onlineRandomStatusText.textContent = randomWaiting
-        ? "マッチング中…"
+        ? privateMatch ? "相手の入室を待っています" : "マッチング中…"
         : !localValidation.valid
           ? onlineDeckValidationMessage(localValidation)
         : bothReady
-          ? "バトルを開始します"
+          ? privateMatch ? "ホストが対戦を開始できます" : "バトルを開始します"
           : state.online.localReady
             ? "相手の準備を待っています"
             : "デッキを選んで準備OKを押してください";
@@ -48435,7 +48499,7 @@
       const randomMode = state.online.matchMode === "random";
       const view = spectator ? "spectate" : (state.online.lobbyView || "menu");
       const randomWaiting = randomMode && !state.online.connected;
-      const showRandomPanel = randomMode && view === "private" && !spectator;
+      const showRandomPanel = view === "private" && !spectator && (randomMode || Boolean(state.online.role));
       const showPrivatePanel = !showRandomPanel && (view === "private" || Boolean(state.online.role && !spectator));
       const showSpectatePanel = view === "spectate" && !showPrivatePanel;
       const showMenu = view === "menu" && !showRandomPanel && !showPrivatePanel && !showSpectatePanel;
@@ -48490,13 +48554,14 @@
           ? "対戦中の部屋を選ぶか、部屋コードを入力して観戦します"
           : randomMode
             ? (randomWaiting ? "対戦相手を探しています" : "デッキを選び、対戦の準備をします")
-            : "部屋の作成・入室と対戦準備を行います";
+            : "";
       }
       if (elements.onlineRoomPanelTitle) {
         elements.onlineRoomPanelTitle.textContent = randomMode ? "ランダムマッチ" : "プライベートマッチ";
       }
       elements.onlineRandomSetupPanel?.classList.toggle("hidden", !showRandomPanel);
       elements.onlinePrivatePanel?.classList.toggle("hidden", !showPrivatePanel);
+      onlineUpdatePrivateDirectoryTimer(showPrivatePanel && state.screen === "online");
       elements.onlineSpectatePanel?.classList.toggle("hidden", !showSpectatePanel);
       elements.onlineServerUrlInput.value = elements.onlineServerUrlInput === document.activeElement
         ? elements.onlineServerUrlInput.value
@@ -48547,7 +48612,7 @@
       elements.onlineRoomInput.value = elements.onlineRoomInput === document.activeElement
         ? elements.onlineRoomInput.value
         : (state.online.roomCode || elements.onlineRoomInput.value);
-      if (showRandomPanel) renderOnlineRandomSetup(randomWaiting, localValidation);
+      if (showRandomPanel) renderOnlineRandomSetup(!state.online.connected, localValidation);
       else renderOnlineRandomDeckPreview();
       onlineScheduleRandomAutoStart();
       renderOnlineSpectateRooms();
@@ -48571,7 +48636,8 @@
       for (const prefix of ["online", "onlineRandom"]) {
         const input = elements[`${prefix}HandLimit`];
         if (document.activeElement !== input || disabled) input.value = state.online.handLimit ?? "";
-        input.disabled = disabled;
+        input.closest(".online-hand-limit-control").classList.toggle("hidden", rule.id !== "normal");
+        input.disabled = disabled || rule.id !== "normal";
         elements[`${prefix}HandLimitMinus`].disabled = disabled || state.online.handLimit === 9;
         elements[`${prefix}HandLimitPlus`].disabled = disabled;
       }
@@ -53329,6 +53395,9 @@
         .join("");
       if (elements.soloRuleSelect.innerHTML !== ruleOptions) elements.soloRuleSelect.innerHTML = ruleOptions;
       elements.soloRuleSelect.value = ruleId;
+      elements.soloHandLimit.closest(".online-hand-limit-control").classList.toggle("hidden", ruleId !== "normal");
+      if (document.activeElement !== elements.soloHandLimit) elements.soloHandLimit.value = selection.handLimit ?? "";
+      elements.soloHandLimitMinus.disabled = selection.handLimit === 9;
       elements.soloRuleCycleLabel.textContent = rule.name;
       const initiativeLabels = { random: "ランダム", player: "左が先攻", opponent: "右が先攻" };
       elements.soloInitiativeLabel.textContent = initiativeLabels[selection.initiative] || initiativeLabels.random;
@@ -53445,7 +53514,7 @@
 
     function trainingConfigKey() {
       const selection = state.soloSelection;
-      return [selection.ruleId, selection.leftController, selection.playerDeckName, selection.opponentDeckName].join("|");
+      return [selection.ruleId, selection.leftController, selection.playerDeckName, selection.opponentDeckName, selection.handLimit ?? "unlimited"].join("|");
     }
 
     function trainingPercent(value, total) {
@@ -54721,7 +54790,8 @@
     }
 
     function startCardTest(baseId) {
-      state.battleHandLimit = null;
+      state.battleRuleId = "normal";
+      state.battleHandLimit = 9;
       if (state.screen === "deck") cardTestReturnView = state.deckBuilder.view || "editor";
       state.kashikashiActionTurn = null;
       resetBattleDrawers();
@@ -55604,7 +55674,7 @@
       state.training.active = false;
       state.dungeon.active = false;
       startNewGameWithDecks({ ruleId: "normal", playerDeckDescriptor: descriptor,
-        opponentDeckDescriptor: deckDescriptorForRule("normal"), aiBattle: true });
+        opponentDeckDescriptor: deckDescriptorForRule("normal"), handLimit: state.soloSelection.handLimit, aiBattle: true });
     }
 
     function startSoloBattleWithSelectedDecks(options = {}) {
@@ -55635,7 +55705,8 @@
         ruleId,
         playerDeckDescriptor: playerDescriptor,
         opponentDeckDescriptor: opponentDescriptor,
-        training: true
+        training: true,
+        handLimit: state.soloSelection.handLimit
       });
     }
 
@@ -55658,7 +55729,8 @@
         playerDeckDescriptor: playerDescriptor,
         opponentDeckDescriptor: opponentDescriptor,
         deferPreBattle: options.training === true,
-        aiBattle: options.aiBattle === true
+        aiBattle: options.aiBattle === true,
+        handLimit: options.handLimit
       });
       if (options.training === true) scheduleTrainingTask(() => beginTrainingPreBattle(state.preBattleToken), 420);
     }
@@ -55859,7 +55931,8 @@
     }
 
     function startTutorialBattle(chapterId = "basic", options = {}) {
-      state.battleHandLimit = null;
+      state.battleRuleId = "normal";
+      state.battleHandLimit = 9;
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === chapterId);
       if (!chapter?.steps) return;
       clearTutorialQuizCoachTimer();
@@ -57851,6 +57924,13 @@
       if (event.target === elements.soloDeckPicker) closeSoloDeckPicker();
     });
     elements.soloLeftControllerButton.addEventListener("click", cycleSoloLeftController);
+    elements.soloHandLimit.addEventListener("change", () => {
+      state.soloSelection.handLimit = normalizeHandLimit(elements.soloHandLimit.value);
+      elements.soloHandLimit.value = state.soloSelection.handLimit ?? ""; render();
+    });
+    elements.soloHandLimit.addEventListener("keydown", event => { if (event.key === "Enter") elements.soloHandLimit.blur(); });
+    elements.soloHandLimitMinus.addEventListener("click", () => { state.soloSelection.handLimit = Math.max(9,(state.soloSelection.handLimit ?? 10)-1); render(); });
+    elements.soloHandLimitPlus.addEventListener("click", () => { state.soloSelection.handLimit = (state.soloSelection.handLimit ?? 8)+1; render(); });
     elements.soloRuleCycleButton.addEventListener("click", cycleSoloRule);
     elements.soloInitiativeCycleButton.addEventListener("click", cycleSoloInitiative);
     elements.soloRuleSelect.addEventListener("change", () => {
@@ -57912,9 +57992,19 @@
     });
     elements.onlineBackHomeButton.addEventListener("click", showHomeScreen);
     elements.onlineBackMenuButton.addEventListener("click", onlineReturnToMenu);
-    elements.onlineRandomBackButton.addEventListener("click", onlineReturnToMenu);
+    elements.onlineRandomBackButton.addEventListener("click", () => {
+      if (state.online.matchMode === "private") { onlineCloseConnection(false); onlineSelectPrivateMatch(); }
+      else onlineReturnToMenu();
+    });
     elements.onlineRandomMatchButton.addEventListener("click", onlineRandomMatch);
     elements.onlinePrivateMatchButton.addEventListener("click", onlineSelectPrivateMatch);
+    elements.onlinePrivateRefreshButton.addEventListener("click", onlineRefreshPrivateRooms);
+    elements.onlinePrivateRoomList.addEventListener("click", event => {
+      const button = event.target.closest("[data-private-join-room]");
+      if (!button || button.disabled || state.online.role) return;
+      elements.onlineRoomInput.value = button.dataset.privateJoinRoom;
+      onlineJoinRoom();
+    });
     elements.onlineSpectateButton.addEventListener("click", onlineSelectSpectate);
     elements.onlineSpectateRefreshButton.addEventListener("click", onlineRefreshSpectateRooms);
     elements.onlineSpectateSearchButton.addEventListener("click", onlineSpectateInputRoom);
