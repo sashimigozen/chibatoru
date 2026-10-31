@@ -17553,6 +17553,11 @@
     .battle-screen #playerDeckPile { overflow: visible !important; }
     .battle-screen #playerDeckPile .hand-count-above-deck { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: max-content; color: #314b64; font-size: 11px; font-weight: 800; line-height: 1.2; white-space: nowrap; pointer-events: none; }
     .battle-screen .expanded-hand-panel { position: fixed; z-index: 85; left: 12px; right: 12px; bottom: 12px; padding: 12px 18px 8px; border: 1px solid #9fb9cc; border-radius: 12px; background: #e3eef5; box-shadow: 0 -8px 28px #24445b33; }
+    .battle-screen #playerDeckPile .hand-count-above-deck.hand-at-limit,
+    .battle-screen #playerHandInfo.hand-at-limit,
+    .battle-screen #opponentHandInfo.hand-at-limit,
+    #expandedHandCount.hand-at-limit { color: #c64d24; }
+    .battle-screen #opponentHandInfo.hand-at-limit::before { color: inherit; }
     .expanded-hand-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; color: #24445b; font-weight: 800; }
     .battle-screen .expanded-hand-panel #playerHand { position: relative !important; inset: auto !important; display: flex !important; flex-wrap: nowrap !important; gap: 12px !important; align-items: flex-start !important; width: 100% !important; min-width: 0 !important; max-width: none !important; height: 200px !important; padding: 12px 8px 10px !important; overflow-x: auto !important; overflow-y: hidden !important; transform: none !important; touch-action: pan-x; }
     .battle-screen .expanded-hand-panel #playerHand .hand-card:nth-child(n) { flex: 0 0 112px !important; width: 112px !important; min-width: 112px !important; height: 170.667px !important; min-height: 170.667px !important; margin: 0 !important; transform: none !important; touch-action: none; }
@@ -20013,7 +20018,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}, {"category": "システム", "title": "AIの手札管理", "after": "手札の空き枚数と、次ターン開始時の1枚ドロー・終了時の補充を考慮するよう改善しました。可能なら先にカードを使用して空きを作り、溢れるドローや生成の優先度を下げます。回復・除去・勝利につながる行動は、溢れる場合も状況に応じて選びます。手札上限なしの場合の評価と、カードの能力値・本文は変更していません。関連する判断と実際の手札・校外エリアの結果を自動テストで確認しました。"}]},
+      {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}, {"category": "システム", "title": "AIの手札管理", "after": "手札の空き枚数と、次ターン開始時の1枚ドロー・終了時の補充を考慮するよう改善しました。可能なら先にカードを使用して空きを作り、溢れるドローや生成の優先度を下げます。回復・除去・勝利につながる行動は、溢れる場合も状況に応じて選びます。手札上限なしの場合の評価と、カードの能力値・本文は変更していません。関連する判断と実際の手札・校外エリアの結果を自動テストで確認しました。"}, {"category": "表示・操作改善", "title": "手札上限の枚数表示", "after": "自分・相手の手札枚数が設定上限に達したとき、枚数表示を赤みのあるオレンジに変更します。手札拡大中にも適用し、上限未満または上限なしでは通常色に戻ります。カードの能力値・本文は変更していません。"}]},
       {
         "version": "ver.0.37.0",
         "versioning": "semver",
@@ -50317,6 +50322,7 @@
     function renderOpponentHand() {
       const hand = state.players.opponent.hand;
       elements.opponentHandInfo.textContent = `${hand.length}枚`;
+      elements.opponentHandInfo.classList.toggle("hand-at-limit", Number.isFinite(state.battleHandLimit) && hand.length >= state.battleHandLimit);
       elements.opponentHand.innerHTML = "";
       // The opponent's row shares the fixed 252px lane to the right of its
       // deck. More cards reduce the step, rather than escaping the playmat.
@@ -50349,6 +50355,8 @@
       elements.playerHandInfo.textContent = `${player.hand.length}枚`;
       document.getElementById("expandedHandCount").textContent = `手札 ${player.hand.length}枚`;
       document.getElementById("playerHandDeckCount").textContent = `手札 ${player.hand.length}枚`;
+      [elements.playerHandInfo, document.getElementById("expandedHandCount"), document.getElementById("playerHandDeckCount")]
+        .forEach(label => label.classList.toggle("hand-at-limit", Number.isFinite(state.battleHandLimit) && player.hand.length >= state.battleHandLimit));
       elements.playerHand.innerHTML = "";
       // Ten cards occupy the agreed hand lane. Further cards reduce only the
       // horizontal step, keeping every card inside the lane instead of letting
