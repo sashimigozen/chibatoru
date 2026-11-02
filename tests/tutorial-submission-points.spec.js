@@ -61,9 +61,9 @@ test('点数編は能力の撃破・攻撃の撃破・単位取得と強化を�
   test.setTimeout(60000);await open(p,'points');await nextTo(p,'能力で倒して点数を獲得しよう');
   expect((await data(p)).points).toBe(8);await play(p,'short_sleeve_student');expect((await data(p)).points).toBe(9);
   await nextTo(p,'攻撃で倒して単位を取得しよう');await attack(p,'long_sleeve_student','ae_student');
-  expect(await data(p)).toMatchObject({points:10,unit:true,long:{attack:4,hp:4}});
+  expect(await data(p)).toMatchObject({points:10,unit:true,long:{attack:4,hp:6}});
   await p.locator('#tutorialBackStepButton').click();await idle(p);
-  expect(await data(p)).toMatchObject({points:9,unit:false,long:{attack:1,hp:1}});
+  expect(await data(p)).toMatchObject({points:9,unit:false,long:{attack:1,hp:3}});
   await attack(p,'long_sleeve_student','ae_student');await nextTo(p,'リーサルクイズに挑戦しよう');
   await p.screenshot({path:test.info().outputPath('points-practice.png')});
 });

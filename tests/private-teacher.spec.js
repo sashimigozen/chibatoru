@@ -102,7 +102,7 @@ test('本文・台帳・オンライン登録・並び順が一致する', async
   expect(await page.evaluate(text => cardRulesText(createCardFromBase('private_teacher', 'player')) === formatCardRulesDisplayText(createCardFromBase('private_teacher', 'player'), text), card.effect)).toBe(true);
   expect(catalog.direct).toContain('private_teacher');
   expect(catalog.names.private_teacher).toBe('二等兵講師');
-  expect(catalog.display.chugidesu.cost).toBe(6);
+  expect(catalog.display.chugidesu.cost).toBe(7);
   expect(catalog.deckOrder).toEqual(await page.evaluate(() => getDeckEditorIds('')));
 });
 
