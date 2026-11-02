@@ -250,11 +250,13 @@ test('Feast release gift awards 100CP once for new and existing saves, including
   }
 });
 
-test('Feast UR correction preserves old Corridor URs and pending rewards, but exchanges Remote Participant',()=>{
-  const s=C.purchase(rich(),'feast',1,fixed(.99999),'legacy-feast-ur');
-  s.owned.corridor_student={ultraRare:true};
-  s.pending.results[0][0]={baseId:'corridor_student',mode:'ultraRare'};
-  assert.equal(C.validate(s).owned.corridor_student.ultraRare,true);
+test('Feast UR correction excludes Corridor URs and exchanges Remote Participant',()=>{
+  const s=C.purchase(rich(),'feast',1,fixed(.99999),'feast-ur');
+  const invalidOwned=JSON.parse(JSON.stringify(s));
+  invalidOwned.owned.corridor_student={ultraRare:true};assert.throws(()=>C.validate(invalidOwned));
+  const invalidPending=JSON.parse(JSON.stringify(s));
+  invalidPending.pending.results[0][0]={baseId:'corridor_student',mode:'ultraRare'};
+  assert.throws(()=>C.validate(invalidPending));
   const p=C.PACKS.find(p=>p.id==='feast');
   assert.ok(p.cards.includes('corridor_student'));assert.ok(!p.ur.includes('corridor_student'));
   s.packs.feast={total:200,miss:0,tickets:1};

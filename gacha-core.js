@@ -44,7 +44,7 @@
     for (const [id, styles] of Object.entries(s.owned)) {
       if (!ids.has(id) || !record(styles) || Object.entries(styles).some(([m, v]) => !MODES.slice(1).includes(m) || v !== true)) throw new Error("解放データが不正です。");
       // Keep previously acquired URs readable after pack pool corrections.
-      if (styles.ultraRare && !['general_student', 'corridor_student'].includes(id) && !PACKS.some((p) => p.ur.includes(id))) throw new Error("URデータが不正です。");
+      if (styles.ultraRare && id !== 'general_student' && !PACKS.some((p) => p.ur.includes(id))) throw new Error("URデータが不正です。");
     }
     for (const [id, value] of Object.entries(s.events)) if (!id || id.length > 200 || value !== true) throw new Error("報酬記録が不正です。");
     for (const [id, g] of Object.entries(s.gifts)) if (!(id === "initial-cp" || id === CP_GIFT_ID || id === FEAST_GIFT_ID || id === PERSONAL_GIFT_ID || /^dungeon:[a-z0-9_]+:(5|10)$/.test(id)) || !g || g.amount !== (id === PERSONAL_GIFT_ID ? 1000000 : id === FEAST_GIFT_ID ? 100 : id === "initial-cp" || id === CP_GIFT_ID || id.endsWith(":5") ? 50 : 100) || typeof g.claimed !== "boolean" || typeof g.label !== "string") throw new Error("プレゼントが不正です。");
@@ -53,7 +53,6 @@
       if (typeof q.id !== "string" || !Array.isArray(q.results) || ![1, 10].includes(q.results.length) || !integer(q.index, q.results.length - 1) || !["handoff", "tear", "cards", "summary"].includes(q.phase) || !integer(q.revealed, 5) || typeof q.urPause !== "boolean") throw new Error("開封記録が不正です。");
       for (const row of q.results) if (!Array.isArray(row) || row.length !== 5 || row.some((c) => !MODES.includes(c.mode) || (!(c.mode === "ultraRare" ? p.ur : p.cards).includes(c.baseId)
         && !(q.packId === 'cynical' && c.mode === 'ultraRare' && c.baseId === 'general_student')
-        && !(q.packId === 'feast' && c.mode === 'ultraRare' && c.baseId === 'corridor_student')
         && !(q.packId === 'awakening' && c.mode !== 'ultraRare' && c.baseId === 'illegal_cafeteria')))) throw new Error("抽選結果が不正です。");
     }
     if (s.recovery !== null) validateProjection(s.recovery);
