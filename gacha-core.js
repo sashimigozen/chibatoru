@@ -9,6 +9,7 @@
   const KEY = "chibattle-gacha-v1";
   const PERSONAL_GIFT_ID = "personal-cp:2026-10-10";
   const CP_GIFT_ID = "cp-gift:2026-10-14";
+  const FEAST_GIFT_ID = "pack-release:feast:2026-11-02";
   const BACKUP_KEYS = ["chibattle-saved-decks-v1", "chibattle-specialty-decks-v1", "chibattle-chaos-decks-v1", "chibattle-player-profile-v1", "chibattle-dungeon-card-styles-v1", "chibattle-dungeon-run-v1", "chibattle-dungeon-pending-reward-v1", "chibattle-deleted-starter-decks-v1", "chibattle-starter-decks-seeded-v1"];
   const list = (s) => s.trim().split(/\s+/);
   const PACKS = [
@@ -46,7 +47,7 @@
       if (styles.ultraRare && id !== 'general_student' && !PACKS.some((p) => p.ur.includes(id))) throw new Error("URデータが不正です。");
     }
     for (const [id, value] of Object.entries(s.events)) if (!id || id.length > 200 || value !== true) throw new Error("報酬記録が不正です。");
-    for (const [id, g] of Object.entries(s.gifts)) if (!(id === "initial-cp" || id === CP_GIFT_ID || id === PERSONAL_GIFT_ID || /^dungeon:[a-z0-9_]+:(5|10)$/.test(id)) || !g || g.amount !== (id === PERSONAL_GIFT_ID ? 1000000 : id === "initial-cp" || id === CP_GIFT_ID || id.endsWith(":5") ? 50 : 100) || typeof g.claimed !== "boolean" || typeof g.label !== "string") throw new Error("プレゼントが不正です。");
+    for (const [id, g] of Object.entries(s.gifts)) if (!(id === "initial-cp" || id === CP_GIFT_ID || id === FEAST_GIFT_ID || id === PERSONAL_GIFT_ID || /^dungeon:[a-z0-9_]+:(5|10)$/.test(id)) || !g || g.amount !== (id === PERSONAL_GIFT_ID ? 1000000 : id === FEAST_GIFT_ID ? 100 : id === "initial-cp" || id === CP_GIFT_ID || id.endsWith(":5") ? 50 : 100) || typeof g.claimed !== "boolean" || typeof g.label !== "string") throw new Error("プレゼントが不正です。");
     if (s.pending !== null) {
       const q = s.pending, p = pack(q.packId);
       if (typeof q.id !== "string" || !Array.isArray(q.results) || ![1, 10].includes(q.results.length) || !integer(q.index, q.results.length - 1) || !["handoff", "tear", "cards", "summary"].includes(q.phase) || !integer(q.revealed, 5) || typeof q.urPause !== "boolean") throw new Error("開封記録が不正です。");
@@ -114,6 +115,7 @@
     // A stable gift ID keeps the initial grant one-time for new and existing saves.
     if (!s.gifts["initial-cp"]) s.gifts["initial-cp"] = { amount: 50, label: "初期CPプレゼント", claimed: false };
     if (!s.gifts[CP_GIFT_ID]) s.gifts[CP_GIFT_ID] = { amount: 50, label: "", claimed: false };
+    if (!s.gifts[FEAST_GIFT_ID]) s.gifts[FEAST_GIFT_ID] = { amount: 100, label: "爆笑フルコース登場記念", claimed: false };
     for (const { id, name } of specialties.filter(x => x.id !== 'king_ghidorah_bed')) for (const [floor, amount] of [[5, 50], [10, 100]]) {
       const key = `dungeon:${id}:${floor}`;
       if (s.events[key] || s.gifts[key]) continue;

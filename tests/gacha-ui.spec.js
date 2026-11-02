@@ -131,9 +131,11 @@ test('initial 50CP is a gift, not direct credit, and cannot be claimed twice', a
   await page.screenshot({path:test.info().outputPath('cp-gift.png')});
   await page.locator('[data-gacha-claim="cp-gift:2026-10-14"]').click();
   await expect.poll(async()=>(await saved(page)).cp).toBe(100);
+  await page.locator('[data-gacha-claim="pack-release:feast:2026-11-02"]').click();
+  await expect.poll(async()=>(await saved(page)).cp).toBe(200);
   await page.reload(); await page.locator('#homeGiftsButton').click();
   await expect(page.locator('.gacha-dialog')).toContainText('プレゼントはありません');
-  expect((await saved(page)).cp).toBe(100);
+  expect((await saved(page)).cp).toBe(200);
 });
 test('normal UR reveal resumes; skip completes the whole batch without changing awards or selection', async ({page}) => {
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
@@ -172,10 +174,10 @@ test('legacy gifts are received once and grant 150CP per specialty; shop layout 
   economy.gifts['dungeon:king_ghidorah_bed:5']={amount:50,label:'キングギドラベッド・5階 初回クリア',claimed:false};
   await boot(page,economy,{unlocked:{design:true,king_ghidorah_bed:true},selected:{},prismUnlocked:{king_ghidorah_bed:true}});
   await page.locator('#homeGiftsButton').click();
-  await expect(page.locator('[data-gacha-claim]')).toHaveCount(5);
+  await expect(page.locator('[data-gacha-claim]')).toHaveCount(6);
   await expect(page.locator('.gacha-dialog')).not.toContainText('キングギドラベッド');
   await page.locator('[data-gacha-claim="all"]').click();
-  await expect.poll(async()=>(await saved(page)).cp).toBe(250);
+  await expect.poll(async()=>(await saved(page)).cp).toBe(350);
   await page.locator('[data-gacha-close]').click();
   await page.reload(); await page.locator('#homeGiftsButton').click();
   await expect(page.locator('.gacha-dialog')).toContainText('プレゼントはありません');
@@ -587,4 +589,19 @@ test('Feast pack loads legacy saves, displays its name, opens and exchanges its 
   await page.locator('[data-gacha-redeem="chugidesu"]').click();
   await expect.poll(async()=>(await saved(page)).owned.chugidesu?.ultraRare).toBe(true);
   await expect(page.locator('[data-gacha-buy="1"]')).toBeEnabled();
+});
+
+test('Feast 100CP gift is visible, additive and cannot be received again after reload',async({page})=>{
+  const s=C.initial();s.cp=23;
+  s.gifts['initial-cp']={amount:50,label:'初期CPプレゼント',claimed:true};
+  s.gifts['cp-gift:2026-10-14']={amount:50,label:'',claimed:true};
+  await boot(page,s);await page.locator('#homeGiftsButton').click();
+  const button=page.locator('[data-gacha-claim="pack-release:feast:2026-11-02"]');
+  await expect(button.locator('..')).toContainText('爆笑フルコース登場記念');
+  await expect(button.locator('..')).toContainText('100 CP');
+  expect((await saved(page)).cp).toBe(23);
+  await page.screenshot({path:test.info().outputPath('feast-gift.png')});
+  await button.click();await expect.poll(async()=>(await saved(page)).cp).toBe(123);
+  await page.reload();await page.locator('#homeGiftsButton').click();
+  await expect(button).toHaveCount(0);expect((await saved(page)).cp).toBe(123);
 });

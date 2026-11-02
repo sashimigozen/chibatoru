@@ -133,11 +133,11 @@ test('initial gift migrates existing saves without changing balance or duplicati
 });
 test('migration independent specialty gifts and repeat claims never duplicate CP', () => {
   const s = C.initial(), specialties = [{id:'information',name:'情報'},{id:'math',name:'数学'}];
-  C.migrate(s, specialties); C.migrate(s, specialties); assert.equal(Object.keys(s.gifts).length,6);
+  C.migrate(s, specialties); C.migrate(s, specialties); assert.equal(Object.keys(s.gifts).length,7);
   C.claim(s,'dungeon:math:5'); assert.equal(s.cp,50);
-  C.claim(s); C.claim(s); C.migrate(s, specialties); C.claim(s); assert.equal(s.cp,400);
+  C.claim(s); C.claim(s); C.migrate(s, specialties); C.claim(s); assert.equal(s.cp,500);
   assert.equal(C.reward(s,{id:'dungeon:math:10',amount:100}),false);
-  C.reward(s,{id:'ai:unique',amount:5}); C.reward(s,{id:'ai:unique',amount:5}); assert.equal(s.cp,405);
+  C.reward(s,{id:'ai:unique',amount:5}); C.reward(s,{id:'ai:unique',amount:5}); assert.equal(s.cp,505);
 });
 test('UR rates give about 80% natural UR probability by 200 packs without changing SR+ or guarantee', () => {
   assert.deepEqual(C.WEIGHTS, [[65000,30000,4886,114],[30000,50000,19650,350]]);
@@ -154,7 +154,7 @@ test('additional reasonless 50CP gift survives saves, is additive and cannot rep
   assert.deepEqual(s.gifts[id], {amount:50,label:'',claimed:false});
   assert.equal(s.cp, 17);
   s = C.validate(JSON.parse(JSON.stringify(s))); C.claim(s, id);
-  s = C.validate(JSON.parse(JSON.stringify(s))); C.migrate(s, []); C.claim(s);
+  s = C.validate(JSON.parse(JSON.stringify(s))); C.migrate(s, []); C.claim(s, id);
   assert.equal(s.cp, 67); assert.equal(s.gifts[id].claimed, true);
 });
 function memory() {
@@ -226,4 +226,24 @@ test('Feast purchases, guarantee and exchange use the agreed pool and persist', 
   assert.equal(batch.cp,9950);assert.equal(batch.pending.results.flat().length,50);
   assert.ok(batch.pending.results.flat().every(c=>p.ur.includes(c.baseId)));
   C.validate(batch);
+});
+
+test('Feast release gift awards 100CP once for new and existing saves, including claim all and reload', () => {
+  const id='pack-release:feast:2026-11-02';
+  for (const existing of [false,true]) {
+    let s=C.initial();s.cp=37;s.owned.yuta={rare:true};
+    if(existing) {
+      s.gifts['initial-cp']={amount:50,label:'初期CPプレゼント',claimed:true};
+      s.gifts['cp-gift:2026-10-14']={amount:50,label:'',claimed:true};
+    }
+    C.migrate(s,[]);C.migrate(s,[]);
+    assert.equal(s.cp,37);
+    assert.deepEqual(s.gifts[id],{amount:100,label:'爆笑フルコース登場記念',claimed:false});
+    C.claim(s,id);assert.equal(s.cp,137);
+    s=C.validate(JSON.parse(JSON.stringify(s)));C.migrate(s,[]);C.claim(s,id);
+    assert.equal(s.cp,137);assert.deepEqual(s.owned,{yuta:{rare:true}});
+    C.claim(s);const total=s.cp;C.migrate(s,[]);C.claim(s);
+    assert.equal(s.cp,total);assert.equal(total,existing?137:237);
+    assert.throws(()=>C.validate({...s,gifts:{...s.gifts,[id]:{...s.gifts[id],amount:200}}}));
+  }
 });
