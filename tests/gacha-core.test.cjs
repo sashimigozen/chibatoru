@@ -209,7 +209,7 @@ test('new Feast pack loads old four-pack saves without changing progress or pend
 test('Feast purchases, guarantee and exchange use the agreed pool and persist', () => {
   const p=C.PACKS.find(p=>p.id==='feast');
   assert.equal(new Set(p.cards).size,40);
-  assert.deepEqual(p.ur,['fifty_ninth_paia','remote_participant_student','wonton_ki','could_not_escape_student','chugidesu']);
+  assert.deepEqual(p.ur,['fifty_ninth_paia','remote_participant_student','wonton_ki','could_not_escape_student','tomoyo_mou']);
   const s=rich();s.packs.feast={total:199,miss:9,tickets:0};
   const bought=C.purchase(s,'feast',1,fixed(0),'feast-guarantee');
   assert.equal(bought.cp,s.cp-5);
@@ -264,3 +264,14 @@ test('Feast UR correction excludes Corridor URs and exchanges Remote Participant
   C.exchange(s,'feast','remote_participant_student');
   assert.equal(C.validate(s).owned.remote_participant_student.ultraRare,true);
 });
+
+ test('Feast now offers Tomoyo UR while previously acquired Chugidesu and pending results remain readable',()=>{
+ const s=C.purchase(rich(),'feast',1,fixed(.99999),'old-chugidesu');
+ s.owned.chugidesu={ultraRare:true};
+ s.pending.results[0][4]={baseId:'chugidesu',mode:'ultraRare'};
+ assert.equal(C.validate(s).owned.chugidesu.ultraRare,true);
+ const fresh=rich();fresh.packs.feast={total:200,miss:0,tickets:1};
+ assert.throws(()=>C.exchange(fresh,'feast','chugidesu'));
+ C.exchange(fresh,'feast','tomoyo_mou');
+ assert.equal(fresh.owned.tomoyo_mou.ultraRare,true);
+ });

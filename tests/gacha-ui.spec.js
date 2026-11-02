@@ -586,8 +586,8 @@ test('Feast pack loads legacy saves, displays its name, opens and exchanges its 
   await page.locator('[data-gacha-pack="feast"]').click();
   await page.locator('[data-gacha-exchange="feast"]').click();
   expect(await page.locator('[data-gacha-redeem]').evaluateAll(els=>els.map(e=>e.dataset.gachaRedeem))).toEqual(C.PACKS.find(p=>p.id==='feast').ur);
-  await page.locator('[data-gacha-redeem="chugidesu"]').click();
-  await expect.poll(async()=>(await saved(page)).owned.chugidesu?.ultraRare).toBe(true);
+  await page.locator('[data-gacha-redeem="tomoyo_mou"]').click();
+  await expect.poll(async()=>(await saved(page)).owned.tomoyo_mou?.ultraRare).toBe(true);
   await expect(page.locator('[data-gacha-buy="1"]')).toBeEnabled();
 });
 
