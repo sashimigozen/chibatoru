@@ -104,7 +104,7 @@ test('TV pickup cycles all pack URs every five seconds without changing saves', 
   await page.locator('[data-gacha-rates]').click();
   await expect(page.locator('.gacha-dialog tbody th')).toHaveText(['レギュラー','R','SR','UR']);
   expect(await page.evaluate(()=>['rare','superRare','ultraRare'].map(cardStyleModeLabel))).toEqual(['R','SR','UR']);
-  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.25.1-shop');
+  await expect(page.locator('script[src^="gacha-ui.js"]')).toHaveAttribute('src','gacha-ui.js?v=0.39.0-feast');
   const paused = await ids();
   await page.clock.runFor(10000);
   expect(await ids()).toEqual(paused);
@@ -556,4 +556,35 @@ test('existing endGame hook awards real AI match once without affecting battle r
   });
   await expect.poll(async()=>(await saved(page)).cp).toBe(5);
   expect(await page.evaluate(()=>window.__chibattle.state.gameWinner)).toBe('player');
+});
+
+test('Feast pack loads legacy saves, displays its name, opens and exchanges its five URs', async ({page}) => {
+  const s=C.initial();s.cp=55;delete s.packs.feast;
+  await boot(page,s);await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-pack="feast"]').click();
+  await expect(page.locator('.gacha-purchase-panel')).toContainText('Feast of Laughter');
+  await expect(page.locator('.gacha-purchase-panel')).toContainText('爆笑フルコース');
+  for(const size of [{width:1440,height:900},{width:1280,height:800},{width:390,height:844}]) {
+    await page.setViewportSize(size);
+    const last=await page.locator('[data-gacha-pack="feast"]').boundingBox();
+    const panel=await page.locator('.gacha-pack-list').boundingBox();
+    expect(last.y+last.height).toBeLessThanOrEqual(panel.y+panel.height+1);
+    await page.screenshot({path:test.info().outputPath(`feast-${size.width}.png`)});
+  }
+  await page.setViewportSize({width:1440,height:900});
+  await page.locator('[data-gacha-buy="10"]').click();
+  await expect(page.locator('[data-gacha-receive]')).toBeVisible();
+  expect((await saved(page)).cp).toBe(5);
+  await page.locator('[data-gacha-skip]').click();
+  await expect(page.locator('.gacha-summary-grid button')).toHaveCount(50);
+  await page.locator('[data-gacha-finish]').click();
+  await expect(page.locator('[data-gacha-pack="feast"]')).toBeVisible();
+  await page.evaluate(key=>{const s=JSON.parse(localStorage.getItem(key));s.packs.feast={total:200,miss:0,tickets:1};localStorage.setItem(key,JSON.stringify(s));},C.KEY);
+  await page.reload();await page.locator('#homeNavGachaButton').click();
+  await page.locator('[data-gacha-pack="feast"]').click();
+  await page.locator('[data-gacha-exchange="feast"]').click();
+  expect(await page.locator('[data-gacha-redeem]').evaluateAll(els=>els.map(e=>e.dataset.gachaRedeem))).toEqual(C.PACKS.find(p=>p.id==='feast').ur);
+  await page.locator('[data-gacha-redeem="chugidesu"]').click();
+  await expect.poll(async()=>(await saved(page)).owned.chugidesu?.ultraRare).toBe(true);
+  await expect(page.locator('[data-gacha-buy="1"]')).toBeEnabled();
 });

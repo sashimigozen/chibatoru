@@ -50,7 +50,7 @@ test('personal CP gift is file-triggered, additive, and received once', () => {
   assert.equal(C.validate(s).cp,1010000);
   assert.throws(()=>C.receivePersonalGift(s,{...file,amount:2000000}));
 });
-test('official pools are 254 unique existing cards, 24 specified URs; tokens and retired cards excluded', () => {
+test('official pools are 294 unique existing cards, 29 specified URs; tokens and retired cards excluded', () => {
   const pool=C.PACKS.find(p=>p.id==='cynical');
   assert.ok(pool.ur.includes('aggro_student'));
   assert.ok(!pool.ur.includes('general_student'));
@@ -59,8 +59,8 @@ test('official pools are 254 unique existing cards, 24 specified URs; tokens and
   const start = source.indexOf('const CARD_BASES =');
   const end = source.indexOf('\n    };', start) + 7;
   const bases = vm.runInNewContext(source.slice(start, end) + ';CARD_BASES');
-  assert.equal(new Set(C.PACKS.flatMap(p => p.cards)).size, 254);
-  assert.equal(C.PACKS.flatMap(p => p.ur).length, 24);
+  assert.equal(new Set(C.PACKS.flatMap(p => p.cards)).size, 294);
+  assert.equal(C.PACKS.flatMap(p => p.ur).length, 29);
   C.PACKS.forEach(p => {
     assert.equal(p.cards.length, p.count);
     p.cards.forEach(id => assert.ok(bases[id] && !bases[id].token && !bases[id].generated && !bases[id].retired, id));
@@ -188,4 +188,42 @@ test('guaranteed SR/UR split keeps the 1% UR boundary and batch crosses threshol
   const result=C.purchase(s,'echoes',10,rng,'crossing');
   assert.equal(result.pending.results[0][4].mode,'ultraRare');
   assert.equal(result.packs.echoes.total,209);assert.equal(result.packs.echoes.tickets,1);
+});
+
+test('new Feast pack loads old four-pack saves without changing progress or pending rewards', () => {
+  const old = C.purchase(rich(), 'echoes', 1, fixed(.99999), 'old-pending');
+  old.packs.cynical = {total:200,miss:0,tickets:1};
+  delete old.packs.feast;
+  const original = JSON.parse(JSON.stringify(old));
+  const loaded = C.validate(old);
+  assert.deepEqual(loaded.packs.feast, {total:0,miss:0,tickets:0});
+  const {feast, ...progress} = loaded.packs;
+  assert.deepEqual({...loaded, packs:progress}, original);
+  assert.deepEqual(old, original);
+  const storage=memory();storage.setItem(C.KEY,JSON.stringify(old));
+  assert.deepEqual(new C.Store(storage).read(), loaded);
+  const invalid=JSON.parse(JSON.stringify(loaded));invalid.packs.feast=null;
+  assert.throws(()=>C.validate(invalid));
+  delete invalid.packs.echoes;assert.throws(()=>C.validate(invalid));
+});
+test('Feast purchases, guarantee and exchange use the agreed pool and persist', () => {
+  const p=C.PACKS.find(p=>p.id==='feast');
+  assert.equal(new Set(p.cards).size,40);
+  assert.deepEqual(p.ur,['fifty_ninth_paia','corridor_student','wonton_ki','could_not_escape_student','chugidesu']);
+  const s=rich();s.packs.feast={total:199,miss:9,tickets:0};
+  const bought=C.purchase(s,'feast',1,fixed(0),'feast-guarantee');
+  assert.equal(bought.cp,s.cp-5);
+  assert.equal(bought.pending.results[0][4].mode,'superRare');
+  assert.ok(bought.pending.results.flat().every(c=>p.cards.includes(c.baseId)));
+  assert.equal(bought.packs.feast.tickets,1);
+  const loaded=C.validate(JSON.parse(JSON.stringify(complete(bought))));
+  for(const id of p.ur) {
+    const copy=JSON.parse(JSON.stringify(loaded));C.exchange(copy,'feast',id);
+    assert.equal(C.validate(copy).owned[id].ultraRare,true);
+  }
+  assert.throws(()=>C.exchange(loaded,'feast','obon_mac'));
+  const batch=C.purchase(rich(),'feast',10,fixed(.99999),'feast-ten');
+  assert.equal(batch.cp,9950);assert.equal(batch.pending.results.flat().length,50);
+  assert.ok(batch.pending.results.flat().every(c=>p.ur.includes(c.baseId)));
+  C.validate(batch);
 });
