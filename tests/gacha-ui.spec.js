@@ -597,7 +597,8 @@ test('Feast 100CP gift is visible, additive and cannot be received again after r
   s.gifts['cp-gift:2026-10-14']={amount:50,label:'',claimed:true};
   await boot(page,s);await page.locator('#homeGiftsButton').click();
   const button=page.locator('[data-gacha-claim="pack-release:feast:2026-11-02"]');
-  await expect(button.locator('..')).toContainText('爆笑フルコース登場記念');
+  await expect(button.locator('..')).toContainText('新パック「Feast of Laughter」登場');
+  await expect(button.locator('..')).not.toContainText('記念');
   await expect(button.locator('..')).toContainText('100 CP');
   expect((await saved(page)).cp).toBe(23);
   await page.screenshot({path:test.info().outputPath('feast-gift.png')});

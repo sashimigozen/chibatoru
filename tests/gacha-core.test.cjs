@@ -209,7 +209,7 @@ test('new Feast pack loads old four-pack saves without changing progress or pend
 test('Feast purchases, guarantee and exchange use the agreed pool and persist', () => {
   const p=C.PACKS.find(p=>p.id==='feast');
   assert.equal(new Set(p.cards).size,40);
-  assert.deepEqual(p.ur,['fifty_ninth_paia','corridor_student','wonton_ki','could_not_escape_student','chugidesu']);
+  assert.deepEqual(p.ur,['fifty_ninth_paia','remote_participant_student','wonton_ki','could_not_escape_student','chugidesu']);
   const s=rich();s.packs.feast={total:199,miss:9,tickets:0};
   const bought=C.purchase(s,'feast',1,fixed(0),'feast-guarantee');
   assert.equal(bought.cp,s.cp-5);
@@ -238,12 +238,27 @@ test('Feast release gift awards 100CP once for new and existing saves, including
     }
     C.migrate(s,[]);C.migrate(s,[]);
     assert.equal(s.cp,37);
-    assert.deepEqual(s.gifts[id],{amount:100,label:'爆笑フルコース登場記念',claimed:false});
+    assert.deepEqual(s.gifts[id],{amount:100,label:'新パック「Feast of Laughter」登場',claimed:false});
     C.claim(s,id);assert.equal(s.cp,137);
+    s.gifts[id].label="爆笑フルコース登場記念";
     s=C.validate(JSON.parse(JSON.stringify(s)));C.migrate(s,[]);C.claim(s,id);
+    assert.equal(s.gifts[id].label,"新パック「Feast of Laughter」登場");
     assert.equal(s.cp,137);assert.deepEqual(s.owned,{yuta:{rare:true}});
     C.claim(s);const total=s.cp;C.migrate(s,[]);C.claim(s);
     assert.equal(s.cp,total);assert.equal(total,existing?137:237);
     assert.throws(()=>C.validate({...s,gifts:{...s.gifts,[id]:{...s.gifts[id],amount:200}}}));
   }
+});
+
+test('Feast UR correction preserves old Corridor URs and pending rewards, but exchanges Remote Participant',()=>{
+  const s=C.purchase(rich(),'feast',1,fixed(.99999),'legacy-feast-ur');
+  s.owned.corridor_student={ultraRare:true};
+  s.pending.results[0][0]={baseId:'corridor_student',mode:'ultraRare'};
+  assert.equal(C.validate(s).owned.corridor_student.ultraRare,true);
+  const p=C.PACKS.find(p=>p.id==='feast');
+  assert.ok(p.cards.includes('corridor_student'));assert.ok(!p.ur.includes('corridor_student'));
+  s.packs.feast={total:200,miss:0,tickets:1};
+  assert.throws(()=>C.exchange(s,'feast','corridor_student'));
+  C.exchange(s,'feast','remote_participant_student');
+  assert.equal(C.validate(s).owned.remote_participant_student.ultraRare,true);
 });
