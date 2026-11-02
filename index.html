@@ -20020,6 +20020,7 @@
     const UPDATE_HISTORY = [
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
         { category: "システム", title: "爆笑フルコース", after: "10月に新規実装された、デッキに直接入れられる40種類を収録しました。URは「59番パイア」「遠くから参加する学生」「万豚記」「逃げられなかった学生」「チュギデス」の5種類です。購入価格・提供割合・開封演出・保証・200パックごとのUR交換は既存パックと共通です。" },
+        { category: "システム", title: "提出編・点数編のチュートリアル", after: "ソロプレイのチュートリアルに提出編・点数編を追加しました。提出の発動条件、カード固有のカウント、撃破による点数獲得、10点での単位取得と強化を通常操作で練習できます。各編にリーサルクイズと超難問も用意しました。練習・一つ戻る・クイズの勝利と再挑戦をテストで確認しました。既存カードの能力値・本文・効果は変更していません。" },
         { category: "システム", title: "100CPプレゼント", after: "100CPを配布します。プレゼント名は英名を使った「新パック『Feast of Laughter』登場」にし、すでに届いているプレゼントにも反映します。プレゼントボックスから1回だけ受け取れます。既存のCP・所持カードは維持します。個別・一括受け取りと再読み込み後の重複防止をテストで確認しました。" },
       ] },
       {"version": "ver.0.38.0", "versioning": "semver", "date": "2026年10月31日", "summary": "通常ルールの手札上限をすべての対戦へ適用しました。プライベートマッチの部屋一覧と対戦準備画面を更新しました。", "changes": [{"category": "システム", "title": "通常ルールの手札上限", "after": "通常ルールのAIバトル・トレーニング・オンライン対戦などに、初期上限9枚を適用します。AIバトルとトレーニングの準備画面にも「−・枚数入力・＋」を追加しました。最低9枚で、空欄は上限なしです。カオス・専攻など、通常以外のルールには適用しません。入りきらないカードは校外エリアへ送ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "プライベートマッチ", "after": "入口を部屋一覧・部屋作成・部屋番号による入室の画面へ更新しました。募集中の部屋を自動更新し、一覧から入室できます。入室後は、プロフィール・デッキ選択・ルール・手札上限を並べた新しい対戦準備画面を使用します。"}, {"category": "システム", "title": "対戦設定と通信の確認", "after": "通常ルールと他ルールの手札上限、AI・トレーニングの設定、部屋一覧の作成・入室・退出・更新、ホストとゲストの準備・対戦開始の自動テストを追加しました。"}, {"category": "システム", "title": "AIの手札管理", "after": "手札の空き枚数と、次ターン開始時の1枚ドロー・終了時の補充を考慮するよう改善しました。可能なら先にカードを使用して空きを作り、溢れるドローや生成の優先度を下げます。回復・除去・勝利につながる行動は、溢れる場合も状況に応じて選びます。手札上限なしの場合の評価と、カードの能力値・本文は変更していません。関連する判断と実際の手札・校外エリアの結果を自動テストで確認しました。"}, {"category": "表示・操作改善", "title": "手札上限の枚数表示", "after": "自分・相手の手札枚数が設定上限に達したとき、枚数表示を赤みのあるオレンジに変更します。手札拡大中にも適用し、上限未満または上限なしでは通常色に戻ります。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "チュギデスの効果による出席", "after": "3枚融合時も、人数選択の画面を挟まず、講義室の光った左右の空き席を直接選んで0〜2人で確定する操作に統一しました。出席後のドロー・回復、AIとオンライン双方の処理を確認しました。カード本文・能力値・効果の対象と人数は変更していません。"}]},
@@ -22965,6 +22966,21 @@
         tutorialItemStep("double_diamond", "opponent", 0, "融合したカードを使おう", "ダブルダイヤモンドクロスを相手の強靭な学生までドラッグしてください。"),
         { id: "fusionUseResult", title: "融合カードの結果", body: "ダブルダイヤモンドクロスの効果が発動しました。\n融合の材料と完成するカードは、それぞれのカード本文を確認しましょう。", focus: "#opponentSeatGrid" }
       ]),
+      submission: abilityTutorialSteps("提出編", "[提出]を持つカードは、使用したとき、場に出たとき、効果で手札から校外エリアへ送られたときに、提出の効果が発動します。\n同じプレイで条件を複数満たしても、発動は1回です。", [
+        tutorialPlayStep("wonton_ki", "万豚記を環境マスに置こう", "万豚記を選び、環境マスを押してください。\n万豚記そのものは[提出]を持ちません。環境マスに置いたときの効果で、[提出]を持つ挨拶シリーズを手札に生成します。", "environment"),
+        { id: "submissionGenerated", title: "提出を持つカードを確認しよう", body: "挨拶シリーズが手札に加わりました。\n万豚記カウントを増やすのは、シリーズのカード本文に書かれた効果です。[提出]共通の効果ではありません。", focus: "#playerHand [data-base-id='wonton_greeting']" },
+        { id: "submitDiscard", title: "効果で校外へ送って提出しよう", body: "ターン終了を押し、万豚記の効果で「万豚記～挨拶シリーズ～」を選んで校外へ送ってください。\n捨てたカードの[提出]が発動します。", action: "endTurn", focus: "#endTurnButton" },
+        { id: "submissionDiscardResult", title: "校外へ送った提出の結果", body: "万豚記カウントが1増え、屋台シリーズの生成と1枚ドローが行われました。\n遅刻ゾーンへの移動や、使用後に校外へ送られる処理では、提出が追加で発動することはありません。", focus: "#playerActiveEffectsButton" },
+        tutorialPlayStep("wonton_stall", "場に出して提出しよう", "屋台シリーズを選び、環境マスに置いてください。\n効果で捨てる場合だけでなく、場に出した場合も[提出]は発動します。", "environment"),
+        { id: "submissionFieldResult", title: "場に出した提出の結果", body: "万豚記カウントが2になり、熱狂シリーズの生成と気力2回復が行われました。\n提出する条件と、その後に発動するカードごとの効果を読み分けましょう。", focus: "#environmentSlot" }
+      ]),
+      points: abilityTutorialSteps("点数編", "自分のターン中、[点数]を持つ自分のカードが相手の出席者を倒すと、点数を1獲得します。\n攻撃・能力のダメージ・直接破壊で獲得でき、相手ターン中の反撃では獲得できません。", [
+        { id: "pointCounter", title: "継続効果の点数を確認しよう", body: "[点数]を持つカードがデッキにあると、継続効果に点数が表示されます。\nここでは点数8から始めます。点数はカードごとではなく、自分全体で共有します。", focus: "#playerActiveEffectsButton" },
+        tutorialPlayStep("short_sleeve_student", "能力で倒して点数を獲得しよう", "半袖の学生を選び、光っている席マスへ出席させてください。\n出席時効果で、体力1の相手の出席者を倒します。", "seat", 1),
+        { id: "pointEffectResult", title: "能力で獲得した点数", body: "半袖の学生の能力で相手を倒し、点数が9になりました。\n[点数]を持たないカードで倒しても加点されません。[点数]を持つピニゲの能力で倒した場合は加点されます。", focus: "#playerActiveEffectsButton" },
+        tutorialAttackStep("long_sleeve_student", "ae_student", "攻撃で倒して単位を取得しよう", "自分の長袖の学生を押し、残っている相手のあえー学生を攻撃してください。\n攻撃で倒すと、10点目を獲得します。"),
+        { id: "unitResult", title: "10点で単位取得", body: "点数が10になり、継続効果の表示が「[単位] 取得済み」に変わりました。点数は10で止まります。\n長袖の学生は攻撃力と体力が+3されました。単位取得後は、各カードの「単位取得済みなら」の効果を確認しましょう。", focus: "#playerSeatGrid [data-base-id='long_sleeve_student']" }
+      ]),
       load: abilityTutorialSteps("負荷編", "手札の[負荷]は紫色、[高負荷]は赤色で表示されます。\n同じカードに[負荷]をもう一度付与すると[高負荷]になります。", [
         { id: "loadHand", title: "負荷と高負荷を確認しよう", body: "[負荷]は、自分のターン終了時に本体へ1ダメージ。\n[高負荷]は2ダメージを与え、戦意も+1されます。高負荷のカードは効果で校外エリアへ捨てられず、さらに負荷を付与することもできません。", focus: "#playerHand" },
         tutorialPlayStep("white_student", "負荷を高負荷にしよう", "白い学生を選び、光っている席マスに出席させてください。\n相手の手札にある[負荷]を持つカードへ、さらに[負荷]を付与します。"),
@@ -22988,7 +23004,9 @@
       { id: "drain", title: "吸血編", description: "吸血と体力の回復" },
       { id: "evolution", title: "進化編", description: "進化・特殊進化" },
       { id: "fusion", title: "融合編", description: "融合の仕組み" },
-      { id: "load", title: "負荷編", description: "負荷・高負荷" }
+      { id: "load", title: "負荷編", description: "負荷・高負荷" },
+      { id: "submission", title: "提出編", description: "提出の発動条件とカード固有の効果" },
+      { id: "points", title: "点数編", description: "点数の獲得・単位取得と能力の強化" }
     ].map((chapter) => ({ ...chapter, steps: chapter.steps || TUTORIAL_ABILITY_STEPS[chapter.id] }));
 
     const TUTORIAL_OVERVIEWS = {
@@ -23004,6 +23022,8 @@
       drain: { card: "apprentice_vampire", text: "[吸血]によるダメージと体力の回復を練習します。" },
       evolution: { card: "dark_yuta", text: "[進化]・[特殊進化]の操作と、進化前から引き継ぐ状態を確認します。" },
       fusion: { card: "double_diamond", text: "手札のカードを[融合]し、生成されたカードを使う操作を練習します。" },
+      submission: { card: "wonton_greeting", text: "[提出]を持つカードを場に出す場合と、効果で手札から校外へ送る場合を練習し、万豚記カウントと固有効果を確認します。" },
+      points: { card: "long_sleeve_student", text: "[点数]を持つカードの能力と攻撃で相手を倒し、10点での単位取得とカードの強化を確認します。" },
       load: { card: "white_student", text: "手札の[負荷]・[高負荷]と、ターン開始時に受けるダメージを確認します。" }
     };
 
@@ -55934,6 +55954,9 @@
         drain: { board: [["player", "apprentice_vampire", "seat", 4, { damage: 1 }], ["opponent", "super_ae_student", "seat", 0]] },
         evolution: { hand: ["dark_yuta", "single_cell"], board: [["player", "yuta", "seat", 4, { damage: 1 }], ["player", "single_cell", "seat", 0]] },
         fusion: { hand: ["ruler", "ruler"], board: [["opponent", "strong_student", "seat", 0]] },
+        submission: { hand: ["wonton_ki"], playerLife: 16, opponentLife: 20 },
+        points: { hand: ["short_sleeve_student"], pointScore: 8, opponentLife: 20,
+          board: [["player", "long_sleeve_student", "seat", 4], ["opponent", "ae_student", "seat", 0, { damage: 3 }], ["opponent", "ae_student", "seat", 2, { damage: 3 }]] },
         load: { hand: ["white_student", "ruler", "cafeteria"], opponentLife: 4 }
       };
       const setup = setups[chapterId];
@@ -55942,6 +55965,12 @@
       const opponent = state.players.opponent;
       player.maxWill = player.will = 10;
       player.life = setup.playerLife ?? 20;
+      if (chapterId === "submission") player.submissionCounters = { "万豚記カウント": 0 };
+      if (chapterId === "points") {
+        player.pointScore = setup.pointScore;
+        player.pointSystemActive = true;
+        player.deck = createTestDeck("player", "short_sleeve_student", ["short_sleeve_student", "long_sleeve_student"]);
+      }
       opponent.life = setup.opponentLife ?? 2;
       player.hand = (setup.hand || ["general_student", "ruler"]).map((baseId) => createCardFromBase(baseId, "player"));
       // 待機中の相手は通常のカードテストと同じくターンを返す。
@@ -55966,6 +55995,10 @@
     // 超難問の解答は表示データへ入れず、通常操作の回帰テスト側で管理する。
     // 傷・出席したターン・遅刻待機は通常対戦でも起きる状態。カード固有の効果は変更しない。
     const TUTORIAL_EXPERT_QUIZZES = {
+      submission: { will: 4, life: 8, submissionCount: 3, hand: ["male_highball", "wonton_graduation", "grudge", "general_student"],
+        board: [["opponent", "super_ae_student", "seat", 0]] },
+      points: { will: 4, life: 10, pointScore: 8, hand: ["sports_spectator_student", "grudge", "long_sleeve_student"],
+        board: [["player", "long_sleeve_student", "seat", 4], ["opponent", "ae_student", "seat", 0, { damage: 3 }], ["opponent", "ae_student", "seat", 2, { damage: 3 }]] },
       placement: { will: 10, life: 13, hand: ["destructive_lie", "student_comedy", "ruler", "ruler", "ruler", "bento"],
         board: [["player", "yuta", "seat", 4], ...[0, 2, 6, 8].map(i => ["player", "general_student", "seat", i]),
           ...[1, 3, 5, 7].map(i => ["player", "wood_gitch", "seat", i, { justAttended: true }]),
@@ -56017,6 +56050,9 @@
       // 既存カードだけで解ける固定問題。手札の末尾は、このターンの勝利に不要な引っ掛け1枚。
       // ドロー先を推測しなくてよいよう、解答に必要なカードはすべて初期手札・盤面に置く。
       const quizzes = {
+        submission: { will: 3, life: 6, submissionCount: 3, hand: ["female_highball", "wonton_graduation", "general_student"] },
+        points: { will: 2, life: 8, pointScore: 9, hand: ["short_sleeve_student", "long_sleeve_student", "general_student"],
+          board: [["player", "long_sleeve_student", "seat", 4], ["opponent", "ae_student", "seat", 0, { damage: 3 }]] },
         placement: { will: 5, life: 6, hand: ["student_comedy", "general_teacher", "general_student"],
           board: [["player", "general_student", "seat", 3], ["player", "general_student", "seat", 5]] },
         lecture: { will: 3, life: 7, hand: ["general_teacher", "general_student", "diligent_student"],
@@ -56055,6 +56091,11 @@
       player.maxWill = stage === "expert" ? 10 : quiz.will;
       player.will = quiz.will;
       opponent.life = quiz.life;
+      if (quiz.submissionCount !== undefined) player.submissionCounters = { "万豚記カウント": quiz.submissionCount };
+      if (quiz.pointScore !== undefined) {
+        player.pointScore = quiz.pointScore;
+        player.pointSystemActive = true;
+      }
       if (quiz.environment) state.environment = makeBoardCard(createCardFromBase(quiz.environment, "player"));
       player.board = { seats: Array(9).fill(null), teacher: null };
       opponent.board = { seats: Array(9).fill(null), teacher: null };

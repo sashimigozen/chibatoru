@@ -79,10 +79,10 @@ test("矢印で3ステージを循環でき、始めるを押した時だけ選�
   await expect(page.locator("#tutorialCoachTitle")).toHaveText("基本編：練習を始めよう");
 });
 
-test("全13編の選択・概要・カード・ステージ数が一致する", async ({ page }) => {
+test("全15編の選択・概要・カード・ステージ数が一致する", async ({ page }) => {
   await openList(page);
   const chapters = await page.locator("[data-tutorial-chapter]").evaluateAll(buttons => buttons.map(button => ({ id: button.dataset.tutorialChapter, title: button.textContent.trim().replace(/^\d+\. /, "") })));
-  expect(chapters).toHaveLength(13);
+  expect(chapters).toHaveLength(15);
   for (const chapter of chapters) {
     await page.locator(`[data-tutorial-chapter="${chapter.id}"]`).click();
     await expect(page.locator("#tutorialDetailTitle")).toHaveText(`${chapter.title} 1/${chapter.id === "basic" ? 1 : 3}`);

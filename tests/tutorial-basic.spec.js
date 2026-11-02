@@ -3,7 +3,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const chapterNames = ["基本編", "配置編", "講義編", "陽気編", "注目編", "遅刻編", "眠気編", "余裕編", "装備編", "吸血編", "進化編", "融合編", "負荷編"];
+const chapterNames = ["基本編", "配置編", "講義編", "陽気編", "注目編", "遅刻編", "眠気編", "余裕編", "装備編", "吸血編", "進化編", "融合編", "負荷編", "提出編", "点数編"];
 const screenGuideTargets = [
   ["講義室", "#playerBoardPanel"],
   ["環境マス", "#environmentSlot"],
@@ -74,7 +74,7 @@ test("ソロ画面のチュートリアルは最後に表示し、一覧を開�
   await expect(page.locator("#tutorialScreen")).toBeVisible();
 });
 
-test("13編を合意した順番で表示し、全編を開始できる", async ({ page }) => {
+test("15編を合意した順番で表示し、全編を開始できる", async ({ page }) => {
   await openList(page);
   await expect(page.locator("#tutorialChapterList .solo-mode-main")).toHaveText(chapterNames.map((name, index) => `${index + 1}. ${name}`));
   await expect(page.locator('[data-tutorial-chapter="basic"]')).toBeEnabled();
