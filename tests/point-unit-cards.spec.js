@@ -13,7 +13,7 @@ test.beforeEach(async({page})=>{await page.goto(url);await page.evaluate(()=>{
  });});
 test('7枚の定義、登録、管理ログ、本文を同期',async({page})=>{
  const r=await page.evaluate(ids=>ids.map(id=>({id,base:CARD_BASES[id],direct:DIRECT_DECK_CARD_IDS.has(id),text:cardRulesText(createCardFromBase(id,'player'))})),ids);const catalog=require('../server/card-catalog.json');
- const stats=[[2,1,1],[3,0,0],[7,4,4],[5,2,2],[4,1,3],[5,2,1],[9,4,5]];
+ const stats=[[2,1,1],[3,0,0],[7,3,3],[5,2,2],[4,1,3],[5,2,1],[9,4,5]];
  for(const [i,c] of r.entries()){
   expect([c.base.cost,c.base.attack,c.base.hp]).toEqual(stats[i]);expect(c.direct).toBe(true);expect(catalog.names[c.id]).toBe(c.base.name);expect(catalog.display[c.id].cost).toBe(c.base.cost);
   const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8').split('\n').find(l=>l.trimStart().startsWith(c.id+':')).trim().replace(/^[^:]+: /,'').replace(/,$/,''));

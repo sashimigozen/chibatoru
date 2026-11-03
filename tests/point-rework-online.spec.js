@@ -50,7 +50,7 @@ for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide=
     const expected=id==='sports_spectator_student'?[score===10?5:1,score===10?5:1,score===10?3:5,10]:id==='lucky_man'?[2,2,score===10?1:4,score===10?14:12]:id==='long_sleeve_student'?[4,6,7,10]:id==='secretly_mocked_student'?[1,1,1,10]:null;
     if(expected)await expect.poll(()=>p.evaluate(({side,id})=>{const own=state.players[side],other=state.players[oppositeSide(side)],c=own.board.seats[id==='secretly_mocked_student'?8:4];return c?[c.attack,c.currentHp,other.board.seats[0]?.currentHp,own.life]:[];},{side,id})).toEqual(expected);
     if(id==='pinige')await expect.poll(()=>p.evaluate(side=>[state.players[side].pointScore,listBoardRefs(oppositeSide(side)).length,playerActiveEffectLines(side)[0]],side)).toEqual([10,0,'[単位] 取得済み']);
-    if(id==='gecko_carrier_student')await expect.poll(()=>p.evaluate(side=>[3,4,5].map(i=>{const c=state.players[side].board.seats[i];return [c?.attack,c?.currentHp,c?hasKeyword(c,'陽気'):false];}),side)).toEqual(Array(3).fill([4,4,true]));
+    if(id==='gecko_carrier_student')await expect.poll(()=>p.evaluate(side=>[3,4,5].map(i=>{const c=state.players[side].board.seats[i];return [c?.attack,c?.currentHp,c?hasKeyword(c,'陽気'):false];}),side)).toEqual(Array(3).fill([3,3,true]));
     if(id==='could_not_escape_student')await expect.poll(()=>p.evaluate(side=>[listBoardRefs(oppositeSide(side)).length,...state.players[side].board.seats.slice(0,3).map(c=>c?.attack)],side)).toEqual([0,2,2,2]);
     if(id==='secretly_mocked_student')expect(await p.evaluate(side=>[state.players[side].board.seats[8].name,isOneHpAttackLocked(state.players[oppositeSide(side)].board.seats[0])],side)).toEqual(['謎多き女学生',true]);
    }
