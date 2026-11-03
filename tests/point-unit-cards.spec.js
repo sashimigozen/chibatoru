@@ -73,8 +73,8 @@ for(const score of [0,10])test(`ピニゲは${score===10?3:2}択、重複なし�
  await choose(page,score===10?[4,2,1]:[4,1]);await settle(page);
  expect(await page.evaluate(()=>[state.players.player.will,state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId).sort(),listBoardRefs('opponent').length])).toEqual(score===10?[18,10,['long_sleeve_student','short_sleeve_student'],0]:[18,1,[],0]);
 });
-test('ピニゲ③で1点と同名補充、②でもピニゲを引く',async({page})=>{
- for(const mode of [2,3]){await page.evaluate(()=>{state.players.player.deck=[createCardFromBase('pinige','player')];const c=createCardFromBase('pinige','player');state.players.player.hand=[c];castImmediateItem('player',c,false);});await choose(page,[mode,1]);await settle(page);expect(await page.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(['pinige']);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(mode===2?0:1);}
+test('ピニゲ③は加点せず同名補充、②でもピニゲを引く',async({page})=>{
+ for(const mode of [2,3]){await page.evaluate(()=>{state.players.player.deck=[createCardFromBase('pinige','player')];const c=createCardFromBase('pinige','player');state.players.player.hand=[c];castImmediateItem('player',c,false);});await choose(page,[mode,1]);await settle(page);expect(await page.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(['pinige']);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(0);}
 });
 test('長袖は陽気、通常操作で2回攻撃し3回目は禁止',async({page})=>{
  await attend(page,'long_sleeve_student');await settle(page);expect(await page.evaluate(()=>{const c=state.players.player.board.seats[4];const before=cardAttacksUsedThisTurn(c);markCardAttackUsed(c);const first=cardAttacksUsedThisTurn(c);markCardAttackUsed(c);return [hasKeyword(c,'陽気'),before,first,cardAttacksUsedThisTurn(c),c.hasAttacked];})).toEqual([true,0,1,2,true]);
@@ -119,7 +119,7 @@ for(const mode of [3,4])test(`ゲストのピニゲ効果${mode}の点数と手�
   const snap=await host.evaluate(()=>{state.currentSide='opponent';state.players.opponent.pointScore=9;state.players.opponent.pointSystemActive=true;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('general_student','player'));state.players.opponent.hand=[createCardFromBase('pinige','opponent')];state.players.opponent.deck=[createCardFromBase('pinige','opponent')];return onlineCreateSnapshot();});
   await guest.evaluate(snapshot=>onlineHandleMessage({type:'gameState',protocol:ONLINE_PROTOCOL_VERSION,snapshot}),snap);await expect.poll(()=>guest.evaluate(()=>battlePresentationBusy())).toBe(false);
   await guest.evaluate(()=>beginItemUse(state.players.player.hand[0]));await relay(guest,host);await expect.poll(()=>host.evaluate(()=>state.pendingRemoteHandTrim?.mode)).toBe('fusion_effect_choice');await relay(host,guest);await choose(guest,[mode,1]);await relay(guest,host);await settle(host);await relay(host,guest);
-  expect(await host.evaluate(()=>[state.players.opponent.pointScore,listBoardRefs('player').length])).toEqual(mode===3?[10,1]:[10,0]);expect(await guest.evaluate(()=>[state.players.player.pointScore,playerActiveEffectLines('player')[0],listBoardRefs('opponent').length])).toEqual(mode===3?[10,'[単位] 取得済み',1]:[10,'[単位] 取得済み',0]);if(mode===3)expect(await guest.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(['pinige']);
+  expect(await host.evaluate(()=>[state.players.opponent.pointScore,listBoardRefs('player').length])).toEqual(mode===3?[9,1]:[10,0]);expect(await guest.evaluate(()=>[state.players.player.pointScore,playerActiveEffectLines('player')[0],listBoardRefs('opponent').length])).toEqual(mode===3?[9,'[点数] 9/10',1]:[10,'[単位] 取得済み',0]);if(mode===3)expect(await guest.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(['pinige']);
  }finally{await guest.close();}
 });
 test('ゲストの単位スナイパーで本体を選び、同じ対象のダメージが同期する',async({page:host,browser})=>{
@@ -139,7 +139,7 @@ test('ゲストの単位スナイパーで本体を選び、同じ対象のダ�
 for(const id of ids)test(`カードテストの通常操作で単位を取得して強化後を試せる ${id}`,async({page})=>{
  await page.goto(url);await page.locator('#homeNavDeckButton').click();await page.locator('[data-case-view="cards"]').click();await page.locator('#cardsCatalogSearch').fill(await page.evaluate(id=>CARD_BASES[id].name,id));await page.locator(`[data-catalog-card="${id}"]`).click();await page.locator('#cardTestStartButton').click();
  await page.evaluate(()=>{scheduleOpponentAI=()=>{};state.training.skipAnimations=true;});await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
- if(id==='pinige'){for(let i=0;i<2;i++){await page.evaluate(()=>castImmediateItem('player',state.players.player.hand.find(c=>c.baseId==='pinige'),false));await choose(page,[3,1]);await settle(page);}}
+ if(id==='pinige'){for(let i=0;i<2;i++){await page.evaluate(()=>castImmediateItem('player',state.players.player.hand.find(c=>c.baseId==='pinige'),false));await choose(page,[3,4]);await settle(page);}}
  for(const target of id==='pinige'?[]:[0]){await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);await page.evaluate(async target=>{handleBoardCardClick('player','seat',6);await attackCard('opponent','seat',target);},target);await settle(page);}
  expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(10);
  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
@@ -160,27 +160,27 @@ for(const id of ids)test(`カードテストの通常操作で単位を取得し
  if(id==='long_sleeve_student')await page.screenshot({path:test.info().outputPath('point-unit-battle-desktop.png')});
 });
 
-for(const score of [0,7,8,9,10])test(`ピニゲ③は1点を獲得し10点で止まり、その後もサーチする ${score}`,async({page})=>{
+for(const score of [0,7,8,9,10])test(`ピニゲ③は点数を変えず、単位取得前後ともサーチだけを行う ${score}`,async({page})=>{
  await page.evaluate(score=>{state.players.player.pointScore=score;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('long_sleeve_student','player'));state.players.player.deck=[createCardFromBase('pinige','player')];const item=createCardFromBase('pinige','player');state.players.player.hand=[item];castImmediateItem('player',item,false);},score);
  await choose(page,score===10?[3,1,2]:[3,1]);await settle(page);
- expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId),state.players.player.board.seats[0].attack])).toEqual([Math.min(10,score+1),['pinige'],score>=9?4:1]);
+ expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId),state.players.player.board.seats[0].attack])).toEqual([score,['pinige'],score>=10?4:1]);
 });
-for(const score of [0,8])test(`ピニゲ③の1点でも福男の旧継続効果は発動しない ${score}`,async({page})=>{
+for(const score of [0,8])test(`ピニゲ③は加点も福男の旧継続効果も発動しない ${score}`,async({page})=>{
  await page.evaluate(score=>{state.players.player.pointScore=score;state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('lucky_man','player'));state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('strong_student','opponent'));const item=createCardFromBase('pinige','player');state.players.player.hand=[item];castImmediateItem('player',item,false);},score);await choose(page,[3,1]);await settle(page);
- expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,state.players.opponent.board.seats[0].currentHp])).toEqual(score===8?[9,10,7]:[1,10,7]);
+ expect(await page.evaluate(()=>[state.players.player.pointScore,state.players.player.life,state.players.opponent.board.seats[0].currentHp])).toEqual([score,10,7]);
 });
-test('ピニゲ③はサーチできなくても加点、単位取得済みではサーチだけ、単位取得後は④で撃破しても10点で止まる',async({page})=>{
+test('ピニゲ③は9点でも単位を取得せず、④の撃破で単位を取得する',async({page})=>{
  await page.evaluate(()=>{state.players.player.pointScore=9;state.players.player.deck=[createCardFromBase('pinige','player')];state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('general_student','opponent'));const item=createCardFromBase('pinige','player');state.players.player.hand=[item];castImmediateItem('player',item,false);});await choose(page,[3,1]);await settle(page);
  // A mid-effect unit acquisition does not add choices to the current cast.
- expect(await page.evaluate(()=>[state.players.player.pointScore,state.pendingCardChoice,state.players.opponent.board.seats[0].currentHp])).toEqual([10,null,2]);
- await page.evaluate(()=>castImmediateItem('player',state.players.player.hand[0],false));await choose(page,[4,3,1]);await settle(page);expect(await page.evaluate(()=>[state.players.player.pointScore,listBoardRefs('opponent').length,state.players.player.hand.length])).toEqual([10,0,0]);
+ expect(await page.evaluate(()=>[state.players.player.pointScore,state.pendingCardChoice,state.players.opponent.board.seats[0].currentHp])).toEqual([9,null,2]);
+ await page.evaluate(()=>castImmediateItem('player',state.players.player.hand[0],false));await choose(page,[4,3]);await settle(page);expect(await page.evaluate(()=>[state.players.player.pointScore,listBoardRefs('opponent').length,state.players.player.hand.length])).toEqual([10,0,0]);
 });
-test('CPUは9点なら③による単位取得を評価する',async({page})=>{
- await page.evaluate(()=>{state.currentSide='opponent';state.players.opponent.pointScore=9;const item=createCardFromBase('pinige','opponent');state.players.opponent.hand=[item];state.players.opponent.deck=[createCardFromBase('pinige','opponent')];castImmediateItem('opponent',item,false);});await settle(page);expect(await page.evaluate(()=>[state.players.opponent.pointScore,state.players.opponent.hand.map(c=>c.baseId)])).toEqual([10,['pinige']]);
+test('CPUも③では加点せずピニゲを引く',async({page})=>{
+ await page.evaluate(()=>{state.currentSide='opponent';state.players.opponent.pointScore=9;const item=createCardFromBase('pinige','opponent');state.players.opponent.hand=[item];state.players.opponent.deck=[createCardFromBase('pinige','opponent')];castImmediateItem('opponent',item,false);});await settle(page);expect(await page.evaluate(()=>[state.players.opponent.pointScore,state.players.opponent.hand.map(c=>c.baseId)])).toEqual([9,['pinige']]);
 });
-test('実際のカードテストから③を2回使い、単位を取得して3択を使える',async({page})=>{
+test('実際のカードテストから③と④を2回使い、単位を取得して3択を使える',async({page})=>{
  await page.goto(url);await page.locator('#homeNavDeckButton').click();await page.locator('[data-case-view="cards"]').click();await page.locator('#cardsCatalogSearch').fill('ピニゲ');await page.locator('[data-catalog-card="pinige"]').click();await page.locator('#cardTestStartButton').click();await page.evaluate(()=>{scheduleOpponentAI=()=>{};state.training.skipAnimations=true;});await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
- for(const score of [9,10]){await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);await page.evaluate(()=>beginItemUse(state.players.player.hand.find(c=>c.baseId==='pinige')));await choose(page,[3,1]);await settle(page);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(score);}
+ for(const score of [9,10]){await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);await page.evaluate(()=>beginItemUse(state.players.player.hand.find(c=>c.baseId==='pinige')));await choose(page,[3,4]);await settle(page);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(score);}
  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);await page.evaluate(()=>beginItemUse(state.players.player.hand.find(c=>c.baseId==='pinige')));await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.max)).toBe(3);await choose(page,[4,2,1]);await settle(page);await page.screenshot({path:test.info().outputPath('pinige-unit.png')});
 });
 
