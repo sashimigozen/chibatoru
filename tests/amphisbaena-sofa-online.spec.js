@@ -38,7 +38,7 @@ for(const actorSide of ['player','opponent'])test(`ソファのホスト・ゲ�
    await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(seq);for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);
    await actor.evaluate(()=>beginItemUse(state.players.player.hand[0]));if(will===7)await choose('sofa_modes',1);await choose('point_destroy',2);if(will===8)await choose('sofa_deck',2);
    await expect.poll(()=>host.evaluate(()=>fusionTasksBusy())).toBe(false);
-   for(const p of [host,guest]){const side=p===host?actorSide:actorSide==='player'?'opponent':'player';await expect.poll(()=>p.evaluate(side=>({life:state.players[side].life,will:state.players[side].will,deck:state.players[side].deck.length,enemy:listBoardRefs(oppositeSide(side)).length,trash:state.players[side].trash.length}),side)).toEqual({life:will===8?12:8,will:will===8?0:2,deck:will===8?2:4,enemy:0,trash:will===8?3:1});}
+   for(const p of [host,guest]){const side=p===host?actorSide:actorSide==='player'?'opponent':'player';await expect.poll(()=>p.evaluate(side=>({life:state.players[side].life,will:state.players[side].will,deck:state.players[side].deck.length,enemy:listBoardRefs(oppositeSide(side)).length,trash:state.players[side].trash.length}),side)).toEqual({life:will===8?12:8,will:will===8?0:3,deck:will===8?2:4,enemy:0,trash:will===8?3:1});}
   }
   expect(errors).toEqual([]);
  }finally{await Promise.all(contexts.map(c=>c.close()));}
