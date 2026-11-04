@@ -19548,6 +19548,7 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
+      amphisbaena_sofa: {"name": "アンフィスバエナソファ", "type": "item", "cost": 5, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       tomoyo_mou: {"name": "友よ、もう", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       shukii: {"name": "しゅきー", "type": "item", "cost": 1, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       past_campus: {"name": "過去のキャンパス", "type": "environment", "cost": 2, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common"},
@@ -19961,6 +19962,9 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("amphisbaena_sofa");
+    SPECIALTY_CARD_IDS.common.push("amphisbaena_sofa");
+    IMMEDIATE_ITEM_IDS.push("amphisbaena_sofa");
     const POINT_CARD_IDS = ["sports_spectator_student", "secretly_mocked_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "long_sleeve_student", "group_sniper", "could_not_escape_student"];
     ALL_DECK_IDS.push(...POINT_CARD_IDS);
     SPECIALTY_CARD_IDS.common.push(...POINT_CARD_IDS);
@@ -20018,6 +20022,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意5／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
         { category: "システム", title: "爆笑フルコース", after: "10月に新規実装された、デッキに直接入れられる40種類を収録しました。URは「59番パイア」「遠くから参加する学生」「万豚記」「逃げられなかった学生」「チュギデス」の5種類です。購入価格・提供割合・開封演出・保証・200パックごとのUR交換は既存パックと共通です。" },
@@ -32066,6 +32071,7 @@
         }));
         return !isDeckToHandLocked() && ai.deck.length > 0 ? Math.max(0, 12 - value * 1.2) : 0;
       }
+      if (item.baseId === "amphisbaena_sofa") return scoreAiAmphisbaenaSofa(side, item) || -Infinity;
       if (item.baseId === "king_ghidorah_bed") return planAiKingGhidorahBed(item, side).score || -Infinity;
       if (item.baseId === "yabe") {
         if (!targets.length) return -Infinity;
@@ -33796,6 +33802,7 @@
       const fusionBatchScore = scoreAiFusionBatchItem("opponent",item);
       if (fusionBatchScore !== null) return fusionBatchScore;
       if (arePlayedEffectsSuppressed("opponent")) return 0;
+      if (item?.baseId === "amphisbaena_sofa") return scoreAiAmphisbaenaSofa("opponent", item);
       if (item?.baseId === "pinige") return pointModeCards("opponent",item).map(c=>c.choiceScore).sort((a,b)=>b-a).slice(0,hasAcquiredUnit("opponent") ? 3 : 2).reduce((a,b)=>a+b,0) - 2;
       if (["female_highball", "male_highball"].includes(item?.baseId)) {
         if (!canUseHighball("opponent", item)) return 0;
@@ -38794,7 +38801,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
@@ -38815,6 +38822,9 @@
         options.context.targetOwner = side;
         options.message = `出席させる空き席マスを${max}つまで直接選んでください。0人でも確定できます。`;
       }
+      if (kind === "sofa_modes") options.message = "使用する効果を1つ選んでください。";
+      if (kind === "sofa_deck") options.message = `デッキから校外エリアへ送るカードを${max}枚選んでください。`;
+      if (kind === "point_destroy" && source.baseId === "amphisbaena_sofa") options.message = `破壊する相手の出席者を${max}人、盤面から指名してください。`;
       if (kind === "two_achievers") options.message = "次の効果から1つを選んでください。";
       if (side === "opponent" && isOnlineHost()) {
         state.pendingRemoteHandTrim = { mode: "fusion_effect_choice", requestId, sourceSide: side };
@@ -41410,6 +41420,81 @@
         }
         if (unit) for (const index of [0,1,2]) if (isBoardSlotOpen(side,"seat",index)) pointSummon(side,"ae_student",index,{attackBonus:2});
       });
+    }
+
+    function amphisbaenaSofaModes(side, item) {
+      const own = state.players[side];
+      const damage = previewFinalDamageToLife(side, 4, item);
+      const removal = effectTargetEntries(side, oppositeSide(side))
+        .map(entry => scoreAiNonCombatEffectTarget(side, item, entry, { destroy: true }))
+        .sort((a, b) => b - a).slice(0, 2).reduce((sum, value) => sum + value, 0);
+      const selfRisk = damage * (own.life <= 8 ? 3 : 1.5);
+      const healing = Math.min(4, Math.max(0, currentLifeCap(side) - own.life)) * 2;
+      const deckRisk = own.deck.length <= 4 ? 12 : own.deck.length <= 8 ? 4 : 0;
+      return [
+        { instanceId: "sofa-mode-1", name: "2人を破壊し、自分本体に4ダメージ", sofaMode: 1,
+          choiceScore: own.life <= damage ? -10000 : removal - selfRisk,
+          effect: "相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。" },
+        { instanceId: "sofa-mode-2", name: "デッキの2枚を送り、気力4回復", sofaMode: 2,
+          choiceScore: healing - deckRisk,
+          effect: "自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。" }
+      ].map(choice => ({ ...choice, type: "item", noCost: true, twoAchieversChoice: true }));
+    }
+
+    function scoreAiAmphisbaenaSofa(side, item) {
+      const modes = amphisbaenaSofaModes(side, item);
+      if (state.players[side].will < 8) return Math.max(0, ...modes.map(mode => mode.choiceScore));
+      if (state.players[side].life <= previewFinalDamageToLife(side, 4, item)) return 0;
+      // Recovery happens after the self-damage, including when currently at full life.
+      const recoveryAfterDamage = Math.min(4, Math.max(0,
+        currentLifeCap(side) - state.players[side].life + previewFinalDamageToLife(side, 4, item))) * 2;
+      const recoveryBeforeDamage = Math.min(4, Math.max(0, currentLifeCap(side) - state.players[side].life)) * 2;
+      return Math.max(0, modes[0].choiceScore + modes[1].choiceScore + recoveryAfterDamage - recoveryBeforeDamage);
+    }
+
+    function castAmphisbaenaSofa(side, item, renderAfter = true) {
+      if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
+      const all = state.players[side].will >= 8;
+      const token = state.preBattleToken;
+      if (!payForItem(side, item)) return false;
+      moveHandCardToTrash(side, item);
+      clearSelections();
+      queueFusionEffect(async () => {
+        const modes = all ? amphisbaenaSofaModes(side, item)
+          : await chooseFusionEffectCards(side, item, amphisbaenaSofaModes(side, item), 1, "sofa_modes", { required: true });
+        for (const mode of modes) {
+          if (token !== state.preBattleToken || state.gameOver) return;
+          if (mode.sofaMode === 1) {
+            const cards = effectTargetEntries(side, oppositeSide(side))
+              .map(({ card, ref }) => ({ ...card, choiceRef: ref }));
+            const selected = await chooseFusionEffectCards(side, item, cards, 2, "point_destroy", { required: true });
+            if (token !== state.preBattleToken || state.gameOver) return;
+            const targets = selected.filter(card => getBoardCardFromRef(card.choiceRef)?.instanceId === card.instanceId
+              && isAllowedEffectTarget(side, getBoardCardFromRef(card.choiceRef)));
+            const destroyed = destroyBoardRefsToTrash(targets.map(card => card.choiceRef), { reason: item.name });
+            cleanupDestroyedCards(); applyBoardAuras();
+            if (token !== state.preBattleToken || state.gameOver) return;
+            damagePlayer(side, 4, item);
+            addLog(`${item.name}の効果1：相手の出席者${destroyed.length}人を破壊し、自分本体に4ダメージを与えました。`);
+            checkLifeVictory();
+          } else {
+            const cards = sortCardsByCostForChoice(state.players[side].deck, "asc").map(card => ({ ...card,
+              choiceScore: -trainingAiChoiceCardScore(side, card) - aiDeckPlanCardBonus(side, card) }));
+            const selected = await chooseFusionEffectCards(side, item, cards, 2, "sofa_deck", { required: true });
+            if (token !== state.preBattleToken || state.gameOver) return;
+            const ids = new Set(selected.map(card => card.instanceId));
+            const sent = state.players[side].deck.filter(card => ids.has(card.instanceId));
+            state.players[side].deck = state.players[side].deck.filter(card => !ids.has(card.instanceId));
+            for (const card of sent) moveToTrash(side, card, { sourceZone: "deck" });
+            healPlayer(side, 4, item);
+            addLog(`${item.name}の効果2：デッキから${sent.map(card => card.name).join("・") || "0枚"}を校外エリアへ送り、気力を4回復しました。`);
+          }
+          render();
+          if (isOnlineHost()) onlineBroadcastState(true);
+        }
+      });
+      if (renderAfter) render();
+      return true;
     }
 
     function castPinige(side, item, renderAfter = true) {
@@ -44426,6 +44511,7 @@
         if(target){target.cost=Math.max(0,target.cost-1);addLog(`${item.name}の効果：デッキの食堂1枚の戦意を-1しました。`);}
         moveHandCardToTrash(side,item);clearSelections();if(renderAfter)render();return true;
       }
+      if (item?.baseId === "amphisbaena_sofa") return castAmphisbaenaSofa(side, item, renderAfter);
       if (item?.baseId === "pinige") return castPinige(side, item, renderAfter);
       if (["female_highball", "male_highball"].includes(item?.baseId)) return castHighball(side, item, renderAfter);
       if (item?.baseId === "obon_mac" && !canUseObonMac(side)) {
@@ -52703,7 +52789,7 @@
         return applyDrawDiscount(10 + highLoadIncrease);
       }
       if (inBattle
-        && card.baseId === "king_ghidorah_bed"
+        && ["king_ghidorah_bed", "amphisbaena_sofa"].includes(card.baseId)
         && card.owner
         && state.players[card.owner]?.will >= 8) {
         return applyDrawDiscount(8 + highLoadIncrease);
@@ -54760,6 +54846,7 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      amphisbaena_sofa: {"hand": ["amphisbaena_sofa", "amphisbaena_sofa", "amphisbaena_sofa", "general_student", "onigiri_draw"], "life": 12, "will": 8, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [4, "general_student"]], "teacher": "general_teacher"}, "deck": ["general_student", "onigiri_draw", "amphisbaena_sofa", "classroom", "strong_student", "general_teacher", "general_student", "onigiri_draw", "classroom"], "enemyHand": ["general_student"], "note": "残り戦意8から開始します。そのまま使うと2人破壊→自傷4→デッキの2枚を校外へ送る→4回復を試せます。先に一般学生を出席させると残り戦意6になり、戦意5で片方を選べます。デッキの残り順は変わりません。"},
       tomoyo_mou: {"hand": ["tomoyo_mou", "general_student", "ruler", "onigiri_draw", "shukii"], "will": 4, "life": 12, "deck": ["tomoyo_mou", "general_student", "tomoyo_mou", "past_campus"], "note": "戦意4で2人を出席させ、低戦意の手札から自動融合する様子を試せます。手札が空でも使用可能です。次のターン以降に戦意8で使うと4人になります。出席先は席マスを直接選びます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       rear_queen: {"hand": ["general_student", "ruler", "tomoyo_mou"], "will": 12, "life": 12, "deck": ["rear_queen", "general_student", "shukii", "past_campus"], "note": "1枚ずつ融合でき、合計2枚で出席できます。カード確認の融合するか、手札同士のドラッグで融合します。中央列に出席させると左右の空き席から爆発する学生の出席先を選べます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       illegal_cafeteria: {"hand": ["illegal_cafeteria", "cafeteria", "onigiri_draw"], "will": 12, "life": 12, "deck": ["cafeteria", "onigiri_draw", "cafeteria", "general_student"], "note": "持ち物として使用するとデッキの「食堂」1枚だけの戦意が1下がります。手札の食堂や他の食堂カテゴリーのカードには影響しません。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
@@ -57360,6 +57447,7 @@
         sports_spectator_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
+        amphisbaena_sofa: "2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。",
         pinige: "[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。",
         gecko_carrier_student: "[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
         lucky_man: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。\n単位取得済みなら、代わりに次の効果を2回行う。\n「相手の出席者1人を指名し、3ダメージを与える。その後、自分の気力を2回復する。」",

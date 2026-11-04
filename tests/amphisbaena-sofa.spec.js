@@ -1,0 +1,38 @@
+const {test,expect}=require('@playwright/test');
+const {pathToFileURL}=require('node:url');const path=require('node:path');const fs=require('node:fs');
+const id='amphisbaena_sofa',url=pathToFileURL(path.join(__dirname,'../index.html')).href;
+async function settle(p){await expect.poll(()=>p.evaluate(()=>!fusionTasksBusy()&&!battlePresentationBusy()),{timeout:15000}).toBe(true);}
+async function choose(p,kind,indices=[0]){await expect.poll(()=>p.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe(kind);await p.evaluate(indices=>{for(const i of indices)toggleCardChoiceCard(state.pendingCardChoice.cards[i].instanceId);confirmCardChoiceSelection();},indices);}
+async function use(p){await p.evaluate(()=>beginItemUse(state.players.player.hand.find(c=>c.baseId==='amphisbaena_sofa')));}
+async function start(p){await p.goto(url);await p.locator('#homeNavDeckButton').click();await p.locator('[data-case-view="cards"]').click();await p.locator('#cardsCatalogSearch').fill('アンフィスバエナソファ');await p.locator(`[data-catalog-card="${id}"]`).click();await p.locator('#cardTestStartButton').click();await p.evaluate(()=>{scheduleOpponentAI=()=>{};state.training.skipAnimations=true;});await settle(p);}
+test('定義・本文・登録・管理ログと台帳の同期、戦意8の境界',async({page})=>{
+ await page.goto(url);await page.evaluate(()=>startCardTest('amphisbaena_sofa'));const r=await page.evaluate(()=>({base:CARD_BASES.amphisbaena_sofa,deck:DIRECT_DECK_CARD_IDS.has('amphisbaena_sofa'),costs:[4,5,7,8,9].map(w=>{state.players.player.will=w;state.screen='battle';state.phase='battle';return effectiveCardCost(createCardFromBase('amphisbaena_sofa','player'));}),text:cardRulesText(createCardFromBase('amphisbaena_sofa','player')),order:getDeckEditorIds('')}));
+ expect(r.base).toMatchObject({name:'アンフィスバエナソファ',cost:5,attack:0,hp:0,type:'item'});expect(r.deck).toBe(true);expect(r.costs).toEqual([5,5,5,8,8]);
+ const ledger=JSON.parse(fs.readFileSync(path.join(__dirname,'../カード管理台帳.html'),'utf8').match(/const CARDS = (\[.*\]);/)[1]).find(c=>c.id===id);const catalog=require('../server/card-catalog.json');expect(catalog.names[id]).toBe(r.base.name);expect(catalog.display[id]).toMatchObject({cost:5,type:'item'});expect(catalog.deckOrder).toEqual(r.order);expect(ledger.cost).toBe(5);expect(r.text).toBe(await page.evaluate(raw=>formatCardRulesDisplayText(createCardFromBase('amphisbaena_sofa','player'),raw),ledger.effect));
+ const raw=fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8').split('\n').find(l=>l.trim().startsWith(id+':'));expect(JSON.parse(raw.trim().replace(/^[^:]+: /,'').replace(/,$/,''))).toBe(ledger.effect);
+});
+test('実際のカードテストで通常①を選び、盤面から2人を指名する',async({page})=>{
+ await start(page);await page.evaluate(()=>playCard(state.players.player.hand.find(c=>c.baseId==='general_student').instanceId,'seat','player',8));await settle(page);await use(page);await choose(page,'sofa_modes',[0]);await expect.poll(()=>page.evaluate(()=>isBoardCardChoice())).toBe(true);await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+ for(const i of [0,4])await page.locator(`.board-card[data-owner="opponent"][data-zone="seat"][data-index="${i}"]`).click();await page.locator('#itemTargetConfirmButton').click();await settle(page);
+ expect(await page.evaluate(()=>[state.players.player.will,state.players.player.life,listBoardRefs('opponent').length,state.players.opponent.board.teacher?.baseId])).toEqual([1,8,1,'general_teacher']);
+ await page.screenshot({path:test.info().outputPath('sofa-normal.png')});
+});
+test('実際のカードテストで通常②を選び、デッキの順番を保って2枚を送る',async({page})=>{
+ await start(page);await page.evaluate(()=>playCard(state.players.player.hand.find(c=>c.baseId==='general_student').instanceId,'seat','player',8));await settle(page);const before=await page.evaluate(()=>state.players.player.deck.map(c=>c.instanceId));await use(page);await choose(page,'sofa_modes',[1]);await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('sofa_deck');const selected=await page.evaluate(()=>state.pendingCardChoice.cards.slice(0,2).map(c=>c.instanceId));await choose(page,'sofa_deck',[0,1]);await settle(page);
+ expect(await page.evaluate(()=>state.players.player.deck.map(c=>c.instanceId))).toEqual(before.filter(id=>!selected.includes(id)));expect(await page.evaluate(()=>[state.players.player.life,listBoardRefs('opponent').length])).toEqual([16,3]);
+});
+test('戦意8では選択なしで①→自傷→②→回復し、選択中も盤面を見られる',async({page})=>{
+ await start(page);const deckCount=await page.evaluate(()=>state.players.player.deck.length);await use(page);await choose(page,'point_destroy',[0,1]);await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('sofa_deck');expect(await page.evaluate(()=>[state.players.player.will,state.players.player.life])).toEqual([0,8]);await page.screenshot({path:test.info().outputPath('sofa-deck-choice.png')});await choose(page,'sofa_deck',[0,1]);await settle(page);expect(await page.evaluate(()=>[state.players.player.life,state.players.player.deck.length,listBoardRefs('opponent').length])).toEqual([12,deckCount-2,1]);
+});
+for(const n of [0,1])test(`対象・デッキが${n}枚でも可能な分を処理し、自傷と回復は行う`,async({page})=>{
+ await start(page);await page.evaluate(n=>{state.players.opponent.board={teacher:null,seats:Array(9).fill(null)};if(n)state.players.opponent.board.seats[0]=makeBoardCard(createCardFromBase('two_achievers','opponent'));if(n)state.players.opponent.board.seats[1]=state.players.opponent.board.seats[0];state.players.player.deck=state.players.player.deck.slice(0,n);},n);await use(page);if(n)await choose(page,'point_destroy',[0]);if(n)await choose(page,'sofa_deck',[0]);await settle(page);expect(await page.evaluate(()=>[state.players.player.life,listBoardRefs('opponent').length,state.players.player.deck.length])).toEqual([12,0,0]);
+});
+test('①の自傷で気力0なら敗北し、デッキ選択・回復へ進まない',async({page})=>{
+ await start(page);const deckCount=await page.evaluate(()=>state.players.player.deck.length);await page.evaluate(()=>{state.players.player.life=4;state.players.opponent.board={teacher:null,seats:Array(9).fill(null)};});await use(page);await expect.poll(()=>page.evaluate(()=>state.gameOver)).toBe(true);expect(await page.evaluate(()=>[state.players.player.life,state.players.player.deck.length,state.pendingCardChoice])).toEqual([0,deckCount,null]);
+});
+test('CPUは低気力では通常②を選び、戦意8の自滅を評価しない',async({page})=>{
+ await start(page);await page.evaluate(()=>{state.currentSide='opponent';const own=state.players.opponent;own.will=7;own.maxWill=8;own.life=3;own.deck=['general_student','classroom','strong_student'].map(id=>createCardFromBase(id,'opponent'));const c=createCardFromBase('amphisbaena_sofa','opponent');own.hand=[c];castImmediateItem('opponent',c,true);});await settle(page);expect(await page.evaluate(()=>[state.players.opponent.life,state.players.opponent.deck.length,state.pendingCardChoice])).toEqual([7,1,null]);expect(await page.evaluate(()=>{state.players.opponent.life=4;state.players.opponent.will=8;return scoreAiAmphisbaenaSofa('opponent',createCardFromBase('amphisbaena_sofa','opponent'));})).toBe(0);
+});
+test('通常の使用演出が終わってから効果選択を開始する',async({page})=>{
+ await start(page);await page.evaluate(()=>{state.training.skipAnimations=false;beginItemUse(state.players.player.hand.find(c=>c.baseId==='amphisbaena_sofa'));});expect(await page.evaluate(()=>!!pendingItemPresentation)).toBe(true);expect(await page.evaluate(()=>state.pendingCardChoice)).toBe(null);await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind),{timeout:15000}).toBe('point_destroy');await choose(page,'point_destroy',[0,1]);await choose(page,'sofa_deck',[0,1]);await settle(page);expect(await page.evaluate(()=>state.players.player.life)).toBe(12);
+});
