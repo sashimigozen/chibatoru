@@ -26,7 +26,7 @@ async function prepare(page) {
 }
 const cp = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)).cp, C.KEY);
 
-test('21 legal decks are selected uniformly with unchanged counts', async ({ page }) => {
+test('43 legal decks are selected uniformly with unchanged counts', async ({ page }) => {
   const data = await page.evaluate(() => {
     const pool = ChibattleAiBattleDecks;
     const random = Math.random;
@@ -38,12 +38,12 @@ test('21 legal decks are selected uniformly with unchanged counts', async ({ pag
       });
     } finally { Math.random = random; }
   });
-  expect(data).toHaveLength(21);
-  expect(new Set(data.map(d => d.name)).size).toBe(21);
+  expect(data).toHaveLength(43);
+  expect(new Set(data.map(d => d.name)).size).toBe(43);
   expect(data.every(d => d.valid && d.name === d.picked)).toBe(true);
 });
 
-for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会', '小細工はなしだ']) {
+for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会', '小細工はなしだ', '単位クリエイター', '爆発しちゃうー', '新生ヴァンパイア']) {
   test(`new AI deck starts with the supplied contents: ${deckName}`, async ({ page }) => {
     await prepare(page);
     const result = await page.evaluate(name => {
