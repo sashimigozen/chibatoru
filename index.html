@@ -8612,20 +8612,33 @@
     }
 
     .online-random-deck-select-wrap .training-deck-select { width: 100%; margin: 0; }
-    .online-random-deck-select-native {
-      position: absolute;
-      inset: 0;
-      width: 100%;
+    #onlineScreen:has(#onlineDeckPicker:not(.hidden)) {
+      display: flex;
+      flex-direction: column;
       height: 100%;
-      opacity: 0;
-      cursor: pointer;
+      min-height: 0;
+      background: #142c3d;
+      color: #f3f7fa;
     }
-
-    .online-random-deck-select-native:disabled { cursor: default; }
-    .online-random-deck-select-wrap:has(.online-random-deck-select-native:disabled) .training-deck-select {
-      border-color: #9babb4;
-      color: #91a0a8;
-      background: #edf2f5;
+    .online-deck-picker { display: flex; flex: 1; flex-direction: column; min-height: 0; gap: 16px; }
+    .online-deck-picker-head { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 12px 18px; }
+    .online-deck-picker-head h2 { margin: 0; font-size: clamp(20px, 2.1vw, 30px); }
+    .online-deck-picker-rule { margin-inline-start: auto; color: #bfd3df; font-weight: 700; }
+    #onlineDeckPickerGrid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: minmax(96px, auto);
+      align-content: start;
+      gap: 14px;
+      min-height: 0;
+      overflow: auto;
+      padding: 3px 5px 12px;
+    }
+    #onlineDeckPicker .deck-library-card.selected { border-color: #adecf9; background: #30566b; }
+    #onlineDeckPicker .deck-library-card:disabled { opacity: .6; cursor: default; transform: none; }
+    #onlineDeckPicker .deck-library-card:focus-visible { outline: 2px solid #adecf9; outline-offset: 2px; }
+    @media (max-width: 760px) {
+      #onlineDeckPickerGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
     }
 
     .online-private-directory { display: block; }
@@ -17574,7 +17587,7 @@
   <link rel="stylesheet" href="draw-animation.css?v=0.23.19" />
   <link rel="stylesheet" href="wonton-animation.css?v=0.36.0" />
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
-<link rel="stylesheet" href="cards-ui.css?v=0.33.1-card-detail" />
+<link rel="stylesheet" href="cards-ui.css?v=0.41.0-match-picker" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.26.0" />
   <link rel="stylesheet" href="narabe-entry.css" />
   <link rel="stylesheet" href="gacha-ui.css?v=0.25.1-shop" />
@@ -17954,8 +17967,8 @@
               <button id="onlineRandomDeckConfirmButton" type="button">確認</button>
             </div>
             <div class="online-random-deck-select-wrap">
-              <button class="training-deck-select" type="button" tabindex="-1" aria-hidden="true">デッキ選択</button>
-              <select class="online-random-deck-select-native" id="onlineRandomDeckSelect" aria-label="ランダムマッチで使用するデッキ"></select>
+              <button class="training-deck-select" id="onlineDeckPickerButton" type="button" aria-controls="onlineDeckPicker" aria-expanded="false">デッキ選択</button>
+              <select id="onlineRandomDeckSelect" aria-label="オンライン対戦で使用するデッキ" hidden></select>
             </div>
           </article>
 
@@ -17991,6 +18004,14 @@
             </div>
           </article>
         </section>
+      </section>
+      <section class="online-deck-picker hidden" id="onlineDeckPicker" aria-labelledby="onlineDeckPickerTitle">
+        <div class="online-deck-picker-head">
+          <button class="training-back-button" id="onlineDeckPickerBackButton" type="button">‹ <span>戻る</span></button>
+          <h2 id="onlineDeckPickerTitle">デッキ選択</h2>
+          <span class="online-deck-picker-rule" id="onlineDeckPickerRule"></span>
+        </div>
+        <div id="onlineDeckPickerGrid" aria-label="使用するデッキ"></div>
       </section>
       <div class="online-layout online-private-directory hidden" id="onlinePrivatePanel">
         <section class="online-panel online-room-card">
@@ -20031,7 +20052,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}]},
+      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
@@ -22710,6 +22731,7 @@
         spectateLoading: false,
         spectateError: "",
         deckPreviewOpen: false,
+        deckPickerOpen: false,
         isApplyingRemote: false,
         isHandlingRemoteCommand: false,
         started: false
@@ -23161,6 +23183,11 @@
       onlineRandomRemoteReadyBadge: document.getElementById("onlineRandomRemoteReadyBadge"),
       onlineRandomLocalDeckName: document.getElementById("onlineRandomLocalDeckName"),
       onlineRandomDeckConfirmButton: document.getElementById("onlineRandomDeckConfirmButton"),
+      onlineDeckPickerButton: document.getElementById("onlineDeckPickerButton"),
+      onlineDeckPicker: document.getElementById("onlineDeckPicker"),
+      onlineDeckPickerBackButton: document.getElementById("onlineDeckPickerBackButton"),
+      onlineDeckPickerRule: document.getElementById("onlineDeckPickerRule"),
+      onlineDeckPickerGrid: document.getElementById("onlineDeckPickerGrid"),
       onlineRandomDeckSelect: document.getElementById("onlineRandomDeckSelect"),
       onlineRandomRuleSelect: document.getElementById("onlineRandomRuleSelect"),
       onlineRandomHandLimit: document.getElementById("onlineRandomHandLimit"),
@@ -27096,6 +27123,21 @@
       }
       if (isOnlineHost()) onlineSendRoomState();
       render();
+    }
+
+    function openOnlineDeckPicker() {
+      if (elements.onlineDeckPickerButton.disabled) return;
+      state.online.deckPreviewOpen = false;
+      state.online.deckPickerOpen = true;
+      render();
+      const current = elements.onlineDeckPickerGrid.querySelector("button.selected:not(:disabled)");
+      (current || elements.onlineDeckPickerBackButton).focus();
+    }
+
+    function closeOnlineDeckPicker() {
+      state.online.deckPickerOpen = false;
+      render();
+      elements.onlineDeckPickerButton.focus();
     }
 
     function openOnlineRandomDeckPreview() {
@@ -48881,11 +48923,8 @@
       return descriptor.kind === "saved" ? (descriptor.name || "未選択") : deckNameForOnline(descriptor);
     }
 
-    function renderOnlineRandomDeckPreview() {
-      if (!elements.onlineRandomDeckPreviewOverlay) return;
-      const visible = state.screen === "online"
-        && state.online.matchMode === "random"
-        && state.online.deckPreviewOpen;
+    function renderOnlineRandomDeckPreview(visible) {
+      if (!visible) state.online.deckPreviewOpen = false;
       elements.onlineRandomDeckPreviewOverlay.classList.toggle("hidden", !visible);
       if (!visible) return;
       const descriptor = onlineLocalDeckDescriptor();
@@ -48931,7 +48970,9 @@
       elements.onlineRandomRemoteReadyBadge.classList.toggle("hidden", !state.online.remoteReady || randomWaiting);
       elements.onlineRandomLocalDeckName.textContent = onlineRandomDeckDisplayName(descriptor);
       elements.onlineRandomDeckConfirmButton.disabled = !onlineDeckDescriptorIsAvailable(descriptor);
-      elements.onlineRandomDeckSelect.disabled = !state.online.role || state.online.started || state.online.startPending;
+      const deckSelectionLocked = !state.online.role || state.online.started || state.online.startPending;
+      elements.onlineRandomDeckSelect.disabled = deckSelectionLocked;
+      elements.onlineDeckPickerButton.disabled = deckSelectionLocked;
       elements.onlineRandomReadyButton.disabled = !state.online.role
         || !connected
         || !localValidation.valid
@@ -48951,12 +48992,38 @@
           : state.online.localReady
             ? "相手の準備を待っています"
             : "デッキを選んで準備OKを押してください";
-      renderOnlineRandomDeckPreview();
+    }
+
+    let onlineDeckPickerMarkup = "";
+
+    function renderOnlineDeckPicker(entries, visible) {
+      elements.onlineDeckPicker.classList.toggle("hidden", !visible);
+      elements.onlineDeckPickerButton.setAttribute("aria-expanded", String(visible));
+      if (!visible) return;
+      const rule = onlineRuleDefinition();
+      elements.onlineDeckPickerRule.textContent = `対戦ルール：${rule.name}`;
+      const active = state.online.localDeckName;
+      const markup = entries.filter(({ descriptor }) => rule.deck.formats.includes(descriptor.format))
+        .map(({ descriptor, label }) => {
+          const value = onlineDeckDescriptorValue(descriptor);
+          const validation = validateOnlineDeckForRule(descriptor, copyOnlineDeckCounts(descriptor));
+          const selected = value === active;
+          const specialty = descriptor.specialtyId ? ` · ${onlineDeckFormatLabel(descriptor)}` : "";
+          const status = validation.valid ? "" : " · 使用不可";
+          return `<button type="button" class="deck-library-card case-deck-tile${selected ? " selected" : ""}"
+            data-match-deck="${escapeHtml(value)}" aria-pressed="${selected}"${validation.valid ? "" : ` disabled title="${escapeHtml(onlineDeckValidationMessage(validation))}"`}>
+            <span class="case-deck-spine" aria-hidden="true"></span><span>${escapeHtml(label)}</span>
+            <small>${validation.size}枚${escapeHtml(specialty)}${status}</small></button>`;
+        }).join("") || '<p class="case-empty">このルールで選べるデッキがありません。</p>';
+      if (markup !== onlineDeckPickerMarkup) {
+        elements.onlineDeckPickerGrid.innerHTML = markup;
+        onlineDeckPickerMarkup = markup;
+      }
     }
 
     function renderOnlineLobby() {
       if (!elements.onlineScreen) return;
-      renderOnlineDeckOptions();
+      const deckEntries = renderOnlineDeckOptions();
       renderOnlineRuleControls();
       const roleLabel = isOnlineHost() ? "ホスト" : isOnlineGuest() ? "ゲスト" : isOnlineSpectator() ? "観戦者" : "未接続";
       const spectator = isOnlineSpectator();
@@ -49023,7 +49090,12 @@
       if (elements.onlineRoomPanelTitle) {
         elements.onlineRoomPanelTitle.textContent = randomMode ? "ランダムマッチ" : "プライベートマッチ";
       }
-      elements.onlineRandomSetupPanel?.classList.toggle("hidden", !showRandomPanel);
+      const inMatchSetup = state.screen === "online" && showRandomPanel
+        && !state.online.started && !state.online.startPending;
+      if (!inMatchSetup || !state.online.role) state.online.deckPickerOpen = false;
+      const pickingDeck = state.online.deckPickerOpen;
+      elements.onlineRandomSetupPanel?.classList.toggle("hidden", !showRandomPanel || pickingDeck);
+      renderOnlineDeckPicker(deckEntries, pickingDeck);
       elements.onlinePrivatePanel?.classList.toggle("hidden", !showPrivatePanel);
       onlineUpdatePrivateDirectoryTimer(showPrivatePanel && state.screen === "online");
       elements.onlineSpectatePanel?.classList.toggle("hidden", !showSpectatePanel);
@@ -49077,7 +49149,7 @@
         ? elements.onlineRoomInput.value
         : (state.online.roomCode || elements.onlineRoomInput.value);
       if (showRandomPanel) renderOnlineRandomSetup(!state.online.connected, localValidation);
-      else renderOnlineRandomDeckPreview();
+      renderOnlineRandomDeckPreview(inMatchSetup && !pickingDeck && state.online.deckPreviewOpen);
       onlineScheduleRandomAutoStart();
       renderOnlineSpectateRooms();
     }
@@ -49207,6 +49279,7 @@
       elements.onlineDeckSelect.value = selectedValue;
       if (elements.onlineRandomDeckSelect) elements.onlineRandomDeckSelect.value = selectedValue;
       state.online.localDeckName = selectedValue;
+      return entries;
     }
 
     function renderStatus() {
@@ -58562,6 +58635,29 @@
     elements.onlineRandomRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRandomRuleSelect));
     elements.onlineDeckSelect.addEventListener("change", () => onlineUpdateDeckSelection(elements.onlineDeckSelect));
     elements.onlineRandomDeckSelect.addEventListener("change", () => onlineUpdateDeckSelection(elements.onlineRandomDeckSelect));
+    elements.onlineDeckPickerButton.addEventListener("click", openOnlineDeckPicker);
+    elements.onlineDeckPickerBackButton.addEventListener("click", closeOnlineDeckPicker);
+    elements.onlineDeckPicker.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeOnlineDeckPicker();
+      }
+    });
+    elements.onlineDeckPickerGrid.addEventListener("click", (event) => {
+      const tile = event.target.closest("button[data-match-deck]");
+      if (!tile || tile.disabled || !state.online.deckPickerOpen || elements.onlineDeckPickerButton.disabled) return;
+      const descriptor = parseOnlineDeckDescriptor(tile.dataset.matchDeck);
+      if (!onlineDeckDescriptorIsAvailable(descriptor)
+        || !validateOnlineDeckForRule(descriptor, copyOnlineDeckCounts(descriptor)).valid) return;
+      if (tile.dataset.matchDeck === state.online.localDeckName) {
+        closeOnlineDeckPicker();
+        return;
+      }
+      state.online.deckPickerOpen = false;
+      elements.onlineRandomDeckSelect.value = tile.dataset.matchDeck;
+      onlineUpdateDeckSelection(elements.onlineRandomDeckSelect);
+      elements.onlineDeckPickerButton.focus();
+    });
     elements.onlineReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineRandomReadyButton.addEventListener("click", onlineToggleReady);
     elements.onlineRandomDeckConfirmButton.addEventListener("click", openOnlineRandomDeckPreview);

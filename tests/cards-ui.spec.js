@@ -540,7 +540,8 @@ test("対戦準備・トレーニング・ダンジョン・オンライン・�
       Object.assign(state.soloSelection, { ruleId: "normal", previewName: "枚数テスト", previewExpanded: true,
         pickerOpen: true, leftController: screen === "training" ? "ai" : "player" });
       Object.assign(state.dungeon, { previewName: "枚数テスト", previewExpanded: true });
-      Object.assign(state.online, { matchMode: "random", localDeckName: "__current", deckPreviewOpen: screen === "online" });
+      Object.assign(state.online, { matchMode: "random", lobbyView: "private",
+        localDeckName: "__current", deckPreviewOpen: screen === "online" });
       state.players.player.originalDeckCounts = counts;
       render();
       if (screen === "battle") openDeckWindow();

@@ -26,7 +26,33 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
   await host.screenshot({path:'/tmp/private-room-prep-final.png'});
   await guest.locator('#onlineRandomBackButton').click();await expect(guest.locator('#onlinePrivateRoomList')).toBeVisible();await guest.locator('#onlinePrivateRefreshButton').click();await expect(guest.locator(`[data-private-join-room="${code}"]`)).toBeEnabled();
   await guest.locator('.private-code-entry > summary').click();await guest.locator('#onlineRoomInput').fill(code);await guest.locator('#onlineJoinRoomButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.connected)).toBe(true);
-  for(const p of [host,guest]){await p.evaluate(()=>{state.deckBuilder.counts.player=createAutoDeckCounts();elements.onlineRandomDeckSelect.dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
+  for (const page of [host, guest]) {
+    await page.evaluate(() => {
+      state.deckBuilder.savedDecks["ルーム用テストデッキ"] = { counts: createAutoDeckCounts() };
+      state.deckBuilder.savedDecks["調整中のデッキ"] = { counts: { general_student: 1 } };
+      render();
+    });
+    const picker = page.locator("#onlineDeckPicker");
+    const opener = page.locator("#onlineDeckPickerButton");
+    await opener.click();
+    await expect(page.locator(".computer-content #onlineDeckPicker")).toBeVisible();
+    await expect(page.locator("#deckScreen")).toBeHidden();
+    await expect(picker.getByRole("button", { name: /調整中のデッキ/ })).toBeDisabled();
+    await page.locator("#onlineDeckPickerBackButton").click();
+    await expect(opener).toBeFocused();
+    await expect(page.locator("#onlineRandomLocalDeckName")).toHaveText("現在の通常デッキ");
+    await opener.click();
+    await picker.getByRole("button", { name: /ルーム用テストデッキ/ }).click();
+    await expect(picker).toBeHidden();
+    await expect(page.locator("#onlineRandomRoomCode")).toHaveText(code);
+    await expect(page.locator("#onlineRandomLocalDeckName")).toHaveText("ルーム用テストデッキ");
+    await expect(page.locator("#onlineRandomHandLimit")).toHaveValue("10");
+    await page.locator("#onlineRandomDeckConfirmButton").click();
+    await expect(page.locator("#onlineRandomDeckPreviewContent")).toContainText("ルーム用テストデッキ");
+    await expect(page.locator("#onlineRandomDeckPreviewContent [data-library-card]").first()).toBeVisible();
+    await page.locator("#onlineRandomDeckPreviewCloseButton").click();
+    await page.locator("#onlineReadyButton").click();
+  }
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
   expect(await guest.evaluate(()=>state.battleHandLimit)).toBe(10);
   await observer.locator('#onlinePrivateRefreshButton').click();await expect(observer.locator(`[data-private-join-room="${code}"]`)).toHaveCount(0);
