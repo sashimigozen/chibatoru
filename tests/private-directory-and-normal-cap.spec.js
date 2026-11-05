@@ -30,6 +30,7 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
     await page.evaluate(() => {
       state.deckBuilder.savedDecks["ルーム用テストデッキ"] = { counts: createAutoDeckCounts() };
       state.deckBuilder.savedDecks["調整中のデッキ"] = { counts: { general_student: 1 } };
+      state.deckBuilder.savedDecks["Test Deck 02"] = { counts: { general_student: 2 } };
       render();
     });
     const picker = page.locator("#onlineDeckPicker");
@@ -38,10 +39,24 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
     await expect(page.locator(".computer-content #onlineDeckPicker")).toBeVisible();
     await expect(page.locator("#deckScreen")).toBeHidden();
     await expect(picker.getByRole("button", { name: /調整中のデッキ/ })).toBeDisabled();
+    const search = picker.getByRole("searchbox", { name: "デッキ名" });
+    const tiles = picker.locator("[data-match-deck]");
+    await picker.getByRole("combobox", { name: "並び替え" }).selectOption("size");
+    await picker.getByRole("combobox", { name: "順序" }).selectOption("asc");
+    await expect(tiles.nth(1)).toContainText("調整中のデッキ");
+    await picker.getByRole("combobox", { name: "順序" }).selectOption("desc");
+    await expect(tiles.last()).toContainText("調整中のデッキ");
+    await search.fill(" ｔｅｓｔ ");
+    await expect(tiles).toHaveCount(1);
+    await expect(tiles.first()).toContainText("Test Deck 02");
+    await search.fill("該当なし");
+    await expect(picker.getByRole("status")).toHaveText("一致するデッキがありません。");
     await page.locator("#onlineDeckPickerBackButton").click();
     await expect(opener).toBeFocused();
     await expect(page.locator("#onlineRandomLocalDeckName")).toHaveText("現在の通常デッキ");
     await opener.click();
+    await expect(search).toHaveValue("");
+    await search.fill("ルーム用");
     await picker.getByRole("button", { name: /ルーム用テストデッキ/ }).click();
     await expect(picker).toBeHidden();
     await expect(page.locator("#onlineRandomRoomCode")).toHaveText(code);
