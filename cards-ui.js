@@ -503,7 +503,7 @@
 
   // All paged views share the same trackpad/wheel gesture. One gesture advances
   // one page; its inertial tail must not skip several pages or reach a lower modal.
-  const pageViews = "#cardsCatalogView, #deckLibraryView, #onlineDeckPicker, .case-deck-dialog, .case-card-dialog, .tutorial-detail";
+  const pageViews = "#cardsCatalogView, #deckLibraryView, .match-deck-picker, .case-deck-dialog, .case-card-dialog, .tutorial-detail";
   let gesture = { root: null, lastEvent: 0, distance: 0, direction: 0, moved: false };
   document.addEventListener("wheel", (event) => {
     const target = event.target instanceof Element ? event.target : null;

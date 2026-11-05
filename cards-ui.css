@@ -18,17 +18,17 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
 .case-arrow { width: 32px; height: 64px; align-self: center; }
 .case-arrow img { width: 20px; height: 34px; }
 .case-arrow.previous img { transform: rotate(180deg); }
-:is(#deckScreen, #onlineDeckPicker) :is(.case-arrow, .case-back) img, #deckScreen .case-choice > img { filter: brightness(0) invert(1); }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) :is(.case-arrow, .case-back) img, #deckScreen .case-choice > img { filter: brightness(0) invert(1); }
 .case-arrow:hover:not(:disabled), .case-back:hover { filter: brightness(1.3); transform: none; }
 .case-arrow:disabled { opacity: .22; cursor: default; }
-:is(#deckScreen, #onlineDeckPicker) button:focus-visible, .case-card-dialog button:focus-visible, .case-deck-dialog button:focus-visible { outline: 3px solid #52b9dc; outline-offset: 3px; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) button:focus-visible, .case-card-dialog button:focus-visible, .case-deck-dialog button:focus-visible { outline: 3px solid #52b9dc; outline-offset: 3px; }
 #deckScreen .button { min-height: 36px; padding: 7px 14px; font-size: 14px; }
-#deckScreen .button.secondary, :is(#deckScreen, #onlineDeckPicker) .control {
+#deckScreen .button.secondary, :is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .control {
   border: 1px solid #7595a8; border-radius: 5px; color: #f3f7fa; background: #203d51;
 }
 #deckScreen .button.active, #deckScreen .button.secondary:hover { background: #345972; border-color: #9dd9e9; }
-:is(#deckScreen, #onlineDeckPicker) .control { min-height: 36px; padding: 7px 10px; }
-:is(#deckScreen, #onlineDeckPicker) .control::placeholder { color: #b2c4cf; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .control { min-height: 36px; padding: 7px 10px; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .control::placeholder { color: #b2c4cf; }
 .case-entry { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 6%; padding: 10px 4% 20px; }
 .case-choice {
   position: relative; display: grid; grid-template-rows: minmax(0,1fr) auto; justify-items: center; gap: 20px;
@@ -64,17 +64,17 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
 #deckScreen .deck-format-tabs { display: flex; gap: 6px; margin: 0; }
 #deckScreen .deck-library-sort { display: flex; align-items: center; gap: 14px; margin: 0; color: #d5e3eb; }
 #deckScreen .deck-library-sort-field { display: flex; flex-direction: row; align-items: center; gap: 8px; color: #d5e3eb; }
-#deckScreen #deckLibraryGrid, #onlineDeckPicker #onlineDeckPickerGrid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); grid-template-rows: repeat(3,minmax(0,1fr)); gap: 16px; min-height: 0; }
-:is(#deckScreen, #onlineDeckPicker) .deck-library-card {
+#deckScreen #deckLibraryGrid, :is(#onlineDeckPicker, #soloMatchDeckPicker) .deck-library-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); grid-template-rows: repeat(3,minmax(0,1fr)); gap: 16px; min-height: 0; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
   min-width: 0; min-height: 0; height: 100%; padding: 16px 20px 16px 30px; gap: 10px;
   border: 1px solid #7595a8; border-radius: 5px; color: #f3f7fa; background: #234156; box-shadow: 0 6px 12px #09192433;
   text-align: left; font-size: clamp(16px, 1.4vw, 22px); font-weight: 900; cursor: pointer;
 }
-:is(#deckScreen, #onlineDeckPicker) .deck-library-card > span:not(.case-deck-spine) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
-:is(#deckScreen, #onlineDeckPicker) .deck-library-card small { color: #bfd3df; font-size: 12px; font-weight: 700; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card > span:not(.case-deck-spine) { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card small { color: #bfd3df; font-size: 12px; font-weight: 700; }
 .case-deck-spine { position: absolute; top: 12px; bottom: 12px; left: 12px; width: 4px; background: #7cbbce; }
-:is(#deckScreen, #onlineDeckPicker) .deck-library-card:hover { border-color: #b4e8f1; background: #2b4e65; transform: none; }
+:is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card:hover { border-color: #b4e8f1; background: #2b4e65; transform: none; }
 #deckScreen .new-deck { border-style: dashed; align-items: center; padding: 12px; background: #152c3e; }
 .case-file-tools { display: flex; gap: 9px; flex: 0 0 auto; align-items: center; }
 #deckScreen .deck-specialty-choice:not(.hidden) { position: absolute; inset: 100px 18% auto; z-index: 10; background: #f3f7fa; color: #173246; border: 1px solid #7595a8; box-shadow: 0 20px 60px #071723aa; padding: 24px; }
@@ -194,7 +194,7 @@ body[data-screen="deck"] { background: #172e40; overflow: hidden; }
 .case-entry.hidden, .case-catalog.hidden, #deckLibraryView.hidden, #deckEditorView.hidden, .case-modal-backdrop.hidden, .case-deck-dialog.hidden, .case-filters.hidden { display: none; }
 @media (max-height: 750px) {
   #deckScreen.card-case-screen:not(.hidden) { padding-top: 14px; gap: 10px; }
-  :is(#deckScreen, #onlineDeckPicker) .deck-library-card { gap: 5px; }
+  :is(#deckScreen, #onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card { gap: 5px; }
   .case-deck-dialog { gap: 10px; }
   .case-choice { padding-top: 22px; padding-bottom: 22px; }
 }
@@ -205,14 +205,14 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, body *::-webkit-scrollbar { di
 
 /* Keep the detail and its bottom-right test action readable on narrow screens. */
 @media (max-width: 760px) {
-  #onlineDeckPicker .case-paged { grid-template-columns: 20px minmax(0,1fr) 20px; gap: 4px; }
-  #onlineDeckPicker .case-arrow { width: 20px; }
-  #onlineDeckPicker .case-arrow img { width: 14px; }
-  #onlineDeckPicker #onlineDeckPickerGrid { gap: 6px; }
-  #onlineDeckPicker .deck-library-card { padding: 5px 3px 5px 7px; gap: 4px; font-size: clamp(9px, 2.8vw, 15px); }
-  #onlineDeckPicker .deck-library-card > span:not(.case-deck-spine) { -webkit-line-clamp: 3; }
-  #onlineDeckPicker .deck-library-card small { font-size: 9px; overflow-wrap: anywhere; }
-  #onlineDeckPicker .case-deck-spine { left: 3px; width: 2px; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .case-paged { grid-template-columns: 20px minmax(0,1fr) 20px; gap: 4px; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .case-arrow { width: 20px; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .case-arrow img { width: 14px; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .deck-library-grid { gap: 6px; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card { padding: 5px 3px 5px 7px; gap: 4px; font-size: clamp(9px, 2.8vw, 15px); }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card > span:not(.case-deck-spine) { -webkit-line-clamp: 3; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .deck-library-card small { font-size: 9px; overflow-wrap: anywhere; }
+  :is(#onlineDeckPicker, #soloMatchDeckPicker) .case-deck-spine { left: 3px; width: 2px; }
   .case-card-dialog.item-confirm-dialog { width: calc(100vw - 24px); height: calc(100dvh - 24px); grid-template-columns: 22px minmax(0,1fr) 22px; grid-template-rows: 40px minmax(120px,.8fr) minmax(0,1fr); gap: 12px; padding: 0 12px 12px; }
   .case-card-dialog #cardTestCard { grid-column: 2; grid-row: 2; }
   .case-card-dialog .card-test-style-frame { height: 100%; width: auto; max-width: 100%; }

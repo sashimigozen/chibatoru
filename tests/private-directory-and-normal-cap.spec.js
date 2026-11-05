@@ -114,9 +114,14 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
       await button.click();
       await expect(page.locator("#profileViewerName")).toHaveText(name);
       await page.locator("#profileViewerCloseButton").click();
-      const width = (await button.boundingBox()).width;
-      const deckWidth = (await page.locator(`#${side}DeckPile`).boundingBox()).width;
-      expect(Math.abs(width - deckWidth)).toBeLessThan(1);
+      const icon = await button.boundingBox();
+      const deck = await page.locator(`#${side}DeckPile`).boundingBox();
+      expect(icon.width / deck.width).toBeGreaterThan(0.6);
+      expect(icon.width / deck.width).toBeLessThan(0.75);
+      if (side === "opponent") {
+        expect(icon.y - (deck.y + deck.height)).toBeGreaterThanOrEqual(13);
+        if (page !== observer) expect(deck.x - (icon.x + icon.width)).toBeGreaterThanOrEqual(13);
+      }
     }
     await page.evaluate(() => { state.lectureRoomCheck = false; });
     if (page === host) await page.screenshot({ path: "/tmp/chibatoru-battle-profile-final.png" });
@@ -124,11 +129,27 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
  }finally{await Promise.all(contexts.map(c=>c.close()));}
 });
 for(const mode of ['training','aiBattle'])for(const limit of [9,null,15])test(`通常ルールの準備設定を対戦へ適用 ${mode}/${limit}`,async({page})=>{
- await page.goto(url.href);await page.evaluate(()=>{state.deckBuilder.savedDecks['テストデッキ']={counts:{...ChibattleAiBattleDecks[0].counts}};});
+ await page.goto(url.href);await page.evaluate(()=>{
+   state.deckBuilder.savedDecks['テストデッキ']={counts:{...ChibattleAiBattleDecks[0].counts}};
+   for(let i=1;i<=12;i++)state.deckBuilder.savedDecks[`準備確認用 ${i}`]={counts:{general_student:1}};
+ });
  await page.locator('#homeNavSoloButton').click();await page.locator(mode==='aiBattle'?'#soloAiBattleButton':'#soloTrainingButton').click();
  await expect(page.locator('#soloHandLimit')).toHaveValue('9');await page.locator('#soloHandLimit').fill(limit===null?'':String(limit));await page.locator('#soloHandLimit').press('Tab');
- await page.locator('#soloPlayerSlot').click();await page.locator('#soloDeckGrid button',{hasText:'テストデッキ'}).click();
- if(mode==='training'){await page.locator('#soloAiSlot').click();await page.locator('#soloDeckGrid button',{hasText:'テストデッキ'}).click();}
+ const picker=page.locator('#soloMatchDeckPicker');
+ await page.locator('#soloPlayerSlot').click();
+ await expect(page.locator('.computer-content #soloMatchDeckPicker')).toBeVisible();
+ await expect(picker.locator('#soloDeckGrid button')).toHaveCount(12);
+ await picker.getByRole('button',{name:'次のデッキページ'}).click();
+ await expect(picker.locator('.case-pagination')).toHaveText('— Page 2 / 2 —');
+ await picker.getByRole('searchbox').fill('テスト');
+ await expect(picker.locator('.case-pagination')).toHaveText('— Page 1 / 1 —');
+ await picker.getByRole('button',{name:/テストデッキ/}).click();
+ if(mode==='training'){
+   await page.locator('#soloAiSlot').click();
+   await expect(picker.getByRole('searchbox')).toHaveValue('');
+   await picker.getByRole('searchbox').fill('テスト');
+   await picker.getByRole('button',{name:/テストデッキ/}).click();
+ }
  await page.screenshot({path:`/tmp/${mode}-hand-limit-final.png`});
  await page.locator('#soloBattleStartButton').click();await expect(page.locator('#battleScreen')).toBeVisible();expect(await page.evaluate(()=>state.battleHandLimit)).toBe(limit);
 });

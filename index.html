@@ -8634,7 +8634,8 @@
     }
 
     .online-random-deck-select-wrap .training-deck-select { width: 100%; margin: 0; }
-    #onlineScreen:has(#onlineDeckPicker:not(.hidden)) {
+    #onlineScreen:has(#onlineDeckPicker:not(.hidden)),
+    #soloDeckScreen:has(#soloMatchDeckPicker:not(.hidden)) {
       display: flex;
       flex-direction: column;
       height: 100%;
@@ -8642,16 +8643,17 @@
       background: #172e40;
       color: #f5f8fa;
     }
-    .online-deck-picker { display: flex; flex: 1; flex-direction: column; min-height: 0; gap: 10px; }
-    .online-deck-picker-head { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 12px; }
-    .online-deck-picker-head h2 { margin: 0; font-size: clamp(20px, 2.1vw, 32px); }
-    .online-deck-picker-rule { margin-inline-start: auto; color: #bfd3df; font-weight: 700; }
-    .online-deck-picker .deck-library-sort { flex: 0 0 auto; margin: 0; }
-    .online-deck-picker .deck-library-sort-field { flex-basis: 135px; color: #d5e3eb; }
-    .online-deck-picker .online-deck-picker-search { flex: 2 1 220px; }
-    #onlineDeckPickerSearch { color-scheme: dark; }
-    #onlineDeckPicker .deck-library-card.selected { border-color: #adecf9; background: #30566b; }
-    #onlineDeckPicker .deck-library-card:disabled { opacity: .6; cursor: default; transform: none; }
+    #soloDeckScreen:has(#soloMatchDeckPicker:not(.hidden)) > :is(.training-setup-head, .training-setup-layout) { display: none; }
+    .match-deck-picker { display: flex; flex: 1; flex-direction: column; min-height: 0; gap: 10px; }
+    .match-deck-picker-head { display: flex; flex: 0 0 auto; flex-wrap: wrap; align-items: center; gap: 12px; }
+    .match-deck-picker-head h2 { margin: 0; font-size: clamp(20px, 2.1vw, 32px); }
+    .match-deck-picker-rule { margin-inline-start: auto; color: #bfd3df; font-weight: 700; }
+    .match-deck-picker .deck-library-sort { flex: 0 0 auto; margin: 0; }
+    .match-deck-picker .deck-library-sort-field { flex-basis: 135px; color: #d5e3eb; }
+    .match-deck-picker .match-deck-picker-search { flex: 2 1 220px; }
+    .match-deck-picker input[type="search"] { color-scheme: dark; }
+    .match-deck-picker .deck-library-card.selected { border-color: #adecf9; background: #30566b; }
+    .match-deck-picker .deck-library-card:disabled { opacity: .6; cursor: default; transform: none; }
 
     .online-private-directory { display: block; }
     .online-private-directory > .online-room-card { background: #f3f7fb; padding: 24px; }
@@ -17599,7 +17601,7 @@
   <link rel="stylesheet" href="draw-animation.css?v=0.23.19" />
   <link rel="stylesheet" href="wonton-animation.css?v=0.36.0" />
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
-<link rel="stylesheet" href="cards-ui.css?v=0.41.0-match-pages" />
+<link rel="stylesheet" href="cards-ui.css?v=0.41.0-match-common" />
   <link rel="stylesheet" href="desktop-ui.css?v=0.26.0" />
   <link rel="stylesheet" href="narabe-entry.css" />
   <link rel="stylesheet" href="gacha-ui.css?v=0.25.1-shop" />
@@ -17901,14 +17903,50 @@
           <button class="training-deck-select" id="soloAiSlot" type="button">デッキ選択</button>
         </article>
       </section>
+      <section class="match-deck-picker hidden" id="soloMatchDeckPicker" aria-labelledby="soloMatchDeckPickerTitle">
+        <div class="match-deck-picker-head">
+          <button class="case-back" id="soloMatchDeckPickerBackButton" type="button" aria-label="対戦設定へ戻る"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
+          <img class="case-head-icon" src="assets/home/nav-card.png" alt="">
+          <h2 id="soloMatchDeckPickerTitle">デッキ選択</h2>
+          <span class="match-deck-picker-rule" id="soloMatchDeckPickerRule"></span>
+        </div>
+        <div class="deck-library-grid" id="soloDeckGrid" aria-label="使用するデッキ"></div>
+      </section>
       <section class="training-picker hidden" id="soloDeckPicker" aria-label="デッキ選択">
         <div class="training-picker-dialog">
           <div class="training-picker-head"><div><h2 id="soloDeckPickerTitle">デッキ選択</h2></div><button class="button secondary" id="soloDeckPickerCloseButton" type="button">閉じる</button></div>
-          <div class="deck-library-grid" id="soloDeckGrid"></div>
           <div class="deck-library-detail hidden" id="soloDeckDetail"></div>
         </div>
       </section>
     </section>
+
+    <template id="matchDeckPickerControls">
+        <div class="deck-library-sort" role="group" aria-label="デッキの検索と並び替え">
+          <label class="deck-library-sort-field match-deck-picker-search">デッキ名
+            <input class="control" id="onlineDeckPickerSearch" type="search" placeholder="デッキ名を検索" autocomplete="off" />
+          </label>
+          <label class="deck-library-sort-field">並び替え
+            <select class="control" id="onlineDeckPickerSortKey">
+              <option value="created" selected>作成順</option>
+              <option value="updated">更新順</option>
+              <option value="name">名前順</option>
+              <option value="size">枚数順</option>
+            </select>
+          </label>
+          <label class="deck-library-sort-field">順序
+            <select class="control" id="onlineDeckPickerSortDirection">
+              <option value="asc">昇順</option>
+              <option value="desc" selected>降順</option>
+            </select>
+          </label>
+        </div>
+        <div class="case-paged case-deck-paged">
+          <button type="button" class="case-arrow previous" id="onlineDeckPickerPrev" aria-label="前のデッキページ"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
+          <div data-match-deck-grid></div>
+          <button type="button" class="case-arrow" id="onlineDeckPickerNext" aria-label="次のデッキページ"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
+        </div>
+        <footer class="case-pagination" id="onlineDeckPickerPageLabel" aria-live="polite"></footer>
+    </template>
 
     <section class="training-data-overlay hidden" id="soloTrainingDataOverlay" aria-label="対戦データ">
       <div class="training-data-dialog">
@@ -18017,38 +18055,14 @@
           </article>
         </section>
       </section>
-      <section class="online-deck-picker hidden" id="onlineDeckPicker" aria-labelledby="onlineDeckPickerTitle">
-        <div class="online-deck-picker-head">
+      <section class="match-deck-picker hidden" id="onlineDeckPicker" aria-labelledby="onlineDeckPickerTitle">
+        <div class="match-deck-picker-head">
           <button class="case-back" id="onlineDeckPickerBackButton" type="button" aria-label="マッチングへ戻る"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
           <img class="case-head-icon" src="assets/home/nav-card.png" alt="">
           <h2 id="onlineDeckPickerTitle">デッキ選択</h2>
-          <span class="online-deck-picker-rule" id="onlineDeckPickerRule"></span>
+          <span class="match-deck-picker-rule" id="onlineDeckPickerRule"></span>
         </div>
-        <div class="deck-library-sort" role="group" aria-label="デッキの検索と並び替え">
-          <label class="deck-library-sort-field online-deck-picker-search">デッキ名
-            <input class="control" id="onlineDeckPickerSearch" type="search" placeholder="デッキ名を検索" autocomplete="off" />
-          </label>
-          <label class="deck-library-sort-field">並び替え
-            <select class="control" id="onlineDeckPickerSortKey">
-              <option value="created" selected>作成順</option>
-              <option value="updated">更新順</option>
-              <option value="name">名前順</option>
-              <option value="size">枚数順</option>
-            </select>
-          </label>
-          <label class="deck-library-sort-field">順序
-            <select class="control" id="onlineDeckPickerSortDirection">
-              <option value="asc">昇順</option>
-              <option value="desc" selected>降順</option>
-            </select>
-          </label>
-        </div>
-        <div class="case-paged case-deck-paged">
-          <button type="button" class="case-arrow previous" id="onlineDeckPickerPrev" aria-label="前のデッキページ"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
-          <div class="deck-library-grid" id="onlineDeckPickerGrid" aria-label="使用するデッキ"></div>
-          <button type="button" class="case-arrow" id="onlineDeckPickerNext" aria-label="次のデッキページ"><img src="assets/tutorial/chevron-right.svg" alt=""></button>
-        </div>
-        <footer class="case-pagination" id="onlineDeckPickerPageLabel" aria-live="polite"></footer>
+        <div class="deck-library-grid" id="onlineDeckPickerGrid" aria-label="使用するデッキ"></div>
       </section>
       <div class="online-layout online-private-directory hidden" id="onlinePrivatePanel">
         <section class="online-panel online-room-card">
@@ -20091,7 +20105,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札のそばに両プレイヤーのアイコンを表示します。アイコンを押すとプロフィールを確認できます。"}]},
+      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。AIバトルとトレーニングのデッキ選択にも同じ一覧を使えます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札や枠線との間に余白を設け、両プレイヤーのプロフィールアイコンを表示します。相手側のアイコンは山札の左下に表示されます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
@@ -23228,13 +23242,7 @@
       onlineDeckPicker: document.getElementById("onlineDeckPicker"),
       onlineDeckPickerBackButton: document.getElementById("onlineDeckPickerBackButton"),
       onlineDeckPickerRule: document.getElementById("onlineDeckPickerRule"),
-      onlineDeckPickerSearch: document.getElementById("onlineDeckPickerSearch"),
-      onlineDeckPickerSortKey: document.getElementById("onlineDeckPickerSortKey"),
-      onlineDeckPickerSortDirection: document.getElementById("onlineDeckPickerSortDirection"),
       onlineDeckPickerGrid: document.getElementById("onlineDeckPickerGrid"),
-      onlineDeckPickerPrev: document.getElementById("onlineDeckPickerPrev"),
-      onlineDeckPickerNext: document.getElementById("onlineDeckPickerNext"),
-      onlineDeckPickerPageLabel: document.getElementById("onlineDeckPickerPageLabel"),
       onlineRandomDeckSelect: document.getElementById("onlineRandomDeckSelect"),
       onlineRandomRuleSelect: document.getElementById("onlineRandomRuleSelect"),
       onlineRandomHandLimit: document.getElementById("onlineRandomHandLimit"),
@@ -23321,6 +23329,10 @@
       soloPlayerDeckConfirmButton: document.getElementById("soloPlayerDeckConfirmButton"),
       soloAiDeckConfirmButton: document.getElementById("soloAiDeckConfirmButton"),
       soloDeckGrid: document.getElementById("soloDeckGrid"),
+      soloMatchDeckPicker: document.getElementById("soloMatchDeckPicker"),
+      soloMatchDeckPickerTitle: document.getElementById("soloMatchDeckPickerTitle"),
+      soloMatchDeckPickerRule: document.getElementById("soloMatchDeckPickerRule"),
+      soloMatchDeckPickerBackButton: document.getElementById("soloMatchDeckPickerBackButton"),
       soloDeckDetail: document.getElementById("soloDeckDetail"),
       soloDeckPicker: document.getElementById("soloDeckPicker"),
       soloDeckPickerTitle: document.getElementById("soloDeckPickerTitle"),
@@ -27176,8 +27188,7 @@
       if (elements.onlineDeckPickerButton.disabled) return;
       state.online.deckPreviewOpen = false;
       state.online.deckPickerOpen = true;
-      elements.onlineDeckPickerSearch.value = "";
-      onlineDeckPickerPage = 0;
+      onlineMatchDeckList.reset();
       render();
       const current = elements.onlineDeckPickerGrid.querySelector("button.selected:not(:disabled)");
       (current || elements.onlineDeckPickerBackButton).focus();
@@ -49038,8 +49049,62 @@
     }
 
     const DECKS_PER_PAGE = 12;
-    let onlineDeckPickerPage = 0;
-    let onlineDeckPickerMarkup = "";
+    function createMatchDeckList(picker, grid, prefix, refresh) {
+      const template = document.getElementById("matchDeckPickerControls");
+      grid.insertAdjacentHTML("beforebegin", template.innerHTML.replaceAll("onlineDeckPicker", prefix));
+      picker.querySelector("[data-match-deck-grid]").replaceWith(grid);
+      const search = picker.querySelector('input[type="search"]');
+      const sortKey = document.getElementById(`${prefix}SortKey`);
+      const direction = document.getElementById(`${prefix}SortDirection`);
+      const previous = document.getElementById(`${prefix}Prev`);
+      const next = document.getElementById(`${prefix}Next`);
+      const pageLabel = document.getElementById(`${prefix}PageLabel`);
+      let page = 0;
+      let lastMarkup = "";
+      const resetPage = () => { page = 0; refresh(); };
+      search.addEventListener("input", resetPage);
+      sortKey.addEventListener("change", resetPage);
+      direction.addEventListener("change", resetPage);
+      previous.addEventListener("click", () => { page -= 1; refresh(); });
+      next.addEventListener("click", () => { page += 1; refresh(); });
+      const normalize = (value) => value.normalize("NFKC").toLocaleLowerCase("ja");
+      return {
+        reset() { page = 0; search.value = ""; },
+        render(orderedEntriesForSort, rule, active, countsFor) {
+          const query = normalize(search.value).trim();
+          const sort = { key: sortKey.value, direction: direction.value };
+          const timeSort = ["created", "updated"].includes(sort.key);
+          const [ascending, descending] = direction.options;
+          const ascendingLabel = timeSort ? "昇順（古い順）" : "昇順";
+          if (ascending.textContent !== ascendingLabel) {
+            ascending.textContent = ascendingLabel;
+            descending.textContent = timeSort ? "降順（新しい順）" : "降順";
+          }
+          const entries = orderedEntriesForSort(sort).filter(({ label }) => normalize(label).includes(query));
+          const pages = Math.max(1, Math.ceil(entries.length / DECKS_PER_PAGE));
+          page = (page + pages) % pages;
+          const label = `— Page ${page + 1} / ${pages} —`;
+          if (pageLabel.textContent !== label) pageLabel.textContent = label;
+          previous.disabled = next.disabled = pages === 1;
+          const first = page * DECKS_PER_PAGE;
+          const markup = entries.slice(first, first + DECKS_PER_PAGE).map(({ descriptor, label }) => {
+            const value = onlineDeckDescriptorValue(descriptor);
+            const validation = validateOnlineDeckForRule(descriptor, countsFor(descriptor), rule.id);
+            const selected = value === active;
+            const specialty = descriptor.specialtyId ? ` · ${onlineDeckFormatLabel(descriptor)}` : "";
+            const status = validation.valid ? "" : " · 使用不可";
+            return `<button type="button" class="deck-library-card case-deck-tile${selected ? " selected" : ""}"
+              data-match-deck="${escapeHtml(value)}" aria-pressed="${selected}"${validation.valid ? "" : ` disabled title="${escapeHtml(onlineDeckValidationMessage(validation))}"`}>
+              <span class="case-deck-spine" aria-hidden="true"></span><span>${escapeHtml(label)}</span>
+              <small>${validation.size}枚${escapeHtml(specialty)}${status}</small></button>`;
+          }).join("") || `<p class="case-empty" role="status">${query ? "一致するデッキがありません。" : "このルールで選べるデッキがありません。"}</p>`;
+          if (markup !== lastMarkup) {
+            grid.innerHTML = markup;
+            lastMarkup = markup;
+          }
+        }
+      };
+    }
 
     function renderOnlineDeckPicker(entries, visible) {
       elements.onlineDeckPicker.classList.toggle("hidden", !visible);
@@ -49047,20 +49112,7 @@
       if (!visible) return;
       const rule = onlineRuleDefinition();
       elements.onlineDeckPickerRule.textContent = `対戦ルール：${rule.name}`;
-      const active = state.online.localDeckName;
-      const query = elements.onlineDeckPickerSearch.value.normalize("NFKC").trim().toLocaleLowerCase("ja");
-      const sort = {
-        key: elements.onlineDeckPickerSortKey.value,
-        direction: elements.onlineDeckPickerSortDirection.value
-      };
-      const timeSort = ["created", "updated"].includes(sort.key);
-      const [ascending, descending] = elements.onlineDeckPickerSortDirection.options;
-      const ascendingLabel = timeSort ? "昇順（古い順）" : "昇順";
-      if (ascending.textContent !== ascendingLabel) {
-        ascending.textContent = ascendingLabel;
-        descending.textContent = timeSort ? "降順（新しい順）" : "降順";
-      }
-      const orderedEntries = rule.deck.formats.flatMap((format) => {
+      onlineMatchDeckList.render((sort) => rule.deck.formats.flatMap((format) => {
         const collectionKey = ONLINE_DECK_FORMAT_DEFINITIONS[format].collectionKey;
         const names = sortedDeckLibraryNames(state.deckBuilder[collectionKey] || {}, sort);
         const savedEntries = new Map();
@@ -49071,31 +49123,7 @@
           else savedEntries.set(entry.descriptor.name, entry);
         }
         return [...currentEntries, ...names.map((name) => savedEntries.get(name))];
-      });
-      const emptyText = query ? "一致するデッキがありません。" : "このルールで選べるデッキがありません。";
-      const matches = orderedEntries.filter(({ label }) => label.normalize("NFKC").toLocaleLowerCase("ja").includes(query));
-      const pages = Math.max(1, Math.ceil(matches.length / DECKS_PER_PAGE));
-      onlineDeckPickerPage = (onlineDeckPickerPage + pages) % pages;
-      const pageLabel = `— Page ${onlineDeckPickerPage + 1} / ${pages} —`;
-      if (elements.onlineDeckPickerPageLabel.textContent !== pageLabel) elements.onlineDeckPickerPageLabel.textContent = pageLabel;
-      elements.onlineDeckPickerPrev.disabled = elements.onlineDeckPickerNext.disabled = pages === 1;
-      const first = onlineDeckPickerPage * DECKS_PER_PAGE;
-      const markup = matches.slice(first, first + DECKS_PER_PAGE)
-        .map(({ descriptor, label }) => {
-          const value = onlineDeckDescriptorValue(descriptor);
-          const validation = validateOnlineDeckForRule(descriptor, copyOnlineDeckCounts(descriptor));
-          const selected = value === active;
-          const specialty = descriptor.specialtyId ? ` · ${onlineDeckFormatLabel(descriptor)}` : "";
-          const status = validation.valid ? "" : " · 使用不可";
-          return `<button type="button" class="deck-library-card case-deck-tile${selected ? " selected" : ""}"
-            data-match-deck="${escapeHtml(value)}" aria-pressed="${selected}"${validation.valid ? "" : ` disabled title="${escapeHtml(onlineDeckValidationMessage(validation))}"`}>
-            <span class="case-deck-spine" aria-hidden="true"></span><span>${escapeHtml(label)}</span>
-            <small>${validation.size}枚${escapeHtml(specialty)}${status}</small></button>`;
-        }).join("") || `<p class="case-empty" role="status">${emptyText}</p>`;
-      if (markup !== onlineDeckPickerMarkup) {
-        elements.onlineDeckPickerGrid.innerHTML = markup;
-        onlineDeckPickerMarkup = markup;
-      }
+      }), rule, state.online.localDeckName, copyOnlineDeckCounts);
     }
 
     function renderOnlineLobby() {
@@ -53264,24 +53292,27 @@
       if (elements.battlePlayerProfileButton.classList.contains("hidden")) return;
       const playerDeck = elements.playerDeckPile.getBoundingClientRect();
       const opponentDeck = elements.opponentDeckPile.getBoundingClientRect();
-      const gap = 8;
-      const fitsRight = playerDeck.right + gap + playerDeck.width <= elements.battleScreen.clientWidth;
-      const opponentLeft = opponentDeck.left + opponentDeck.width / 4;
+      const field = elements.battleScreen.querySelector(".game-shell").getBoundingClientRect();
+      const gap = 14;
+      const playerSize = playerDeck.width * .64;
+      const opponentSize = opponentDeck.width * .7;
+      const fitsRight = playerDeck.right + gap + playerSize <= field.right - gap;
+      const opponentLeft = Math.max(field.left + gap, opponentDeck.left - opponentSize - gap);
       const opponentTrash = elements.opponentTrashButton.getBoundingClientRect();
-      const overlapsTrash = opponentLeft < opponentTrash.right && opponentLeft + opponentDeck.width > opponentTrash.left;
+      const overlapsTrash = opponentLeft < opponentTrash.right && opponentLeft + opponentSize > opponentTrash.left;
       const opponentTop = Math.max(opponentDeck.bottom, overlapsTrash ? opponentTrash.bottom : 0) + gap;
       const positions = [
-        [elements.battlePlayerProfileButton, playerDeck,
-          fitsRight ? playerDeck.right + gap : playerDeck.left,
-          fitsRight ? playerDeck.bottom - playerDeck.width : playerDeck.top - playerDeck.width - 26],
-        [elements.battleOpponentProfileButton, opponentDeck, opponentLeft, opponentTop]
+        [elements.battlePlayerProfileButton, playerSize,
+          fitsRight ? playerDeck.right + gap : playerDeck.left + (playerDeck.width - playerSize) / 2,
+          fitsRight ? Math.min(playerDeck.bottom, field.bottom - gap) - playerSize : playerDeck.top - playerSize - 30],
+        [elements.battleOpponentProfileButton, opponentSize, opponentLeft, opponentTop]
       ];
-      for (const [button, deck, left, top] of positions) {
-        button.style.visibility = deck.width && top + deck.width > 0 && top < window.innerHeight ? "" : "hidden";
+      for (const [button, size, left, top] of positions) {
+        button.style.visibility = size && top + size > 0 && top < window.innerHeight ? "" : "hidden";
         button.style.left = `${left}px`;
         button.style.top = `${top}px`;
-        button.style.setProperty("--battle-profile-size", `${deck.width}px`);
-        button.style.setProperty("--battle-profile-scale", String(deck.width / 116));
+        button.style.setProperty("--battle-profile-size", `${size}px`);
+        button.style.setProperty("--battle-profile-scale", String(size / 116));
       }
     }
 
@@ -54062,7 +54093,6 @@
       const rule = onlineRuleDefinition(ruleId);
       const format = rule.deck.formats[0] || "normal";
       const decks = state.deckBuilder[onlineDeckFormatDefinition(format).collectionKey] || {};
-      const names = Object.keys(decks).sort((a, b) => a.localeCompare(b, "ja"));
       const ruleOptions = ONLINE_RULE_DEFINITIONS
         .map((definition) => `<option value="${escapeHtml(definition.id)}">${escapeHtml(definition.name)}</option>`)
         .join("");
@@ -54082,48 +54112,28 @@
       elements.soloAiDeckName.textContent = aiBattle ? "ランダム" : selection.opponentDeckName || "未選択";
       elements.soloPlayerDeckConfirmButton.disabled = !selection.playerDeckName;
       elements.soloAiDeckConfirmButton.disabled = !selection.opponentDeckName;
-      elements.soloDeckPicker.classList.toggle("hidden", !selection.pickerOpen);
-      elements.soloDeckGrid.innerHTML = "";
-      if (names.length === 0) {
-        const empty = document.createElement("p");
-        empty.className = "current-deck-empty";
-        empty.textContent = `${onlineDeckFormatDefinition(format).groupLabel}がありません。先にデッキ変更から作成・保存してください。`;
-        elements.soloDeckGrid.appendChild(empty);
-      }
-      names.forEach((name) => {
-        const saved = decks[name];
-        const descriptor = deckDescriptorForRule(ruleId, name, saved);
-        const validation = validateOnlineDeckForRule(descriptor, saved?.counts || {}, ruleId);
-        const selected = selection.playerDeckName === name || selection.opponentDeckName === name;
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = `deck-library-card${selected ? " selected" : ""}`;
-        button.textContent = `${name}${validation.valid ? "" : "（要調整）"}`;
-        button.disabled = !validation.valid;
-        button.addEventListener("click", () => {
-          const key = selection.activeSide === "player" ? "playerDeckName" : "opponentDeckName";
-          selection[key] = name;
-          selection.previewName = name;
-          selection.previewExpanded = false;
-          selection.pickerOpen = false;
-          render();
-        });
-        elements.soloDeckGrid.appendChild(button);
-      });
       const preview = decks[selection.previewName];
-      const showingSelectedDeck = Boolean(preview && selection.previewExpanded);
-      elements.soloDeckPickerTitle.textContent = showingSelectedDeck
-        ? (selection.activeSide === "player" ? "左側の使用デッキ" : "右側CPUの使用デッキ")
-        : (selection.activeSide === "player" ? "左側のデッキ選択" : "右側CPUのデッキ選択");
-      elements.soloDeckGrid.classList.toggle("hidden", showingSelectedDeck);
-      elements.soloDeckDetail.classList.toggle("hidden", !preview);
-      elements.soloDeckDetail.innerHTML = preview ? `${deckDetailHtml(selection.previewName, preview, { showCards: selection.previewExpanded, showCurve: false })}
-        <div class="deck-library-detail-actions"><button class="button secondary" type="button" data-solo-view>${selection.previewExpanded ? "内容を閉じる" : "内容を見る"}</button></div>` : "";
-      elements.soloDeckDetail.querySelector("[data-solo-view]")?.addEventListener("click", () => {
-        selection.previewExpanded = !selection.previewExpanded;
-        render();
-      });
-      attachLibraryCardDetails(elements.soloDeckDetail);
+      const previewOpen = Boolean(selection.pickerOpen && preview && selection.previewExpanded);
+      const choosingDeck = selection.pickerOpen && !previewOpen;
+      elements.soloMatchDeckPicker.classList.toggle("hidden", !choosingDeck);
+      elements.soloDeckPicker.classList.toggle("hidden", !previewOpen);
+      const sideLabel = selection.activeSide === "player" ? "左側" : "右側CPU";
+      if (choosingDeck) {
+        elements.soloMatchDeckPickerTitle.textContent = `${sideLabel}のデッキ選択`;
+        elements.soloMatchDeckPickerRule.textContent = `対戦ルール：${rule.name}`;
+        const activeName = selection.activeSide === "player" ? selection.playerDeckName : selection.opponentDeckName;
+        const active = onlineDeckDescriptorValue(deckDescriptorForRule(ruleId, activeName, decks[activeName]));
+        soloMatchDeckList.render(
+          (sort) => sortedDeckLibraryNames(decks, sort).map((name) => ({ label: name, descriptor: deckDescriptorForRule(ruleId, name, decks[name]) })),
+          rule, active, getOnlineDeckCountsByName
+        );
+      }
+      elements.soloDeckPickerTitle.textContent = `${sideLabel}の使用デッキ`;
+      elements.soloDeckDetail.classList.toggle("hidden", !previewOpen);
+      elements.soloDeckDetail.innerHTML = previewOpen
+        ? deckDetailHtml(selection.previewName, preview, { showCards: true, showCurve: false })
+        : "";
+      if (previewOpen) attachLibraryCardDetails(elements.soloDeckDetail);
       const playerSaved = decks[selection.playerDeckName];
       const opponentSaved = decks[selection.opponentDeckName];
       const playerValid = playerSaved && validateOnlineDeckForRule(
@@ -54143,12 +54153,20 @@
       state.soloSelection.previewName = "";
       state.soloSelection.previewExpanded = false;
       state.soloSelection.pickerOpen = true;
+      soloMatchDeckList.reset();
       render();
+      const current = elements.soloDeckGrid.querySelector("button.selected:not(:disabled)");
+      (current || elements.soloMatchDeckPickerBackButton).focus();
     }
 
     function closeSoloDeckPicker() {
-      state.soloSelection.pickerOpen = false;
+      const selection = state.soloSelection;
+      const opener = selection.previewExpanded
+        ? (selection.activeSide === "player" ? elements.soloPlayerDeckConfirmButton : elements.soloAiDeckConfirmButton)
+        : (selection.activeSide === "player" ? elements.soloPlayerSlot : elements.soloAiSlot);
+      selection.pickerOpen = false;
       render();
+      opener.focus();
     }
 
     function previewSoloSelectedDeck(side) {
@@ -58646,6 +58664,21 @@
     elements.soloAiSlot.addEventListener("click", () => openSoloDeckPicker("opponent"));
     elements.soloPlayerDeckConfirmButton.addEventListener("click", () => previewSoloSelectedDeck("player"));
     elements.soloAiDeckConfirmButton.addEventListener("click", () => previewSoloSelectedDeck("opponent"));
+    elements.soloMatchDeckPickerBackButton.addEventListener("click", closeSoloDeckPicker);
+    elements.soloMatchDeckPicker.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeSoloDeckPicker();
+      }
+    });
+    elements.soloDeckGrid.addEventListener("click", (event) => {
+      const tile = event.target.closest("button[data-match-deck]");
+      if (!tile || tile.disabled || elements.soloMatchDeckPicker.classList.contains("hidden")) return;
+      const selection = state.soloSelection;
+      const key = selection.activeSide === "player" ? "playerDeckName" : "opponentDeckName";
+      selection[key] = parseOnlineDeckDescriptor(tile.dataset.matchDeck).name;
+      closeSoloDeckPicker();
+    });
     elements.soloDeckPickerCloseButton.addEventListener("click", closeSoloDeckPicker);
     elements.soloDeckPicker.addEventListener("click", (event) => {
       if (event.target === elements.soloDeckPicker) closeSoloDeckPicker();
@@ -58759,21 +58792,8 @@
     elements.onlineRandomDeckSelect.addEventListener("change", () => onlineUpdateDeckSelection(elements.onlineRandomDeckSelect));
     elements.onlineDeckPickerButton.addEventListener("click", openOnlineDeckPicker);
     elements.onlineDeckPickerBackButton.addEventListener("click", closeOnlineDeckPicker);
-    function resetOnlineDeckPickerPage() {
-      onlineDeckPickerPage = 0;
-      renderOnlineLobby();
-    }
-    elements.onlineDeckPickerSearch.addEventListener("input", resetOnlineDeckPickerPage);
-    elements.onlineDeckPickerSortKey.addEventListener("change", resetOnlineDeckPickerPage);
-    elements.onlineDeckPickerSortDirection.addEventListener("change", resetOnlineDeckPickerPage);
-    elements.onlineDeckPickerPrev.addEventListener("click", () => {
-      onlineDeckPickerPage -= 1;
-      renderOnlineLobby();
-    });
-    elements.onlineDeckPickerNext.addEventListener("click", () => {
-      onlineDeckPickerPage += 1;
-      renderOnlineLobby();
-    });
+    const onlineMatchDeckList = createMatchDeckList(elements.onlineDeckPicker, elements.onlineDeckPickerGrid, "onlineDeckPicker", renderOnlineLobby);
+    const soloMatchDeckList = createMatchDeckList(elements.soloMatchDeckPicker, elements.soloDeckGrid, "soloDeckPicker", renderSoloDeckSelection);
     elements.onlineDeckPicker.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
@@ -59415,7 +59435,7 @@
     initializeGame();
 
   </script>
-<script src="cards-ui.js?v=0.41.0-match-pages"></script>
+<script src="cards-ui.js?v=0.41.0-match-common"></script>
   <script src="desktop-ui.js?v=0.26.0"></script>
 <script src="draw-animation.js?v=0.23.19-video-tempo"></script>
 <script src="wonton-animation.js?v=0.36.0-cover-1s"></script>
