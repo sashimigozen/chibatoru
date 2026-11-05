@@ -118,10 +118,9 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
       const deck = await page.locator(`#${side}DeckPile`).boundingBox();
       expect(icon.width / deck.width).toBeGreaterThan(0.6);
       expect(icon.width / deck.width).toBeLessThan(0.75);
-      if (side === "opponent") {
-        expect(icon.y - (deck.y + deck.height)).toBeGreaterThanOrEqual(13);
-        if (page !== observer) expect(deck.x - (icon.x + icon.width)).toBeGreaterThanOrEqual(13);
-      }
+      expect(Math.abs(icon.y + icon.height - deck.y - deck.height)).toBeLessThan(1);
+      const gap = side === "opponent" ? deck.x - icon.x - icon.width : icon.x - deck.x - deck.width;
+      expect(gap).toBeGreaterThan(9);
     }
     await page.evaluate(() => { state.lectureRoomCheck = false; });
     if (page === host) await page.screenshot({ path: "/tmp/chibatoru-battle-profile-final.png" });
