@@ -19548,6 +19548,7 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
+      endless_talker: {"name": "エンドレストーカー", "type": "student", "cost": 10, "attack": 1, "hp": 1, "allowedZones": ["seat", "teacher"], "category": "common"},
       amphisbaena_sofa: {"name": "アンフィスバエナソファ", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       tomoyo_mou: {"name": "友よ、もう", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       shukii: {"name": "しゅきー", "type": "item", "cost": 1, "attack": 0, "hp": 0, "target": "self", "category": "common"},
@@ -19962,6 +19963,8 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("endless_talker");
+    SPECIALTY_CARD_IDS.common.push("endless_talker");
     ALL_DECK_IDS.push("amphisbaena_sofa");
     SPECIALTY_CARD_IDS.common.push("amphisbaena_sofa");
     IMMEDIATE_ITEM_IDS.push("amphisbaena_sofa");
@@ -20022,6 +20025,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」を追加しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
@@ -33190,7 +33194,24 @@
       return Math.min(count,seats.length) * 9;
     }
 
+    function scoreAiEndlessTalker(side, source) {
+      if (arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(source)) return -4;
+      const other = oppositeSide(side);
+      const boardValue = owner => listBoardRefs(owner).map(getBoardCardFromRef)
+        .filter(card => card && card.instanceId !== source.instanceId && !isAibenNyoteiEffectImmune(card))
+        .reduce((sum, card) => sum + Math.max(0, card.attack || 0) * 2 + Math.max(0, card.currentHp || 0) + 5, 0);
+      const handValue = owner => state.players[owner].hand
+        .filter(card => card.instanceId !== source.instanceId && isEndlessTalkerAttendee(card)).length * 3;
+      const own = state.players[side], enemy = state.players[other];
+      const deckOutRescue = own.deck.length <= 2 && (own.trash.some(isEndlessTalkerAttendee) || boardValue(side) > 0) ? 18 : 0;
+      // A 1/1 is not a reason to erase a winning board. Favor resets when
+      // behind, while accounting for both players losing attendee hands.
+      return boardValue(other) - boardValue(side) + handValue(other) - handValue(side)
+        + (enemy.maxWill - own.maxWill) * 2 + deckOutRescue - 6;
+    }
+
     function scoreAiPlacement(card, zone, index) {
+      if (card.baseId === "endless_talker") return scoreAiEndlessTalker("opponent", card);
       const context = getAiDecisionContext();
       const lethalForecast = getAiLethalForecast();
       const enemyRefs = context.enemyRefs;
@@ -40308,6 +40329,7 @@
 
     function canPlaceCard(side, card, zone, owner, index, options = {}) {
       if (!card || state.phase !== "battle" || state.gameOver) return false;
+      if (card.baseId === "endless_talker" && effectiveCardCost(card, zone, index) !== 10) return false;
       if (card.effectAllowedSeats && (zone !== "seat" || !card.effectAllowedSeats.includes(index))) return false;
       if (Number.isInteger(card.allowedSeatIndex) && (zone !== "seat" || index !== card.allowedSeatIndex)) return false;
       if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return false;
@@ -40912,6 +40934,7 @@
     function attendCard(side, card, zone, index = null, options = {}) {
       delete card.effectAllowedSeats;
       if (!card || !["seat", "teacher", "environment"].includes(zone)) return null;
+      if (card.baseId === "endless_talker" && effectiveCardCost(card, zone, index) !== 10) return null;
       if (Number.isInteger(card.allowedSeatIndex) && (zone !== "seat" || index !== card.allowedSeatIndex)) return null;
       if (card.frontRowOnly && (zone !== "seat" || index === null || seatRow(index) !== 1)) return null;
       if (zone !== "environment" && isAttendanceLimited(side) && !options.ignoreAttendanceLimit) return null;
@@ -41497,6 +41520,79 @@
       return true;
     }
 
+    function isEndlessTalkerAttendee(card) {
+      return ["student", "teacher", "vampire"].includes(card?.type);
+    }
+
+    function resolveEndlessTalker(side, source) {
+      const seen = new Set();
+      const equipmentIds = new Set();
+      const returned = { player: [], opponent: [] };
+      // Separate material recovery from destruction/discard: neither a death
+      // trigger nor 提出 may fire while these cards are returned to the deck.
+      const recover = (card, owner) => {
+        if (!card || seen.has(card.instanceId || card)) return;
+        seen.add(card.instanceId || card);
+        const previous = card.evolvedFrom;
+        const stored = [...(card.handFusionStored || [])];
+        const horse = horseFusionMaterialEntries(card);
+        const uta = utaFusionMaterialEntries(card);
+        const recipe = horse.length ? horse : (!uta.length ? card.fusionMaterials || [] : []);
+        for (const equipment of equipmentEntriesForCard(card)) {
+          const key = equipment.instanceId || equipment;
+          if (equipmentIds.has(key)) continue;
+          equipmentIds.add(key);
+          moveToTrash(equipment.owner || owner, equipment, { sourceZone: "equipment", reason: source.name });
+        }
+        recover(previous, owner);
+        stored.forEach(material => recover(material, owner));
+        if (recipe.length) {
+          recipe.forEach(material => recover(createCardFromBase(material.baseId, owner), owner));
+          return;
+        }
+        if (uta.length) {
+          uta.forEach(material => recover(createCardFromBase(material.baseId, owner), owner));
+          if (card.baseId === "ultimate_yuta") card = createCardFromBase("yuta", owner);
+        }
+        if (isTokenCard(card)) return; // Ordinary tokens vanish on leaving play; their fusion materials above survive.
+        resetCardEffectsForTrash(card, owner);
+        returned[owner].push(card);
+      };
+      for (const owner of ["player", "opponent"]) {
+        const player = state.players[owner];
+        player.maxWill = 3;
+        player.will = Math.min(3, Math.max(0, player.will));
+        player.padPresentNaturalMaxWill = null;
+        const hand = player.hand.filter(isEndlessTalkerAttendee);
+        const trash = player.trash.filter(isEndlessTalkerAttendee);
+        player.hand = player.hand.filter(card => !isEndlessTalkerAttendee(card));
+        player.trash = player.trash.filter(card => !isEndlessTalkerAttendee(card));
+        // Snapshot refs first: multi-seat attendees must leave exactly once.
+        const board = listBoardRefs(owner).map(ref => ({ ref, card: getBoardCardFromRef(ref) }))
+          .filter(({ card }) => card && card.instanceId !== source.instanceId && !isAibenNyoteiEffectImmune(card));
+        for (const { ref, card } of board) {
+          analyticsRecordEffect({ side, source, effectType: "board_leave", chosenTargets: [analyticsCardInfo(card)],
+            details: { owner, zone: ref.zone, seat: ref.zone === "seat" ? analyticsSeatInfo(ref.index) : null, reason: source.name } });
+          clearBoardCardFromField(owner, ref.zone, ref.index, card);
+        }
+        [...board.map(entry => entry.card), ...hand, ...trash].forEach(card => recover(card, owner));
+      }
+      for (const owner of ["player", "opponent"]) {
+        const player = state.players[owner];
+        player.deck = shuffle([...player.deck, ...returned[owner]]);
+        queueAnimation("shuffle", owner);
+        let discounted = 0;
+        for (const card of player.deck.filter(isEndlessTalkerAttendee)) {
+          card.cost = Math.max(0, (card.cost || 0) - 3);
+          discounted += 1;
+        }
+        analyticsRecordEffect({ side, source, effectType: "endless_talker_reset", chosenTargets: returned[owner].map(analyticsCardInfo),
+          details: { owner, returned: returned[owner].length, discounted, maxWill: 3, will: player.will } });
+        addLog(`${source.name}の効果：${SIDES[owner]}の最大戦意を3にし、出席者カード${returned[owner].length}枚を分解してデッキへ戻しました。デッキの出席者カード${discounted}枚の戦意を−3しました。`);
+      }
+      applyBoardAuras();
+    }
+
     function castPinige(side, item, renderAfter = true) {
       if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side,item,renderAfter);
       const unit = hasAcquiredUnit(side);
@@ -41544,6 +41640,7 @@
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
       }
+      if (card.baseId === "endless_talker") resolveEndlessTalker(side, card);
       if (card.baseId === "private_teacher") {
         for (let i = 0; i < 2; i++) {
           const generated = createCardFromBase("exploding_student", side);
@@ -54846,6 +54943,7 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      endless_talker: {"hand": ["go_home", "long_sleeve_student", "classroom", "rear_queen"], "life": 14, "will": 10, "own": {"seats": [[0, "umaibo"], [4, "dark_yuta"]], "teacher": "general_teacher"}, "enemy": {"seats": [[0, "two_achievers"], [4, "exploding_student"]], "teacher": "general_teacher"}, "trash": ["general_student", "ruler"], "deck": ["endless_talker", "long_sleeve_student", "general_teacher", "vampire", "onigiri_draw", "classroom"], "enemyHand": ["strong_student", "general_teacher", "ruler", "cafeteria"], "enemyDeck": ["strong_student", "general_student", "general_teacher", "onigiri_draw", "cafeteria"], "environment": "classroom", "note": "戦意10でエンドレストーカーを出席させ、お互いの講義室・手札・校外エリアから出席者がデッキへ戻ることを確認できます。裏U太は進化元と分かれ、ウマイボは融合素材に分かれます。持ち物・環境・遅刻ゾーンと気力は維持され、デッキの出席者は戦意−3になります。本人は残り、次の自分のターンから最大戦意が4へ増えます。"},
       amphisbaena_sofa: {"hand": ["amphisbaena_sofa", "amphisbaena_sofa", "amphisbaena_sofa", "general_student", "onigiri_draw"], "life": 12, "will": 8, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [4, "general_student"]], "teacher": "general_teacher"}, "deck": ["general_student", "onigiri_draw", "amphisbaena_sofa", "classroom", "strong_student", "general_teacher", "general_student", "onigiri_draw", "classroom"], "enemyHand": ["general_student"], "note": "残り戦意8から開始します。そのまま使うと2人破壊→自傷4→デッキの2枚を校外へ送る→4回復を試せます。先に一般学生を出席させると残り戦意6になり、戦意4で片方を選べます。デッキの残り順は変わりません。"},
       tomoyo_mou: {"hand": ["tomoyo_mou", "general_student", "ruler", "onigiri_draw", "shukii"], "will": 4, "life": 12, "deck": ["tomoyo_mou", "general_student", "tomoyo_mou", "past_campus"], "note": "戦意4で2人を出席させ、低戦意の手札から自動融合する様子を試せます。手札が空でも使用可能です。次のターン以降に戦意8で使うと4人になります。出席先は席マスを直接選びます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       rear_queen: {"hand": ["general_student", "ruler", "tomoyo_mou"], "will": 12, "life": 12, "deck": ["rear_queen", "general_student", "shukii", "past_campus"], "note": "1枚ずつ融合でき、合計2枚で出席できます。カード確認の融合するか、手札同士のドラッグで融合します。中央列に出席させると左右の空き席から爆発する学生の出席先を選べます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
@@ -55037,6 +55135,14 @@
       if (scenario.enemyHand) state.players.opponent.hand = scenario.enemyHand.map(id => createCardFromBase(id, "opponent"));
       if (scenario.environment) state.environment = makeBoardCard(createCardFromBase(scenario.environment, "player"));
       if (scenario.suitAttendanceCount !== undefined) state.suitStudentAttendanceCount = scenario.suitAttendanceCount;
+      if (baseId === "endless_talker") {
+        player.board.seats[4].evolvedFrom = makeAttendee("player", "yuta");
+        const giant = state.players.opponent.board.seats[0];
+        state.players.opponent.board.seats[1] = giant;
+        giant.occupiedSeatIndexes = [0, 1];
+        state.players.opponent.trash = ["vampire", "onigiri_draw"].map(id => createCardFromBase(id, "opponent"));
+        player.late = [{ card: createCardFromBase("lazy_student", "player"), owner: "player", zone: "seat", index: 8, remaining: 2 }];
+      }
       for (const side of ["player", "opponent"]) {
         const testPlayer = state.players[side];
         const cards = [...testPlayer.hand, ...testPlayer.deck, ...testPlayer.trash,
@@ -57447,6 +57553,7 @@
         sports_spectator_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
+        endless_talker: "このカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。",
         amphisbaena_sofa: "2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。",
         pinige: "[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。",
         gecko_carrier_student: "[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。",
