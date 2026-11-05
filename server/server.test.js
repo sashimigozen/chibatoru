@@ -887,10 +887,10 @@ test("snapshots hide the opponent hand from guests and reveal both hands to spec
       gameOver: false,
       players: {
         player: {
-          hand: [{ instanceId: "host-secret", baseId: "general_student", name: "ホスト秘密カード" }]
+          hand: [{ instanceId: "host-secret", baseId: "general_student", name: "ホスト秘密カード", hapaHandDamage: 2 }]
         },
         opponent: {
-          hand: [{ instanceId: "guest-secret", baseId: "aggro_student", name: "ゲスト秘密カード" }]
+          hand: [{ instanceId: "guest-secret", baseId: "aggro_student", name: "ゲスト秘密カード", hapaHandDamage: 4 }]
         }
       }
     }
@@ -900,12 +900,15 @@ test("snapshots hide the opponent hand from guests and reveal both hands to spec
   const guestStarted = await waitFor(guest, (message) => message.type === "startGame" && message.snapshot?.seq === 1, guestStart);
   assert.deepEqual(guestStarted.message.snapshot.state.players.player.hand, [{ hidden: true }]);
   assert.equal(guestStarted.message.snapshot.state.players.opponent.hand[0].name, "ゲスト秘密カード");
+  assert.equal(JSON.stringify(guestStarted.message.snapshot).includes("hapaHandDamage"), false);
+  assert.equal(snapshot.state.players.opponent.hand[0].hapaHandDamage, 4);
 
   const spectator = await connectSpectatorClient(url, roomId, "spectator-hide");
   clients.push(spectator);
   const spectatorState = await waitFor(spectator, (message) => message.type === "gameState" && message.snapshot?.seq === 1);
   assert.equal(spectatorState.message.snapshot.state.players.player.hand[0].name, "ホスト秘密カード");
   assert.equal(spectatorState.message.snapshot.state.players.opponent.hand[0].name, "ゲスト秘密カード");
+  assert.equal(JSON.stringify(spectatorState.message.snapshot).includes("hapaHandDamage"), false);
 
   const guestRevealStart = guest.messages.length;
   const spectatorRevealStart = spectator.messages.length;
@@ -913,6 +916,7 @@ test("snapshots hide the opponent hand from guests and reveal both hands to spec
   const reveal = await waitFor(guest, (message) => message.type === "oneEyedPeekReveal", guestRevealStart);
   assert.equal(reveal.message.cards.length, 1);
   assert.equal(reveal.message.cards[0].name, "ホスト秘密カード");
+  assert.equal(JSON.stringify(reveal.message.cards).includes("hapaHandDamage"), false);
   await new Promise((resolve) => setTimeout(resolve, 80));
   assert.equal(spectator.messages.slice(spectatorRevealStart).some((message) => message.type === "oneEyedPeekReveal"), false);
 

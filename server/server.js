@@ -1770,7 +1770,8 @@ function snapshotForRecipient(snapshot, recipient) {
     recipient.analyticsGameId = analytics.game?.gameId;
     recipient.analyticsCount = analytics.events.length;
   }
-  const copy = JSON.parse(JSON.stringify(transmitted));
+  const copy = JSON.parse(JSON.stringify(transmitted, (key, value) =>
+    recipient?.role !== "host" && key === "hapaHandDamage" ? undefined : value));
   const players = copy?.state?.players;
   if (!players || typeof players !== "object") return copy;
   hiddenSides.forEach((side) => {
@@ -2450,7 +2451,8 @@ function handleOneEyedPeekReveal(ws, message) {
     type: "oneEyedPeekReveal",
     senderId: player.clientId,
     roomSessionId: room.sessionId,
-    cards: Array.isArray(hand) ? hand : []
+    cards: JSON.parse(JSON.stringify(Array.isArray(hand) ? hand : [], (key, value) =>
+      key === "hapaHandDamage" ? undefined : value))
   });
 }
 

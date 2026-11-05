@@ -19548,6 +19548,9 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
+      hapa_english: {"name": "Hapa英会話", "type": "item", "cost": 2, "attack": 0, "hp": 0, "target": "self", "category": "common"},
+      questioning_lecturer: {"name": "質問する講師", "type": "teacher", "cost": 4, "attack": 1, "hp": 3, "allowedZones": ["teacher"], "category": "common"},
+
       endless_talker: {"name": "エンドレストーカー", "type": "student", "cost": 10, "attack": 1, "hp": 1, "allowedZones": ["seat", "teacher"], "category": "common"},
       amphisbaena_sofa: {"name": "アンフィスバエナソファ", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       tomoyo_mou: {"name": "友よ、もう", "type": "item", "cost": 4, "attack": 0, "hp": 0, "target": "self", "category": "common"},
@@ -19963,6 +19966,9 @@
       "classroom_change", "annoying_na", "childhood_memory_tutuapp", "jailbreak_tutuapp", "efficient_experiment_method",
       "hat_man", "academic_move", "confucius_says", "gesture_student", "diligent_student", "plump_student", "aggro_princess", "aggro_walk", "red_ideology", "illness", "recovered_dark_yuta", "igidakatta", "contrarian_portal", "stress_hair", "laser_beam", "attitude", "folder_galaxy", "variable_student", "sweet_curry", "spoon_wizard", "adjective_vs_cynical", "suffix_sugi", "yakitori_harassment", "starbucks_student", "overfitting_student", "loud_typing_student", "tiny_rhythm_student", "apprentice_best_friend", "white_student", "true_enemy", "enemy_horde", "rear_queen", "enemy_enemy", "enemy_revive", "triple_enemy", "salt_to_enemy"
     );
+    ALL_DECK_IDS.push("hapa_english", "questioning_lecturer");
+    SPECIALTY_CARD_IDS.common.push("hapa_english", "questioning_lecturer");
+    IMMEDIATE_ITEM_IDS.push("hapa_english");
     ALL_DECK_IDS.push("endless_talker");
     SPECIALTY_CARD_IDS.common.push("endless_talker");
     ALL_DECK_IDS.push("amphisbaena_sofa");
@@ -20025,7 +20031,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」を追加しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}]},
+      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
@@ -28475,7 +28481,7 @@
     }
 
     function onlineTransformSnapshotForSpectator(hostState) {
-      const transformed = JSON.parse(JSON.stringify(hostState));
+      const transformed = JSON.parse(JSON.stringify(hostState, (key, value) => key === "hapaHandDamage" ? undefined : value));
       transformed.pendingCopiedCard = null;
       transformed.pendingSpecialAttendanceQueue = null;
       transformed.pendingCrotchFebrezeEffects = null;
@@ -28485,6 +28491,7 @@
     }
 
     function onlineTransformSnapshotForGuest(hostState) {
+      hostState = JSON.parse(JSON.stringify(hostState, (key, value) => key === "hapaHandDamage" ? undefined : value));
       const transformed = onlineSwapOwnersDeep(hostState);
       transformed.players = {
         player: onlineSwapOwnersDeep(hostState.players.opponent),
@@ -33212,6 +33219,13 @@
 
     function scoreAiPlacement(card, zone, index) {
       if (card.baseId === "endless_talker") return scoreAiEndlessTalker("opponent", card);
+      if (card.baseId === "questioning_lecturer") {
+        if (arePlayedEffectsSuppressed("opponent") || !canUsePrintedCardEffects(card)) return 2;
+        const target = state.players.player.board.teacher;
+        const values = target ? [questioningLecturerMoveValue("opponent", target)]
+          : questioningLecturerMoveCandidates("opponent").map(entry => questioningLecturerMoveValue("opponent", entry.card));
+        return zone === "teacher" ? 4 + Math.max(0, ...values) : 1;
+      }
       const context = getAiDecisionContext();
       const lethalForecast = getAiLethalForecast();
       const enemyRefs = context.enemyRefs;
@@ -34295,6 +34309,7 @@
         return plan.target ? plan.score : 0;
       }
       if (item.baseId === "sweet_curry") return enemyCards.some((card) => card.type === "vampire") ? 10 : 0;
+      if (item.baseId === "hapa_english") return state.players.player.hand.length ? 5 : 0;
       if (item.baseId === "confucius_says") return opponent.deck.length >= 3 ? 7 : 0;
       if (item.baseId === "suffix_sugi") return scoreAiHandLoadItem("opponent", item);
       if (item.baseId === "igidakatta") return ["player", "opponent"].some((side) => listBoardRefs(side)
@@ -34913,19 +34928,20 @@
     function shouldAiUseLecture(ref, teacher, side = "opponent") {
       if (!canTeacherChooseLecture(ref) || teacher?.owner !== side) return false;
       if (aiBoardFaceDamage(side, { readyOnly: true }).guaranteed >= state.players[oppositeSide(side)].life) return false;
-      const targets = lectureTargetEntries(side, teacher).filter(({ card }) => previewFinalDamageToCard(card, 1, teacher, {
+      const damage = teacherLectureDamage(side, teacher);
+      const targets = lectureTargetEntries(side, teacher).filter(({ card }) => previewFinalDamageToCard(card, damage, teacher, {
         ignoreWeakness: teacher.baseId === "lightning_n", damageKind: "lecture"
       }) > 0);
       if (targets.length === 0) return false;
-      const defeated = targets.filter(({ card }) => previewFinalDamageToCard(card, 1, teacher, {
+      const defeated = targets.filter(({ card }) => previewFinalDamageToCard(card, damage, teacher, {
         ignoreWeakness: teacher.baseId === "lightning_n", damageKind: "lecture"
       }) >= card.currentHp).map(({ card }) => card);
       if (aiEnemyTrpgRemovalPenalty(side, defeated) > 0) return false;
-      if (targets.some(({ card }) => previewFinalDamageToCard(card, 1, teacher, {
+      if (targets.some(({ card }) => previewFinalDamageToCard(card, damage, teacher, {
         ignoreWeakness: teacher.baseId === "lightning_n",
         damageKind: "lecture"
       }) >= card.currentHp)) return true;
-      return targets.length >= 2;
+      return teacher.baseId === "questioning_lecturer" || targets.length >= 2;
     }
 
     function planAiGuaranteedEndTurnEffectKills(side) {
@@ -35256,7 +35272,7 @@
         && teacher.type === "teacher"
         && !teacher.noLecture
         && canUsePrintedCardEffects(teacher)
-        && canAttackSilently(teacher));
+        && canAttackSilently(teacher, { lecture: true }));
     }
 
     function lectureTargetEntries(side, teacher) {
@@ -35267,8 +35283,8 @@
       const onDemandProtectsStudents = ongoingEnvironmentBaseId() === "on_demand_business";
       return listBoardRefs(opponent)
         .map((ref) => ({ ref, card: getBoardCardFromRef(ref) }))
-        .filter(({ card }) => card
-          && lectureTargetTypes.includes(card.type)
+        .filter(({ card, ref }) => card
+          && (teacher?.baseId === "questioning_lecturer" ? ref.zone === "teacher" : lectureTargetTypes.includes(card.type))
           && !isEarphoneEquipped(card)
           && !(onDemandProtectsStudents && card.type === "student"));
     }
@@ -35278,18 +35294,27 @@
       const lectureTargetLabel = lectureTargetsVampires ? "ヴァンパイア" : "学生";
       const onDemandProtectsStudents = ongoingEnvironmentBaseId() === "on_demand_business";
       const targets = lectureTargetEntries(side, teacher);
+      const damage = teacherLectureDamage(side, teacher);
       let affected = 0;
-      targets.forEach(({ card }) => {
-        dealDamageToCard(card, 1, teacher, {
+      targets.forEach(({ card, ref }) => {
+        const beforeHp = card.currentHp;
+        dealDamageToCard(card, damage, teacher, {
           ignoreWeakness: teacher.baseId === "lightning_n",
           damageKind: "lecture"
         });
+        if (teacher.baseId === "questioning_lecturer" && beforeHp > 0 && card.currentHp <= 0 && !tryResolveRebirthStudent(card)) {
+          const destroyed = destroyBoardCard(ref, { reason: "体力0", showDestroyFeedback: false, suppressToast: true });
+          if (destroyed && !state.gameOver) {
+            addHandCards(side, [publicHandCard("hapa_english", side)], "generated");
+            addLog(`${teacher.name}の効果：Hapa英会話を1枚手札に生成しました。`);
+          }
+        }
         affected += 1;
       });
       const onDemandText = onDemandProtectsStudents && !lectureTargetsVampires
         ? " オンデマンド授業により、学生は講義を受けません。"
         : "";
-      addLog(`${teacher.name}の講義：相手の${lectureTargetLabel}${affected}人に1ダメージ。${onDemandText}`);
+      addLog(`${teacher.name}の講義：相手の${teacher.baseId === "questioning_lecturer" ? "教卓の出席者" : lectureTargetLabel}${affected}人に${damage}ダメージ。${onDemandText}`);
       return affected;
     }
 
@@ -36367,7 +36392,7 @@
       pendingTeacherActionRef = ref;
       elements.teacherActionCard.innerHTML = cardShellTemplate(teacher);
       const tutorialStep = currentTutorialStep();
-      elements.teacherAttackChoiceButton.disabled = Boolean(
+      elements.teacherAttackChoiceButton.disabled = !canAttackSilently(teacher) || Boolean(
         isTutorialActive() && tutorialStep?.action === "lecture"
       );
       elements.teacherLectureChoiceButton.disabled = Boolean(
@@ -36389,7 +36414,7 @@
     function confirmTeacherAttackChoice() {
       const ref = pendingTeacherActionRef ? { ...pendingTeacherActionRef } : null;
       closeTeacherActionChoice();
-      if (!ref || !canTeacherChooseLecture(ref)) {
+      if (!ref || !canTeacherChooseLecture(ref) || !canAttackSilently(getBoardCardFromRef(ref))) {
         render();
         return false;
       }
@@ -38822,19 +38847,21 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck", "lecturer_move"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
+        if (kind === "lecturer_move") return sorted.filter(card => card.choiceScore > 0).slice(0, max);
         return sorted.filter(card => !["buff","damage"].includes(kind) || (!isPadlocked(card) && !isAibenNyoteiEffectImmune(card)
           && (kind !== "damage" || choiceOptions.required || !aiShouldPreserveEnemyTrpg(side,card)))).slice(0, max);
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
-      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional"].includes(kind) ? 0 : max;
+      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional", "lecturer_move"].includes(kind) ? 0 : max;
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
         requestId, context: { kind }, confirmLabel: "確定" };
+      if (kind === "lecturer_move") options.message = "相手の教卓マスへ移動させる出席者を、盤面から1人まで指名してください。0人でも確定できます。";
       if (kind === "destroy_columns") options.context.targetOwner = oppositeSide(side);
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
       if (kind === "submission_discard") options.message = "校外エリアへ送る手札1枚を選んでください。";
@@ -40453,6 +40480,8 @@
         clearBoardCardFromField(owner, target.zone, target.index, previous);
         setBoardCard(owner, target.zone, target.index, evolved);
       }
+      prepareHapaAttendance(evolved);
+      if (evolved.hapaAttendanceResolving && !options.skipEvolutionEffect) evolved.hapaEvolutionPending = true;
       addLog(`${SIDES[side]}は${evolved.evolvedFrom.name}を${card.name}に${options.specialEvolution ? "特殊進化" : "進化"}させました。`);
       if (recoveryMaterial) moveToTrash(side, recoveryMaterial, { reason: "特殊進化素材", sourceZone: "hand" });
       if (options.countAsAttendance !== false && side === state.currentSide) state.players[side].attendancesThisTurn += 1;
@@ -40546,9 +40575,16 @@
         const asyncHandled = resolveEvolutionEffect(side, evolved, effectTurn, {
           ...options,
           commandId,
-          onAiComplete: finishAiWait
+          onAiComplete: () => {
+            if (evolved.hapaEvolutionPending) {
+              delete evolved.hapaEvolutionPending;
+              cleanupDestroyedCards(); applyBoardAuras(); checkLifeVictory();
+            }
+            finishAiWait();
+          }
         });
         if (asyncHandled) return;
+        delete evolved.hapaEvolutionPending;
         cleanupDestroyedCards();
         applyBoardAuras();
         checkLifeVictory();
@@ -40968,6 +41004,7 @@
       }
 
       card.owner = owner;
+      prepareHapaAttendance(card);
       // This continuous condition applies to every attendance source, before
       // attendance/attack effects can use the newly placed numeric stats.
       if ((zone === "seat" || zone === "teacher")
@@ -41520,6 +41557,72 @@
       return true;
     }
 
+    function applyHapaEnglish(side) {
+      const cards = state.players[oppositeSide(side)].hand.filter(card =>
+        ["student", "teacher", "vampire"].includes(card.type) && Number.isFinite(card.hp));
+      const target = cards[Math.floor(battleRandom() * cards.length)];
+      if (target) target.hapaHandDamage = (target.hapaHandDamage || 0) + 2;
+      // Never log/reveal the chosen card, its position, or whether it survived.
+      return "相手の手札の出席者カード1枚に、非公開で2ダメージを与える効果を使用しました。";
+    }
+
+    function prepareHapaAttendance(card) {
+      const damage = Math.max(0, Number(card?.hapaHandDamage) || 0);
+      if (!damage) return;
+      delete card.hapaHandDamage;
+      card.hapaAttendanceResolving = true;
+      // Resolve current board bonuses before revealing damage (e.g. 単位).
+      recalculateBoardAuras();
+      card.currentHp = Math.max(0, card.currentHp - damage);
+      showFloatingTextForCard(card, `−${damage}`, "damage");
+      addLog(`${card.name}は手札でHapa英会話による${damage}ダメージを受けていました。出席時の体力は${card.currentHp}です。`);
+      analyticsRecordEffect({ side: card.owner, source: card, effectType: "hapa_damage_revealed",
+        details: { damage, currentHp: card.currentHp } });
+    }
+
+    function questioningLecturerAbilityActive(card) {
+      return card?.baseId === "questioning_lecturer" && canUseOngoingCardEffects(card)
+        && Boolean(state.players[oppositeSide(card.owner)]?.board.teacher);
+    }
+
+    function questioningLecturerMoveCandidates(side) {
+      const owner = oppositeSide(side);
+      if (state.players[owner].board.teacher) return [];
+      return effectTargetEntries(side, owner).filter(({ ref, card }) => ref.zone === "seat"
+        && !isMultiSeatCard(card) && !isPadlocked(card)
+        && canPlaceCard(owner, card, "teacher", owner, null, { ignoreAttendanceLimit: true }));
+    }
+
+    function questioningLecturerMoveValue(side, target) {
+      const enemyCount = listBoardRefs(oppositeSide(side)).length;
+      const damage = previewFinalDamageToCard(target, enemyCount, createCardFromBase("questioning_lecturer", side), { damageKind: "lecture" });
+      const dies = damage >= target.currentHp;
+      const teachingRisk = ["pro_k", "popular_c", "kakiage_teacher", "lightning_n", "president"].includes(target.baseId) ? 10 : 0;
+      return Math.min(target.currentHp, damage) * 2 + (dies ? 8 + Math.max(0, target.attack || 0) : 2 - teachingRisk);
+    }
+
+    function resolveQuestioningLecturerAttendance(side, source) {
+      queueFusionEffect(async () => {
+        const cards = questioningLecturerMoveCandidates(side).map(({ card, ref }) => ({ ...card,
+          choiceRef: ref, choiceScore: questioningLecturerMoveValue(side, card) }));
+        const [selected] = await chooseFusionEffectCards(side, source, cards, 1, "lecturer_move");
+        if (!selected) return;
+        const entry = questioningLecturerMoveCandidates(side).find(({ card }) => card.instanceId === selected.instanceId);
+        if (!entry) return;
+        clearBoardCardFromField(entry.ref.owner, entry.ref.zone, entry.ref.index, entry.card);
+        setBoardCard(entry.ref.owner, "teacher", null, entry.card);
+        showFloatingTextForCard(entry.card, "移動", "buff");
+        analyticsRecordEffect({ side, source, effectType: "move_to_teacher", chosenTargets: [analyticsCardInfo(entry.card)],
+          details: { owner: entry.ref.owner, fromSeat: entry.ref.index, toZone: "teacher" } });
+        addLog(`${source.name}の効果：${entry.card.name}を相手の教卓マスへ移動させました。`);
+        applyBoardAuras();
+      });
+    }
+
+    function teacherLectureDamage(side, teacher) {
+      return teacher?.baseId === "questioning_lecturer" ? listBoardRefs(oppositeSide(side)).length : 1;
+    }
+
     function isEndlessTalkerAttendee(card) {
       return ["student", "teacher", "vampire"].includes(card?.type);
     }
@@ -41640,6 +41743,7 @@
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
       }
+      if (card.baseId === "questioning_lecturer") resolveQuestioningLecturerAttendance(side, card);
       if (card.baseId === "endless_talker") resolveEndlessTalker(side, card);
       if (card.baseId === "private_teacher") {
         for (let i = 0; i < 2; i++) {
@@ -44782,6 +44886,7 @@
       if (!payForItem(side, item)) return false;
       if (item.baseId !== "donguri") showCardPlayAnimation(item, "trash");
       let resultText = "";
+      if (item.baseId === "hapa_english") resultText = applyHapaEnglish(side);
       let itemAlreadyMovedToTrash = false;
       if (item.baseId === "chotto_machii") {
         damagePlayer(side, 19, item);
@@ -46120,8 +46225,9 @@
       return true;
     }
 
-    function canAttackSilently(card) {
-      return !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
+    function canAttackSilently(card, options = {}) {
+      return (options.lecture === true || !questioningLecturerAbilityActive(card))
+        && !(state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= state.actionTurn)
         && !isAttackLocked(card)
         && (card.playedOnTurn !== state.actionTurn || hasKeyword(card, "陽気"))
         && cardAttacksUsedThisTurn(card) < cardAttackLimit(card);
@@ -46336,6 +46442,7 @@
       if (keyword === "超陽気" && card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) return true;
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
+      if (keyword === "陽気" && questioningLecturerAbilityActive(card)) return true;
       if (keyword === "陽気" && card.baseId === "general_teacher") return isOnTeacherSlot(card);
       if (keyword === "陽気" && isUtaEquipmentTarget(card) && hasEquipmentCard(card)) return true;
       if (keyword === "陽気" && card.type === "teacher" && String(card.name || "").includes("デザイン")) {
@@ -47223,7 +47330,7 @@
 
     function cardRevealPayload(card) {
       if (!card) return null;
-      return JSON.parse(JSON.stringify(card));
+      return JSON.parse(JSON.stringify(card, (key, value) => key === "hapaHandDamage" ? undefined : value));
     }
 
     function revealCardFromBase(baseId, owner = "player") {
@@ -47886,6 +47993,10 @@
       ["player", "opponent"].forEach((owner) => {
         listBoardRefs(owner).forEach((ref) => {
           const card = getBoardCardFromRef(ref);
+          if (card?.hapaAttendanceResolving) {
+            if (card.hapaEvolutionPending || fusionTasksBusy() || hasPendingOrderedAttendance()) return;
+            delete card.hapaAttendanceResolving;
+          }
           if (card && card.currentHp <= 0) {
             if (tryResolveRebirthStudent(card)) return;
             const moved = destroyBoardCard(ref, { suppressToast: true, suppressLog: true, showDestroyFeedback: false, reason: "体力0" });
@@ -52426,7 +52537,8 @@
         && !state.gameOver
         && !state.aiThinking
         && !hasPeekableSelectionOverlay()
-        && canAttackSilently(card);
+        && (canAttackSilently(card) || (card.baseId === "questioning_lecturer" && isOnTeacherSlot(card)
+          && canTeacherChooseLecture({ owner, zone: "teacher", index: null })));
     }
 
     function createEnvironmentCard(card) {
@@ -54943,6 +55055,9 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      hapa_english: {"hand": ["hapa_english", "hapa_english", "hapa_english", "hapa_english", "onigiri_draw"], "will": 12, "life": 16, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [], "teacher": null}, "enemyHand": ["general_student"], "deck": ["questioning_lecturer", "hapa_english", "onigiri_draw", "general_student"], "enemyDeck": ["classroom", "ruler", "onigiri_draw"], "note": "相手の手札は一般学生1枚です。Hapa英会話を使っても対象や体力の変化は表示されません。ターン終了後、相手が一般学生を出席させるとダメージが判明し、体力0で破壊されます。自分の手札にも非公開ダメージを受けたスーツを着た学生を用意しています。出席時の1枚ドローを処理してから破壊されます。"},
+      questioning_lecturer: {"hand": ["hapa_english", "onigiri_draw", "general_student"], "will": 10, "life": 16, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"], [6, "ta_killer"]], "teacher": null}, "enemyHand": ["general_student"], "deck": ["questioning_lecturer", "hapa_english", "onigiri_draw", "general_student"], "note": "質問する講師を教卓へ出席させ、相手の光った出席者を直接選んで相手の教卓へ移動させます。0人でも確定できます。移動後は陽気で講義でき、通常攻撃はできません。講義は相手の出席者数と同じダメージを教卓の1人に与え、破壊するとHapa英会話を生成します。TAキラーは講義を防ぐ対象として比較できます。"},
+
       endless_talker: {"hand": ["go_home", "long_sleeve_student", "classroom", "rear_queen"], "life": 14, "will": 10, "own": {"seats": [[0, "umaibo"], [4, "dark_yuta"]], "teacher": "general_teacher"}, "enemy": {"seats": [[0, "two_achievers"], [4, "exploding_student"]], "teacher": "general_teacher"}, "trash": ["general_student", "ruler"], "deck": ["endless_talker", "long_sleeve_student", "general_teacher", "vampire", "onigiri_draw", "classroom"], "enemyHand": ["strong_student", "general_teacher", "ruler", "cafeteria"], "enemyDeck": ["strong_student", "general_student", "general_teacher", "onigiri_draw", "cafeteria"], "environment": "classroom", "note": "戦意10でエンドレストーカーを出席させ、お互いの講義室・手札・校外エリアから出席者がデッキへ戻ることを確認できます。裏U太は進化元と分かれ、ウマイボは融合素材に分かれます。持ち物・環境・遅刻ゾーンと気力は維持され、デッキの出席者は戦意−3になります。本人は残り、次の自分のターンから最大戦意が4へ増えます。"},
       amphisbaena_sofa: {"hand": ["amphisbaena_sofa", "amphisbaena_sofa", "amphisbaena_sofa", "general_student", "onigiri_draw"], "life": 12, "will": 8, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [4, "general_student"]], "teacher": "general_teacher"}, "deck": ["general_student", "onigiri_draw", "amphisbaena_sofa", "classroom", "strong_student", "general_teacher", "general_student", "onigiri_draw", "classroom"], "enemyHand": ["general_student"], "note": "残り戦意8から開始します。そのまま使うと2人破壊→自傷4→デッキの2枚を校外へ送る→4回復を試せます。先に一般学生を出席させると残り戦意6になり、戦意4で片方を選べます。デッキの残り順は変わりません。"},
       tomoyo_mou: {"hand": ["tomoyo_mou", "general_student", "ruler", "onigiri_draw", "shukii"], "will": 4, "life": 12, "deck": ["tomoyo_mou", "general_student", "tomoyo_mou", "past_campus"], "note": "戦意4で2人を出席させ、低戦意の手札から自動融合する様子を試せます。手札が空でも使用可能です。次のターン以降に戦意8で使うと4人になります。出席先は席マスを直接選びます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
@@ -55135,6 +55250,11 @@
       if (scenario.enemyHand) state.players.opponent.hand = scenario.enemyHand.map(id => createCardFromBase(id, "opponent"));
       if (scenario.environment) state.environment = makeBoardCard(createCardFromBase(scenario.environment, "player"));
       if (scenario.suitAttendanceCount !== undefined) state.suitStudentAttendanceCount = scenario.suitAttendanceCount;
+      if (baseId === "hapa_english") {
+        const damaged = createCardFromBase("suit_student", "player");
+        damaged.hapaHandDamage = 2;
+        player.hand.push(damaged);
+      }
       if (baseId === "endless_talker") {
         player.board.seats[4].evolvedFrom = makeAttendee("player", "yuta");
         const giant = state.players.opponent.board.seats[0];
@@ -57146,6 +57266,7 @@
         if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) add("超陽気", "相手の学生・教師");
         if (card.baseId === "loud_student" && isAdjacentToBestFriend(card)) add("超陽気", "ベストフレンド");
       } else if (hasKeyword(card, "陽気")) {
+        if (questioningLecturerAbilityActive(card)) add("陽気", "相手の教卓マスに出席者");
         if (card.baseId === "general_teacher" && isOnTeacherSlot(card)) add("陽気", "教卓マス");
         if (isUtaEquipmentTarget(card) && hasEquipmentCard(card)) {
           const equipmentNames = equipmentEntriesForCard(card)
@@ -57553,6 +57674,8 @@
         sports_spectator_student: "[点数]\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。\n1. 「相手の出席者1人をランダムに選び、1ダメージを与える。」を2回行う。\n2. このカードの攻撃力と体力を+2する。\n単位取得済みなら、代わりに1と2の効果を番号順に行う。これを2回行う。",
         secretly_mocked_student: "[点数]\nこのカードは3行3列にのみ出席できる。\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、体力を1にする。その出席者は体力が1であるかぎり、攻撃できない。\n単位取得済みなら、代わりに相手の出席者1人を指名し、破壊する。",
         short_sleeve_student: "[点数]\nこのカードを手札から出席させたとき、相手の出席者1人をランダムに選び、2ダメージを与える。\n単位取得済みなら、代わりに相手の出席者2人までを指名し、それぞれに3ダメージを与える。",
+        hapa_english: "相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。",
+        questioning_lecturer: "このカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。",
         endless_talker: "このカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。",
         amphisbaena_sofa: "2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。",
         pinige: "[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。",
