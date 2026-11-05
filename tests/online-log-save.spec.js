@@ -21,6 +21,7 @@ async function finishOnline(page, role) {
 test('online result has a top-right save button; host downloads the verified server log', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await finishOnline(page, 'host');
+  await expect(page.locator('#resultOverlay .result-actions button')).toHaveText(['戻る']);
   const button = page.locator('#resultSaveLogButton');
   await expect(button).toBeVisible();
   await expect.poll(async () => {
@@ -44,10 +45,14 @@ test('online result has a top-right save button; host downloads the verified ser
   const log = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
   expect(log.trace.marker).toBe('full-server-log');
   await expect(button).toBeEnabled();
+  await page.locator('#resultOverlay').getByRole('button', { name: '戻る', exact: true }).click();
+  await expect(page.locator('#resultOverlay')).toBeHidden();
+  expect(await page.evaluate(() => __chibattle.state.screen)).toBe('online');
 });
 test('guest saves only its perspective without private replay; narrow viewport stays on screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await finishOnline(page, 'guest');
+  await expect(page.locator('#resultOverlay .result-actions button')).toHaveText(['戻る']);
   const button = page.locator('#resultSaveLogButton');
   const box = await button.boundingBox();
   expect(box.x + box.width).toBeLessThanOrEqual(390); expect(box.y).toBeGreaterThanOrEqual(0);

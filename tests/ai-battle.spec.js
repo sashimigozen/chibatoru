@@ -130,6 +130,7 @@ test('result back returns to AI match setup with the selected deck and can start
       __chibattle.state.preBattleToken++;
       __chibattle.state.phase = 'battle'; __chibattle.render(); endGame(winner, 'テスト');
     }, winner);
+    await expect(page.locator('#resultOverlay .result-actions button')).toHaveCount(1);
     await expect(page.locator('[data-result-ai-back]')).toHaveText('戻る');
     await expect(page.locator('[data-result-home]')).toHaveCount(0);
     await page.locator('[data-result-ai-back]').click();
