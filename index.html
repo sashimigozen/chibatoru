@@ -19810,7 +19810,7 @@
       chigauyo: { name: "ちがうよ", type: "item", cost: 3, target: "self" },
       pure_destruction: { name: "純粋の破壊", type: "item", cost: 3, target: "self" },
       destructive_lie: { name: "破壊させる嘘", type: "item", cost: 2, target: "friendlyAny" },
-      scary_question: { name: "怖い質問", type: "item", cost: 1, target: "self", generated: true },
+      scary_question: { name: "怖い質問", type: "item", cost: 0, target: "self", generated: true },
       classroom_change: { name: "教室変更", type: "item", cost: 6, target: "self" },
       annoying_na: { name: "煩わしいなぁ", type: "item", cost: 5, target: "self" },
       childhood_memory_tutuapp: { name: "-幼き日の思い出-⚪︎u⚪︎uApp", type: "item", cost: 3, target: "self" },
@@ -20031,7 +20031,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}]},
+      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
@@ -32286,13 +32286,14 @@
           if (!isTrainingLeftAiActive()) return;
           attackSafety += 1;
           const attacker = getBoardCardFromRef(ref);
-          if (!attacker || !canAttackSilently(attacker)) break;
+          if (!attacker) break;
           if (shouldAiUseLecture(ref, attacker, "player")) {
             performTeacherLecture("player", ref, { renderAfter: false });
             render();
             await sleep(AI_STEP_DELAY);
             break;
           }
+          if (!canAttackSilently(attacker)) break;
           const target = findTrainingAiAttackTarget("player", attacker);
           const lifeBlocked = !target && (!aiShouldAttackLife("player", attacker)
             || listAttentionCards("opponent").length > 0
@@ -34659,9 +34660,9 @@
 
     function aiCombatOpeningPriority(side, ref) {
       const card = getBoardCardFromRef(ref);
-      if (!card || !canAttackSilently(card)) return 0;
+      if (!card) return 0;
       if (shouldAiUseLecture(ref, card, side)) return 100;
-      if (hasKeyword(card, "眠気")) return 0;
+      if (!canAttackSilently(card) || hasKeyword(card, "眠気")) return 0;
       const targetSide = oppositeSide(side);
       const priorityIds = new Set(listAttackPriorityCards(targetSide).map(target => target.instanceId));
       const effectKills = planAiGuaranteedEndTurnEffectKills(side);
@@ -34700,7 +34701,8 @@
       for (let attendeeSafety = 0; attendeeSafety < 20 && isOpponentAiActive(); attendeeSafety += 1) {
         const ref = aiOrderedAttackRefs("opponent").find(entry => {
           const card = getBoardCardFromRef(entry);
-          return card && !processedAttackers.has(card.instanceId) && canAttackSilently(card);
+          return card && !processedAttackers.has(card.instanceId)
+            && (canAttackSilently(card) || canTeacherChooseLecture(entry));
         });
         if (!ref) break;
         processedAttackers.add(getBoardCardFromRef(ref).instanceId);
@@ -34710,7 +34712,7 @@
           if (!isOpponentAiActive()) return;
           attackSafety += 1;
           const attacker = getBoardCardFromRef(ref);
-          if (!attacker || !canAttackSilently(attacker)) break;
+          if (!attacker) break;
           if (shouldAiUseLecture(ref, attacker)) {
             performTeacherLecture("opponent", ref, { renderAfter: false });
             render();
@@ -34718,6 +34720,7 @@
             await sleep(AI_STEP_DELAY);
             break;
           }
+          if (!canAttackSilently(attacker)) break;
           const target = findAiAttackTarget(attacker);
           if (target) {
             if (!await waitForAttackResolution(ref, target)) return;
@@ -34929,19 +34932,31 @@
       if (!canTeacherChooseLecture(ref) || teacher?.owner !== side) return false;
       if (aiBoardFaceDamage(side, { readyOnly: true }).guaranteed >= state.players[oppositeSide(side)].life) return false;
       const damage = teacherLectureDamage(side, teacher);
-      const targets = lectureTargetEntries(side, teacher).filter(({ card }) => previewFinalDamageToCard(card, damage, teacher, {
-        ignoreWeakness: teacher.baseId === "lightning_n", damageKind: "lecture"
-      }) > 0);
-      if (targets.length === 0) return false;
-      const defeated = targets.filter(({ card }) => previewFinalDamageToCard(card, damage, teacher, {
-        ignoreWeakness: teacher.baseId === "lightning_n", damageKind: "lecture"
-      }) >= card.currentHp).map(({ card }) => card);
+      const hits = lectureTargetEntries(side, teacher).map(({ card }) => ({
+        card,
+        damage: previewFinalDamageToCard(card, damage, teacher, {
+          ignoreWeakness: teacher.baseId === "lightning_n", damageKind: "lecture"
+        })
+      })).filter(hit => hit.damage > 0);
+      if (!hits.length) return false;
+      const defeated = hits.filter(hit => hit.damage >= hit.card.currentHp).map(hit => hit.card);
       if (aiEnemyTrpgRemovalPenalty(side, defeated) > 0) return false;
-      if (targets.some(({ card }) => previewFinalDamageToCard(card, damage, teacher, {
-        ignoreWeakness: teacher.baseId === "lightning_n",
-        damageKind: "lecture"
-      }) >= card.currentHp)) return true;
-      return teacher.baseId === "questioning_lecturer" || targets.length >= 2;
+      if (defeated.length || hits.length >= 2 || !canAttackSilently(teacher)) return true;
+
+      const targetRef = side === "opponent"
+        ? findAiAttackTarget(teacher)
+        : findTrainingAiAttackTarget(side, teacher);
+      const target = targetRef ? getBoardCardFromRef(targetRef) : null;
+      if (!target) return !aiShouldAttackLife(side, teacher);
+
+      // Preserve useful removal and on-attack effects. Compare chip damage
+      // against the counterattack of the selected combat target.
+      if (target.instanceId === state.aiLethalForcedTargetId
+        || canAiLethalAttackerDefeatCard(teacher, target)
+        || aiAttackTriggerHasValue(side, teacher, target)) return false;
+      const attackDamage = previewFinalDamageToCard(target, cardAttackDamage(teacher, target), teacher, { combat: true });
+      const counter = aiAttackCounterDamage(teacher, target);
+      return counter >= teacher.currentHp || attackDamage - counter <= hits[0].damage;
     }
 
     function planAiGuaranteedEndTurnEffectKills(side) {
@@ -55055,6 +55070,12 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      scary_question: {
+        hand: [], will: 0,
+        own: { seats: [], teacher: null }, enemy: { seats: [[4, "strong_student"]], teacher: null },
+        deck: ["scary_question", "general_student", "onigiri_draw", "ruler"],
+        note: "残り戦意0から開始します。「怖い質問」で相手の出席者に1ダメージを与え、デッキから引いた2枚目も戦意0で続けて使えます。"
+      },
       hapa_english: {"hand": ["hapa_english", "hapa_english", "hapa_english", "hapa_english", "onigiri_draw"], "will": 12, "life": 16, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [], "teacher": null}, "enemyHand": ["general_student"], "deck": ["questioning_lecturer", "hapa_english", "onigiri_draw", "general_student"], "enemyDeck": ["classroom", "ruler", "onigiri_draw"], "note": "相手の手札は一般学生1枚です。Hapa英会話を使っても対象や体力の変化は表示されません。ターン終了後、相手が一般学生を出席させるとダメージが判明し、体力0で破壊されます。自分の手札にも非公開ダメージを受けたスーツを着た学生を用意しています。出席時の1枚ドローを処理してから破壊されます。"},
       questioning_lecturer: {"hand": ["hapa_english", "onigiri_draw", "general_student"], "will": 10, "life": 16, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"], [6, "ta_killer"]], "teacher": null}, "enemyHand": ["general_student"], "deck": ["questioning_lecturer", "hapa_english", "onigiri_draw", "general_student"], "note": "質問する講師を教卓へ出席させ、相手の光った出席者を直接選んで相手の教卓へ移動させます。0人でも確定できます。移動後は陽気で講義でき、通常攻撃はできません。講義は相手の出席者数と同じダメージを教卓の1人に与え、破壊するとHapa英会話を生成します。TAキラーは講義を防ぐ対象として比較できます。"},
 

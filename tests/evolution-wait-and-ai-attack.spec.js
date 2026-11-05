@@ -120,6 +120,50 @@ test("左CPUも本体が守られているとき反撃で出席者を失わず�
   })).toEqual({ used: false, hp: 2, alive: true });
 });
 
+for (const side of ["player", "opponent"]) {
+  test(`${side}: 反撃で倒される攻撃しかない教師は講義で削る`, async ({ page }) => {
+    await setup(page, side);
+    const result = await page.evaluate(async (side) => {
+      const api = window.__chibattle;
+      const enemy = oppositeSide(side);
+      const teacher = api.makeBoardCard(api.createCardFromBase("general_teacher", side));
+      teacher.playedOnTurn = 0;
+      state.players[side].board.teacher = teacher;
+      state.players[enemy].board.seats[4] = api.makeBoardCard(api.createCardFromBase("strong_student", enemy));
+      state.players[enemy].lifeShieldUntilTurn = state.actionTurn;
+      state.players[enemy].lifeShieldUntilSide = side;
+      if (side === "player") await api.runTrainingLeftAI();
+      else await api.aiAttackWithReadyCards();
+      return {
+        teacherHp: teacher.currentHp,
+        acted: teacher.hasAttacked,
+        enemyHp: state.players[enemy].board.seats[4].currentHp,
+        enemyLife: state.players[enemy].life
+      };
+    }, side);
+    expect(result).toEqual({ teacherHp: 2, acted: true, enemyHp: 6, enemyLife: 20 });
+  });
+}
+
+test("通常攻撃が禁止されている質問する講師も講義で敵を倒し、Hapa英会話を生成する", async ({ page }) => {
+  await setup(page);
+  const result = await page.evaluate(async () => {
+    const api = window.__chibattle;
+    const teacher = api.makeBoardCard(api.createCardFromBase("questioning_lecturer", "opponent"));
+    state.players.opponent.board.teacher = teacher;
+    const target = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    state.players.player.board.teacher = target;
+    state.players.player.board.seats[4] = api.makeBoardCard(api.createCardFromBase("general_student", "player"));
+    await api.aiAttackWithReadyCards();
+    return {
+      acted: teacher.hasAttacked,
+      lecternCleared: !state.players.player.board.teacher,
+      hand: state.players.opponent.hand.map(card => card.baseId)
+    };
+  });
+  expect(result).toEqual({ acted: true, lecternCleared: true, hand: ["hapa_english"] });
+});
+
 for (const id of ["tiny_rhythm_student", "absolute_woman", "true_enemy", "bounce_day"]) {
   test(`攻撃力0でも${id}の有効な攻撃時効果は使える`, async ({ page }) => {
     await setup(page);

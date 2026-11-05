@@ -41,7 +41,7 @@ test("2枚を共通カードとして登録し、確定したカードテキス�
       baseId: "scary_question",
       name: "怖い質問",
       type: "item",
-      cost: 1,
+      cost: 0,
       attack: null,
       hp: null,
       category: "common",
@@ -117,6 +117,7 @@ test("ガン詰め講師の効果1は自分のデッキに怖い質問を10枚�
     state.phase = "battle";
     state.currentSide = "player";
     state.actionTurn = 1;
+    state.training.skipAnimations = true;
     state.players.player.will = 4;
     state.players.player.deck = [];
     state.players.player.hand = [api.createCardFromBase("cornering_lecturer", "player")];
@@ -144,6 +145,7 @@ test("効果2は最初に手札の怖い質問をすべてデッキへ戻し、�
     state.phase = "battle";
     state.currentSide = "player";
     state.actionTurn = 1;
+    state.training.skipAnimations = true;
     state.players.player.will = 4;
     state.players.player.deck = [
       api.createCardFromBase("scary_question", "player"),
@@ -200,7 +202,8 @@ test("通常の怖い質問は相手の出席者がいる場合だけ使え、1�
     state.phase = "battle";
     state.currentSide = "player";
     state.actionTurn = 1;
-    state.players.player.will = 1;
+    state.training.skipAnimations = true;
+    state.players.player.will = 0;
     state.players.player.deck = [api.createCardFromBase("general_student", "player")];
     state.players.player.hand = [api.createCardFromBase("scary_question", "player")];
     state.players.player.trash = [];
@@ -231,6 +234,26 @@ test("通常の怖い質問は相手の出席者がいる場合だけ使え、1�
     trash: ["scary_question"],
     will: 0
   });
+});
+
+test("関連カードからテストを開き、残り戦意0で怖い質問を続けて使う", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.locator("#homeNavDeckButton").click();
+  await page.locator('[data-case-view="cards"]').click();
+  await page.locator("#cardsCatalogSearch").fill("ガン詰め講師");
+  await page.locator('[data-catalog-card="cornering_lecturer"]').click();
+  await page.locator('#cardTestModal [data-related-card="scary_question"]').first().click();
+  await page.locator("#cardTestStartButton").click();
+
+  for (const [hp, drawn] of [[6, "scary_question"], [5, "general_student"]]) {
+    await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+    await page.locator('#playerHand [data-base-id="scary_question"]').dragTo(page.locator(".playmat"));
+    await expect.poll(() => page.evaluate(() => ({
+      will: state.players.player.will,
+      hp: state.players.opponent.board.seats[4].currentHp,
+      hand: state.players.player.hand.map(card => card.baseId)
+    }))).toEqual({ will: 0, hp, hand: [drawn] });
+  }
 });
 
 test("ver.0.23.6の更新情報へ2枚を統合する", async ({ page }) => {
