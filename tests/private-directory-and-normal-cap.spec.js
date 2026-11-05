@@ -17,7 +17,7 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
   await open(host);await host.evaluate(()=>{state.profile.username='ホストA';render();});await expect(host.locator('#onlinePrivateRoomList')).toBeVisible();
   await host.locator('#onlineCreateRoomButton').click();await expect(host.locator('#onlineRandomSetupPanel')).toBeVisible();await expect(host.locator('#onlinePrivatePanel')).toBeHidden();
   await expect.poll(()=>host.evaluate(()=>state.online.lastSeenAt>0)).toBe(true);const code=await host.evaluate(()=>state.online.roomCode);
-  await open(guest);await guest.locator('#onlinePrivateRefreshButton').click();await expect(guest.locator('#onlinePrivateRoomList')).toContainText('ホストAの部屋');
+  await open(guest);await guest.evaluate(()=>{state.profile.username='ゲストB';render();});await guest.locator('#onlinePrivateRefreshButton').click();await expect(guest.locator('#onlinePrivateRoomList')).toContainText('ホストAの部屋');
   await guest.screenshot({path:'/tmp/private-room-directory-final.png'});
   await guest.locator(`[data-private-join-room="${code}"]`).click();for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);
   await open(observer);await observer.locator('#onlinePrivateRefreshButton').click();await expect(observer.locator(`[data-private-join-room="${code}"]`)).toBeDisabled();
@@ -92,6 +92,35 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
   expect(await guest.evaluate(()=>state.battleHandLimit)).toBe(10);
   await observer.locator('#onlinePrivateRefreshButton').click();await expect(observer.locator(`[data-private-join-room="${code}"]`)).toHaveCount(0);
+  await host.evaluate(() => {
+    state.phase = "battle";
+    render();
+    onlineBroadcastState(true);
+  });
+  await observer.setViewportSize({ width: 390, height: 844 });
+  await observer.locator('#homeNavBattleButton').click();
+  await observer.locator('#onlineSpectateButton').click();
+  await observer.locator('#onlineSpectateRoomInput').fill(code);
+  await observer.locator('#onlineSpectateSearchButton').click();
+  for (const [page, player, opponent] of [
+    [host, "ホストA", "ゲストB"],
+    [guest, "ゲストB", "ホストA"],
+    [observer, "ホストA", "ゲストB"]
+  ]) {
+    await expect.poll(() => page.evaluate(() => state.phase)).toBe("battle");
+    await page.evaluate(() => { state.lectureRoomCheck = true; });
+    for (const [side, name] of [["player", player], ["opponent", opponent]]) {
+      const button = page.getByRole("button", { name: `${name}のプロフィールを表示` }).and(page.locator(".battle-profile-button"));
+      await button.click();
+      await expect(page.locator("#profileViewerName")).toHaveText(name);
+      await page.locator("#profileViewerCloseButton").click();
+      const width = (await button.boundingBox()).width;
+      const deckWidth = (await page.locator(`#${side}DeckPile`).boundingBox()).width;
+      expect(Math.abs(width - deckWidth)).toBeLessThan(1);
+    }
+    await page.evaluate(() => { state.lectureRoomCheck = false; });
+    if (page === host) await page.screenshot({ path: "/tmp/chibatoru-battle-profile-final.png" });
+  }
  }finally{await Promise.all(contexts.map(c=>c.close()));}
 });
 for(const mode of ['training','aiBattle'])for(const limit of [9,null,15])test(`通常ルールの準備設定を対戦へ適用 ${mode}/${limit}`,async({page})=>{

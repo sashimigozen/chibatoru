@@ -7687,6 +7687,23 @@
       transform: scale(.52);
     }
 
+    .battle-profile-button {
+      position: fixed;
+      z-index: 45;
+      width: var(--battle-profile-size);
+      height: var(--battle-profile-size);
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .battle-profile-button .avatar-scale-frame { width: 100%; height: 100%; }
+    .battle-profile-button .profile-avatar { transform: scale(var(--battle-profile-scale)); }
+    .battle-profile-button:hover { filter: brightness(1.06); }
+    .battle-profile-button:focus-visible { outline: 2px solid #147d9e; outline-offset: 2px; }
+
     .home-profile-copy {
       display: grid;
       gap: 3px;
@@ -18596,6 +18613,8 @@
     </div>
     <div class="result-overlay hidden" id="resultOverlay" aria-live="assertive"></div>
     <button class="button secondary result-save-log hidden" id="resultSaveLogButton" type="button">ログを保存</button>
+    <button class="battle-profile-button hidden" id="battlePlayerProfileButton" type="button" aria-controls="profileViewerModal"><span class="avatar-scale-frame" aria-hidden="true"><span class="profile-avatar user"><span></span></span></span></button>
+    <button class="battle-profile-button hidden" id="battleOpponentProfileButton" type="button" aria-controls="profileViewerModal"><span class="avatar-scale-frame" aria-hidden="true"><span class="profile-avatar user"><span></span></span></span></button>
     <div class="ultimate-yuta-overlay hidden" id="ultimateYutaOverlay" aria-live="assertive">
       <div class="ultimate-yuta-phrase-layout">
         <span class="ultimate-yuta-footer">思ってまう</span>
@@ -20072,7 +20091,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}]},
+      {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札のそばに両プレイヤーのアイコンを表示します。アイコンを押すとプロフィールを確認できます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
       { version: "ver.0.39.0", versioning: "semver", date: "2026年11月2日", summary: "新パック「Feast of Laughter／爆笑フルコース」を追加しました。", changes: [
@@ -23109,6 +23128,8 @@
       tutorialScreen: document.getElementById("tutorialScreen"),
       deckScreen: document.getElementById("deckScreen"),
       battleScreen: document.getElementById("battleScreen"),
+      battlePlayerProfileButton: document.getElementById("battlePlayerProfileButton"),
+      battleOpponentProfileButton: document.getElementById("battleOpponentProfileButton"),
       spectatorBanner: document.getElementById("spectatorBanner"),
       battleSpectatorCount: document.getElementById("battleSpectatorCount"),
       battleSpectatorCountValue: document.getElementById("battleSpectatorCountValue"),
@@ -28829,6 +28850,7 @@
 
     function battleInspectionAllowed(target) {
       if (target.closest("[data-room-code-copy]")) return true;
+      if (target.closest(".battle-profile-button, #profileViewerModal")) return true;
       if (target.closest("#battleConcedeButton, [data-preview-ruler-fuse], [data-preview-diamond-dust-recovery], [data-preview-uta-fusion], [data-preview-horse-fusion], [data-preview-any-hand-fusion]")) return false;
       return Boolean(target.closest("[data-battle-inspect-card], #battleLogButton, #battleLogDrawer, #battleMenuButton, #battleMenuDrawer, #battleSpectatorCount, #battleSpectatorList, #expandedHandPanel .expanded-hand-heading, #playerDeckPile, #deckInspectPrompt, #deckModal, #playerTrashButton, #opponentTrashButton, #playerActiveEffectsButton, #opponentActiveEffectsButton, #playerLateZone, #opponentLateZone, #battleCardPreview, #cardTooltip, #trashDetailStage"));
     }
@@ -49342,6 +49364,7 @@
       const deckValidation = state.players.player.deckValid;
       const spectator = isOnlineSpectator();
       const onlineProfiles = state.online.role ? onlineVisibleProfiles() : null;
+      renderBattleProfileButtons(state.screen === "battle" && state.online.started ? onlineProfiles : null);
       const playerDisplayName = onlineProfiles?.local.username || (spectator ? "プレイヤー1" : "あなた");
       const opponentDisplayName = onlineProfiles?.remote.username || (spectator ? "プレイヤー2" : SIDES.opponent);
       elements.playerRpsLabel.textContent = playerDisplayName;
@@ -53219,6 +53242,47 @@
     function playerProfileAvatarMarkup(avatarId) {
       const avatar = playerProfileAvatarDefinition(avatarId);
       return `<span class="avatar-scale-frame" aria-hidden="true"><span class="profile-avatar ${avatar.classes.join(" ")}"><span></span></span></span>`;
+    }
+
+    function renderBattleProfileButtons(profiles) {
+      for (const [button, profile] of [
+        [elements.battlePlayerProfileButton, profiles?.local],
+        [elements.battleOpponentProfileButton, profiles?.remote]
+      ]) {
+        button.classList.toggle("hidden", !profile);
+        if (!profile) continue;
+        if (button.dataset.avatarId !== profile.avatarId) {
+          applyPlayerProfileAvatar(button.querySelector(".profile-avatar"), profile.avatarId);
+          button.dataset.avatarId = profile.avatarId;
+        }
+        button.setAttribute("aria-label", `${profile.username}のプロフィールを表示`);
+      }
+      if (profiles) positionBattleProfileButtons();
+    }
+
+    function positionBattleProfileButtons() {
+      if (elements.battlePlayerProfileButton.classList.contains("hidden")) return;
+      const playerDeck = elements.playerDeckPile.getBoundingClientRect();
+      const opponentDeck = elements.opponentDeckPile.getBoundingClientRect();
+      const gap = 8;
+      const fitsRight = playerDeck.right + gap + playerDeck.width <= elements.battleScreen.clientWidth;
+      const opponentLeft = opponentDeck.left + opponentDeck.width / 4;
+      const opponentTrash = elements.opponentTrashButton.getBoundingClientRect();
+      const overlapsTrash = opponentLeft < opponentTrash.right && opponentLeft + opponentDeck.width > opponentTrash.left;
+      const opponentTop = Math.max(opponentDeck.bottom, overlapsTrash ? opponentTrash.bottom : 0) + gap;
+      const positions = [
+        [elements.battlePlayerProfileButton, playerDeck,
+          fitsRight ? playerDeck.right + gap : playerDeck.left,
+          fitsRight ? playerDeck.bottom - playerDeck.width : playerDeck.top - playerDeck.width - 26],
+        [elements.battleOpponentProfileButton, opponentDeck, opponentLeft, opponentTop]
+      ];
+      for (const [button, deck, left, top] of positions) {
+        button.style.visibility = deck.width && top + deck.width > 0 && top < window.innerHeight ? "" : "hidden";
+        button.style.left = `${left}px`;
+        button.style.top = `${top}px`;
+        button.style.setProperty("--battle-profile-size", `${deck.width}px`);
+        button.style.setProperty("--battle-profile-scale", String(deck.width / 116));
+      }
     }
 
     function playerProfileCommentText(commentParts) {
@@ -58433,6 +58497,8 @@
     window.addEventListener("resize", scheduleCardTemplateScaleSync);
     window.addEventListener("resize", syncHomeDeskLayout);
     window.addEventListener("resize", syncBattleLayout);
+    window.addEventListener("resize", positionBattleProfileButtons);
+    elements.battleScreen.addEventListener("scroll", positionBattleProfileButtons, { capture: true, passive: true });
     window.addEventListener("resize", applyHomeFavoriteCardPerspective);
     document.addEventListener("mousemove", updatePlayerHandHoverOverlay);
     window.addEventListener("blur", clearPlayerHandCardHoverOverlay);
@@ -58514,6 +58580,8 @@
     elements.onlineRandomRemoteAvatar.addEventListener("click", () => openProfileViewer(state.online.remoteProfile));
     elements.onlineLocalProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().local));
     elements.onlineRemoteProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().remote));
+    elements.battlePlayerProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().local));
+    elements.battleOpponentProfileButton.addEventListener("click", () => openProfileViewer(onlineVisibleProfiles().remote));
     elements.homeUpdatesButton.addEventListener("click", showUpdatesScreen);
     elements.updatesBackHomeButton.addEventListener("click", showHomeScreen);
     elements.homeBattleButton.addEventListener("click", () => {
