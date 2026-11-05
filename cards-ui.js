@@ -2,7 +2,6 @@
    No sample decks or separate storage are introduced here. */
 (() => {
   const screen = elements.deckScreen;
-  const DECKS_PER_PAGE = 12;
   const ui = { cardPage: 0, deckPage: 0, query: "", type: "", cost: "", category: "", cardContext: [], opener: null,
     editorCardId: null, editorHistory: [], editorScroll: 0, drag: null, dragImage: null };
   const arrow = (label, previous = false) => `<button type="button" class="case-arrow${previous ? " previous" : ""}" aria-label="${label}"><img src="assets/tutorial/chevron-right.svg" alt=""></button>`;
@@ -504,7 +503,7 @@
 
   // All paged views share the same trackpad/wheel gesture. One gesture advances
   // one page; its inertial tail must not skip several pages or reach a lower modal.
-  const pageViews = "#cardsCatalogView, #deckLibraryView, .case-deck-dialog, .case-card-dialog, .tutorial-detail";
+  const pageViews = "#cardsCatalogView, #deckLibraryView, #onlineDeckPicker, .case-deck-dialog, .case-card-dialog, .tutorial-detail";
   let gesture = { root: null, lastEvent: 0, distance: 0, direction: 0, moved: false };
   document.addEventListener("wheel", (event) => {
     const target = event.target instanceof Element ? event.target : null;

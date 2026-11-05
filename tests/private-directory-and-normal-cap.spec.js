@@ -56,7 +56,28 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
     await expect(page.locator("#onlineRandomLocalDeckName")).toHaveText("現在の通常デッキ");
     await opener.click();
     await expect(search).toHaveValue("");
+    await page.evaluate(() => {
+      for (let i = 1; i <= 12; i++) {
+        state.deckBuilder.savedDecks[`ページ送り用 ${i}`] = { counts: { general_student: 3 } };
+      }
+      render();
+    });
+    const previous = picker.getByRole("button", { name: "前のデッキページ" });
+    const next = picker.getByRole("button", { name: "次のデッキページ" });
+    const pageNumber = page.locator("#onlineDeckPickerPageLabel");
+    await expect(tiles).toHaveCount(12);
+    await expect(pageNumber).toHaveText("— Page 1 / 2 —");
+    await next.click();
+    await expect(pageNumber).toHaveText("— Page 2 / 2 —");
+    await expect(tiles.first()).toContainText("ページ送り用");
+    await expect(tiles.last()).toContainText("調整中のデッキ");
+    await previous.click();
+    await expect(pageNumber).toHaveText("— Page 1 / 2 —");
+    await previous.click();
+    await expect(pageNumber).toHaveText("— Page 2 / 2 —");
     await search.fill("ルーム用");
+    await expect(pageNumber).toHaveText("— Page 1 / 1 —");
+    await expect(next).toBeDisabled();
     await picker.getByRole("button", { name: /ルーム用テストデッキ/ }).click();
     await expect(picker).toBeHidden();
     await expect(page.locator("#onlineRandomRoomCode")).toHaveText(code);
