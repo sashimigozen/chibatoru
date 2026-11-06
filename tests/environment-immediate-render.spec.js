@@ -50,7 +50,7 @@ test('TRPGの非同期出席後もドローを開始し、AIがターンを返�
   expect(await page.evaluate(() => state.currentSide)).toBe('player');
 });
 
-for (const env of ['academic_move', 'full_lock', 'no_late_time', 'shogi_duel_field']) {
+for (const env of ['academic_move', 'full_lock', 'no_late_time']) {
   test(`環境の配置時効果 ${env} は次のターンを待たずに発動する`, async ({ page }) => {
     await page.goto(url);
     await page.evaluate(env => {
@@ -73,8 +73,7 @@ for (const env of ['academic_move', 'full_lock', 'no_late_time', 'shogi_duel_fie
     const result = await page.evaluate(() => ({
       boosted: ['player', 'opponent'].every(side => hasKeyword(state.players[side].board.seats[4], '超陽気')),
       blocked: ['player', 'opponent'].every(side => !isBoardSlotOpen(side, 'seat', 1)),
-      arrived: ['player', 'opponent'].every(side => !state.players[side].late.length && state.players[side].board.seats[0]?.baseId === 'scout_student'),
-      life: ['player', 'opponent'].map(side => state.players[side].life)
+      arrived: ['player', 'opponent'].every(side => !state.players[side].late.length && state.players[side].board.seats[0]?.baseId === 'scout_student')
     }));
     if (env === 'academic_move') expect(result.boosted).toBe(false);
     if (env === 'full_lock') expect(result.blocked).toBe(true);
@@ -83,6 +82,5 @@ for (const env of ['academic_move', 'full_lock', 'no_late_time', 'shogi_duel_fie
       await expect(page.locator('#playerLateZone')).toContainText('0人');
       await expect(page.locator('#opponentLateZone')).toContainText('0人');
     }
-    if (env === 'shogi_duel_field') expect(result.life).toEqual([10, 10]);
   });
 }

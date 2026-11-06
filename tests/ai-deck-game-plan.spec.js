@@ -204,7 +204,7 @@ test('ウマイボはコピー用に手札へ残し、コピー役を出せる�
   })).toEqual({ wait: null, trainingWait: null, deploy: 'umaibo', emergency: 'umaibo' });
 });
 
-test('万豚記は環境を維持して提出を進め、決闘フィールドからハイボールで決着する', async ({ page }) => {
+test('万豚記は決闘フィールドを置いたターンの即勝利を見込まず、相手の気力10で決着する', async ({ page }) => {
   expect(await page.evaluate(async () => {
     const a = __chibattle, s = a.state;
     const own = s.players.opponent;
@@ -213,18 +213,21 @@ test('万豚記は環境を維持して提出を進め、決闘フィールド�
     s.environment = card('wonton_ki');
     const keepsEngine = a.scoreAiEnvironment(card('wonton_greeting')) === 0;
     const highball = card('female_highball');
-    own.hand = [card('wonton_graduation'), highball, card('shogi_duel_field')];
+    const field = card('shogi_duel_field');
+    own.hand = [card('wonton_graduation'), highball, field];
     own.deck = [card('general_student')];
     own.submissionCounters = { 万豚記カウント: 5 };
-    const holdHighball = a.scoreAiItem(highball) === 0;
-    const move = a.findAiPlayMove();
-    const setup = move?.card.baseId;
-    if (move) a.placeCardFromHand('opponent', move.card.instanceId, move.zone, move.owner, move.index, false);
+    const fieldScoresAsLethal = a.scoreAiEnvironment(field) >= 1000;
+    a.placeCardFromHand('opponent', field.instanceId, 'environment', 'opponent', null, false);
+    const onPlacement = s.players.player.life;
+    for (let i = 0; i < 4; i++) resolveEnvironmentEndTurnEffects('player');
+    const waitsAtTwelve = a.scoreAiItem(highball) < 1000;
+    resolveEnvironmentEndTurnEffects('player');
     const finish = a.scoreAiItem(highball);
     const cast = a.useAiItem(highball);
     await a.waitForAiTimedEffects();
-    return { keepsEngine, holdHighball, setup, finish, cast, playerLife: s.players.player.life };
-  })).toEqual({ keepsEngine: true, holdHighball: true, setup: 'shogi_duel_field', finish: 1000, cast: true, playerLife: 0 });
+    return { keepsEngine, fieldScoresAsLethal, onPlacement, waitsAtTwelve, finish, cast, playerLife: s.players.player.life };
+  })).toEqual({ keepsEngine: true, fieldScoresAsLethal: false, onPlacement: 20, waitsAtTwelve: true, finish: 1000, cast: true, playerLife: 0 });
 });
 
 test('敵の敵は残したい敵をデッキへ戻さず、空いた盤面では復活の敵を評価する', async ({ page }) => {

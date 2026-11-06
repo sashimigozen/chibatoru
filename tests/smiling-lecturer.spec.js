@@ -25,7 +25,7 @@ test('能力値・本文・デッキ登録・講義なし',async({page})=>{
   expect(r).toEqual({stats:[4,0,4],category:'common',zones:['teacher'],text:text.replace('講義を','[講義]を'),deck:true,lecture:false});
   const catalog=require('../server/card-catalog.json');expect(catalog.direct).toContain('smiling_lecturer');expect(catalog.specialties.common).toContain('smiling_lecturer');
   expect(fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8')).toContain(`smiling_lecturer: "${text}"`);
-  const update=await page.evaluate(()=>UPDATE_HISTORY[0].changes.find(change=>change.title==='微笑み講師'));
+  const update=await page.evaluate(()=>UPDATE_HISTORY.flatMap(entry=>entry.changes || []).find(change=>change.title==='微笑み講師' && change.category==='不具合修正'));
   expect(update.category).toBe('不具合修正');
   expect(update.afterHighlights).toEqual(['「微笑み講師」の効果以外で']);
   expect(update.before).toContain('自分の気力が回復したとき、自分の気力を1回復する。');
@@ -104,7 +104,7 @@ test('気力上限10や独自上限で停止し、相手側の微笑み講師は
     state.players.player.board.teacher=makeBoardCard(createCardFromBase('smiling_lecturer','player'));
     state.players.player.life=1;state.players.player.maxLifeOverride=7;healPlayer('player',1);const belowSeven=state.players.player.life;
     state.players.player.life=6;healPlayer('player',1);const seven=state.players.player.life;
-    delete state.players.player.maxLifeOverride;state.environment=createCardFromBase('shogi_duel_field','player');state.players.player.life=1;healPlayer('player',1);const belowTen=state.players.player.life;
+    delete state.players.player.maxLifeOverride;state.environment=createCardFromBase('shogi_duel_field','player');for(let i=0;i<5;i++)resolveEnvironmentEndTurnEffects('player');state.players.player.life=1;healPlayer('player',1);const belowTen=state.players.player.life;
     state.players.player.life=9;healPlayer('player',1);
     return [other,belowSeven,seven,belowTen,state.players.player.life,state.players.opponent.life];
   })).toEqual([11,3,7,3,10,10]);

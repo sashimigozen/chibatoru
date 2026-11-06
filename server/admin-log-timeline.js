@@ -68,7 +68,7 @@ function renderTimeline(log) {
     return `<div class="log-metric-card"><div class="log-metric-copy"><strong>${esc(who(side))}</strong><span>気力 ${esc(value(p.life))}</span><span>戦意 ${esc(value(p.will))}／${esc(value(p.maxWill))}</span><span>手札 ${esc(countText(Array.isArray(p.hand)?p.hand.length:p.handCount))}</span><span>山札 ${esc(countText(Array.isArray(p.deck)?p.deck.length:p.deckCount))}</span></div>${miniClassroom(state?.players?.[side]?.board || event?.boardSnapshot?.[side],side)}</div>`;
   }).join('')}</div>`;
   const actions={draw:'ドロー',play_card:'出席',play_environment:'環境を配置',reserve_late:'遅刻ゾーンへ',evolve:'進化',use_item:'持ち物を使用',attack_card:'出席者へ攻撃',attack_life:'本体へ攻撃',lecture:'講義',fusion:'融合'};
-  const effects={attendance:'効果による出席',late_resolve:'遅刻処理',damage_card:'出席者へのダメージ',damage_life:'気力へのダメージ',distributed_damage:'ランダムダメージ',heal_card:'出席者の回復',heal_life:'気力の回復',board_leave:'場を離れる'};
+  const effects={attendance:'効果による出席',late_resolve:'遅刻処理',damage_card:'出席者へのダメージ',damage_life:'気力へのダメージ',distributed_damage:'ランダムダメージ',heal_card:'出席者の回復',heal_life:'気力の回復',max_life_change:'最大気力の変更',board_leave:'場を離れる'};
   const describe = e => {
     const d=e.details || {}, damage=e.damageDistribution || {};
     const card=e.cardName || (e.cardId ? cardName(e.cardId) : e.source ? cardName(e.source) : '');
@@ -88,6 +88,7 @@ function renderTimeline(log) {
       if(targets.length)text+=` → ${targets.join('、')}`;
       if(damage.dealt != null)text+=`／${damage.dealt}ダメージ`;
       if(d.healed != null)text+=`／${d.healed}回復`;
+      if(e.effectType==='max_life_change')text+=`／${d.previousMaxLife} → ${d.maxLife}`;
       if(e.drawCount != null)text+=`／${e.drawCount}枚ドロー`;
       if(d.targetDiedAfterDamage)text+='／破壊';
     } else if(e.eventType==='battle_start') text='対戦開始';

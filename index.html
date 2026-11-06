@@ -19961,7 +19961,7 @@
       on_demand_business: { name: "オンデマンド授業", type: "environment", cost: 3, allowedZones: ["environment"] },
       cote_dazur: { name: "コートダジュール", type: "environment", cost: 8, allowedZones: ["environment"] },
       door_war: { name: "ドア前戦争", type: "environment", cost: 2, allowedZones: ["environment"] },
-      shogi_duel_field: { name: "将棋部の決闘フィールド", type: "environment", cost: 5, allowedZones: ["environment"] },
+      shogi_duel_field: { name: "将棋部の決闘フィールド", type: "environment", cost: 4, allowedZones: ["environment"] },
       aiben_vs_nyotei_title_match: { name: "アイベンVSにょていタイトルマッチ", type: "item", cost: 2, target: "self" },
       loud_group: { name: "声が大きい集団", type: "student", cost: 8, attack: 2, hp: 3, keywords: ["注目"], rowOnly: 3, allowedZones: ["seat"] },
       dark_yuta: { name: "裏U太", type: "student", cost: 0, noCost: true, attack: 5, hp: 5, evolutionFrom: "yuta", allowedZones: ["evolution"] },
@@ -20114,7 +20114,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}]},
+      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。 「将棋部の決闘フィールド」の戦意と効果を調整しました。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}, {"category": "カード調整", "title": "将棋部の決闘フィールド", "before": "将棋部の決闘フィールド／環境／共通カード／戦意5／攻撃力なし／体力なし\nお互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。", "after": "将棋部の決闘フィールド／環境／共通カード／戦意4／攻撃力なし／体力なし\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。", "beforeHighlights": ["戦意5", "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。"], "afterHighlights": ["戦意4", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。"]}, {"category": "システム", "title": "決闘フィールドのカードテスト", "after": "環境に置いた直後、各ターンの終了時、別の環境での上書き、再配置を試せる開始状態を用意しました。気力が上限を超えた場合は上限まで下がり、上書きで上限が戻っても現在の気力はそのままです。"}]},
       {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。AIバトルとトレーニングのデッキ選択にも同じ一覧を使えます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札や枠線との間に余白を設け、両プレイヤーのプロフィールアイコンを表示します。相手側のアイコンは山札の左下に表示されます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
@@ -32200,7 +32200,6 @@
       const fusionBatchScore=scoreAiFusionBatchItem(side,item);
       if(fusionBatchScore!==null)return fusionBatchScore||-Infinity;
       if (["female_highball", "male_highball"].includes(item.baseId)) return scoreAiHighball(side, item);
-      if (aiWontonDuelFinish(side)) return -Infinity;
       if (item.baseId === "chotto_machii") return scoreAiChottoMachii(side, item) || -Infinity;
       const crabPlan = getAiCrabVictoryPlan(side);
       if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return -Infinity;
@@ -33034,7 +33033,6 @@
 
     function shouldAiUseItemAtTiming(item, score, timing) {
       if (score <= 0) return false;
-      if (score < 1000 && aiWontonDuelFinish("opponent")) return false;
       if (score >= 1000 && ["female_highball", "male_highball"].includes(item.baseId)) return true;
       if (item.baseId === "dont_worry") return scoreAiDontWorry("opponent", item) > 0;
       if (item.baseId === "yakitori_harassment") return Boolean(planAiYakitori("opponent", item).target);
@@ -33817,7 +33815,6 @@
     function scoreAiEnvironment(card, side = "opponent") {
       if (!arePlayedEffectsSuppressed(side)) {
         const activeWonton = ongoingEnvironmentBaseId() === "wonton_ki";
-        if (card.baseId === "shogi_duel_field" && aiWontonDuelFinish(side, card)) return 1000;
         if (card.baseId === "wonton_ki") return activeWonton ? -100 : 20;
         if (WONTON_SERIES_IDS.includes(card.baseId)) {
           if (card.baseId === "wonton_graduation") {
@@ -33951,9 +33948,11 @@
       if (card.baseId === "shogi_duel_field") {
         const ownLife = state.players[side].life;
         const enemyLife = state.players[targetSide].life;
-        if (enemyLife <= 10 && ownLife > enemyLife) return 10 + replacementBonus;
-        if (ownLife <= 10 && enemyLife > ownLife) return 5 + replacementBonus;
-        return ownLife <= enemyLife ? 3 + replacementBonus : -2;
+        // Estimate the clamp after two turns per player, not immediate damage.
+        const pressure = life => Math.max(0, life - 16);
+        const protection = state.players[side].hand.some(entry => entry.baseId === "stand_up" && !entry.unusable) ? 2 : 0;
+        return (pressure(enemyLife) - pressure(ownLife)) * 2 + protection
+          + replacementBonus - replacementRiskPenalty;
       }
       if (card.baseId === "aiben_vs_nyotei_title_match") {
         const ownOpenSeat = titleMatchOpenSeat(side) >= 0;
@@ -35661,6 +35660,21 @@
       if (ongoingEnvironmentBaseId() === "past_campus" && state.players[side].hand.length <= 3) {
         drawCards(side,Math.max(0,5-state.players[side].hand.length));
         addLog(`過去のキャンパスの効果：${SIDES[side]}は手札が5枚になるように引きました。`);
+      }
+      if (ongoingEnvironmentBaseId() === "shogi_duel_field" && canUsePrintedCardEffects(state.environment)) {
+        const field = state.environment;
+        const key = field.owner === side ? "owner" : "other";
+        const caps = field.duelFieldLifeCaps ||= { owner: 20, other: 20 };
+        const previousCap = currentLifeCap(side);
+        caps[key] = Math.max(10, caps[key] - 2);
+        const maxLife = currentLifeCap(side);
+        if (maxLife < previousCap) {
+          const player = state.players[side];
+          player.life = Math.min(player.life, maxLife);
+          addLog(`${field.name}の効果：${SIDES[side]}の最大気力は${maxLife}になりました。`);
+          analyticsRecordEffect({ side, source: field, effectType: "max_life_change",
+            details: { previousMaxLife: previousCap, maxLife, life: player.life } });
+        }
       }
       resolveDormCouncilEndTurnDraw(side);
       resolveCouncilEnvironmentCycle(side);
@@ -40394,11 +40408,6 @@
             addLog(`${overwrittenEnvironment.name}は上書きされ、校外エリアへ送られました。`);
           }
           if (card.baseId !== "full_lock") state.fullLockSeatBlocks = [];
-          if (card.baseId === "shogi_duel_field") {
-            ["player", "opponent"].forEach((lifeSide) => {
-              state.players[lifeSide].life = Math.min(10, state.players[lifeSide].life);
-            });
-          }
         }
         attendCard(side, placedCard, zone, index, {
           owner,
@@ -41225,6 +41234,7 @@
           if (!isBoardSlotOpen(owner, "teacher", null)) return null;
           setBoardCard(owner, "teacher", null, card);
         } else {
+          delete card.duelFieldLifeCaps;
           state.environment = card;
         }
       }
@@ -44805,24 +44815,12 @@
     }
 
     function aiShouldSaveWontonGraduation(side) {
-      const own = state.players[side];
-      return state.players[oppositeSide(side)].life > 10
-        && [...own.hand, ...own.deck].some(card => card.baseId === "shogi_duel_field" && !card.unusable);
-    }
-
-    function aiWontonDuelFinish(side, field = null) {
-      const own = state.players[side];
+      if (ongoingEnvironmentBaseId() !== "shogi_duel_field" || !canUsePrintedCardEffects(state.environment)) return false;
       const enemySide = oppositeSide(side);
-      if (state.players[enemySide].life <= 10 || wontonCount(side) < 5
-        || arePlayedEffectsSuppressed(side) || aiWontonGraduationDamage(side) < 10
-        || aiLifeFloorShieldActive(enemySide, side)) return false;
-      if (!own.hand.some(card => card.baseId === "wonton_graduation" && !isHighLoadHandCard(card)
-        && canUsePrintedCardEffects(card))) return false;
-      const fields = field ? [field] : own.hand.filter(card => card.baseId === "shogi_duel_field");
-      return fields.some(card => !card.unusable && canPlaceCard(side, card, "environment", null, null)
-        && own.hand.some(item => ["female_highball", "male_highball"].includes(item.baseId)
-          && !item.unusable && canUsePrintedCardEffects(item) && canUseHighball(side, item)
-          && effectiveCardCost(card) + effectiveCardCost(item) <= own.will));
+      const damage = aiWontonGraduationDamage(side);
+      return state.players[enemySide].life > damage
+        && Math.max(10, currentLifeCap(enemySide) - 2) <= damage
+        && state.players[side].life > aiBoardFaceDamage(enemySide, { futureActionTurn: state.actionTurn + 1 }).expected;
     }
 
     function scoreAiHighball(side, item) {
@@ -44830,7 +44828,6 @@
       const own = state.players[side];
       const enemySide = oppositeSide(side);
       const candidates = highballDiscardCandidates(side, item);
-      if (aiWontonDuelFinish(side)) return 0;
       const values = candidates.map(card => submissionDiscardValue(side, card));
       if (values.includes(100)) return 1000;
       if (values.every(value => value <= -100)) return 0;
@@ -47412,7 +47409,10 @@
     function currentLifeCap(side = null) {
       const player = side ? state.players[side] : null;
       const caps = [20];
-      if (ongoingEnvironmentBaseId() === "shogi_duel_field") caps.push(10);
+      if (side && ongoingEnvironmentBaseId() === "shogi_duel_field" && canUsePrintedCardEffects(state.environment)) {
+        const key = state.environment.owner === side ? "owner" : "other";
+        caps.push(state.environment.duelFieldLifeCaps?.[key] ?? 20);
+      }
       if (Number.isFinite(player?.dungeonLifeCap)) caps.push(player.dungeonLifeCap);
       if (!ongoingEffectsSuppressed() && Number.isFinite(player?.maxLifeOverride)) caps.push(player.maxLifeOverride);
       return Math.min(...caps);
@@ -52391,7 +52391,7 @@
           detail = "ヴァンパイアは「デザイン」とつく教師を攻撃できません。";
           break;
         case "shogi_duel_field":
-          detail = "自分本体の最大気力は10になります。";
+          detail = `自分のターン終了時、最大気力を2減らします（下限10）。現在の最大気力は${currentLifeCap(side)}です。`;
           break;
         case "chaos_world":
           detail = "各ターン開始時、お互いの手札の戦意を0〜10、講義室の出席者の攻撃力を0〜10、体力を1〜10のランダムな値にします。";
@@ -55437,6 +55437,10 @@
       questioning_lecturer: {"hand": ["hapa_english", "onigiri_draw", "general_student"], "will": 10, "life": 16, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"], [6, "ta_killer"]], "teacher": null}, "enemyHand": ["general_student"], "deck": ["questioning_lecturer", "hapa_english", "onigiri_draw", "general_student"], "note": "質問する講師を教卓へ出席させ、相手の光った出席者を直接選んで相手の教卓へ移動させます。0人でも確定できます。移動後は陽気で講義でき、通常攻撃はできません。講義は相手の出席者数と同じダメージを教卓の1人に与え、破壊するとHapa英会話を生成します。TAキラーは講義を防ぐ対象として比較できます。"},
 
       endless_talker: {"hand": ["go_home", "long_sleeve_student", "classroom", "rear_queen"], "life": 14, "will": 10, "own": {"seats": [[0, "umaibo"], [4, "dark_yuta"]], "teacher": "general_teacher"}, "enemy": {"seats": [[0, "two_achievers"], [4, "exploding_student"]], "teacher": "general_teacher"}, "trash": ["general_student", "ruler"], "deck": ["endless_talker", "long_sleeve_student", "general_teacher", "vampire", "onigiri_draw", "classroom"], "enemyHand": ["strong_student", "general_teacher", "ruler", "cafeteria"], "enemyDeck": ["strong_student", "general_student", "general_teacher", "onigiri_draw", "cafeteria"], "environment": "classroom", "note": "戦意10でエンドレストーカーを出席させ、お互いの講義室・手札・校外エリアから出席者がデッキへ戻ることを確認できます。裏U太は進化元と分かれ、ウマイボは融合素材に分かれます。持ち物・環境・遅刻ゾーンと気力は維持され、デッキの出席者は戦意−3になります。本人は残り、次の自分のターンから最大戦意が4へ増えます。"},
+      shogi_duel_field: { hand: ["classroom", "peaceful_mind", "shogi_duel_field", "stand_up"], will: 10,
+        own: { seats: [], teacher: null }, enemy: { seats: [], teacher: null },
+        deck: ["peaceful_mind", "classroom", "stand_up"], enemyDeck: ["stand_up"],
+        note: "環境に置いた直後は気力20のままです。ターンを終えた側だけ最大気力が2下がります。一般教室で上書きすると上限は20に戻ります。気力を回復したり、2枚目を置いて減少が最初からになることも試せます。" },
       amphisbaena_sofa: {"hand": ["amphisbaena_sofa", "amphisbaena_sofa", "amphisbaena_sofa", "general_student", "onigiri_draw"], "life": 12, "will": 8, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [4, "general_student"]], "teacher": "general_teacher"}, "deck": ["general_student", "onigiri_draw", "amphisbaena_sofa", "classroom", "strong_student", "general_teacher", "general_student", "onigiri_draw", "classroom"], "enemyHand": ["general_student"], "note": "残り戦意8から開始します。そのまま使うと2人破壊→自傷4→デッキの2枚を校外へ送る→4回復を試せます。先に一般学生を出席させると残り戦意6になり、戦意4で片方を選べます。デッキの残り順は変わりません。"},
       tomoyo_mou: {"hand": ["tomoyo_mou", "general_student", "ruler", "onigiri_draw", "shukii"], "will": 4, "life": 12, "deck": ["tomoyo_mou", "general_student", "tomoyo_mou", "past_campus"], "note": "戦意4で2人を出席させ、低戦意の手札から自動融合する様子を試せます。手札が空でも使用可能です。次のターン以降に戦意8で使うと4人になります。出席先は席マスを直接選びます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
       rear_queen: {"hand": ["general_student", "ruler", "tomoyo_mou"], "will": 12, "life": 12, "deck": ["rear_queen", "general_student", "shukii", "past_campus"], "note": "1枚ずつ融合でき、合計2枚で出席できます。カード確認の融合するか、手札同士のドラッグで融合します。中央列に出席させると左右の空き席から爆発する学生の出席先を選べます。", "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"], [4, "strong_student"]], "teacher": null}},
@@ -58370,7 +58374,7 @@
         on_demand_business: "場の学生は講義の効果を受けない。",
         cote_dazur: "お互いの場の「あえー」と名のつく出席者の攻撃力を+10、体力を+10する。",
         door_war: "各プレイヤーのターン終了時、そのターンに自分が講義室へ出席させた出席者の中から1人をランダムに選び、その出席者に1ダメージを与える。",
-        shogi_duel_field: "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。",
+        shogi_duel_field: "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。",
         aiben_vs_nyotei_title_match: "自分の講義室の空いている席マスに「アイベン」または「にょてい」1人を陽気を持つ状態で出席させる。もう一方を相手の講義室の空いている席マスに出席させる。その後、各プレイヤーは自分の手札を好きな枚数だけ校外エリアへ送ってよい。各プレイヤーは、自分が送った枚数だけ、自分の講義室にいる「アイベン」と「にょてい」の攻撃力と体力を+1する。この効果で出席した「アイベン」と「にょてい」の出席時効果は使用しない。",
         ta_killer: "これは講義のダメージを受けない。手札から出席させたとき、相手のランダムな教師に1ダメージを与える。",
         strict_lateness_teacher: "このカードを手札から出席させたとき、お互いの講義室にいる遅刻を持つ学生すべてを破壊する。その後、お互いの遅刻ゾーンにいる学生すべてを校外エリアへ送る。",
