@@ -26,7 +26,7 @@ async function prepare(page) {
 }
 const cp = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)).cp, C.KEY);
 
-test('all 45 legal decks remain selectable, with a small bonus that expires after seven days', async ({ page }) => {
+test('all 45 legal decks remain selectable, but stale decks receive less weight', async ({ page }) => {
   const data = await page.evaluate(() => {
     const pool = ChibattleAiBattleDecks;
     const random = Math.random;
@@ -45,7 +45,9 @@ test('all 45 legal decks remain selectable, with a small bonus that expires afte
         legal: pool.every(deck => __chibattle.validateOnlineDeckForRule({ format: 'normal' }, deck.counts, 'normal').valid),
         current: sample('2026-11-06T00:00:00+09:00'),
         sixDaysLater: sample('2026-11-12T00:00:00+09:00'),
-        expired: sample('2026-11-13T00:00:00+09:00')
+        sevenDaysLater: sample('2026-11-13T00:00:00+09:00'),
+        tenDaysLater: sample('2026-11-16T00:00:00+09:00'),
+        fourteenDaysLater: sample('2026-11-20T00:00:00+09:00')
       };
     } finally {
       Math.random = random;
@@ -57,10 +59,12 @@ test('all 45 legal decks remain selectable, with a small bonus that expires afte
   expect(Object.values(data.current).every(hits => hits > 0)).toBe(true);
   expect(data.current['ワンパン記']).toBeGreaterThan(data.current['LO最終講義']);
   expect(data.current['LO最終講義']).toBeGreaterThan(data.current['ガトリング講師']);
-  expect(data.current['ワンパン記'] / data.current['ガトリング講師']).toBeCloseTo(1.15, 1);
-  expect(data.sixDaysLater['ワンパン記']).toBeGreaterThan(data.sixDaysLater['ガトリング講師']);
-  expect(Math.abs(data.sixDaysLater['LO最終講義'] - data.sixDaysLater['ガトリング講師'])).toBeLessThanOrEqual(1);
-  expect(Object.values(data.expired).every(hits => hits === 100)).toBe(true);
+  const oldVsUpdated = hits => hits['ガトリング講師'] / hits['ワンパン記'];
+  expect(oldVsUpdated(data.current)).toBeCloseTo(0.55 / 1.15, 1);
+  expect(oldVsUpdated(data.sixDaysLater)).toBeLessThan(oldVsUpdated(data.sevenDaysLater));
+  expect(oldVsUpdated(data.sevenDaysLater)).toBeCloseTo(0.55, 1);
+  expect(oldVsUpdated(data.tenDaysLater)).toBeCloseTo(0.55 / (1 - 0.45 * 3 / 7), 1);
+  expect(Object.values(data.fourteenDaysLater).every(hits => hits === 100)).toBe(true);
 });
 
 for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会', '小細工はなしだ', '単位クリエイター', '爆発しちゃうー', '新生ヴァンパイア', 'ウマイボコピー', 'ワンパン記', '我が敵']) {
