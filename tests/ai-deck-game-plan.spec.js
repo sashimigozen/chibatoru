@@ -162,3 +162,85 @@ test('コイントス研究会は強化される出席者の展開を評価す�
       score: a.aiDeckPlanCardBonus('opponent', a.createCardFromBase('adjective_student', 'opponent')) };
   })).toEqual({ plan: 'coinBoard', score: 5 });
 });
+
+test('爆発する学生は反撃で本体を仕留められる攻撃を選び、自分の負けになる破壊は避ける', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const a = __chibattle, s = a.state;
+    const card = (id, side) => a.makeBoardCard(a.createCardFromBase(id, side));
+    const token = card('exploding_student', 'opponent');
+    const defender = card('general_student', 'player');
+    defender.currentHp = 5;
+    defender.attack = 3;
+    s.players.player.life = 2;
+    const finishes = aiShouldAttackCard('opponent', token, defender);
+    s.players.player.lifeShieldUntilTurn = s.actionTurn;
+    s.players.player.lifeShieldUntilSide = 'opponent';
+    const blocked = aiShouldAttackCard('opponent', token, defender);
+    s.players.opponent.life = 2;
+    const enemyToken = card('exploding_student', 'player');
+    const attacker = card('strong_student', 'opponent');
+    attacker.attack = 3;
+    return { finishes, blocked, loses: aiShouldAttackCard('opponent', attacker, enemyToken) };
+  })).toEqual({ finishes: true, blocked: false, loses: false });
+});
+
+test('ウマイボはコピー用に手札へ残し、コピー役を出せる見込みがなければ使う', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const a = __chibattle, s = a.state;
+    const own = s.players.opponent;
+    own.will = own.maxWill = 7;
+    const source = a.createCardFromBase('umaibo', 'opponent');
+    source.fusionResult = true;
+    const rhythm = a.createCardFromBase('tiny_rhythm_student', 'opponent');
+    own.hand = [source, rhythm];
+    const wait = a.findAiPlayMove();
+    const trainingWait = findTrainingAiPlayMove('opponent');
+    own.hand = [source];
+    const deploy = a.findAiPlayMove()?.card.baseId;
+    own.hand.push(rhythm);
+    own.life = 3;
+    const emergency = a.findAiPlayMove()?.card.baseId;
+    return { wait, trainingWait, deploy, emergency };
+  })).toEqual({ wait: null, trainingWait: null, deploy: 'umaibo', emergency: 'umaibo' });
+});
+
+test('万豚記は環境を維持して提出を進め、決闘フィールドからハイボールで決着する', async ({ page }) => {
+  expect(await page.evaluate(async () => {
+    const a = __chibattle, s = a.state;
+    const own = s.players.opponent;
+    const card = id => a.createCardFromBase(id, 'opponent');
+    own.will = own.maxWill = 8;
+    s.environment = card('wonton_ki');
+    const keepsEngine = a.scoreAiEnvironment(card('wonton_greeting')) === 0;
+    const highball = card('female_highball');
+    own.hand = [card('wonton_graduation'), highball, card('shogi_duel_field')];
+    own.deck = [card('general_student')];
+    own.submissionCounters = { 万豚記カウント: 5 };
+    const holdHighball = a.scoreAiItem(highball) === 0;
+    const move = a.findAiPlayMove();
+    const setup = move?.card.baseId;
+    if (move) a.placeCardFromHand('opponent', move.card.instanceId, move.zone, move.owner, move.index, false);
+    const finish = a.scoreAiItem(highball);
+    const cast = a.useAiItem(highball);
+    await a.waitForAiTimedEffects();
+    return { keepsEngine, holdHighball, setup, finish, cast, playerLife: s.players.player.life };
+  })).toEqual({ keepsEngine: true, holdHighball: true, setup: 'shogi_duel_field', finish: 1000, cast: true, playerLife: 0 });
+});
+
+test('敵の敵は残したい敵をデッキへ戻さず、空いた盤面では復活の敵を評価する', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const a = __chibattle, s = a.state;
+    const own = s.players.opponent;
+    const card = id => a.createCardFromBase(id, 'opponent');
+    own.deck = Array.from({ length: 6 }, () => card('general_student'));
+    own.hand = [card('enemy_enemy')];
+    const enemy = a.makeBoardCard(card('enemy_student'));
+    enemy.attack = 6;
+    own.board.seats[0] = enemy;
+    const recycle = aiEnemyAttendanceBonus('opponent', own.hand[0]);
+    own.board.seats[0] = null;
+    own.trash = [card('enemy_student'), card('enemy_student')];
+    own.hand.push(card('enemy_revive'));
+    return { preservesEnemy: recycle < 0, refill: a.findAiPlayMove()?.card.baseId };
+  })).toEqual({ preservesEnemy: true, refill: 'enemy_revive' });
+});

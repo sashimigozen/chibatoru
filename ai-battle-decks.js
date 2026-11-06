@@ -433,6 +433,47 @@ window.ChibattleAiBattleDecks = Object.freeze([
     }
   },
   {
+    "name": "ウマイボコピー",
+    "counts": {
+      "aggro_queen": 3,
+      "protein_drinker": 3,
+      "general_teacher": 3,
+      "king_ghidorah_bed": 3,
+      "onigiri_draw": 3,
+      "alpha": 3,
+      "quick_quiz_tournament": 3,
+      "summer_teacher": 3,
+      "efficient_experiment_method": 3,
+      "plump_student": 3,
+      "tiny_rhythm_student": 2,
+      "chotto_machii": 2,
+      "fusion_uma": 2,
+      "fusion_maibo": 2,
+      "remote_participant_student": 3,
+      "corridor_student": 3
+    }
+  },
+  {
+    "name": "ワンパン記",
+    "counts": {
+      "aggro_army": 3,
+      "king_ghidorah_bed": 3,
+      "environment_setup": 3,
+      "onigiri_draw": 3,
+      "thin_item": 3,
+      "deck_without": 3,
+      "ikemasu": 3,
+      "peaceful_mind": 3,
+      "sage_legacy": 3,
+      "dont_worry": 3,
+      "alpha": 3,
+      "shogi_duel_field": 3,
+      "wonton_ki": 3,
+      "female_highball": 3,
+      "male_highball": 3
+    }
+  },
+  {
     "name": "コイントス研究会",
     "counts": {
       "aggro_student": 2,
@@ -829,24 +870,25 @@ window.ChibattleAiBattleDecks = Object.freeze([
     }
   },
   {
-    "name": "敵にクイーンは必要",
+    "name": "我が敵",
     "counts": {
-      "aggro_queen": 3,
-      "enemy_student": 3,
-      "proliferating_enemy": 2,
-      "king_ghidorah_bed": 3,
+      "enemy_student": 5,
+      "proliferating_enemy": 3,
+      "king_ghidorah_bed": 2,
+      "yakiniku": 1,
       "onigiri_draw": 3,
-      "go_away": 3,
-      "three_gestures": 2,
+      "go_away": 2,
+      "sage_legacy": 3,
+      "three_gestures": 3,
       "alpha": 3,
-      "quick_quiz_tournament": 2,
-      "yakitori_harassment": 2,
+      "smoke_flare": 3,
+      "yakitori_harassment": 1,
       "true_enemy": 3,
       "enemy_horde": 3,
-      "enemy_enemy": 2,
-      "enemy_revive": 3,
+      "enemy_enemy": 3,
+      "enemy_revive": 1,
       "triple_enemy": 3,
-      "salt_to_enemy": 3
+      "salt_to_enemy": 1
     }
   },
   {

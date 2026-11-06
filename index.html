@@ -18883,7 +18883,7 @@
 
   <script src="websocket-client.js"></script>
   <script src="online-replay.js"></script>
-  <script src="ai-battle-decks.js?v=0.40.1"></script>
+  <script src="ai-battle-decks.js?v=0.42.0"></script>
   <script>
     const SIDES = { player: "あなた", opponent: "相手AI" };
     const SOLO_OPPONENT_LABEL = "相手AI";
@@ -20114,7 +20114,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.41.1", "versioning": "semver", "date": "2026年11月6日", "summary": "対戦中のプロフィールアイコンの位置を調整しました。", "changes": [{"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}]},
+      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}]},
       {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。AIバトルとトレーニングのデッキ選択にも同じ一覧を使えます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札や枠線との間に余白を設け、両プレイヤーのプロフィールアイコンを表示します。相手側のアイコンは山札の左下に表示されます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
@@ -30890,11 +30890,14 @@
         && player.lifeShieldUntilSide === attackingSide);
     }
 
+    function aiLifeFloorShieldActive(side, attackingSide) {
+      return !ongoingEffectsSuppressed() && (state.players[side].lifeFloorShields || []).some(shield =>
+        shield?.untilActionTurn >= state.actionTurn && shield.againstSide === attackingSide);
+    }
+
     function aiCanSurviveSelfDamage(side, amount) {
       return state.players[side].life > amount || aiLifeDamagePrevented(side)
-        || (state.players[side].lifeFloorShields || []).some(shield => (
-          shield?.untilActionTurn >= state.actionTurn && shield.againstSide === state.currentSide
-        ));
+        || aiLifeFloorShieldActive(side, state.currentSide);
     }
 
     function scoreAiChottoMachii(side, item) {
@@ -30922,16 +30925,40 @@
       return previewFinalDamageToLife(targetSide, attacker.attack || 0, attacker) > 0 || aiAttackTriggerHasValue(side, attacker);
     }
 
+    function aiExplosionLifeDamage(side, card) {
+      const targetSide = oppositeSide(side);
+      if (card.baseId !== "exploding_student" || !canUsePrintedCardEffects(card)
+        || aiLifeDamagePrevented(targetSide, state.actionTurn, state.currentSide)) return 0;
+      return previewFinalDamageToLife(targetSide, 2, card);
+    }
+
+    function aiCombatExplosionValue(side, attacker, target) {
+      const targetSide = oppositeSide(side);
+      const ownBurst = attacker.baseId === "exploding_student"
+        && aiAttackCounterDamage(attacker, target) >= attacker.currentHp ? aiExplosionLifeDamage(side, attacker) : 0;
+      const opposingBurst = target.baseId === "exploding_student"
+        && (attacker.baseId === "absolute_woman" || canAiLethalAttackerDefeatCard(attacker, target))
+        ? aiExplosionLifeDamage(targetSide, target) : 0;
+      if (opposingBurst && !aiCanSurviveSelfDamage(side, opposingBurst)) return -1000;
+      if (ownBurst >= state.players[targetSide].life && !aiLifeFloorShieldActive(targetSide, state.currentSide)) return 1000;
+      return (ownBurst - opposingBurst) * 4;
+    }
+
     function aiShouldAttackCard(side, attacker, target) {
       const damage = previewFinalDamageToCard(target, cardAttackDamage(attacker, target), attacker, { combat: true });
       const triggerValue = aiAttackTriggerHasValue(side, attacker, target);
+      const explosionValue = aiCombatExplosionValue(side, attacker, target);
+      if (explosionValue <= -1000) return false;
+      if (explosionValue >= 1000) return true;
       if (damage <= 0 && !triggerValue) return false;
       const counter = aiAttackCounterDamage(attacker, target);
       const removes = !target.yutaUmbrellaShield && (damage >= target.currentHp
         || (triggerValue && ["absolute_woman", "bounce_day"].includes(attacker.baseId)));
       if (removes) return true;
       // Preserve the attendee instead of spending its health on a losing trade.
-      if (counter >= attacker.currentHp && !triggerValue) return false;
+      if (counter >= attacker.currentHp && !triggerValue) {
+        return explosionValue > 0 && damage >= Math.min(2, target.currentHp);
+      }
       const healing = attacker.type === "vampire" && !CARD_BASES[attacker.baseId]?.keywords?.includes("超吸血")
         ? Math.min(damage, attacker.maxHp - attacker.currentHp) : 0;
       if (!triggerValue && counter - healing >= damage && counter > 0) return false;
@@ -31202,8 +31229,32 @@
     }
 
     function aiEnemyAttendanceBonus(side, card) {
-      return card.baseId === "enemy_student" && canUsePrintedCardEffects(card)
-        && listBoardRefs(oppositeSide(side)).some((ref) => getBoardCardFromRef(ref)?.baseId === "trpg_member") ? 20 : 0;
+      if (!["enemy_student", "enemy_revive", "enemy_horde", "true_enemy", "enemy_enemy", "triple_enemy"].includes(card.baseId)
+        || !canUsePrintedCardEffects(card) || arePlayedEffectsSuppressed(side)) return 0;
+      const enemySide = oppositeSide(side);
+      const aura = listBoardRefs(enemySide).some(ref => getBoardCardFromRef(ref)?.baseId === "trpg_member");
+      if (card.baseId === "enemy_student") return aura ? 20 : 0;
+      const own = state.players[side];
+      const openSeats = PLAYER_SEAT_ORDER.filter(index => isBoardSlotOpen(side, "seat", index)).length;
+      if (card.baseId === "enemy_horde") return openSeats > 1 ? (aura ? 14 : 6) : 0;
+      if (card.baseId === "enemy_revive") {
+        return Math.min(Math.max(0, openSeats - 1), enemyReviveCandidates(side).length) * (aura ? 10 : 7) - 4;
+      }
+      const allies = listBoardRefs(side).map(getBoardCardFromRef).filter(isEnemyNamedAttendee);
+      const openHand = Number.isFinite(state.battleHandLimit)
+        ? Math.max(0, state.battleHandLimit - own.hand.length + 1) : Infinity;
+      if (["triple_enemy", "true_enemy"].includes(card.baseId)) {
+        if (isDeckToHandLocked() || !own.deck.length) return 0;
+        const enemyShare = own.deck.filter(isEnemyNamedAttendee).length / own.deck.length;
+        if (card.baseId === "true_enemy") return openHand > 0 ? 3 + enemyShare * (openSeats > 1 ? 8 : 3) : 0;
+        const expectedHits = Math.min(3, own.deck.length) * enemyShare;
+        return Math.min(openHand, expectedHits) * (openSeats > 1 ? 7 : 3);
+      }
+      const draws = isDeckToHandLocked() ? 0 : Math.min(allies.length + 1, own.deck.length, openHand);
+      if (draws >= own.deck.length && allies.length < 2) return -12;
+      return draws * (own.hand.length <= 3 ? 5 : 3)
+        - allies.reduce((sum, ally) => sum + Math.max(0, ally.attack) * 1.5
+          + Math.max(0, ally.currentHp) * 0.5 + (canAttackSilently(ally) ? 5 : 1), 0);
     }
 
     function scoreAiFriendlySacrifice(side, card, ref = null) {
@@ -31696,7 +31747,19 @@
       if (card.baseId === "water_2l") plan.incoming = Math.min(2, own.trash.filter(c => CRAB_SET_IDS.includes(c.baseId)).length);
       if (card.baseId === "go_home") plan.incoming = 1;
       if (card.baseId === "chugidesu" && (card.handFusionStored || []).length >= 3) plan.incoming = draw(2);
-      if (card.baseId === "female_highball") { plan.incoming = draw(1); plan.beforeGain = consumed + 1; plan.consumed += 1; }
+      if (["female_highball", "male_highball"].includes(card.baseId)) {
+        const discard = highballDiscardCandidates(side, card)
+          .reduce((best, entry) => !best || submissionDiscardValue(side, entry) > submissionDiscardValue(side, best)
+            ? entry : best, null);
+        if (discard) {
+          const submits = canUsePrintedCardEffects(discard) && WONTON_SERIES_IDS.includes(discard.baseId);
+          const nextStage = submits && discard.baseId !== "wonton_graduation" ? 1 : 0;
+          const draws = Number(card.baseId === "female_highball") + Number(submits && discard.baseId === "wonton_greeting");
+          plan.incoming = nextStage + draw(draws);
+          plan.beforeGain = consumed + 1;
+          plan.consumed += 1;
+        }
+      }
       if (card.baseId === "word_increaser") {
         plan.beforeGain = own.hand.length;
         plan.consumed = own.hand.length;
@@ -32044,6 +32107,7 @@
         return 650 + materialCount * 30;
       }
       if (!isAiYocchanHyperCarryStrategyActive(side)) {
+        if (scoreAiUmaiboCopySetup(side, card) < 0) return -900;
         const body = Math.max(0, card.attack || 0) + Math.max(0, card.hp || 0) * 0.65;
         return (offensiveEffectPriority + aiEnemyAttendanceBonus(side, card) + body
           + aiCardResourceValue(side, card) + aiRecurringCardValue(side, card)) * 10;
@@ -32135,6 +32199,8 @@
       if (cost > ai.will) return -Infinity;
       const fusionBatchScore=scoreAiFusionBatchItem(side,item);
       if(fusionBatchScore!==null)return fusionBatchScore||-Infinity;
+      if (["female_highball", "male_highball"].includes(item.baseId)) return scoreAiHighball(side, item);
+      if (aiWontonDuelFinish(side)) return -Infinity;
       if (item.baseId === "chotto_machii") return scoreAiChottoMachii(side, item) || -Infinity;
       const crabPlan = getAiCrabVictoryPlan(side);
       if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return -Infinity;
@@ -32337,7 +32403,8 @@
             || previewFinalDamageToCard(entry.card, cardAttackDamage(attacker, entry.card), attacker, { combat: true }) >= entry.card.currentHp;
           return { ...entry, defeats, score: (defeats ? 14 : 0)
             + (aiAttackCounterDamage(attacker, entry.card) < attacker.currentHp ? 4 : -8)
-            + scoreAiEnemyAttendeeThreat(entry.card, entry.ref) - entry.card.currentHp * 0.25 };
+            + scoreAiEnemyAttendeeThreat(entry.card, entry.ref)
+            + aiCombatExplosionValue(side, attacker, entry.card) - entry.card.currentHp * 0.25 };
         }).sort((a, b) => b.score - a.score);
       const best = targets[0];
       if (!best) return null;
@@ -32967,6 +33034,8 @@
 
     function shouldAiUseItemAtTiming(item, score, timing) {
       if (score <= 0) return false;
+      if (score < 1000 && aiWontonDuelFinish("opponent")) return false;
+      if (score >= 1000 && ["female_highball", "male_highball"].includes(item.baseId)) return true;
       if (item.baseId === "dont_worry") return scoreAiDontWorry("opponent", item) > 0;
       if (item.baseId === "yakitori_harassment") return Boolean(planAiYakitori("opponent", item).target);
       if (getAiLethalEnablingItemPlan(item)) return true;
@@ -33305,11 +33374,11 @@
       return candidates[0]?.index;
     }
 
-    function scoreAiExplodingAttendance(side, card, zone, index) {
+    function scoreAiExplodingAttendance(side, card, zone, index, fusionCount = (card.handFusionStored || []).length) {
       if (!["rear_queen", "chugidesu"].includes(card.baseId) || zone !== "seat"
         || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
-      const count = card.baseId === "chugidesu" && (card.handFusionStored || []).length >= 3 ? 2 : 1;
-      const token = createCardFromBase("exploding_student", side);
+      const count = card.baseId === "chugidesu" && fusionCount >= 3 ? 2 : 1;
+      const token = makePreviewCard("exploding_student", side);
       const seats = [index-1,index+1].filter(i=>i>=0&&i<9&&Math.floor(i/3)===Math.floor(index/3)
         && canPlaceCard(side,token,"seat",side,i));
       return Math.min(count,seats.length) * 9;
@@ -33413,7 +33482,8 @@
       const preferredPlacementScore = scoreAiPreferredPlacement(card, zone, index, context);
       score += isEarlyDungeonAi() ? preferredPlacementScore * 0.55 : preferredPlacementScore;
       score += scoreAiHandLoadPlacement("opponent", card, zone);
-      score += scoreAiFusionCopyAttendance("opponent", card);
+      score += scoreAiFusionCopyAttendance("opponent", card)
+        + scoreAiUmaiboCopySetup("opponent", card);
       score += scoreAiAttendanceRemoval("opponent", card, zone, index);
       score += scoreAiAttackReductionAttendance("opponent", card);
       score += aiEnemyAttendanceBonus("opponent", card);
@@ -33745,18 +33815,24 @@
     }
 
     function scoreAiEnvironment(card, side = "opponent") {
-      if (card.baseId === "past_campus") return state.players[side].hand.length <= 4 ? 12 : 2;
       if (!arePlayedEffectsSuppressed(side)) {
-        if (card.baseId === "wonton_ki") return ongoingEnvironmentBaseId() === "wonton_ki" ? -100 : 8 + state.players[side].hand.filter(c=>c.submission).length * 4;
+        const activeWonton = ongoingEnvironmentBaseId() === "wonton_ki";
+        if (card.baseId === "shogi_duel_field" && aiWontonDuelFinish(side, card)) return 1000;
+        if (card.baseId === "wonton_ki") return activeWonton ? -100 : 20;
         if (WONTON_SERIES_IDS.includes(card.baseId)) {
           if (card.baseId === "wonton_graduation") {
-            const damage = Math.min(10, wontonCount(side) * 2);
-            return damage >= state.players[oppositeSide(side)].life ? 1000 : damage * 2;
+            const damage = aiWontonGraduationDamage(side);
+            if (damage && damage >= state.players[oppositeSide(side)].life
+              && !aiLifeFloorShieldActive(oppositeSide(side), side)) return 1000;
+            return activeWonton || aiShouldSaveWontonGraduation(side) ? 0 : damage * 2;
           }
-          return 6 + (card.baseId === "wonton_final_battle" ? listBoardRefs(side).length * 2 : 0);
+          if (activeWonton) return 0;
+          return 8;
         }
+        if (activeWonton && state.players[side].hand.some(c => WONTON_SERIES_IDS.includes(c.baseId))) return -100;
       }
       if (ongoingEnvironmentBaseId() === card.baseId && card.baseId !== "seat_rules") return -100;
+      if (card.baseId === "past_campus") return state.players[side].hand.length <= 4 ? 12 : 2;
       const targetSide = oppositeSide(side);
       const friendlySeats = state.players[side].board.seats;
       const enemySeats = state.players[targetSide].board.seats;
@@ -33953,11 +34029,7 @@
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (item?.baseId === "amphisbaena_sofa") return scoreAiAmphisbaenaSofa("opponent", item);
       if (item?.baseId === "pinige") return pointModeCards("opponent",item).map(c=>c.choiceScore).sort((a,b)=>b-a).slice(0,hasAcquiredUnit("opponent") ? 3 : 2).reduce((a,b)=>a+b,0) - 2;
-      if (["female_highball", "male_highball"].includes(item?.baseId)) {
-        if (!canUseHighball("opponent", item)) return 0;
-        const series = highballDiscardCandidates("opponent", item).some(card => card.submission);
-        return (series ? 12 : 1) + (item.baseId === "female_highball" ? Math.max(0, Math.min(2, currentLifeCap("opponent") - state.players.opponent.life)) * 2 + 3 : 6);
-      }
+      if (["female_highball", "male_highball"].includes(item?.baseId)) return scoreAiHighball("opponent", item);
       if (item?.baseId === "chotto_machii") return scoreAiChottoMachii("opponent", item);
       if (item?.baseId === "ittan") {
         const value = side => listBoardRefs(side).map(getBoardCardFromRef)
@@ -34995,6 +35067,7 @@
             + scoreAiEnemyAttendeeThreat(target.card, target)
             - lostValue
             + aiCombatTradeAdjustment("opponent", attacker, target.card)
+            + aiCombatExplosionValue("opponent", attacker, target.card)
             - target.card.currentHp * 0.25;
           return { ...target, score, canDefeat, survivesCounter };
         })
@@ -39105,6 +39178,23 @@
         && !isHighLoadHandCard(card) && !card.unusable && effectiveCardCost(card) <= 5);
     }
 
+    function scoreAiUmaiboCopySetup(side, card) {
+      if (card.baseId !== "umaibo" || !card.fusionResult || !canUsePrintedCardEffects(card)
+        || arePlayedEffectsSuppressed(side) || isAttendanceLimited(side)) return 0;
+      const own = state.players[side];
+      const openSeats = PLAYER_SEAT_ORDER.filter(index => isBoardSlotOpen(side, "seat", index));
+      if (openSeats.length < 2 || own.life <= 6) return 0;
+      const incoming = aiBoardFaceDamage(oppositeSide(side), { futureActionTurn: state.actionTurn + 1 }).expected;
+      if (incoming >= own.life - 3) return 0;
+      const availableWill = Math.max(own.will, Math.min(10, own.maxWill + 1));
+      const hasCopyPlay = own.hand.some(entry => ["tiny_rhythm_student", "remote_participant_student"].includes(entry.baseId)
+        && !entry.unusable && !isHighLoadHandCard(entry) && canUsePrintedCardEffects(entry)
+        && effectiveCardCost(entry) <= availableWill
+        && openSeats.some(index => canPlaceCard(side, entry, "seat", side, index))
+        && (entry.baseId === "tiny_rhythm_student" || fusionCopyAttendanceCandidates(side).length === 1));
+      return hasCopyPlay ? -30 : 0;
+    }
+
     function scoreAiFusionCopyAttendance(side, card) {
       if (!["remote_participant_student", "tiny_rhythm_student"].includes(card.baseId)
         || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
@@ -39405,7 +39495,12 @@
         const materials = state.players[side].hand.filter(c => canFuseAnyHandCard(side, target, c))
           .sort((a,b) => trainingAiChoiceCardScore(side,a) - trainingAiChoiceCardScore(side,b));
         const minimum = Math.max(0, (target.handFusionRequired || handFusionCapacity(target)) - (target.handFusionStored || []).length);
-        const count = materials.length >= need ? need : minimum;
+        const enhanced = target.baseId !== "chugidesu" || (!arePlayedEffectsSuppressed(side)
+          && ((!isDeckToHandLocked() && state.players[side].deck.length > 2)
+            || state.players[side].life < currentLifeCap(side)
+            || PLAYER_SEAT_ORDER.some(index => canPlaceCard(side, target, "seat", side, index)
+              && scoreAiExplodingAttendance(side, target, "seat", index, 3) >= 18)));
+        const count = enhanced && materials.length >= need ? need : minimum;
         if (count > 0 && materials.length >= count) return fuseAnyHandCards(side, target.instanceId, materials.slice(0,count).map(c=>c.instanceId), false);
       }
       return false;
@@ -40125,7 +40220,10 @@
         if (ids !== undefined && (!Array.isArray(ids) || ids.length > candidates.length
           || new Set(ids).size !== ids.length
           || ids.some((id) => !candidates.some((entry) => entry.instanceId === id)))) return false;
-        card.tripleEnemyOrderIds = ids === undefined ? candidates.map((entry) => entry.instanceId) : ids;
+        const cpuChoices = isCpuControlledBattleSide(side)
+          ? candidates.filter(entry => entry.baseId !== "enemy_enemy" || aiEnemyAttendanceBonus(side, entry) > 0)
+          : candidates;
+        card.tripleEnemyOrderIds = ids === undefined ? cpuChoices.map(entry => entry.instanceId) : ids;
       }
       if (side === "opponent" && !isOnlineBattle()) {
         if (card.baseId === "spoon_wizard") {
@@ -40138,8 +40236,8 @@
             .sort((a, b) => scoreAiFriendlySacrifice(side, a.card, a.ref) - scoreAiFriendlySacrifice(side, b.card, b.ref))
             .slice(0, enemies.length).map(entry => entry.card.instanceId);
         }
-        if (card.baseId === "enemy_revive") card.enemyReviveIds = state.players[side].trash
-          .filter((entry) => entry.baseId === "enemy_student").map((entry) => entry.instanceId);
+        if (card.baseId === "enemy_revive") card.enemyReviveIds = enemyReviveCandidates(side)
+          .slice(0, 9).map(entry => entry.instanceId);
       }
       if (card.baseId === "adjective_vs_cynical") {
         card.adjectiveChoice = ["destroy", "weaken"].includes(options.adjectiveChoice)
@@ -44701,10 +44799,57 @@
       return card;
     }
 
+    function aiWontonGraduationDamage(side) {
+      const enemySide = oppositeSide(side);
+      return aiLifeDamagePrevented(enemySide, state.actionTurn, side) ? 0 : Math.min(10, wontonCount(side) * 2);
+    }
+
+    function aiShouldSaveWontonGraduation(side) {
+      const own = state.players[side];
+      return state.players[oppositeSide(side)].life > 10
+        && [...own.hand, ...own.deck].some(card => card.baseId === "shogi_duel_field" && !card.unusable);
+    }
+
+    function aiWontonDuelFinish(side, field = null) {
+      const own = state.players[side];
+      const enemySide = oppositeSide(side);
+      if (state.players[enemySide].life <= 10 || wontonCount(side) < 5
+        || arePlayedEffectsSuppressed(side) || aiWontonGraduationDamage(side) < 10
+        || aiLifeFloorShieldActive(enemySide, side)) return false;
+      if (!own.hand.some(card => card.baseId === "wonton_graduation" && !isHighLoadHandCard(card)
+        && canUsePrintedCardEffects(card))) return false;
+      const fields = field ? [field] : own.hand.filter(card => card.baseId === "shogi_duel_field");
+      return fields.some(card => !card.unusable && canPlaceCard(side, card, "environment", null, null)
+        && own.hand.some(item => ["female_highball", "male_highball"].includes(item.baseId)
+          && !item.unusable && canUsePrintedCardEffects(item) && canUseHighball(side, item)
+          && effectiveCardCost(card) + effectiveCardCost(item) <= own.will));
+    }
+
+    function scoreAiHighball(side, item) {
+      if (!canUseHighball(side, item) || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(item)) return 0;
+      const own = state.players[side];
+      const enemySide = oppositeSide(side);
+      const candidates = highballDiscardCandidates(side, item);
+      if (aiWontonDuelFinish(side)) return 0;
+      const values = candidates.map(card => submissionDiscardValue(side, card));
+      if (values.includes(100)) return 1000;
+      if (values.every(value => value <= -100)) return 0;
+      const bestDiscard = Math.max(...values);
+      const effectValue = item.baseId === "male_highball"
+        ? scoreAiDamageEffectTargets(side, item, effectTargetEntries(side, enemySide), { damage: 4, maxTargets: 1 })
+        : Math.min(2, Math.max(0, currentLifeCap(side) - own.life)) * 2
+          + (own.deck.length && !isDeckToHandLocked() ? 3 : 0);
+      return bestDiscard > 0 ? effectValue + bestDiscard * 0.55
+        : effectValue - Math.max(3, -bestDiscard) - 3;
+    }
+
     function submissionDiscardValue(side, card) {
       if (WONTON_SERIES_IDS.includes(card?.baseId) && canUsePrintedCardEffects(card)) {
-        const count = wontonCount(side);
-        return card.baseId === "wonton_graduation" ? Math.min(10, count * 2) * 4 : 20;
+        if (card.baseId !== "wonton_graduation") return 20;
+        const damage = aiWontonGraduationDamage(side);
+        if (damage && damage >= state.players[oppositeSide(side)].life
+          && !aiLifeFloorShieldActive(oppositeSide(side), side)) return 100;
+        return damage && !aiShouldSaveWontonGraduation(side) ? damage * 1.8 : -100;
       }
       return -trainingAiChoiceCardScore(side, card);
     }
