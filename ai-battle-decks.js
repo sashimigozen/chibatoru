@@ -1,7 +1,9 @@
 // AIバトル専用。提供されたデッキのカードID・枚数をそのまま使用する。
+// 新規追加やカード構成の変更時は updatedOn に日本時間の日付（YYYY-MM-DD）を記録する。
 window.ChibattleAiBattleDecks = Object.freeze([
   {
     "name": "LO最終講義",
+    "updatedOn": "2026-11-05",
     "counts": {
       "general_teacher": 2,
       "king_ghidorah_bed": 3,
@@ -23,6 +25,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "U太ビート",
+    "updatedOn": "2026-11-05",
     "counts": {
       "yuta": 3,
       "aggro_queen": 3,
@@ -45,6 +48,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "いっぱい校外行こうぜ！！",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 1,
       "aggro_king": 3,
@@ -91,6 +95,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "デザイン",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 3,
       "fairy_t": 3,
@@ -111,6 +116,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "バカでかい闇へ",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 3,
       "best_friend": 3,
@@ -134,6 +140,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "ハンデスエンドレス",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 2,
       "aggro_king": 3,
@@ -156,6 +163,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "よっちゃんハイパーキャリー",
+    "updatedOn": "2026-11-05",
     "counts": {
       "trpg_member": 3,
       "yocchan": 3,
@@ -179,6 +187,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "学生アグロ",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -224,6 +233,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "捨てられたぎっちの復讐",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 3,
       "ae_student": 2,
@@ -250,6 +260,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "重い想い",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 3,
       "trpg_member": 3,
@@ -273,6 +284,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "食堂ヴァンパイア",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 3,
       "tissue_distributor": 2,
@@ -389,6 +401,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "顔殴りのどこ骨",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_king": 3,
       "aggro_queen": 3,
@@ -410,6 +423,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "どこのウマの骨のマイボだよ！",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 3,
       "trpg_member": 3,
@@ -434,6 +448,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "ウマイボコピー",
+    "updatedOn": "2026-11-06",
     "counts": {
       "aggro_queen": 3,
       "protein_drinker": 3,
@@ -455,6 +470,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "ワンパン記",
+    "updatedOn": "2026-11-06",
     "counts": {
       "aggro_army": 3,
       "king_ghidorah_bed": 3,
@@ -515,6 +531,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "Dosで退寮",
+    "updatedOn": "2026-11-05",
     "counts": {
       "ae_student": 3,
       "trpg_member": 3,
@@ -534,6 +551,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "Y.Tダイナマイト2",
+    "updatedOn": "2026-11-05",
     "counts": {
       "yuta": 3,
       "ae_student": 3,
@@ -554,6 +572,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "アグロと遅刻両方の性質を併せ持つ......♡",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -574,6 +593,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "カニ4戦",
+    "updatedOn": "2026-11-05",
     "counts": {
       "general_teacher": 3,
       "aggro_army": 3,
@@ -597,6 +617,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "カニU太",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "yuta": 3,
@@ -620,6 +641,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "ハンデスエンドレス改・循環制圧 AI研究版",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -646,6 +668,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "バカでかいナイトプール",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "single_cell": 3,
@@ -667,6 +690,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "何をやっても3000字",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -689,6 +713,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "何をやっても救う学生",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -711,6 +736,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "俺らの場所に入り込むクイーン",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "adjective_student": 3,
@@ -730,6 +756,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "卓上遊戯会員に仇なす女子会（マルチプライ・ガールズ）",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -756,6 +783,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "単位クリエイター",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 2,
       "king_ghidorah_bed": 3,
@@ -776,6 +804,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "地元の「よっちゃん」すげーんだぜ！",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 2,
       "single_cell": 3,
@@ -803,6 +832,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "夏風小僧のU太郎",
+    "updatedOn": "2026-11-05",
     "counts": {
       "yuta": 3,
       "aggro_queen": 3,
@@ -826,6 +856,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "学生キラー",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_king": 3,
       "aggro_queen": 3,
@@ -849,6 +880,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "就活の代償",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_king": 3,
       "suit_student": 3,
@@ -871,6 +903,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "我が敵",
+    "updatedOn": "2026-11-06",
     "counts": {
       "enemy_student": 5,
       "proliferating_enemy": 3,
@@ -893,6 +926,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "新生ヴァンパイア",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_queen": 2,
       "tissue_distributor": 2,
@@ -915,6 +949,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "爆発しちゃうー",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_king": 3,
       "aggro_queen": 3,
@@ -935,6 +970,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "逆張り教師",
+    "updatedOn": "2026-11-05",
     "counts": {
       "general_teacher": 3,
       "fairy_t": 3,
@@ -954,6 +990,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "適応型ハンデス・リロード AI制作",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,
@@ -980,6 +1017,7 @@ window.ChibattleAiBattleDecks = Object.freeze([
   },
   {
     "name": "食堂アグロヴァンパイア",
+    "updatedOn": "2026-11-05",
     "counts": {
       "aggro_student": 3,
       "aggro_king": 3,

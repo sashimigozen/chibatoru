@@ -26,21 +26,41 @@ async function prepare(page) {
 }
 const cp = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)).cp, C.KEY);
 
-test('45 legal decks are selected uniformly with unchanged counts', async ({ page }) => {
+test('all 45 legal decks remain selectable, with a small bonus that expires after seven days', async ({ page }) => {
   const data = await page.evaluate(() => {
     const pool = ChibattleAiBattleDecks;
     const random = Math.random;
+    const now = Date.now;
+    const sample = (day) => {
+      Date.now = () => Date.parse(day);
+      const hits = Object.fromEntries(pool.map(deck => [deck.name, 0]));
+      for (let i = 0; i < 4500; i += 1) {
+        Math.random = () => (i + 0.5) / 4500;
+        hits[__chibattle.chooseAiBattleDeck().name] += 1;
+      }
+      return hits;
+    };
     try {
-      return pool.map((deck, i) => {
-        Math.random = () => (i + 0.5) / pool.length;
-        return { name: deck.name, picked: __chibattle.chooseAiBattleDeck().name,
-          valid: __chibattle.validateOnlineDeckForRule({ format: 'normal' }, deck.counts, 'normal').valid };
-      });
-    } finally { Math.random = random; }
+      return {
+        legal: pool.every(deck => __chibattle.validateOnlineDeckForRule({ format: 'normal' }, deck.counts, 'normal').valid),
+        current: sample('2026-11-06T00:00:00+09:00'),
+        sixDaysLater: sample('2026-11-12T00:00:00+09:00'),
+        expired: sample('2026-11-13T00:00:00+09:00')
+      };
+    } finally {
+      Math.random = random;
+      Date.now = now;
+    }
   });
-  expect(data).toHaveLength(45);
-  expect(new Set(data.map(d => d.name)).size).toBe(45);
-  expect(data.every(d => d.valid && d.name === d.picked)).toBe(true);
+  expect(data.legal).toBe(true);
+  expect(Object.keys(data.current)).toHaveLength(45);
+  expect(Object.values(data.current).every(hits => hits > 0)).toBe(true);
+  expect(data.current['ワンパン記']).toBeGreaterThan(data.current['LO最終講義']);
+  expect(data.current['LO最終講義']).toBeGreaterThan(data.current['ガトリング講師']);
+  expect(data.current['ワンパン記'] / data.current['ガトリング講師']).toBeCloseTo(1.15, 1);
+  expect(data.sixDaysLater['ワンパン記']).toBeGreaterThan(data.sixDaysLater['ガトリング講師']);
+  expect(Math.abs(data.sixDaysLater['LO最終講義'] - data.sixDaysLater['ガトリング講師'])).toBeLessThanOrEqual(1);
+  expect(Object.values(data.expired).every(hits => hits === 100)).toBe(true);
 });
 
 for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会', '小細工はなしだ', '単位クリエイター', '爆発しちゃうー', '新生ヴァンパイア', 'ウマイボコピー', 'ワンパン記', '我が敵']) {
@@ -50,7 +70,14 @@ for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイ
       const index = ChibattleAiBattleDecks.findIndex(deck => deck.name === name);
       const random = Math.random;
       try {
-        Math.random = () => (index + 0.5) / ChibattleAiBattleDecks.length;
+        const slices = ChibattleAiBattleDecks.length * 3;
+        const rolls = Array.from({ length: slices }, (_, i) => (i + 0.5) / slices);
+        const roll = rolls.find(value => {
+          Math.random = () => value;
+          return __chibattle.chooseAiBattleDeck().name === name;
+        });
+        if (roll === undefined) throw new Error(`Deck cannot be drawn: ${name}`);
+        Math.random = () => roll;
         __chibattle.startSoloBattleWithSelectedDecks();
       } finally { Math.random = random; }
       const player = __chibattle.state.players.opponent;
