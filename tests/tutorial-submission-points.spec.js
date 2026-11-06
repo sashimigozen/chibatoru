@@ -44,10 +44,13 @@ test('提出編は生成・効果での手札捨て・場に出す提出を通�
   test.setTimeout(60000);await open(p,'submission');
   await nextTo(p,'万豚記を環境マスに置こう');await play(p,'wonton_ki');
   expect((await data(p)).count).toBe(0);expect((await data(p)).hand).toContain('wonton_greeting');
-  await nextTo(p,'効果で校外へ送って提出しよう');await p.locator('#endTurnButton').click();
+  await nextTo(p,'効果で校外へ送って提出しよう');
+  await drag(p,'female_highball',p.locator('#environmentSlot'));
   await choose(p,'万豚記～挨拶シリーズ～');await idle(p);
-  await expect.poll(()=>p.evaluate(()=>state.currentSide==='player'&&!state.aiThinking&&!state.lectureRoomCheck)).toBe(true);
   expect((await data(p)).count).toBe(1);expect((await data(p)).hand).toContain('wonton_stall');
+  await nextTo(p,'万豚記で持ち物を引こう');await p.locator('#endTurnButton').click();
+  await expect.poll(()=>p.evaluate(()=>state.currentSide==='player'&&!state.aiThinking&&!state.lectureRoomCheck)).toBe(true);
+  expect((await data(p)).hand).toContain('onigiri_draw');
   await nextTo(p,'場に出して提出しよう');await play(p,'wonton_stall');
   expect((await data(p)).count).toBe(2);expect((await data(p)).life).toBe(18);
   expect((await data(p)).hand).toContain('wonton_fever');

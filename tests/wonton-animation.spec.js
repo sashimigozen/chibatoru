@@ -128,7 +128,7 @@ test('漢数字は十・百・千・万・億・兆を使って正しく表す',
   expect(await page.evaluate(cases => cases.map(([n]) => window.ChibattleWonton.formatCount(n)), cases)).toEqual(cases.map(([,label]) => label));
 });
 
-for (const width of [1440, 390]) test(`4コストの万豚記は大きい表紙を約1秒見せ、カウントを増やさない ${width}`, async ({ page }) => {
+for (const width of [1440, 390]) test(`戦意3の万豚記は大きい表紙を約1秒見せ、カウントを増やさない ${width}`, async ({ page }) => {
   await page.setViewportSize({ width, height: width === 390 ? 844 : 900 });
   await setup(page, 'wonton_ki');
   await page.evaluate(() => {
@@ -146,7 +146,7 @@ for (const width of [1440, 390]) test(`4コストの万豚記は大きい表紙�
   await page.waitForFunction(() => Number(document.querySelector('.wonton-book-effect')?.dataset.time) >= 650);
   await expect(effect).toBeVisible();
   expect(await effect.evaluate(canvasHasArt)).toBe(true);
-  expect(await page.evaluate(() => [wontonCount('player'), state.players.player.hand.filter(c => c.baseId === 'wonton_greeting').length])).toEqual([0,2]);
+  expect(await page.evaluate(() => [wontonCount('player'), state.players.player.hand.filter(c => c.baseId === 'wonton_greeting').length])).toEqual([0,1]);
   await page.screenshot({ path: test.info().outputPath(`cover-${width}.png`) });
   await settle(page);
   await expect(effect).toHaveCount(0);
@@ -206,13 +206,14 @@ test('Canvasが利用できなくても卒業の効果は通常どおり解決�
 test('卒業のAI評価は増加前のカウントを使い、偽のリーサルと誤認しない', async ({ page }) => {
   await setup(page);
   expect(await page.evaluate(() => {
+    state.environment = null;
     state.players.opponent.life = 3;
     state.players.player.submissionCounters['万豚記カウント'] = 1;
     const card = createCardFromBase('wonton_graduation', 'player');
     const low = [scoreAiEnvironment(card, 'player'), submissionDiscardValue('player', card)];
     state.players.player.submissionCounters['万豚記カウント'] = 2;
     return [...low, scoreAiEnvironment(card, 'player')];
-  })).toEqual([4, 8, 1000]);
+  })).toEqual([4, 3.6, 1000]);
 });
 
 test('ver.0.36.0のお知らせに卒業の変更前後・読書演出・検証内容を表示する', async ({ page }) => {

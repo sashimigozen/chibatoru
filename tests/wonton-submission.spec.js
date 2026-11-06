@@ -20,11 +20,12 @@ test.beforeEach(async({page})=>{
 });
 test('9枚の能力値・本文・生成専用登録と管理ログ表示情報を同期',async({page})=>{
   const catalog=require('../server/card-catalog.json');
+  expect(await page.evaluate(()=>getDeckEditorIds(''))).toEqual(catalog.deckOrder);
   const ledger=JSON.parse(fs.readFileSync(path.join(__dirname,'../カード管理台帳.html'),'utf8').match(/const CARDS = (\[[^\r\n]*\]);/)[1]);
   expect(await page.evaluate(() => Object.entries(CARD_BASES).filter(([,card])=>card.submission).map(([id])=>id))).toEqual(series);
   const data=await page.evaluate(ids=>ids.map(id=>{const c=CARD_BASES[id];return {id,name:c.name,stats:[c.cost,c.attack,c.hp],text:cardRulesText(createCardFromBase(id,'player')),direct:DIRECT_DECK_CARD_IDS.has(id),generated:!!c.generated};}),ids);
   for(const [i,c]of data.entries()){
-    expect(c.stats).toEqual([i===0?4:i<3?3:8,0,0]);expect(c.direct).toBe(i<3);expect(c.generated).toBe(i>=3);
+    expect(c.stats).toEqual([i<3?3:8,0,0]);expect(c.direct).toBe(i<3);expect(c.generated).toBe(i>=3);
     expect(catalog.names[c.id]).toBe(c.name);expect(catalog.display[c.id].cost).toBe(c.stats[0]);
     const raw=JSON.parse(fs.readFileSync(path.join(__dirname,'../card_rules.txt'),'utf8').split('\n').find(line=>line.trimStart().startsWith(c.id+':')).trim().replace(/^[^:]+: /,'').replace(/,$/,''));
     expect(c.text.replaceAll('\n','')).toBe(raw.replace('提出したとき','[提出]したとき').replaceAll('\n',''));
@@ -157,6 +158,23 @@ for(const n of [0,1,4,8])test(`卒業はカウントを増やさず計算し最�
   await page.evaluate(n=>{state.players.opponent.life=20;state.players.player.submissionCounters={'万豚記カウント':n};const c=createCardFromBase('wonton_graduation','player');state.players.player.hand=[c];moveHandCardToTrash('player',c,{effectDiscard:true});},n);
   await settle(page);expect(await page.evaluate(()=>[state.players.opponent.life,state.players.player.submissionCounters['万豚記カウント']])).toEqual([20-Math.min(10,n*2),0]);
 });
+test('将棋部の決闘フィールドで最大気力10になった相手に、ハイボールから卒業の10ダメージが入る',async({page})=>{
+  const before=await page.evaluate(()=>{
+    const player=state.players.player;
+    state.players.opponent.life=20;
+    player.submissionCounters={'万豚記カウント':5};
+    state.environment=makeBoardCard(createCardFromBase('wonton_ki','player'));
+    attendCard('player',makeBoardCard(createCardFromBase('shogi_duel_field','player')),'environment',null,{attendanceSource:ATTENDANCE_SOURCE.HAND});
+    for(let i=0;i<5;i++) resolveEnvironmentEndTurnEffects('opponent');
+    const item=createCardFromBase('female_highball','player');
+    player.hand=[item,createCardFromBase('wonton_graduation','player')];
+    castHighball('player',item,false);
+    return [state.players.opponent.life,wontonCount('player')];
+  });
+  expect(before).toEqual([10,5]);
+  await choose(page,'wonton_graduation');await settle(page);
+  expect(await page.evaluate(()=>[state.players.opponent.life,wontonCount('player'),state.gameWinner])).toEqual([0,0,'player']);
+});
 test('直接配置と効果配置、環境の置き換えで二重発動・カウント消失しない',async({page})=>{
   await page.evaluate(()=>{const c=createCardFromBase('wonton_greeting','player');state.players.player.hand=[c];state.players.player.deck=[createCardFromBase('general_student','player')];state.players.player.hand=[];attendCard('player',makeBoardCard(c),'environment',null,{attendanceSource:ATTENDANCE_SOURCE.HAND});});
   await settle(page);expect(await page.evaluate(()=>state.players.player.submissionCounters['万豚記カウント'])).toBe(1);
@@ -193,27 +211,64 @@ for(const id of ids)test(`実際のカードテスト開始状態で使える ${
   await page.evaluate(id=>{startCardTest(id);scheduleOpponentAI=()=>{};state.training.skipAnimations=true;},id);
   await expect.poll(()=>page.evaluate(()=>battlePresentationBusy())).toBe(false);
   const before=await page.evaluate(id=>({hand:state.players.player.hand.map(c=>c.baseId),life:state.players.player.life,deck:state.players.player.deck.map(c=>c.baseId),own:listBoardRefs('player').length,enemy:listBoardRefs('opponent').length}),id);
-  expect(before.hand).toContain(id);expect(before.hand).toContain('wonton_greeting');expect(before.life).toBe(10);expect(before.own).toBeGreaterThan(0);expect(before.enemy).toBeGreaterThan(0);
+  expect(before.hand).toContain(id);
+  expect(before.life).toBe(id==='wonton_ki'?16:10);
+  if(id!=='wonton_ki'){expect(before.hand).toContain('wonton_greeting');expect(before.own).toBeGreaterThan(0);}
+  expect(before.enemy).toBeGreaterThan(0);
   await page.evaluate(id=>{const c=state.players.player.hand.find(c=>c.baseId===id);if(c.type==='item')castImmediateItem('player',c,false);else playCard(c.instanceId,'environment','player');},id);
   if(id.includes('highball')){await choose(page,'wonton_greeting');if(id==='male_highball')await choose(page);}
   if(id==='wonton_final_battle')await choose(page);
   await settle(page);
-  if(id==='wonton_ki')expect(await page.evaluate(()=>state.players.player.hand.filter(c=>c.baseId==='wonton_greeting').length)).toBe(2);
+  if(id==='wonton_ki'){
+    expect(await page.evaluate(()=>[state.players.player.will,wontonCount('player'),state.players.player.hand.filter(c=>c.baseId==='wonton_greeting').length])).toEqual([0,0,1]);
+    await page.locator('#endTurnButton').click({force:true});
+    await expect.poll(()=>page.evaluate(()=>state.currentSide)).toBe('opponent');
+    expect(await page.evaluate(()=>state.players.player.hand.some(c=>['female_highball','male_highball'].includes(c.baseId)))).toBe(true);
+    await page.evaluate(()=>endTurn({fromAi:true}));
+    await expect.poll(()=>page.evaluate(()=>state.currentSide)).toBe('player');
+    expect(await page.evaluate(()=>state.players.opponent.hand.some(c=>c.baseId==='onigiri_draw'))).toBe(true);
+  }
   else expect(await page.evaluate(()=>state.players.player.submissionCounters['万豚記カウント'])).toBe(id==='wonton_graduation'?0:1);
 });
 
-test('万豚記は双方のターン終了時に各自の手札を1枚だけ提出する',async({page})=>{
-  for(const side of ['player','opponent']){
-    await page.evaluate(side=>{state.environment=createCardFromBase('wonton_ki','player');const c=createCardFromBase('wonton_stall',side);state.players[side].hand=[c];resolveEnvironmentEndTurnEffects(side,{meguroDiscardId:c.instanceId});},side);await settle(page);
-  }
-  expect(await page.evaluate(()=>['player','opponent'].map(s=>[state.players[s].submissionCounters['万豚記カウント'],state.players[s].hand.map(c=>c.baseId)]))).toEqual([[1,['wonton_fever']],[1,['wonton_fever']]]);
-  expect(await page.evaluate(()=>{state.kashikashiActionTurn=state.actionTurn;return needsMeguroHandChoice('player');})).toBe(false);
+test('万豚記は手番側の元の戦意3の持ち物だけを引き、提出は起きない',async({page})=>{
+  const result=await page.evaluate(()=>{
+    state.environment=createCardFromBase('wonton_ki','player');
+    const [player,opponent]=['player','opponent'].map(side=>state.players[side]);
+    player.hand=[createCardFromBase('wonton_stall','player')];
+    const reduced=createCardFromBase('female_highball','player');reduced.cost=1;
+    const falseMatch=createCardFromBase('ruler','player');falseMatch.cost=3;
+    player.deck=[falseMatch,createCardFromBase('wonton_ki','player'),reduced];
+    opponent.deck=[createCardFromBase('onigiri_draw','opponent'),createCardFromBase('general_student','opponent')];
+    const snapshot=()=>[player,opponent].map(p=>p.hand.map(c=>c.baseId));
+    resolveEnvironmentEndTurnEffects('player');
+    const afterPlayer=snapshot();
+    resolveEnvironmentEndTurnEffects('opponent');
+    const afterOpponent=snapshot();
+    const handChoice=needsMeguroHandChoice('player');
+    const noTargetBefore=player.deck.map(c=>c.instanceId);
+    resolveEnvironmentEndTurnEffects('player');
+    const noTargetUnchanged=JSON.stringify(noTargetBefore)===JSON.stringify(player.deck.map(c=>c.instanceId));
+    player.deck.push(createCardFromBase('male_highball','player'));
+    state.kashikashiActionTurn=state.actionTurn;
+    resolveEnvironmentEndTurnEffects('player');
+    state.kashikashiActionTurn=null;
+    state.environment=createCardFromBase('classroom','opponent');
+    resolveEnvironmentEndTurnEffects('player');
+    return {afterPlayer,afterOpponent,handChoice,noTargetUnchanged,final:snapshot(),count:wontonCount('player')};
+  });
+  expect(result).toEqual({
+    afterPlayer:[['wonton_stall','female_highball'],[]],
+    afterOpponent:[['wonton_stall','female_highball'],['onigiri_draw']],
+    handChoice:false,noTargetUnchanged:true,
+    final:[['wonton_stall','female_highball'],['onigiri_draw']],count:0
+  });
 });
 test('無能力コピー・出席時効果禁止では配置による提出をしない',async({page})=>{
   await page.evaluate(()=>{const c=createCardFromBase('wonton_stall','player');c.generatedWithoutEffects=true;state.players.player.hand=[c];moveHandCardToTrash('player',c,{effectDiscard:true});state.players.player.effectUseLockTurnsRemaining=1;attendCard('player',makeBoardCard(createCardFromBase('wonton_greeting','player')),'environment',null,{attendanceSource:ATTENDANCE_SOURCE.HAND});});
   await settle(page);expect(await page.evaluate(()=>state.players.player.submissionCounters)).toEqual({});
 });
-test('ゲストのハイボールの手札・盤面選択と提出後の状態が同期する',async({page:host,browser})=>{
+test('ゲストのハイボールの提出と万豚記のターン終了時ドローが同期する',async({page:host,browser})=>{
   const guest=await browser.newPage();
   async function relay(from,to){for(const message of await from.evaluate(()=>outbox.splice(0)))await to.evaluate(message=>onlineHandleMessage({...message,type:message.command?'command':message.type,protocol:ONLINE_PROTOCOL_VERSION}),message);}
   try{
@@ -224,6 +279,9 @@ test('ゲストのハイボールの手札・盤面選択と提出後の状態�
     await expect.poll(()=>host.evaluate(()=>battlePresentationBusy())).toBe(false);
     const snapshot=await host.evaluate(()=>{
       state.currentSide='opponent';state.players.player.board.seats[0]=makeBoardCard(createCardFromBase('strong_student','player'));
+      state.environment=createCardFromBase('wonton_ki','player');
+      state.players.player.deck=[createCardFromBase('general_student','player')];
+      state.players.opponent.deck=[createCardFromBase('onigiri_draw','opponent')];
       state.players.opponent.hand=[createCardFromBase('male_highball','opponent'),createCardFromBase('wonton_stall','opponent')];return onlineCreateSnapshot();
     });
     await guest.evaluate(snapshot=>onlineHandleMessage({type:'gameState',protocol:ONLINE_PROTOCOL_VERSION,snapshot}),snapshot);
@@ -235,6 +293,12 @@ test('ゲストのハイボールの手札・盤面選択と提出後の状態�
     await relay(host,guest);await choose(guest);await relay(guest,host);await settle(host);await relay(host,guest);
     expect(await host.evaluate(()=>[state.players.opponent.life,state.players.opponent.submissionCounters['万豚記カウント'],state.players.player.board.seats[0].currentHp])).toEqual([12,1,3]);
     expect(await guest.evaluate(()=>[state.players.player.life,state.players.player.submissionCounters['万豚記カウント'],listBoardRefs("opponent").map(getBoardCardFromRef)[0].currentHp])).toEqual([12,1,3]);
+    await expect.poll(()=>guest.evaluate(()=>battlePresentationBusy())).toBe(false);
+    await guest.evaluate(()=>endTurn());await relay(guest,host);
+    await expect.poll(()=>host.evaluate(()=>state.currentSide)).toBe('player');
+    await relay(host,guest);
+    expect(await host.evaluate(()=>state.players.opponent.hand.map(c=>c.baseId))).toContain('onigiri_draw');
+    expect(await guest.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toContain('onigiri_draw');
   }finally{await guest.close();}
 });
 

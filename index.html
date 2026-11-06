@@ -19657,7 +19657,7 @@
       wonton_rebellion: {"name": "叛逆の万豚記～敵地を玉砕～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
       wonton_final_battle: {"name": "燃えよ！万豚記～決戦シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
       wonton_graduation: {"name": "恋の万豚記～卒業シリーズ～", "type": "environment", "cost": 8, "attack": 0, "hp": 0, "allowedZones": ["environment"], "category": "common", "generated": true, "submission": true},
-      wonton_ki: { name: "万豚記", type: "environment", cost: 4, attack: 0, hp: 0, allowedZones: ["environment"], category: "common" },
+      wonton_ki: { name: "万豚記", type: "environment", cost: 3, attack: 0, hp: 0, allowedZones: ["environment"], category: "common" },
       female_highball: { name: "女のハイボール", type: "item", cost: 3, attack: 0, hp: 0, target: "self", category: "common" },
       male_highball: { name: "男のハイボール", type: "item", cost: 3, attack: 0, hp: 0, target: "self", category: "common" },
       chotto_machii: { name: "ちょっと待ちぃ", type: "item", cost: 10, target: "self", category: "common" },
@@ -20114,7 +20114,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。 「将棋部の決闘フィールド」の戦意と効果を調整しました。 AIが複数人を出席させるカードの使い方を改善しました。 AIバトルではデッキの更新日によって抽選率が変わります。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}, {"category": "カード調整", "title": "将棋部の決闘フィールド", "before": "将棋部の決闘フィールド／環境／共通カード／戦意5／攻撃力なし／体力なし\nお互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。", "after": "将棋部の決闘フィールド／環境／共通カード／戦意3／攻撃力なし／体力なし\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。", "beforeHighlights": ["戦意5", "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。"], "afterHighlights": ["戦意3", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。"]}, {"category": "システム", "title": "決闘フィールドのカードテスト", "after": "環境に置いた直後、各ターンの終了時、別の環境での上書き、再配置を試せる開始状態を用意しました。気力が上限を超えた場合は上限まで下がり、上書きで上限が戻っても現在の気力はそのままです。"}, {"category": "システム", "title": "AIの複数人出席", "after": "右隣や左右の空き席、教卓マスを比較して、出席時効果を活かせる置き場所を優先します。有利な相打ちで席が空いた場合は、攻撃後に出席させます。相手に決着されそうな場面では出席を優先します。カードの能力値・効果は従来どおりです。"}, {"category": "システム", "title": "AIバトルのデッキ抽選", "after": "更新直後のデッキに小さな抽選ボーナスを付けます。更新から7日で標準に戻り、その後は徐々に選ばれにくくなります。14日以降も抽選対象です。"}]},
+      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。 「将棋部の決闘フィールド」の戦意と効果を調整しました。 AIが複数人を出席させるカードの使い方を改善しました。 AIバトルではデッキの更新日によって抽選率が変わります。 万豚記の戦意とターン終了時の効果を調整しました。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}, {"category": "カード調整", "title": "将棋部の決闘フィールド", "before": "将棋部の決闘フィールド／環境／共通カード／戦意5／攻撃力なし／体力なし\nお互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。", "after": "将棋部の決闘フィールド／環境／共通カード／戦意3／攻撃力なし／体力なし\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。", "beforeHighlights": ["戦意5", "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。"], "afterHighlights": ["戦意3", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。"]}, {"category": "システム", "title": "決闘フィールドのカードテスト", "after": "環境に置いた直後、各ターンの終了時、別の環境での上書き、再配置を試せる開始状態を用意しました。気力が上限を超えた場合は上限まで下がり、上書きで上限が戻っても現在の気力はそのままです。"}, {"category": "システム", "title": "AIの複数人出席", "after": "右隣や左右の空き席、教卓マスを比較して、出席時効果を活かせる置き場所を優先します。有利な相打ちで席が空いた場合は、攻撃後に出席させます。相手に決着されそうな場面では出席を優先します。カードの能力値・効果は従来どおりです。"}, {"category": "システム", "title": "AIバトルのデッキ抽選", "after": "更新直後のデッキに小さな抽選ボーナスを付けます。更新から7日で標準に戻り、その後は徐々に選ばれにくくなります。14日以降も抽選対象です。"}, {"category": "カード調整", "title": "万豚記", "before": "万豚記／環境／共通カード／戦意4／攻撃力なし／体力なし\nこのカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。", "after": "万豚記／環境／共通カード／戦意3／攻撃力なし／体力なし\nこのカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引く。", "beforeHighlights": ["戦意4", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。"], "afterHighlights": ["戦意3", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引く。"]}, {"category": "システム", "title": "万豚記のカードテスト・提出編", "after": "双方が持ち物を引く処理をカードテストで試せます。提出編では女のハイボールで挨拶シリーズを提出する手順を練習できます。"}]},
       {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。AIバトルとトレーニングのデッキ選択にも同じ一覧を使えます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札や枠線との間に余白を設け、両プレイヤーのプロフィールアイコンを表示します。相手側のアイコンは山札の左下に表示されます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
@@ -23070,8 +23070,9 @@
       submission: abilityTutorialSteps("提出編", "[提出]を持つカードは、使用したとき、場に出たとき、効果で手札から校外エリアへ送られたときに、提出の効果が発動します。\n同じプレイで条件を複数満たしても、発動は1回です。", [
         tutorialPlayStep("wonton_ki", "万豚記を環境マスに置こう", "万豚記を選び、環境マスを押してください。\n万豚記そのものは[提出]を持ちません。環境マスに置いたときの効果で、[提出]を持つ挨拶シリーズを手札に生成します。", "environment"),
         { id: "submissionGenerated", title: "提出を持つカードを確認しよう", body: "挨拶シリーズが手札に加わりました。\n万豚記カウントを増やすのは、シリーズのカード本文に書かれた効果です。[提出]共通の効果ではありません。", focus: "#playerHand [data-base-id='wonton_greeting']" },
-        { id: "submitDiscard", title: "効果で校外へ送って提出しよう", body: "ターン終了を押し、万豚記の効果で「万豚記～挨拶シリーズ～」を選んで校外へ送ってください。\n捨てたカードの[提出]が発動します。", action: "endTurn", focus: "#endTurnButton" },
-        { id: "submissionDiscardResult", title: "校外へ送った提出の結果", body: "万豚記カウントが1増え、屋台シリーズの生成と1枚ドローが行われました。\n遅刻ゾーンへの移動や、使用後に校外へ送られる処理では、提出が追加で発動することはありません。", focus: "#playerActiveEffectsButton" },
+        { id: "submitDiscard", title: "効果で校外へ送って提出しよう", body: "「女のハイボール」を盤面へドラッグして使い、「万豚記～挨拶シリーズ～」を選んで校外エリアへ送ってください。\n送ったカードの[提出]が発動します。", action: "submissionDiscard", allowedBaseId: "female_highball", focus: "#playerHand [data-base-id='female_highball']" },
+        { id: "submissionDiscardResult", title: "校外へ送った提出の結果", body: "万豚記カウントが1増え、屋台シリーズが手札に加わりました。\n遅刻ゾーンへの移動や、使用後に校外へ送られる処理では、提出が追加で発動することはありません。", focus: "#playerActiveEffectsButton" },
+        { id: "submissionDraw", title: "万豚記で持ち物を引こう", body: "ターンを終了してください。万豚記は、お互いが自分のターンを終了するたび、元の戦意が3の持ち物をデッキから1枚引かせます。", action: "endTurn", focus: "#endTurnButton" },
         tutorialPlayStep("wonton_stall", "場に出して提出しよう", "屋台シリーズを選び、環境マスに置いてください。\n効果で捨てる場合だけでなく、場に出した場合も[提出]は発動します。", "environment"),
         { id: "submissionFieldResult", title: "場に出した提出の結果", body: "万豚記カウントが2になり、熱狂シリーズの生成と気力2回復が行われました。\n提出する条件と、その後に発動するカードごとの効果を読み分けましょう。", focus: "#environmentSlot" }
       ]),
@@ -33924,7 +33925,15 @@
     function scoreAiEnvironment(card, side = "opponent") {
       if (!arePlayedEffectsSuppressed(side)) {
         const activeWonton = ongoingEnvironmentBaseId() === "wonton_ki";
-        if (card.baseId === "wonton_ki") return activeWonton ? -100 : 20;
+        const own = state.players[side];
+        const hasWontonDraw = (activeWonton || card.baseId === "wonton_ki")
+          && !isDeckToHandLocked() && own.deck.some(isWontonDrawCandidate);
+        const keepWonton = activeWonton && hasWontonDraw;
+        if (card.baseId === "wonton_ki") {
+          if (activeWonton && state.environment.owner === side) return -100;
+          const hasSubmissionOutlet = [...own.hand, ...own.deck].some(c => ["female_highball", "male_highball", "shukii", "deck_without"].includes(c.baseId));
+          return (hasWontonDraw ? 12 : 0) + (hasSubmissionOutlet ? 10 : 0);
+        }
         if (WONTON_SERIES_IDS.includes(card.baseId)) {
           if (card.baseId === "wonton_graduation") {
             const damage = aiWontonGraduationDamage(side);
@@ -33932,10 +33941,10 @@
               && !aiLifeFloorShieldActive(oppositeSide(side), side)) return 1000;
             return activeWonton || aiShouldSaveWontonGraduation(side) ? 0 : damage * 2;
           }
-          if (activeWonton) return 0;
+          if (keepWonton) return 0;
           return 8;
         }
-        if (activeWonton && state.players[side].hand.some(c => WONTON_SERIES_IDS.includes(c.baseId))) return -100;
+        if (keepWonton && own.hand.some(c => WONTON_SERIES_IDS.includes(c.baseId))) return -100;
       }
       if (ongoingEnvironmentBaseId() === card.baseId && card.baseId !== "seat_rules") return -100;
       if (card.baseId === "past_campus") return state.players[side].hand.length <= 4 ? 12 : 2;
@@ -35377,9 +35386,7 @@
       const endingSide = state.currentSide;
       if (fromAi && needsMeguroHandChoice(endingSide) && !options.meguroDiscardId) {
         const discard = state.players[endingSide].hand.filter((card) => !isHighLoadHandCard(card))
-          .sort((a, b) => ongoingEnvironmentBaseId() === "wonton_ki"
-            ? submissionDiscardValue(endingSide, b) - submissionDiscardValue(endingSide, a)
-            : trainingAiChoiceCardScore(endingSide, a) - trainingAiChoiceCardScore(endingSide, b))[0];
+          .sort((a, b) => trainingAiChoiceCardScore(endingSide, a) - trainingAiChoiceCardScore(endingSide, b))[0];
         options = { ...options, meguroDiscardId: discard?.instanceId || null };
       }
       if (endingSide === "player" && needsMeguroHandChoice("player") && !options.meguroDiscardId) {
@@ -35461,8 +35468,7 @@
 
     function needsMeguroHandChoice(side) {
       if (ongoingEffectsSuppressed()) return false;
-      return (ongoingEnvironmentBaseId() === "wonton_ki"
-        || (ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side))
+      return ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side
         && state.players[side].hand.some((card) => !isHighLoadHandCard(card));
     }
 
@@ -35757,8 +35763,12 @@
           addLog(`ドア前戦争の効果：このターンに${SIDES[side]}が出席させた${target.name}に1ダメージ。`);
         }
       }
-      if (ongoingEnvironmentBaseId() === "wonton_ki"
-        || (ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side)) {
+      if (ongoingEnvironmentBaseId() === "wonton_ki" && canUsePrintedCardEffects(state.environment)
+        && state.players[side].deck.some(isWontonDrawCandidate)) {
+        const pulled = pullRandomCardsFromDeck(side, isWontonDrawCandidate, 1);
+        if (pulled) addLog(`万豚記の効果：${SIDES[side]}は元の戦意が3の持ち物カードを1枚引きました。`);
+      }
+      if (ongoingEnvironmentBaseId() === "meguro_library" && state.environment.owner === side) {
         const environmentName = state.environment.name;
         const discarded = discardOneHandCardForMeguro(side, options.meguroDiscardId);
         if (discarded) {
@@ -35788,6 +35798,11 @@
       }
       resolveDormCouncilEndTurnDraw(side);
       resolveCouncilEnvironmentCycle(side);
+    }
+
+    function isWontonDrawCandidate(card) {
+      const base = CARD_BASES[card.baseId];
+      return base?.type === "item" && base.cost === 3 && !base.noCost;
     }
 
     function resolveDormCouncilEndTurnDraw(side) {
@@ -45070,6 +45085,7 @@
     function castHighball(side, item, renderAfter = true) {
       if (!canUseHighball(side, item)) return false;
       if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
+      if (side === "player") pushTutorialHistoryBeforeAction("submissionDiscard", { item });
       if (!payForItem(side, item)) return false;
       moveHandCardToTrash(side, item);
       clearSelections();
@@ -45086,6 +45102,7 @@
           if (target && target.instanceId === chosen.instanceId && isAllowedEffectTarget(side, target)) dealDamageToCard(target, 4, item);
         }
         addLog(`${SIDES[side]}は${item.name}で「${card.name}」を校外エリアへ送りました。`);
+        if (side === "player") completeTutorialAction("submissionDiscard", { item });
       });
       if (renderAfter) render();
       return true;
@@ -50258,6 +50275,7 @@
           && tutorialRefMatches(step.target, payload.owner, payload.zone, payload.index);
       }
       if (action === "lecture") return payload.teacher?.baseId === step.attackerBaseId;
+      if (action === "submissionDiscard") return payload.item?.baseId === step.allowedBaseId;
       if (action === "fusion") return true;
       if (action === "attackLife") {
         return payload.attacker?.baseId === step.attackerBaseId && payload.targetSide === step.targetSide;
@@ -52492,7 +52510,7 @@
       let detail;
       switch (environment.baseId) {
         case "wonton_ki":
-          detail = "自分のターン終了時、手札1枚を選び、校外エリアへ送ります。";
+          detail = "自分のターン終了時、自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引きます。";
           break;
         case "academic_move":
           detail = cardRulesText(environment);
@@ -55578,14 +55596,14 @@
       long_sleeve_student: {"hand": ["long_sleeve_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。通常は1/3・陽気・2回攻撃です。相手を倒して単位を取得すると4/6になります。体力1の一般学生を攻撃して単位を取得する流れと、残った体力も確認できます。"},
       group_sniper: {"hand": ["group_sniper", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。まず通常効果を試せます。単位取得後を試す場合は、先に3行1列の長袖の学生で相手の体力1の一般学生を倒してください。中央の左右を空け、選択・連続攻撃・回復・デッキ検索に必要なカードを用意しています。"},
       could_not_escape_student: {"hand": ["could_not_escape_student", "short_sleeve_student", "pinige", "gecko_carrier_student", "lucky_man", "classroom"], "life": 10, "will": 20, "pointScore": 9, "own": {"seats": [[6, "long_sleeve_student"]], "teacher": null}, "enemy": {"seats": [[0, "general_student", 1], [1, "strong_student"], [5, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student", "long_sleeve_student", "group_sniper", "pinige", "pinige", "short_sleeve_student", "onigiri_draw", "strong_student"], "enemyHand": ["general_student"], "note": "点数9から開始します。相手の4人の出席者と教師からランダムに4人まで破壊します。先に長袖の学生の攻撃で単位を取得すると、1行目の空席に攻撃力+2のあえー学生を出席させます。"},
-      wonton_ki: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": null, "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_greeting: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_stall: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_fever: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_rebellion: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
-      wonton_final_battle: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "万豚記のターン終了時かハイボールでシリーズを校外へ送り、提出をきっかけに発動する万豚記シリーズ固有のカウント増加と次のカードの生成を試せます。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_ki: {"hand": ["classroom", "general_student"], "will": 3, "life": 16, "own": {"seats": [], "teacher": null}, "enemy": {"seats": [[0, "general_student"]], "teacher": null}, "deck": ["general_student", "female_highball", "male_highball"], "enemyHand": ["general_student"], "enemyDeck": ["general_student", "onigiri_draw"], "environment": null, "submissionCount": 0, "note": "戦意3で万豚記を置くと、挨拶シリーズが手札に加わります。ターンを終了して自分がハイボールを、相手が自分のターン終了時におにぎりドローを引くことを試せます。一般教室で上書きすると抽選は止まります。"},
+      female_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      male_highball: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_greeting: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_stall: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_fever: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_rebellion: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
+      wonton_final_battle: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 0, "note": "ハイボールでシリーズを校外エリアへ送ると、提出で万豚記カウントが増え、次のカードを生成します。環境マスへ直接置いた場合も比較できます。自分の気力10、強化する出席者、相手の出席者とデッキを用意しています。"},
       wonton_graduation: {"hand": ["female_highball", "male_highball", "wonton_greeting", "general_student", "classroom"], "life": 10, "own": {"seats": [[4, "strong_student", 2]], "teacher": null}, "enemy": {"seats": [[0, "strong_student"], [8, "general_student"]], "teacher": "general_teacher"}, "deck": ["female_highball", "male_highball", "general_student", "wonton_ki", "onigiri_draw"], "enemyHand": ["wonton_greeting", "general_student"], "environment": "wonton_ki", "submissionCount": 4, "note": "万豚記カウント4から開始します。卒業シリーズを環境マスに置くか、万豚記やハイボールの効果で手札から校外へ送ると、カウントを増やさず相手本体に8ダメージを与え、その後0にします。毛筆の「完」がある最終ページと、相手本体へ向かう紙片の演出を比較できます。"},
 
       smiling_lecturer: {
@@ -56781,7 +56799,7 @@
         drain: { board: [["player", "apprentice_vampire", "seat", 4, { damage: 1 }], ["opponent", "super_ae_student", "seat", 0]] },
         evolution: { hand: ["dark_yuta", "single_cell"], board: [["player", "yuta", "seat", 4, { damage: 1 }], ["player", "single_cell", "seat", 0]] },
         fusion: { hand: ["ruler", "ruler"], board: [["opponent", "strong_student", "seat", 0]] },
-        submission: { hand: ["wonton_ki"], playerLife: 16, opponentLife: 20 },
+        submission: { hand: ["wonton_ki", "female_highball"], playerLife: 14, opponentLife: 20 },
         points: { hand: ["short_sleeve_student"], pointScore: 8, opponentLife: 20,
           board: [["player", "long_sleeve_student", "seat", 4], ["opponent", "ae_student", "seat", 0, { damage: 3 }], ["opponent", "ae_student", "seat", 2, { damage: 3 }]] },
         load: { hand: ["white_student", "ruler", "cafeteria"], opponentLife: 4 }
@@ -56792,7 +56810,10 @@
       const opponent = state.players.opponent;
       player.maxWill = player.will = 10;
       player.life = setup.playerLife ?? 20;
-      if (chapterId === "submission") player.submissionCounters = { "万豚記カウント": 0 };
+      if (chapterId === "submission") {
+        player.submissionCounters = { "万豚記カウント": 0 };
+        player.deck = ["general_student", "ruler", "onigiri_draw", "general_teacher"].map(id => createCardFromBase(id, "player"));
+      }
       if (chapterId === "points") {
         player.pointScore = setup.pointScore;
         player.pointSystemActive = true;
@@ -58177,7 +58198,7 @@
         if (kingdomRules[card.baseId]) return formatCardRulesDisplayText(card, kingdomRules[card.baseId]);
       }
       const rules = {
-        wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分の手札1枚を選び、校外エリアへ送る。",
+        wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引く。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
         tomoyo_mou: "このカードを使用したとき、自分の手札から戦意が低い順にカードを2枚まで、このカードに融合する。同じ戦意のカードはランダムに選ぶ。その後、自分の空いている席マスに「爆発する学生」を2人出席させる。\n自分の戦意が8以上なら、このカードの戦意は8になり、融合する枚数と出席させる人数はそれぞれ4になる。",
