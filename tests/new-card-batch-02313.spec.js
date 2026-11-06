@@ -692,6 +692,7 @@ test("レーザービームと焼き鳥ハラスメントの対象処理、ア�
 test("ストレスヘアーは次の相手ターン終了時に外れて+4/+4になる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
+    api.state.training.skipAnimations = true;
     const yuta = api.makeBoardCard(api.createCardFromBase("yuta", "player"));
     api.state.players.player.board.seats[0] = yuta;
     const before = { attack: yuta.attack, hp: yuta.maxHp };
@@ -701,15 +702,16 @@ test("ストレスヘアーは次の相手ターン終了時に外れて+4/+4に
     api.state.actionTurn += 1;
     api.resolveEndTurnEffects("opponent");
     return { attackGain: yuta.attack - before.attack, hpGain: yuta.maxHp - before.hp,
-      removed: !yuta.stressHairEquipment,
+      removed: !api.equipmentDetailText(yuta).includes("ストレスヘアー"),
       hairTrash: api.state.players.player.trash.some((card) => card.baseId === "stress_hair") };
   });
   expect(result).toEqual({ attackGain: 4, hpGain: 4, removed: true, hairTrash: true });
 });
 
-test("ストレスヘアーと従来のU太装備は同じ1枚枠を使う", async ({ page }) => {
+test("ストレスヘアーと従来のU太装備は同じ枠を使い、裏U太は2枚装備できる", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
+    api.state.training.skipAnimations = true;
     const yuta = api.makeBoardCard(api.createCardFromBase("yuta", "player"));
     api.state.players.player.board.seats[0] = yuta;
     const hair = api.createCardFromBase("stress_hair", "player");
@@ -725,19 +727,20 @@ test("ストレスヘアーと従来のU太装備は同じ1枚枠を使う", asy
     api.castItemOnCard("player", darkHair, "player", "seat", 1, false);
     return { first, secondHair, conventional, detail: api.equipmentDetailText(yuta),
       darkCheerful: api.hasKeyword(dark, "陽気"),
-      darkSecondBlocked: !api.canUseItemOnBoardTarget(happi, "player", "seat", 1) };
+      darkSecondAllowed: api.canUseItemOnBoardTarget(happi, "player", "seat", 1) };
   });
   expect(result.first).toBe(true);
   expect(result.secondHair).toBe(false);
   expect(result.conventional).toBe(false);
   expect(result.detail).toContain("ストレスヘアー");
   expect(result.darkCheerful).toBe(true);
-  expect(result.darkSecondBlocked).toBe(true);
+  expect(result.darkSecondAllowed).toBe(true);
 });
 
 test("従来の装備が先についていてもストレスヘアーを重ねられない", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
+    api.state.training.skipAnimations = true;
     const yuta = api.makeBoardCard(api.createCardFromBase("yuta", "player"));
     api.state.players.player.board.seats[0] = yuta;
     const happi = api.createCardFromBase("red_happi", "player");
