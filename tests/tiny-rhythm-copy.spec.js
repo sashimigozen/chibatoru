@@ -36,7 +36,7 @@ test('本文・能力値・カテゴリーを更新し、同名2枚も選んで�
       text:cardRulesText(createCardFromBase('tiny_rhythm_student','player'))};
   })).toEqual({stats:[8,2,2,'gakuyukai_item'],hand:await page.evaluate(()=>window.originalIds),will:0,
     copies:['umaibo','umaibo','maibo_bone'],fresh:true,sources:['copy','copy','copy'],
-    text:'このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、それぞれのコピーを出席させる。'});
+    text:'このカードを手札から出席させたとき、自分の手札にある戦意5以下の融合で生成された出席者カードを3枚まで選び、コピーごとに自分の空いている席マス1つを選び、そのマスに出席させる。'});
 });
 for(const side of ['player','opponent'])test(`${side}のCPUは空き席が不足しても置ける人数までコピーし手札を消費しない`,async({page})=>{
   expect(await page.evaluate(async side=>{
