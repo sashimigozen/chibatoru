@@ -20114,7 +20114,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。 「将棋部の決闘フィールド」の戦意と効果を調整しました。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}, {"category": "カード調整", "title": "将棋部の決闘フィールド", "before": "将棋部の決闘フィールド／環境／共通カード／戦意5／攻撃力なし／体力なし\nお互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。", "after": "将棋部の決闘フィールド／環境／共通カード／戦意3／攻撃力なし／体力なし\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。", "beforeHighlights": ["戦意5", "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。"], "afterHighlights": ["戦意3", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。"]}, {"category": "システム", "title": "決闘フィールドのカードテスト", "after": "環境に置いた直後、各ターンの終了時、別の環境での上書き、再配置を試せる開始状態を用意しました。気力が上限を超えた場合は上限まで下がり、上書きで上限が戻っても現在の気力はそのままです。"}]},
+      {"version": "ver.0.42.0", "versioning": "semver", "date": "2026年11月6日", "summary": "AIの攻撃判断と対戦中のプロフィール表示を改善しました。 「将棋部の決闘フィールド」の戦意と効果を調整しました。 AIが複数人を出席させるカードの使い方を改善しました。", "changes": [{"category": "システム", "title": "AIの攻撃判断", "after": "出席者が破壊されたときに発生する本体ダメージも見込んで攻撃を選びます。カードの能力値・効果は従来どおりです。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "両プレイヤーのプロフィールアイコンを、それぞれの山札の下端に揃えました。"}, {"category": "カード調整", "title": "将棋部の決闘フィールド", "before": "将棋部の決闘フィールド／環境／共通カード／戦意5／攻撃力なし／体力なし\nお互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。", "after": "将棋部の決闘フィールド／環境／共通カード／戦意3／攻撃力なし／体力なし\nこのカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。", "beforeHighlights": ["戦意5", "お互いのプレイヤーの最大気力は10になる。このカードが環境マスに出たとき、両者の気力が10を超えている場合、10になる。"], "afterHighlights": ["戦意3", "このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーの最大気力を2減らす。この効果で最大気力は10未満にならない。"]}, {"category": "システム", "title": "決闘フィールドのカードテスト", "after": "環境に置いた直後、各ターンの終了時、別の環境での上書き、再配置を試せる開始状態を用意しました。気力が上限を超えた場合は上限まで下がり、上書きで上限が戻っても現在の気力はそのままです。"}, {"category": "システム", "title": "AIの複数人出席", "after": "右隣や左右の空き席、教卓マスを比較して、出席時効果を活かせる置き場所を優先します。有利な相打ちで席が空いた場合は、攻撃後に出席させます。相手に決着されそうな場面では出席を優先します。カードの能力値・効果は従来どおりです。"}]},
       {"version": "ver.0.41.0", "versioning": "semver", "date": "2026年11月5日", "summary": "新カード「エンドレストーカー」「Hapa英会話」「質問する講師」を追加しました。「怖い質問」の戦意を0に調整しました。", "changes": [{"category": "新カード", "title": "エンドレストーカー", "after": "エンドレストーカー／学生／共通カード／戦意10／攻撃力1／体力1\nこのカードの戦意が10のときにのみ出席できる。\nこのカードを手札から出席させたとき、お互いの最大戦意を3にする。その後、このカード以外のお互いの講義室・手札・校外エリアにある出席者カードすべてを、持ち主のデッキに戻してシャッフルする。進化・融合している出席者は、分解してから戻す。\nその後、お互いのデッキにある出席者カードすべての戦意を−3する。"}, {"category": "システム", "title": "カードテスト", "after": "双方の手札・講義室・校外エリアの回収、進化・融合の分解、最大戦意の再成長とデッキの戦意低下を確認できるカードテストを用意しました。AIの使用判断、戦意10の出席条件、オンライン同期も検証しました。"}, {"category": "新カード", "title": "Hapa英会話", "after": "Hapa英会話／持ち物／共通カード／戦意2／攻撃力0／体力0\n相手の手札にある体力を持つ出席者カード1枚をランダムに選び、2ダメージを与える。\n選ばれたカードとその体力の変化は、出席するまでお互いに公開しない。体力が0になっても手札に残る。"}, {"category": "新カード", "title": "質問する講師", "after": "質問する講師／教師／共通カード／戦意4／攻撃力1／体力3\nこのカードを手札から出席させたとき、相手の教卓マスが空いているなら、相手の席マスにいる、教卓マスへ移動できる出席者1人までを指名し、相手の教卓マスへ移動させる。\n相手の教卓マスに出席者がいるかぎり、このカードは攻撃できず、陽気を持つ。\nこのカードの講義は、相手の教卓マスにいる出席者にのみダメージを与える。そのダメージは、相手の講義室にいる出席者の数と同じになる。\nこのカードの講義で出席者を破壊したとき、自分の手札に「Hapa英会話」1枚を生成する。"}, {"category": "システム", "title": "非公開の手札ダメージと特殊な講義", "after": "手札へのダメージを出席まで双方に隠し、体力0でも出席時効果の後に破壊します。出席時の選択・進化時効果との処理順、講義と通常攻撃の区別、盤面での移動対象選択、トークン撃破時の生成、AI・オンライン同期を検証するカードテストを用意しました。"}, {"category": "カード調整", "title": "怖い質問", "before": "怖い質問／持ち物／共通カード／戦意1／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "after": "怖い質問／持ち物／共通カード／戦意0／攻撃力0／体力0\n相手の出席者1人をランダムに指名し、1ダメージを与える。その後、自分のデッキからカードを1枚引く。", "beforeHighlights": ["戦意1"], "afterHighlights": ["戦意0"]}, {"category": "システム", "title": "怖い質問のカードテスト", "after": "残り戦意0での使用と、引いた2枚目の連続使用を試せる開始状態を用意しました。"}, {"category": "システム", "title": "AIの講義判断", "after": "教卓の教師が通常攻撃で倒し切れないとき、反撃と講義のダメージを比較して行動を選びます。通常攻撃ができない質問する講師も、有効な講義を行います。"}, {"category": "表示・操作改善", "title": "マッチングのデッキ選択", "after": "パソコン内のバトル画面で、デッキ編成と同じタイルから使用デッキを選べます。「確認」から選択中のデッキの中身を表示できます。デッキ名で検索でき、作成順・更新順・名前順・枚数順で並び替えられます。デッキ編成と同じ横4列・縦3行で表示し、左右の矢印でページを切り替えられます。AIバトルとトレーニングのデッキ選択にも同じ一覧を使えます。"}, {"category": "表示・操作改善", "title": "対戦終了画面", "after": "対戦終了画面の「デッキを編成する」を削除し、中央の操作を「戻る」に統一しました。"}, {"category": "表示・操作改善", "title": "対戦中のプロフィール", "after": "オンライン対戦と観戦で、山札や枠線との間に余白を設け、両プレイヤーのプロフィールアイコンを表示します。相手側のアイコンは山札の左下に表示されます。"}]},
       {"version": "ver.0.40.0", "versioning": "semver", "date": "2026年11月4日", "summary": "新カード「アンフィスバエナソファ」を追加しました。", "changes": [{"category": "新カード", "title": "アンフィスバエナソファ", "after": "アンフィスバエナソファ／持ち物／共通カード／戦意4／攻撃力0／体力0\n2つの効果から1つを選んで使用する。自分の戦意が8以上のときに使用する場合、このカードの戦意は8になり、2つすべての効果を番号順に使用する。\n1. 相手の出席者2人を指名し、破壊する。その後、自分本体に4ダメージを与える。\n2. 自分のデッキからカードを2枚選び、校外エリアへ送る。その後、自分の気力を4回復する。"}, {"category": "システム", "title": "カードテスト", "after": "アンフィスバエナソファの通常使用と戦意8での使用、出席者の指名、デッキからの選択を試せる手札・盤面を用意しました。"}]},
       {"version": "ver.0.39.1", "versioning": "semver", "date": "2026年11月3日", "summary": "ピニゲ・長袖の学生・チュギデス・ヤモリを背負う学生を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分の点数を2獲得する。その後、自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、1つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["4つの効果から1つ", "1つではなく3つ", "自分の点数を2獲得する。その後、"], "afterHighlights": ["4つの効果から2つ", "2つではなく3つ"]}, {"category": "カード調整", "title": "長袖の学生", "before": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力1\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "after": "長袖の学生／学生／共通カード／戦意4／攻撃力1／体力3\n[点数]\n陽気を持つ。このカードは1ターンに2回攻撃できる。\n単位取得済みなら、このカードの攻撃力と体力は+3される。", "beforeHighlights": ["体力1"], "afterHighlights": ["体力3"]}, {"category": "カード調整", "title": "チュギデス", "before": "チュギデス／学生／共通カード／戦意6／攻撃力3／体力5\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "after": "チュギデス／学生／共通カード／戦意7／攻撃力3／体力5\n陽気を持つ。\n[融合]\n自分の手札のカードを合計3枚まで、このカードに融合できる。このカードは2枚以上融合した後にのみ手札から出席できる。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マス1つを選び、「爆発する学生」を1人出席させる。\n3枚融合しているなら、代わりに左右に隣接する空いている席マスに「爆発する学生」を2人まで出席させる。その後、自分のデッキからカードを2枚引き、自分の気力を2回復する。", "beforeHighlights": ["戦意6"], "afterHighlights": ["戦意7", "陽気を持つ。"]}, {"category": "カード調整", "title": "ヤモリを背負う学生", "before": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力4／体力4\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "after": "ヤモリを背負う学生／学生／共通カード／戦意7／攻撃力3／体力3\n[点数]\n陽気を持つ。\nこのカードを手札から出席させたとき、次の効果から1つを選ぶ。選んだ効果を番号順に行う。\n1. 左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。\n2. このカードは超陽気を持つ。\n単位取得済みなら、1つではなく2つを選ぶ。", "beforeHighlights": ["攻撃力4", "体力4"], "afterHighlights": ["攻撃力3", "体力3"]}, {"category": "システム", "title": "カードテスト・チュートリアルの更新", "after": "今回の調整に合わせてカードテストの案内と検証内容を更新しました。通常・単位取得後の選択数、体力の強化、融合後の出席と陽気を確認します。"}]},
@@ -30495,7 +30495,8 @@
         return;
       }
       if (await resolveAiGuaranteedBoardLethal()) return;
-      await playAiBoardMoves();
+      const deferredAttendance = new Map();
+      await playAiBoardMoves(deferredAttendance);
       await waitForOrderedAttendance();
       await waitForAiTimedEffects();
       if (await resolveAiGuaranteedBoardLethal()) return;
@@ -30512,11 +30513,11 @@
         return;
       }
       if (await resolveAiGuaranteedBoardLethal()) return;
-      await playAiBoardMoves();
+      await playAiBoardMoves(deferredAttendance);
       await waitForOrderedAttendance();
       await waitForAiTimedEffects();
       if (await resolveAiGuaranteedBoardLethal()) return;
-      await aiAttackWithReadyCards();
+      await aiAttackWithReadyCards(deferredAttendance);
       state.aiThinking = false;
       if (state.gameOver) {
         render();
@@ -30529,7 +30530,7 @@
       }
     }
 
-    async function playAiBoardMoves() {
+    async function playAiBoardMoves(deferredAttendance) {
       while (tryFuseAnyHandCardForAi("opponent")) {render();await waitForBattlePresentation();}
       let safety = 0;
       const moveLimit = isEarlyDungeonAi() ? 5 : 8;
@@ -30542,7 +30543,7 @@
             continue;
           }
         }
-        const move = findAiPlayMove();
+        const move = findAiPlayMove(deferredAttendance);
         if (!move) break;
         placeCardFromHand("opponent", move.card.instanceId, move.zone, move.owner, move.index, false);
         render();
@@ -32072,6 +32073,8 @@
       const offensiveEffectPriority = scoreAiAttendanceRemoval(side, card, effectZone, effectIndex)
         + scoreAiAttackReductionAttendance(side, card);
       if (card.evolutionFrom) return 40 + scoreAiEvolutionEffect(side, card);
+      if (effectIndex !== undefined && card.baseId === "gecko_carrier_student"
+        && aiCardCanAttackLifeOnAttendance(card, side, effectZone, effectIndex)) return 2000;
       if (card.baseId === "student_comedy") {
         return Math.max(0, ...AI_SEAT_PRIORITY
           .filter((index) => canPlaceCard(side, card, "seat", side, index))
@@ -32109,7 +32112,11 @@
       if (!isAiYocchanHyperCarryStrategyActive(side)) {
         if (scoreAiUmaiboCopySetup(side, card) < 0) return -900;
         const body = Math.max(0, card.attack || 0) + Math.max(0, card.hp || 0) * 0.65;
-        return (offensiveEffectPriority + aiEnemyAttendanceBonus(side, card) + body
+        const summonScore = AI_SUMMONING_ATTENDEE_VALUES[card.baseId] ? Math.max(
+          canPlaceCard(side, card, "teacher", side, null) ? scoreAiSummoningAttendance(side, card, "teacher", null) : 0,
+          ...AI_SEAT_PRIORITY.filter(index => canPlaceCard(side, card, "seat", side, index))
+            .map(index => scoreAiSummoningAttendance(side, card, "seat", index))) : 0;
+        return (offensiveEffectPriority + aiEnemyAttendanceBonus(side, card) + body + summonScore
           + aiCardResourceValue(side, card) + aiRecurringCardValue(side, card)) * 10;
       }
       if (card.baseId === "trpg_member" && aiDeckIncludesCard(side, "trpg_member")) {
@@ -32125,13 +32132,13 @@
       return offensiveEffectPriority * 10;
     }
 
-    function findTrainingAiPlayMove(side) {
+    function findTrainingAiPlayMove(side, deferredAttendance = null) {
       const player = state.players[side];
       const refill = planAiYakitori(side);
       if (refill.setup && aiBoardFaceDamage(side, { readyOnly: true }).guaranteed < state.players[oppositeSide(side)].life) return refill.setup;
       const candidates = player.hand
         .filter((card) => card.type !== "item" && handFusionReady(card)
-          && effectiveCardCost(card) <= player.will
+          && effectiveCardCost(card) <= player.will && !shouldAiWaitForSummoningAttendance(side, card, null, deferredAttendance)
           && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi(side, card))))
         .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) + aiHandSpaceAdjustment(side, card) * 10 }))
         .filter((entry) => entry.priority > -900)
@@ -32148,12 +32155,15 @@
         if (card.type === "environment" && scoreAiEnvironment(card, side) > 0 && canPlaceCard(side, card, "environment", null, null)) {
           return { card, zone: "environment", owner: null, index: null };
         }
-        if (card.type === "teacher" && canPlaceCard(side, card, "teacher", side, null)) {
+        if ((card.type === "teacher" || AI_SUMMONING_ATTENDEE_VALUES[card.baseId])
+          && canPlaceCard(side, card, "teacher", side, null)) {
           const placements = [{ card, zone: "teacher", owner: side, index: null,
-            score: 20 + scoreAiPlacementAuras(side, card, "teacher", null) }];
+            score: (card.type === "teacher" ? 20 : -5) + scoreAiPlacementAuras(side, card, "teacher", null)
+              + scoreAiSummoningAttendance(side, card, "teacher", null) }];
           for (const index of AI_SEAT_PRIORITY.filter((index) => canPlaceCard(side, card, "seat", side, index))) {
             placements.push({ card, zone: "seat", owner: side, index,
-              score: scoreAiPlacementAuras(side, card, "seat", index) });
+              score: scoreAiPlacementAuras(side, card, "seat", index)
+                + scoreAiSummoningAttendance(side, card, "seat", index) });
           }
           return placements.sort((a, b) => b.score - a.score)[0];
         }
@@ -32169,7 +32179,7 @@
         const seatPriority = card.baseId === "back_question_student" ? [6, 7, 8] : AI_SEAT_PRIORITY;
         const seatIndex = seatPriority.filter((index) => canPlaceCard(side, card, "seat", side, index))
           .map((index) => ({ index, score: scoreAiPlacementAuras(side, card, "seat", index)
-            + scoreAiExplodingAttendance(side, card, "seat", index) }))
+            + scoreAiSummoningAttendance(side, card, "seat", index) }))
           .sort((a, b) => b.score - a.score)[0]?.index;
         if (seatIndex !== undefined) return { card, zone: "seat", owner: side, index: seatIndex };
         if (card.baseId === "back_question_student") continue;
@@ -32435,6 +32445,7 @@
       await tryUseTrainingYocchanItems("player");
       resolveTrainingAiPendingSelections("player");
       while (tryFuseHorseForAi("player")) { render(); await waitForBattlePresentation(); }
+      const deferredAttendance = new Map();
       let safety = 0;
       while (isTrainingLeftAiActive() && safety < 8) {
         safety += 1;
@@ -32446,7 +32457,7 @@
           }
         }
         while (tryFuseAnyHandCardForAi("player")) {render();await waitForBattlePresentation();}
-        const move = findTrainingAiPlayMove("player");
+        const move = findTrainingAiPlayMove("player", deferredAttendance);
         if (!move) break;
         placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
         resolveTrainingAiPendingSelections("player");
@@ -32488,6 +32499,7 @@
           else await attackLifeForCurrentSide("opponent");
           if (state.gameOver) return;
           await playAiWhiteAfterLoadAttack("player", attacker);
+          await playDeferredSummoningAttendance("player", deferredAttendance);
           await sleep(AI_STEP_DELAY);
         }
       }
@@ -32521,6 +32533,8 @@
       if (!card || !["student", "teacher", "vampire"].includes(card.type)) return false;
       if (card.keywords?.includes("超陽気")) return true;
       if (card.baseId === "vampire" && isCafeteriaEnvironmentActive()) return true;
+      if (card.baseId === "gecko_carrier_student" && !arePlayedEffectsSuppressed(side)
+        && canUsePrintedCardEffects(card) && aiGeckoCanFinishOnAttendance(side, card)) return true;
       if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(side)) return true;
       if (card.baseId === "loud_student" && zone === "seat" && index !== null) {
         return adjacentIndexes(index).some((seatIndex) => state.players[side].board.seats[seatIndex]?.baseId === "best_friend");
@@ -33187,7 +33201,13 @@
       if (first.card.instanceId === second.card.instanceId
         || [first, second].some(move => move.card.evolutionFrom || move.card.occupiedSeatSize
           || move.card.late || move.card.baseId === "predator" || move.zone === "environment")) return false;
-      return first.zone !== second.zone || first.index !== second.index;
+      if (first.zone === second.zone && first.index === second.index) return false;
+      const usedSeats = move => {
+        const summons = aiAttendanceSummonPlan("opponent", move.card, move.zone, move.index)?.seats || [];
+        return move.zone === "seat" ? [move.index, ...summons] : summons;
+      };
+      const firstSeats = usedSeats(first);
+      return !usedSeats(second).some(index => firstSeats.includes(index));
     }
 
     function aiPlacementStrategyAdjustment(move, moves, forecast = getAiLethalForecast("opponent")) {
@@ -33218,15 +33238,17 @@
       return adjustment;
     }
 
-    function findAiPlayMove() {
+    function findAiPlayMove(deferredAttendance = null) {
       const opponent = state.players.opponent;
       const refill = planAiYakitori("opponent");
       if (refill.setup && !getAiGuaranteedBoardLethalPlan()) return refill.setup;
+      const strategyForecast = getAiLethalForecast("opponent");
       const affordable = opponent.hand.filter((card) => card.type !== "item" && handFusionReady(card)
         && effectiveCardCost(card) <= opponent.will
         && (card.baseId !== "summer_teacher" || Boolean(chooseSummerTeacherEffectForAi("opponent", card))));
       const moves = [];
       affordable.forEach((card) => {
+        if (shouldAiWaitForSummoningAttendance("opponent", card, strategyForecast, deferredAttendance)) return;
         if (card.evolutionFrom) {
           const target = findEvolveTarget("opponent", card);
           if (target) moves.push({ card, zone: target.zone, owner: "opponent", index: target.index,
@@ -33260,7 +33282,6 @@
       });
       // Calculate against unchanged scores, so enumeration order cannot affect
       // another candidate's follow-up value. Re-evaluate after every real move.
-      const strategyForecast = getAiLethalForecast("opponent");
       const adjustedScores = moves.map(move => move.score + aiPlacementStrategyAdjustment(move, moves, strategyForecast)
         + aiHandSpaceAdjustment("opponent", move.card));
       moves.forEach((move, index) => { move.score = adjustedScores[index]; });
@@ -33372,14 +33393,124 @@
       return candidates[0]?.index;
     }
 
-    function scoreAiExplodingAttendance(side, card, zone, index, fusionCount = (card.handFusionStored || []).length) {
-      if (!["rear_queen", "chugidesu"].includes(card.baseId) || zone !== "seat"
-        || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return 0;
-      const count = card.baseId === "chugidesu" && fusionCount >= 3 ? 2 : 1;
-      const token = makePreviewCard("exploding_student", side);
-      const seats = [index-1,index+1].filter(i=>i>=0&&i<9&&Math.floor(i/3)===Math.floor(index/3)
-        && canPlaceCard(side,token,"seat",side,i));
-      return Math.min(count,seats.length) * 9;
+    const AI_SUMMONING_ATTENDEE_VALUES = Object.freeze({
+      fifty_ninth_paia: 36, college_student_vibe: 45, loud_group: 40, apprentice_vampire: 65,
+      rear_queen: 9, chugidesu: 9, group_sniper: 8, gecko_carrier_student: 9, jobs_woody: 14,
+      enemy_boss: 10, enemy_horde: 6, could_not_escape_student: 8
+    });
+
+    function aiAttendanceSummonPlan(side, card, zone, index, seatIsOpen = i => isBoardSlotOpen(side, "seat", i)) {
+      const value = AI_SUMMONING_ATTENDEE_VALUES[card.baseId];
+      if (!value || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return null;
+      const neighbors = zone === "seat" ? adjacentIndexes(index) : [];
+      let candidates = neighbors;
+      let limit = 1;
+      switch (card.baseId) {
+        case "fifty_ninth_paia":
+        case "college_student_vibe":
+          candidates = neighbors.filter(seat => seat > index);
+          break;
+        case "loud_group":
+          candidates = zone === "seat" ? [index + 1, index + 2].filter(seat => seatRow(seat) === seatRow(index)) : [];
+          limit = 2;
+          break;
+        case "chugidesu":
+          limit = (card.handFusionStored || []).length >= 3 ? 2 : 1;
+          break;
+        case "group_sniper":
+        case "gecko_carrier_student":
+          limit = 2;
+          break;
+        case "jobs_woody":
+        case "enemy_horde":
+        case "enemy_boss":
+          if (card.baseId === "enemy_boss" && listBoardRefs(side).map(getBoardCardFromRef)
+            .filter(isEnemyNamedAttendee).length < 1) return null;
+          candidates = PLAYER_SEAT_ORDER.filter(seat => zone !== "seat" || seat !== index);
+          limit = card.baseId === "enemy_boss" || (card.baseId === "jobs_woody" && isCafeteriaEnvironmentActive()) ? 2 : 1;
+          break;
+        case "could_not_escape_student":
+          if (!hasAcquiredUnit(side)) return null;
+          candidates = [0, 1, 2].filter(seat => zone !== "seat" || seat !== index);
+          limit = 3;
+          break;
+      }
+      return { seats: candidates.filter(seatIsOpen).slice(0, limit), limit, value };
+    }
+
+    function scoreAiSummoningAttendance(side, card, zone, index) {
+      const plan = aiAttendanceSummonPlan(side, card, zone, index);
+      if (!plan) return 0;
+      if (card.baseId === "gecko_carrier_student" && !hasAcquiredUnit(side)
+        && aiGeckoCanFinishOnAttendance(side, card)) return 0;
+      return plan.seats.length * plan.value;
+    }
+
+    function aiAttendanceSummonOptions(side, card) {
+      const options = PLAYER_SEAT_ORDER.filter(index => canPlaceCard(side, card, "seat", side, index))
+        .map(index => ({ zone: "seat", index }));
+      if (canPlaceCard(side, card, "teacher", side, null)) options.push({ zone: "teacher", index: null });
+      return options.map(option => ({ ...option, plan: aiAttendanceSummonPlan(side, card, option.zone, option.index) }));
+    }
+
+    function shouldAiWaitForSummoningAttendance(side, card, forecast = null, deferredAttendance = null) {
+      if (!AI_SUMMONING_ATTENDEE_VALUES[card.baseId] || card.baseId === "could_not_escape_student"
+        || (card.baseId === "gecko_carrier_student" && !hasAcquiredUnit(side))
+        || card.baseId === "enemy_horde" || arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(card)) return false;
+      const own = state.players[side];
+      if (Number.isFinite(state.battleHandLimit) && own.hand.length >= state.battleHandLimit) return false;
+      const options = aiAttendanceSummonOptions(side, card);
+      const plans = options.map(option => option.plan);
+      if (!plans.some(plan => plan && plan.seats.length < plan.limit)
+        || plans.some(plan => plan && plan.seats.length >= plan.limit)) return false;
+      forecast ||= getAiLethalForecast(side);
+      if (forecast.opponentCounterLethal || forecast.immediateLethal
+        || own.life <= forecast.opponentNextTurnDamage + 3) return false;
+
+      // Only wait when a useful, legal exchange can actually open a relevant seat.
+      if (!listBoardRefs(oppositeSide(side)).length) return false;
+      const currentCount = Math.max(...plans.filter(Boolean).map(plan => plan.seats.length));
+      const shouldWait = listBoardRefs(side).filter(ref => ref.zone === "seat").some(ref => {
+        const attacker = getBoardCardFromRef(ref);
+        if (!attacker || attacker.baseId === "bounce_day" || aiCardProvidesFaceProtection(attacker)
+          || hasKeyword(attacker, "眠気") || !canAttackSilently(attacker)
+          || shouldAiUseLecture(ref, attacker, side)) return false;
+        const opensSeat = seat => isBoardSlotOpen(side, "seat", seat)
+          || (own.board.seats[seat]?.instanceId === attacker.instanceId
+            && !isSeatBlocked(side, seat) && !isSeatClosedByAggro(side, seat)
+            && !beforeAttendanceSlots.has(beforeAttendanceSlotKey(side, "seat", seat)));
+        const improvesPlacement = options.some(({ zone, index }) => (
+          aiAttendanceSummonPlan(side, card, zone, index, opensSeat)?.seats.length > currentCount
+        ));
+        if (!improvesPlacement) return false;
+        const targetRef = side === "opponent" ? findAiAttackTarget(attacker) : findTrainingAiAttackTarget(side, attacker);
+        const target = targetRef && getBoardCardFromRef(targetRef);
+        return target && canAiLethalAttackerDefeatCard(attacker, target)
+          && aiAttackCounterDamage(attacker, target) >= attacker.currentHp;
+      });
+      if (shouldWait) deferredAttendance?.set(card.instanceId, currentCount);
+      return shouldWait;
+    }
+
+    async function playDeferredSummoningAttendance(side, deferredAttendance) {
+      if (!deferredAttendance?.size || state.currentSide !== side || state.gameOver) return;
+      const own = state.players[side];
+      const moves = own.hand.filter(card => deferredAttendance.has(card.instanceId)
+        && handFusionReady(card) && effectiveCardCost(card) <= own.will).flatMap(card => (
+        aiAttendanceSummonOptions(side, card)
+          .filter(({ plan }) => plan && plan.seats.length > deferredAttendance.get(card.instanceId))
+          .map(({ zone, index, plan }) => ({ card, zone, index, score: side === "opponent"
+            ? scoreAiPlacement(card, zone, index)
+            : plan.seats.length * plan.value + scoreAiPlacementAuras(side, card, zone, index) }))
+      ));
+      const move = moves.sort((a, b) => b.score - a.score)[0];
+      if (!move) return;
+      deferredAttendance.delete(move.card.instanceId);
+      if (!placeCardFromHand(side, move.card.instanceId, move.zone, side, move.index, false)) return;
+      if (side === "player") resolveTrainingAiPendingSelections(side);
+      render();
+      await waitForOrderedAttendance();
+      await waitForAiTimedEffects();
     }
 
     function scoreAiEndlessTalker(side, source) {
@@ -33414,7 +33545,7 @@
       const bodyScore = (card.attack || 0) + (card.hp || 0) * 0.65 - effectiveCardCost(card) * 0.15;
       let score = bodyScore + (zone === "seat" ? 2 : 0);
       score += aiCardResourceValue("opponent", card) + aiRecurringCardValue("opponent", card)
-        + scoreAiExplodingAttendance("opponent", card, zone, index);
+        + scoreAiSummoningAttendance("opponent", card, zone, index);
       score += aiDeckPlanCardBonus("opponent", card);
       if (card.baseId === "window_snipe_student" && zone === "seat" && index === 8
         && !arePlayedEffectsSuppressed("opponent")) {
@@ -33429,7 +33560,6 @@
         const unit = hasAcquiredUnit("opponent");
         const targets = effectTargetEntries("opponent","player");
         if (card.baseId === "short_sleeve_student" || card.baseId === "group_sniper") score += Math.max(0,...targets.map(e=>scoreAiNonCombatEffectTarget("opponent",card,e,{damage: unit ? (card.baseId === "group_sniper" ? 2 : 3) : (card.baseId === "group_sniper" ? 1 : 2)})));
-        if (["gecko_carrier_student","group_sniper"].includes(card.baseId) && zone === "seat") score += [index-1,index+1].filter(i=>i>=0 && i<9 && Math.floor(i/3)===Math.floor(index/3) && isBoardSlotOpen("opponent","seat",i)).length*7;
         if (card.baseId === "could_not_escape_student") score += targets.filter(e=>!isPadlocked(e.card)).sort((a,b)=>(b.card.attack+b.card.currentHp)-(a.card.attack+a.card.currentHp)).slice(0,4).reduce((v,e)=>v+e.card.attack+e.card.currentHp*.7,0);
         if (card.baseId === "secretly_mocked_student" && targets.length) {
           const values = targets.map(entry => isPadlocked(entry.card) ? 0 : unit
@@ -33613,19 +33743,11 @@
           .filter((handCard) => ["cafeteria_lady", "curry_treater", "chen_san", "dry_meal_ticket", "impossible_high_note"].includes(handCard.baseId)).length;
         score += 12 + cafeteriaSynergy * 3;
       }
-      if (card.baseId === "apprentice_vampire") {
-        const openNeighbor = zone === "seat" && adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex));
-        score += (isCafeteriaEnvironmentActive() ? 5 : 0) + (openNeighbor ? 45 : 0);
-      }
+      if (card.baseId === "apprentice_vampire" && isCafeteriaEnvironmentActive()) score += 5;
       if (card.baseId === "window_eater") {
         const columns = [0, 1, 2].map(column => windowEaterColumnValue("opponent", column));
         score += columns.sort((a, b) => b - a).slice(0, isCafeteriaEnvironmentActive() ? 2 : 1)
           .reduce((sum, value) => sum + value, 0);
-      }
-      if (card.baseId === "jobs_woody") {
-        const capacity = PLAYER_SEAT_ORDER.filter(seat => isBoardSlotOpen("opponent", "seat", seat)
-          && !(zone === "seat" && seat === index)).length;
-        score += Math.min(capacity, isCafeteriaEnvironmentActive() ? 2 : 1) * 14;
       }
       if (["aiben", "nyotei"].includes(card.baseId)) {
         const opponentOpenSeats = state.players.player.board.seats
@@ -33782,19 +33904,6 @@
       }
       if (card.baseId === "ai_chan") score += zone === "seat" ? 20 : -12;
       if (card.baseId === "extra_people" && zone === "teacher") score += 18;
-      if (zone === "seat" && card.baseId === "college_student_vibe") {
-        const rightIndex = index + 1;
-        score += seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex) ? 45 : 0;
-      }
-      if (zone === "seat" && card.baseId === "loud_group") {
-        const openRight = [index + 1, index + 2].filter((rightIndex) =>
-          seatRow(rightIndex) === seatRow(index) && isBoardSlotOpen("opponent", "seat", rightIndex)
-        ).length;
-        score += openRight * 40;
-      }
-      if (zone === "seat" && card.baseId === "apprentice_vampire") {
-        score += adjacentIndexes(index).some((seatIndex) => isBoardSlotOpen("opponent", "seat", seatIndex)) ? 20 : 0;
-      }
       if (card.baseId === "proliferating_enemy") {
         const openSeats = state.players.opponent.board.seats
           .filter((seatCard, seatIndex) => !seatCard && isBoardSlotOpen("opponent", "seat", seatIndex)).length;
@@ -34878,7 +34987,7 @@
       return false;
     }
 
-    async function aiAttackWithReadyCards() {
+    async function aiAttackWithReadyCards(deferredAttendance = null) {
       const processedAttackers = new Set();
       // Reconsider the board after each attendee has acted, rather than keeping
       // a stale order after a blocker, aura source, or lecturer has disappeared.
@@ -34971,6 +35080,7 @@
           render();
           if (state.gameOver) return;
           await playAiWhiteAfterLoadAttack("opponent", attacker);
+          await playDeferredSummoningAttendance("opponent", deferredAttendance);
           await sleep(AI_STEP_DELAY);
         }
       }
@@ -39513,7 +39623,7 @@
           && ((!isDeckToHandLocked() && state.players[side].deck.length > 2)
             || state.players[side].life < currentLifeCap(side)
             || PLAYER_SEAT_ORDER.some(index => canPlaceCard(side, target, "seat", side, index)
-              && scoreAiExplodingAttendance(side, target, "seat", index, 3) >= 18)));
+              && adjacentIndexes(index).filter(seat => isBoardSlotOpen(side, "seat", seat)).length === 2)));
         const count = enhanced && materials.length >= need ? need : minimum;
         if (count > 0 && materials.length >= count) return fuseAnyHandCards(side, target.instanceId, materials.slice(0,count).map(c=>c.instanceId), false);
       }
@@ -41628,11 +41738,20 @@
       }
     }
 
+    function aiGeckoCanFinishOnAttendance(side, source) {
+      const targetSide = oppositeSide(side);
+      const damage = previewFinalDamageToLife(targetSide, source.attack, source);
+      return damage >= state.players[targetSide].life && !hasKeyword(source, "眠気")
+        && canAiCardAttackAfterSuperCheerful(source) && aiCanCardTargetLife(source, side)
+        && !aiLifeFloorShieldActive(targetSide, side);
+    }
+
     function pointModeCards(side, source, gecko = false) {
       const labels = gecko ? ["左右に出席", "超陽気を得る"] : ["戦意を1回復", "点数カードを2枚引く", "ピニゲを1枚引く", "ランダムに3ダメージ"];
       return labels.map((name, index) => ({instanceId:`point-mode-${index+1}`, name, type:"item", cost:0,
         pointMode:index+1, twoAchieversChoice:true, effect: name,
-        choiceScore: gecko ? (index === 0 ? pointAdjacentSeats(side,source).length * 8 : 7)
+        choiceScore: gecko ? (index === 0 ? pointAdjacentSeats(side,source).length * 8
+          : isCpuControlledBattleSide(side) && aiGeckoCanFinishOnAttendance(side, source) ? 1000 : 7)
           : index === 0 ? 2 : index === 1 ? Math.min(2,state.players[side].deck.filter(c=>c.hasPoint).length)*4
           : index === 2 ? (state.players[side].deck.some(c=>c.baseId === "pinige") ? 3 : 0)
           : Math.max(0,...effectTargetEntries(side,oppositeSide(side)).map(e=>scoreAiNonCombatEffectTarget(side,source,e,{damage:3})))}));

@@ -130,4 +130,90 @@ for (const side of ["player", "opponent"]) {
     });
     expect(result).toBe(true);
   });
+  test(`${side}: 59番パイアを右隣が空いている席に出席させ、コピーも出席する`, async ({ page }) => {
+    await setup(page, side);
+    const move = await page.evaluate(() => {
+      const api = window.__chibattle;
+      const t = window.auraTest;
+      for (const index of [1, 4, 8]) t.put("general_student", index);
+      const card = t.hand("fifty_ninth_paia");
+      const move = t.move();
+      api.placeCardFromHand(t.side, card.instanceId, move.zone, t.side, move.index, false);
+      return { zone: move.zone, index: move.index };
+    });
+    expect(move).toEqual({ zone: "seat", index: 6 });
+    await expect.poll(() => page.evaluate(() => {
+      const t = window.auraTest;
+      return window.__chibattle.state.players[t.side].board.seats[7]?.baseId;
+    })).toBe("fifty_ninth_paia");
+  });
+
+  test(`${side}: 食堂でジョブズウッディを教卓に出し、空き席2つを見習いに使う`, async ({ page }) => {
+    await setup(page, side);
+    const zone = await page.evaluate(() => {
+      const api = window.__chibattle;
+      const t = window.auraTest;
+      t.environment("cafeteria");
+      for (const index of [0, 1, 2, 3, 4, 5, 6]) t.put("general_student", index);
+      const card = t.hand("jobs_woody");
+      const move = t.move();
+      api.placeCardFromHand(t.side, card.instanceId, move.zone, t.side, move.index, false);
+      return move.zone;
+    });
+    expect(zone).toBe("teacher");
+    await expect.poll(() => page.evaluate(() => {
+      const t = window.auraTest;
+      return window.__chibattle.state.players[t.side].board.seats.slice(7).map(card => card?.baseId);
+    })).toEqual(["apprentice_vampire", "apprentice_vampire"]);
+  });
+
+  test(`${side}: 59番パイアは相打ちで右隣を空けられるなら待ち、危険なら先に出す`, async ({ page }) => {
+    await setup(page, side);
+    const result = await page.evaluate(() => {
+      const api = window.__chibattle;
+      const t = window.auraTest;
+      const other = t.side === "player" ? "opponent" : "player";
+      for (const index of [3, 4, 5, 6, 7, 8]) t.put("general_student", index);
+      const defender = api.makeBoardCard(api.createCardFromBase("general_student", other));
+      Object.assign(defender, { playedOnTurn: 1, attack: 2, currentHp: 2, keywords: ["注目"] });
+      api.state.players[other].board.seats[0] = defender;
+      t.hand("fifty_ninth_paia");
+      const attacker = t.put("general_student", 1, { playedOnTurn: 1, attack: 2, currentHp: 2 });
+      const safe = t.move()?.card.baseId ?? null;
+      api.state.players[t.side].life = 2;
+      const danger = t.move()?.card.baseId ?? null;
+      api.state.players[t.side].life = 20;
+      attacker.playedOnTurn = api.state.actionTurn;
+      const noTrade = t.move()?.card.baseId ?? null;
+      attacker.playedOnTurn = 1;
+      for (const owner of [t.side, other]) {
+        api.state.players[owner].deck.push(api.createCardFromBase("general_student", owner));
+      }
+      void (t.side === "player" ? api.runTrainingLeftAI() : api.runOpponentAI());
+      return { safe, danger, noTrade };
+    });
+    expect(result).toEqual({ safe: null, danger: "fifty_ninth_paia", noTrade: "fifty_ninth_paia" });
+    await expect.poll(() => page.evaluate(() => {
+      const t = window.auraTest;
+      return window.__chibattle.state.players[t.side].board.seats
+        .filter(card => card?.baseId === "fifty_ninth_paia").length;
+    })).toBe(2);
+  });
+
+  test(`${side}: ヤモリはコピーより超陽気での即時勝利を選ぶ`, async ({ page }) => {
+    await setup(page, side);
+    await page.evaluate(() => {
+      const api = window.__chibattle;
+      const t = window.auraTest;
+      const other = t.side === "player" ? "opponent" : "player";
+      api.state.players[other].life = 3;
+      const card = t.hand("gecko_carrier_student");
+      api.placeCardFromHand(t.side, card.instanceId, "seat", t.side, 4, false);
+    });
+    await expect.poll(() => page.evaluate(() => {
+      const t = window.auraTest;
+      const seats = window.__chibattle.state.players[t.side].board.seats;
+      return { count: seats.filter(Boolean).length, rush: seats[4]?.keywords.includes("超陽気") };
+    })).toEqual({ count: 1, rush: true });
+  });
 }
