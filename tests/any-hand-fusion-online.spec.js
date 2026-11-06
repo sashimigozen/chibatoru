@@ -28,18 +28,18 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
  try{
   for(const p of [host,guest]){p.on('pageerror',e=>errors.push(e.message));await p.goto(gameUrl.href);await p.locator('#homeNavBattleButton').click();await p.locator('#onlinePrivateMatchButton').click();}
   await host.locator('#onlineCreateRoomButton').click();await expect.poll(()=>host.evaluate(()=>state.online.role)).toBe('host');await guest.locator('.private-code-entry > summary').click();await guest.locator('#onlineRoomInput').fill(await host.evaluate(()=>state.online.roomCode));await guest.locator('#onlineJoinRoomButton').click();
-  for(const p of [host,guest]){await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);await p.evaluate(()=>{state.deckBuilder.counts.player=createAutoDeckCounts();document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
+  for(const p of [host,guest]){await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);await p.evaluate(()=>{state.deckBuilder.counts.player={...createAutoDeckCounts(),ae_female_student:1};document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
   const actor=actorSide==='player'?host:guest;
-  for(const scenario of [{id:'private_teacher',materials:2},{id:'chugidesu',materials:2},{id:'chugidesu',materials:3},{id:'rear_queen',materials:2},{id:'tomoyo_mou',materials:1},{id:'shukii',materials:1}]){
+  for(const scenario of [{id:'private_teacher',materials:2},{id:'chugidesu',materials:2},{id:'chugidesu',materials:3},{id:'rear_queen',materials:2},{id:'tomoyo_mou',materials:1},{id:'shukii',materials:1},{id:'summer_teacher',materials:1}]){
    const {id,materials}=scenario;
    const setup=await host.evaluate(({side,id,materials})=>{
     startCardTest(id);state.testMode=false;state.training.skipAnimations=true;state.currentSide=side;state.environment=null;
     for(const owner of ['player','opponent'])Object.assign(state.players[owner],{board:{teacher:null,seats:Array(9).fill(null)},hand:[],deck:[],trash:[],late:[],will:id==='tomoyo_mou'?4:12,maxWill:12,life:10});
-    const own=state.players[side];own.hand=[id,...['general_student','ruler','onigiri_draw'].slice(0,materials)].map(id=>createCardFromBase(id,side));own.deck=['dark_yuta','ruler','ruler','general_student'].map(id=>createCardFromBase(id,side));render();return{seq:state.online.lastSnapshotSeq};
+    const own=state.players[side];own.hand=[id,...(id==='summer_teacher'?['trendy_student']:['general_student','ruler','onigiri_draw'].slice(0,materials))].map(id=>createCardFromBase(id,side));own.deck=['dark_yuta','ruler','ruler','general_student'].map(id=>createCardFromBase(id,side));render();return{seq:state.online.lastSnapshotSeq};
    },{side:actorSide,id,materials});
    await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);
-   if(['private_teacher','chugidesu','rear_queen'].includes(id)){
+   if(['private_teacher','chugidesu','rear_queen','summer_teacher'].includes(id)){
     await actor.evaluate(id=>openAnyHandFusionChoice(state.players.player.hand.find(c=>c.baseId===id)),id);
     await actor.evaluate(()=>{for(const c of state.pendingCardChoice.cards)toggleCardChoiceCard(c.instanceId);confirmCardChoiceSelection();});
     for(const p of [host,guest]){const side=p===host?actorSide:actorSide==='player'?'opponent':'player';await expect.poll(()=>p.evaluate(side=>state.players[side].hand.length,side)).toBe(1);await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);}
@@ -64,10 +64,49 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
    await expect.poll(()=>host.evaluate(()=>fusionTasksBusy())).toBe(false);
    for(const p of [host,guest]){
     const side=p===host?actorSide:actorSide==='player'?'opponent':'player';
-    await expect.poll(()=>p.evaluate(({side,id})=>{const own=state.players[side];return[listBoardRefs(side).length,own.hand.length,own.life,own.trash.length];},{side,id})).toEqual(id==='private_teacher'?[1,2,10,0]:id==='chugidesu'?(materials===3?[3,2,12,0]:[2,0,10,0]):id==='rear_queen'?[2,0,10,0]:id==='tomoyo_mou'?[2,0,10,2]:[0,1,10,2]);
+    await expect.poll(()=>p.evaluate(({side,id})=>{const own=state.players[side];return[listBoardRefs(side).length,own.hand.length,own.life,own.trash.length];},{side,id})).toEqual(id==='private_teacher'?[1,2,10,0]:id==='chugidesu'?(materials===3?[3,2,12,0]:[2,0,10,0]):id==='rear_queen'?[2,0,10,0]:id==='tomoyo_mou'?[2,0,10,2]:id==='summer_teacher'?[1,0,10,0]:[0,1,10,2]);
+    if (id === 'summer_teacher') expect(await p.evaluate(side => {
+      const card = state.players[side].board.seats[4];
+      return [card.cost, hasKeyword(card, '陽気'), summerTeacherFusionMaterial(card)];
+    }, side)).toEqual([4, true, 'trendy_student']);
    }
    if(id==='private_teacher') for(const p of [host,guest]) {const side=p===host?actorSide:actorSide==='player'?'opponent':'player';expect(await p.evaluate(side=>{const c=state.players[side].board.teacher;return [c.attack,c.currentHp,hasKeyword(c,'陽気'),c.handFusionStored.length];},side)).toEqual([4,4,true,2]);}
+  }
+  const ultimateSnapshot = await host.evaluate(side => {
+    startCardTest('ultimate_yuta');
+    state.testMode = false;
+    state.training.skipAnimations = false;
+    state.currentSide = side;
+    const own = state.players[side];
+    const rival = state.players[oppositeSide(side)];
+    own.board = { teacher: null, seats: Array(9).fill(null) };
+    own.hand = [createCardFromBase('ultimate_yuta', side)];
+    own.will = 10;
+    rival.board = { teacher: null, seats: Array(9).fill(null) };
+    rival.board.seats[0] = makeBoardCard(createCardFromBase('general_student', oppositeSide(side)));
+    render();
+    return state.online.lastSnapshotSeq;
+  }, actorSide);
+  await expect.poll(() => guest.evaluate(() => state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(ultimateSnapshot);
+  for (const page of [host, guest]) await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+  await actor.evaluate(() => playCard(state.players.player.hand[0].instanceId, 'seat', 'player', 4));
+  for (const page of [host, guest]) {
+    const side = page === host ? actorSide : oppositeActorSide(actorSide);
+    await expect(page.locator('#ultimateYutaOverlay')).toBeVisible({ timeout: 8000 });
+    expect(await page.evaluate(side => listBoardRefs(oppositeSide(side)).length, side)).toBe(1);
+  }
+  for (const page of [host, guest]) {
+    const side = page === host ? actorSide : oppositeActorSide(actorSide);
+    await expect(page.locator('#ultimateYutaOverlay')).toBeHidden({ timeout: 8000 });
+    await expect.poll(() => page.evaluate(side => [
+      listBoardRefs(oppositeSide(side)).length,
+      state.players[side].ultimateYutaAttendance
+    ], side)).toEqual([0, true]);
   }
   expect(errors).toEqual([]);
  }finally{await Promise.all(contexts.map(c=>c.close()));}
 });
+
+function oppositeActorSide(side) {
+  return side === 'player' ? 'opponent' : 'player';
+}

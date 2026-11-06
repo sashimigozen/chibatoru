@@ -19,7 +19,7 @@ for (const baseId of ['yuta', 'tsurai_nara', 'company_one_day', 'enough_to_fly',
     await expect(related).toHaveCount(1);
     await expect(related).toHaveText('Ultimate U太');
     await related.click();
-    await expect(preview).toContainText('このカードを手札から出席させたとき、このゲームに勝利する。');
+    await expect(preview).toContainText('このカードを手札から出席させたとき、相手の出席者すべてを破壊する。');
     if (baseId === 'yuta') await page.screenshot({ path: test.info().outputPath('ultimate-uta-related.png') });
     await preview.locator('[data-related-card-back]').click();
     await expect(preview).toContainText(originalName);

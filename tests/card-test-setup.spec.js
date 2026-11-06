@@ -462,7 +462,7 @@ test("手札の定規をもう1枚の定規へドラッグして融合する", a
   expect(result.trashIds).toEqual(expect.arrayContaining([ids.sourceId, ids.targetId]));
 });
 
-test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残したまま勝利する", async ({ page }) => {
+test("4種類をU太へ1枚ずつ融合し、Ultimate U太の出席時演出が流れる", async ({ page }) => {
   await page.goto(gameUrl);
 
   const fusion = await page.evaluate(() => {
@@ -503,7 +503,7 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
       ultimate: {
         baseId: ultimate.baseId,
         name: ultimate.name,
-        noCost: ultimate.noCost,
+        cost: ultimate.cost,
         attack: ultimate.attack,
         hp: ultimate.hp,
         rules: api.cardRulesText(ultimate),
@@ -521,9 +521,9 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   expect(fusion.ultimate).toEqual(expect.objectContaining({
     baseId: "ultimate_yuta",
     name: "Ultimate U太",
-    noCost: true,
-    attack: 13,
-    hp: 13
+    cost: 3,
+    attack: 3,
+    hp: 3
   }));
   expect(fusion.ultimate.fusionOrder).toEqual([
     "tsurai_nara", "company_one_day", "enough_to_fly", "ii_daro_tte"
@@ -536,7 +536,7 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
   });
   expect(fusion.ultimate.rules).not.toContain("融合：「U太」");
   expect(fusion.trash).toEqual([]);
-  expect(fusion.phaseAfterAttendance).toBe("ultimateVictory");
+  expect(fusion.phaseAfterAttendance).toBe("battle");
 
   const expectAtScreenPosition = async (locator, horizontalRatio) => {
     const box = await locator.boundingBox();
@@ -593,9 +593,9 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の文言を残した�
     })
   ));
   expect(finalColumnCenters).toEqual([...finalColumnCenters].sort((a, b) => a - b));
-  await expect(page.locator("#resultOverlay")).toHaveClass(/victory/, { timeout: 2000 });
-  await expect(page.locator("#ultimateYutaOverlay")).toHaveClass(/all-visible/);
-  await expect(page.locator("#ultimateYutaOverlay")).not.toHaveClass(/hidden/);
+  await expect(page.locator("#ultimateYutaOverlay")).toBeHidden({ timeout: 2500 });
+  await expect(page.locator("#resultOverlay")).toBeHidden();
+  expect(await page.evaluate(() => state.players.player.ultimateYutaAttendance)).toBe(true);
 });
 
 test("早押しクイズ大会は通常ビンゴを再成立でも発動し、8ビンゴ追加効果は各1回にする", async ({ page }) => {
