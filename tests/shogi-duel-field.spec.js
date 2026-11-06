@@ -24,6 +24,7 @@ test('カードテストで両者のターン終了と上書き・回復・再�
   await page.locator('#cardsCatalogSearch').fill('将棋部の決闘フィールド');
   await page.locator(`[data-catalog-card="${id}"]`).click();
   await expect(page.locator('#cardTestText')).toContainText(rules);
+  await expect(page.locator('#cardTestText')).toContainText('戦意3');
   await page.locator('#cardTestStartButton').click();
   await page.evaluate(() => { scheduleOpponentAI = () => {}; state.training.skipAnimations = true; });
   await waitForEffects(page);
@@ -31,7 +32,7 @@ test('カードテストで両者のターン終了と上書き・回復・再�
   expect(await placeEnvironment(page, id)).toBe(true);
   await waitForEffects(page);
   expect(await life(page)).toEqual([[20, 20], [20, 20]]);
-  expect(await page.evaluate(() => state.players.player.will)).toBe(6);
+  expect(await page.evaluate(() => state.players.player.will)).toBe(7);
   await page.locator('#endTurnButton').click();
   await expect.poll(() => page.evaluate(() => state.currentSide)).toBe('opponent');
   expect(await life(page)).toEqual([[18, 18], [20, 20]]);
