@@ -133,7 +133,8 @@ for(const mode of ['training','aiBattle'])for(const limit of [9,null,15])test(`�
    for(let i=1;i<=12;i++)state.deckBuilder.savedDecks[`準備確認用 ${i}`]={counts:{general_student:1}};
  });
  await page.locator('#homeNavSoloButton').click();await page.locator(mode==='aiBattle'?'#soloAiBattleButton':'#soloTrainingButton').click();
- await expect(page.locator('#soloHandLimit')).toHaveValue('9');await page.locator('#soloHandLimit').fill(limit===null?'':String(limit));await page.locator('#soloHandLimit').press('Tab');
+ await expect(page.locator('#soloHandLimit')).toHaveValue('9');await page.locator('#soloHandLimit').fill(limit===null?'':String(limit).replace(/[0-9]/g,digit=>String.fromCharCode(digit.charCodeAt(0)+0xFEE0)));await page.locator('#soloHandLimit').press('Tab');
+ await expect(page.locator('#soloHandLimit')).toHaveValue(limit===null?'':String(limit));
  const picker=page.locator('#soloMatchDeckPicker');
  await page.locator('#soloPlayerSlot').click();
  await expect(page.locator('.computer-content #soloMatchDeckPicker')).toBeVisible();
@@ -151,6 +152,26 @@ for(const mode of ['training','aiBattle'])for(const limit of [9,null,15])test(`�
  }
  await page.screenshot({path:`/tmp/${mode}-hand-limit-final.png`});
  await page.locator('#soloBattleStartButton').click();await expect(page.locator('#battleScreen')).toBeVisible();expect(await page.evaluate(()=>state.battleHandLimit)).toBe(limit);
+});
+test('手札上限の全角入力は日本語変換のEnterでは確定せず、入力確定時に半角へ変わる',async({page})=>{
+ await page.goto(url.href);
+ await page.locator('#homeNavSoloButton').click();
+ await page.locator('#soloTrainingButton').click();
+ const input=page.locator('#soloHandLimit');
+ await input.fill('１２');
+ await input.dispatchEvent('keydown',{key:'Enter',isComposing:true,keyCode:229});
+ await expect(input).toBeFocused();
+ await expect(input).toHaveValue('１２');
+ expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBe(9);
+ await input.press('Enter');
+ await expect(input).toHaveValue('12');
+ expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBe(12);
+ await input.fill('８');
+ await input.press('Tab');
+ await expect(input).toHaveValue('9');
+ await input.fill('');
+ await input.press('Enter');
+ expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBeNull();
 });
 for(const rule of ['normal','chaos','specialty'])test(`手札上限は通常ルールだけに適用 ${rule}`,async({page})=>{
  await page.goto(url.href);expect(await page.evaluate(rule=>{initializeGame({ruleId:rule,handLimit:12});return state.battleHandLimit;},rule)).toBe(rule==='normal'?12:null);

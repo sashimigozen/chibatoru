@@ -34,6 +34,10 @@ for(const startLimit of [9,null])test(`ホスト設定・増減・直接入力�
   await host.locator('#onlineRandomHandLimitPlus').click();await expect.poll(()=>host.evaluate(()=>state.online.handLimit)).toBe(10);
   await open(guest);await guest.locator('.private-code-entry > summary').click();await guest.locator('#onlineRoomInput').fill(await host.evaluate(()=>state.online.roomCode));await guest.locator('#onlineJoinRoomButton').click();await expect(guest.locator('#onlineRandomHandLimit')).toHaveValue('10');await expect(guest.locator('#onlineRandomHandLimit')).toBeDisabled();
   await guest.evaluate(()=>onlineSend({type:'setHandLimit',handLimit:99}));await expect(guest.locator('#onlineStatusText')).toContainText('ホストだけ');expect(await host.evaluate(()=>state.online.handLimit)).toBe(10);
+  await host.locator('#onlineRandomHandLimit').fill('１２');await host.locator('#onlineRandomHandLimit').press('Enter');
+  for(const page of [host,guest])await expect(page.locator('#onlineRandomHandLimit')).toHaveValue('12');
+  await host.locator('#onlineRandomHandLimit').fill('１3');await host.locator('#onlineRandomHandLimit').press('Tab');
+  for(const page of [host,guest])await expect(page.locator('#onlineRandomHandLimit')).toHaveValue('13');
   await host.locator('#onlineRandomHandLimit').fill('1000000');await host.locator('#onlineRandomHandLimit').press('Tab');await expect(guest.locator('#onlineRandomHandLimit')).toHaveValue('1000000');
   await host.locator('#onlineRandomHandLimit').fill('8');await host.locator('#onlineRandomHandLimit').press('Tab');await expect(host.locator('#onlineRandomHandLimit')).toHaveValue('9');await expect(guest.locator('#onlineRandomHandLimit')).toHaveValue('9');
   for(const p of [host,guest]){await p.evaluate(()=>{state.deckBuilder.counts.player=createAutoDeckCounts();document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
