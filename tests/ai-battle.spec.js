@@ -47,7 +47,7 @@ test('all 45 legal decks remain selectable, but stale decks receive less weight'
         sixDaysLater: sample('2026-11-12T00:00:00+09:00'),
         sevenDaysLater: sample('2026-11-13T00:00:00+09:00'),
         tenDaysLater: sample('2026-11-16T00:00:00+09:00'),
-        fourteenDaysLater: sample('2026-11-20T00:00:00+09:00')
+        allDecksStale: sample('2026-11-21T00:00:00+09:00')
       };
     } finally {
       Math.random = random;
@@ -64,10 +64,10 @@ test('all 45 legal decks remain selectable, but stale decks receive less weight'
   expect(oldVsUpdated(data.sixDaysLater)).toBeLessThan(oldVsUpdated(data.sevenDaysLater));
   expect(oldVsUpdated(data.sevenDaysLater)).toBeCloseTo(0.55, 1);
   expect(oldVsUpdated(data.tenDaysLater)).toBeCloseTo(0.55 / (1 - 0.45 * 3 / 7), 1);
-  expect(Object.values(data.fourteenDaysLater).every(hits => hits === 100)).toBe(true);
+  expect(Object.values(data.allDecksStale).every(hits => hits === 100)).toBe(true);
 });
 
-for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会', '小細工はなしだ', '単位クリエイター', '爆発しちゃうー', '新生ヴァンパイア', 'ウマイボコピー', 'ワンパン記', '我が敵']) {
+for (const deckName of ['顔殴りのどこ骨', 'どこのウマの骨のマイボだよ！', 'コイントス研究会', '小細工はなしだ', '単位クリエイター', '爆発しちゃうー', '新生ヴァンパイア', 'ウマイボコピー', 'ワンパン記', '我が敵', 'デザイン', '俺らの場所に入り込むクイーン', '就活の代償']) {
   test(`new AI deck starts with the supplied contents: ${deckName}`, async ({ page }) => {
     await prepare(page);
     const result = await page.evaluate(name => {
@@ -110,9 +110,11 @@ test('only the player selects a deck; AI contents stay hidden and training stays
   expect(await page.evaluate(() => {
     const s = __chibattle.state;
     const positive = counts => Object.fromEntries(Object.entries(counts).filter(([, n]) => n > 0));
+    const actual = positive(s.players.opponent.originalDeckCounts);
     return s.aiBattle.active && !s.training.active && !s.dungeon.active && s.battleRuleId === 'normal'
       && s.players.player.deckValid.valid && s.players.opponent.deckValid.valid
-      && ChibattleAiBattleDecks.some(d => JSON.stringify(positive(s.players.opponent.originalDeckCounts)) === JSON.stringify(d.counts));
+      && ChibattleAiBattleDecks.some(deck => Object.keys(deck.counts).length === Object.keys(actual).length
+        && Object.entries(deck.counts).every(([id, count]) => actual[id] === count));
   })).toBe(true);
   await page.evaluate(() => { __chibattle.state.preBattleToken++; __chibattle.startSoloBattleFromHome(); });
   await expect(page.locator('#soloDeckScreen h1')).toHaveText('TRAINING');
