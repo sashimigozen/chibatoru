@@ -247,6 +247,11 @@ test("AIの自動選択とオンライン用の相手側処理も必ず5枚に�
 
 test("今回の更新情報を表示し、一度読んだら未読表示が消える", async ({ page }) => {
   await page.goto(gameUrl);
+  await page.evaluate(() => {
+    localStorage.setItem(UPDATE_READ_STORAGE_KEY, JSON.stringify(DISPLAY_UPDATE_HISTORY
+      .filter(entry => entry.version !== "ver.0.22.1").map(updateReadId)));
+    renderHomeUpdateStatus();
+  });
   await expect(page.locator("#homeUpdatesDot")).toBeVisible();
   await page.locator("#homeUpdatesButton").click();
   const entry = page.locator(".update-entry").filter({ hasText: "ver.0.22.1" });
@@ -257,5 +262,5 @@ test("今回の更新情報を表示し、一度読んだら未読表示が消�
   await page.reload();
   await expect(page.locator("#homeUpdatesDot")).toBeHidden();
   await page.locator("#homeUpdatesButton").click();
-  await expect(page.locator(".update-entry").first()).not.toHaveClass(/unread/);
+  await expect(page.locator(".update-entry.unread")).toHaveCount(0);
 });
