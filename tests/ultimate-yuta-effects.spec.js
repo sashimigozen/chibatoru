@@ -7,7 +7,7 @@ async function settle(page) {
   await expect.poll(() => page.evaluate(() => battlePresentationBusy()), { timeout: 15000 }).toBe(false);
 }
 
-test("U太の関連カードからテストし、演出後に相手だけ全体破壊する", async ({ page }) => {
+test("UU太は盤面の外側を薄暗くし、次のターンに出たU太のとどめで文字演出を流す", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
@@ -17,21 +17,37 @@ test("U太の関連カードからテストし、演出後に相手だけ全体�
   await page.locator('#cardTestModal [data-related-card="ultimate_yuta"]').click();
   await page.locator("#cardTestStartButton").click();
   await settle(page);
-  await page.evaluate(() => {
-    const card = state.players.player.hand.find(entry => entry.baseId === "ultimate_yuta");
-    playCard(card.instanceId, "seat", "player", 4);
-  });
-  await expect(page.locator("#ultimateYutaOverlay")).toBeVisible({ timeout: 3500 });
-  expect(await page.evaluate(() => [
-    listBoardRefs("opponent").length,
-    state.players.player.ultimateYutaAttendance,
-    onlineCreateSnapshot().state.remoteResolutionPending
-  ])).toEqual([3, false, true]);
-  await expect(page.locator("#ultimateYutaOverlay")).toBeHidden({ timeout: 8000 });
+  const battle = page.locator("#battleScreen");
+  const phrase = page.locator("#ultimateYutaOverlay");
+  const surface = () => battle.evaluate(node => [
+    getComputedStyle(node).backgroundColor,
+    getComputedStyle(node.querySelector(".game-shell"), "::before").backgroundColor
+  ]);
+  const before = await surface();
+  await page.locator('#playerHand [data-base-id="ultimate_yuta"]').first().click({ position: { x: 15, y: 65 } });
+  await page.locator('#playerSeatGrid .slot[data-index="4"]').click();
+  await expect(battle).toHaveClass(/ultimate-yuta-field/);
+  const after = await surface();
+  expect(after[0]).not.toBe(before[0]);
+  expect(after[1]).toBe(before[1]);
+  await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
     listBoardRefs("opponent").length, listBoardRefs("player").length, state.players.player.will,
     state.players.player.ultimateYutaAttendance, state.gameOver
   ])).toEqual([0, 2, 7, true, false]);
+  await page.screenshot({ path: test.info().outputPath("ultimate-yuta-backdrop.png") });
+
+  await page.locator("#endTurnButton").click();
+  const yuta = page.locator('.board-card[data-owner="player"][data-base-id="yuta"]');
+  await expect(yuta).toBeVisible({ timeout: 15000 });
+  await settle(page);
+  await yuta.click();
+  await page.locator("#opponentLifeTarget").press("Enter");
+  await expect(phrase.locator('[data-ultimate-phrase="tsurai_nara"]')).toHaveClass(/active/);
+  await expect(page.locator("#resultOverlay")).toBeHidden();
+  expect(await page.evaluate(() => [state.players.opponent.life, state.gameWinner])).toEqual([0, "player"]);
+  await expect(phrase).toBeHidden({ timeout: 8000 });
+  await expect(page.locator("#resultOverlay")).toContainText("勝利");
 });
 
 test("Ultimate U太が2枚出ても本体がいなくなった後のU太は1人で、空席を順に使う", async ({ page }) => {

@@ -82,6 +82,7 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
     own.board = { teacher: null, seats: Array(9).fill(null) };
     own.hand = [createCardFromBase('ultimate_yuta', side)];
     own.will = 10;
+    rival.life = 3;
     rival.board = { teacher: null, seats: Array(9).fill(null) };
     rival.board.seats[0] = makeBoardCard(createCardFromBase('general_student', oppositeSide(side)));
     render();
@@ -92,16 +93,25 @@ for(const actorSide of ['player','opponent'])test(`実WebSocketで手札融合�
   await actor.evaluate(() => playCard(state.players.player.hand[0].instanceId, 'seat', 'player', 4));
   for (const page of [host, guest]) {
     const side = page === host ? actorSide : oppositeActorSide(actorSide);
-    await expect(page.locator('#ultimateYutaOverlay')).toBeVisible({ timeout: 8000 });
-    expect(await page.evaluate(side => listBoardRefs(oppositeSide(side)).length, side)).toBe(1);
-  }
-  for (const page of [host, guest]) {
-    const side = page === host ? actorSide : oppositeActorSide(actorSide);
-    await expect(page.locator('#ultimateYutaOverlay')).toBeHidden({ timeout: 8000 });
+    await expect(page.locator('#battleScreen')).toHaveClass(/ultimate-yuta-field/, { timeout: 8000 });
+    await expect(page.locator('#ultimateYutaOverlay')).toBeHidden();
     await expect.poll(() => page.evaluate(side => [
       listBoardRefs(oppositeSide(side)).length,
       state.players[side].ultimateYutaAttendance
     ], side)).toEqual([0, true]);
+  }
+  const ultimate = actor.locator('.board-card[data-owner="player"][data-base-id="ultimate_yuta"]');
+  await expect.poll(() => actor.evaluate(() => battlePresentationBusy())).toBe(false);
+  await ultimate.click();
+  await actor.locator('#opponentLifeTarget').press('Enter');
+  for (const page of [host, guest]) {
+    await expect(page.locator('#ultimateYutaOverlay')).toBeVisible();
+    await expect(page.locator('#resultOverlay')).toBeHidden();
+  }
+  await host.evaluate(() => onlineBroadcastState(true));
+  for (const page of [host, guest]) {
+    await expect(page.locator('#ultimateYutaOverlay')).toBeHidden({ timeout: 8000 });
+    await expect(page.locator('#resultOverlay')).toContainText(page === actor ? '勝利' : '敗北');
   }
   expect(errors).toEqual([]);
  }finally{await Promise.all(contexts.map(c=>c.close()));}

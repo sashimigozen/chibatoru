@@ -462,7 +462,7 @@ test("手札の定規をもう1枚の定規へドラッグして融合する", a
   expect(result.trashIds).toEqual(expect.arrayContaining([ids.sourceId, ids.targetId]));
 });
 
-test("4種類をU太へ1枚ずつ融合し、Ultimate U太の出席時演出が流れる", async ({ page }) => {
+test("4種類をU太へ1枚ずつ融合し、UU太で勝利すると従来の筆文字が並ぶ", async ({ page }) => {
   await page.goto(gameUrl);
 
   const fusion = await page.evaluate(() => {
@@ -538,6 +538,12 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の出席時演出が�
   expect(fusion.trash).toEqual([]);
   expect(fusion.phaseAfterAttendance).toBe("battle");
 
+  await expect(page.locator("#battleScreen")).toHaveClass(/ultimate-yuta-field/);
+  await expect(page.locator("#ultimateYutaOverlay")).toBeHidden();
+  await page.evaluate(() => { state.players.opponent.life = 3; render(); });
+  await page.locator('.board-card[data-owner="player"][data-base-id="ultimate_yuta"]').click();
+  await page.locator("#opponentLifeTarget").press("Enter");
+
   const expectAtScreenPosition = async (locator, horizontalRatio) => {
     const box = await locator.boundingBox();
     const viewport = page.viewportSize();
@@ -594,7 +600,7 @@ test("4種類をU太へ1枚ずつ融合し、Ultimate U太の出席時演出が�
   ));
   expect(finalColumnCenters).toEqual([...finalColumnCenters].sort((a, b) => a - b));
   await expect(page.locator("#ultimateYutaOverlay")).toBeHidden({ timeout: 2500 });
-  await expect(page.locator("#resultOverlay")).toBeHidden();
+  await expect(page.locator("#resultOverlay")).toContainText("勝利");
   expect(await page.evaluate(() => state.players.player.ultimateYutaAttendance)).toBe(true);
 });
 
