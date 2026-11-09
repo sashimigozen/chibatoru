@@ -20,7 +20,7 @@ test("UU太は盤面の外側を薄暗くし、次のターンに出たU太の�
   const battle = page.locator("#battleScreen");
   const phrase = page.locator("#ultimateYutaOverlay");
   const surface = () => battle.evaluate(node => [
-    getComputedStyle(node).backgroundColor,
+    getComputedStyle(node).backgroundImage,
     getComputedStyle(node.querySelector(".game-shell"), "::before").backgroundColor
   ]);
   const before = await surface();
@@ -29,6 +29,7 @@ test("UU太は盤面の外側を薄暗くし、次のターンに出たU太の�
   await expect(battle).toHaveClass(/ultimate-yuta-field/);
   const after = await surface();
   expect(after[0]).not.toBe(before[0]);
+  await expect(phrase).toHaveCSS("background-image", after[0]);
   expect(after[1]).toBe(before[1]);
   await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
