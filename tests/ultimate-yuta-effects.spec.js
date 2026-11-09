@@ -7,7 +7,7 @@ async function settle(page) {
   await expect.poll(() => page.evaluate(() => battlePresentationBusy()), { timeout: 15000 }).toBe(false);
 }
 
-test("UU太は盤面の外側を薄暗くし、次のターンに出たU太のとどめで文字演出を流す", async ({ page }) => {
+test("UU太は盤面の外側の背景を変え、次のターンに出たU太のとどめで文字演出を流す", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
@@ -19,18 +19,23 @@ test("UU太は盤面の外側を薄暗くし、次のターンに出たU太の�
   await settle(page);
   const battle = page.locator("#battleScreen");
   const phrase = page.locator("#ultimateYutaOverlay");
-  const surface = () => battle.evaluate(node => [
-    getComputedStyle(node).backgroundImage,
-    getComputedStyle(node.querySelector(".game-shell"), "::before").backgroundColor
-  ]);
+  const surface = () => battle.evaluate(node => {
+    const shell = node.querySelector(".game-shell");
+    const classroom = getComputedStyle(shell, "::before");
+    return {
+      outer: getComputedStyle(node).backgroundImage,
+      controls: getComputedStyle(shell).backgroundImage,
+      classroom: [classroom.backgroundColor, classroom.backgroundImage]
+    };
+  });
   const before = await surface();
   await page.locator('#playerHand [data-base-id="ultimate_yuta"]').first().click({ position: { x: 15, y: 65 } });
   await page.locator('#playerSeatGrid .slot[data-index="4"]').click();
   await expect(battle).toHaveClass(/ultimate-yuta-field/);
   const after = await surface();
-  expect(after[0]).not.toBe(before[0]);
-  await expect(phrase).toHaveCSS("background-image", after[0]);
-  expect(after[1]).toBe(before[1]);
+  expect(after.outer).not.toBe(before.outer);
+  expect(after.controls).not.toBe(before.controls);
+  expect(after.classroom).toEqual(before.classroom);
   await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
     listBoardRefs("opponent").length, listBoardRefs("player").length, state.players.player.will,
