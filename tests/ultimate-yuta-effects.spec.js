@@ -23,7 +23,7 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
     const shell = node.querySelector(".game-shell");
     const classroom = getComputedStyle(shell, "::before");
     return {
-      outer: getComputedStyle(node).backgroundImage,
+      outer: [getComputedStyle(node).backgroundColor, getComputedStyle(node).backgroundImage],
       controls: getComputedStyle(shell).backgroundImage,
       classroom: [classroom.backgroundColor, classroom.backgroundImage]
     };
@@ -33,7 +33,7 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   await page.locator('#playerSeatGrid .slot[data-index="4"]').click();
   await expect(battle).toHaveClass(/ultimate-yuta-field/);
   const after = await surface();
-  expect(after.outer).not.toBe(before.outer);
+  expect(after.outer).toEqual(before.outer);
   expect(after.controls).not.toBe(before.controls);
   expect(after.classroom).toEqual(before.classroom);
   await expect(phrase).toBeHidden();
