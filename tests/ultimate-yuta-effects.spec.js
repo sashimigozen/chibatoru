@@ -26,6 +26,7 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
     return {
       outer: [getComputedStyle(node).backgroundColor, getComputedStyle(node).backgroundImage],
       controls: getComputedStyle(shell.parentElement, "::before").backgroundImage,
+      frame: getComputedStyle(node, "::before").backgroundImage,
       classroom: [classroom.backgroundColor, classroom.backgroundImage],
       innerInk: [innerInk.display, innerInk.backgroundImage, innerInk.opacity]
     };
@@ -38,7 +39,9 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   expect(after.outer).toEqual(before.outer);
   expect(before.controls).toBe("none");
   expect(after.controls).toContain("ultimate-yuta-ink.webp");
-  expect(after.classroom).toEqual(before.classroom);
+  expect(before.frame).toBe("none");
+  expect(after.frame).toContain("linear-gradient");
+  expect(after.classroom).toEqual(["rgba(248, 251, 253, 0.91)", before.classroom[1]]);
   expect(before.innerInk[0]).toBe("none");
   expect(after.innerInk).toEqual(["block", expect.stringContaining("ultimate-yuta-inner-ink.webp"), "0.13"]);
   await expect(phrase).toBeHidden();
