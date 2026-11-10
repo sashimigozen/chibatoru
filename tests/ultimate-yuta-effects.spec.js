@@ -22,10 +22,12 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   const surface = () => battle.evaluate(node => {
     const shell = node.querySelector(".game-shell");
     const classroom = getComputedStyle(shell, "::before");
+    const innerInk = getComputedStyle(shell.querySelector(".playmat"), "::after");
     return {
       outer: [getComputedStyle(node).backgroundColor, getComputedStyle(node).backgroundImage],
       controls: getComputedStyle(shell.parentElement, "::before").backgroundImage,
-      classroom: [classroom.backgroundColor, classroom.backgroundImage]
+      classroom: [classroom.backgroundColor, classroom.backgroundImage],
+      innerInk: [innerInk.display, innerInk.backgroundImage, innerInk.opacity]
     };
   });
   const before = await surface();
@@ -37,6 +39,8 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   expect(before.controls).toBe("none");
   expect(after.controls).toContain("ultimate-yuta-ink.webp");
   expect(after.classroom).toEqual(before.classroom);
+  expect(before.innerInk[0]).toBe("none");
+  expect(after.innerInk).toEqual(["block", expect.stringContaining("ultimate-yuta-inner-ink.webp"), "0.13"]);
   await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
     listBoardRefs("opponent").length, listBoardRefs("player").length, state.players.player.will,
