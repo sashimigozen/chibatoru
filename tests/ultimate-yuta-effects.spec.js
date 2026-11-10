@@ -35,7 +35,7 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   const after = await surface();
   expect(after.outer).toEqual(before.outer);
   expect(before.controls).toBe("none");
-  expect(after.controls).toContain("ultimate-yuta-ink.svg");
+  expect(after.controls).toContain("ultimate-yuta-ink.webp");
   expect(after.classroom).toEqual(before.classroom);
   await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
