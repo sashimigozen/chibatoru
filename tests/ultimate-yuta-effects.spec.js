@@ -24,7 +24,7 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
     const classroom = getComputedStyle(shell, "::before");
     return {
       outer: [getComputedStyle(node).backgroundColor, getComputedStyle(node).backgroundImage],
-      controls: getComputedStyle(shell).backgroundImage,
+      controls: getComputedStyle(shell.parentElement, "::before").backgroundImage,
       classroom: [classroom.backgroundColor, classroom.backgroundImage]
     };
   });
@@ -34,7 +34,8 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   await expect(battle).toHaveClass(/ultimate-yuta-field/);
   const after = await surface();
   expect(after.outer).toEqual(before.outer);
-  expect(after.controls).not.toBe(before.controls);
+  expect(before.controls).toBe("none");
+  expect(after.controls).toContain("ultimate-yuta-ink.svg");
   expect(after.classroom).toEqual(before.classroom);
   await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
