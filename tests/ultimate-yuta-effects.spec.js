@@ -22,13 +22,12 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   const surface = () => battle.evaluate(node => {
     const shell = node.querySelector(".game-shell");
     const classroom = getComputedStyle(shell, "::before");
-    const innerInk = getComputedStyle(shell.querySelector(".playmat"), "::after");
+    const ink = getComputedStyle(shell.parentElement, "::before");
     return {
       outer: [getComputedStyle(node).backgroundColor, getComputedStyle(node).backgroundImage],
-      controls: getComputedStyle(shell.parentElement, "::before").backgroundImage,
+      ink: [ink.backgroundImage, ink.mixBlendMode],
       frame: getComputedStyle(node, "::before").backgroundImage,
-      classroom: [classroom.backgroundColor, classroom.backgroundImage],
-      innerInk: [innerInk.display, innerInk.backgroundImage, innerInk.opacity]
+      classroom: [classroom.backgroundColor, classroom.backgroundImage]
     };
   });
   const before = await surface();
@@ -37,13 +36,11 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   await expect(battle).toHaveClass(/ultimate-yuta-field/);
   const after = await surface();
   expect(after.outer).toEqual(before.outer);
-  expect(before.controls).toBe("none");
-  expect(after.controls).toContain("ultimate-yuta-ink.webp");
+  expect(before.ink[0]).toBe("none");
+  expect(after.ink).toEqual([expect.stringContaining("ultimate-yuta-vortex.webp"), "multiply"]);
   expect(before.frame).toBe("none");
   expect(after.frame).toContain("linear-gradient");
   expect(after.classroom).toEqual(["rgba(248, 251, 253, 0.91)", before.classroom[1]]);
-  expect(before.innerInk[0]).toBe("none");
-  expect(after.innerInk).toEqual(["block", expect.stringContaining("ultimate-yuta-inner-ink.webp"), "0.13"]);
   await expect(phrase).toBeHidden();
   expect(await page.evaluate(() => [
     listBoardRefs("opponent").length, listBoardRefs("player").length, state.players.player.will,
