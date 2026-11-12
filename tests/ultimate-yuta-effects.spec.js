@@ -41,8 +41,14 @@ test("UU太は盤面の外側の背景を変え、勝利の文字演出中も同
   expect(after.ink).toEqual(["block", "multiply"]);
   const inkLayers = battle.locator(".battle-stage > .ultimate-yuta-ink use");
   await expect(inkLayers).toHaveCount(5);
-  const layerDirections = () => inkLayers.evaluateAll(layers => layers.map(layer => getComputedStyle(layer).animationDirection));
-  expect(await layerDirections()).toEqual(["normal", "reverse", "normal", "reverse", "normal"]);
+  const layerMotion = () => inkLayers.evaluateAll(layers => layers.map(layer => {
+    const style = getComputedStyle(layer);
+    return [style.animationDirection, style.animationDuration, style.animationDelay];
+  }));
+  const motion = await layerMotion();
+  expect(motion.map(([direction]) => direction)).toEqual(["normal", "reverse", "normal", "reverse", "normal"]);
+  expect(new Set(motion.map(([, duration]) => duration)).size).toBe(5);
+  expect(new Set(motion.map(([, , delay]) => delay)).size).toBe(5);
   expect(await inkLayers.evaluateAll(layers => {
     const center = new DOMPoint(0, 0).matrixTransform(layers[0].ownerSVGElement.getScreenCTM());
     return layers.every(layer => {
@@ -72,7 +78,7 @@ test("UU太は盤面の外側の背景を変え、勝利の文字演出中も同
   expect(await surface()).toEqual(after);
   await expect(phrase).toHaveCSS("background-image", "none");
   await expect(phrase).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-  expect(await layerDirections()).toEqual(["normal", "reverse", "normal", "reverse", "normal"]);
+  expect(await layerMotion()).toEqual(motion);
   await expect(phrase).toHaveClass(/all-visible/, { timeout: 8000 });
   expect(await surface()).toEqual(after);
   await page.screenshot({ path: test.info().outputPath("ultimate-yuta-victory.png") });
