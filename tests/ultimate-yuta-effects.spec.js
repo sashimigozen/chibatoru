@@ -41,6 +41,13 @@ test("UU太は盤面の外側の背景を変え、勝利の文字演出中も同
   expect(after.ink).toEqual(["block", "multiply"]);
   const inkLayers = battle.locator(".battle-stage > .ultimate-yuta-ink use");
   await expect(inkLayers).toHaveCount(5);
+  const scales = await inkLayers.evaluateAll(layers => layers.map(layer => {
+    const transform = new DOMMatrixReadOnly(getComputedStyle(layer).transform);
+    return Math.hypot(transform.a, transform.b);
+  }));
+  for (let index = 1; index < scales.length; index += 1) {
+    expect(scales[index] / scales[index - 1]).toBeCloseTo(.8, 4);
+  }
   const layerMotion = () => inkLayers.evaluateAll(layers => layers.map(layer => {
     const style = getComputedStyle(layer);
     return [style.animationDirection, style.animationDuration, style.animationDelay];
