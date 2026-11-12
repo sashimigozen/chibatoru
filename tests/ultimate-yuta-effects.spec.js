@@ -47,7 +47,7 @@ test("UU太は盤面の外側の背景を変え、勝利の文字演出中も同
   }));
   const motion = await layerMotion();
   expect(motion.map(([direction]) => direction)).toEqual(["normal", "reverse", "normal", "reverse", "normal"]);
-  expect(motion.map(([, duration]) => duration)).toEqual(["144s", "86s", "118s", "62s", "74s"]);
+  expect(motion.map(([, duration]) => duration)).toEqual(["432s", "258s", "354s", "186s", "222s"]);
   expect(new Set(motion.map(([, , delay]) => delay)).size).toBe(5);
   expect(await inkLayers.evaluateAll(layers => {
     const center = new DOMPoint(0, 0).matrixTransform(layers[0].ownerSVGElement.getScreenCTM());
