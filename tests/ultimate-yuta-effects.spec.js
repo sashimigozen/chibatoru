@@ -7,7 +7,7 @@ async function settle(page) {
   await expect.poll(() => page.evaluate(() => battlePresentationBusy()), { timeout: 15000 }).toBe(false);
 }
 
-test("UU太は盤面の外側の背景を変え、次のターンに出たU太のとどめで文字演出を流す", async ({ page }) => {
+test("UU太は盤面の外側の背景を変え、勝利の文字演出中も同じ背景を保つ", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(gameUrl);
   await page.locator("#homeNavDeckButton").click();
@@ -57,6 +57,12 @@ test("UU太は盤面の外側の背景を変え、次のターンに出たU太�
   await expect(phrase.locator('[data-ultimate-phrase="tsurai_nara"]')).toHaveClass(/active/);
   await expect(page.locator("#resultOverlay")).toBeHidden();
   expect(await page.evaluate(() => [state.players.opponent.life, state.gameWinner])).toEqual([0, "player"]);
+  expect(await surface()).toEqual(after);
+  await expect(phrase).toHaveCSS("background-image", "none");
+  await expect(phrase).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  await expect(phrase).toHaveClass(/all-visible/, { timeout: 8000 });
+  expect(await surface()).toEqual(after);
+  await page.screenshot({ path: test.info().outputPath("ultimate-yuta-victory.png") });
   await expect(phrase).toBeHidden({ timeout: 8000 });
   await expect(page.locator("#resultOverlay")).toContainText("勝利");
 });
