@@ -91,7 +91,26 @@ test("UU太は盤面の外側の背景を変え、勝利の文字演出中も同
   await page.screenshot({ path: test.info().outputPath("ultimate-yuta-victory.png") });
   await expect(phrase).toBeHidden({ timeout: 8000 });
   await expect(page.locator("#resultOverlay")).toContainText("勝利");
+  await expect(battle).not.toHaveClass(/ultimate-yuta-field/);
 });
+
+for (const outcome of ["opponent", null]) {
+  test(`UU太の効果が有効な側が勝たなければ結果に渦を出さない ${outcome ?? "引き分け"}`, async ({ page }) => {
+    await page.goto(gameUrl);
+    await page.evaluate(() => startCardTest("ultimate_yuta"));
+    await settle(page);
+    await page.evaluate(winner => {
+      state.training.skipAnimations = false;
+      state.players.player.ultimateYutaAttendance = true;
+      render();
+      endGame(winner, "対戦終了");
+      render();
+    }, outcome);
+    await expect(page.locator("#resultOverlay")).toContainText(outcome ? "敗北" : "引き分け");
+    await expect(page.locator("#ultimateYutaOverlay")).toBeHidden();
+    await expect(page.locator("#battleScreen")).not.toHaveClass(/ultimate-yuta-field/);
+  });
+}
 
 test("Ultimate U太が2枚出ても本体がいなくなった後のU太は1人で、空席を順に使う", async ({ page }) => {
   await page.goto(gameUrl);

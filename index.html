@@ -20311,7 +20311,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.44.0", "versioning": "semver", "date": "2026年11月14日", "summary": "新能力「足軽」と移動に関わるカード8枚を追加しました。", "changes": [{"category": "新カード", "title": "フィジカルスカイ", "after": "フィジカルスカイ／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、お互いのプレイヤーは自分のターンに1回、自分の出席者1人を指名できる。その出席者が出席可能な空きマスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "ミニテストスター", "after": "ミニテストスター／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。"}, {"category": "新カード", "title": "バカでかい怠惰", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"}, {"category": "新カード", "title": "夢の国バイト学生", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。"}, {"category": "新カード", "title": "数独女王（スウドクイーン）", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。"}, {"category": "新カード", "title": "あきくん係", "after": "あきくん係／学生／共通カード／戦意2／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "パ学生パ", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "あれカメラ", "after": "あれカメラ／持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの出席者を、それぞれの講義室で出席可能なマスへランダムに移動させる。"}, {"category": "カード調整", "title": "パ学生パ", "before": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。", "beforeHighlights": ["その出席者が出席可能な隣接する", "反撃の前にそこへ"], "afterHighlights": ["その出席者の左隣か右隣にある出席可能な", "そこに"]}, {"category": "カード調整", "title": "バカでかい怠惰", "before": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果が2回発動したとき、この効果は失われる。\nこの効果は重複しない。", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。", "beforeHighlights": ["この効果が2回発動したとき、この効果は失われる。", "この効果は重複しない。"], "afterHighlights": ["この効果は2回発動するまで続く。", "この効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"]}, {"category": "システム", "title": "足軽と移動の処理", "after": "自分のターンに1回、出席したターンから使用できる。行動権を消費せず、このカードを出席可能な空きマスへ移動させる。このカードが移動したとき、このカードの攻撃力と体力を+1する。 出席者をタップまたは長押しして、攻撃か移動を選べます。攻撃や講義の後でも移動できます。 一斉移動ではすべての移動先を確定してから、移動前の席順で処理します。移動した出席者ごとに、本人の強化や能力を先に処理します。カードの効果で移動したときも足軽で強化されます。カードテストで新カード8枚を試せます。"}]},
+      {"version": "ver.0.44.0", "versioning": "semver", "date": "2026年11月14日", "summary": "新能力「足軽」と移動に関わるカード8枚を追加しました。", "changes": [{"category": "新カード", "title": "フィジカルスカイ", "after": "フィジカルスカイ／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、お互いのプレイヤーは自分のターンに1回、自分の出席者1人を指名できる。その出席者が出席可能な空きマスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "ミニテストスター", "after": "ミニテストスター／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。"}, {"category": "新カード", "title": "バカでかい怠惰", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"}, {"category": "新カード", "title": "夢の国バイト学生", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。"}, {"category": "新カード", "title": "数独女王（スウドクイーン）", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。"}, {"category": "新カード", "title": "あきくん係", "after": "あきくん係／学生／共通カード／戦意2／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "パ学生パ", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "あれカメラ", "after": "あれカメラ／持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの出席者を、それぞれの講義室で出席可能なマスへランダムに移動させる。"}, {"category": "カード調整", "title": "パ学生パ", "before": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。", "beforeHighlights": ["その出席者が出席可能な隣接する", "反撃の前にそこへ"], "afterHighlights": ["その出席者の左隣か右隣にある出席可能な", "そこに"]}, {"category": "カード調整", "title": "バカでかい怠惰", "before": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果が2回発動したとき、この効果は失われる。\nこの効果は重複しない。", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。", "beforeHighlights": ["この効果が2回発動したとき、この効果は失われる。", "この効果は重複しない。"], "afterHighlights": ["この効果は2回発動するまで続く。", "この効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"]}, {"category": "システム", "title": "足軽と移動の処理", "after": "自分のターンに1回、出席したターンから使用できる。行動権を消費せず、このカードを出席可能な空きマスへ移動させる。このカードが移動したとき、このカードの攻撃力と体力を+1する。 出席者をタップまたは長押しして、攻撃か移動を選べます。攻撃や講義の後でも移動できます。 一斉移動ではすべての移動先を確定してから、移動前の席順で処理します。移動した出席者ごとに、本人の強化や能力を先に処理します。カードの効果で移動したときも足軽で強化されます。カードテストで新カード8枚を試せます。"}, {"category": "表示・操作改善", "title": "Ultimate U太の勝利演出", "after": "Ultimate U太の効果が有効な側が勝ったときだけ、勝利の文字演出に墨の渦を表示します。"}]},
       {"version": "ver.0.43.3", "versioning": "semver", "date": "2026年11月12日", "summary": "Ultimate U太の墨の渦を描き直しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "太い墨の帯が何周も内側へ続く絵柄に変更しました。講義室に重なる筆跡は薄く透けます。墨の渦は一層ずつ交互に逆方向へゆっくり回転し、層ごとに回る速さとタイミングが異なります。各層の回転速度を抑え、背景がかすかに動くようにしました。渦の各層は同じ比率で縮小し、回転しても隣り合う層の太い筆跡が重ならないようにしました。勝利演出中も対戦中と同じ背景を表示します。カードの能力値・効果に変更はありません。"}]},
       {"version": "ver.0.43.2", "versioning": "semver", "date": "2026年11月10日", "summary": "Ultimate U太の効果中に表示する対戦背景を調整しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "通常の明るい背景に何層にも重なる黒い筆跡とかすれ、赤い飛沫が現れ、講義室の周りでゆっくり揺れます。外周から中心へ巻き込む筆跡を近づけ、講義室に重なる部分は薄く透けるようにしました。パソコン表示では画面の外縁に暗い影を加えました。カードの能力値・効果に変更はありません。カードテストで、背景の切り替えと勝利演出を確認できるようにしました。"}]},
       {"version": "ver.0.43.1", "versioning": "semver", "date": "2026年11月9日", "summary": "更新情報の未読表示と、対戦中の演出を改善しました。", "changes": [{"category": "表示・操作改善", "title": "更新情報の未読表示", "after": "未読の各バージョンに赤い印を表示し、中身を開くとその項目を既読にします。ホームの赤い印は、未読の更新情報がある間表示します。"}, {"category": "不具合修正", "title": "装備による強化・弱体化の表示", "after": "画面の動きを抑える設定でも、装備による強化・弱体化を赤・青の効果表示で確認できるようにしました。赤はっぴとストレスヘアーを通常操作で装備し、表示と再表示を確認するテストを追加しました。カードの能力値・効果内容に変更はありません。"}, {"category": "表示・操作改善", "title": "Ultimate U太の出席・勝利演出", "after": "Ultimate U太の出席時効果が発動すると、盤面の外側に青紫のもやが広がります。白い盤面と手札は元の明るさで表示します。勝った側でその効果が有効なら、勝利画面の前に「辛いなら」から始まる文字演出を流します。カードテストでもこの流れを試せます。カードの能力値・効果内容に変更はありません。"}]},
@@ -48140,6 +48140,7 @@
       if (!overlay) return;
       overlay.classList.add("hidden");
       overlay.classList.remove("all-visible");
+      renderUltimateYutaField();
       overlay.querySelectorAll("[data-ultimate-phrase]").forEach((phrase) => phrase.classList.remove("active"));
     }
 
@@ -48159,6 +48160,7 @@
         phrases.forEach((element, id) => element.classList.toggle("active", id === baseId));
       };
       overlay.classList.remove("hidden", "all-visible");
+      renderUltimateYutaField();
       phrases.forEach((element) => element.classList.remove("active"));
       phraseOrder.forEach((baseId, index) => {
         window.setTimeout(() => showOnly(baseId), index * 1000);
@@ -48219,8 +48221,20 @@
       addLog(`${CARD_BASES.ultimate_yuta.name}の効果：超陽気を持つ「U太」を1人出席させました。`);
     }
 
-    function shouldPlayUltimateYutaVictory(options) {
-      return options.ultimateYutaVictory && !state.training.skipAnimations;
+    function hasUltimateYutaEffect(side) {
+      return Boolean(state.players[side]?.ultimateYutaAttendance) && !ongoingEffectsSuppressed();
+    }
+
+    function shouldPlayUltimateYutaVictory(winner, options) {
+      return Boolean(options?.ultimateYutaVictory) && hasUltimateYutaEffect(winner) && !state.training.skipAnimations;
+    }
+
+    function renderUltimateYutaField() {
+      const battleActive = state.phase === "battle" && ["player", "opponent"].some(hasUltimateYutaEffect);
+      const victoryActive = state.phase === "gameover"
+        && shouldPlayUltimateYutaVictory(state.gameWinner, state.gameResultOptions)
+        && Boolean(elements.ultimateYutaOverlay && !elements.ultimateYutaOverlay.classList.contains("hidden"));
+      elements.battleScreen.classList.toggle("ultimate-yuta-field", state.screen === "battle" && (battleActive || victoryActive));
     }
 
     function showResultOverlay(winner, options = {}, displayOptions = {}) {
@@ -48232,7 +48246,7 @@
         && !elements.resultOverlay.classList.contains("hidden")) {
         return;
       }
-      if (elements.ultimateYutaOverlay && shouldPlayUltimateYutaVictory(options) && !displayOptions.afterUltimateYuta) {
+      if (elements.ultimateYutaOverlay && shouldPlayUltimateYutaVictory(winner, options) && !displayOptions.afterUltimateYuta) {
         if (elements.ultimateYutaOverlay.classList.contains("hidden")) {
           resetBattleDrawers();
           const battleToken = state.preBattleToken;
@@ -48947,7 +48961,7 @@
     }
 
     function endGame(winner, reason, options = {}) {
-      if (winner && state.players[winner]?.ultimateYutaAttendance && !ongoingEffectsSuppressed()) {
+      if (hasUltimateYutaEffect(winner)) {
         options = { ...options, ultimateYutaVictory: true };
       }
       window.ChibattleGacha?.recordBattleResult(winner);
@@ -48980,13 +48994,14 @@
       recordTrainingMatchResult(winner);
       onlineSubmitAnalyticsLog("game_end");
       showResultOverlay(winner, state.gameResultOptions);
+      renderUltimateYutaField();
       if (state.training.active && state.training.replayRemaining > 0) {
         scheduleTrainingTask(() => {
           if (!state.gameOver || state.training.replayRemaining <= 0) return;
           hideResultOverlay();
           startNextTrainingReplay();
         }, trainingAnimationDelay(state.training.skipAnimations ? 40 : 1100)
-          + (shouldPlayUltimateYutaVictory(options) ? ULTIMATE_YUTA_VICTORY_MS : 0));
+          + (shouldPlayUltimateYutaVictory(winner, options) ? ULTIMATE_YUTA_VICTORY_MS : 0));
       }
       if (isOnlineHost() && state.online.started && !state.online.isHandlingRemoteCommand) {
         onlineBroadcastState(true);
@@ -49732,11 +49747,7 @@
       elements.tutorialScreen.classList.toggle("hidden", state.screen !== "tutorial");
       elements.deckScreen.classList.toggle("hidden", state.screen !== "deck");
       elements.battleScreen.classList.toggle("hidden", state.screen !== "battle");
-      elements.battleScreen.classList.toggle("ultimate-yuta-field", state.screen === "battle"
-        && (state.phase === "battle"
-          || (state.phase === "gameover" && shouldPlayUltimateYutaVictory(state.gameResultOptions || {})))
-        && !ongoingEffectsSuppressed()
-        && (state.players.player.ultimateYutaAttendance || state.players.opponent.ultimateYutaAttendance));
+      renderUltimateYutaField();
       elements.spectatorBanner.classList.toggle("hidden", state.screen !== "battle" || !isOnlineSpectator());
       const showSpectatorCount = hasBattleSpectators();
       elements.battleSpectatorCount.classList.toggle("hidden", !showSpectatorCount);
@@ -56307,7 +56318,7 @@
         own: { seats: [[0, "general_student"]], teacher: null },
         enemy: { seats: [[0, "general_student"], [4, "strong_student"]], teacher: "general_teacher" },
         deck: ["ruler", "general_student", "dark_yuta", "onigiri_draw"],
-        note: "手札から出席させると相手の講義室を一掃し、操作エリアの背景に青紫のもやが広がります。Ultimate U太か、次の自分のターンに出席する超陽気のU太で相手本体を攻撃し、気力3を削り切ると勝利演出を確認できます。"
+        note: "手札から出席させると相手の講義室を一掃し、対戦画面に墨の渦が広がります。相手本体の気力3を削り切ると、墨の渦つきの勝利演出を確認できます。"
       },
       ae_female_student: {
         hand: ["ruler"], own: { seats: [[0, "general_student"]], teacher: null },
