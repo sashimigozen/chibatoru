@@ -44,10 +44,15 @@ async function choose(page, target, kind) {
   await page.locator('#itemTargetConfirmButton').click();
 }
 
-test('足軽は出席ターンから使え、行動権を使う。ミニテストスターのコピーに能力は付かない', async ({ page }) => {
+test('足軽は出席ターンから使え、召喚酔いは続く。ミニテストスターのコピーに能力は付かない', async ({ page }) => {
   await start(page, 'mini_test_star');
   await play(page, 'mini_test_star', 'seat', 4);
-  await slot(page, 'player', 4).locator('.board-card').click();
+  const card = slot(page, 'player', 4).locator('.board-card');
+  await card.hover();
+  await page.mouse.down();
+  await expect(page.locator('#teacherActionModal')).toBeVisible();
+  await page.mouse.up();
+  await expect(page.locator('#teacherAttackChoiceButton')).toBeDisabled();
   await page.locator('#ashigaruMoveButton').click();
   await choose(page, slot(page, 'player', 5), 'movement_destination');
   await idle(page);
@@ -68,7 +73,10 @@ test('フィジカルスカイは行動権を保ち、夢の国バイト学生�
   await choose(page, slot(page, 'player', 4).locator('.board-card'), 'movement_source');
   await choose(page, slot(page, 'player', 5), 'movement_destination');
   await idle(page);
-  expect(await page.evaluate(() => canAttack(state.players.player.board.seats[5]))).toBe(true);
+  expect(await page.evaluate(() => {
+    const card = state.players.player.board.seats[5];
+    return [card.attack, card.currentHp, canAttack(card)];
+  })).toEqual([3, 3, true]);
   await expect(page.locator('#physicalSkyMoveButton')).toBeDisabled();
   await slot(page, 'player', 5).locator('.board-card').click();
   await page.locator('#ashigaruMoveButton').click();
@@ -77,8 +85,32 @@ test('フィジカルスカイは行動権を保ち、夢の国バイト学生�
 
   expect(await page.evaluate(() => {
     const card = state.players.player.board.seats[3];
-    return ['超注目', '超陽気'].map(keyword => hasKeyword(card, keyword)).concat(canAttack(card));
-  })).toEqual([true, true, false]);
+    return ['超注目', '超陽気'].map(keyword => hasKeyword(card, keyword)).concat(canAttack(card), card.attack, card.currentHp);
+  })).toEqual([true, true, true, 4, 4]);
+});
+
+test('攻撃後も足軽を使え、移動しても攻撃済みのまま', async ({ page }) => {
+  await start(page, 'dream_park_student');
+  await play(page, 'dream_park_student', 'seat', 4);
+  await page.evaluate(() => {
+    const target = state.players.opponent.board.seats[4];
+    target.baseAttack = 0;
+    target.attack = 0;
+  });
+  await slot(page, 'player', 4).locator('.board-card').click();
+  await page.locator('#teacherAttackChoiceButton').click();
+  await slot(page, 'opponent', 4).locator('.board-card').click();
+  await expect.poll(() => page.evaluate(() => cardAttacksUsedThisTurn(state.players.player.board.seats[4]))).toBe(1);
+  await idle(page);
+  await slot(page, 'player', 4).locator('.board-card').click();
+  await expect(page.locator('#teacherAttackChoiceButton')).toBeDisabled();
+  await page.locator('#ashigaruMoveButton').click();
+  await choose(page, slot(page, 'player', 5), 'movement_destination');
+  await idle(page);
+  expect(await page.evaluate(() => {
+    const card = state.players.player.board.seats[5];
+    return [card.attack, card.currentHp, cardAttacksUsedThisTurn(card), canAttack(card)];
+  })).toEqual([3, 3, 1, false]);
 });
 
 test('あきくん係は移動元と3行目の空き席を盤面で選び、移動時効果を処理する', async ({ page }) => {
@@ -103,30 +135,66 @@ test('パ学生パは攻撃力0で相手を動かし、怠惰で倒せば反撃�
 
   expect(await page.evaluate(() => [state.players.player.board.seats[7]?.currentHp,
     state.players.opponent.board.seats[4], state.players.opponent.board.seats[5],
-    state.players.player.lazinessNextDamage])).toEqual([1, null, null, 2]);
+    state.players.player.lazinessTriggersRemaining])).toEqual([1, null, null, 1]);
 });
 
-test('一斉移動は両陣営で元の席順を維持し、怠惰は再使用してもダメージをリセットしない', async ({ page }) => {
+test('あれカメラは全員の移動後に元の席順で足軽と怠惰を処理し、怠惰は2回で終了する', async ({ page }) => {
   await start(page, 'bakadekai_laziness');
   await item(page, 'bakadekai_laziness');
   const result = await page.evaluate(() => {
     const side = 'opponent';
     const entries = movementEntries(side);
-    const before = new Map(entries.map(({ card }) => [card, card.currentHp]));
-    const move = entry => moveAttendee(entry, { owner: side, zone: 'seat', index: 1 },
-      CARD_BASES.physical_sky, { side });
-    const first = move(entries[0]);
-    const next = state.players.player.lazinessNextDamage;
-    const copy = state.players.player.hand.find(card => card.baseId === 'bakadekai_laziness');
-    castImmediateItem('player', copy, true);
-    const persisted = state.players.player.lazinessNextDamage;
-    const moves = planRandomClassroomMoves(side);
-    commitAttendeeMoves(moves, CARD_BASES.are_moshikashite, { side: 'player' });
-    return { first, next, persisted, moved: moves.length,
-      loss: entries.map(({ card }) => before.get(card) - card.currentHp),
-      cycle: state.players.player.lazinessNextDamage };
+    const destinations = [1, 3, 6];
+    for (const { card } of entries) addKeyword(card, '足軽', 'テスト');
+    const before = entries.map(({ card }) => card.currentHp);
+    const snapshots = [];
+    const resolve = resolveAttendeeMovementEffect;
+    resolveAttendeeMovementEffect = (card, from, to) => {
+      snapshots.push(entries.map(({ card }) => [findBoardCardByInstanceId(card.instanceId).ref.index, card.currentHp]));
+      resolve(card, from, to);
+    };
+    try {
+      const moves = entries.map((entry, index) => ({ ...entry, destination: { owner: side, zone: 'seat', index: destinations[index] } }));
+      commitAttendeeMoves(moves.reverse(), CARD_BASES.are_moshikashite, { side: 'player' });
+    } finally {
+      resolveAttendeeMovementEffect = resolve;
+    }
+    return { before, snapshots, changes: entries.map(({ card }, index) => card.currentHp - before[index]),
+      remaining: state.players.player.lazinessTriggersRemaining,
+      shown: playerActiveEffectLines('player').some(line => line.includes('バカでかい怠惰')) };
   });
-  expect(result).toEqual({ first: true, next: 2, persisted: 2, moved: 3, loss: [3, 3, 1], cycle: 2 });
+  const [first, second, third] = result.before;
+  expect(result).toEqual({
+    before: [first, second, third],
+    snapshots: [
+      [[1, first], [3, second], [6, third]],
+      [[1, first - 1], [3, second], [6, third]],
+      [[1, first - 1], [3, second - 1], [6, third]]
+    ],
+    changes: [-1, -1, 1], remaining: 0, shown: false
+  });
+});
+
+test('怠惰は発動中に使用しても残り回数が増えず、終了した後にまた使える', async ({ page }) => {
+  await start(page, 'bakadekai_laziness');
+  await item(page, 'bakadekai_laziness');
+  const result = await page.evaluate(() => {
+    const side = 'opponent';
+    const player = state.players.player;
+    const move = (from, to) => moveAttendee(movementEntryAt({ owner: side, zone: 'seat', index: from }),
+      { owner: side, zone: 'seat', index: to }, CARD_BASES.physical_sky, { side });
+    move(0, 1);
+    const afterFirst = player.lazinessTriggersRemaining;
+    castImmediateItem('player', player.hand.find(card => card.baseId === 'bakadekai_laziness'), true);
+    const afterDuplicate = player.lazinessTriggersRemaining;
+    move(4, 5);
+    const expired = player.lazinessTriggersRemaining;
+    const later = createCardFromBase('bakadekai_laziness', 'player');
+    player.hand.push(later);
+    castImmediateItem('player', later, true);
+    return [afterFirst, afterDuplicate, expired, player.lazinessTriggersRemaining];
+  });
+  expect(result).toEqual([1, 1, 0, 2]);
 });
 
 test('数独女王は移動した行の効果だけ処理する', async ({ page }) => {
@@ -145,10 +213,10 @@ test('数独女王は移動した行の効果だけ処理する', async ({ page 
     move(7, 6);
     return { frontDamage, rowBuff, life: state.players.player.life };
   });
-  expect(values).toEqual({ frontDamage: [1, 1, 2], rowBuff: [[3, 3], [2, 2], [3, 3]], life: 13 });
+  expect(values).toEqual({ frontDamage: [1, 1, 2], rowBuff: [[3, 3], [4, 4], [3, 3]], life: 13 });
 });
 
-test('あれもしかしては満席から交換でき、複数マス出席者を分裂させない', async ({ page }) => {
+test('あれカメラは満席から交換でき、複数マス出席者を分裂させない', async ({ page }) => {
   await start(page, 'are_moshikashite');
   const originalIds = await page.evaluate(() => {
     const owner = 'opponent';
@@ -198,7 +266,7 @@ test('CPUは出席したターンに足軽で移動して効果を使える', as
     return { attack: card.attack, hp: card.currentHp, actionUsed: cardAttacksUsedThisTurn(card),
       copies: entries.filter(entry => entry.card.generatedWithoutEffects).length };
   });
-  expect(result).toEqual({ attack: 2, hp: 2, actionUsed: 1, copies: 1 });
+  expect(result).toEqual({ attack: 2, hp: 2, actionUsed: 0, copies: 1 });
 });
 
 test('オンラインのゲストが足軽・パ学生パ・あきくん係の盤面選択を完了できる', async ({ browser }) => {
@@ -268,7 +336,7 @@ test('オンラインのゲストが足軽・パ学生パ・あきくん係の�
       state.players.opponent.board.seats[4] = makeBoardCard(createCardFromBase('mini_test_star', 'opponent'));
       state.players.opponent.board.seats[7] = makeBoardCard(createCardFromBase('pa_student_pa', 'opponent'));
       state.players.player.board.seats[4] = makeBoardCard(createCardFromBase('aggro_student', 'player'));
-      state.players.opponent.lazinessNextDamage = 1;
+      state.players.opponent.lazinessTriggersRemaining = 2;
       state.players.opponent.hand.push(createCardFromBase('aki_helper', 'opponent'));
       render();
       return state.online.lastSnapshotSeq;
@@ -285,14 +353,14 @@ test('オンラインのゲストが足軽・パ学生パ・あきくん係の�
     await slot(guest, 'opponent', 4).locator('.board-card').click();
     await choose(guest, slot(guest, 'opponent', 5), 'movement_destination');
     await expect.poll(() => guest.evaluate(() => state.players.opponent.board.seats[4])).toBe(null);
-    expect(await host.evaluate(() => state.players.opponent.lazinessNextDamage)).toBe(2);
+    expect(await host.evaluate(() => state.players.opponent.lazinessTriggersRemaining)).toBe(1);
     await expect.poll(() => guest.evaluate(() => battleNewActionBlocked())).toBe(false);
     await guest.locator('#playerHand [data-base-id="aki_helper"]').click();
     await slot(guest, 'player', 2).click();
     await choose(guest, slot(guest, 'player', 5).locator('.board-card'), 'movement_source');
     await choose(guest, slot(guest, 'player', 8), 'movement_destination');
-    await expect.poll(() => guest.evaluate(() => state.players.player.board.seats[8]?.attack)).toBe(2);
-    expect(await host.evaluate(() => state.players.opponent.board.seats[8]?.attack)).toBe(2);
+    await expect.poll(() => guest.evaluate(() => state.players.player.board.seats[8]?.attack)).toBe(3);
+    expect(await host.evaluate(() => state.players.opponent.board.seats[8]?.attack)).toBe(3);
     expect(errors).toEqual([]);
   } finally {
     await Promise.all(contexts.map(context => context.close()));
