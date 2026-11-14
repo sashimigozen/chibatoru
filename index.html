@@ -3766,6 +3766,15 @@
       pointer-events: auto;
     }
 
+    #ashigaruMoveButton {
+      position: absolute;
+      bottom: calc(100% + 6px);
+      width: max-content;
+      max-width: 120px;
+      padding: 6px 8px;
+      font-size: 12px;
+    }
+
     .battle-stage { display: contents; }
 
     .ultimate-yuta-ink {
@@ -18784,6 +18793,7 @@
 
       <div class="battle-action-slot">
         <button class="button battle-end-button hidden" id="itemTargetConfirmButton" type="button">対象を確定</button>
+        <button class="button secondary hidden" id="ashigaruMoveButton" type="button">足軽で移動</button>
         <button class="button warning battle-end-button hidden" id="endTurnButton" type="button">ターン終了</button>
       </div>
 
@@ -19814,6 +19824,14 @@
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
     const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
     const CARD_BASES = {
+      physical_sky: {"name": "フィジカルスカイ", "type": "environment", "cost": 2, "attack": 0, "hp": 0, "category": "common", "allowedZones": ["environment"]},
+      mini_test_star: {"name": "ミニテストスター", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽"], "allowedZones": ["seat"]},
+      bakadekai_laziness: {"name": "バカでかい怠惰", "type": "item", "cost": 3, "attack": 0, "hp": 0, "category": "big", "target": "self"},
+      dream_park_student: {"name": "夢の国バイト学生", "type": "student", "cost": 3, "attack": 2, "hp": 2, "category": "common", "keywords": ["足軽", "陽気"], "allowedZones": ["seat"]},
+      sudoku_queen: {"name": "数独女王（スウドクイーン）", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽"], "allowedZones": ["seat"]},
+      aki_helper: {"name": "あきくん係", "type": "student", "cost": 2, "attack": 1, "hp": 2, "category": "common", "allowedZones": ["seat"]},
+      pa_student_pa: {"name": "パ学生パ", "type": "student", "cost": 1, "attack": 0, "hp": 1, "category": "common", "keywords": ["陽気"], "allowedZones": ["seat"]},
+      are_moshikashite: {"name": "あれもしかして", "type": "item", "cost": 7, "attack": 0, "hp": 0, "category": "common", "target": "self"},
       hapa_english: {"name": "Hapa英会話", "type": "item", "cost": 2, "attack": 0, "hp": 0, "target": "self", "category": "common"},
       questioning_lecturer: {"name": "質問する講師", "type": "teacher", "cost": 4, "attack": 1, "hp": 3, "allowedZones": ["teacher"], "category": "common"},
 
@@ -20269,6 +20287,10 @@
     SPECIALTY_CARD_IDS.design.splice(SPECIALTY_CARD_IDS.design.indexOf("rear_queen"), 1);
     SPECIALTY_CARD_IDS.common.push("private_teacher", "tomoyo_mou", "shukii", "past_campus", "chugidesu", "rear_queen");
     IMMEDIATE_ITEM_IDS.push("tomoyo_mou", "shukii", "illegal_cafeteria");
+    ALL_DECK_IDS.push("physical_sky", "mini_test_star", "bakadekai_laziness", "dream_park_student", "sudoku_queen", "aki_helper", "pa_student_pa", "are_moshikashite");
+    SPECIALTY_CARD_IDS.common.push("physical_sky", "mini_test_star", "dream_park_student", "sudoku_queen", "aki_helper", "pa_student_pa", "are_moshikashite");
+    SPECIALTY_CARD_IDS.big.push("bakadekai_laziness");
+    IMMEDIATE_ITEM_IDS.push("bakadekai_laziness", "are_moshikashite");
     ALL_DECK_IDS = [...new Set(ALL_DECK_IDS)].filter((baseId) => {
       const base = CARD_BASES[baseId];
       // Evolution cards are deck-buildable cards.  Their allowedZones setting
@@ -20298,6 +20320,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.44.0", "versioning": "semver", "date": "2026年11月14日", "summary": "新能力「足軽」と移動に関わるカード8枚を追加しました。", "changes": [{"category": "新カード", "title": "フィジカルスカイ", "after": "フィジカルスカイ／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、お互いのプレイヤーはそれぞれ自分のターンに1回、自分の出席者1人を指名し、その出席者が出席可能な空きマスへ移動させることができる。"}, {"category": "新カード", "title": "ミニテストスター", "after": "ミニテストスター／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが移動したとき、自分の空いている席マスに、能力を持たない「ミニテストスター」を1人出席させる。"}, {"category": "新カード", "title": "バカでかい怠惰", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意3／攻撃力0／体力0\nこの対戦中、相手の出席者が移動したとき、その出席者に1ダメージを与える。\nその後、次にこの効果で与えるダメージを+1する。この効果のダメージが3だったなら、次のダメージを1に戻す。\nこの効果は重複しない。"}, {"category": "新カード", "title": "夢の国バイト学生", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。"}, {"category": "新カード", "title": "数独女王（スウドクイーン）", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。"}, {"category": "新カード", "title": "あきくん係", "after": "あきくん係／学生／共通カード／戦意2／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "パ学生パ", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。"}, {"category": "新カード", "title": "あれもしかして", "after": "あれもしかして／持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの出席者すべてを、それぞれの講義室内でランダムな位置に移動させる。"}, {"category": "システム", "title": "足軽と移動の処理", "after": "自分のターンに1回、出席したターンから使用できる。行動権を消費し、このカードを出席可能な空きマスへ移動させる。その後、このカードの攻撃力と体力を+1する。 一斉移動ではすべての移動先を確定してから、移動前の席順で処理します。移動した出席者自身の効果を先に処理します。カードテストで新カード8枚を試せます。"}]},
       {"version": "ver.0.43.3", "versioning": "semver", "date": "2026年11月12日", "summary": "Ultimate U太の墨の渦を描き直しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "太い墨の帯が何周も内側へ続く絵柄に変更しました。講義室に重なる筆跡は薄く透けます。墨の渦は一層ずつ交互に逆方向へゆっくり回転し、層ごとに回る速さとタイミングが異なります。各層の回転速度を抑え、背景がかすかに動くようにしました。渦の各層は同じ比率で縮小し、回転しても隣り合う層の太い筆跡が重ならないようにしました。勝利演出中も対戦中と同じ背景を表示します。カードの能力値・効果に変更はありません。"}]},
       {"version": "ver.0.43.2", "versioning": "semver", "date": "2026年11月10日", "summary": "Ultimate U太の効果中に表示する対戦背景を調整しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "通常の明るい背景に何層にも重なる黒い筆跡とかすれ、赤い飛沫が現れ、講義室の周りでゆっくり揺れます。外周から中心へ巻き込む筆跡を近づけ、講義室に重なる部分は薄く透けるようにしました。パソコン表示では画面の外縁に暗い影を加えました。カードの能力値・効果に変更はありません。カードテストで、背景の切り替えと勝利演出を確認できるようにしました。"}]},
       {"version": "ver.0.43.1", "versioning": "semver", "date": "2026年11月9日", "summary": "更新情報の未読表示と、対戦中の演出を改善しました。", "changes": [{"category": "表示・操作改善", "title": "更新情報の未読表示", "after": "未読の各バージョンに赤い印を表示し、中身を開くとその項目を既読にします。ホームの赤い印は、未読の更新情報がある間表示します。"}, {"category": "不具合修正", "title": "装備による強化・弱体化の表示", "after": "画面の動きを抑える設定でも、装備による強化・弱体化を赤・青の効果表示で確認できるようにしました。赤はっぴとストレスヘアーを通常操作で装備し、表示と再表示を確認するテストを追加しました。カードの能力値・効果内容に変更はありません。"}, {"category": "表示・操作改善", "title": "Ultimate U太の出席・勝利演出", "after": "Ultimate U太の出席時効果が発動すると、盤面の外側に青紫のもやが広がります。白い盤面と手札は元の明るさで表示します。勝った側でその効果が有効なら、勝利画面の前に「辛いなら」から始まる文字演出を流します。カードテストでもこの流れを試せます。カードの能力値・効果内容に変更はありません。"}]},
@@ -23783,6 +23806,7 @@
       itemTargetConfirmButton: document.getElementById("itemTargetConfirmButton"),
       fusionButton: document.getElementById("fusionButton"),
       startButton: document.getElementById("startButton"),
+      ashigaruMoveButton: document.getElementById("ashigaruMoveButton"),
       endTurnButton: document.getElementById("endTurnButton"),
       resetButton: document.getElementById("resetButton")
     };
@@ -23810,6 +23834,8 @@
       effectUseLockTurnsRemaining: 0,
       skipAllTurns: false,
       ultimateYutaAttendance: false,
+      lazinessNextDamage: 0,
+      physicalSkyUsedTurn: null,
       submissionCounters: {},
       pointScore: 0,
       pointSystemActive: false,
@@ -27488,6 +27514,7 @@
     function onlineCommandNeedsHostResolution(type, commandCard) {
       return type === "endTurn"
         || type === "lecture"
+        || type === "moveAttendee"
         || type === "placeCopy"
         || type === "donguri"
         || type === "raptorTemple"
@@ -28924,7 +28951,8 @@
     let pendingItemPresentation = null;
     function battlePresentationBusy({ ignoreFusionTasks = false } = {}) {
       return Boolean((!ignoreFusionTasks && fusionTasksBusy()) || ultimateYutaEffectPending() || pendingItemPresentation || state.pendingCardPlay || state.resolvingOrderedAttendance
-        || state.attackInProgress || state.attackQueue.length
+        || ((!ignoreFusionTasks || state.pendingCardChoice?.context?.kind !== "movement_destination")
+          && (state.attackInProgress || state.attackQueue.length))
         || window.ChibattleDraw?.isBusy()
         || window.ChibattleHandTrash?.isBusy()
         || window.ChibattleWonton?.isBusy()
@@ -29389,6 +29417,11 @@
           const item = getHandCard("opponent", payload.instanceId);
           const target = getHandCard("opponent", payload.targetInstanceId);
           if (item && target) castUtaFusion("opponent", item, target, true);
+        }
+        if (command.type === "moveAttendee") {
+          resolveVoluntaryMovement("opponent", onlineMapRefForHost(payload.source),
+            onlineMapRefForHost(payload.destination), payload.ability, payload.instanceId);
+          render();
         }
         if (command.type === "attackCard") {
           state.selectedAttacker = onlineMapRefForHost(payload.attacker);
@@ -30705,6 +30738,7 @@
       await waitForOrderedAttendance();
       await waitForAiTimedEffects();
       if (await resolveAiGuaranteedBoardLethal()) return;
+      await useAiVoluntaryMovement("opponent");
       await aiAttackWithReadyCards(deferredAttendance);
       state.aiThinking = false;
       if (state.gameOver) {
@@ -31102,6 +31136,15 @@
       if (!target || target.yutaUmbrellaShield) return false;
       if (attacker.baseId === "absolute_woman" || attacker.baseId === "bounce_day") {
         return aiCanPredictEffectRemoval(target, { destroy: attacker.baseId === "absolute_woman" });
+      }
+      if (attacker.baseId === "pa_student_pa") {
+        const found = findBoardCardByInstanceId(target.instanceId);
+        const entry = movementEntryAt(found?.ref);
+        const damage = state.players[side].lazinessNextDamage || 0;
+        return Boolean(entry && movementDestinations(entry, { adjacent: true }).length
+          && ((damage && !ongoingEffectsSuppressed()
+            && previewFinalDamageToCard(target, damage, CARD_BASES.bakadekai_laziness) > 0)
+            || entry.ref.index === (target.baseId === "aggro_king" ? 6 : target.baseId === "aggro_queen" ? 5 : -1)));
       }
       return attacker.baseId === "zombie" && target.type !== "vampire" && !isAibenNyoteiEffectImmune(target);
     }
@@ -31891,6 +31934,7 @@
       if (card.baseId === "where_bone") return aiLifeDamagePrevented(oppositeSide(side), state.actionTurn, side) ? 0
         : state.players[oppositeSide(side)].life <= 3 ? 60 : 9;
       if (card.baseId === "sick_yuta") return enemy.filter(e => canEquipIllness({ ...e.card }) && e.card.baseId !== "yuta").length ? 4 : 0;
+      if (hasKeyword(card, "足軽")) return card.baseId === "dream_park_student" ? 5 : 7;
       if (card.baseId === "protein_drinker") return 3;
       return 0;
     }
@@ -32396,6 +32440,7 @@
       if(fusionBatchScore!==null)return fusionBatchScore||-Infinity;
       if (["female_highball", "male_highball"].includes(item.baseId)) return scoreAiHighball(side, item);
       if (item.baseId === "chotto_machii") return scoreAiChottoMachii(side, item) || -Infinity;
+      if (["bakadekai_laziness", "are_moshikashite"].includes(item.baseId)) return scoreAiMovementItem(side, item) || -Infinity;
       const crabPlan = getAiCrabVictoryPlan(side);
       if (crabPlan.active && CRAB_SET_IDS.includes(item.baseId)) return -Infinity;
       const crabDefenseBonus = crabPlan.active ? (crabPlan.countdownActive ? 26 : 16) : 0;
@@ -32653,6 +32698,7 @@
       }
       await tryUseTrainingYocchanItems("player");
       resolveTrainingAiPendingSelections("player");
+      await useAiVoluntaryMovement("player");
       const attackers = aiOrderedAttackRefs("player");
       for (const ref of attackers) {
         let attackSafety = 0;
@@ -34108,6 +34154,10 @@
     }
 
     function scoreAiEnvironment(card, side = "opponent") {
+      if (card.baseId === "physical_sky") {
+        const own = [...state.players[side].hand, ...movementEntries(side).map(entry => entry.card)];
+        return own.filter(c => ["mini_test_star", "dream_park_student", "sudoku_queen", "aggro_queen", "aggro_king"].includes(c.baseId)).length * 3;
+      }
       if (!arePlayedEffectsSuppressed(side)) {
         const activeWonton = ongoingEnvironmentBaseId() === "wonton_ki";
         const own = state.players[side];
@@ -34332,6 +34382,7 @@
       if (item?.baseId === "amphisbaena_sofa") return scoreAiAmphisbaenaSofa("opponent", item);
       if (item?.baseId === "pinige") return pointModeCards("opponent",item).map(c=>c.choiceScore).sort((a,b)=>b-a).slice(0,hasAcquiredUnit("opponent") ? 3 : 2).reduce((a,b)=>a+b,0) - 2;
       if (["female_highball", "male_highball"].includes(item?.baseId)) return scoreAiHighball("opponent", item);
+      if (["bakadekai_laziness", "are_moshikashite"].includes(item?.baseId)) return scoreAiMovementItem("opponent", item);
       if (item?.baseId === "chotto_machii") return scoreAiChottoMachii("opponent", item);
       if (item?.baseId === "ittan") {
         const value = side => listBoardRefs(side).map(getBoardCardFromRef)
@@ -34791,7 +34842,7 @@
       if (item.baseId === "aggro_walk") return aiCanSurviveSelfDamage("opponent", 2)
         && friendlyCards.some((card) => card.name.includes("アグロ")) ? 8 : 0;
       if (item.baseId === "stress_hair") return friendlyCards.some(canAttachUtaEquipment) ? 7 : 0;
-      if (item.baseId === "attitude") return !state.players.player.board.teacher && enemyCards.some((card) => card.type === "student") ? 6 : 0;
+      if (item.baseId === "attitude") return !state.players.player.board.teacher && enemyCards.some((card) => card.type === "student" && !isMultiSeatCard(card)) ? 6 : 0;
       if (item.baseId === "yakitori_harassment") {
         const plan = planAiYakitori("opponent", item);
         return plan.target ? plan.score : 0;
@@ -35128,7 +35179,7 @@
       if (item.baseId === "attitude") {
         const ref = listBoardRefs("player").find((entry) => {
           const target = getBoardCardFromRef(entry);
-          return target?.type === "student" && !state.players.player.board.teacher;
+          return target?.type === "student" && !isMultiSeatCard(target) && !state.players.player.board.teacher;
         });
         return ref ? castItemOnCard("opponent", item, ref.owner, ref.zone, ref.index, false) : false;
       }
@@ -35230,7 +35281,13 @@
                 cleanupDestroyedCards();
                 applyBoardAuras();
               } else {
-                resolveCardAttackWithBoardCleanup(resolvingAttacker, target);
+                const choice = choosePaStudentAttackDestination(resolvingAttacker, target);
+                const destination = choice ? await choice : null;
+                if (coinAttackToken !== state.preBattleToken || state.gameOver) {
+                  if (coinAttackToken === state.preBattleToken) finishAttackResolution();
+                  return;
+                }
+                resolveCardAttackWithBoardCleanup(resolvingAttacker, target, destination);
               }
             }
           } else {
@@ -37857,14 +37914,14 @@
     }
 
     function isBoardSeatChoice(choice = state.pendingCardChoice) {
-      return Boolean(choice?.context?.kind === "attendance_seats" && choice.cards?.length
+      return Boolean(["attendance_seats", "movement_destination"].includes(choice?.context?.kind) && choice.cards?.length
         && ["player", "opponent"].includes(choice.context.targetOwner));
     }
 
     function boardSeatChoiceCandidate(zone, owner, index) {
       const choice = state.pendingCardChoice;
-      return zone === "seat" && isBoardSeatChoice(choice) && choice.context.targetOwner === owner
-        ? choice.cards.find(card => card.choiceIndex === index) : null;
+      return isBoardSeatChoice(choice) && choice.context.targetOwner === owner
+        ? choice.cards.find(card => (card.choiceZone || "seat") === zone && card.choiceIndex === index) : null;
     }
 
     function isBoardColumnChoice(choice = state.pendingCardChoice) {
@@ -37873,7 +37930,8 @@
     }
 
     function isBoardCardChoice(choice = state.pendingCardChoice) {
-      return isBoardSeatChoice(choice) || isBoardColumnChoice(choice) || Boolean(choice?.cards.length && choice.cards.every(card => card.pointLifeTarget || ["player", "opponent"].flatMap(side => listBoardRefs(side))
+      return isBoardSeatChoice(choice) || isBoardColumnChoice(choice)
+        || choice?.context?.kind === "movement_source" || Boolean(choice?.cards.length && choice.cards.every(card => card.pointLifeTarget || ["player", "opponent"].flatMap(side => listBoardRefs(side))
         .some(ref => getBoardCardFromRef(ref)?.instanceId === card.instanceId)));
     }
 
@@ -39353,7 +39411,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck", "lecturer_move"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck", "lecturer_move", "movement_source", "movement_destination"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
@@ -39363,7 +39421,7 @@
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
-      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional", "lecturer_move"].includes(kind) ? 0 : max;
+      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional", "lecturer_move", "movement_source", "movement_destination"].includes(kind) ? 0 : max;
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max,
         requestId, context: { kind }, confirmLabel: "確定" };
@@ -39372,6 +39430,13 @@
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
       if (kind === "submission_discard") options.message = "校外エリアへ送る手札1枚を選んでください。";
       if (kind === "point_modes") options.message = `異なる効果を${max}つ選んでください。番号順に処理します。`;
+      if (kind === "movement_source") options.message = min
+        ? "移動させる出席者を盤面から1人指名してください。"
+        : "移動させる出席者を盤面から1人まで指名してください。";
+      if (kind === "movement_destination") {
+        options.context.targetOwner = choiceOptions.targetOwner;
+        options.message = "移動先の空きマスを盤面から選んでください。";
+      }
       if (kind === "attendance_seats") {
         options.context.targetOwner = side;
         options.message = `出席させる空き席マスを${max}つまで直接選んでください。0人でも確定できます。`;
@@ -41578,21 +41643,16 @@
       if (!skipLocalEffects && options.allowDerivedAttendanceTransitions !== false) {
         resolveAttendanceStateTransitions(owner, card);
       }
-      if (!ongoingEffectsSuppressed() && zone === "seat" && listBoardRefs(oppositeSide(owner)).some((ref) =>
-        getBoardCardFromRef(ref)?.baseId === "variable_student")) {
-        if (!listBoardRefs(owner).some((ref) => getBoardCardFromRef(ref)?.instanceId === card.instanceId)) return card;
-        clearBoardCardFromField(owner, "seat", index, card);
-        const destinations = state.players[owner].board.seats.map((_, seatIndex) => seatIndex)
-          .filter((seatIndex) => seatIndex !== index && !isSeatBlocked(owner, seatIndex)
-            && (card.occupiedSeatSize ? canPlaceMultiSeatCard(owner, card, seatIndex)
-              : !state.players[owner].board.seats[seatIndex]));
-        const destination = destinations[Math.floor(battleRandom() * destinations.length)];
-        if (destination !== undefined) {
-          if (card.occupiedSeatSize) placeMultiSeatCard(owner, destination, card);
-          else setBoardCard(owner, "seat", destination, card);
-          addLog(`${card.name}は変数学生の効果でランダムな席マスへ移動しました。`);
-        } else if (card.occupiedSeatSize) placeMultiSeatCard(owner, index, card);
-        else setBoardCard(owner, "seat", index, card);
+      if (!ongoingEffectsSuppressed() && zone === "seat") {
+        const mover = movementEntries(oppositeSide(owner)).find(entry => entry.card.baseId === "variable_student"
+          && entry.card.currentHp > 0 && canUsePrintedCardEffects(entry.card));
+        if (mover) {
+          const placed = findBoardCardByInstanceId(card.instanceId);
+          const entry = movementEntryAt(placed?.ref);
+          const destinations = movementDestinations(entry).filter(ref => ref.zone === "seat");
+          const destination = destinations[Math.floor(battleRandom() * destinations.length)];
+          if (destination) moveAttendee(entry, destination, mover.card);
+        }
       }
       resolveProliferatingEnemyTriggers(owner, card);
       return card;
@@ -42119,13 +42179,8 @@
         if (!selected) return;
         const entry = questioningLecturerMoveCandidates(side).find(({ card }) => card.instanceId === selected.instanceId);
         if (!entry) return;
-        clearBoardCardFromField(entry.ref.owner, entry.ref.zone, entry.ref.index, entry.card);
-        setBoardCard(entry.ref.owner, "teacher", null, entry.card);
-        showFloatingTextForCard(entry.card, "移動", "buff");
-        analyticsRecordEffect({ side, source, effectType: "move_to_teacher", chosenTargets: [analyticsCardInfo(entry.card)],
-          details: { owner: entry.ref.owner, fromSeat: entry.ref.index, toZone: "teacher" } });
-        addLog(`${source.name}の効果：${entry.card.name}を相手の教卓マスへ移動させました。`);
-        applyBoardAuras();
+        const destination = { owner: entry.ref.owner, zone: "teacher", index: null };
+        commitAttendeeMoves([{ ...entry, destination }], source, { side });
       });
     }
 
@@ -42253,6 +42308,7 @@
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
       }
+      if (card.baseId === "aki_helper") queueAkiHelperAttendance(side, card);
       if (card.baseId === "questioning_lecturer") resolveQuestioningLecturerAttendance(side, card);
       if (card.baseId === "endless_talker") resolveEndlessTalker(side, card);
       if (card.baseId === "private_teacher") {
@@ -42915,7 +42971,7 @@
         }
       }
       if (card.baseId === "fairy_t" && zone === "teacher") {
-        moveOpponentThirdRowStudents(opponent);
+        moveOpponentThirdRowStudents(opponent, card);
       }
       if (card.baseId === "thin_professor_h" && zone === "teacher") {
         const enemyTargets = listBoardRefs(opponent)
@@ -43386,17 +43442,19 @@
       addLog(`座れる席と座れない席の存在：出席不可になった席から${movedText}を校外エリアへ送りました。`);
     }
 
-    function moveOpponentThirdRowStudents(owner) {
-      [6, 7, 8].forEach((fromIndex) => {
-        const card = state.players[owner].board.seats[fromIndex];
-        if (!card || card.type !== "student" || isAibenNyoteiEffectImmune(card)) return;
-        const targetIndex = [0, 1, 2].find((i) => isBoardSlotOpen(owner, "seat", i));
-        if (targetIndex === undefined) return;
-        if (card.baseId === "aggro_king" && fromIndex === 6) card.aggroKingTurns = 0;
-        state.players[owner].board.seats[targetIndex] = card;
-        state.players[owner].board.seats[fromIndex] = null;
-        addLog(`${card.name}は妖精効果で1行目へ移動しました。`);
-      });
+    function moveOpponentThirdRowStudents(owner, source) {
+      const moved = [];
+      for (const entry of movementEntries(owner)) {
+        if (entry.ref.zone !== "seat" || seatRow(entry.ref.index) !== 3 || entry.card.type !== "student") continue;
+        const [destination] = movementDestinations(entry, { row: 1 });
+        if (!destination) continue;
+        const { ref, card } = entry;
+        clearBoardCardFromField(owner, "seat", ref.index, card);
+        if (isMultiSeatCard(card)) placeMultiSeatCard(owner, destination.index, card);
+        else setBoardCard(owner, "seat", destination.index, card);
+        moved.push({ ...entry, destination });
+      }
+      finishAttendeeMoves(moved, source);
     }
 
     function addKeyword(card, keyword, source = "") {
@@ -43978,7 +44036,13 @@
         render();
         return;
       }
-      resolveCardAttackWithBoardCleanup(resolvingAttacker, targetRef);
+      const choice = choosePaStudentAttackDestination(resolvingAttacker, targetRef);
+      const destination = choice ? await choice : null;
+      if (coinAttackToken !== state.preBattleToken || state.gameOver) {
+        if (coinAttackToken === state.preBattleToken) finishAttackResolution();
+        return;
+      }
+      resolveCardAttackWithBoardCleanup(resolvingAttacker, targetRef, destination);
       checkLifeVictory();
       completeTutorialAction("attackCard", { attacker: resolvingAttacker, target: resolvingTarget });
       clearSelections();
@@ -44138,7 +44202,7 @@
       render();
     }
 
-    function resolveCardAttack(attacker, target) {
+    function resolveCardAttack(attacker, target, moveDestination = null) {
       if (consumeActiveUtaUmbrella(target)) {
         addLog(`${target.name}のU太の傘：攻撃を一度だけ防ぎ、傘を校外エリアへ送りました。`);
         showFloatingTextForCard(target, "0", "heal");
@@ -44176,7 +44240,14 @@
       }
       const attackDamage = cardAttackDamage(attacker, target);
       const dealtDamage = dealDamageToCard(target, attackDamage, attacker, { combat: true });
-      const counterDamage = attacker.noCounterAttack || summerTeacherMeleeActive(attacker) || actingOutStudentAttackBonus(attacker, target) > 0
+      let removedByMovement = false;
+      if (moveDestination && target.currentHp > 0) {
+        const entry = findBoardCardByInstanceId(target.instanceId);
+        const moved = moveAttendee(movementEntryAt(entry?.ref), moveDestination, attacker, { adjacent: true });
+        removedByMovement = moved && !findBoardCardByInstanceId(target.instanceId);
+      }
+      const counterDamage = removedByMovement || state.gameOver || attacker.noCounterAttack
+        || summerTeacherMeleeActive(attacker) || actingOutStudentAttackBonus(attacker, target) > 0
         || (attacker.baseId === "trendy_student" && target.currentHp <= 0)
         ? 0
         : (target.attack || 0);
@@ -44240,13 +44311,13 @@
       }
     }
 
-    function resolveCardAttackWithBoardCleanup(attacker, targetRef) {
+    function resolveCardAttackWithBoardCleanup(attacker, targetRef, moveDestination = null) {
       const target = getBoardCardFromRef(targetRef);
       if (!attacker || !target) return { targetDefeated: false, birdSummoned: false };
       const canonicalTargetRef = listBoardRefs(target.owner)
         .find((ref) => getBoardCardFromRef(ref)?.instanceId === target.instanceId) || { ...targetRef };
       const defeatedName = target.name;
-      resolveCardAttack(attacker, target);
+      resolveCardAttack(attacker, target, moveDestination);
       const targetDefeated = target.currentHp <= 0;
       const canAttackAgain = targetDefeated && summerTeacherMeleeActive(attacker);
       const attackerId = attacker.instanceId;
@@ -44444,7 +44515,7 @@
       if (item.baseId === "stress_hair" && !canAttachUtaEquipment(target)) return false;
       if (item.baseId === "laser_beam" && !(targetZone === "seat" && seatRow(targetIndex) === 3)) return false;
       if (item.baseId === "yakitori_harassment" && target.type !== "student") return false;
-      if (item.baseId === "attitude" && (target.type !== "student" || state.players[targetOwner].board.teacher)) return false;
+      if (item.baseId === "attitude" && (target.type !== "student" || isMultiSeatCard(target) || state.players[targetOwner].board.teacher)) return false;
       if (UTA_EQUIPMENT_BASE_IDS.includes(item.baseId) && !isUtaEquipmentTarget(target)) {
         addLog(`${item.name}は「U太」または「裏U太」にだけ使えます。`);
         if (renderAfter) render();
@@ -44510,9 +44581,8 @@
         addLog(`${target.name}を回復し、余剰${excess}点分の戦意を回復しました。`);
       }
       if (item.baseId === "attitude") {
-        clearBoardCardFromField(targetOwner, targetZone, targetIndex, target);
-        setBoardCard(targetOwner, "teacher", null, target);
-        addLog(`${target.name}を相手の教卓マスへ移動させました。`);
+        const entry = movementEntryAt({ owner: targetOwner, zone: targetZone, index: targetIndex });
+        if (entry) commitAttendeeMoves([{ ...entry, destination: { owner: targetOwner, zone: "teacher", index: null } }], item, { side });
       }
       if (item.baseId === "padlock") {
         if (!attachPadlock(target, item)) return false;
@@ -45427,6 +45497,15 @@
       let resultText = "";
       if (item.baseId === "hapa_english") resultText = applyHapaEnglish(side);
       let itemAlreadyMovedToTrash = false;
+      if (item.baseId === "bakadekai_laziness") {
+        state.players[side].lazinessNextDamage ||= 1;
+        resultText = "相手の出席者が移動したときにダメージを与えます。";
+      }
+      if (item.baseId === "are_moshikashite") {
+        const moves = ["player", "opponent"].flatMap(owner => planRandomClassroomMoves(owner));
+        const moved = commitAttendeeMoves(moves, item, { side });
+        resultText = moved ? `お互いの出席者をランダムに${moved}人移動させました。` : "移動できる出席者がいませんでした。";
+      }
       if (item.baseId === "chotto_machii") {
         damagePlayer(side, 19, item);
         resultText = "自分本体に19ダメージを与えました。";
@@ -45481,6 +45560,7 @@
         resultText = "お互いの手札の持ち物をデッキに戻してシャッフルし、それぞれ2枚引きました。";
       }
       if (item.baseId === "red_ideology") {
+        const moves = [];
         ["player", "opponent"].forEach((owner) => {
           const refs = listBoardRefs(owner).filter((ref) => ref.zone === "seat")
             .sort((a, b) => a.index - b.index);
@@ -45499,13 +45579,17 @@
             if (card.occupiedSeatSize) placeMultiSeatCard(owner, destination, card);
             else setBoardCard(owner, "seat", destination, card);
             if (aggroKingTurns !== null && destination === ref.index) card.aggroKingTurns = aggroKingTurns;
+            if (destination !== ref.index) moves.push({ card, ref, destination: { ...ref, index: destination } });
           });
         });
+        finishAttendeeMoves(moves, item, { side });
         resultText = "お互いの出席者を各行の左側へ詰めました。";
       }
       if (item.baseId === "contrarian_portal") {
         const board = state.players[side].board.seats;
         if (![...new Set(board)].some((card) => card?.occupiedSeatSize?.rows > 1)) {
+          const moves = movementEntries(side).filter(({ ref }) => ref.zone === "seat" && seatRow(ref.index) !== 2)
+            .map(entry => ({ ...entry, destination: { ...entry.ref, index: (entry.ref.index + 6) % 12 } }));
           if (board[6]?.baseId === "aggro_king") board[6].aggroKingTurns = 0;
           for (let col = 0; col < 3; col += 1) {
             [board[col], board[6 + col]] = [board[6 + col], board[col]];
@@ -45518,6 +45602,7 @@
               }
             });
           });
+          finishAttendeeMoves(moves, item, { side });
           resultText = "自分の1行目と3行目を入れ替えました。";
         } else resultText = "複数行を使う出席者がいるため、位置を入れ替えられませんでした。";
       }
@@ -45659,6 +45744,9 @@
       }
       if (item.baseId === "lie_pekora") {
         const opponent = oppositeSide(side);
+        const moves = [side, opponent].flatMap(owner => movementEntries(owner).map(entry => ({
+          ...entry, destination: { ...entry.ref, owner: oppositeSide(owner) }
+        })));
         const ownBoard = state.players[side].board;
         state.players[side].board = state.players[opponent].board;
         state.players[opponent].board = ownBoard;
@@ -45668,6 +45756,7 @@
             if (moved) moved.owner = owner;
           });
         });
+        finishAttendeeMoves(moves, item, { side });
         resultText = "お互いの講義室に存在する出席者を、対応するマスごと入れ替えました。";
       }
       if (item.baseId === "diamond_dust") {
@@ -46675,6 +46764,7 @@
     }
 
     function cardAttacksUsedThisTurn(card) {
+      if (card?.ashigaruActionTurn === state.actionTurn) return cardAttackLimit(card);
       if (card?.baseId === "acting_out_man" && Number.isFinite(card.attacksUsedThisTurn)) return Math.max(0, card.attacksUsedThisTurn);
       if (card?.hasAttacked) return cardAttackLimit(card);
       const stored = Number(card?.attacksUsedThisTurn);
@@ -48933,6 +49023,392 @@
       return result;
     }
 
+    function movementEntries(side) {
+      return listBoardRefs(side).map(ref => ({ ref, card: getBoardCardFromRef(ref) }));
+    }
+
+    function movementEntryAt(ref) {
+      if (!ref || !["player", "opponent"].includes(ref.owner)
+        || !(ref.zone === "teacher" ? ref.index === null
+          : ref.zone === "seat" && Number.isInteger(ref.index) && ref.index >= 0 && ref.index < 9)) return null;
+      const card = getBoardCardFromRef(ref);
+      return movementEntries(ref.owner).find(entry => entry.card === card) || null;
+    }
+
+    function movementFootprint(card, ref) {
+      if (ref.zone === "teacher") return [9];
+      return occupiedSeatIndexesFor(card, ref.index);
+    }
+
+    function canOccupyMovementDestination(card, ref) {
+      const base = CARD_BASES[card.baseId];
+      const { owner, zone, index } = ref;
+      // Evolution describes how the card enters play, not where it can stand afterward.
+      if (card.allowedZones?.includes("evolution")) {
+        if (!base?.evolutionFrom) return false;
+        if (zone === "teacher" && !card.evolvedFrom?.allowedZones?.includes("teacher")) return false;
+      } else if (!card.allowedZones?.includes(zone)) return false;
+      if (beforeAttendanceSlots.has(beforeAttendanceSlotKey(owner, zone, index))) return false;
+      if (zone === "teacher") return !isMultiSeatCard(card) && !card.frontRowOnly
+        && !Number.isInteger(card.allowedSeatIndex) && !isLateReservedSlot(owner, zone, null);
+      if (Number.isInteger(card.allowedSeatIndex) && card.allowedSeatIndex !== index) return false;
+      if (card.baseId === "seat_taking_group" && index !== 4) return false;
+      const row = card.rowOnly || (card.frontRowOnly ? 1 : null);
+      const footprint = movementFootprint(card, ref);
+      return footprint.length > 0 && footprint.every(seat =>
+        (!row || seatRow(seat) === row) && !beforeAttendanceSlots.has(beforeAttendanceSlotKey(owner, zone, seat))
+        && !isSeatBlocked(owner, seat) && !isSeatClosedByAggro(owner, seat));
+    }
+
+    function movementDestinations(entry, options = {}) {
+      if (!entry?.card || entry.card.currentHp <= 0 || isPadlocked(entry.card)
+        || isAibenNyoteiEffectImmune(entry.card)) return [];
+      const { ref, card } = entry;
+      const candidates = PLAYER_SEAT_ORDER
+        .filter(index => (!options.row || seatRow(index) === options.row)
+          && (!options.adjacent || (ref.zone === "seat"
+            && movementFootprint(card, ref).some(seat => Math.abs(seatRow(seat) - seatRow(index))
+              + Math.abs(seatCol(seat) - seatCol(index)) === 1))))
+        .map(index => ({ owner: ref.owner, zone: "seat", index }));
+      if (!options.row && !options.adjacent) candidates.push({ owner: ref.owner, zone: "teacher", index: null });
+      return candidates.filter(destination => !refsMatch(ref, destination)
+        && canOccupyMovementDestination(card, destination)
+        && (options.ignoreOccupants || movementFootprint(card, destination).every(seat => {
+          const occupant = seat === 9 ? state.players[ref.owner].board.teacher : state.players[ref.owner].board.seats[seat];
+          return !occupant || occupant === card;
+        })));
+    }
+
+    const pendingAttendeeMoveEffects = [];
+    let resolvingAttendeeMoveEffects = false;
+
+    function finishAttendeeMoves(entries, source, options = {}) {
+      if (!entries.length) return 0;
+      const token = state.preBattleToken;
+      for (const entry of entries) {
+        if (options.ashigaru) {
+          entry.card.ashigaruActionTurn = state.actionTurn;
+          entry.card.attacksUsedThisTurn = cardAttackLimit(entry.card);
+          entry.card.hasAttacked = true;
+          applyPermanentStatBuff(entry.card, 1, 1, 0, "足軽", { beforeAttendance: true });
+        }
+        analyticsRecordEffect({ side: options.side ?? source?.owner ?? entry.ref.owner, source, effectType: "move_attendee",
+          chosenTargets: [analyticsCardInfo(entry.card)], details: { from: entry.ref, to: entry.destination } });
+        addLog(`${source?.name || "足軽"}の効果：${entry.card.name}を${movementLocationName(entry.destination)}へ移動させました。`);
+        showFloatingTextForCard(entry.card, "移動", "buff");
+      }
+      if (options.ashigaru) state.players[entries[0].ref.owner].turnActionTaken = true;
+      recalculateBoardAuras();
+      // Capture the original order before any movement listener changes the board again.
+      const ordered = [...entries].sort((a, b) => compareDamageTargetRefs(a.ref, b.ref));
+      pendingAttendeeMoveEffects.push(...ordered.map(entry => ({ ...entry, moveToken: token })));
+      if (resolvingAttendeeMoveEffects) return entries.length;
+      resolvingAttendeeMoveEffects = true;
+      try {
+        while (pendingAttendeeMoveEffects.length) {
+          const { card, ref, destination, moveToken } = pendingAttendeeMoveEffects.shift();
+          if (moveToken !== state.preBattleToken || state.gameOver) continue;
+          if (card.currentHp > 0 && findBoardCardByInstanceId(card.instanceId)?.card === card) {
+            resolveAttendeeMovementEffect(card, ref, destination);
+          }
+          const opponent = oppositeSide(destination.owner);
+          const opposingPlayer = state.players[opponent];
+          if (!ongoingEffectsSuppressed() && opposingPlayer.lazinessNextDamage) {
+            const damage = opposingPlayer.lazinessNextDamage;
+            opposingPlayer.lazinessNextDamage = damage % 3 + 1;
+            if (card.currentHp > 0 && findBoardCardByInstanceId(card.instanceId)?.card === card) {
+              dealDamageToCard(card, damage, { ...CARD_BASES.bakadekai_laziness, baseId: "bakadekai_laziness", owner: opponent });
+              addLog(`バカでかい怠惰の効果：${card.name}に${damage}ダメージ。次は${opposingPlayer.lazinessNextDamage}ダメージです。`);
+            }
+          }
+          applyBoardAuras();
+          checkLifeVictory();
+        }
+      } finally {
+        resolvingAttendeeMoveEffects = false;
+        pendingAttendeeMoveEffects.length = 0;
+      }
+      return entries.length;
+    }
+
+    function commitAttendeeMoves(entries, source, options = {}) {
+      for (const { ref, card } of entries) clearBoardCardFromField(ref.owner, ref.zone, ref.index, card);
+      for (const { destination, card } of entries) {
+        if (destination.zone === "seat" && isMultiSeatCard(card)) placeMultiSeatCard(destination.owner, destination.index, card);
+        else setBoardCard(destination.owner, destination.zone, destination.index, card);
+      }
+      return finishAttendeeMoves(entries, source, options);
+    }
+
+    function moveAttendee(entry, destination, source, options = {}) {
+      if (!movementDestinations(entry, options).some(ref => refsMatch(ref, destination))
+        || getBoardCardFromRef(entry.ref) !== entry.card) return false;
+      return Boolean(commitAttendeeMoves([{ ...entry, destination }], source, options));
+    }
+
+    function resolveAttendeeMovementEffect(card, from, to) {
+      if (!canUsePrintedCardEffects(card)) return;
+      const side = to.owner;
+      if (card.baseId === "mini_test_star") {
+        const index = PLAYER_SEAT_ORDER.find(seat => isBoardSlotOpen(side, "seat", seat));
+        if (index === undefined) return;
+        const copy = makeBoardCard({ ...createCardFromBase(card.baseId, side), keywords: [], generatedWithoutEffects: true, token: true });
+        if (attendCard(side, copy, "seat", index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED })) {
+          showCardPlayAnimation(copy, "board");
+          addLog(`${card.name}の効果：能力を持たない「ミニテストスター」を1人出席させました。`);
+        }
+      }
+      if (to.zone !== "seat") return;
+      if (card.baseId === "dream_park_student") {
+        const column = seatCol(to.index);
+        if (from.zone === "seat" && seatCol(from.index) === column) return;
+        const keyword = column === 0 ? "超注目" : column === 2 ? "超陽気" : "";
+        if (keyword && !hasKeyword(card, keyword)) {
+          addKeyword(card, keyword, card.name);
+          showFloatingTextForCard(card, keyword, "buff");
+          addLog(`${card.name}は${keyword}を持ちました。`);
+        }
+      }
+      if (card.baseId === "sudoku_queen") {
+        const row = seatRow(to.index);
+        if (from.zone === "seat" && seatRow(from.index) === row) return;
+        if (row === 1) {
+          const targets = movementEntries(oppositeSide(side)).filter(entry =>
+            entry.ref.zone === "seat" && movementFootprint(entry.card, entry.ref).some(index => seatRow(index) === 1));
+          runEffectFeedbackBatch(() => targets.forEach(({ card: target }) => dealDamageToCard(target, 1, card)));
+        }
+        if (row === 2) {
+          for (const entry of movementEntries(side)) {
+            if (entry.ref.zone === "seat" && !isPadlocked(entry.card)
+              && movementFootprint(entry.card, entry.ref).some(index => seatRow(index) === 2)) {
+              applyPermanentStatBuff(entry.card, 1, 1, 0, card.name, { beforeAttendance: true });
+            }
+          }
+          addLog(`${card.name}の効果：自分の2行目にいる出席者の攻撃力と体力を+1しました。`);
+        }
+        if (row === 3) healPlayer(side, 1, card);
+      }
+    }
+
+    function planRandomClassroomMoves(side, randomize = true) {
+      // Reserve the full footprint of each attendee. Backtracking makes swaps
+      // possible without leaving anyone stranded on an illegal seat.
+      const entries = movementEntries(side).map(entry => ({
+        ...entry, destinations: movementDestinations(entry, { ignoreOccupants: true })
+      })).sort((a, b) => a.destinations.length - b.destinations.length);
+      const candidates = entries.map(entry => {
+        const moves = randomize ? shuffle(entry.destinations) : entry.destinations;
+        return [...moves, entry.ref].map(destination => ({
+          destination, bits: movementFootprint(entry.card, destination).reduce((bits, seat) => bits | (1 << seat), 0)
+        }));
+      });
+      const bestByOccupancy = new Map();
+      const search = (index, occupied) => {
+        if (index === entries.length) return { count: 0, moves: [] };
+        const key = index * 1024 + occupied;
+        if (bestByOccupancy.has(key)) return bestByOccupancy.get(key);
+        let best = null;
+        for (const { destination, bits } of candidates[index]) {
+          if (bits & occupied) continue;
+          const tail = search(index + 1, occupied | bits);
+          if (!tail) continue;
+          const { ref, card } = entries[index];
+          const changed = !refsMatch(ref, destination);
+          const count = tail.count + Number(changed);
+          if (!best || count > best.count) {
+            best = { count, moves: changed ? [{ ref, card, destination }, ...tail.moves] : tail.moves };
+          }
+          if (count === entries.length - index) break;
+        }
+        bestByOccupancy.set(key, best);
+        return best;
+      };
+      return search(0, 0)?.moves ?? [];
+    }
+
+    function movementLocationName(ref) {
+      return ref.zone === "teacher" ? "教卓マス" : `${seatRow(ref.index)}行${seatCol(ref.index) + 1}列`;
+    }
+
+    async function startVoluntaryMovementChoice(ability) {
+      if (isOnlineSpectator() || battleNewActionBlocked() || isTutorialActive()) return;
+      const side = "player";
+      const ashigaru = ability === "ashigaru";
+      let entry = ashigaru ? movementEntryAt(state.selectedAttacker) : null;
+      if (!(ashigaru ? canUseAshigaru(side, entry) : canUsePhysicalSky(side))) return;
+      const source = ashigaru ? { ...entry.card, name: "足軽" } : state.environment;
+      const token = state.preBattleToken;
+      clearSelections();
+      if (!ashigaru) {
+        const entries = movementEntries(side).filter(candidate => movementDestinations(candidate).length);
+        const [chosen] = await chooseFusionEffectCards(side, source, entries.map(candidate => candidate.card), 1,
+          "movement_source");
+        entry = entries.find(candidate => candidate.card.instanceId === chosen?.instanceId);
+      }
+      if (!entry || token !== state.preBattleToken || state.gameOver) return;
+      const destination = await chooseAttendeeMoveDestination(side, source, entry, { required: false });
+      if (!destination || token !== state.preBattleToken || state.gameOver) return;
+      const { instanceId } = entry.card;
+      if (onlineCanSendCommand()) {
+        onlineSendCommand("moveAttendee", { source: entry.ref, destination, ability, instanceId });
+      } else if (!isOnlineGuest()) {
+        resolveVoluntaryMovement(side, entry.ref, destination, ability, instanceId);
+      }
+      render();
+    }
+
+    function scoreAiMovementItem(side, item) {
+      const enemy = oppositeSide(side);
+      if (item.baseId === "bakadekai_laziness") {
+        if (state.players[side].lazinessNextDamage) return 0;
+        const enemyMoves = movementEntries(enemy).filter(entry => hasKeyword(entry.card, "足軽")).length;
+        const ownTriggers = state.players[side].hand.filter(card => ["pa_student_pa", "are_moshikashite"].includes(card.baseId)).length;
+        return enemyMoves * 4 + ownTriggers * 4 + (ongoingEnvironmentBaseId() === "physical_sky" ? 4 : 0);
+      }
+      const own = planRandomClassroomMoves(side, false);
+      const opposing = planRandomClassroomMoves(enemy, false);
+      if (!own.length && !opposing.length) return 0;
+      const movementValue = own.reduce((sum, entry) => sum + movementPositionValue(side, entry, entry.destination), 0)
+        - opposing.reduce((sum, entry) => sum + movementPositionValue(enemy, entry, entry.destination), 0);
+      const opponentPositioned = opposing.filter(({ card, ref }) =>
+        (card.baseId === "aggro_queen" && ref.index === 5) || (card.baseId === "aggro_king" && ref.index === 6)).length;
+      return Math.max(0, movementValue + opponentPositioned * 2 - 5);
+    }
+
+    function canUseAshigaru(side, entry) {
+      return state.phase === "battle" && !state.gameOver && side === state.currentSide
+        && entry?.ref.owner === side && canUsePrintedCardEffects(entry.card) && hasKeyword(entry.card, "足軽")
+        && entry.card.ashigaruActionTurn !== state.actionTurn && cardAttacksUsedThisTurn(entry.card) === 0;
+    }
+
+    function physicalSkyUsedThisTurn(side) {
+      return state.players[side].physicalSkyUsedTurn === state.actionTurn;
+    }
+
+    function canUsePhysicalSky(side) {
+      return state.phase === "battle" && !state.gameOver && state.currentSide === side
+        && ongoingEnvironmentBaseId() === "physical_sky" && !physicalSkyUsedThisTurn(side);
+    }
+
+    function resolveVoluntaryMovement(side, source, destination, ability, instanceId) {
+      if (!source || !destination || source.owner !== side || destination.owner !== side) return false;
+      const entry = movementEntryAt(source);
+      if (!entry || entry.card.instanceId !== instanceId) return false;
+      const ashigaru = ability === "ashigaru";
+      if (!(ashigaru ? canUseAshigaru(side, entry) : ability === "physical_sky" && canUsePhysicalSky(side))) return false;
+      if (!movementDestinations(entry).some(ref => refsMatch(ref, destination))) return false;
+      if (side === "player") pushTestHistoryBeforeAction();
+      const effectSource = ashigaru ? { ...entry.card, name: "足軽" } : state.environment;
+      if (!ashigaru) state.players[side].physicalSkyUsedTurn = state.actionTurn;
+      clearSelections();
+      return moveAttendee(entry, destination, effectSource, { ashigaru, side });
+    }
+
+    function movementPositionValue(side, entry, destination, ashigaru = false) {
+      const { card, ref } = entry;
+      const row = destination.zone === "seat" ? seatRow(destination.index) : 0;
+      const column = destination.zone === "seat" ? seatCol(destination.index) : -1;
+      let value = ashigaru ? 3 : 0;
+      const nextDamage = ongoingEffectsSuppressed() ? 0 : state.players[oppositeSide(side)].lazinessNextDamage || 0;
+      if (nextDamage && card.baseId !== "best_friend") {
+        value -= nextDamage >= card.currentHp + Number(ashigaru) ? 15 : nextDamage;
+      }
+      if (!canUsePrintedCardEffects(card)) return value;
+      if (card.baseId === "mini_test_star" && PLAYER_SEAT_ORDER.some(index => isBoardSlotOpen(side, "seat", index)
+        || (ref.zone === "seat" && ref.index === index))) value += 5;
+      if (card.baseId === "dream_park_student" && (ref.zone !== "seat" || column !== seatCol(ref.index))) {
+        if (column === 0 && !hasKeyword(card, "超注目")) value += state.players[side].life <= 8 ? 6 : 2;
+        if (column === 2 && !hasKeyword(card, "超陽気") && !ashigaru && card.playedOnTurn === state.actionTurn) value += 4;
+      }
+      if (card.baseId === "sudoku_queen" && row && (ref.zone !== "seat" || row !== seatRow(ref.index))) {
+        if (row === 1) value += movementEntries(oppositeSide(side)).filter(entry => entry.ref.zone === "seat"
+          && seatRow(entry.ref.index) === 1).reduce((sum, {card}) => sum + (card.currentHp === 1 ? 4 : 1), 0);
+        if (row === 2) value += 3 + 2 * movementEntries(side).filter(entry =>
+          entry.card !== card && entry.ref.zone === "seat" && seatRow(entry.ref.index) === 2).length;
+        if (row === 3 && state.players[side].life < currentLifeCap(side)) value += 1;
+      }
+      if (card.baseId === "aggro_queen") value += (destination.index === 5 ? 5 : 0) - (ref.index === 5 ? 5 : 0);
+      if (card.baseId === "aggro_king") value += (destination.index === 6 ? 3 : 0) - (ref.index === 6 ? 4 : 0);
+      if (card.type === "teacher" && ref.zone !== destination.zone) {
+        value += destination.zone === "teacher" ? lectureTargetEntries(side, card).length : -lectureTargetEntries(side, card).length;
+      }
+      return value;
+    }
+
+    function chooseAttendeeMoveDestination(side, source, entry, options = {}) {
+      const destinations = movementDestinations(entry, options);
+      const targetOwner = entry.ref.owner;
+      const choices = destinations.map(ref => ({
+        instanceId: `move-${ref.zone}-${ref.index}`, name: movementLocationName(ref), type: "item",
+        noCost: true, attendanceLocationChoice: true, choiceIndex: ref.index, choiceZone: ref.zone,
+        choiceScore: options.score ? options.score(ref) : movementPositionValue(side, entry, ref)
+      }));
+      return chooseFusionEffectCards(side, source, choices, 1, "movement_destination", {
+        required: options.required !== false, targetOwner
+      })
+        .then(([choice]) => choice ? { owner: targetOwner, zone: choice.choiceZone, index: choice.choiceIndex } : null);
+    }
+
+    function queueAkiHelperAttendance(side, source) {
+      queueFusionEffect(async () => {
+        const entries = movementEntries(side).filter(entry => movementDestinations(entry, { row: 3 }).length);
+        const choices = entries.map(entry => ({
+          ...entry.card,
+          choiceScore: Math.max(...movementDestinations(entry, { row: 3 }).map(ref => movementPositionValue(side, entry, ref)))
+        }));
+        const [chosen] = await chooseFusionEffectCards(side, source, choices, 1, "movement_source", { required: true });
+        const entry = entries.find(candidate => candidate.card.instanceId === chosen?.instanceId);
+        if (!entry) return;
+        const destination = await chooseAttendeeMoveDestination(side, source, entry, { row: 3 });
+        if (destination && !state.gameOver) moveAttendee(entry, destination, source, { row: 3, side });
+      });
+    }
+
+    function choosePaStudentAttackDestination(attacker, targetRef) {
+      const entry = movementEntryAt(targetRef);
+      if (attacker.baseId !== "pa_student_pa" || !canUsePrintedCardEffects(attacker)
+        || !entry || entry.card.yutaUmbrellaShield
+        || previewFinalDamageToCard(entry.card, cardAttackDamage(attacker, entry.card), attacker, { combat: true }) >= entry.card.currentHp) return null;
+      return chooseAttendeeMoveDestination(attacker.owner, attacker, entry, {
+        adjacent: true,
+        score: ref => -movementPositionValue(entry.ref.owner, entry, ref)
+      });
+    }
+
+    async function useAiVoluntaryMovement(side) {
+      if (state.gameOver || state.currentSide !== side) return;
+      const token = state.preBattleToken;
+      const entries = movementEntries(side);
+      const bestMove = (entries, ashigaru) => entries.flatMap(entry => movementDestinations(entry).map(destination => ({
+        entry, destination, value: movementPositionValue(side, entry, destination, ashigaru)
+      }))).sort((a, b) => b.value - a.value)[0];
+      if (canUsePhysicalSky(side)) {
+        const move = bestMove(entries, false);
+        if (move?.value > 0) {
+          resolveVoluntaryMovement(side, move.entry.ref, move.destination, "physical_sky", move.entry.card.instanceId);
+          render();
+          await waitForBattlePresentation();
+        }
+      }
+      for (const entry of movementEntries(side)) {
+        if (token !== state.preBattleToken || state.gameOver) return;
+        if (!canUseAshigaru(side, entry)) continue;
+        const best = bestMove([entry], true);
+        if (!best) continue;
+        const card = entry.card;
+        const attackReady = canAttackSilently(card);
+        const enemy = oppositeSide(side);
+        if (attackReady && card.attack > 0
+          && (card.attack >= state.players[enemy].life || best.value < card.attack + 2
+            || (canTeacherChooseLecture(entry.ref) && lectureTargetEntries(side, card).length >= 2))) continue;
+        if (best.value > 0) {
+          resolveVoluntaryMovement(side, entry.ref, best.destination, "ashigaru", card.instanceId);
+          render();
+          await waitForBattlePresentation();
+        }
+      }
+    }
+
     function adjacentBoardTargets(owner, zone, index) {
       if (zone !== "seat") return [];
       return adjacentIndexes(index).map((i) => ({ owner, zone: "seat", index: i }));
@@ -50004,7 +50480,8 @@
             : "対象を確定";
       if (boardChoice) {
         elements.itemTargetConfirmButton.textContent = isBoardSeatChoice()
-          ? `出席させる\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}人`
+          ? state.pendingCardChoice.context.kind === "movement_destination" ? "移動する"
+            : `出席させる\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}人`
           : isBoardColumnChoice()
           ? `破壊する\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}列`
           : `対象を確定\n${state.pendingCardChoice.selectedIds.length}/${state.pendingCardChoice.max}`;
@@ -50031,6 +50508,8 @@
         ))
         || (state.pendingDestroyItem && !state.pendingDestroyItem.target)
         || (state.pendingKingGhidorahBed && !state.pendingKingGhidorahBed.target);
+      const ashigaruEntry = movementEntryAt(state.selectedAttacker);
+      elements.ashigaruMoveButton.classList.toggle("hidden", spectator || isTutorialActive() || battleNewActionBlocked() || !canUseAshigaru("player", ashigaruEntry) || !movementDestinations(ashigaruEntry).length);
       elements.endTurnButton.classList.toggle("hidden", spectator || state.phase !== "battle" || (choosingItemTargets && !choosingCrotchFebreze) || waitingForCardChoice);
       elements.endTurnButton.disabled = spectator
         || Boolean(state.lectureRoomCheck)
@@ -50631,6 +51110,8 @@
       if (state.phase !== "battle" || state.currentSide !== "player" || state.gameOver || state.aiThinking || state.pendingCardPlay || state.resolvingOrderedAttendance) return false;
       if (state.pendingCopiedCard || state.pendingMultiItem) return true;
       if (state.players.player.hand.filter((card) => card.baseId === "ruler").length >= 2) return true;
+      if (movementEntries("player").some(entry => (canUseAshigaru("player", entry) || canUsePhysicalSky("player"))
+        && movementDestinations(entry).length)) return true;
       if (listBoardRefs("player").some((ref) => canAttackSilently(getBoardCardFromRef(ref)))) return true;
       return state.players.player.hand.some((card) => canUseHandCardNow(card));
     }
@@ -50769,7 +51250,7 @@
           if (item.baseId === "favorite_number_s") return ref.zone === "teacher" && target.type === "teacher";
           if (item.baseId === "vampirization") return hasOpenBoardSlotForCard("player", target);
           if (item.baseId === "laser_beam") return ref.zone === "seat" && seatRow(ref.index) === 3;
-          if (item.baseId === "attitude") return target.type === "student" && !state.players.opponent.board.teacher;
+          if (item.baseId === "attitude") return target.type === "student" && !isMultiSeatCard(target) && !state.players.opponent.board.teacher;
           return true;
         });
       }
@@ -50845,7 +51326,7 @@
       if (item.baseId === "stress_hair" && !canAttachUtaEquipment(target)) return false;
       if (item.baseId === "laser_beam" && !(zone === "seat" && seatRow(index) === 3)) return false;
       if (item.baseId === "yakitori_harassment" && target.type !== "student") return false;
-      if (item.baseId === "attitude" && (target.type !== "student" || state.players[owner].board.teacher)) return false;
+      if (item.baseId === "attitude" && (target.type !== "student" || isMultiSeatCard(target) || state.players[owner].board.teacher)) return false;
       if (item.target === "enemy" && !isAllowedEffectTarget("player", target)) return false;
       if (target.untargetableUntilTurn && target.untargetableUntilTurn >= state.actionTurn && item.target === "enemy") return false;
       return ["enemy", "friendly", "friendlyAny", "anyBoard"].includes(item.target);
@@ -52307,6 +52788,17 @@
       elements.environmentSlot.innerHTML = "";
       setupSlotEvents(elements.environmentSlot, "environment", null, null);
       if (state.environment) elements.environmentSlot.appendChild(createEnvironmentCard(state.environment));
+      if (state.environment?.baseId === "physical_sky" && !isOnlineSpectator()) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "environment-action-button";
+        button.id = "physicalSkyMoveButton";
+        button.textContent = physicalSkyUsedThisTurn("player") ? "使用済み" : "移動させる";
+        button.disabled = !canUsePhysicalSky("player")
+          || !movementEntries("player").some(entry => movementDestinations(entry).length);
+        button.addEventListener("click", () => startVoluntaryMovementChoice("physical_sky"));
+        elements.environmentSlot.appendChild(button);
+      }
       if (state.environment?.baseId === "raptor_temple") {
         const button = document.createElement("button");
         button.type = "button";
@@ -52702,6 +53194,9 @@
         case "wonton_ki":
           detail = "自分のターン終了時、自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引きます。";
           break;
+        case "physical_sky":
+          detail = physicalSkyUsedThisTurn(side) ? "このターンは使用済みです。" : "自分のターンに1回、自分の出席者を1人移動させられます。";
+          break;
         case "academic_move":
           detail = cardRulesText(environment);
           break;
@@ -52800,6 +53295,9 @@
       if (player.pointSystemActive || player.pointScore > 0) lines.push(hasAcquiredUnit(side) ? "[単位] 取得済み" : `[点数] ${player.pointScore || 0}/10`);
       Object.entries(player.submissionCounters || {}).forEach(([name, count]) => lines.push(`${name}：${count}`));
       if (ongoingEffectsSuppressed()) return lines;
+      if (player.lazinessNextDamage) {
+        lines.push(`バカでかい怠惰：次に移動した相手の出席者に${player.lazinessNextDamage}ダメージを与えます。`);
+      }
       if (player.retainNextUsedItem) {
         lines.push(`${CARD_BASES.jailbreak_tutuapp.name}：次に自分が使用する持ち物カードは、使用後に校外エリアへ送られず、手札に残る。`);
       }
@@ -53103,7 +53601,8 @@
         slot.classList.add("click-ready", "selection-candidate");
         slot.classList.toggle("placement-valid", selected);
         slot.setAttribute("role", "button");
-        slot.setAttribute("aria-label", `出席先：${seatChoice.name}`);
+        const label = state.pendingCardChoice.context.kind === "movement_destination" ? "移動先" : "出席先";
+        slot.setAttribute("aria-label", `${label}：${seatChoice.name}`);
         markEffectTargetSelection(slot, selected);
         return;
       }
@@ -55757,6 +56256,43 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      physical_sky: {
+        hand: ["classroom", "physical_sky"], own: { seats: [[4, "dream_park_student"], [7, "mini_test_star"]] },
+        enemy: { seats: [[4, "sudoku_queen"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "環境マスに置き、「移動させる」から出席者と移動先を選びます。移動した出席者の行動権と、同じターンに再使用できないことを確認できます。"
+      },
+      mini_test_star: {
+        hand: ["physical_sky"], own: { seats: [] }, enemy: { seats: [[4, "general_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "手札から出席させた直後に本人を選んで「足軽で移動」を使います。本人が2/2になり、能力を持たない1/1が最初の空席に出席します。"
+      },
+      bakadekai_laziness: {
+        hand: ["bakadekai_laziness", "pa_student_pa", "are_moshikashite"], own: { seats: [[7, "general_student"]] },
+        enemy: { seats: [[0, "strong_student"], [4, "strong_student"], [8, "strong_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "バカでかい怠惰を使い、パ学生パの攻撃や「あれもしかして」で相手を移動させます。移動した出席者ごとにダメージが1、2、3、1の順で変わります。"
+      },
+      dream_park_student: {
+        hand: ["physical_sky"], own: { seats: [] }, enemy: { seats: [[4, "general_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "2列目に出席させ、フィジカルスカイと足軽で別々の列へ移動します。1列目で超注目、3列目で超陽気を得て、両方を保持できます。"
+      },
+      sudoku_queen: {
+        hand: ["physical_sky"], life: 12, own: { seats: [[3, "general_student"], [5, "general_student"]] },
+        enemy: { seats: [[0, "general_student"], [2, "general_student"], [4, "general_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "行を変えると効果が変わります。1行目は相手の1行目にダメージ、2行目は自分の同じ行を強化、3行目は自分の気力を回復します。"
+      },
+      aki_helper: {
+        hand: ["physical_sky"], own: { seats: [[4, "mini_test_star"], [7, "general_student"]] },
+        enemy: { seats: [[4, "general_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "出席時にミニテストスターを指名し、3行目の空き席を選びます。移動時の効果で能力を持たないミニテストスターが出席します。"
+      },
+      pa_student_pa: {
+        hand: ["bakadekai_laziness"], own: { seats: [] }, enemy: { seats: [[4, "aggro_student"], [8, "strong_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "手札から出席させたターンに相手の出席者を攻撃し、相手の隣接する空き席を選びます。怠惰を先に使うと、移動時に破壊して反撃を防げます。"
+      },
+      are_moshikashite: {
+        hand: ["bakadekai_laziness"], own: { seats: [[4, "mini_test_star"], [7, "sudoku_queen"]] },
+        enemy: { seats: [[0, "strong_student"], [4, "strong_student"], [8, "strong_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "両方の講義室に出席者がいる状態で一斉移動を試せます。怠惰を先に使うと、相手の移動前の席順でダメージが変わります。"
+      },
       summer_teacher: {
         hand: ["summer_teacher", "summer_teacher", "trendy_student", "extra_people", "kyoto_sound_i", "ruler"], will: 20,
         own: { seats: [], teacher: null }, enemy: { seats: [[0, "general_student"], [1, "single_cell"], [4, "strong_student"]], teacher: "general_teacher" },
@@ -57684,6 +58220,7 @@
     }
 
     const BATTLE_CARD_TERM_DESCRIPTIONS = {
+      足軽: "自分のターンに1回、出席したターンから使用できる。行動権を消費し、このカードを出席可能な空きマスへ移動させる。その後、このカードの攻撃力と体力を+1する。",
       "提出": "このカードを使用したとき、場に出たとき、または効果で手札から校外エリアへ送られたとき、以下の効果を発動する。同じプレイで複数の条件を満たしても、発動は1回だけ。場に出るとは出席・環境マスへの配置・装備を指す。遅刻ゾーンへの移動や通常使用後の校外送りでは重ねて発動しない。",
       "超吸血": "攻撃で与えたダメージの分だけ、自分本体の気力を回復する。この出席者自身の体力は回復しない。",
       "超陽気": "出席したターンでも、出席者と相手本体のどちらにも攻撃できる。",
@@ -58383,7 +58920,7 @@
         if (abilities.includes("装備") && removeMatch(text.match(/^(?:装備カード。|装備(?:。|\n))/))) continue;
         if (abilities.includes("講義") && removeMatch(text.match(/^講義。/))) continue;
         if (Number(base.late) > 0 && removeMatch(text.match(new RegExp(`^遅刻${Number(base.late)}。`)))) continue;
-        const keywordDeclaration = text.match(/^((?:超吸血|超陽気|超注目|陽気|注目|眠気|余裕)(?:と(?:超吸血|超陽気|超注目|陽気|注目|眠気|余裕))*)を持つ。/);
+        const keywordDeclaration = text.match(/^((?:超吸血|超陽気|超注目|陽気|注目|眠気|余裕|足軽)(?:と(?:超吸血|超陽気|超注目|陽気|注目|眠気|余裕|足軽))*)を持つ。/);
         if (keywordDeclaration) {
           const declared = keywordDeclaration[1].split("と");
           if (declared.every((keyword) => baseKeywords.has(keyword))) removeMatch(keywordDeclaration);
@@ -58427,6 +58964,14 @@
       }
       const rules = {
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引く。",
+        physical_sky: "このカードが環境マスにあるかぎり、お互いのプレイヤーはそれぞれ自分のターンに1回、自分の出席者1人を指名し、その出席者が出席可能な空きマスへ移動させることができる。",
+        mini_test_star: "足軽を持つ。\nこのカードが移動したとき、自分の空いている席マスに、能力を持たない「ミニテストスター」を1人出席させる。",
+        bakadekai_laziness: "この対戦中、相手の出席者が移動したとき、その出席者に1ダメージを与える。\nその後、次にこの効果で与えるダメージを+1する。この効果のダメージが3だったなら、次のダメージを1に戻す。\nこの効果は重複しない。",
+        dream_park_student: "足軽を持つ。\n陽気を持つ。\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。",
+        sudoku_queen: "足軽を持つ。\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。",
+        aki_helper: "このカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。",
+        pa_student_pa: "陽気を持つ。\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。",
+        are_moshikashite: "お互いの出席者すべてを、それぞれの講義室内でランダムな位置に移動させる。",
         female_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、自分のデッキからカードを1枚引き、自分の気力を2回復する。",
         male_highball: "このカード以外の自分の手札1枚を選び、校外エリアへ送る。そうしたなら、相手の出席者1人を指名し、4ダメージを与える。",
         tomoyo_mou: "このカードを使用したとき、自分の手札から戦意が低い順にカードを2枚まで、このカードに融合する。同じ戦意のカードはランダムに選ぶ。その後、自分の空いている席マスを1つずつ選び、「爆発する学生」を2人出席させる。\n自分の戦意が8以上なら、このカードの戦意は8になり、融合する枚数と出席させる人数はそれぞれ4になる。",
@@ -59460,6 +60005,7 @@
     elements.trashDetailStage.addEventListener("click", (event) => {
       if (event.target === elements.trashDetailStage) closeTrashDetail();
     });
+    elements.ashigaruMoveButton.addEventListener("click", () => startVoluntaryMovementChoice("ashigaru"));
     elements.itemTargetConfirmButton.addEventListener("click", confirmSelectedItemTargets);
     elements.fusionButton.addEventListener("click", () => {
       const source = state.players.player.hand.find((card) => card.baseId === "ruler");
