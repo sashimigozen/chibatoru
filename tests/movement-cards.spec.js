@@ -130,12 +130,31 @@ test('パ学生パは攻撃力0で相手を動かし、怠惰で倒せば反撃�
   await play(page, 'pa_student_pa', 'seat', 7);
   await slot(page, 'player', 7).locator('.board-card').click();
   await slot(page, 'opponent', 4).locator('.board-card').click();
+  await expect.poll(() => page.evaluate(() => state.pendingCardChoice?.cards.map(card => card.choiceIndex))).toEqual([3, 5]);
   await choose(page, slot(page, 'opponent', 5), 'movement_destination');
   await expect.poll(() => page.evaluate(() => state.attackInProgress)).toBe(false);
 
   expect(await page.evaluate(() => [state.players.player.board.seats[7]?.currentHp,
     state.players.opponent.board.seats[4], state.players.opponent.board.seats[5],
     state.players.player.lazinessTriggersRemaining])).toEqual([1, null, null, 1]);
+});
+
+test('パ学生パは左右が埋まっていると前後が空いていても移動させない', async ({ page }) => {
+  await start(page, 'pa_student_pa');
+  await play(page, 'pa_student_pa', 'seat', 7);
+  await page.evaluate(() => {
+    for (const index of [3, 5]) {
+      state.players.opponent.board.seats[index] = makeBoardCard(createCardFromBase('general_student', 'opponent'));
+    }
+    render();
+  });
+  await slot(page, 'player', 7).locator('.board-card').click();
+  await slot(page, 'opponent', 4).locator('.board-card').click();
+  await expect.poll(() => page.evaluate(() => ({
+    choice: state.pendingCardChoice?.context?.kind ?? null,
+    attacker: state.players.player.board.seats[7]?.baseId ?? null,
+    target: state.players.opponent.board.seats[4]?.baseId
+  }))).toEqual({ choice: null, attacker: null, target: 'aggro_student' });
 });
 
 test('あれカメラは全員の移動後に元の席順で足軽と怠惰を処理し、怠惰は2回で終了する', async ({ page }) => {
@@ -175,7 +194,7 @@ test('あれカメラは全員の移動後に元の席順で足軽と怠惰を�
   });
 });
 
-test('怠惰は発動中に使用しても残り回数が増えず、終了した後にまた使える', async ({ page }) => {
+test('怠惰を使い直すと残り2回に戻り、1回の移動で発動するのは1回だけ', async ({ page }) => {
   await start(page, 'bakadekai_laziness');
   await item(page, 'bakadekai_laziness');
   const result = await page.evaluate(() => {
@@ -188,13 +207,15 @@ test('怠惰は発動中に使用しても残り回数が増えず、終了し�
     castImmediateItem('player', player.hand.find(card => card.baseId === 'bakadekai_laziness'), true);
     const afterDuplicate = player.lazinessTriggersRemaining;
     move(4, 5);
+    const afterNext = player.lazinessTriggersRemaining;
+    move(8, 7);
     const expired = player.lazinessTriggersRemaining;
     const later = createCardFromBase('bakadekai_laziness', 'player');
     player.hand.push(later);
     castImmediateItem('player', later, true);
-    return [afterFirst, afterDuplicate, expired, player.lazinessTriggersRemaining];
+    return [afterFirst, afterDuplicate, afterNext, expired, player.lazinessTriggersRemaining];
   });
-  expect(result).toEqual([1, 1, 0, 2]);
+  expect(result).toEqual([1, 2, 1, 0, 2]);
 });
 
 test('数独女王は移動した行の効果だけ処理する', async ({ page }) => {
