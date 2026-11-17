@@ -92,3 +92,63 @@ test('オンラインのゲストも選択待ち中にクリックして応答�
   expect(await page.evaluate(()=>({kind:window.fusionSelectionResponse.privateChoiceKind,count:window.fusionSelectionResponse.selectedIds.length})))
     .toEqual({kind:'fusion_effect_choice',count:2});
 });
+
+test('相手の手番と攻撃処理中は全種類の手札融合を開けず、自分の手番には操作できる', async ({ page }) => {
+  const cases = [
+    { hand: ['private_teacher', 'general_student'], button: '[data-preview-any-hand-fusion]', open: 'openAnyHandFusionChoice' },
+    { hand: ['fusion_uma', 'fusion_maibo'], button: '[data-preview-horse-fusion]', open: 'openHorseFusionChoice' },
+    { hand: ['ruler', 'ruler'], button: '[data-preview-ruler-fuse]', open: 'openRulerFusionChoice' },
+    { hand: ['tsurai_nara', 'yuta'], button: '[data-preview-uta-fusion]', open: 'openUtaFusionChoice' }
+  ];
+  for (const { hand, button, open } of cases) {
+    await page.evaluate(ids => {
+      state.currentSide = 'opponent';
+      state.players.player.hand = ids.map(id => createCardFromBase(id, 'player'));
+      render();
+      showBattleCardPreview(state.players.player.hand[0]);
+    }, hand);
+    const previewButton = page.locator(button);
+    await expect(page.locator('#battleCardPreview')).toBeVisible();
+    await expect(previewButton).toBeDisabled();
+    expect(await page.evaluate(name => {
+      const [source, target] = state.players.player.hand;
+      return [window[name](source), performHandFusionDrop(source.instanceId, target.instanceId), state.pendingCardChoice];
+    }, open)).toEqual([false, false, null]);
+
+    await page.evaluate(() => {
+      state.currentSide = 'player';
+      state.attackInProgress = true;
+      render();
+    });
+    await expect(previewButton).toBeDisabled();
+    expect(await page.evaluate(name => window[name](state.players.player.hand[0]), open)).toBe(false);
+
+    await page.evaluate(() => {
+      state.attackInProgress = false;
+      render();
+    });
+    await expect(previewButton).toBeEnabled();
+    await previewButton.click();
+    await expect(page.locator('#threeGesturesStage')).toBeVisible();
+    await page.locator('#threeGesturesHand button.card').first().click();
+    await page.locator('#threeGesturesConfirmButton').click();
+    await expect.poll(() => page.evaluate(() => state.players.player.hand.length)).toBe(1);
+    await expect(page.locator('#threeGesturesStage')).toBeHidden();
+  }
+});
+
+test('手番切り替え直後の古い定規融合の確定は取り消し、相手の手番を進められる', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    state.players.player.hand = Array.from({ length: 2 }, () => createCardFromBase('ruler', 'player'));
+    state.players.player.deck = [createCardFromBase('general_student', 'player')];
+    openRulerFusionChoice(state.players.player.hand[0]);
+    toggleCardChoiceCard(state.players.player.hand[1].instanceId);
+    state.currentSide = 'opponent';
+    confirmCardChoiceSelection();
+    const remaining = state.players.player.hand.map(card => card.baseId);
+    await finishEndTurn('opponent');
+    return { remaining, choice: state.pendingCardChoice, nextSide: state.currentSide };
+  });
+  expect(result).toEqual({ remaining: ['ruler', 'ruler'], choice: null, nextSide: 'player' });
+  await expect(page.locator('#threeGesturesStage')).toBeHidden();
+});

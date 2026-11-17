@@ -153,6 +153,7 @@ test('ゲストのドラッグ融合をホストで処理し途中段階と最�
         type:message.command?'command':message.type,protocol:ONLINE_PROTOCOL_VERSION}),message);
     }
     for(const base of ['fusion_maibo','fusion_where']){
+      await expect.poll(() => guest.evaluate(() => canPlayerStartHandFusion())).toBe(true);
       expect(await guest.evaluate(base=>{
         const p=state.players.player;
         return performHandFusionDrop(p.hand.find(c=>c.baseId===base).instanceId,p.hand.find(c=>c.baseId==='uma_bone').instanceId);

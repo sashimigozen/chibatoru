@@ -15,16 +15,18 @@ for(const [position,blocked,count] of [[4,[],0],[4,[],1],[4,[],2],[0,[],1],[4,[3
   fuseAnyHandCards('player',c.instanceId,p.hand.filter(x=>x.instanceId!==c.instanceId).map(c=>c.instanceId),false);
   placeCardFromHand('player',c.instanceId,'seat','player',position,true);
  },{position,blocked});
- const available=(position%3>0&&!blocked.includes(position-1)?1:0)+(position%3<2&&!blocked.includes(position+1)?1:0);
- if(available){
-  await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('attendance_count');
+ const seats = [position-1,position+1].filter(index => index >= 0 && index < 9
+  && Math.floor(index/3) === Math.floor(position/3) && !blocked.includes(index));
+ if(seats.length){
+  await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('attendance_seats');
+  await expect.poll(()=>page.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
   expect(await page.evaluate(()=>[state.players.player.hand.length,state.players.player.life])).toEqual([0,10]);
-  await page.evaluate(count=>{toggleCardChoiceCard(state.pendingCardChoice.cards.find(c=>c.attendanceCount===count).instanceId);confirmCardChoiceSelection();},count);
-  for(let n=0;n<count;n++){
-   await expect.poll(()=>page.evaluate(()=>!!state.pendingCopiedCard)).toBe(true);
-   expect(await page.evaluate(()=>[state.players.player.hand.length,state.players.player.life])).toEqual([0,10]);
-   await page.evaluate(()=>{const index=PLAYER_SEAT_ORDER.find(index=>isPendingCopiedCardPlacementLegal('player','seat','player',index));placePendingCopiedCardForSide('player','seat','player',index);});
+  const candidates = page.locator('#playerSeatGrid .slot.selection-candidate');
+  await expect(candidates).toHaveCount(seats.length);
+  for (const index of seats.slice(0,count)) {
+   await page.locator(`#playerSeatGrid .slot.selection-candidate[data-index="${index}"]`).click();
   }
+  await page.locator('#itemTargetConfirmButton').click();
  }
  await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
  expect(await page.evaluate(()=>[state.players.player.hand.length,state.players.player.life,listBoardRefs('player').filter(r=>getBoardCardFromRef(r).baseId==='exploding_student').length])).toEqual([2,12,count]);
@@ -53,7 +55,7 @@ test('AIは素材3枚でチュギデスの強化効果を最後まで処理す�
  await ready(page);
  await page.evaluate(()=>{
   state.testMode=false;state.currentSide='opponent';state.aiThinking=true;
-  for(const side of ['player','opponent'])Object.assign(state.players[side],{board:{teacher:null,seats:Array(9).fill(null)},deck:Array.from({length:8},()=>createCardFromBase('ruler',side)),hand:[],will:6,maxWill:6,life:10});
+  for(const side of ['player','opponent'])Object.assign(state.players[side],{board:{teacher:null,seats:Array(9).fill(null)},deck:Array.from({length:8},()=>createCardFromBase('ruler',side)),hand:[],will:7,maxWill:7,life:10});
   state.players.opponent.hand=['chugidesu','ruler','ruler','ruler'].map(id=>createCardFromBase(id,'opponent'));
   runOpponentAI();
  });
@@ -66,7 +68,7 @@ for(const [side,materials] of [['opponent',2],['player',2],['player',3]])test(`�
  await page.evaluate(({side,materials})=>{
   state.testMode=false;state.currentSide=side;state.aiThinking=true;
   state.training.active=side==='player';state.training.leftController='ai';
-  for(const owner of ['player','opponent'])Object.assign(state.players[owner],{board:{teacher:null,seats:Array(9).fill(null)},deck:Array.from({length:8},()=>createCardFromBase('ruler',owner)),hand:[],will:6,maxWill:6,life:10});
+  for(const owner of ['player','opponent'])Object.assign(state.players[owner],{board:{teacher:null,seats:Array(9).fill(null)},deck:Array.from({length:8},()=>createCardFromBase('ruler',owner)),hand:[],will:7,maxWill:7,life:10});
   state.players[side].hand=['chugidesu',...Array(materials).fill('ruler')].map(id=>createCardFromBase(id,side));
   if(side==='player')runTrainingLeftAI();else runOpponentAI();
  },{side,materials});
