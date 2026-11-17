@@ -68,6 +68,10 @@ test('足軽は出席ターンから使え、召喚酔いは続く。ミニテ�
 test('フィジカルスカイは行動権を保ち、夢の国バイト学生は左右の効果を保持する', async ({ page }) => {
   await start(page, 'dream_park_student');
   await play(page, 'dream_park_student', 'seat', 4);
+  expect(await page.evaluate(() => {
+    const card = state.players.player.board.seats[4];
+    return [card.attack, card.currentHp];
+  })).toEqual([1, 1]);
   await play(page, 'physical_sky', 'environment');
   await page.locator('#physicalSkyMoveButton').click();
   await choose(page, slot(page, 'player', 4).locator('.board-card'), 'movement_source');
@@ -76,7 +80,7 @@ test('フィジカルスカイは行動権を保ち、夢の国バイト学生�
   expect(await page.evaluate(() => {
     const card = state.players.player.board.seats[5];
     return [card.attack, card.currentHp, canAttack(card)];
-  })).toEqual([3, 3, true]);
+  })).toEqual([2, 2, true]);
   await expect(page.locator('#physicalSkyMoveButton')).toBeDisabled();
   await slot(page, 'player', 5).locator('.board-card').click();
   await page.locator('#ashigaruMoveButton').click();
@@ -86,7 +90,7 @@ test('フィジカルスカイは行動権を保ち、夢の国バイト学生�
   expect(await page.evaluate(() => {
     const card = state.players.player.board.seats[3];
     return ['超注目', '超陽気'].map(keyword => hasKeyword(card, keyword)).concat(canAttack(card), card.attack, card.currentHp);
-  })).toEqual([true, true, true, 4, 4]);
+  })).toEqual([true, true, true, 3, 3]);
 });
 
 test('攻撃後も足軽を使え、移動しても攻撃済みのまま', async ({ page }) => {
@@ -110,7 +114,7 @@ test('攻撃後も足軽を使え、移動しても攻撃済みのまま', async
   expect(await page.evaluate(() => {
     const card = state.players.player.board.seats[5];
     return [card.attack, card.currentHp, cardAttacksUsedThisTurn(card), canAttack(card)];
-  })).toEqual([3, 3, 1, false]);
+  })).toEqual([2, 2, 1, false]);
 });
 
 test('あきくん係は移動元と3行目の空き席を盤面で選び、移動時効果を処理する', async ({ page }) => {
@@ -218,23 +222,48 @@ test('怠惰を使い直すと残り2回に戻り、1回の移動で発動する
   expect(result).toEqual([1, 2, 1, 0, 2]);
 });
 
-test('数独女王は移動した行の効果だけ処理する', async ({ page }) => {
+test('数独女王は1行目を強化し、2行目から教卓を含む相手の学生だけに2ダメージ', async ({ page }) => {
   await start(page, 'sudoku_queen');
+  await expect(page.locator('#playerHand [data-base-id="sudoku_queen"]')).toContainText('4');
   await play(page, 'sudoku_queen', 'seat', 8);
-  const values = await page.evaluate(() => {
-    const side = 'player';
-    const move = (from, to) => moveAttendee(movementEntryAt({ owner: side, zone: 'seat', index: from }),
-      { owner: side, zone: 'seat', index: to }, CARD_BASES.physical_sky, { side });
-    move(8, 1);
-    const enemy = state.players.opponent.board.seats;
-    const frontDamage = [enemy[0].currentHp, enemy[2].currentHp, enemy[4].currentHp];
-    move(1, 4);
-    const rowBuff = state.players.player.board.seats.slice(3, 6).map(card => [card.attack, card.currentHp]);
-    move(4, 7);
-    move(7, 6);
-    return { frontDamage, rowBuff, life: state.players.player.life };
-  });
-  expect(values).toEqual({ frontDamage: [1, 1, 2], rowBuff: [[3, 3], [4, 4], [3, 3]], life: 13 });
+  await slot(page, 'player', 8).locator('.board-card').click();
+  await page.locator('#ashigaruMoveButton').click();
+  await choose(page, slot(page, 'player', 1), 'movement_destination');
+  await idle(page);
+  expect(await page.evaluate(() => {
+    const { board } = state.players.player;
+    return [board.seats.slice(0, 3).map(card => [card.attack, card.currentHp]), state.players.opponent.board.teacher.currentHp];
+  })).toEqual([[[3, 3], [3, 3], [3, 3]], 2]);
+
+  await play(page, 'physical_sky', 'environment');
+  await page.locator('#physicalSkyMoveButton').click();
+  await choose(page, slot(page, 'player', 1).locator('.board-card'), 'movement_source');
+  await choose(page, slot(page, 'player', 4), 'movement_destination');
+  await idle(page);
+  expect(await page.evaluate(() => {
+    const own = state.players.player;
+    const enemy = state.players.opponent.board;
+    return [own.board.seats[4].currentHp, own.life, enemy.teacher, enemy.seats[0],
+      enemy.seats[4].currentHp, enemy.seats[6].currentHp, enemy.seats[8].currentHp];
+  })).toEqual([4, 12, null, null, 8, 2, 5]);
+});
+
+test('数独女王の3行目は回復し、同じ行を移動すると足軽だけが発動する', async ({ page }) => {
+  await start(page, 'sudoku_queen');
+  await play(page, 'sudoku_queen', 'seat', 4);
+  await slot(page, 'player', 4).locator('.board-card').click();
+  await page.locator('#ashigaruMoveButton').click();
+  await choose(page, slot(page, 'player', 7), 'movement_destination');
+  await idle(page);
+  await play(page, 'physical_sky', 'environment');
+  await page.locator('#physicalSkyMoveButton').click();
+  await choose(page, slot(page, 'player', 7).locator('.board-card'), 'movement_source');
+  await choose(page, slot(page, 'player', 8), 'movement_destination');
+  await idle(page);
+  expect(await page.evaluate(() => {
+    const { board, life } = state.players.player;
+    return [life, board.seats[8].attack, board.seats[8].currentHp];
+  })).toEqual([13, 3, 3]);
 });
 
 test('あれカメラは満席から交換でき、複数マス出席者を分裂させない', async ({ page }) => {

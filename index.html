@@ -19818,8 +19818,8 @@
       physical_sky: {"name": "フィジカルスカイ", "type": "environment", "cost": 2, "attack": 0, "hp": 0, "category": "common", "allowedZones": ["environment"]},
       mini_test_star: {"name": "ミニテストスター", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽"], "allowedZones": ["seat"]},
       bakadekai_laziness: {"name": "バカでかい怠惰", "type": "item", "cost": 2, "attack": 0, "hp": 0, "category": "big", "target": "self"},
-      dream_park_student: {"name": "夢の国バイト学生", "type": "student", "cost": 3, "attack": 2, "hp": 2, "category": "common", "keywords": ["足軽", "陽気"], "allowedZones": ["seat"]},
-      sudoku_queen: {"name": "数独女王（スウドクイーン）", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽"], "allowedZones": ["seat"]},
+      dream_park_student: {"name": "夢の国バイト学生", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽", "陽気"], "allowedZones": ["seat"]},
+      sudoku_queen: {"name": "数独女王（スウドクイーン）", "type": "student", "cost": 4, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽"], "allowedZones": ["seat"]},
       aki_helper: {"name": "あきくん係", "type": "student", "cost": 2, "attack": 1, "hp": 2, "category": "common", "allowedZones": ["seat"]},
       pa_student_pa: {"name": "パ学生パ", "type": "student", "cost": 1, "attack": 0, "hp": 1, "category": "common", "keywords": ["陽気"], "allowedZones": ["seat"]},
       are_moshikashite: {"name": "あれカメラ", "type": "item", "cost": 7, "attack": 0, "hp": 0, "category": "common", "target": "self"},
@@ -20311,7 +20311,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.44.1", "versioning": "semver", "date": "2026年11月17日", "summary": "融合操作で対戦が進まなくなることがある不具合を修正しました。", "changes": [{"category": "不具合修正", "title": "手札の融合操作", "after": "手札の融合は、自分の手番でほかの処理を待っていないときに行えるようにしました。手番が切り替わると、残っている融合の選択を閉じます。相手の手番や効果の処理中でも、カードの詳細を確認できます。"}]},
+      {"version": "ver.0.44.1", "versioning": "semver", "date": "2026年11月17日", "summary": "数独女王（スウドクイーン）と夢の国バイト学生を調整し、融合操作の不具合を修正しました。", "changes": [{"category": "カード調整", "title": "数独女王（スウドクイーン）", "before": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意4／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、自分の1行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から2行目に移動したとき、相手の講義室にいる学生すべてに2ダメージを与える。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "beforeHighlights": ["戦意3", "相手の1行目にいる出席者すべてに1ダメージを与える。", "自分の2行目にいる出席者すべての攻撃力と体力を+1する。"], "afterHighlights": ["戦意4", "自分の1行目にいる出席者すべての攻撃力と体力を+1する。", "相手の講義室にいる学生すべてに2ダメージを与える。"]}, {"category": "カード調整", "title": "夢の国バイト学生", "before": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "beforeHighlights": ["攻撃力2", "体力2"], "afterHighlights": ["攻撃力1", "体力1"]}, {"category": "不具合修正", "title": "手札の融合操作", "after": "手札の融合は、自分の手番でほかの処理を待っていないときに行えるようにしました。手番が切り替わると、残っている融合の選択を閉じます。相手の手番や効果の処理中でも、カードの詳細を確認できます。"}]},
       {"version": "ver.0.44.0", "versioning": "semver", "date": "2026年11月14日", "summary": "新能力「足軽」と移動に関わるカード8枚を追加しました。", "changes": [{"category": "新カード", "title": "フィジカルスカイ", "after": "フィジカルスカイ／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、お互いのプレイヤーは自分のターンに1回、自分の出席者1人を指名できる。その出席者が出席可能な空きマスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "ミニテストスター", "after": "ミニテストスター／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。"}, {"category": "新カード", "title": "バカでかい怠惰", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"}, {"category": "新カード", "title": "夢の国バイト学生", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。"}, {"category": "新カード", "title": "数独女王（スウドクイーン）", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。"}, {"category": "新カード", "title": "あきくん係", "after": "あきくん係／学生／共通カード／戦意2／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "パ学生パ", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "あれカメラ", "after": "あれカメラ／持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの出席者を、それぞれの講義室で出席可能なマスへランダムに移動させる。"}, {"category": "カード調整", "title": "パ学生パ", "before": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。", "beforeHighlights": ["その出席者が出席可能な隣接する", "反撃の前にそこへ"], "afterHighlights": ["その出席者の左隣か右隣にある出席可能な", "そこに"]}, {"category": "カード調整", "title": "バカでかい怠惰", "before": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果が2回発動したとき、この効果は失われる。\nこの効果は重複しない。", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。", "beforeHighlights": ["この効果が2回発動したとき、この効果は失われる。", "この効果は重複しない。"], "afterHighlights": ["この効果は2回発動するまで続く。", "この効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"]}, {"category": "システム", "title": "足軽と移動の処理", "after": "自分のターンに1回、出席したターンから使用できる。行動権を消費せず、このカードを出席可能な空きマスへ移動させる。このカードが移動したとき、このカードの攻撃力と体力を+1する。 出席者をタップまたは長押しして、攻撃か移動を選べます。攻撃や講義の後でも移動できます。 一斉移動ではすべての移動先を確定してから、移動前の席順で処理します。移動した出席者ごとに、本人の強化や能力を先に処理します。カードの効果で移動したときも足軽で強化されます。カードテストで新カード8枚を試せます。"}, {"category": "表示・操作改善", "title": "Ultimate U太の勝利演出", "after": "Ultimate U太の効果が有効な側が勝ったときだけ、勝利の文字演出に墨の渦を表示します。"}]},
       {"version": "ver.0.43.3", "versioning": "semver", "date": "2026年11月12日", "summary": "Ultimate U太の墨の渦を描き直しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "太い墨の帯が何周も内側へ続く絵柄に変更しました。講義室に重なる筆跡は薄く透けます。墨の渦は一層ずつ交互に逆方向へゆっくり回転し、層ごとに回る速さとタイミングが異なります。各層の回転速度を抑え、背景がかすかに動くようにしました。渦の各層は同じ比率で縮小し、回転しても隣り合う層の太い筆跡が重ならないようにしました。勝利演出中も対戦中と同じ背景を表示します。カードの能力値・効果に変更はありません。"}]},
       {"version": "ver.0.43.2", "versioning": "semver", "date": "2026年11月10日", "summary": "Ultimate U太の効果中に表示する対戦背景を調整しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "通常の明るい背景に何層にも重なる黒い筆跡とかすれ、赤い飛沫が現れ、講義室の周りでゆっくり揺れます。外周から中心へ巻き込む筆跡を近づけ、講義室に重なる部分は薄く透けるようにしました。パソコン表示では画面の外縁に暗い影を加えました。カードの能力値・効果に変更はありません。カードテストで、背景の切り替えと勝利演出を確認できるようにしました。"}]},
@@ -49181,6 +49181,10 @@
       return Boolean(commitAttendeeMoves([{ ...entry, destination }], source, options));
     }
 
+    function sudokuQueenDamageTargets(side) {
+      return movementEntries(oppositeSide(side)).filter(({ card }) => card?.type === "student");
+    }
+
     function resolveAttendeeMovementEffect(card, from, to) {
       if (!canUsePrintedCardEffects(card)) return;
       if (hasKeyword(card, "足軽")) {
@@ -49211,18 +49215,17 @@
         const row = seatRow(to.index);
         if (from.zone === "seat" && seatRow(from.index) === row) return;
         if (row === 1) {
-          const targets = movementEntries(oppositeSide(side)).filter(entry =>
-            entry.ref.zone === "seat" && movementFootprint(entry.card, entry.ref).some(index => seatRow(index) === 1));
-          runEffectFeedbackBatch(() => targets.forEach(({ card: target }) => dealDamageToCard(target, 1, card)));
-        }
-        if (row === 2) {
           for (const entry of movementEntries(side)) {
             if (entry.ref.zone === "seat" && !isPadlocked(entry.card)
-              && movementFootprint(entry.card, entry.ref).some(index => seatRow(index) === 2)) {
+              && movementFootprint(entry.card, entry.ref).some(index => seatRow(index) === 1)) {
               applyPermanentStatBuff(entry.card, 1, 1, 0, card.name, { beforeAttendance: true });
             }
           }
-          addLog(`${card.name}の効果：自分の2行目にいる出席者の攻撃力と体力を+1しました。`);
+          addLog(`${card.name}の効果：自分の1行目にいる出席者の攻撃力と体力を+1しました。`);
+        }
+        if (row === 2) {
+          const targets = sudokuQueenDamageTargets(side);
+          runEffectFeedbackBatch(() => targets.forEach(({ card: target }) => dealDamageToCard(target, 2, card)));
         }
         if (row === 3) healPlayer(side, 1, card);
       }
@@ -49364,10 +49367,15 @@
         if (column === 2 && !hasKeyword(card, "超陽気") && card.playedOnTurn === state.actionTurn && cardAttacksUsedThisTurn(card) < cardAttackLimit(card)) value += 4;
       }
       if (card.baseId === "sudoku_queen" && row && (ref.zone !== "seat" || row !== seatRow(ref.index))) {
-        if (row === 1) value += movementEntries(oppositeSide(side)).filter(entry => entry.ref.zone === "seat"
-          && seatRow(entry.ref.index) === 1).reduce((sum, {card}) => sum + (card.currentHp === 1 ? 4 : 1), 0);
-        if (row === 2) value += 3 + 2 * movementEntries(side).filter(entry =>
-          entry.card !== card && entry.ref.zone === "seat" && seatRow(entry.ref.index) === 2).length;
+        if (row === 1) value += 3 + 2 * movementEntries(side).filter(entry =>
+          entry.card !== card && entry.ref.zone === "seat" && !isPadlocked(entry.card)
+          && movementFootprint(entry.card, entry.ref).some(index => seatRow(index) === 1)).length;
+        if (row === 2) {
+          for (const { card: target } of sudokuQueenDamageTargets(side)) {
+            const damage = previewFinalDamageToCard(target, 2, card);
+            value += damage >= target.currentHp ? 4 : damage;
+          }
+        }
         if (row === 3 && state.players[side].life < currentLifeCap(side)) value += 1;
       }
       if (card.baseId === "aggro_queen") value += (destination.index === 5 ? 5 : 0) - (ref.index === 5 ? 5 : 0);
@@ -56314,9 +56322,10 @@
         note: "2列目に出席させ、フィジカルスカイと足軽で別々の列へ移動します。1列目で超注目、3列目で超陽気を得て、両方を保持できます。"
       },
       sudoku_queen: {
-        hand: ["physical_sky"], life: 12, own: { seats: [[3, "general_student"], [5, "general_student"]] },
-        enemy: { seats: [[0, "general_student"], [2, "general_student"], [4, "general_student"]] }, deck: ["ruler", "onigiri_draw"],
-        note: "行を変えると効果が変わります。1行目は相手の1行目にダメージ、2行目は自分の同じ行を強化、3行目は自分の気力を回復します。"
+        hand: ["physical_sky"], life: 12, own: { seats: [[0, "general_student"], [2, "general_student"]] },
+        enemy: { teacher: "general_student", seats: [[0, "general_student"], [4, "leaving_on_time_lecturer"],
+          [6, "apprentice_vampire"], [8, "strong_student"]] }, deck: ["ruler", "onigiri_draw"],
+        note: "1行目に移動すると味方の1行目を強化し、2行目に移動すると教卓を含む相手の学生全員に2ダメージを与えます。3行目では自分の気力を1回復します。足軽とフィジカルスカイを使うと同じターンに2回移動できます。"
       },
       aki_helper: {
         hand: ["physical_sky"], own: { seats: [[4, "mini_test_star"], [7, "general_student"]] },
@@ -59025,7 +59034,7 @@
         mini_test_star: "足軽を持つ。\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。",
         bakadekai_laziness: "以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。",
         dream_park_student: "足軽を持つ。\n陽気を持つ。\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。",
-        sudoku_queen: "足軽を持つ。\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。",
+        sudoku_queen: "足軽を持つ。\nこのカードが別の行から1行目に移動したとき、自分の1行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から2行目に移動したとき、相手の講義室にいる学生すべてに2ダメージを与える。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。",
         aki_helper: "このカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。",
         pa_student_pa: "陽気を持つ。\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。",
         are_moshikashite: "お互いの出席者を、それぞれの講義室で出席可能なマスへランダムに移動させる。",
