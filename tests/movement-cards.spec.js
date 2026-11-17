@@ -222,7 +222,7 @@ test('怠惰を使い直すと残り2回に戻り、1回の移動で発動する
   expect(result).toEqual([1, 2, 1, 0, 2]);
 });
 
-test('数独女王は1行目を強化し、2行目から教卓を含む相手の学生だけに2ダメージ', async ({ page }) => {
+test('数独女王は1行目を強化し、2行目で指名した教卓の学生1人にだけ2ダメージ', async ({ page }) => {
   await start(page, 'sudoku_queen');
   await expect(page.locator('#playerHand [data-base-id="sudoku_queen"]')).toContainText('4');
   await play(page, 'sudoku_queen', 'seat', 8);
@@ -239,13 +239,48 @@ test('数独女王は1行目を強化し、2行目から教卓を含む相手の
   await page.locator('#physicalSkyMoveButton').click();
   await choose(page, slot(page, 'player', 1).locator('.board-card'), 'movement_source');
   await choose(page, slot(page, 'player', 4), 'movement_destination');
+  await expect(page.locator('.board-card.selection-candidate')).toHaveCount(3);
+  await expect(slot(page, 'opponent', 4).locator('.board-card')).not.toHaveClass(/selection-candidate/);
+  await expect(slot(page, 'opponent', 6).locator('.board-card')).not.toHaveClass(/selection-candidate/);
+  await expect(page.locator('#itemTargetConfirmButton')).toBeDisabled();
+  await choose(page, page.locator('.slot[data-owner="opponent"][data-zone="teacher"] .board-card'), 'point_damage');
   await idle(page);
   expect(await page.evaluate(() => {
     const own = state.players.player;
     const enemy = state.players.opponent.board;
-    return [own.board.seats[4].currentHp, own.life, enemy.teacher, enemy.seats[0],
+    return [own.board.seats[4].currentHp, own.life, enemy.teacher, enemy.seats[0].currentHp,
       enemy.seats[4].currentHp, enemy.seats[6].currentHp, enemy.seats[8].currentHp];
-  })).toEqual([4, 12, null, null, 8, 2, 5]);
+  })).toEqual([4, 12, null, 2, 8, 2, 7]);
+});
+
+test('一斉移動では数独女王の指名を解決してから怠惰と次の移動効果を処理する', async ({ page }) => {
+  await start(page, 'sudoku_queen');
+  await play(page, 'sudoku_queen', 'seat', 1);
+  await page.evaluate(() => {
+    const side = 'player';
+    const queen = movementEntryAt({ owner: side, zone: 'seat', index: 1 });
+    const other = movementEntryAt({ owner: side, zone: 'seat', index: 2 });
+    state.players.opponent.lazinessTriggersRemaining = 2;
+    commitAttendeeMoves([
+      { ...queen, destination: { owner: side, zone: 'seat', index: 4 } },
+      { ...other, destination: { owner: side, zone: 'seat', index: 5 } }
+    ], CARD_BASES.are_moshikashite, { side });
+    render();
+  });
+  await expect.poll(() => page.evaluate(() => ({
+    kind: state.pendingCardChoice?.context?.kind,
+    queen: state.players.player.board.seats[4]?.currentHp,
+    other: state.players.player.board.seats[5]?.currentHp,
+    remaining: state.players.opponent.lazinessTriggersRemaining
+  }))).toEqual({ kind: 'point_damage', queen: 2, other: 2, remaining: 2 });
+  await choose(page, slot(page, 'opponent', 8).locator('.board-card'), 'point_damage');
+  await expect.poll(() => page.evaluate(() => [
+    state.players.opponent.board.seats[8]?.currentHp,
+    state.players.player.board.seats[4],
+    state.players.player.board.seats[5],
+    state.players.opponent.lazinessTriggersRemaining,
+    fusionTasksBusy()
+  ])).toEqual([5, null, null, 0, false]);
 });
 
 test('数独女王の3行目は回復し、同じ行を移動すると足軽だけが発動する', async ({ page }) => {
@@ -411,6 +446,23 @@ test('オンラインのゲストが足軽・パ学生パ・あきくん係の�
     await choose(guest, slot(guest, 'player', 8), 'movement_destination');
     await expect.poll(() => guest.evaluate(() => state.players.player.board.seats[8]?.attack)).toBe(3);
     expect(await host.evaluate(() => state.players.opponent.board.seats[8]?.attack)).toBe(3);
+
+    await host.evaluate(() => {
+      state.players.opponent.board.seats.fill(null);
+      state.players.opponent.board.seats[8] = makeBoardCard(createCardFromBase('sudoku_queen', 'opponent'));
+      state.players.player.board.teacher = makeBoardCard(createCardFromBase('general_student', 'player'));
+      state.players.player.board.seats[0] = makeBoardCard(createCardFromBase('general_student', 'player'));
+      render();
+    });
+    await expect.poll(() => guest.evaluate(() => state.players.player.board.seats[8]?.baseId)).toBe('sudoku_queen');
+    await idle(guest);
+    await slot(guest, 'player', 8).locator('.board-card').click();
+    await guest.locator('#ashigaruMoveButton').click();
+    await choose(guest, slot(guest, 'player', 4), 'movement_destination');
+    await choose(guest, guest.locator('.slot[data-owner="opponent"][data-zone="teacher"] .board-card'), 'point_damage');
+    await expect.poll(() => guest.evaluate(() => [state.players.opponent.board.teacher,
+      state.players.opponent.board.seats[0].currentHp, state.online.pendingTurnCommandId])).toEqual([null, 2, '']);
+    expect(await host.evaluate(() => state.players.player.board.teacher)).toBeNull();
     expect(errors).toEqual([]);
   } finally {
     await Promise.all(contexts.map(context => context.close()));
