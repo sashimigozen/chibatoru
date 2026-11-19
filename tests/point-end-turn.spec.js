@@ -65,7 +65,7 @@ for (const side of ['player', 'opponent']) test(`終了した側だけが1点獲
   }, side)).toEqual(side === 'player' ? [1, 0] : [0, 1]);
 });
 
-test('撃破の加点に加えて終了時に10点となり、次の手番前に単位強化を適用する', async ({ page }) => {
+test('撃破で点数を得たターンは終了時に加点せず、次の自分のターンは改めて判定する', async ({ page }) => {
   await page.evaluate(() => {
     const own = state.players.player;
     own.originalDeckCounts = { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: 1 };
@@ -80,11 +80,72 @@ test('撃破の加点に加えて終了時に10点となり、次の手番前に
   await page.locator('#endTurnButton').click();
   await expect.poll(() => page.evaluate(() => !state.lectureRoomCheck && state.currentSide === 'opponent')).toBe(true);
   expect(await page.evaluate(() => [state.players.player.pointScore, hasAcquiredUnit('player'),
+    state.players.player.board.seats[0].attack, state.players.player.board.seats[0].currentHp])).toEqual([9, false, 1, 3]);
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
+  await page.evaluate(() => { endTurn({ fromAi: true }); });
+  await expect.poll(() => page.evaluate(() => !state.lectureRoomCheck && state.currentSide === 'player' && !battlePresentationBusy())).toBe(true);
+  await page.locator('#endTurnButton').click();
+  await expect.poll(() => page.evaluate(() => !state.lectureRoomCheck && state.currentSide === 'opponent')).toBe(true);
+  expect(await page.evaluate(() => [state.players.player.pointScore, hasAcquiredUnit('player'),
     state.players.player.board.seats[0].attack, state.players.player.board.seats[0].currentHp,
     playerActiveEffectLines('player')[0]])).toEqual([10, true, 4, 6, '[単位] 取得済み']);
   await page.evaluate(() => resolveEndTurnEffects('player'));
   expect(await page.evaluate(() => [state.players.player.pointScore,
     state.players.player.board.seats[0].attack, state.players.player.board.seats[0].currentHp])).toEqual([10, 4, 6]);
+});
+
+test('撃破せずに終了したターンの加点も、同じターンには繰り返さない', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    state.players.player.originalDeckCounts = { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: 1 };
+    resolvePointEndTurn('player'); resolvePointEndTurn('player');
+    const first = state.players.player.pointScore;
+    state.actionTurn += 2;
+    resolvePointEndTurn('player');
+    return [first, state.players.player.pointScore];
+  })).toEqual([1, 2]);
+});
+
+for (const side of ['player', 'opponent']) test(`終了時効果による撃破の加点も補充条件に含める ${side}`, async ({ page }) => {
+  expect(await page.evaluate(side => {
+    const own = state.players[side], other = oppositeSide(side);
+    state.currentSide = side;
+    own.originalDeckCounts = { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: 1 };
+    const original = resolveStudentEndTurnEffects;
+    resolveStudentEndTurnEffects = owner => {
+      original(owner);
+      const enemy = makeBoardCard(createCardFromBase('aggro_student', other));
+      state.players[other].board.seats[0] = enemy;
+      dealDamageToCard(enemy, 1, createCardFromBase('short_sleeve_student', side));
+    };
+    resolveEndTurnEffects(side);
+    resolveStudentEndTurnEffects = original;
+    return own.pointScore;
+  }, side)).toBe(1);
+});
+
+test('非致死ダメージや点数を持たないカードの撃破は、終了時の1点を妨げない', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const own = state.players.player;
+    own.originalDeckCounts = { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: 1 };
+    const enemy = makeBoardCard(createCardFromBase('general_student', 'opponent'));
+    state.players.opponent.board.seats[0] = enemy;
+    dealDamageToCard(enemy, 1, createCardFromBase('short_sleeve_student', 'player'));
+    dealDamageToCard(enemy, 1, createCardFromBase('general_student', 'player'));
+    cleanupDestroyedCards();
+    resolveEndTurnEffects('player');
+    return own.pointScore;
+  })).toBe(1);
+});
+
+test('無効な点数獲得では終了時の1点を妨げない', async ({ page }) => {
+  expect(await page.evaluate(() => {
+    const own = state.players.player;
+    own.originalDeckCounts = { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: 1 };
+    gainPoints('player', null, 0);
+    gainPoints('player', null, -1);
+    resolvePointEndTurn('player');
+    return own.pointScore;
+  })).toBe(1);
 });
 
 test('終了ボタンの連打で二重加点せず、飛ばされた相手ターンにも加点しない', async ({ page }) => {
@@ -124,6 +185,7 @@ test('終了時の負荷で敗北した後は点数を獲得しない', async ({
 
 test('カード確認とチュートリアルで新しい点数条件を説明する', async ({ page }) => {
   expect(await page.evaluate(() => BATTLE_CARD_TERM_DESCRIPTIONS['点数'])).toContain('合計10枚以上');
+  expect(await page.evaluate(() => BATTLE_CARD_TERM_DESCRIPTIONS['点数'])).toContain('そのターン中に点数を獲得していなければ');
   // Inspect the actual tutorial definition independently of the current test battle.
   expect(await page.evaluate(() => JSON.stringify(TUTORIAL_ABILITY_STEPS.points))).toContain('自分のターン終了時');
 });

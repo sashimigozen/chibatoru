@@ -49,8 +49,8 @@ test('終了時の点数・単位強化を実WebSocketで双方へ同期し、�
   await expect.poll(() => host.evaluate(() => state.online.remoteReady)).toBe(true);
   await host.locator('#onlineStartButton').click();
   await expect.poll(() => guest.evaluate(() => state.online.started)).toBe(true);
-  for (const side of ['player', 'opponent']) for (const count of [9, 10]) {
-   const seq = await host.evaluate(({ side, count }) => {
+  for (const side of ['player', 'opponent']) for (const { count, earned } of [{ count: 9, earned: false }, { count: 10, earned: false }, { count: 10, earned: true }]) {
+   const seq = await host.evaluate(({ side, count, earned }) => {
     startCardTest('long_sleeve_student'); state.testMode = false; state.training.skipAnimations = true;
     state.currentSide = side; state.environment = null;
     for (const owner of ['player', 'opponent']) Object.assign(state.players[owner], {
@@ -60,8 +60,15 @@ test('終了時の点数・単位強化を実WebSocketで双方へ同期し、�
      originalDeckCounts: { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: count - 9 }
     });
     state.players[side].board.seats[0] = makeBoardCard(createCardFromBase('long_sleeve_student', side));
+    if (earned) {
+     state.players[side].pointScore = 8;
+     const enemy = makeBoardCard(createCardFromBase('aggro_student', oppositeSide(side)));
+     state.players[oppositeSide(side)].board.seats[0] = enemy;
+     dealDamageToCard(enemy, 1, createCardFromBase('short_sleeve_student', side));
+     cleanupDestroyedCards();
+    }
     render(); return state.online.lastSnapshotSeq;
-   }, { side, count });
+   }, { side, count, earned });
    await expect.poll(() => guest.evaluate(() => state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(seq);
    for (const p of [host, guest]) await expect.poll(() => p.evaluate(() => battlePresentationBusy())).toBe(false);
    await (side === 'player' ? host : guest).locator('#endTurnButton').click();
@@ -71,12 +78,12 @@ test('終了時の点数・単位強化を実WebSocketで双方へ同期し、�
     await expect.poll(() => p.evaluate(owner => {
      const own = state.players[owner], other = state.players[oppositeSide(owner)], card = own.board.seats[0];
      return [own.pointScore, other.pointScore, card?.attack, card?.currentHp, playerActiveEffectLines(owner)[0]];
-    }, owner)).toEqual(count === 10 ? [10, 9, 4, 6, '[単位] 取得済み'] : [9, 9, 1, 3, '[点数] 9/10']);
+    }, owner)).toEqual(count === 10 && !earned ? [10, 9, 4, 6, '[単位] 取得済み'] : [9, 9, 1, 3, '[点数] 9/10']);
    }
    expect(await host.evaluate(side => {
     const snapshot = onlineTransformSnapshotForSpectator(onlineCreateSnapshot().state);
     return snapshot.players[side].pointScore;
-   }, side)).toBe(count === 10 ? 10 : 9);
+   }, side)).toBe(count === 10 && !earned ? 10 : 9);
   }
   expect(errors).toEqual([]);
  } finally { await Promise.all(contexts.map(c => c.close())); }
