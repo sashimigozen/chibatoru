@@ -23,6 +23,65 @@ test.beforeAll(async () => {
 });
 test.afterAll(() => server?.kill("SIGTERM"));
 
+test('終了時の点数・単位強化を実WebSocketで双方へ同期し、ゲスト側で二重加点しない', async ({ browser }) => {
+ test.setTimeout(120000);
+ const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
+ const [host, guest] = await Promise.all(contexts.map(c => c.newPage()));
+ const errors = [];
+ try {
+  for (const p of [host, guest]) {
+   p.on('pageerror', e => errors.push(e.message));
+   await p.goto(gameUrl.href); await p.locator('#homeNavBattleButton').click(); await p.locator('#onlinePrivateMatchButton').click();
+  }
+  await host.locator('#onlineCreateRoomButton').click();
+  await expect.poll(() => host.evaluate(() => state.online.role)).toBe('host');
+  await guest.locator('.private-code-entry > summary').click();
+  await guest.locator('#onlineRoomInput').fill(await host.evaluate(() => state.online.roomCode));
+  await guest.locator('#onlineJoinRoomButton').click();
+  for (const p of [host, guest]) {
+   await expect.poll(() => p.evaluate(() => state.online.connected)).toBe(true);
+   await p.evaluate(() => {
+    state.deckBuilder.counts.player = createAutoDeckCounts();
+    document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change', { bubbles: true }));
+   });
+   await p.locator('#onlineReadyButton').click();
+  }
+  await expect.poll(() => host.evaluate(() => state.online.remoteReady)).toBe(true);
+  await host.locator('#onlineStartButton').click();
+  await expect.poll(() => guest.evaluate(() => state.online.started)).toBe(true);
+  for (const side of ['player', 'opponent']) for (const count of [9, 10]) {
+   const seq = await host.evaluate(({ side, count }) => {
+    startCardTest('long_sleeve_student'); state.testMode = false; state.training.skipAnimations = true;
+    state.currentSide = side; state.environment = null;
+    for (const owner of ['player', 'opponent']) Object.assign(state.players[owner], {
+     board: { teacher: null, seats: Array(9).fill(null) }, hand: [], trash: [], late: [], life: 20,
+     deck: Array.from({ length: 20 }, () => createCardFromBase('general_student', owner)),
+     pointScore: 9, pointSystemActive: true,
+     originalDeckCounts: { short_sleeve_student: 3, long_sleeve_student: 3, pinige: 3, lucky_man: count - 9 }
+    });
+    state.players[side].board.seats[0] = makeBoardCard(createCardFromBase('long_sleeve_student', side));
+    render(); return state.online.lastSnapshotSeq;
+   }, { side, count });
+   await expect.poll(() => guest.evaluate(() => state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(seq);
+   for (const p of [host, guest]) await expect.poll(() => p.evaluate(() => battlePresentationBusy())).toBe(false);
+   await (side === 'player' ? host : guest).locator('#endTurnButton').click();
+   await expect.poll(() => host.evaluate(side => !state.lectureRoomCheck && state.currentSide !== side, side)).toBe(true);
+   for (const p of [host, guest]) {
+    const owner = p === host ? side : side === 'player' ? 'opponent' : 'player';
+    await expect.poll(() => p.evaluate(owner => {
+     const own = state.players[owner], other = state.players[oppositeSide(owner)], card = own.board.seats[0];
+     return [own.pointScore, other.pointScore, card?.attack, card?.currentHp, playerActiveEffectLines(owner)[0]];
+    }, owner)).toEqual(count === 10 ? [10, 9, 4, 6, '[単位] 取得済み'] : [9, 9, 1, 3, '[点数] 9/10']);
+   }
+   expect(await host.evaluate(side => {
+    const snapshot = onlineTransformSnapshotForSpectator(onlineCreateSnapshot().state);
+    return snapshot.players[side].pointScore;
+   }, side)).toBe(count === 10 ? 10 : 9);
+  }
+  expect(errors).toEqual([]);
+ } finally { await Promise.all(contexts.map(c => c.close())); }
+});
+
 for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide==='player'?'ホスト':'ゲスト'}の新点数カードと選択・強化・破壊が同期する`,async({browser})=>{
  test.setTimeout(120000);
  const contexts=await Promise.all([browser.newContext(),browser.newContext()]);const [host,guest]=await Promise.all(contexts.map(c=>c.newPage()));const errors=[];
