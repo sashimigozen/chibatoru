@@ -19794,6 +19794,7 @@
     });
     const TARGETED_DESTROY_ITEM_IDS = new Set(["seriously_hit", "favorite_number_s"]);
     const IMMEDIATE_ITEM_IDS = [
+      "tojirika", "yohabari", "habayose", "footkiri",
       "yabe", "aggro_army", "onigiri_draw", "hondara", "fire_touch", "thin_item", "handy_jet_engine",
       "iv_pack", "wet_meal_ticket", "dry_meal_ticket",
       "fluid_pasta", "water_2l", "sexual_eye", "yoyu_announce", "peaceful_mind",
@@ -19813,8 +19814,18 @@
     }
 
     const WONTON_SERIES_IDS = ["wonton_greeting", "wonton_stall", "wonton_fever", "wonton_rebellion", "wonton_final_battle", "wonton_graduation"];
-    const SUBMISSION_EFFECT_HANDLERS = Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission]));
+    const SUBMISSION_EFFECT_HANDLERS = {
+      ...Object.fromEntries(WONTON_SERIES_IDS.map(baseId => [baseId, resolveWontonSubmission])),
+      tojirika: resolveTojirikaSubmission,
+      yohabari: resolveYohabariSubmission,
+      habayose: resolveHabayoseSubmission,
+      footkiri: resolveFootkiriSubmission
+    };
     const CARD_BASES = {
+      tojirika: { name: "トジリカ", type: "item", cost: 2, attack: 0, hp: 0, category: "common", target: "self", submission: true, hasPoint: true },
+      yohabari: { name: "ヨハバリ", type: "item", cost: 2, attack: 0, hp: 0, category: "common", target: "self", submission: true },
+      habayose: { name: "ハバヨセ!", type: "item", cost: 2, attack: 0, hp: 0, category: "common", target: "self", submission: true },
+      footkiri: { name: "フットキリ", type: "item", cost: 2, attack: 0, hp: 0, category: "common", target: "self", submission: true },
       physical_sky: {"name": "フィジカルスカイ", "type": "environment", "cost": 2, "attack": 0, "hp": 0, "category": "common", "allowedZones": ["environment"]},
       mini_test_star: {"name": "ミニテストスター", "type": "student", "cost": 3, "attack": 1, "hp": 1, "category": "common", "keywords": ["足軽"], "allowedZones": ["seat"]},
       bakadekai_laziness: {"name": "バカでかい怠惰", "type": "item", "cost": 2, "attack": 0, "hp": 0, "category": "big", "target": "self"},
@@ -20280,6 +20291,8 @@
     IMMEDIATE_ITEM_IDS.push("tomoyo_mou", "shukii", "illegal_cafeteria");
     ALL_DECK_IDS.push("physical_sky", "mini_test_star", "bakadekai_laziness", "dream_park_student", "sudoku_queen", "aki_helper", "pa_student_pa", "are_moshikashite");
     SPECIALTY_CARD_IDS.common.push("physical_sky", "mini_test_star", "dream_park_student", "sudoku_queen", "aki_helper", "pa_student_pa", "are_moshikashite");
+    ALL_DECK_IDS.push("tojirika", "yohabari", "habayose", "footkiri");
+    SPECIALTY_CARD_IDS.common.push("tojirika", "yohabari", "habayose", "footkiri");
     SPECIALTY_CARD_IDS.big.push("bakadekai_laziness");
     IMMEDIATE_ITEM_IDS.push("bakadekai_laziness", "are_moshikashite");
     ALL_DECK_IDS = [...new Set(ALL_DECK_IDS)].filter((baseId) => {
@@ -20311,7 +20324,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.44.2", "versioning": "semver", "date": "2026年11月19日", "summary": "点数の獲得条件を追加しました。", "changes": [{"category": "システム", "title": "点数のターン終了時獲得", "after": "対戦開始時のデッキに［点数］を持つカードが合計10枚以上ある場合、自分のターン終了時、そのターン中に点数を獲得していなければ、点数を1獲得するようにしました。同名カードも1枚ずつ数え、対戦中に山札の枚数が変わっても条件は変わりません。撃破による点数獲得は引き続き行い、10点で単位へ変化します。能力説明・チュートリアル・ルール台帳を更新し、境界条件・そのターンの獲得状況・単位取得・オンライン同期を確認するテストを追加しました。カードの能力値・本文は変更していません。"}]},
+      {"version": "ver.0.45.0", "versioning": "semver", "date": "2026年11月19日", "summary": "提出を持つ持ち物4枚と、点数の獲得条件を追加しました。", "changes": [{"category": "新カード", "title": "トジリカ", "after": "トジリカ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[点数]\n[提出]\n環境が「食堂」であるかぎり、このカードの戦意は0になる。\nこのカードを手札から戦意を1以上消費して使用したとき、環境が「食堂」でないなら、自分の手札のヴァンパイア1枚を相手に見せてもよい。\n自分の手札に「ピニゲ」1枚を生成する。ヴァンパイアを見せたなら、相手の講義室にいる出席者1人を指名し、破壊する。"}, {"category": "新カード", "title": "ヨハバリ", "after": "ヨハバリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキに「単細胞生物」5枚を生成してシャッフルする。\nこのカードを手札から戦意を1以上消費して使用したとき、代わりにお互いの講義室にいる「単細胞生物」「ミジンコ」「生物」の合計人数と同じ枚数の「単細胞生物」を自分の手札に生成する。"}, {"category": "新カード", "title": "ハバヨセ!", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。\nその後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。そうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。"}, {"category": "新カード", "title": "フットキリ", "after": "フットキリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキから、「フットキリ」以外の[提出]を持つカードか「万豚記」を、ランダムに2枚まで手札に加える。"}, {"category": "システム", "title": "点数のターン終了時獲得", "after": "対戦開始時のデッキに［点数］を持つカードが合計10枚以上ある場合、自分のターン終了時、そのターン中に点数を獲得していなければ、点数を1獲得するようにしました。同名カードも1枚ずつ数え、対戦中に山札の枚数が変わっても条件は変わりません。撃破による点数獲得は引き続き行い、10点で単位へ変化します。能力説明・チュートリアル・ルール台帳を更新し、境界条件・そのターンの獲得状況・単位取得・オンライン同期を確認するテストを追加しました。カードの能力値・本文は変更していません。"}, {"category": "システム", "title": "新カードのカードテスト", "after": "新しい持ち物4枚をカード一覧からテストできます。通常使用と提出、食堂での無料使用、裏U太の出席・装備を試せる手札と盤面を用意しました。"}]},
       {"version": "ver.0.44.1", "versioning": "semver", "date": "2026年11月17日", "summary": "数独女王（スウドクイーン）と夢の国バイト学生を調整し、融合操作の不具合を修正しました。", "changes": [{"category": "カード調整", "title": "数独女王（スウドクイーン）", "before": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意4／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、自分の1行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から2行目に移動したとき、相手の講義室にいる学生1人を指名し、それに2ダメージを与える。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "beforeHighlights": ["戦意3", "相手の1行目にいる出席者すべてに1ダメージを与える。", "自分の2行目にいる出席者すべての攻撃力と体力を+1する。"], "afterHighlights": ["戦意4", "自分の1行目にいる出席者すべての攻撃力と体力を+1する。", "相手の講義室にいる学生1人を指名し、それに2ダメージを与える。"]}, {"category": "カード調整", "title": "夢の国バイト学生", "before": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "beforeHighlights": ["攻撃力2", "体力2"], "afterHighlights": ["攻撃力1", "体力1"]}, {"category": "不具合修正", "title": "手札の融合操作", "after": "手札の融合は、自分の手番でほかの処理を待っていないときに行えるようにしました。手番が切り替わると、残っている融合の選択を閉じます。相手の手番や効果の処理中でも、カードの詳細を確認できます。"}]},
       {"version": "ver.0.44.0", "versioning": "semver", "date": "2026年11月14日", "summary": "新能力「足軽」と移動に関わるカード8枚を追加しました。", "changes": [{"category": "新カード", "title": "フィジカルスカイ", "after": "フィジカルスカイ／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、お互いのプレイヤーは自分のターンに1回、自分の出席者1人を指名できる。その出席者が出席可能な空きマスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "ミニテストスター", "after": "ミニテストスター／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。"}, {"category": "新カード", "title": "バカでかい怠惰", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"}, {"category": "新カード", "title": "夢の国バイト学生", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。"}, {"category": "新カード", "title": "数独女王（スウドクイーン）", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。"}, {"category": "新カード", "title": "あきくん係", "after": "あきくん係／学生／共通カード／戦意2／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "パ学生パ", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "あれカメラ", "after": "あれカメラ／持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの出席者を、それぞれの講義室で出席可能なマスへランダムに移動させる。"}, {"category": "カード調整", "title": "パ学生パ", "before": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。", "beforeHighlights": ["その出席者が出席可能な隣接する", "反撃の前にそこへ"], "afterHighlights": ["その出席者の左隣か右隣にある出席可能な", "そこに"]}, {"category": "カード調整", "title": "バカでかい怠惰", "before": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果が2回発動したとき、この効果は失われる。\nこの効果は重複しない。", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。", "beforeHighlights": ["この効果が2回発動したとき、この効果は失われる。", "この効果は重複しない。"], "afterHighlights": ["この効果は2回発動するまで続く。", "この効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"]}, {"category": "システム", "title": "足軽と移動の処理", "after": "自分のターンに1回、出席したターンから使用できる。行動権を消費せず、このカードを出席可能な空きマスへ移動させる。このカードが移動したとき、このカードの攻撃力と体力を+1する。 出席者をタップまたは長押しして、攻撃か移動を選べます。攻撃や講義の後でも移動できます。 一斉移動ではすべての移動先を確定してから、移動前の席順で処理します。移動した出席者ごとに、本人の強化や能力を先に処理します。カードの効果で移動したときも足軽で強化されます。カードテストで新カード8枚を試せます。"}, {"category": "表示・操作改善", "title": "Ultimate U太の勝利演出", "after": "Ultimate U太の効果が有効な側が勝ったときだけ、勝利の文字演出に墨の渦を表示します。"}]},
       {"version": "ver.0.43.3", "versioning": "semver", "date": "2026年11月12日", "summary": "Ultimate U太の墨の渦を描き直しました。", "changes": [{"category": "表示・操作改善", "title": "Ultimate U太の対戦演出", "after": "太い墨の帯が何周も内側へ続く絵柄に変更しました。講義室に重なる筆跡は薄く透けます。墨の渦は一層ずつ交互に逆方向へゆっくり回転し、層ごとに回る速さとタイミングが異なります。各層の回転速度を抑え、背景がかすかに動くようにしました。渦の各層は同じ比率で縮小し、回転しても隣り合う層の太い筆跡が重ならないようにしました。勝利演出中も対戦中と同じ背景を表示します。カードの能力値・効果に変更はありません。"}]},
@@ -31954,6 +31967,9 @@
       const draws = { hondara: 1, wet_meal_ticket: 1, smoke_flare: 1, onigiri_draw: 2,
         fire_touch: 3, gamma: 3, destructive_lie: 2, suit_student: 1, angry_maker: 2 };
       if (draws[card.baseId]) plan.incoming = draw(draws[card.baseId]);
+      if (card.baseId === "tojirika") plan.incoming = 1;
+      if (card.baseId === "yohabari" && effectiveCardCost(card) >= 1) plan.incoming = yohabariAttendeeCount();
+      if (card.baseId === "footkiri") plan.incoming = search(isFootkiriDeckCandidate, 2);
       if (card.baseId === "trpg_member") plan.incoming = search(c => c.type === "student", 2);
       if (card.baseId === "environment_setup") plan.incoming = search(c => c.type === "environment");
       if (card.baseId === "iv_pack") plan.incoming = search(c => c.type === "vampire", 2);
@@ -31986,7 +32002,10 @@
           const submits = canUsePrintedCardEffects(discard) && WONTON_SERIES_IDS.includes(discard.baseId);
           const nextStage = submits && discard.baseId !== "wonton_graduation" ? 1 : 0;
           const draws = Number(card.baseId === "female_highball") + Number(submits && discard.baseId === "wonton_greeting");
-          plan.incoming = nextStage + draw(draws);
+          const submissionGain = !canUsePrintedCardEffects(discard) ? 0
+            : discard.baseId === "tojirika" ? 1
+              : discard.baseId === "footkiri" ? search(isFootkiriDeckCandidate, 2) : 0;
+          plan.incoming = nextStage + draw(draws) + submissionGain;
           plan.beforeGain = consumed + 1;
           plan.consumed += 1;
         }
@@ -32747,7 +32766,7 @@
       if (card.baseId === "double_diamond") return 4;
       if (card.baseId === "grudge") return 2;
       if (card.baseId === "greeting_3000") {
-        return state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
+        return state.players[side].trash.filter(isUtaOrDarkYutaInTrash).length;
       }
       return 0;
     }
@@ -34374,8 +34393,11 @@
     function scoreAiItemWithoutHandLimit(item, options = {}) {
       const fusionBatchScore = scoreAiFusionBatchItem("opponent",item);
       if (fusionBatchScore !== null) return fusionBatchScore;
+      const submissionScore = scoreAiSubmissionItem("opponent", item);
+      if (submissionScore !== null) return submissionScore;
       if (arePlayedEffectsSuppressed("opponent")) return 0;
       if (item?.baseId === "amphisbaena_sofa") return scoreAiAmphisbaenaSofa("opponent", item);
+      if (item?.baseId === "habayose") return scoreAiHabayose("opponent", item);
       if (item?.baseId === "pinige") return pointModeCards("opponent",item).map(c=>c.choiceScore).sort((a,b)=>b-a).slice(0,hasAcquiredUnit("opponent") ? 3 : 2).reduce((a,b)=>a+b,0) - 2;
       if (["female_highball", "male_highball"].includes(item?.baseId)) return scoreAiHighball("opponent", item);
       if (["bakadekai_laziness", "are_moshikashite"].includes(item?.baseId)) return scoreAiMovementItem("opponent", item);
@@ -34639,7 +34661,7 @@
       if (item.baseId === "smart_me") return state.players.player.late.some((entry) => entry.card?.type === "student") ? 6 : 0;
       if (item.baseId === "grudge") return state.players.player.life <= 2 ? 1000 : 7;
       if (item.baseId === "greeting_3000") {
-        const utaCount = opponent.trash.filter((card) => ["yuta", "dark_yuta"].includes(card.baseId)).length;
+        const utaCount = opponent.trash.filter(isUtaOrDarkYutaInTrash).length;
         if (utaCount <= 0) return 0;
         return getAiLethalForecast().immediateLethal ? 40 + utaCount * 2 : 3 + utaCount * 2;
       }
@@ -34790,7 +34812,7 @@
       if (item.baseId === "set_log") {
         return friendlyCards.some((card) => card.type === "student" && !hasKeyword(card, "陽気")) ? 7 : 0;
       }
-      if (item.baseId === "yutakun_yutakun") return opponent.trash.some((card) => card.baseId === "yuta") ? 6 : 0;
+      if (item.baseId === "yutakun_yutakun") return opponent.trash.some(isUtaInTrash) ? 6 : 0;
       if (item.baseId === "three_gestures") return opponent.deck.length >= 6 ? 8 : 0;
       if (item.baseId === "donguri") return canUseDonguri("opponent", item) ? 18 : 0;
       if (item.baseId === "music_detergent") {
@@ -39429,7 +39451,7 @@
             return value(b)-value(a);
           }
           if (kind === "material" || kind === "material_optional") return aiHorseMaterialValue(side,b)-aiHorseMaterialValue(side,a);
-          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck", "lecturer_move", "movement_source", "movement_destination"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
+          if (["destroy_columns", "two_achievers", "point_modes", "attendance_seats", "sofa_modes", "sofa_deck", "lecturer_move", "movement_source", "movement_destination", "habayose_search"].includes(kind)) return (b.choiceScore || 0) - (a.choiceScore || 0);
           if (kind === "submission_discard") return submissionDiscardValue(side, b) - submissionDiscardValue(side, a);
           return trainingAiChoiceCardScore(side, b) - trainingAiChoiceCardScore(side, a);
         });
@@ -39439,7 +39461,7 @@
       }
       const requestId = `fusion-choice-${state.preBattleToken}-${++fusionChoiceSerial}`;
       const token = state.preBattleToken;
-      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional", "lecturer_move", "movement_source", "movement_destination"].includes(kind) ? 0 : max;
+      const min = choiceOptions.required ? max : ["buff", "damage", "point_damage", "attendance_optional", "attendance_seats", "material_optional", "lecturer_move", "movement_source", "movement_destination", "tojirika_reveal", "habayose_equip"].includes(kind) ? 0 : max;
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max, message: choiceOptions.message,
         requestId, context: { kind }, confirmLabel: "確定" };
@@ -39457,7 +39479,7 @@
       }
       if (kind === "attendance_seats") {
         options.context.targetOwner = side;
-        options.message = `出席させる空き席マスを${max}つまで直接選んでください。0人でも確定できます。`;
+        options.message = choiceOptions.message || `出席させる空き席マスを${max}つまで直接選んでください。0人でも確定できます。`;
       }
       if (kind === "sofa_modes") options.message = "使用する効果を1つ選んでください。";
       if (kind === "sofa_deck") options.message = `デッキから校外エリアへ送るカードを${max}枚選んでください。`;
@@ -40102,6 +40124,119 @@
       return true;
     }
 
+    // This alias applies only while inspecting 校外; the actual card keeps its
+    // identity and returns to the hand as ハバヨセ!.
+    function isUtaInTrash(card) {
+      return card?.baseId === "yuta" || card?.baseId === "habayose";
+    }
+
+    function isUtaOrDarkYutaInTrash(card) {
+      return isUtaInTrash(card) || card?.baseId === "dark_yuta";
+    }
+
+    function habayoseSearchCandidates(side) {
+      if (isDeckToHandLocked()) return [];
+      return state.players[side].deck.filter(card => `${card.name || ""}\n${cardRulesText(card)}`.includes("U太"));
+    }
+
+    function habayoseAttendanceChoices(side, card) {
+      if (card?.baseId !== "dark_yuta" || card.unusable || isHighLoadHandCard(card)) return [];
+      // Only this effect bypasses the evolution requirement. Ordinary hand
+      // plays still use the unchanged 裏U太 definition and evolution rules.
+      const probe = { ...card, evolutionFrom: null, allowedZones: ["seat", "teacher"] };
+      return [...PLAYER_SEAT_ORDER.map(index => ({ zone: "seat", index })), { zone: "teacher", index: null }]
+        .filter(ref => canPlaceCard(side, probe, ref.zone, side, ref.index))
+        .map(ref => ({ instanceId: `habayose-${ref.zone}-${ref.index}`, type: "item", noCost: true,
+          name: ref.zone === "teacher" ? "教卓マス" : `${seatRow(ref.index)}行${seatCol(ref.index) + 1}列`,
+          attendanceLocationChoice: true, choiceZone: ref.zone, choiceIndex: ref.index,
+          choiceScore: 1 + scoreAiPlacementAuras(side, probe, ref.zone, ref.index) }));
+    }
+
+    function scoreAiHabayose(side, item) {
+      if (arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(item)) return 0;
+      const player = state.players[side];
+      const searches = habayoseSearchCandidates(side);
+      const canPay = state.currentSide === side && player.will - effectiveCardCost(item) >= 3;
+      const canSummon = canPay && [...player.hand, ...searches].some(card => habayoseAttendanceChoices(side, card).length);
+      return (searches.length ? 5 : 0) + (canSummon ? 15 : 0);
+    }
+
+    async function resolveHabayoseSubmission(side, source) {
+      const token = state.preBattleToken;
+      const active = () => token === state.preBattleToken && !state.gameOver && state.screen === "battle";
+      const player = state.players[side];
+      const canPay = () => active() && state.currentSide === side && player.will >= 3;
+      const searches = habayoseSearchCandidates(side).map(card => ({ ...card,
+        choiceScore: trainingAiChoiceCardScore(side, card)
+          + (canPay() && habayoseAttendanceChoices(side, card).length ? 30 : 0) }));
+      const [searched] = await chooseFusionEffectCards(side, source, searches, 1, "habayose_search", {
+        required: true, message: "カード名か効果本文に「U太」と書かれたカード1枚を選んでください。"
+      });
+      if (!active()) return;
+      if (searched && !isDeckToHandLocked()) {
+        const index = player.deck.findIndex(card => card.instanceId === searched.instanceId
+          && `${card.name || ""}\n${cardRulesText(card)}`.includes("U太"));
+        if (index >= 0) {
+          const [card] = player.deck.splice(index, 1);
+          card.handTurns = 0;
+          addHandCards(side, [card], "deck");
+          queueAnimation("draw", side, 1);
+          shuffleDeckAfterSearch(side);
+          addLog(`${source.name}の効果：${SIDES[side]}はデッキからカード1枚を選び、手札に加えました。`);
+          render();
+        }
+      }
+      if (!canPay()) return;
+      const candidates = player.hand.filter(card => habayoseAttendanceChoices(side, card).length);
+      const [chosen] = await chooseFusionEffectCards(side, source, candidates, 1, "attendance_optional", {
+        message: "戦意3を支払って出席させる「裏U太」1枚までを選んでください。0枚でも確定できます。"
+      });
+      if (!chosen || !canPay()) return;
+      const target = getHandCard(side, chosen.instanceId);
+      if (!target) return;
+      const [destination] = await chooseFusionEffectCards(side, source, habayoseAttendanceChoices(side, target), 1, "attendance_seats", {
+        message: "戦意3を支払って出席させる空き席マスか空き教卓マスを1つ選んでください。0マスで取り消せます。"
+      });
+      if (!destination || !canPay() || getHandCard(side, target.instanceId) !== target
+        || !habayoseAttendanceChoices(side, target).some(choice => choice.instanceId === destination.instanceId)) return;
+      const handIndex = player.hand.indexOf(target);
+      player.hand.splice(handIndex, 1);
+      player.will -= 3;
+      const attendee = makeBoardCard(target);
+      if (!attendCard(side, attendee, destination.choiceZone, destination.choiceIndex, { attendanceSource: ATTENDANCE_SOURCE.EFFECT })) {
+        player.will += 3;
+        player.hand.splice(handIndex, 0, target);
+        return;
+      }
+      analyticsRecordEffect({ side, source, effectType: "habayose_attendance", chosenTargets: [analyticsCardInfo(attendee)], details: { paidCost: 3 } });
+      showCardPlayAnimation(attendee, "board");
+      addLog(`${source.name}の効果：${SIDES[side]}は戦意3を支払い、「裏U太」を出席させました。`);
+      applyBoardAuras();
+      render();
+      // A normally used item is in 校外; ジェイルブレイクソフト may instead
+      // have retained it in hand. Move that same instance, never a duplicate.
+      const sourceCard = [...player.trash, ...player.hand].find(card => card.instanceId === source.instanceId);
+      if (!sourceCard || !findBoardCardByInstanceId(attendee.instanceId) || !canAttachUtaEquipment(attendee)) return;
+      const [equipment] = await chooseFusionEffectCards(side, source, [sourceCard], 1, "habayose_equip", {
+        message: "このハバヨセ!を、出席させた裏U太に装備できます。装備しない場合は0枚で確定してください。"
+      });
+      if (!active() || !equipment || !findBoardCardByInstanceId(attendee.instanceId) || !canAttachUtaEquipment(attendee)) return;
+      const sourceZone = player.trash.some(card => card.instanceId === source.instanceId) ? "trash" : "hand";
+      const sourceIndex = player[sourceZone].findIndex(card => card.instanceId === source.instanceId);
+      if (sourceIndex < 0) return;
+      const [attached] = player[sourceZone].splice(sourceIndex, 1);
+      delete attached.usedFromHand;
+      attached.attachedTo = attendee.instanceId;
+      attached.attachedAtTurn = state.actionTurn;
+      attendee.yutaEquipments = [...normalizeUtaEquipmentEntries(attendee), attached];
+      syncLegacyUtaEquipmentState(attendee);
+      analyticsRecordEffect({ side, source, effectType: "equipment", chosenTargets: [analyticsCardInfo(attendee)], details: { sourceZone } });
+      addLog(`${source.name}を「裏U太」に装備しました。`);
+      // This is the same 提出 resolution, so attaching it must not submit again.
+      applyBoardAuras();
+      render();
+    }
+
     function isUtaEquipmentTarget(card) {
       return ["yuta", "dark_yuta"].includes(card?.baseId)
         || ["yuta", "dark_yuta"].includes(card?.originalBaseId);
@@ -40123,7 +40258,7 @@
           return normalized;
         }
         return { ...entry };
-      }).filter((entry) => UTA_EQUIPMENT_BASE_IDS.includes(entry?.baseId));
+      }).filter((entry) => UTA_EQUIPMENT_BASE_IDS.includes(entry?.baseId) || entry?.baseId === "habayose");
       card.yutaEquipments = entries;
       syncLegacyUtaEquipmentState(card);
       return entries;
@@ -45220,6 +45355,12 @@
     }
 
     function submissionDiscardValue(side, card) {
+      if (canUsePrintedCardEffects(card)) {
+        if (card?.baseId === "tojirika") return 6;
+        if (card?.baseId === "yohabari") return state.players[side].deck.length < 8 ? 10 : 3;
+        if (card?.baseId === "footkiri") return isDeckToHandLocked() ? 0
+          : Math.min(2, state.players[side].deck.filter(isFootkiriDeckCandidate).length) * 6;
+      }
       if (WONTON_SERIES_IDS.includes(card?.baseId) && canUsePrintedCardEffects(card)) {
         if (card.baseId !== "wonton_graduation") return 20;
         const damage = aiWontonGraduationDamage(side);
@@ -45230,7 +45371,7 @@
       return -trainingAiChoiceCardScore(side, card);
     }
 
-    function triggerSubmission(side, card, cause) {
+    function triggerSubmission(side, card, cause, context = {}) {
       if (!(card?.submission || CARD_BASES[card?.baseId]?.submission) || !canUsePrintedCardEffects(card)) return false;
       const effect = SUBMISSION_EFFECT_HANDLERS[card.baseId];
       if (typeof effect !== "function") return false;
@@ -45239,9 +45380,94 @@
         analyticsRecordEffect({ side, source, effectType: "submission", details: { cause } });
         addLog(`[提出]：${SIDES[side]}の「${source.name}」の効果が発動しました。`);
         if (!WONTON_SERIES_IDS.includes(source.baseId)) showSharedCenterAnnouncement("提出", "");
-        await effect(side, source, cause);
+        await effect(side, source, cause, context);
       });
       return true;
+    }
+
+    function castSubmissionItem(side, item, renderAfter = true) {
+      if (arePlayedEffectsSuppressed(side)) return useSuppressedItemEffect(side, item, renderAfter);
+      if (!payForItem(side, item)) return false;
+      moveHandCardToTrash(side, item);
+      clearSelections();
+      if (renderAfter) render();
+      return true;
+    }
+
+    function yohabariAttendeeCount() {
+      return ["player", "opponent"].reduce((count, owner) => count + listBoardRefs(owner)
+        .filter(ref => ["single_cell", "midge", "organism"].includes(getBoardCardFromRef(ref)?.baseId)).length, 0);
+    }
+
+    function isFootkiriDeckCandidate(card) {
+      return Boolean(card && card.baseId !== "footkiri"
+        && (card.submission || CARD_BASES[card.baseId]?.submission || card.baseId === "wonton_ki"));
+    }
+
+    async function resolveTojirikaSubmission(side, source, cause, context = {}) {
+      const token = state.preBattleToken;
+      let revealed = null;
+      if (cause === "use" && context.paidCost >= 1 && !context.cafeteriaActive) {
+        const vampires = state.players[side].hand.filter(card => card.type === "vampire");
+        const worthwhileForAi = !isCpuControlledBattleSide(side) || effectTargetEntries(side, oppositeSide(side))
+          .some(entry => scoreAiNonCombatEffectTarget(side, source, entry, { destroy: true }) > 0);
+        if (worthwhileForAi) {
+          const [chosen] = await chooseFusionEffectCards(side, source, vampires, 1, "tojirika_reveal", {
+            message: "相手に見せるヴァンパイアを1枚まで選んでください。見せたカードは手札に残ります。0枚なら破壊しません。"
+          });
+          if (token !== state.preBattleToken || state.gameOver) return;
+          revealed = chosen && state.players[side].hand.find(card => card.instanceId === chosen.instanceId && card.type === "vampire");
+          if (revealed) {
+            addLog(`${source.name}の効果：${SIDES[side]}は手札の「${revealed.name}」を公開しました。`);
+            analyticsRecordEffect({ side, source, effectType: "reveal_hand", chosenTargets: [analyticsCardInfo(revealed)] });
+            await new Promise(resolve => showCardPlayAnimation(revealed, "hand", { onComplete: resolve }));
+          }
+        }
+      }
+      if (token !== state.preBattleToken || state.gameOver) return;
+      addHandCards(side, [publicHandCard("pinige", side)], "generated");
+      addLog(`${source.name}の効果：${SIDES[side]}の手札に「ピニゲ」1枚を生成しました。`);
+      if (!revealed) return;
+      const cards = effectTargetEntries(side, oppositeSide(side), target => target.currentHp > 0)
+        .map(({ card, ref }) => ({ ...card, choiceRef: ref }));
+      const [chosen] = await chooseFusionEffectCards(side, source, cards, 1, "point_destroy", {
+        required: true, message: "破壊する相手の出席者1人を盤面から指名してください。"
+      });
+      if (token !== state.preBattleToken || state.gameOver) return;
+      const target = chosen && getBoardCardFromRef(chosen.choiceRef);
+      if (target?.instanceId === chosen.instanceId && isAllowedEffectTarget(side, target)) {
+        destroyBoardCard(chosen.choiceRef, { pointSource: pointSourceSnapshot(source), reason: source.name });
+      }
+    }
+
+    function resolveYohabariSubmission(side, source, cause, context = {}) {
+      if (cause === "use" && context.paidCost >= 1) {
+        const count = yohabariAttendeeCount();
+        for (let i = 0; i < count; i++) addHandCards(side, [publicHandCard("single_cell", side)], "generated");
+        addLog(`${source.name}の効果：${SIDES[side]}の手札に「単細胞生物」${count}枚を生成しました。`);
+        return;
+      }
+      generateCardsIntoDeck(side, "single_cell", 5);
+      addLog(`${source.name}の効果：${SIDES[side]}のデッキに「単細胞生物」5枚を生成してシャッフルしました。`);
+    }
+
+    function resolveFootkiriSubmission(side, source) {
+      const count = pullRandomCardsFromDeck(side, isFootkiriDeckCandidate, 2);
+      addLog(`${source.name}の効果：${SIDES[side]}はデッキからカード${count}枚を手札に加えました。`);
+    }
+
+    function scoreAiSubmissionItem(side, item) {
+      if (!["tojirika", "yohabari", "footkiri"].includes(item?.baseId)) return null;
+      if (arePlayedEffectsSuppressed(side) || !canUsePrintedCardEffects(item)) return 0;
+      if (item.baseId === "footkiri") return isDeckToHandLocked() ? 0
+        : Math.min(2, state.players[side].deck.filter(isFootkiriDeckCandidate).length) * 5;
+      if (item.baseId === "yohabari") return effectiveCardCost(item) >= 1 ? yohabariAttendeeCount() * 3.5
+        : state.players[side].deck.length < 8 ? 8 : 2;
+      const removal = effectiveCardCost(item) >= 1 && !isCafeteriaEnvironmentActive()
+        && state.players[side].hand.some(card => card.type === "vampire")
+        ? Math.max(0, ...effectTargetEntries(side, oppositeSide(side))
+          .map(entry => scoreAiNonCombatEffectTarget(side, item, entry, { destroy: true }))) : 0;
+      return 5 + removal;
     }
 
     function wontonCount(side) {
@@ -45354,6 +45580,7 @@
     }
 
     function castImmediateItem(side, item, renderAfter, options = {}) {
+      if (["tojirika", "yohabari", "habayose", "footkiri"].includes(item?.baseId)) return castSubmissionItem(side, item, renderAfter);
       if (!arePlayedEffectsSuppressed(side) && item?.baseId === "tomoyo_mou") return castTomoyoMou(side,item,renderAfter);
       if (!arePlayedEffectsSuppressed(side) && item?.baseId === "shukii") return castShukii(side,item,renderAfter);
       if (!arePlayedEffectsSuppressed(side) && item?.baseId === "illegal_cafeteria") {
@@ -45403,7 +45630,7 @@
         if (renderAfter) render();
         return false;
       }
-      if (item.baseId === "yutakun_yutakun" && !state.players[side].trash.some((card) => card.baseId === "yuta")) {
+      if (item.baseId === "yutakun_yutakun" && !state.players[side].trash.some(isUtaInTrash)) {
         addLog("U太くんU太くんは校外エリアに「U太」がないため使えません。");
         if (renderAfter) render();
         return false;
@@ -45959,7 +46186,7 @@
         resultText = "次の相手ターン終了時まで、自分の気力はダメージを受けません。";
       }
       if (item.baseId === "yutakun_yutakun") {
-        const trashIndex = state.players[side].trash.findIndex((card) => card.baseId === "yuta");
+        const trashIndex = state.players[side].trash.findIndex(isUtaInTrash);
         const [yutaCard] = state.players[side].trash.splice(trashIndex, 1);
         yutaCard.owner = side;
         yutaCard.handTurns = 0;
@@ -45985,7 +46212,7 @@
         resultText = "相手本体に2ダメージを与えました。";
       }
       if (item.baseId === "greeting_3000") {
-        const utaCount = state.players[side].trash.filter((trashCard) => ["yuta", "dark_yuta"].includes(trashCard.baseId)).length;
+        const utaCount = state.players[side].trash.filter(isUtaOrDarkYutaInTrash).length;
         damagePlayer(oppositeSide(side), utaCount);
         resultText = `自分の校外エリアにあるU太と裏U太の合計${utaCount}人分、相手本体に${utaCount}ダメージを与えました。`;
       }
@@ -46665,7 +46892,9 @@
       }
       if (side === "player") pushTestHistoryBeforeAction();
       item.usedFromHand = true;
-      if (!arePlayedEffectsSuppressed(side)) triggerSubmission(side, item, "use");
+      if (!arePlayedEffectsSuppressed(side)) triggerSubmission(side, item, "use", {
+        paidCost: playCost, cafeteriaActive: isCafeteriaEnvironmentActive()
+      });
       state.players[side].will -= playCost;
       options.onPaid?.();
       const candidates = analyticsItemCandidates(side, item);
@@ -48852,7 +49081,7 @@
       if (!options.suppressLog) addTrashLog(owner, card, options.reason || "");
       if (!vanishes && !options.suppressToast) announceTrashMove(owner, card);
       detachedUtaEquipments.forEach((entry) => {
-        moveToTrash(owner, createCardFromBase(entry.baseId, owner), {
+        moveToTrash(owner, entry.baseId === "habayose" && entry.instanceId ? entry : createCardFromBase(entry.baseId, owner), {
           suppressLog: options.suppressLog === true,
           suppressToast: options.suppressToast === true,
           reason: "装備解除",
@@ -51242,6 +51471,7 @@
     }
 
     function canUseItemNow(item) {
+      if (["tojirika", "yohabari", "habayose", "footkiri"].includes(item?.baseId)) return true;
       if (item?.baseId === "shukii") return state.players.player.hand.some(c=>c.instanceId!==item.instanceId&&!isHighLoadHandCard(c));
       if (HORSE_MATERIAL_IDS.includes(item?.baseId)) return handFusionEligibleTargets("player", item).length > 0;
       if (item?.baseId === "thin_item" && !canUseThinItem()) return false;
@@ -51256,7 +51486,7 @@
       if (item.baseId === "aiben_vs_nyotei_title_match") return canUseTitleMatch("player", item);
       if (item.baseId === "dry_meal_ticket" && !isCafeteriaEnvironmentActive()) return false;
       if (item.baseId === "dont_worry" && state.actionTurn < 5) return false;
-      if (item.baseId === "yutakun_yutakun" && !state.players.player.trash.some((card) => card.baseId === "yuta")) return false;
+      if (item.baseId === "yutakun_yutakun" && !state.players.player.trash.some(isUtaInTrash)) return false;
       if (item.baseId === "three_gestures" && state.players.player.deck.length < 6) return false;
       if (item.baseId === "deck_without" && state.players.player.deck.length < 2) return false;
       if (item.baseId === "dropped_cards" && state.players.player.deck.length <= 0) return false;
@@ -54211,6 +54441,7 @@
 
     function effectiveCardCost(card, zone = null, index = null) {
       if (!card || card.noCost || isChaosBattle()) return 0;
+      if (card.baseId === "tojirika" && state.screen === "battle" && state.phase === "battle" && isCafeteriaEnvironmentActive()) return 0;
       const highLoadIncrease = isHighLoadHandCard(card) ? 1 : 0;
       const applyDrawDiscount = (cost) => Math.max(Math.min(1, cost), cost
         - (Number(card.smokeFlareCostReduction) || 0) - (Number(card.thinkSoCostReduction) || 0));
@@ -56354,6 +56585,29 @@
     // Game-facing test fixtures: use real cards and rules, with the resources
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
+      tojirika: {
+        hand: ["tojirika", "tojirika", "apprentice_vampire", "cafeteria", "female_highball"],
+        own: { seats: [] }, enemy: { teacher: "general_teacher", seats: [[4, "strong_student"]] },
+        deck: ["tojirika", "classroom", "apprentice_vampire", "pinige", "onigiri_draw"], life: 12,
+        note: "ヴァンパイアを見せて破壊する場合と見せない場合を選べます。食堂を置くと戦意0になり、破壊できません。女のハイボールで捨てた場合もピニゲだけを生成します。"
+      },
+      yohabari: {
+        hand: ["yohabari", "female_highball", "single_cell"],
+        own: { seats: [[0, "single_cell"], [4, "midge"]] }, enemy: { seats: [[4, "organism"]] },
+        deck: ["yohabari", "single_cell", "female_highball", "onigiri_draw"], life: 12,
+        note: "双方の講義室に対象を合計3人用意しました。戦意を払って使うと単細胞生物3枚を手札に生成します。女のハイボールで捨てるとデッキに5枚生成します。"
+      },
+      habayose: {
+        hand: ["habayose", "dark_yuta", "female_highball", "yutakun_yutakun", "greeting_3000"],
+        own: { seats: [] }, enemy: { seats: [[4, "general_student"]] },
+        deck: ["dark_yuta", "sexual_eye", "yuta", "red_happi", "habayose", "onigiri_draw"], life: 12,
+        note: "名前または本文にU太を含むカードを選んで検索できます。追加の戦意3で裏U太を空き席・教卓に出席させ、自身を装備できます。捨てた場合の提出、校外からの回収も試せます。"
+      },
+      footkiri: {
+        hand: ["footkiri", "female_highball"], own: { seats: [] }, enemy: { seats: [[4, "general_student"]] },
+        deck: ["footkiri", "tojirika", "yohabari", "habayose", "wonton_ki", "wonton_greeting", "general_student"], life: 12,
+        note: "通常使用と女のハイボールで捨てた場合の提出を試せます。デッキのフットキリは検索対象になりません。提出カードか万豚記をランダムに2枚まで加えます。"
+      },
       physical_sky: {
         hand: ["classroom", "physical_sky"], own: { seats: [[4, "dream_park_student"], [7, "mini_test_star"]] },
         enemy: { seats: [[4, "sudoku_queen"]] }, deck: ["ruler", "onigiri_draw"],
@@ -59080,6 +59334,10 @@
         if (kingdomRules[card.baseId]) return formatCardRulesDisplayText(card, kingdomRules[card.baseId]);
       }
       const rules = {
+        tojirika: "[点数]\n[提出]\n環境が「食堂」であるかぎり、このカードの戦意は0になる。\nこのカードを手札から戦意を1以上消費して使用したとき、環境が「食堂」でないなら、自分の手札のヴァンパイア1枚を相手に見せてもよい。\n自分の手札に「ピニゲ」1枚を生成する。ヴァンパイアを見せたなら、相手の講義室にいる出席者1人を指名し、破壊する。",
+        yohabari: "[提出]\n自分のデッキに「単細胞生物」5枚を生成してシャッフルする。\nこのカードを手札から戦意を1以上消費して使用したとき、代わりにお互いの講義室にいる「単細胞生物」「ミジンコ」「生物」の合計人数と同じ枚数の「単細胞生物」を自分の手札に生成する。",
+        habayose: "[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。\nその後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。そうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。",
+        footkiri: "[提出]\n自分のデッキから、「フットキリ」以外の[提出]を持つカードか「万豚記」を、ランダムに2枚まで手札に加える。",
         wonton_ki: "このカードを環境マスに置いたとき、自分の手札に「万豚記～挨拶シリーズ～」1枚を生成する。このカードが環境マスにあるかぎり、各プレイヤーのターン終了時、そのプレイヤーは自分のデッキから元の戦意が3の持ち物カード1枚をランダムに引く。",
         physical_sky: "このカードが環境マスにあるかぎり、お互いのプレイヤーは自分のターンに1回、自分の出席者1人を指名できる。その出席者が出席可能な空きマスを1つ選び、そこに移動させる。",
         mini_test_star: "足軽を持つ。\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。",

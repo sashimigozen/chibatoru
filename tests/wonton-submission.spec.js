@@ -22,7 +22,8 @@ test('9枚の能力値・本文・生成専用登録と管理ログ表示情報�
   const catalog=require('../server/card-catalog.json');
   expect(await page.evaluate(()=>getDeckEditorIds(''))).toEqual(catalog.deckOrder);
   const ledger=JSON.parse(fs.readFileSync(path.join(__dirname,'../カード管理台帳.html'),'utf8').match(/const CARDS = (\[[^\r\n]*\]);/)[1]);
-  expect(await page.evaluate(() => Object.entries(CARD_BASES).filter(([,card])=>card.submission).map(([id])=>id))).toEqual(series);
+  expect(await page.evaluate(() => Object.entries(CARD_BASES).filter(([,card])=>card.submission).map(([id])=>id).sort()))
+    .toEqual([...series, 'tojirika', 'yohabari', 'habayose', 'footkiri'].sort());
   const data=await page.evaluate(ids=>ids.map(id=>{const c=CARD_BASES[id];return {id,name:c.name,stats:[c.cost,c.attack,c.hp],text:cardRulesText(createCardFromBase(id,'player')),direct:DIRECT_DECK_CARD_IDS.has(id),generated:!!c.generated};}),ids);
   for(const [i,c]of data.entries()){
     expect(c.stats).toEqual([i<3?3:8,0,0]);expect(c.direct).toBe(i<3);expect(c.generated).toBe(i>=3);
