@@ -22,7 +22,7 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
   await guest.locator(`[data-private-join-room="${code}"]`).click();for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);
   await open(observer);await observer.locator('#onlinePrivateRefreshButton').click();await expect(observer.locator(`[data-private-join-room="${code}"]`)).toBeDisabled();
   await expect(host.locator('#onlineRandomHandLimit')).toBeVisible();await expect(guest.locator('#onlineRandomHandLimit')).toBeDisabled();
-  await host.locator('#onlineRandomHandLimitPlus').click();await expect(guest.locator('#onlineRandomHandLimit')).toHaveValue('10');
+  await host.locator('#onlineRandomHandLimitPlus').click();await expect(guest.locator('#onlineRandomHandLimit')).toHaveValue('13');
   await host.screenshot({path:'/tmp/private-room-prep-final.png'});
   await guest.locator('#onlineRandomBackButton').click();await expect(guest.locator('#onlinePrivateRoomList')).toBeVisible();await guest.locator('#onlinePrivateRefreshButton').click();await expect(guest.locator(`[data-private-join-room="${code}"]`)).toBeEnabled();
   await guest.locator('.private-code-entry > summary').click();await guest.locator('#onlineRoomInput').fill(code);await guest.locator('#onlineJoinRoomButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.connected)).toBe(true);
@@ -82,7 +82,7 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
     await expect(picker).toBeHidden();
     await expect(page.locator("#onlineRandomRoomCode")).toHaveText(code);
     await expect(page.locator("#onlineRandomLocalDeckName")).toHaveText("ルーム用テストデッキ");
-    await expect(page.locator("#onlineRandomHandLimit")).toHaveValue("10");
+    await expect(page.locator("#onlineRandomHandLimit")).toHaveValue("13");
     await page.locator("#onlineRandomDeckConfirmButton").click();
     await expect(page.locator("#onlineRandomDeckPreviewContent")).toContainText("ルーム用テストデッキ");
     await expect(page.locator("#onlineRandomDeckPreviewContent [data-library-card]").first()).toBeVisible();
@@ -90,7 +90,7 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
     await page.locator("#onlineReadyButton").click();
   }
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
-  expect(await guest.evaluate(()=>state.battleHandLimit)).toBe(10);
+  expect(await guest.evaluate(()=>state.battleHandLimit)).toBe(13);
   await observer.locator('#onlinePrivateRefreshButton').click();await expect(observer.locator(`[data-private-join-room="${code}"]`)).toHaveCount(0);
   await host.evaluate(() => {
     state.phase = "battle";
@@ -127,13 +127,13 @@ test('部屋一覧から入室し、新しい準備画面で同期して対戦�
   }
  }finally{await Promise.all(contexts.map(c=>c.close()));}
 });
-for(const mode of ['training','aiBattle'])for(const limit of [9,null,15])test(`通常ルールの準備設定を対戦へ適用 ${mode}/${limit}`,async({page})=>{
+for(const mode of ['training','aiBattle'])for(const limit of [12,null,15])test(`通常ルールの準備設定を対戦へ適用 ${mode}/${limit}`,async({page})=>{
  await page.goto(url.href);await page.evaluate(()=>{
    state.deckBuilder.savedDecks['テストデッキ']={counts:{...ChibattleAiBattleDecks[0].counts}};
    for(let i=1;i<=12;i++)state.deckBuilder.savedDecks[`準備確認用 ${i}`]={counts:{general_student:1}};
  });
  await page.locator('#homeNavSoloButton').click();await page.locator(mode==='aiBattle'?'#soloAiBattleButton':'#soloTrainingButton').click();
- await expect(page.locator('#soloHandLimit')).toHaveValue('9');await page.locator('#soloHandLimit').fill(limit===null?'':String(limit).replace(/[0-9]/g,digit=>String.fromCharCode(digit.charCodeAt(0)+0xFEE0)));await page.locator('#soloHandLimit').press('Tab');
+ await expect(page.locator('#soloHandLimit')).toHaveValue('12');await page.locator('#soloHandLimit').fill(limit===null?'':String(limit).replace(/[0-9]/g,digit=>String.fromCharCode(digit.charCodeAt(0)+0xFEE0)));await page.locator('#soloHandLimit').press('Tab');
  await expect(page.locator('#soloHandLimit')).toHaveValue(limit===null?'':String(limit));
  const picker=page.locator('#soloMatchDeckPicker');
  await page.locator('#soloPlayerSlot').click();
@@ -162,17 +162,32 @@ test('手札上限の全角入力は日本語変換のEnterでは確定せず、
  await input.dispatchEvent('keydown',{key:'Enter',isComposing:true,keyCode:229});
  await expect(input).toBeFocused();
  await expect(input).toHaveValue('１２');
- expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBe(9);
+ expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBe(12);
  await input.press('Enter');
  await expect(input).toHaveValue('12');
  expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBe(12);
  await input.fill('８');
  await input.press('Tab');
- await expect(input).toHaveValue('9');
+ await expect(input).toHaveValue('12');
  await input.fill('');
  await input.press('Enter');
  expect(await page.evaluate(()=>state.soloSelection.handLimit)).toBeNull();
 });
-for(const rule of ['normal','chaos','specialty'])test(`手札上限は通常ルールだけに適用 ${rule}`,async({page})=>{
- await page.goto(url.href);expect(await page.evaluate(rule=>{initializeGame({ruleId:rule,handLimit:12});return state.battleHandLimit;},rule)).toBe(rule==='normal'?12:null);
+for(const rule of ['normal','chaos','specialty'])test(`手札上限を全ルールに適用 ${rule}`,async({page})=>{
+ await page.goto(url.href);
+ await page.locator('#homeNavSoloButton').click();await page.locator('#soloTrainingButton').click();
+ await page.locator('#soloRuleSelect').selectOption(rule);
+ await expect(page.locator('#soloHandLimit')).toBeVisible();await expect(page.locator('#soloHandLimit')).toHaveValue('12');
+ await expect(page.locator('#soloHandLimitMinus')).toBeDisabled();
+ await page.locator('#soloHandLimitPlus').click();await expect(page.locator('#soloHandLimit')).toHaveValue('13');
+ await page.locator('#soloHandLimitMinus').click();await expect(page.locator('#soloHandLimit')).toHaveValue('12');
+ await page.screenshot({path:test.info().outputPath(`hand-limit-${rule}.png`)});
+ for(const limit of [undefined,11,12,15,null])expect(await page.evaluate(({rule,limit})=>{
+   initializeGame({ruleId:rule,handLimit:limit});
+   const own=state.players.player;
+   own.hand=Array.from({length:11},()=>createCardFromBase('ruler','player'));
+   own.deck=Array.from({length:3},()=>createCardFromBase('general_student','player'));
+   own.trash=[];drawCards('player',3,false);
+   return [state.battleHandLimit,own.hand.length,own.trash.length];
+ },{rule,limit})).toEqual(limit===null?[null,14,0]:limit===15?[15,14,0]:[12,12,2]);
 });

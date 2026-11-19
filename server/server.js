@@ -1516,7 +1516,7 @@ function createRoom(roomId, sessionId = "", matchType = "private") {
     sessionId: sessionId || createSessionId(),
     matchType,
     ruleId: DEFAULT_ROOM_RULE_ID,
-    handLimit: 9,
+    handLimit: 12,
     players: new Map(),
     started: false,
     state: null,
@@ -2192,7 +2192,7 @@ function handleSetHandLimit(ws, message) {
   if (player.role !== "host") return sendError(ws, "手札上限はホストだけが変更できます。", "forbidden");
   if (room.started) return sendError(ws, "対戦開始後に手札上限は変更できません。", "game_started");
   const value = message.handLimit;
-  if (value !== null && (!Number.isFinite(value) || !Number.isInteger(value) || value < 9)) return sendError(ws, "手札上限は9枚以上か空欄にしてください。", "invalid_hand_limit");
+  if (value !== null && (!Number.isFinite(value) || !Number.isInteger(value) || value < 12)) return sendError(ws, "手札上限は12枚以上か空欄にしてください。", "invalid_hand_limit");
   if (room.handLimit === value) return;
   room.handLimit = value;
   for (const entry of battlePlayers(room)) entry.ready = false;
@@ -2291,7 +2291,7 @@ function handleStartGame(ws, message) {
   room.replayIncidents = [];
   clearWaitingRoomTimer(room);
   room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
-  if (room.state?.state) room.state.state.battleHandLimit = room.ruleId === "normal" ? room.handLimit : null;
+  if (room.state?.state) room.state.state.battleHandLimit = room.handLimit;
   room.snapshotSeq = Math.max(room.snapshotSeq, Number(message.snapshot.seq) || 0);
   room.currentTurn = snapshotCurrentTurn(message.snapshot);
   room.updatedAt = now();
@@ -2315,7 +2315,7 @@ function handleGameState(ws, message) {
   const seq = Number(message.snapshot.seq) || 0;
   if (seq && seq < room.snapshotSeq) return;
   room.state = mergeSnapshotAnalytics(room.state, message.snapshot);
-  if (room.state?.state) room.state.state.battleHandLimit = room.ruleId === "normal" ? room.handLimit : null;
+  if (room.state?.state) room.state.state.battleHandLimit = room.handLimit;
   room.snapshotSeq = Math.max(room.snapshotSeq, seq);
   room.currentTurn = snapshotCurrentTurn(message.snapshot) || room.currentTurn;
   room.updatedAt = now();

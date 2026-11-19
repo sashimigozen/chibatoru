@@ -18037,7 +18037,7 @@
           <label class="training-setting-label">ルール</label>
           <button class="training-cycle-button" id="soloRuleCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloRuleCycleLabel">通常ルール</strong></button>
           <select class="control training-native-select" id="soloRuleSelect" aria-label="ソロバトルの対戦ルール"></select>
-          <div class="online-hand-limit-control"><label for="soloHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="soloHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="soloHandLimit" type="text" inputmode="numeric" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="soloHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
+          <div class="online-hand-limit-control"><label for="soloHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="soloHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="soloHandLimit" type="text" inputmode="numeric" value="12" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="soloHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
           <label class="training-setting-label">手番</label>
           <button class="training-cycle-button" id="soloInitiativeCycleButton" type="button"><span aria-hidden="true">⟲</span><strong id="soloInitiativeLabel">ランダム</strong></button>
           <div class="training-versus">VS</div>
@@ -18176,7 +18176,7 @@
             <label class="training-setting-label" for="onlineRandomRuleSelect">ルール</label>
             <select class="training-cycle-button online-random-rule-select" id="onlineRandomRuleSelect" aria-label="ランダムマッチの対戦ルール"></select>
             <p class="training-rule-description" id="onlineRandomRuleDescription"></p>
-            <div class="online-hand-limit-control"><label for="onlineRandomHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineRandomHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineRandomHandLimit" type="text" inputmode="numeric" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineRandomHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
+            <div class="online-hand-limit-control"><label for="onlineRandomHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineRandomHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineRandomHandLimit" type="text" inputmode="numeric" value="12" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineRandomHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
             <div class="training-versus">VS</div>
             <button class="online-random-ready-button" id="onlineRandomReadyButton" type="button" disabled>準備OK</button>
           <div class="online-private-ready-controls hidden" id="onlinePrivateReadyControls"><div class="online-ready-row">
@@ -18239,7 +18239,7 @@
           <select class="control" id="onlineDeckSelect" aria-label="オンライン用デッキ">
             <option value="__current">現在のあなたデッキ</option>
           </select>
-          <div class="online-hand-limit-control"><label for="onlineHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineHandLimit" type="text" inputmode="numeric" value="9" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
+          <div class="online-hand-limit-control"><label for="onlineHandLimit">手札上限</label><div class="online-hand-limit-stepper"><button type="button" class="button secondary" id="onlineHandLimitMinus" aria-label="手札上限を1枚減らす">−</button><input class="control" id="onlineHandLimit" type="text" inputmode="numeric" value="12" placeholder="上限なし" aria-label="手札上限枚数"><span>枚</span><button type="button" class="button secondary" id="onlineHandLimitPlus" aria-label="手札上限を1枚増やす">＋</button></div></div>
 
           <div class="online-player-list">
             <div class="online-player-row">
@@ -20324,6 +20324,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.45.1", "versioning": "semver", "date": "2026年11月20日", "summary": "すべての対戦ルールの手札上限を調整しました。", "changes": [{"category": "システム", "title": "手札上限の共通化", "after": "手札上限の初期値・最低設定を12枚に変更しました。通常・専攻・カオスのすべてのルールで、ソロ対戦・オンライン対戦に同じ上限処理を適用します。各準備画面で増減・直接入力ができ、空欄は上限なしです。カードテスト・チュートリアル・魔の1号館の初期上限も12枚です。全ルールの超過処理、設定操作とオンライン同期を確認するテストを更新しました。カードの能力値・本文は変更していません。"}]},
       {"version": "ver.0.45.0", "versioning": "semver", "date": "2026年11月19日", "summary": "提出を持つ持ち物4枚と、点数の獲得条件を追加しました。", "changes": [{"category": "新カード", "title": "トジリカ", "after": "トジリカ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[点数]\n[提出]\n環境が「食堂」であるかぎり、このカードの戦意は0になる。\nこのカードを手札から戦意を1以上消費して使用したとき、環境が「食堂」でないなら、自分の手札のヴァンパイア1枚を相手に見せてもよい。\n自分の手札に「ピニゲ」1枚を生成する。ヴァンパイアを見せたなら、相手の講義室にいる出席者1人を指名し、破壊する。"}, {"category": "新カード", "title": "ヨハバリ", "after": "ヨハバリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキに「単細胞生物」5枚を生成してシャッフルする。\nこのカードを手札から戦意を1以上消費して使用したとき、代わりにお互いの講義室にいる「単細胞生物」「ミジンコ」「生物」の合計人数と同じ枚数の「単細胞生物」を自分の手札に生成する。"}, {"category": "新カード", "title": "ハバヨセ!", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。\nその後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。そうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。"}, {"category": "新カード", "title": "フットキリ", "after": "フットキリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキから、「フットキリ」以外の[提出]を持つカードか「万豚記」を、ランダムに2枚まで手札に加える。"}, {"category": "システム", "title": "点数のターン終了時獲得", "after": "対戦開始時のデッキに［点数］を持つカードが合計10枚以上ある場合、自分のターン終了時、そのターン中に点数を獲得していなければ、点数を1獲得するようにしました。同名カードも1枚ずつ数え、対戦中に山札の枚数が変わっても条件は変わりません。撃破による点数獲得は引き続き行い、10点で単位へ変化します。能力説明・チュートリアル・ルール台帳を更新し、境界条件・そのターンの獲得状況・単位取得・オンライン同期を確認するテストを追加しました。カードの能力値・本文は変更していません。"}, {"category": "システム", "title": "新カードのカードテスト", "after": "新しい持ち物4枚をカード一覧からテストできます。通常使用と提出、食堂での無料使用、裏U太の出席・装備を試せる手札と盤面を用意しました。"}]},
       {"version": "ver.0.44.1", "versioning": "semver", "date": "2026年11月17日", "summary": "数独女王（スウドクイーン）と夢の国バイト学生を調整し、融合操作の不具合を修正しました。", "changes": [{"category": "カード調整", "title": "数独女王（スウドクイーン）", "before": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意4／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、自分の1行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から2行目に移動したとき、相手の講義室にいる学生1人を指名し、それに2ダメージを与える。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "beforeHighlights": ["戦意3", "相手の1行目にいる出席者すべてに1ダメージを与える。", "自分の2行目にいる出席者すべての攻撃力と体力を+1する。"], "afterHighlights": ["戦意4", "自分の1行目にいる出席者すべての攻撃力と体力を+1する。", "相手の講義室にいる学生1人を指名し、それに2ダメージを与える。"]}, {"category": "カード調整", "title": "夢の国バイト学生", "before": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "beforeHighlights": ["攻撃力2", "体力2"], "afterHighlights": ["攻撃力1", "体力1"]}, {"category": "不具合修正", "title": "手札の融合操作", "after": "手札の融合は、自分の手番でほかの処理を待っていないときに行えるようにしました。手番が切り替わると、残っている融合の選択を閉じます。相手の手番や効果の処理中でも、カードの詳細を確認できます。"}]},
       {"version": "ver.0.44.0", "versioning": "semver", "date": "2026年11月14日", "summary": "新能力「足軽」と移動に関わるカード8枚を追加しました。", "changes": [{"category": "新カード", "title": "フィジカルスカイ", "after": "フィジカルスカイ／環境／共通カード／戦意2／攻撃力0／体力0\nこのカードが環境マスにあるかぎり、お互いのプレイヤーは自分のターンに1回、自分の出席者1人を指名できる。その出席者が出席可能な空きマスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "ミニテストスター", "after": "ミニテストスター／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが移動したとき、自分の空き席マスに能力を持たない「ミニテストスター」1人を出席させる。"}, {"category": "新カード", "title": "バカでかい怠惰", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"}, {"category": "新カード", "title": "夢の国バイト学生", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。"}, {"category": "新カード", "title": "数独女王（スウドクイーン）", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。"}, {"category": "新カード", "title": "あきくん係", "after": "あきくん係／学生／共通カード／戦意2／攻撃力1／体力2\nこのカードを手札から出席させたとき、自分の講義室にいる出席者1人を指名する。その出席者が出席可能な3行目の空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "パ学生パ", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。"}, {"category": "新カード", "title": "あれカメラ", "after": "あれカメラ／持ち物／共通カード／戦意7／攻撃力0／体力0\nお互いの出席者を、それぞれの講義室で出席可能なマスへランダムに移動させる。"}, {"category": "カード調整", "title": "パ学生パ", "before": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者が出席可能な隣接する空き席マスを1つ選び、反撃の前にそこへ移動させる。", "after": "パ学生パ／学生／共通カード／戦意1／攻撃力0／体力1\n[陽気]\nこのカードが出席者を攻撃したとき、その出席者の左隣か右隣にある出席可能な空き席マスを1つ選び、そこに移動させる。", "beforeHighlights": ["その出席者が出席可能な隣接する", "反撃の前にそこへ"], "afterHighlights": ["その出席者の左隣か右隣にある出席可能な", "そこに"]}, {"category": "カード調整", "title": "バカでかい怠惰", "before": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果が2回発動したとき、この効果は失われる。\nこの効果は重複しない。", "after": "バカでかい怠惰／持ち物／バカでかい型／戦意2／攻撃力0／体力0\n以降、相手の出席者が移動したとき、その出席者に2ダメージを与える。この効果は2回発動するまで続く。\nこの効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。", "beforeHighlights": ["この効果が2回発動したとき、この効果は失われる。", "この効果は重複しない。"], "afterHighlights": ["この効果は2回発動するまで続く。", "この効果が続いている間にこのカードを使用したとき、残りの発動回数を2回にする。"]}, {"category": "システム", "title": "足軽と移動の処理", "after": "自分のターンに1回、出席したターンから使用できる。行動権を消費せず、このカードを出席可能な空きマスへ移動させる。このカードが移動したとき、このカードの攻撃力と体力を+1する。 出席者をタップまたは長押しして、攻撃か移動を選べます。攻撃や講義の後でも移動できます。 一斉移動ではすべての移動先を確定してから、移動前の席順で処理します。移動した出席者ごとに、本人の強化や能力を先に処理します。カードの効果で移動したときも足軽で強化されます。カードテストで新カード8枚を試せます。"}, {"category": "表示・操作改善", "title": "Ultimate U太の勝利演出", "after": "Ultimate U太の効果が有効な側が勝ったときだけ、勝利の文字演出に墨の渦を表示します。"}]},
@@ -22882,7 +22883,7 @@
       message: "",
       log: [],
       battleRuleId: "normal",
-      battleHandLimit: 9,
+      battleHandLimit: 12,
       analytics: createAnalyticsState(),
       deckBuilder: {
         activeSide: "player",
@@ -22909,7 +22910,7 @@
         }
       },
       soloSelection: {
-        handLimit: 9,
+        handLimit: 12,
         mode: "training",
         ruleId: "normal",
         activeSide: "player",
@@ -22966,7 +22967,7 @@
         localReady: false,
         remoteReady: false,
         roomRuleId: "normal",
-        handLimit: 9,
+        handLimit: 12,
         localDeckName: "__current",
         remoteDeckName: "",
         localDeckCounts: null,
@@ -25655,7 +25656,7 @@
         .replace(/[０-９]/g, digit => String.fromCharCode(digit.charCodeAt(0) - 0xFEE0));
       if (text === "") return null;
       const number = Number(text);
-      return Number.isFinite(number) && Number.isInteger(number) && number >= 9 ? number : 9;
+      return Number.isFinite(number) && Number.isInteger(number) && number >= 12 ? number : 12;
     }
 
     function onlineUpdateHandLimit(value) {
@@ -26440,7 +26441,7 @@
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.online.roomRuleId = "normal";
-      state.online.handLimit = 9;
+      state.online.handLimit = 12;
       state.online.startPending = false;
       state.online.remoteDeckName = "";
       onlineClearRemoteDeckCounts();
@@ -26503,7 +26504,7 @@
       state.online.localReady = false;
       state.online.remoteReady = false;
       state.online.roomRuleId = "normal";
-      state.online.handLimit = 9;
+      state.online.handLimit = 12;
       state.online.startPending = false;
       state.online.remoteDeckName = "";
       onlineClearRemoteDeckCounts();
@@ -29720,9 +29721,8 @@
         ? "normal"
         : normalizeOnlineRuleId(options.ruleId || (onlineHost ? state.online.roomRuleId : state.battleRuleId));
       state.battleRuleId = ruleId;
-      state.battleHandLimit = ruleId === "normal"
-        ? normalizeHandLimit(onlineHost ? state.online.handLimit : options.handLimit === undefined ? 9 : options.handLimit)
-        : null;
+      state.battleHandLimit = normalizeHandLimit(onlineHost ? state.online.handLimit
+        : options.handLimit === undefined ? 12 : options.handLimit);
       SIDES.opponent = onlineHost ? ONLINE_OPPONENT_LABEL : SOLO_OPPONENT_LABEL;
       nextCardInstanceId = 1;
       state.preBattleToken += 1;
@@ -50559,9 +50559,9 @@
       for (const prefix of ["online", "onlineRandom"]) {
         const input = elements[`${prefix}HandLimit`];
         if (document.activeElement !== input || disabled) input.value = state.online.handLimit ?? "";
-        input.closest(".online-hand-limit-control").classList.toggle("hidden", rule.id !== "normal");
-        input.disabled = disabled || rule.id !== "normal";
-        elements[`${prefix}HandLimitMinus`].disabled = disabled || state.online.handLimit === 9;
+        input.closest(".online-hand-limit-control").classList.remove("hidden");
+        input.disabled = disabled;
+        elements[`${prefix}HandLimitMinus`].disabled = disabled || state.online.handLimit === 12;
         elements[`${prefix}HandLimitPlus`].disabled = disabled;
       }
       elements.onlineRuleSelect.disabled = disabled;
@@ -55404,9 +55404,9 @@
         .join("");
       if (elements.soloRuleSelect.innerHTML !== ruleOptions) elements.soloRuleSelect.innerHTML = ruleOptions;
       elements.soloRuleSelect.value = ruleId;
-      elements.soloHandLimit.closest(".online-hand-limit-control").classList.toggle("hidden", ruleId !== "normal");
+      elements.soloHandLimit.closest(".online-hand-limit-control").classList.remove("hidden");
       if (document.activeElement !== elements.soloHandLimit) elements.soloHandLimit.value = selection.handLimit ?? "";
-      elements.soloHandLimitMinus.disabled = selection.handLimit === 9;
+      elements.soloHandLimitMinus.disabled = selection.handLimit === 12;
       elements.soloRuleCycleLabel.textContent = rule.name;
       const initiativeLabels = { random: "ランダム", player: "左が先攻", opponent: "右が先攻" };
       elements.soloInitiativeLabel.textContent = initiativeLabels[selection.initiative] || initiativeLabels.random;
@@ -56917,7 +56917,7 @@
 
     function startCardTest(baseId) {
       state.battleRuleId = "normal";
-      state.battleHandLimit = 9;
+      state.battleHandLimit = 12;
       if (state.screen === "deck") cardTestReturnView = state.deckBuilder.view || "editor";
       state.kashikashiActionTurn = null;
       resetBattleDrawers();
@@ -58095,7 +58095,7 @@
 
     function startTutorialBattle(chapterId = "basic", options = {}) {
       state.battleRuleId = "normal";
-      state.battleHandLimit = 9;
+      state.battleHandLimit = 12;
       const chapter = TUTORIAL_CHAPTERS.find((entry) => entry.id === chapterId);
       if (!chapter?.steps) return;
       clearTutorialQuizCoachTimer();
@@ -60144,8 +60144,8 @@
       elements.soloHandLimit.value = state.soloSelection.handLimit ?? ""; render();
     });
     elements.soloHandLimit.addEventListener("keydown", event => { if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) elements.soloHandLimit.blur(); });
-    elements.soloHandLimitMinus.addEventListener("click", () => { state.soloSelection.handLimit = Math.max(9,(state.soloSelection.handLimit ?? 10)-1); render(); });
-    elements.soloHandLimitPlus.addEventListener("click", () => { state.soloSelection.handLimit = (state.soloSelection.handLimit ?? 8)+1; render(); });
+    elements.soloHandLimitMinus.addEventListener("click", () => { state.soloSelection.handLimit = Math.max(12,(state.soloSelection.handLimit ?? 13)-1); render(); });
+    elements.soloHandLimitPlus.addEventListener("click", () => { state.soloSelection.handLimit = (state.soloSelection.handLimit ?? 11)+1; render(); });
     elements.soloRuleCycleButton.addEventListener("click", cycleSoloRule);
     elements.soloInitiativeCycleButton.addEventListener("click", cycleSoloInitiative);
     elements.soloRuleSelect.addEventListener("change", () => {
@@ -60238,8 +60238,8 @@
       const input = elements[`${prefix}HandLimit`];
       input.addEventListener("change", () => { input.value = normalizeHandLimit(input.value) ?? ""; onlineUpdateHandLimit(input.value); });
       input.addEventListener("keydown", event => { if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) input.blur(); });
-      elements[`${prefix}HandLimitMinus`].addEventListener("click", () => onlineUpdateHandLimit(Math.max(9, (state.online.handLimit ?? 10) - 1)));
-      elements[`${prefix}HandLimitPlus`].addEventListener("click", () => onlineUpdateHandLimit((state.online.handLimit ?? 8) + 1));
+      elements[`${prefix}HandLimitMinus`].addEventListener("click", () => onlineUpdateHandLimit(Math.max(12, (state.online.handLimit ?? 13) - 1)));
+      elements[`${prefix}HandLimitPlus`].addEventListener("click", () => onlineUpdateHandLimit((state.online.handLimit ?? 11) + 1));
     }
     elements.onlineRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRuleSelect));
     elements.onlineRandomRuleSelect.addEventListener("change", () => onlineUpdateRoomRule(elements.onlineRandomRuleSelect));
