@@ -107,7 +107,16 @@ for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide=
    await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);
    await actor.evaluate(({cardId,index,id})=>id==='pinige'?beginItemUse(state.players.player.hand.find(c=>c.instanceId===cardId)):playCard(cardId,'seat','player',index),{cardId:setup.cardId,index:id==='secretly_mocked_student'?8:4,id});
    if(id==='sports_spectator_student'||id==='gecko_carrier_student'||id==='pinige'){
-    await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);await actor.evaluate(({id,score})=>{const cards=state.pendingCardChoice.cards;const modes=id==='pinige'?[4,1]:id==='sports_spectator_student'&&score===10?[2,1]:[1];for(const mode of modes)toggleCardChoiceCard(cards.find(c=>c.pointMode===mode).instanceId);confirmCardChoiceSelection();},{id,score});
+    await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);
+    await expect(actor.locator('#effectModeSource .card')).toHaveCount(1);
+    await expect.poll(()=>actor.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
+    const selection = await actor.evaluate(({id,score})=>{
+     const choice=state.pendingCardChoice;
+     const modes=id==='pinige'?[4,1]:id==='sports_spectator_student'&&score===10?[2,1]:[1];
+     return {max:choice.max,ids:modes.map(mode=>choice.cards.find(c=>c.pointMode===mode).instanceId)};
+    },{id,score});
+    for(const cardId of selection.ids) await actor.locator(`.effect-mode-option[data-card-id="${cardId}"]`).click();
+    if(selection.max>1) await actor.locator('#threeGesturesConfirmButton').click();
    }
    if(id==='lucky_man')for(let i=0;i<(score===10?2:1);i++){await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);await expect.poll(()=>actor.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);await actor.locator('.board-card[data-owner="opponent"][data-zone="seat"][data-index="0"]').click();await actor.locator('#itemTargetConfirmButton').click();}
    await expect.poll(()=>host.evaluate(()=>fusionTasksBusy())).toBe(false);await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThan(setup.seq);

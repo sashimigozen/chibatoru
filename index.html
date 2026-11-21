@@ -17743,6 +17743,144 @@
     .battle-screen .expanded-hand-panel #playerHand .hand-card .hand-card-stats .stat-attack { top: 124px !important; left: -18px !important; }
     .battle-screen .expanded-hand-panel #playerHand .hand-card .hand-card-stats .stat-hp { top: 266px !important; left: -18px !important; }
     @media (max-height: 540px) { .battle-screen .expanded-hand-panel #playerHand { height: 144px !important; } .battle-screen .expanded-hand-panel #playerHand .hand-card:nth-child(n) { flex-basis: 78px !important; width: 78px !important; min-width: 78px !important; height: 118.857px !important; min-height: 118.857px !important; } }
+    /* Effect modes sit over the visible board, with one shared source card. */
+    .effect-mode-layout { width: 100%; }
+    #threeGesturesStage.effect-mode-choice {
+      padding: 28px 20px;
+      background: rgba(7, 18, 30, .62);
+      backdrop-filter: none;
+    }
+    #threeGesturesStage.effect-mode-choice .mulligan-window {
+      width: min(760px, 52vw);
+      max-height: calc(100dvh - 40px);
+      gap: 12px;
+      padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    #threeGesturesStage.effect-mode-choice h2 {
+      width: max-content;
+      max-width: 100%;
+      margin: 0;
+      padding: 7px 28px;
+      border-block: 1px solid rgba(191, 219, 237, .32);
+      color: #f3f9ff;
+      background: rgba(18, 43, 63, .88);
+      font-size: clamp(13px, 1.15vw, 17px);
+      font-weight: 800;
+      line-height: 1.4;
+    }
+    #threeGesturesStage.effect-mode-choice .mulligan-window > p {
+      margin: 0;
+      color: #d7e6f3;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    #threeGesturesStage.effect-mode-choice .effect-mode-layout {
+      display: grid;
+      grid-template-columns: clamp(92px, min(17vw, 28vh), 190px) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(18px, 3.5vw, 48px);
+      min-height: 0;
+    }
+    #threeGesturesStage.effect-mode-choice #effectModeSource {
+      display: grid;
+      align-items: center;
+      width: 100%;
+      min-width: 0;
+    }
+    #threeGesturesStage.effect-mode-choice .effect-mode-source-card {
+      width: 100%;
+      min-width: 0;
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 21 / 32;
+      margin: 0;
+      cursor: pointer;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, .32);
+    }
+    #threeGesturesStage.effect-mode-choice #threeGesturesHand {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      gap: 12px;
+      max-height: min(64dvh, 520px);
+      min-width: 0;
+      padding: 8px 5px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-gutter: auto;
+    }
+    #threeGesturesStage .effect-mode-option {
+      position: relative;
+      flex: 0 0 auto;
+      display: grid;
+      gap: 5px;
+      width: 100%;
+      min-height: 52px;
+      padding: 12px 16px;
+      border: 1px solid #8baac5;
+      border-radius: 3px;
+      color: #f3f8ff;
+      background: rgba(18, 43, 63, .96);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .2);
+      font-family: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color .15s, background-color .15s, box-shadow .15s, translate .15s;
+      touch-action: manipulation;
+    }
+    #threeGesturesStage .effect-mode-option:hover,
+    #threeGesturesStage .effect-mode-option:focus-visible {
+      border-color: #d6f2ff;
+      background: #244e6b;
+      outline: 2px solid #8cd9ff;
+      outline-offset: 2px;
+    }
+    #threeGesturesStage .effect-mode-option.selected {
+      border-color: #a2e3ff;
+      background: #245a7b;
+      box-shadow: 0 0 0 2px rgba(133, 218, 255, .44), 0 0 20px rgba(84, 196, 244, .22);
+      translate: 4px 0;
+    }
+    #threeGesturesStage .effect-mode-option:disabled { cursor: default; }
+    #threeGesturesStage .effect-mode-option:disabled:not(.selected) { opacity: .55; }
+    .effect-mode-option-label { font-size: 14px; font-weight: 800; line-height: 1.4; }
+    .effect-mode-option-text { color: #e0edf6; font-size: 13px; font-weight: 500; line-height: 1.6; overflow-wrap: anywhere; }
+    #threeGesturesStage.effect-mode-choice .mulligan-action-row { justify-self: end; margin-top: 0; }
+    #threeGesturesStage.effect-mode-choice .selection-peek-button { color: #e8f5ff; border-color: #829fb7; background: #17374e; }
+    #threeGesturesStage.effect-mode-choice #threeGesturesConfirmButton { min-height: 42px; }
+    #threeGesturesStage.effect-mode-entering { animation: effect-mode-backdrop-in .22s ease-out both; }
+    .effect-mode-entering .effect-mode-source-card { animation: effect-mode-source-in .36s cubic-bezier(.2,.7,.2,1) both; }
+    .effect-mode-entering .effect-mode-option { animation: effect-mode-option-in .28s ease-out both; animation-delay: calc(110ms + var(--mode-index) * 45ms); }
+    #threeGesturesStage.effect-mode-committing .effect-mode-option.selected { animation: effect-mode-confirm .2s ease-out both; }
+    @keyframes effect-mode-backdrop-in { from { background-color: transparent; } to { background-color: rgba(7,18,30,.62); } }
+    @keyframes effect-mode-source-in { from { opacity: 0; transform: translateX(42px) scale(.94); } to { opacity: 1; transform: translateX(0) scale(1); } }
+    @keyframes effect-mode-option-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes effect-mode-confirm { 50% { background-color: #367fa1; box-shadow: 0 0 0 2px #b5edff, 0 0 24px rgba(137,224,255,.65); } }
+    @media (max-width: 700px) {
+      #threeGesturesStage.effect-mode-choice { padding: 16px 10px; }
+      #threeGesturesStage.effect-mode-choice .mulligan-window { width: min(580px, calc(100vw - 28px)); gap: 10px; }
+      #threeGesturesStage.effect-mode-choice .effect-mode-layout { gap: 14px; }
+      #threeGesturesStage .effect-mode-option { padding: 10px 12px; }
+      .effect-mode-option-label { font-size: 13px; }
+      .effect-mode-option-text { font-size: 12px; line-height: 1.5; }
+    }
+    @media (max-height: 600px) and (min-width: 701px) {
+      #threeGesturesStage.effect-mode-choice .mulligan-window { gap: 8px; }
+      #threeGesturesStage.effect-mode-choice #threeGesturesHand { gap: 9px; max-height: 55dvh; }
+      #threeGesturesStage .effect-mode-option { padding: 8px 12px; }
+      .effect-mode-option-label { font-size: 12px; }
+      .effect-mode-option-text { font-size: 12px; line-height: 1.4; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #threeGesturesStage.effect-mode-choice,
+      #threeGesturesStage.effect-mode-choice .effect-mode-source-card,
+      #threeGesturesStage.effect-mode-choice .effect-mode-option { animation: none; transition: none; }
+    }
   </style>
   <link rel="stylesheet" href="four-mode.css" />
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
@@ -18593,7 +18731,10 @@
       <div class="mulligan-window">
         <h2 id="threeGesturesTitle">カードを選んでください</h2>
         <p id="threeGesturesMessage">手札に加えるカードを3枚選び、確定してください。</p>
-        <div class="mulligan-hand" id="threeGesturesHand"></div>
+        <div class="effect-mode-layout">
+          <div id="effectModeSource" class="hidden"></div>
+          <div class="mulligan-hand" id="threeGesturesHand"></div>
+        </div>
         <div class="mulligan-action-row">
           <button class="button mulligan-hand-button" id="threeGesturesConfirmButton" type="button">3枚選択で確定</button>
           <button class="selection-peek-button" type="button" data-selection-peek="hide" aria-label="講義室を見る" title="講義室を見る">
@@ -20324,6 +20465,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.45.2", "versioning": "semver", "date": "2026年11月21日", "summary": "複数の効果から選ぶ画面と演出を改善しました。", "changes": [{"category": "表示・操作改善", "title": "効果の選択画面", "after": "使用カードを左、効果のボタンを右に並べ、盤面を透かして確認できる表示にしました。カードと効果が現れる演出と、決定時の短い発光を追加しました。効果を1つ選ぶ場合は、押すとそのまま決定します。複数選ぶ場合は選択状態と枚数を表示し、選び直してから確定できます。講義室を見て選択画面へ戻ることもできます。スマートフォン表示・選択のやり直し・対戦切り替え・オンライン双方の操作を確認するテストを追加・更新しました。カードの能力値・本文・効果の処理順は変更していません。"}]},
       {"version": "ver.0.45.1", "versioning": "semver", "date": "2026年11月20日", "summary": "すべての対戦ルールの手札上限を調整しました。", "changes": [{"category": "システム", "title": "手札上限の共通化", "after": "手札上限の初期値・最低設定を12枚に変更しました。通常・専攻・カオスのすべてのルールで、ソロ対戦・オンライン対戦に同じ上限処理を適用します。各準備画面で増減・直接入力ができ、空欄は上限なしです。カードテスト・チュートリアル・魔の1号館の初期上限も12枚です。全ルールの超過処理、設定操作とオンライン同期を確認するテストを更新しました。カードの能力値・本文は変更していません。"}]},
       {"version": "ver.0.45.0", "versioning": "semver", "date": "2026年11月19日", "summary": "提出を持つ持ち物4枚と、点数の獲得条件を追加しました。", "changes": [{"category": "新カード", "title": "トジリカ", "after": "トジリカ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[点数]\n[提出]\n環境が「食堂」であるかぎり、このカードの戦意は0になる。\nこのカードを手札から戦意を1以上消費して使用したとき、環境が「食堂」でないなら、自分の手札のヴァンパイア1枚を相手に見せてもよい。\n自分の手札に「ピニゲ」1枚を生成する。ヴァンパイアを見せたなら、相手の講義室にいる出席者1人を指名し、破壊する。"}, {"category": "新カード", "title": "ヨハバリ", "after": "ヨハバリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキに「単細胞生物」5枚を生成してシャッフルする。\nこのカードを手札から戦意を1以上消費して使用したとき、代わりにお互いの講義室にいる「単細胞生物」「ミジンコ」「生物」の合計人数と同じ枚数の「単細胞生物」を自分の手札に生成する。"}, {"category": "新カード", "title": "ハバヨセ!", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。\nその後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。そうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。"}, {"category": "新カード", "title": "フットキリ", "after": "フットキリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキから、「フットキリ」以外の[提出]を持つカードか「万豚記」を、ランダムに2枚まで手札に加える。"}, {"category": "システム", "title": "点数のターン終了時獲得", "after": "対戦開始時のデッキに［点数］を持つカードが合計10枚以上ある場合、自分のターン終了時、そのターン中に点数を獲得していなければ、点数を1獲得するようにしました。同名カードも1枚ずつ数え、対戦中に山札の枚数が変わっても条件は変わりません。撃破による点数獲得は引き続き行い、10点で単位へ変化します。能力説明・チュートリアル・ルール台帳を更新し、境界条件・そのターンの獲得状況・単位取得・オンライン同期を確認するテストを追加しました。カードの能力値・本文は変更していません。"}, {"category": "システム", "title": "新カードのカードテスト", "after": "新しい持ち物4枚をカード一覧からテストできます。通常使用と提出、食堂での無料使用、裏U太の出席・装備を試せる手札と盤面を用意しました。"}]},
       {"version": "ver.0.44.1", "versioning": "semver", "date": "2026年11月17日", "summary": "数独女王（スウドクイーン）と夢の国バイト学生を調整し、融合操作の不具合を修正しました。", "changes": [{"category": "カード調整", "title": "数独女王（スウドクイーン）", "before": "数独女王（スウドクイーン）／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、相手の1行目にいる出席者すべてに1ダメージを与える。\nこのカードが別の行から2行目に移動したとき、自分の2行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "after": "数独女王（スウドクイーン）／学生／共通カード／戦意4／攻撃力1／体力1\n[足軽]\nこのカードが別の行から1行目に移動したとき、自分の1行目にいる出席者すべての攻撃力と体力を+1する。\nこのカードが別の行から2行目に移動したとき、相手の講義室にいる学生1人を指名し、それに2ダメージを与える。\nこのカードが別の行から3行目に移動したとき、自分の気力を1回復する。", "beforeHighlights": ["戦意3", "相手の1行目にいる出席者すべてに1ダメージを与える。", "自分の2行目にいる出席者すべての攻撃力と体力を+1する。"], "afterHighlights": ["戦意4", "自分の1行目にいる出席者すべての攻撃力と体力を+1する。", "相手の講義室にいる学生1人を指名し、それに2ダメージを与える。"]}, {"category": "カード調整", "title": "夢の国バイト学生", "before": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力2／体力2\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "after": "夢の国バイト学生／学生／共通カード／戦意3／攻撃力1／体力1\n[足軽]\n[陽気]\nこのカードが別の列から1列目に移動したとき、超注目を持つ。\nこのカードが別の列から3列目に移動したとき、超陽気を持つ。", "beforeHighlights": ["攻撃力2", "体力2"], "afterHighlights": ["攻撃力1", "体力1"]}, {"category": "不具合修正", "title": "手札の融合操作", "after": "手札の融合は、自分の手番でほかの処理を待っていないときに行えるようにしました。手番が切り替わると、残っている融合の選択を閉じます。相手の手番や効果の処理中でも、カードの詳細を確認できます。"}]},
@@ -23709,6 +23851,7 @@
       thinItemChoiceActions: document.getElementById("thinItemChoiceActions"),
       thinItemKeepConfirmButton: document.getElementById("thinItemKeepConfirmButton"),
       threeGesturesStage: document.getElementById("threeGesturesStage"),
+      effectModeSource: document.getElementById("effectModeSource"),
       threeGesturesTitle: document.getElementById("threeGesturesTitle"),
       threeGesturesHand: document.getElementById("threeGesturesHand"),
       threeGesturesMessage: document.getElementById("threeGesturesMessage"),
@@ -39465,6 +39608,7 @@
       const promise = new Promise(resolve => fusionChoiceWaiters.set(requestId, { resolve, cards, min, max, token }));
       const options = { mode: "fusion_effect_choice", title: source.name, cards, min, max, message: choiceOptions.message,
         requestId, context: { kind }, confirmLabel: "確定" };
+      if (isEffectModeChoice(options)) options.context.modeSource = cardRevealPayload(source);
       if (kind === "lecturer_move") options.message = "相手の教卓マスへ移動させる出席者を、盤面から1人まで指名してください。0人でも確定できます。";
       if (kind === "destroy_columns") options.context.targetOwner = oppositeSide(side);
       if (kind === "destroy_columns") options.message = `破壊する列を${max}つ選んでください。教卓マスは対象に含みません。`;
@@ -42143,8 +42287,17 @@
 
     function pointModeCards(side, source, gecko = false) {
       const labels = gecko ? ["左右に出席", "超陽気を得る"] : ["戦意を1回復", "点数カードを2枚引く", "ピニゲを1枚引く", "ランダムに3ダメージ"];
+      const effects = gecko ? [
+        "左右に隣接する空いている席マスすべてに「ヤモリを背負う学生」を1人ずつ出席させる。",
+        "このカードは超陽気を持つ。"
+      ] : [
+        "自分の戦意を1回復する。",
+        "自分のデッキから[点数]を持つカードを2枚引く。",
+        "自分のデッキから「ピニゲ」を1枚引く。",
+        "相手の出席者1人をランダムに選び、3ダメージを与える。"
+      ];
       return labels.map((name, index) => ({instanceId:`point-mode-${index+1}`, name, type:"item", cost:0,
-        pointMode:index+1, twoAchieversChoice:true, effect: name,
+        pointMode:index+1, twoAchieversChoice:true, effect: effects[index],
         choiceScore: gecko ? (index === 0 ? pointAdjacentSeats(side,source).length * 8
           : isCpuControlledBattleSide(side) && aiGeckoCanFinishOnAttendance(side, source) ? 1000 : 7)
           : index === 0 ? 2 : index === 1 ? Math.min(2,state.players[side].deck.filter(c=>c.hasPoint).length)*4
@@ -51982,6 +52135,123 @@
       });
     }
 
+    function isEffectModeChoice(choice) {
+      if (!choice) return false;
+      if (["king_ghidorah_effect", "environment_setup", "adjective_choice", "cornering_lecturer",
+        "starbucks_cornering_teacher", "starbucks_cornering_online_response"].includes(choice.mode)) return true;
+      return ["fusion_effect_choice", "fusion_effect_online_response"].includes(choice.mode)
+        && ["point_modes", "two_achievers", "sofa_modes"].includes(choice.context?.kind);
+    }
+
+    function effectModeSourceCard(choice) {
+      if (choice.context?.modeSource) return choice.context.modeSource;
+      const cards = [...state.players.player.hand, ...state.players.player.trash,
+        ...["player", "opponent"].flatMap(side => listBoardRefs(side).map(getBoardCardFromRef))];
+      const id = choice.itemId || choice.playCardId;
+      const source = cards.find(card => id && card.instanceId === id)
+        || cards.find(card => card.name === choice.title);
+      if (source) return source;
+      const baseId = Object.keys(CARD_BASES).find(id => CARD_BASES[id].name === choice.title);
+      return baseId ? revealCardFromBase(baseId, "player") : null;
+    }
+
+    let renderedEffectModeChoice = null;
+    let effectModeCommit = null;
+
+    function clearEffectModePresentation() {
+      if (effectModeCommit) window.clearTimeout(effectModeCommit.timer);
+      effectModeCommit = null;
+      renderedEffectModeChoice = null;
+      elements.effectModeSource.innerHTML = "";
+      elements.effectModeSource.classList.add("hidden");
+      elements.threeGesturesStage.classList.remove("effect-mode-choice", "effect-mode-entering", "effect-mode-committing");
+      elements.threeGesturesConfirmButton.classList.remove("hidden");
+      elements.threeGesturesStage.querySelector("[data-selection-peek]").disabled = false;
+    }
+
+    function commitEffectModeChoice() {
+      const choice = state.pendingCardChoice;
+      if (!isEffectModeChoice(choice) || effectModeCommit || choice.selectedIds.length < choice.min) return;
+      const token = state.preBattleToken;
+      effectModeCommit = { choice, timer: null };
+      elements.threeGesturesStage.classList.add("effect-mode-committing");
+      render();
+      const delay = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 200;
+      effectModeCommit.timer = window.setTimeout(() => {
+        effectModeCommit = null;
+        if (state.pendingCardChoice !== choice || token !== state.preBattleToken || state.gameOver || state.screen !== "battle") return;
+        confirmCardChoiceSelection();
+      }, delay);
+    }
+
+    function renderEffectModeChoice(choice) {
+      const stage = elements.threeGesturesStage;
+      if (effectModeCommit && effectModeCommit.choice !== choice) {
+        window.clearTimeout(effectModeCommit.timer);
+        effectModeCommit = null;
+      }
+      stage.classList.add("effect-mode-choice");
+      const single = choice.min === 1 && choice.max === 1;
+      elements.threeGesturesTitle.textContent = `効果を${choice.max}つ選んでください`;
+      elements.threeGesturesMessage.textContent = single ? choice.title
+        : `${choice.title}　${choice.selectedIds.length}/${choice.max} 選択中${choice.context?.kind === "point_modes" ? "・番号順に処理" : ""}`;
+      elements.threeGesturesConfirmButton.classList.toggle("hidden", single);
+      elements.threeGesturesConfirmButton.textContent = `確定 ${choice.selectedIds.length}/${choice.max}`;
+      elements.threeGesturesConfirmButton.disabled = Boolean(effectModeCommit) || choice.selectedIds.length < choice.min;
+      stage.querySelector("[data-selection-peek]").disabled = Boolean(effectModeCommit);
+      if (renderedEffectModeChoice !== choice) {
+        renderedEffectModeChoice = choice;
+        stage.classList.remove("effect-mode-entering", "effect-mode-committing");
+        elements.threeGesturesHand.innerHTML = "";
+        elements.effectModeSource.innerHTML = "";
+        const source = effectModeSourceCard(choice);
+        elements.effectModeSource.classList.toggle("hidden", !source);
+        if (source) {
+          const card = document.createElement("button");
+          card.type = "button";
+          card.className = `card mulligan-card effect-mode-source-card ${source.type}${cardVisualClass(source)}`;
+          card.innerHTML = cardTemplate(source, false);
+          card.setAttribute("aria-label", `${source.name}のカード詳細`);
+          attachCardDetailEvents(card, source);
+          elements.effectModeSource.append(card);
+        }
+        choice.cards.forEach((card, index) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "effect-mode-option";
+          button.dataset.cardId = card.instanceId;
+          button.style.setProperty("--mode-index", index);
+          const label = document.createElement("span");
+          label.className = "effect-mode-option-label";
+          label.textContent = `${index + 1}. ${card.name.replace(/^効果\d+[：:]\s*/, "")}`;
+          button.append(label);
+          if (card.effect && card.effect !== card.name) {
+            const text = document.createElement("span");
+            text.className = "effect-mode-option-text";
+            text.textContent = card.effect;
+            button.append(text);
+          }
+          button.addEventListener("click", () => {
+            if (state.pendingCardChoice !== choice || effectModeCommit) return;
+            toggleCardChoiceCard(card.instanceId);
+            if (single) commitEffectModeChoice();
+          });
+          elements.threeGesturesHand.append(button);
+        });
+        // Restart the entrance only for a new choice or when returning from the board.
+        void stage.offsetWidth;
+        stage.classList.add("effect-mode-entering");
+      }
+      for (const button of elements.threeGesturesHand.children) {
+        const selected = choice.selectedIds.includes(button.dataset.cardId);
+        const selectable = !choice.selectableIds || choice.selectableIds.includes(button.dataset.cardId);
+        button.classList.toggle("selected", selected);
+        button.setAttribute("aria-pressed", String(selected));
+        button.disabled = Boolean(effectModeCommit) || !selectable
+          || (!selected && choice.selectedIds.length >= choice.max);
+      }
+    }
+
     function renderThreeGesturesStage() {
       if (!elements.threeGesturesStage) return;
       const pending = state.pendingThreeGestures;
@@ -51996,9 +52266,15 @@
         && !isOnlineSpectator();
       elements.threeGesturesStage.classList.toggle("hidden", !active);
       if (!active) {
+        clearEffectModePresentation();
         elements.threeGesturesHand.innerHTML = "";
         return;
       }
+      if (isEffectModeChoice(choice)) {
+        renderEffectModeChoice(choice);
+        return;
+      }
+      clearEffectModePresentation();
       if (choice) {
         elements.threeGesturesTitle.textContent = choice.title;
         elements.threeGesturesMessage.textContent = `${choice.message} 選択中：${choice.selectedIds.length}/${choice.max}`;
@@ -60373,7 +60649,8 @@
     elements.selectionPeekReturnButton.addEventListener("click", showSelectionOverlayFromBoard);
     elements.thinItemKeepConfirmButton.addEventListener("click", confirmCardChoiceSelection);
     elements.threeGesturesConfirmButton.addEventListener("click", () => {
-      if (state.pendingCardChoice) confirmCardChoiceSelection();
+      if (isEffectModeChoice(state.pendingCardChoice)) commitEffectModeChoice();
+      else if (state.pendingCardChoice) confirmCardChoiceSelection();
       else confirmThreeGesturesSelection();
     });
     elements.trashDetailCloseButton.addEventListener("click", closeTrashDetail);

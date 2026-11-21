@@ -951,6 +951,8 @@ test("スタバ学生は手札以外からの出席ではダメージも教師�
 });
 
 test("スタバ学生がガン詰め講師を引いたときは、その二択を選んで発動する", async ({ page }) => {
+  await page.waitForFunction(() => !battleNewActionBlocked());
+  await page.evaluate(() => { state.training.skipAnimations = true; });
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const lecturer = api.createCardFromBase("cornering_lecturer", "player");
@@ -975,6 +977,8 @@ test("スタバ学生がガン詰め講師を引いたときは、その二択�
 
 test("スマホ幅でもスタバ学生から出たガン詰め講師の二択を操作できる", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => !battleNewActionBlocked());
+  await page.evaluate(() => { state.training.skipAnimations = true; });
   await page.evaluate(() => {
     const api = window.__chibattle;
     api.state.players.player.trash = [api.createCardFromBase("cornering_lecturer", "player")];
@@ -984,11 +988,12 @@ test("スマホ幅でもスタバ学生から出たガン詰め講師の二択�
   });
   const stage = page.locator("#threeGesturesStage");
   await expect(stage).toBeVisible();
-  const choices = stage.locator(".mulligan-card");
+  const choices = stage.locator(".effect-mode-option");
   await expect(choices).toHaveCount(2);
+  await expect(stage.locator("#effectModeSource .card")).toHaveCount(1);
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   await choices.first().click();
-  await expect(page.locator("#threeGesturesConfirmButton")).toBeEnabled();
-  await page.locator("#threeGesturesConfirmButton").click();
+  await expect(page.locator("#threeGesturesConfirmButton")).toBeHidden();
   await expect.poll(() => page.evaluate(() => window.__chibattle.state.players.player.board.teacher?.baseId))
     .toBe("cornering_lecturer");
 });

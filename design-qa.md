@@ -1,3 +1,28 @@
+# Effect Mode Selection QA — 2026-11-21
+
+final result: passed
+
+## Reference and implementation
+
+- Reference: user-provided `ScreenRecording_11-20-2026 23-18-15_1.mp4`, 1108 × 512, 30 fps. Reviewed the whole scene, then the 6.4–10.0 s entrance/choice/exit frame sequence. Mode-selection still: `/tmp/chibatoru-mode-reference/mode-reference.png`.
+- Combined full-view comparison: `/tmp/chibatoru-mode-reference/comparison.png`. Both views use 1108 × 512 pixels, DPR 1; no scaling or cropping. The reference and implementation were inspected together.
+- Multi-choice captures: `/tmp/chibatoru-mode-reference/multiple-desktop.png` (1440 × 900) and `multiple-mobile.png` (390 × 844), DPR 1. Original UI: `/tmp/chibatoru-mode-reference/chibatoru-before.png`.
+- Fidelity: translucent dimmed board; one actual source card at left; compact top instruction; stacked navy effect buttons at right. Chibatoru's card faces, typography and colors are retained. No reference game artwork is shipped.
+- Motion: source card enters from center toward left over 360 ms; rows fade/slide in with short stagger; chosen row flashes for 200 ms before resolution. System reduced-motion preference removes these animations and delay.
+- Adaptation: multi-effect cards retain selection/deselection, selected glow, count and final confirmation. One-effect cards resolve directly from the row. The existing board-peek control remains available, preserving the selection on return.
+
+## Verification and findings
+
+- 8 new UI cases pass: actual card-test actions, single resolution exactly once, two choices and deselection, keyboard focus retention, board peek, both viewport bounds, reduced motion, cancellation when changing battles, and transition to ordinary card selection after a mode.
+- 32 existing point-card, fusion-selection and target-feedback cases pass. AI chooses through the existing automatic path; board targets and physical card/material choices retain their current controls.
+- 3 real WebSocket cases pass. Host and guest use actual new buttons; source-card delivery, choice replies and final card effects synchronize. The watcher path does not display the actor's selection overlay.
+- 3 additional lecturer/attendance cases pass, including the new single-tap smartphone flow. The two old lecturer tests were updated to wait for the existing initial presentation and use the new controls. Wider checks also found an unrelated old synchronous setup failure in `item-usage-rules`; it reproduces on unmodified HEAD `a41601c`. No game-effect changes were made to accommodate legacy tests.
+- Initial new test incorrectly expected the first King Ghidorah mode and Environment Setup to open another card choice. Corrected the test to use Ghidorah mode 2 (discard choice) and assert the existing environment draw outcome. All 8 focused cases then passed.
+- No outstanding visual P0/P1/P2 findings. Portrait mode permits vertical scrolling for unusually long choices, with no horizontal overflow. Tested four-effect Pinige choices fit within the visible viewport.
+- Card definitions, displayed rules, ability values and resolution order are unchanged. Mode option descriptions for Pinige and Gecko show the existing full effects instead of short pseudo-card summaries.
+
+---
+
 # Wonton Animation QA
 
 final result: passed
