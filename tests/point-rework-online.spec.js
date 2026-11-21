@@ -98,11 +98,11 @@ for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide=
   for(const p of [host,guest]){await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);await p.evaluate(()=>{state.deckBuilder.counts.player=createAutoDeckCounts();document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
   const actor=actorSide==='player'?host:guest;
-  for(const [id,score] of [['sports_spectator_student',0],['sports_spectator_student',10],['lucky_man',0],['lucky_man',10],['gecko_carrier_student',0],['long_sleeve_student',10],['could_not_escape_student',10],['secretly_mocked_student',0],['pinige',9]]){
+  for(const [id,score] of [['sports_spectator_student',0],['sports_spectator_student',10],['lucky_man',0],['lucky_man',10],['gecko_carrier_student',0],['long_sleeve_student',10],['could_not_escape_student',10],['secretly_mocked_student',0],['pinige',9],['pinige',0]]){
    const setup=await host.evaluate(({id,score,side})=>{
     startCardTest(id);state.testMode=false;state.training.skipAnimations=true;state.currentSide=side;state.environment=null;
     for(const owner of ['player','opponent'])Object.assign(state.players[owner],{board:{teacher:null,seats:Array(9).fill(null)},hand:[],deck:[],trash:[],late:[],will:20,maxWill:20,life:10,pointScore:0});
-    const own=state.players[side],enemy=state.players[oppositeSide(side)];own.pointScore=score;const card=createCardFromBase(id,side);own.hand=[card];for(const i of (id==='could_not_escape_student'?[0,1,2,3]:[0]))enemy.board.seats[i]=makeBoardCard(createCardFromBase(id==='pinige'?'general_student':'strong_student',oppositeSide(side)));render();return {cardId:card.instanceId,seq:state.online.lastSnapshotSeq};
+    const own=state.players[side],enemy=state.players[oppositeSide(side)];own.pointScore=score;const card=createCardFromBase(id,side);own.hand=[card];if(id==='pinige'&&score===0)own.deck=['pinige','tojirika','general_student','short_sleeve_student','long_sleeve_student'].map(id=>createCardFromBase(id,side));for(const i of (id==='could_not_escape_student'?[0,1,2,3]:[0]))enemy.board.seats[i]=makeBoardCard(createCardFromBase(id==='pinige'?'general_student':'strong_student',oppositeSide(side)));render();return {cardId:card.instanceId,seq:state.online.lastSnapshotSeq};
    },{id,score,side:actorSide});
    await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);
    await actor.evaluate(({cardId,index,id})=>id==='pinige'?beginItemUse(state.players.player.hand.find(c=>c.instanceId===cardId)):playCard(cardId,'seat','player',index),{cardId:setup.cardId,index:id==='secretly_mocked_student'?8:4,id});
@@ -112,7 +112,7 @@ for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide=
     await expect.poll(()=>actor.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);
     const selection = await actor.evaluate(({id,score})=>{
      const choice=state.pendingCardChoice;
-     const modes=id==='pinige'?[4,1]:id==='sports_spectator_student'&&score===10?[2,1]:[1];
+     const modes=id==='pinige'?(score===0?[2,1]:[4,1]):id==='sports_spectator_student'&&score===10?[2,1]:[1];
      return {max:choice.max,ids:modes.map(mode=>choice.cards.find(c=>c.pointMode===mode).instanceId)};
     },{id,score});
     for(const cardId of selection.ids) await actor.locator(`.effect-mode-option[data-card-id="${cardId}"]`).click();
@@ -124,7 +124,11 @@ for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide=
     const side=p===host?actorSide:actorSide==='player'?'opponent':'player';
     const expected=id==='sports_spectator_student'?[score===10?5:1,score===10?5:1,score===10?3:5,10]:id==='lucky_man'?[2,2,score===10?1:4,score===10?14:12]:id==='long_sleeve_student'?[4,6,7,10]:id==='secretly_mocked_student'?[1,1,1,10]:null;
     if(expected)await expect.poll(()=>p.evaluate(({side,id})=>{const own=state.players[side],other=state.players[oppositeSide(side)],c=own.board.seats[id==='secretly_mocked_student'?8:4];return c?[c.attack,c.currentHp,other.board.seats[0]?.currentHp,own.life]:[];},{side,id})).toEqual(expected);
-    if(id==='pinige')await expect.poll(()=>p.evaluate(side=>[state.players[side].pointScore,listBoardRefs(oppositeSide(side)).length,playerActiveEffectLines(side)[0]],side)).toEqual([10,0,'[単位] 取得済み']);
+    if(id==='pinige'&&score!==0)await expect.poll(()=>p.evaluate(side=>[state.players[side].pointScore,listBoardRefs(oppositeSide(side)).length,playerActiveEffectLines(side)[0]],side)).toEqual([10,0,'[単位] 取得済み']);
+    if(id==='pinige'&&score===0){
+     if(p===actor||p===host)await expect.poll(()=>p.evaluate(side=>[state.players[side].hand.map(c=>c.baseId).sort(),state.players[side].deck.map(c=>c.baseId).sort()],side)).toEqual([['long_sleeve_student','short_sleeve_student'],['general_student','pinige','tojirika']]);
+     else await expect.poll(()=>p.evaluate(side=>[state.players[side].hand.length,state.players[side].deck.length,state.players[side].hand.every(c=>!c.baseId)],side)).toEqual([2,3,true]);
+    }
     if(id==='gecko_carrier_student')await expect.poll(()=>p.evaluate(side=>[3,4,5].map(i=>{const c=state.players[side].board.seats[i];return [c?.attack,c?.currentHp,c?hasKeyword(c,'陽気'):false];}),side)).toEqual(Array(3).fill([3,3,true]));
     if(id==='could_not_escape_student')await expect.poll(()=>p.evaluate(side=>[listBoardRefs(oppositeSide(side)).length,...state.players[side].board.seats.slice(0,3).map(c=>c?.attack)],side)).toEqual([0,2,2,2]);
     if(id==='secretly_mocked_student')expect(await p.evaluate(side=>[state.players[side].board.seats[8].name,isOneHpAttackLocked(state.players[oppositeSide(side)].board.seats[0])],side)).toEqual(['謎多き女学生',true]);

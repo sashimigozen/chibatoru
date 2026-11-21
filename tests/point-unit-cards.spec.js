@@ -73,8 +73,35 @@ for(const score of [0,10])test(`ピニゲは${score===10?3:2}択、重複なし�
  await choose(page,score===10?[4,2,1]:[4,1]);await settle(page);
  expect(await page.evaluate(()=>[state.players.player.will,state.players.player.pointScore,state.players.player.hand.map(c=>c.baseId).sort(),listBoardRefs('opponent').length])).toEqual(score===10?[18,10,['long_sleeve_student','short_sleeve_student'],0]:[18,1,[],0]);
 });
-test('ピニゲ③は加点せず同名補充、②でもピニゲを引く',async({page})=>{
- for(const mode of [2,3]){await page.evaluate(()=>{state.players.player.deck=[createCardFromBase('pinige','player')];const c=createCardFromBase('pinige','player');state.players.player.hand=[c];castImmediateItem('player',c,false);});await choose(page,[mode,1]);await settle(page);expect(await page.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(['pinige']);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(0);}
+test('ピニゲ③は加点せず同名補充、②ではピニゲを引かない',async({page})=>{
+ for(const mode of [2,3]){await page.evaluate(()=>{state.players.player.deck=[createCardFromBase('pinige','player')];const c=createCardFromBase('pinige','player');state.players.player.hand=[c];castImmediateItem('player',c,false);});await choose(page,[mode,1]);await settle(page);expect(await page.evaluate(()=>state.players.player.hand.map(c=>c.baseId))).toEqual(mode===3?['pinige']:[]);expect(await page.evaluate(()=>state.players.player.pointScore)).toBe(0);}
+});
+for(const count of [0,1,2,3])test(`ピニゲ②は点数を持つ学生だけを2枚まで引く：対象${count}枚`,async({page})=>{
+ const excluded=await page.evaluate(count=>{
+  const own=state.players.player;
+  const decoys=['pinige','tojirika','general_student','general_teacher'].map(id=>createCardFromBase(id,'player'));
+  decoys[3].hasPoint=true;
+  own.deck=[...decoys,...['short_sleeve_student','long_sleeve_student','group_sniper'].slice(0,count).map(id=>createCardFromBase(id,'player'))];
+  const item=createCardFromBase('pinige','player');own.hand=[item];castImmediateItem('player',item,false);
+  return decoys.map(c=>c.instanceId);
+ },count);
+ await choose(page,[2,1]);await settle(page);
+ const result=await page.evaluate(ids=>({hand:state.players.player.hand.map(c=>({type:c.type,point:c.hasPoint})),excludedRemain:ids.every(id=>state.players.player.deck.some(c=>c.instanceId===id))}),excluded);
+ expect(result).toEqual({hand:Array(Math.min(2,count)).fill({type:'student',point:true}),excludedRemain:true});
+});
+test('ピニゲのAIも効果2の学生だけを数え、効果3と分けて補充する',async({page})=>{
+ const scores=await page.evaluate(()=>{
+  const own=state.players.opponent,item=createCardFromBase('pinige','opponent');
+  own.deck=['pinige','tojirika'].map(id=>createCardFromBase(id,'opponent'));
+  const score=()=>pointModeCards('opponent',item)[1].choiceScore;
+  const result=[score()];
+  for(const id of ['short_sleeve_student','long_sleeve_student']){own.deck.push(createCardFromBase(id,'opponent'));result.push(score());}
+  state.currentSide='opponent';own.hand=[item];castImmediateItem('opponent',item,false);
+  return result;
+ });
+ expect(scores).toEqual([0,4,8]);await settle(page);
+ expect(await page.evaluate(()=>state.players.opponent.hand.map(c=>c.baseId).sort())).toEqual(['long_sleeve_student','pinige','short_sleeve_student']);
+ expect(await page.evaluate(()=>state.players.opponent.deck.map(c=>c.baseId))).toEqual(['tojirika']);
 });
 test('長袖は陽気、通常操作で2回攻撃し3回目は禁止',async({page})=>{
  await attend(page,'long_sleeve_student');await settle(page);expect(await page.evaluate(()=>{const c=state.players.player.board.seats[4];const before=cardAttacksUsedThisTurn(c);markCardAttackUsed(c);const first=cardAttacksUsedThisTurn(c);markCardAttackUsed(c);return [hasKeyword(c,'陽気'),before,first,cardAttacksUsedThisTurn(c),c.hasAttacked];})).toEqual([true,0,1,2,true]);
