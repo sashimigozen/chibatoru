@@ -1,3 +1,16 @@
+# Card Selection Overflow Fix — 2026-11-22
+
+final result: passed
+
+- Reproduced the user's screenshot with the actual Dropped Cards test and 45 deck candidates. At 1440 × 900, the 1120px dialog had a 6969px implicit grid track; its confirm button was at x=3489. The card rail itself had no overflow because its viewport had expanded to the full contents.
+- Cause: the new source/choices wrapper had its default automatic minimum width. Bound the parent track with `minmax(0, 1fr)` and the wrapper with `min-width: 0`. Ordinary card candidates align to the start, while the two-column effect-mode layout remains scoped to modes.
+- The candidate rail retains native horizontal/touch scrolling and additionally maps a mouse wheel to horizontal movement. Mode rows retain their vertical scrolling. Short landscape windows keep the heading, instructions and confirmation within the viewport.
+- Before: `/tmp/chibatoru-deck-selection-before.png` (1440 × 900). After: `/tmp/chibatoru-deck-selection-1440.png`, `/tmp/chibatoru-deck-selection-390.png`, and `/tmp/chibatoru-deck-selection-landscape-after.png`. Viewed desktop, portrait and landscape captures; cards and existing colors are preserved.
+- 25 focused cases pass, covering 45-card lists at 1440 × 900, 1330 × 834, 390 × 844 and 844 × 390; real wheel input; first/last card selection and confirmation; Sage Legacy's hand-to-deck transition; mode-to-deck transition; board peek; existing mode UI; fusion and board-target feedback.
+- 1 real-WebSocket case also passes: both host and guest select from 60 candidates, confirm, and synchronize the two removed deck cards and used item. All 26 focused cases pass. No card definitions, effect resolution or communication format were changed.
+
+---
+
 # Effect Mode Selection QA — 2026-11-21
 
 final result: passed
