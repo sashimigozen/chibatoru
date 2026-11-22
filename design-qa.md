@@ -1,3 +1,14 @@
+# Reference Shuffle Motion and Full Generation Count — 2026-11-22
+
+- Reviewed both user videos in full through extracted frame sequences: `shuffle_normal_compatible.mp4` (480 × 1038, 30 fps, 1.27 s) and `shuffle_slow_compatible.mp4` (480 × 854, 30 fps, 1.63 s). Examined the slow clip's pile every 0.1 s. References: `/tmp/chibatoru-shuffle-reference/normal-sheet.jpg`, `slow-sheet.jpg`, `shuffle-detail.jpg`.
+- Replaced the sideways, rotating fan with two upright vertical packet lifts and restacks (900 ms). A small initial lift and final settle follow the reference, with vertical travel limited near the upper viewport edge.
+- Every generated card now has its own face and insertion flight: 3 means 3, 10 means 10. No identical-card grouping or generation count badge remains. Preview rows adapt to the viewport so ten faces remain on screen; the cards turn to backs and enter in a short stagger. Shuffle waits for the final card, and a subsequent draw waits for shuffle.
+- Kept current card faces, card effects, card counts, randomness, queue/cancellation and online event sharing. Only motion, presentation layout and asset cache keys changed. Recorded the no-grouping requirement in AGENTS.md for future work.
+- 21 focused cases pass across the full-count and final motion runs. They cover 3/10 individual faces, viewport bounds, staggered face-to-back insertion, both vertical packet cuts, waiting for every insertion, subsequent draws, both owners, cancellation, reduced motion, repeated online snapshots and actual Lecturer generation. The four new motion cases pass at desktop and mobile sizes.
+- Visual review: `/tmp/chibatoru-shuffle-reference/implementation-motion.jpg` is an extracted timeline of the implementation recording; `/tmp/chibatoru-packet-demo/` contains the clip. Inspected 3-card preview, turn/insertion and both packet cuts, plus the ten-card mobile grid under `/tmp/chibatoru-full-count-shuffle-tests/`.
+
+---
+
 # Deck Shuffle and Transfers — 2026-11-22
 
 final result: passed
