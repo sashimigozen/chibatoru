@@ -1,3 +1,12 @@
+# Batched Multi-Type Search — 2026-11-22
+
+- Efficient Experiment Method now searches student, teacher and item as one batch; Dry Meal Ticket likewise searches its two named cards together. Each uses one draw presentation and exactly one final deck shuffle. Separate numbered effects and intervening actions retain their current order. Recorded this policy in AGENTS.md and the rule ledger.
+- Existing selection restrictions, per-type counts, random selection, hand limits, overflow, draw locks, card stats and text are unchanged. The grouped draw only includes cards actually added to the hand, so overflow cannot animate unrelated cards already held.
+- Own searched cards appear together at viewport center using the existing draw and card-face presentation; opponent and spectator views retain backs. Reviewed actual Efficient Experiment card-test screenshots at 1440 × 900 and 390 × 844 in `/tmp/chibatoru-multi-search-regression/`.
+- Six new focused cases pass: actual card-test action and centered previews at both sizes, both owners for Dry Meal Ticket, missing candidates/zero matches/overflow/draw lock, and guest/spectator repeated snapshots without duplicate flights or revealed faces. All 47 relevant cases pass across the regression run (46) and isolated recheck (1); the rechecked existing mobile generation case had sampled an already-finished animation while running concurrently. Existing return → shuffle → draw, ten-card generation, ordinary draws, cancellation and reduced-motion behavior remain covered.
+
+---
+
 # Centered Generated-Card Presentation — 2026-11-22
 
 - Changed generated deck-card previews from the owner's pile vicinity to the center of the viewport, matching the existing card-use overlay's centered presentation. Incomplete final rows are individually centered as well.

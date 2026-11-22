@@ -20474,7 +20474,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "カード選択画面とデッキ操作を修正し、山札へ戻す・生成する・混ぜる演出を改善しました。", "changes": [{"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、束の一部を上に抜いて重ね直すシャッフル演出を追加しました。山札へ生成する場合は全カードの表面を画面中央で見せ、裏向きになって山札へ入った後にシャッフルします。生成枚数を省略せず、同じカードでも1枚ずつ並べて表示します。枚数が多い場合は複数の段に並べ、各段を中央揃えにして、すべてのカードが画面内に収まります。続けて引く場合も、すべて入り終わってから混ぜ、その後に引く順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えと表示順を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
+      {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "カード選択画面とデッキ操作を修正し、山札へ戻す・生成する・混ぜる演出を改善しました。", "changes": [{"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、束の一部を上に抜いて重ね直すシャッフル演出を追加しました。山札へ生成する場合は全カードの表面を画面中央で見せ、裏向きになって山札へ入った後にシャッフルします。生成枚数を省略せず、同じカードでも1枚ずつ並べて表示します。枚数が多い場合は複数の段に並べ、各段を中央揃えにして、すべてのカードが画面内に収まります。続けて引く場合も、すべて入り終わってから混ぜ、その後に引く順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えと表示順を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "表示・操作改善", "title": "複数種類のサーチ", "after": "効率的な実験法や乾いた食券で複数種類のカードを探すときは、まとめて引き、最後に1回だけシャッフルするようにしました。自分が引いたカードは画面中央に並べて表示します。候補不足・手札上限・ドロー禁止と、オンライン対戦・観戦での表示順と非公開情報を確認するテストを追加しました。カードの能力値・本文・探す対象と枚数は変更していません。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
       {"version": "ver.0.45.2", "versioning": "semver", "date": "2026年11月21日", "summary": "ピニゲの効果2と、効果の選択画面を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つ学生を2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["[点数]を持つカード"], "afterHighlights": ["[点数]を持つ学生"]}, {"category": "システム", "title": "ピニゲのカードテスト", "after": "効果2で［点数］を持つ学生だけを引くよう、選択画面・AIの判断・カードテストの案内を更新しました。対象が0枚・1枚・2枚以上の場合と、効果3による同名カードの補充、オンライン双方の同期を確認するテストを追加・更新しました。能力値と効果1・3・4は変更していません。"}, {"category": "表示・操作改善", "title": "効果の選択画面", "after": "使用カードを左、効果のボタンを右に並べ、盤面を透かして確認できる表示にしました。カードと効果が現れる演出と、決定時の短い発光を追加しました。効果を1つ選ぶ場合は、押すとそのまま決定します。複数選ぶ場合は選択状態と枚数を表示し、選び直してから確定できます。講義室を見て選択画面へ戻ることもできます。スマートフォン表示・選択のやり直し・対戦切り替え・オンライン双方の操作を確認するテストを追加・更新しました。効果を選んだ後の処理順は変更していません。"}]},
       {"version": "ver.0.45.1", "versioning": "semver", "date": "2026年11月20日", "summary": "すべての対戦ルールの手札上限を調整しました。", "changes": [{"category": "システム", "title": "手札上限の共通化", "after": "手札上限の初期値・最低設定を12枚に変更しました。通常・専攻・カオスのすべてのルールで、ソロ対戦・オンライン対戦に同じ上限処理を適用します。各準備画面で増減・直接入力ができ、空欄は上限なしです。カードテスト・チュートリアル・魔の1号館の初期上限も12枚です。全ルールの超過処理、設定操作とオンライン同期を確認するテストを更新しました。カードの能力値・本文は変更していません。"}]},
       {"version": "ver.0.45.0", "versioning": "semver", "date": "2026年11月19日", "summary": "提出を持つ持ち物4枚と、点数の獲得条件を追加しました。", "changes": [{"category": "新カード", "title": "トジリカ", "after": "トジリカ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[点数]\n[提出]\n環境が「食堂」であるかぎり、このカードの戦意は0になる。\nこのカードを手札から戦意を1以上消費して使用したとき、環境が「食堂」でないなら、自分の手札のヴァンパイア1枚を相手に見せてもよい。\n自分の手札に「ピニゲ」1枚を生成する。ヴァンパイアを見せたなら、相手の講義室にいる出席者1人を指名し、破壊する。"}, {"category": "新カード", "title": "ヨハバリ", "after": "ヨハバリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキに「単細胞生物」5枚を生成してシャッフルする。\nこのカードを手札から戦意を1以上消費して使用したとき、代わりにお互いの講義室にいる「単細胞生物」「ミジンコ」「生物」の合計人数と同じ枚数の「単細胞生物」を自分の手札に生成する。"}, {"category": "新カード", "title": "ハバヨセ!", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。\nその後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。そうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。"}, {"category": "新カード", "title": "フットキリ", "after": "フットキリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキから、「フットキリ」以外の[提出]を持つカードか「万豚記」を、ランダムに2枚まで手札に加える。"}, {"category": "システム", "title": "点数のターン終了時獲得", "after": "対戦開始時のデッキに［点数］を持つカードが合計10枚以上ある場合、自分のターン終了時、そのターン中に点数を獲得していなければ、点数を1獲得するようにしました。同名カードも1枚ずつ数え、対戦中に山札の枚数が変わっても条件は変わりません。撃破による点数獲得は引き続き行い、10点で単位へ変化します。能力説明・チュートリアル・ルール台帳を更新し、境界条件・そのターンの獲得状況・単位取得・オンライン同期を確認するテストを追加しました。カードの能力値・本文は変更していません。"}, {"category": "システム", "title": "新カードのカードテスト", "after": "新しい持ち物4枚をカード一覧からテストできます。通常使用と提出、食堂での無料使用、裏U太の出席・装備を試せる手札と盤面を用意しました。"}]},
@@ -43470,7 +43470,7 @@
       }
     }
 
-    function pullCardsFromDeck(side, baseId, count) {
+    function pullCardsFromDeck(side, baseId, count, { deferFinish = false } = {}) {
       if (isDeckToHandLocked()) return 0;
       let pulled = 0;
       state.players[side].deck = state.players[side].deck.filter((deckCard) => {
@@ -43482,9 +43482,25 @@
         }
         return true;
       });
-      if (pulled > 0) queueAnimation("draw", side, pulled);
-      shuffleDeckAfterSearch(side);
+      if (!deferFinish) {
+        if (pulled > 0) queueAnimation("draw", side, pulled);
+        shuffleDeckAfterSearch(side);
+      }
       return pulled;
+    }
+
+    function pullDeckSearchBatch(side, searches) {
+      if (isDeckToHandLocked()) return searches.map(() => 0);
+      const player = state.players[side];
+      const previousHandIds = new Set(player.hand.map(card => card.instanceId));
+      const counts = searches.map(search => search.baseId
+        ? pullCardsFromDeck(side, search.baseId, search.count, { deferFinish: true })
+        : pullRandomCardsFromDeck(side, search.predicate, search.count, { deferFinish: true }));
+      const added = player.hand.filter(card => !previousHandIds.has(card.instanceId));
+      // A single effect's searches finish together, without shuffling between types.
+      if (added.length) queueAnimation("draw", side, added.length, { centerReveal: true });
+      shuffleDeckAfterSearch(side);
+      return counts;
     }
 
     function shuffleDeckAfterSearch(side) {
@@ -43564,7 +43580,7 @@
       return true;
     }
 
-    function pullRandomCardsFromDeck(side, predicate, count) {
+    function pullRandomCardsFromDeck(side, predicate, count, { deferFinish = false } = {}) {
       if (isDeckToHandLocked()) return 0;
       const player = state.players[side];
       const matches = player.deck.filter(predicate);
@@ -43575,8 +43591,10 @@
         card.handTurns = 0;
         addHandCards(side, [card], "deck");
       });
-      if (selected.length > 0) queueAnimation("draw", side, selected.length);
-      shuffleDeckAfterSearch(side);
+      if (!deferFinish) {
+        if (selected.length > 0) queueAnimation("draw", side, selected.length);
+        shuffleDeckAfterSearch(side);
+      }
       return selected.length;
     }
 
@@ -46091,9 +46109,11 @@
         resultText = "次に使用する持ち物カードを、使用後に校外エリアへ送らず手札に残します。";
       }
       if (item.baseId === "efficient_experiment_method") {
-        const student = pullRandomCardsFromDeck(side, (card) => card.type === "student", 1);
-        const teacher = pullRandomCardsFromDeck(side, (card) => card.type === "teacher", 1);
-        const carried = pullRandomCardsFromDeck(side, (card) => card.type === "item", 1);
+        const [student, teacher, carried] = pullDeckSearchBatch(side, [
+          { predicate: card => card.type === "student", count: 1 },
+          { predicate: card => card.type === "teacher", count: 1 },
+          { predicate: card => card.type === "item", count: 1 }
+        ]);
         resultText = `自分のデッキから学生${student}枚、教師${teacher}枚、持ち物${carried}枚をランダムに手札へ加えました。`;
       }
       if (item.baseId === "pure_destruction") {
@@ -46321,8 +46341,9 @@
         resultText = `${drawn}枚ドローしました。`;
       }
       if (item.baseId === "dry_meal_ticket") {
-        const onigiri = pullCardsFromDeck(side, "onigiri_draw", 1);
-        const pasta = pullCardsFromDeck(side, "fluid_pasta", 1);
+        const [onigiri, pasta] = pullDeckSearchBatch(side, [
+          { baseId: "onigiri_draw", count: 1 }, { baseId: "fluid_pasta", count: 1 }
+        ]);
         resultText = `おにぎりドローを${onigiri}枚、流動性パスタを${pasta}枚引きました。`;
       }
       if (item.baseId === "fluid_pasta") {
@@ -53024,7 +53045,7 @@
         const batches = [];
         for (const animation of animations) {
           const previous = batches.findLast(entry => entry.side === animation.side);
-          if (animation.type === "draw" && previous?.type === "draw" && previous.phase === animation.phase) {
+          if (animation.type === "draw" && previous?.type === "draw" && previous.phase === animation.phase && previous.centerReveal === animation.centerReveal) {
             previous.cardIds = [...new Set([...previous.cardIds, ...animation.cardIds])];
             previous.count += animation.count;
           } else batches.push({ ...animation });
@@ -53050,7 +53071,7 @@
           } else if (animation.type === "draw" && animation.count > 0) {
             if (animation.phase === "battle") {
               const hidden = state.players[side].hand.some(card => card.hidden) ? animation.count : 0;
-              animateRecentHandCards(side, animation.cardIds, hidden);
+              animateRecentHandCards(side, animation.cardIds, hidden, false, [], animation.centerReveal);
             } else {
               const presentation = window.ChibattleDeck?.barrier(side).then(() => {
                 if (state.screen !== "battle" || state.preBattleToken !== token) return;
@@ -53073,7 +53094,7 @@
       restartAnimation(document.querySelector(side === "player" ? ".player-hand-zone" : ".opponent-hand-zone"), "mulligan-anim");
     }
 
-    function animateRecentHandCards(side, cardIds, hiddenDrawCount = 0, obtained = false, publicCards = []) {
+    function animateRecentHandCards(side, cardIds, hiddenDrawCount = 0, obtained = false, publicCards = [], centerReveal = false) {
       if (state.phase !== "battle" || state.training?.skipAnimations) return;
       const battleToken = state.preBattleToken;
       const hand = state.players[side].hand;
@@ -53096,7 +53117,7 @@
       }).filter(Boolean);
       const presentation = window.ChibattleDraw?.play({
         waitFor: window.ChibattleDeck?.barrier(side),
-        side, cards, obtained,
+        side, cards, obtained, centered: centerReveal,
         deck: side === "player" ? elements.playerDeckPile : elements.opponentDeckPile,
         life: document.querySelector(`[data-life-target="${side}"]`),
         canReveal: side === "player" && !isOnlineSpectator(),
@@ -61259,7 +61280,7 @@
 <script src="cards-ui.js?v=0.41.0-match-common"></script>
   <script src="desktop-ui.js?v=0.26.0"></script>
 <script src="deck-animation.js?v=0.45.3-center-reveal"></script>
-<script src="draw-animation.js?v=0.45.3-deck-order"></script>
+<script src="draw-animation.js?v=0.45.3-batch-search"></script>
 <script src="wonton-animation.js?v=0.36.0-cover-1s"></script>
 <script src="hand-trash-animation.js?v=0.23.19-deck"></script>
 <script src="gacha-ui.js?v=0.39.0-feast"></script>

@@ -4,22 +4,22 @@
   const queues = new Map();
   function cancel() { [...active].forEach(flight => flight.dispose()); queues.clear(); }
   function sync() { [...active].forEach(flight => flight.sync()); }
-  function play({ side, cards, deck, life, canReveal, face, isCurrent, isVisualBusy, syncScale, obtained = false, speed = 1, waitFor }) {
+  function play({ side, cards, deck, life, canReveal, face, isCurrent, isVisualBusy, syncScale, obtained = false, speed = 1, waitFor, centered = false }) {
     const playbackSpeed = Number.isFinite(speed) && speed > 0 ? speed : 1;
     if (!cards.length || (!obtained && !deck) || !isCurrent() || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const start = deck?.getBoundingClientRect() || cards[0].node.getBoundingClientRect();
     if (!start.width || !start.height) return;
     deck?.classList.remove('draw-anim');
     const compactDraw = !obtained && !canReveal;
-    const width = Math.min(120, innerHeight * .15, innerWidth * .2 / (cards.length * 1.1),
+    const width = Math.min(120, innerHeight * .15, (centered ? innerWidth - 32 : innerWidth * .2) / (cards.length * 1.1),
       compactDraw ? Math.min(start.width, ...cards.map(({ node }) => node.getBoundingClientRect().width)) : Infinity);
     const height = width * 1.5;
     const step = width * 1.1;
     const groupWidth = width + (cards.length - 1) * step;
     const anchor = life?.getBoundingClientRect() || start;
-    const groupX = Math.max(12, Math.min(innerWidth - groupWidth - 12,
+    const groupX = centered ? (innerWidth - groupWidth) / 2 : Math.max(12, Math.min(innerWidth - groupWidth - 12,
       side === 'player' ? anchor.left - groupWidth - 18 : anchor.right + 18));
-    const stageY = Math.max(12, Math.min(innerHeight - height - 12, anchor.top));
+    const stageY = centered ? (innerHeight - height) / 2 : Math.max(12, Math.min(innerHeight - height - 12, anchor.top));
     // Generated cards originate at the visible hand's right edge, not the deck.
     const handRects = [...cards[0].node.parentElement.children].map(node => node.getBoundingClientRect())
       .filter(rect => rect.width && rect.height);
@@ -40,6 +40,7 @@
       ghost.className = 'draw-flight';
       if (obtained) ghost.classList.add('hand-add-flight');
       ghost.dataset.drawSide = side;
+      if (centered) ghost.dataset.searchDraw = 'true';
       ghost.setAttribute('aria-hidden', 'true');
       ghost.style.width = `${width}px`; ghost.style.height = `${height}px`;
       ghost.style.opacity = '0';
@@ -110,7 +111,7 @@
         ], { delay: 60, duration: 260, easing: 'ease-in-out' }) : Promise.resolve();
         await Promise.all([movement, turning]);
         ghost.dataset.drawPhase = 'preview';
-        await animate(ghost, [{ transform: at(stageX, previewY) }, { transform: at(stageX, previewY) }], { duration: obtained ? 650 : reveal ? 180 : 100 });
+        await animate(ghost, [{ transform: at(stageX, previewY) }, { transform: at(stageX, previewY) }], { duration: obtained ? 650 : centered && reveal ? 550 : reveal ? 180 : 100 });
         if (!current()) return;
         ghost.dataset.drawPhase = 'returning';
         const end = target.getBoundingClientRect();
