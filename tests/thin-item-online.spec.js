@@ -39,6 +39,7 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
     await host.locator("#onlineCreateRoomButton").click();
     await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.role)).toBe("host");
     const room = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+    await guest.locator(".private-code-entry > summary").click();
     await guest.locator("#onlineRoomInput").fill(room);
     await guest.locator("#onlineJoinRoomButton").click();
     for (const page of [host, guest]) {
@@ -95,7 +96,7 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
           handleHandCardClick(api.state.players.player.hand[0].instanceId);
           endTurn();
           return { sideUnchanged: api.state.currentSide === side, selected: api.state.selectedHandId,
-            blocked: !battleInputAllowed(document.querySelector('#endTurnButton')) };
+            blocked: !battleActionInputAllowed(document.querySelector('#endTurnButton')) };
         });
         expect(locked).toEqual({ sideUnchanged: true, selected: null, blocked: true });
         await expect.poll(() => target.evaluate(() => battlePresentationBusy())).toBe(false);
@@ -106,6 +107,10 @@ test("オンライン双方で手札が11枚以上でも動的戦意で使用し
           api.confirmCardChoiceSelection();
           return ids;
         });
+        await expect(target.locator('.deck-flight[data-deck-phase="deck-return"]')).toHaveCount(Math.min(4, targetCount - 4));
+        await expect(target.locator('.deck-flight-face')).toHaveCount(0);
+        await expect(target.locator('.deck-flight[data-deck-phase="shuffle"]')).toHaveCount(3);
+        await expect.poll(() => target.evaluate(() => battlePresentationBusy())).toBe(false);
         await expect.poll(() => actor.evaluate(() => window.__chibattle.state.players.opponent.hand.length)).toBe(4);
         await expect.poll(() => target.evaluate(() => window.__chibattle.state.players.player.hand.length)).toBe(4);
         expect(await target.evaluate(() => window.__chibattle.state.players.player.hand.map((card) => card.instanceId))).toEqual(kept);

@@ -31,7 +31,7 @@ test('ドロー開始直後から操作を止め、終了後に操作を戻す',
     return card.instanceId;
   });
   await expect(page.locator('.draw-flight')).toHaveCount(1);
-  await page.locator('#endTurnButton').dispatchEvent('click');
+  // endTurn() above tests rejection; the UI button separately supports reserving the next end turn.
   await page.locator('#battleMenuButton').dispatchEvent('click');
   expect(await page.evaluate(() => ({ side: state.currentSide, selected: state.selectedHandId })))
     .toEqual({ side: 'player', selected: null });
@@ -248,7 +248,7 @@ test('移動とめくりが同時に進み、到着時には表向きになる',
   await expect(page.locator('.draw-flight')).toHaveCount(0);
 });
 
-test('TRPGの3枚は同時にめくって並べ、同時に手札へ収める', async ({ page }) => {
+test('TRPGが探した学生2枚は同時にめくって並べ、同時に手札へ収める', async ({ page }) => {
   await setup(page);
   await page.evaluate(() => {
     const card = makeBoardCard(createCardFromBase('trpg_member', 'player'));
@@ -256,19 +256,19 @@ test('TRPGの3枚は同時にめくって並べ、同時に手札へ収める', 
     attendCard('player', card, 'seat', 0, { attendanceSource: ATTENDANCE_SOURCE.HAND });
     render();
   });
-  await expect(page.locator('.draw-flight')).toHaveCount(3);
-  await page.waitForFunction(() => document.querySelectorAll('.draw-flight[data-draw-phase="moving"]').length === 3);
+  await expect(page.locator('.draw-flight')).toHaveCount(2);
+  await page.waitForFunction(() => document.querySelectorAll('.draw-flight[data-draw-phase="moving"]').length === 2);
   await expect(page.locator('#playRevealOverlay')).toHaveClass(/hidden/);
   await page.waitForTimeout(100);
   const turns = await page.locator('.draw-flight-turn').evaluateAll(nodes => nodes.map(node => node.getAnimations()[0].effect.getComputedTiming().progress));
   expect(turns.every(progress => progress > 0 && progress <= 1)).toBe(true);
   expect(Math.max(...turns) - Math.min(...turns)).toBeLessThan(.05);
-  await page.waitForFunction(() => document.querySelectorAll('.draw-flight[data-draw-phase="preview"]').length === 3);
+  await page.waitForFunction(() => document.querySelectorAll('.draw-flight[data-draw-phase="preview"]').length === 2);
   await page.screenshot({ path: test.info().outputPath('trpg-three-draw.png') });
-  await page.waitForFunction(() => document.querySelectorAll('.draw-flight[data-draw-phase="returning"]').length === 3);
+  await page.waitForFunction(() => document.querySelectorAll('.draw-flight[data-draw-phase="returning"]').length === 2);
   expect(await page.locator('#playerHand .card').evaluateAll(nodes => nodes.every(node => node.style.visibility === 'hidden'))).toBe(true);
   await expect(page.locator('.draw-flight')).toHaveCount(0);
-  expect(await page.locator('#playerHand .card').count()).toBe(3);
+  expect(await page.locator('#playerHand .card').count()).toBe(2);
   expect(await page.locator('#playerHand .card').evaluateAll(nodes => nodes.every(node => node.style.visibility === ''))).toBe(true);
 });
 

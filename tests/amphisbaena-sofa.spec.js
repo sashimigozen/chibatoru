@@ -17,9 +17,9 @@ test('実際のカードテストで通常①を選び、盤面から2人を指�
  expect(await page.evaluate(()=>[state.players.player.will,state.players.player.life,listBoardRefs('opponent').length,state.players.opponent.board.teacher?.baseId])).toEqual([2,8,1,'general_teacher']);
  await page.screenshot({path:test.info().outputPath('sofa-normal.png')});
 });
-test('実際のカードテストで通常②を選び、デッキの順番を保って2枚を送る',async({page})=>{
+test('実際のカードテストで通常②を選び、デッキから2枚を送り、残りをシャッフルする',async({page})=>{
  await start(page);await page.evaluate(()=>playCard(state.players.player.hand.find(c=>c.baseId==='general_student').instanceId,'seat','player',8));await settle(page);const before=await page.evaluate(()=>state.players.player.deck.map(c=>c.instanceId));await use(page);await choose(page,'sofa_modes',[1]);await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('sofa_deck');const selected=await page.evaluate(()=>state.pendingCardChoice.cards.slice(0,2).map(c=>c.instanceId));await choose(page,'sofa_deck',[0,1]);await settle(page);
- expect(await page.evaluate(()=>state.players.player.deck.map(c=>c.instanceId))).toEqual(before.filter(id=>!selected.includes(id)));expect(await page.evaluate(()=>[state.players.player.life,listBoardRefs('opponent').length])).toEqual([16,3]);
+ expect((await page.evaluate(()=>state.players.player.deck.map(c=>c.instanceId))).sort()).toEqual(before.filter(id=>!selected.includes(id)).sort());expect(await page.evaluate(()=>state.deckVisualEvents.some(e=>e.type==='shuffle'&&e.owner==='player'))).toBe(true);expect(await page.evaluate(()=>[state.players.player.life,listBoardRefs('opponent').length])).toEqual([16,3]);
 });
 test('戦意8では選択なしで①→自傷→②→回復し、選択中も盤面を見られる',async({page})=>{
  await start(page);const deckCount=await page.evaluate(()=>state.players.player.deck.length);await use(page);await choose(page,'point_destroy',[0,1]);await expect.poll(()=>page.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe('sofa_deck');expect(await page.evaluate(()=>[state.players.player.will,state.players.player.life])).toEqual([0,8]);await page.screenshot({path:test.info().outputPath('sofa-deck-choice.png')});await choose(page,'sofa_deck',[0,1]);await settle(page);expect(await page.evaluate(()=>[state.players.player.life,state.players.player.deck.length,listBoardRefs('opponent').length])).toEqual([12,deckCount-2,1]);

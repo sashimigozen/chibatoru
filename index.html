@@ -17894,6 +17894,7 @@
   <link rel="stylesheet" href="home-ui.css?v=0.23.8" />
   <link rel="stylesheet" href="card-back.css?v=2" />
   <link rel="stylesheet" href="draw-animation.css?v=0.23.19" />
+  <link rel="stylesheet" href="deck-animation.css?v=0.45.3">
   <link rel="stylesheet" href="wonton-animation.css?v=0.36.0" />
   <link rel="stylesheet" href="mulligan-ui.css?v=0.23.19-confirm" />
 <link rel="stylesheet" href="cards-ui.css?v=0.41.0-match-common" />
@@ -20473,7 +20474,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "デッキなどからカードを選ぶ画面の不具合を修正しました。", "changes": [{"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}]},
+      {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "カード選択画面とデッキ操作を修正し、山札へ戻す・生成する・混ぜる演出を改善しました。", "changes": [{"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、カードの束を分けて混ぜる動きを追加しました。山札へ生成する場合はカードの表面と枚数を見せ、山札へ入ってからシャッフルします。続けて引く場合もこの順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えも確認するテストを追加しました。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
       {"version": "ver.0.45.2", "versioning": "semver", "date": "2026年11月21日", "summary": "ピニゲの効果2と、効果の選択画面を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つ学生を2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["[点数]を持つカード"], "afterHighlights": ["[点数]を持つ学生"]}, {"category": "システム", "title": "ピニゲのカードテスト", "after": "効果2で［点数］を持つ学生だけを引くよう、選択画面・AIの判断・カードテストの案内を更新しました。対象が0枚・1枚・2枚以上の場合と、効果3による同名カードの補充、オンライン双方の同期を確認するテストを追加・更新しました。能力値と効果1・3・4は変更していません。"}, {"category": "表示・操作改善", "title": "効果の選択画面", "after": "使用カードを左、効果のボタンを右に並べ、盤面を透かして確認できる表示にしました。カードと効果が現れる演出と、決定時の短い発光を追加しました。効果を1つ選ぶ場合は、押すとそのまま決定します。複数選ぶ場合は選択状態と枚数を表示し、選び直してから確定できます。講義室を見て選択画面へ戻ることもできます。スマートフォン表示・選択のやり直し・対戦切り替え・オンライン双方の操作を確認するテストを追加・更新しました。効果を選んだ後の処理順は変更していません。"}]},
       {"version": "ver.0.45.1", "versioning": "semver", "date": "2026年11月20日", "summary": "すべての対戦ルールの手札上限を調整しました。", "changes": [{"category": "システム", "title": "手札上限の共通化", "after": "手札上限の初期値・最低設定を12枚に変更しました。通常・専攻・カオスのすべてのルールで、ソロ対戦・オンライン対戦に同じ上限処理を適用します。各準備画面で増減・直接入力ができ、空欄は上限なしです。カードテスト・チュートリアル・魔の1号館の初期上限も12枚です。全ルールの超過処理、設定操作とオンライン同期を確認するテストを更新しました。カードの能力値・本文は変更していません。"}]},
       {"version": "ver.0.45.0", "versioning": "semver", "date": "2026年11月19日", "summary": "提出を持つ持ち物4枚と、点数の獲得条件を追加しました。", "changes": [{"category": "新カード", "title": "トジリカ", "after": "トジリカ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[点数]\n[提出]\n環境が「食堂」であるかぎり、このカードの戦意は0になる。\nこのカードを手札から戦意を1以上消費して使用したとき、環境が「食堂」でないなら、自分の手札のヴァンパイア1枚を相手に見せてもよい。\n自分の手札に「ピニゲ」1枚を生成する。ヴァンパイアを見せたなら、相手の講義室にいる出席者1人を指名し、破壊する。"}, {"category": "新カード", "title": "ヨハバリ", "after": "ヨハバリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキに「単細胞生物」5枚を生成してシャッフルする。\nこのカードを手札から戦意を1以上消費して使用したとき、代わりにお互いの講義室にいる「単細胞生物」「ミジンコ」「生物」の合計人数と同じ枚数の「単細胞生物」を自分の手札に生成する。"}, {"category": "新カード", "title": "ハバヨセ!", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。\nその後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。そうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。"}, {"category": "新カード", "title": "フットキリ", "after": "フットキリ／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\n自分のデッキから、「フットキリ」以外の[提出]を持つカードか「万豚記」を、ランダムに2枚まで手札に加える。"}, {"category": "システム", "title": "点数のターン終了時獲得", "after": "対戦開始時のデッキに［点数］を持つカードが合計10枚以上ある場合、自分のターン終了時、そのターン中に点数を獲得していなければ、点数を1獲得するようにしました。同名カードも1枚ずつ数え、対戦中に山札の枚数が変わっても条件は変わりません。撃破による点数獲得は引き続き行い、10点で単位へ変化します。能力説明・チュートリアル・ルール台帳を更新し、境界条件・そのターンの獲得状況・単位取得・オンライン同期を確認するテストを追加しました。カードの能力値・本文は変更していません。"}, {"category": "システム", "title": "新カードのカードテスト", "after": "新しい持ち物4枚をカード一覧からテストできます。通常使用と提出、食堂での無料使用、裏U太の出席・装備を試せる手札と盤面を用意しました。"}]},
@@ -22881,6 +22882,8 @@
     let unlockedExtraCardStyles = normalizeExtraCardStyleUnlocks(readDungeonCardStyleStorage());
     let selectedDungeonCardStyles = loadDungeonCardStyleSelections();
     const pendingAnimations = [];
+    let nextDeckVisualId = 1;
+    let deckAnimationBattleToken = null;
     const boardVisualSnapshots = new Map();
     const attackVisualBonuses = new Map();
     let statBuffVisualSerial = 0;
@@ -24145,7 +24148,7 @@
       analyticsSafe(() => {
         const snapshot = {};
         // Private recorder only. Never attach this to the shared state/snapshots.
-        const excluded = new Set(["analytics", "online", "deckBuilder", "profile", "profileEditor", "profileViewer", "training", "tutorial", "dungeon", "testSetup", "logs"]);
+        const excluded = new Set(["analytics", "online", "deckBuilder", "profile", "profileEditor", "profileViewer", "training", "tutorial", "dungeon", "testSetup", "logs", "deckVisualEvents"]);
         for (const key of Object.keys(state)) if (!excluded.has(key)) snapshot[key] = state[key];
         snapshot.nextCardInstanceId = nextCardInstanceId;
         onlineReplayRecorder.checkpoint(snapshot, cause);
@@ -28793,6 +28796,7 @@
         actionTurn: state.actionTurn,
         preBattleToken: state.preBattleToken,
         feedbackEventIds: new Set((state.effectFeedbackEvents || []).map((event) => event.id)),
+        deckEventIds: new Set((state.deckVisualEvents || []).map(event => event.id)),
         players: {
           player: capturePlayerVisualState("player"),
           opponent: capturePlayerVisualState("opponent")
@@ -28901,6 +28905,9 @@
 
     function showOnlineSnapshotVisuals(before) {
       if (!before || state.screen !== "battle") return;
+      const deckEvents = before.screen === "battle" && before.preBattleToken === state.preBattleToken
+        ? (state.deckVisualEvents || []).filter(event => event.token === state.preBattleToken && !before.deckEventIds?.has(event.id)) : [];
+      deckEvents.forEach(event => pendingAnimations.push({ ...event, side: event.owner }));
       const sharedFeedbackShown = showOnlineEffectFeedbackEvents(before);
       ["player", "opponent"].forEach((side) => {
         const previous = before.players?.[side];
@@ -28910,7 +28917,7 @@
           const drawIds = current.hand.filter(card => card.instanceId && !previous.handIds.has(card.instanceId) && previous.deckIds.has(card.instanceId)).map(card => card.instanceId);
           const hiddenDrawCount = current.hand.some(card => card.hidden)
             ? Math.max(0, Math.min(current.hand.length - previous.handCount, previous.deckCount - current.deck.length)) : 0;
-          if (drawIds.length || hiddenDrawCount) {
+          if ((drawIds.length || hiddenDrawCount) && !deckEvents.some(event => event.owner === side && event.type === "draw")) {
             queuedBattlePresentations += 1;
             window.requestAnimationFrame(() => {
               queuedBattlePresentations -= 1;
@@ -28934,6 +28941,7 @@
           if (!previous.trashIds.has(card.instanceId) && !card.suppressTrashToast) announceTrashMove(side, card);
         });
       });
+      flushAnimationQueue();
       const previousTurnCount = before.players?.[state.currentSide]?.turnsTaken || 0;
       const currentTurnCount = state.players[state.currentSide]?.turnsTaken || 0;
       if (state.phase === "battle"
@@ -29116,10 +29124,11 @@
         || ((!ignoreFusionTasks || state.pendingCardChoice?.context?.kind !== "movement_destination")
           && (state.attackInProgress || state.attackQueue.length))
         || window.ChibattleDraw?.isBusy()
+        || window.ChibattleDeck?.isBusy()
         || window.ChibattleHandTrash?.isBusy()
         || window.ChibattleWonton?.isBusy()
         || queuedBattlePresentations > 0
-        || pendingAnimations.some(animation => animation.type === "draw" && animation.phase === "battle")
+        || pendingAnimations.some(animation => animation.phase === "battle")
         || !elements.playRevealOverlay.classList.contains("hidden")
         || elements.turnOverlay.getAnimations().some(animation => animation.playState === "running")
         || Date.now() < drawEffectVisualUntil);
@@ -30204,6 +30213,10 @@
 
     function dealNextInitialCard(token) {
       if (!isCurrentPreBattle(token, "dealing")) return;
+      if (window.ChibattleDeck?.isBusy()) {
+        scheduleTrainingTask(() => dealNextInitialCard(token), 60);
+        return;
+      }
       drawOne("player", false);
       drawOne("opponent", false);
       state.initialDealCount += 1;
@@ -30263,6 +30276,7 @@
           moveToTrash(side, card, {sourceZone, handOverflow: true, reason: "手札上限超過"});
           continue;
         }
+        card.handEntryKind = sourceZone === "deck" ? "draw" : "obtained";
         player.hand.push(card);
         added += 1;
       }
@@ -30455,7 +30469,7 @@
       const selectedSet = new Set(player.mulliganSelection.slice(0, 5));
       const returned = player.hand.filter((card) => selectedSet.has(card.instanceId));
       player.hand = player.hand.filter((card) => !selectedSet.has(card.instanceId));
-      player.deck = shuffle([...player.deck, ...returned]);
+      if (returned.length) insertCardsIntoDeck("player", returned);
       state.analytics.pendingMulligans.player = { returned: returned.map((card) => ({ ...card })), redrawn: [] };
       player.mulliganSelection = [];
       player.mulliganUsed = true;
@@ -30463,7 +30477,6 @@
       state.mulliganDrawRemaining = returned.length;
       state.lastMulliganDrawId = null;
       if (returned.length > 0) {
-        queueAnimation("shuffle", "player");
         addLog(`${SIDES.player}は${returned.length}枚を引き直します。`);
         state.message = `カードを引き直しています。残り${returned.length}枚。`;
       } else {
@@ -30476,6 +30489,10 @@
 
     function drawNextMulliganCard(token) {
       if (!isCurrentPreBattle(token, "mulliganDraw")) return;
+      if (window.ChibattleDeck?.isBusy()) {
+        window.setTimeout(() => drawNextMulliganCard(token), 60);
+        return;
+      }
       if (state.mulliganDrawRemaining > 0) {
         drawOne("player", false);
         const drawnCard = state.players.player.hand.at(-1);
@@ -30510,10 +30527,9 @@
       const selectedSet = new Set(selectedIds.slice(0, 5));
       const returned = player.hand.filter((card) => selectedSet.has(card.instanceId));
       player.hand = player.hand.filter((card) => !selectedSet.has(card.instanceId));
-      player.deck = shuffle([...player.deck, ...returned]);
+      if (returned.length) insertCardsIntoDeck(side, returned);
       const redrawn = player.deck.slice(0, returned.length).map((card) => ({ ...card }));
       if (returned.length > 0) {
-        queueAnimation("shuffle", side);
         queueAnimation("mulligan", side);
       }
       drawCards(side, returned.length, false);
@@ -37033,9 +37049,8 @@
     function redrawHand(side) {
       const player = state.players[side];
       const returned = player.hand.length;
-      player.deck = shuffle([...player.deck, ...player.hand]);
-      player.hand = [];
-      queueAnimation("shuffle", side);
+      const returnedCards = player.hand.splice(0);
+      insertCardsIntoDeck(side, returnedCards);
       let drawn = 0;
       for (let i = 0; i < returned; i += 1) {
         if (drawOne(side, false)) drawn += 1;
@@ -37643,8 +37658,7 @@
       if (cards.length !== 5 || !payForItem(side, item)) return false;
       const cardIds = new Set(cards.map((card) => card.instanceId));
       state.players[side].trash = state.players[side].trash.filter((card) => !cardIds.has(card.instanceId));
-      state.players[side].deck = shuffle([...state.players[side].deck, ...cards]);
-      queueAnimation("shuffle", side);
+      insertCardsIntoDeck(side, cards, { sourceZone: "trash" });
       const drawn = drawUpTo(side, 2);
       showCardPlayAnimation(item, "trash");
       moveHandCardToTrash(side, item);
@@ -39463,8 +39477,7 @@
       showCardPlayAnimation(item, "trash");
       player.hand = player.hand.filter(card => card.instanceId !== returned.instanceId);
       returned.handTurns = 0;
-      player.deck.push(returned);
-      shuffleDeckAfterSearch(side);
+      insertCardsIntoDeck(side, [returned]);
       const pickedNames = [];
       if (!isDeckToHandLocked()) {
         const index = specialSearch ? player.deck.findIndex(card => card.instanceId === selectedId) : 0;
@@ -39780,6 +39793,7 @@
         const target = shuffle([...state.players[side].deck, ...state.players[side].hand]
           .filter(card => HORSE_MATERIAL_IDS.includes(card.baseId)))[0];
         if (target) addHandCards(side, [copiedHorseMaterialCard(target, side, source)], "generated");
+        shuffleDeckAfterSearch(side);
       }
       if (source.baseId === "corridor_student") queueFusionEffect(async () => {
         const targets = shuffle(horseMaterialCandidates(side)).slice(0, 2);
@@ -42053,16 +42067,17 @@
       const deck = state.players[side].deck;
       const revealed = deck.splice(0, 3);
       if (isDeckToHandLocked()) {
-        deck.push(...revealed);
+        insertCardsIntoDeck(side, revealed, { position: "bottom", sourceZone: "deck" });
         addLog(`${card.name}の効果：デッキから手札に加えられないため、見た3枚をデッキの下に置きました。`);
         resumeTripleEnemySequences();
         return;
       }
       const matches = revealed.filter(isEnemyNamedAttendee);
-      deck.push(...revealed.filter((entry) => !isEnemyNamedAttendee(entry)));
+      insertCardsIntoDeck(side, revealed.filter(entry => !isEnemyNamedAttendee(entry)), { position: "bottom", sourceZone: "deck" });
       const order = Array.isArray(orderIds) ? orderIds : matches.map((entry) => entry.instanceId);
       const ordered = order.map((id) => matches.find((entry) => entry.instanceId === id)).filter(Boolean);
-      addHandCards(side, [...matches], "deck");
+      const added = addHandCards(side, [...matches], "deck");
+      if (added) queueAnimation("draw", side, added);
       continueTripleEnemyAttendance({ side, name: card.name, matchCount: matches.length,
         commandId: card.tripleEnemyCommandId || "",
         summoned: 0, remaining: ordered });
@@ -42458,6 +42473,7 @@
             const sent = state.players[side].deck.filter(card => ids.has(card.instanceId));
             state.players[side].deck = state.players[side].deck.filter(card => !ids.has(card.instanceId));
             for (const card of sent) moveToTrash(side, card, { sourceZone: "deck" });
+            shuffleDeckAfterSearch(side);
             healPlayer(side, 4, item);
             addLog(`${item.name}の効果2：デッキから${sent.map(card => card.name).join("・") || "0枚"}を校外エリアへ送り、気力を4回復しました。`);
           }
@@ -42589,8 +42605,7 @@
       }
       for (const owner of ["player", "opponent"]) {
         const player = state.players[owner];
-        player.deck = shuffle([...player.deck, ...returned[owner]]);
-        queueAnimation("shuffle", owner);
+        insertCardsIntoDeck(owner, returned[owner], { sourceZone: "board" });
         let discounted = 0;
         for (const card of player.deck.filter(isEndlessTalkerAttendee)) {
           card.cost = Math.max(0, (card.cost || 0) - 3);
@@ -42838,8 +42853,7 @@
           resetCardEffectsForTrash(target, side);
           returned.push(target);
         });
-        state.players[side].deck.push(...returned);
-        shuffleDeckAfterSearch(side);
+        insertCardsIntoDeck(side, returned, { sourceZone: "board" });
         addLog(`${card.name}の効果：${drawn}枚引き、他の「敵」とつく出席者${returned.length}人をデッキに戻してシャッフルしました。`);
       }
       if (card.baseId === "triple_enemy") {
@@ -43161,9 +43175,8 @@
       }
       if (card.baseId === "word_increaser") {
         const returned = state.players[side].hand.length;
-        state.players[side].deck = shuffle([...state.players[side].deck, ...state.players[side].hand]);
-        state.players[side].hand = [];
-        queueAnimation("shuffle", side);
+        const returnedCards = state.players[side].hand.splice(0);
+        insertCardsIntoDeck(side, returnedCards);
         const drawn = drawUpTo(side, 7);
         addLog(`${card.name}の効果：手札${returned}枚をデッキに戻してシャッフルし、${drawn}枚ドローしました。`);
       }
@@ -43481,10 +43494,23 @@
       queueAnimation("shuffle", side);
     }
 
+    function insertCardsIntoDeck(side, cards, { generated = false, sourceZone = "hand", position = "shuffle" } = {}) {
+      const player = state.players[side];
+      if (!player) return;
+      const entries = cards.filter(Boolean);
+      if (entries.length) queueAnimation(generated ? "deck-generate" : "deck-return", side, entries.length, {
+        cards: generated ? entries.map(cardRevealPayload) : [], sourceZone,
+        origins: entries.map(captureCardVisualRect).filter(Boolean)
+      });
+      if (position === "top") player.deck.unshift(...entries);
+      else player.deck.push(...entries);
+      // Explicit top/bottom instructions keep that order; every other insertion shuffles.
+      if (position === "shuffle") shuffleDeckAfterSearch(side);
+    }
+
     function generateCardsIntoDeck(side, baseId, count) {
       const generated = Array.from({ length: count }, () => createCardFromBase(baseId, side));
-      state.players[side].deck = shuffle([...state.players[side].deck, ...generated]);
-      queueAnimation("shuffle", side);
+      insertCardsIntoDeck(side, generated, { generated: true });
       return generated.length;
     }
 
@@ -43521,8 +43547,7 @@
       const questionIds = new Set(questions.map((question) => question.instanceId));
       state.players[side].hand = state.players[side].hand.filter((handCard) => !questionIds.has(handCard.instanceId));
       if (questions.length > 0) {
-        state.players[side].deck = shuffle([...state.players[side].deck, ...questions]);
-        queueAnimation("shuffle", side);
+        insertCardsIntoDeck(side, questions);
       }
       let attendeeHits = 0;
       let lifeHits = 0;
@@ -43881,19 +43906,15 @@
 
     function returnRandomHandCardsToDeckUntil(side, targetCount) {
       const player = state.players[side];
-      let returned = 0;
+      const returned = [];
       while (player.hand.length > targetCount) {
         const index = Math.floor(battleRandom() * player.hand.length);
         const [card] = player.hand.splice(index, 1);
         card.handTurns = 0;
-        player.deck.push(card);
-        returned += 1;
+        returned.push(card);
       }
-      if (returned > 0) {
-        player.deck = shuffle(player.deck);
-        queueAnimation("shuffle", side);
-      }
-      return returned;
+      if (returned.length) insertCardsIntoDeck(side, returned);
+      return returned.length;
     }
 
     function chooseHandKeepIdsForAi(side, targetCount) {
@@ -43925,8 +43946,7 @@
         moved.push(card);
         return false;
       });
-      player.deck = shuffle([...player.deck, ...moved]);
-      queueAnimation("shuffle", side);
+      insertCardsIntoDeck(side, moved);
       return moved;
     }
 
@@ -44025,9 +44045,8 @@
     function redrawHandToCount(side, drawCount) {
       const player = state.players[side];
       const returned = player.hand.length;
-      player.deck = shuffle([...player.deck, ...player.hand]);
-      player.hand = [];
-      queueAnimation("shuffle", side);
+      const returnedCards = player.hand.splice(0);
+      insertCardsIntoDeck(side, returnedCards);
       const drawn = drawUpTo(side, drawCount);
       return { returned, drawn };
     }
@@ -45750,6 +45769,7 @@
         const cards=state.players[side].deck.filter(c=>c.baseId==="cafeteria");
         const target=cards[Math.floor(battleRandom()*cards.length)];
         if(target){target.cost=Math.max(0,target.cost-1);addLog(`${item.name}の効果：デッキの食堂1枚の戦意を-1しました。`);}
+        shuffleDeckAfterSearch(side);
         moveHandCardToTrash(side,item);clearSelections();if(renderAfter)render();return true;
       }
       if (item?.baseId === "amphisbaena_sofa") return castAmphisbaenaSofa(side, item, renderAfter);
@@ -45988,7 +46008,7 @@
           const player = state.players[owner];
           const returned = player.hand.filter((card) => card.type === "item" && card.instanceId !== item.instanceId);
           player.hand = player.hand.filter((card) => !returned.includes(card));
-          player.deck = shuffle([...player.deck, ...returned]);
+          insertCardsIntoDeck(owner, returned);
           drawUpTo(owner, 2);
         });
         resultText = "お互いの手札の持ち物をデッキに戻してシャッフルし、それぞれ2枚引きました。";
@@ -46563,8 +46583,9 @@
       showCardPlayAnimation(item, "trash");
       state.players[side].deck.splice(0, revealed.length);
       const chosen = isDeckToHandLocked() ? [] : revealed.filter((card) => selectedIds.includes(card.instanceId));
-      addHandCards(side, [...chosen], "deck");
-      state.players[side].deck = shuffle([...state.players[side].deck, ...revealed.filter((card) => !chosen.includes(card))]);
+      const added = addHandCards(side, [...chosen], "deck");
+      if (added) queueAnimation("draw", side, added);
+      insertCardsIntoDeck(side, revealed.filter(card => !chosen.includes(card)), { sourceZone: "deck" });
       moveHandCardToTrash(side, item);
       addLog(`${SIDES[side]}は${item.name}で${declaredType}を宣言し、公開した${revealed.map((card) => card.name).join("・") || "0枚"}から${chosen.length}枚を手札に加えました。`);
       clearSelections();
@@ -49988,7 +50009,7 @@
         const acquired = player.hand.filter(card => card.instanceId && !card.hidden
           && !card.fusionVisualAddition
           && !old.hand.some(entry => entry.id === card.instanceId)
-          && !(card.handEntryKind === "draw" && old.deckIds.has(card.instanceId)));
+          && card.handEntryKind !== "draw");
         if (acquired.length) animateRecentHandCards(side, [], 0, true, acquired.map(card => ({
           card: { ...card, generatedHandAddition: !old.deckIds.has(card.instanceId) && !old.trashIds.has(card.instanceId) },
           index: player.hand.findIndex(entry => entry.instanceId === card.instanceId)
@@ -50042,7 +50063,11 @@
         || !getHandCard("player", activeHandDrag.instanceId))) cancelHandPointerDrag();
       if (pendingItemPresentation && (state.screen !== "battle" || pendingItemPresentation.token !== state.preBattleToken)) pendingItemPresentation = null;
       if (state.screen !== "battle" || state.lectureRoomCheckToken !== state.preBattleToken) state.lectureRoomCheck = false;
-      if (state.screen !== "battle") window.ChibattleDraw?.cancel();
+      if (state.screen !== "battle" || state.training?.skipAnimations || deckAnimationBattleToken !== state.preBattleToken) {
+        window.ChibattleDraw?.cancel();
+        window.ChibattleDeck?.cancel();
+        deckAnimationBattleToken = state.preBattleToken;
+      }
       if (state.screen !== "battle") window.ChibattleWonton?.cancel();
       // Covers all navigation paths, including Cards and Shop's direct screen changes.
       // Entering an actual online battle is not a cancellation.
@@ -50188,7 +50213,7 @@
       document.querySelectorAll(".card > .card-scale-stage").forEach((stage) => {
         const shell = stage.parentElement;
         if (!shell || shell.classList.contains("hand-card-hover-overlay")) return;
-        if (shell.classList.contains("home-favorite-card-render") || shell.closest(".gacha-screen,.draw-flight")) {
+        if (shell.classList.contains("home-favorite-card-render") || shell.closest(".gacha-screen,.draw-flight,.deck-flight")) {
           const scale = Math.min(shell.offsetWidth / CARD_TEMPLATE_BASE_WIDTH, shell.offsetHeight / CARD_TEMPLATE_BASE_HEIGHT);
           if (scale > 0) stage.style.setProperty("--card-template-scale", String(scale));
           return;
@@ -51180,6 +51205,8 @@
         history
       };
       pendingAnimations.length = 0;
+      window.ChibattleDraw?.cancel();
+      window.ChibattleDeck?.cancel();
       closeItemConfirm();
       hidePlayReveal();
       hideResultOverlay();
@@ -51300,6 +51327,8 @@
       state.testHistory = history;
       resetTutorialState();
       pendingAnimations.length = 0;
+      window.ChibattleDraw?.cancel();
+      window.ChibattleDeck?.cancel();
       handDragCandidate = null;
       finishHandDrag();
       handScrollDrag = null;
@@ -52967,40 +52996,72 @@
       clearHandDropHints();
     }
 
-    function queueAnimation(type, side, count = 1) {
+    function queueAnimation(type, side, count = 1, details = {}) {
       if (trainingFastSimulation()) return;
       holdCrotchFebrezeForVisual(800);
-      const cardIds = type === "draw" && count > 0 ? state.players[side].hand.slice(-count).map((card) => card.instanceId) : [];
+      const cardIds = type === "draw" && count > 0 ? state.players[side].hand.slice(-count).map(card => card.instanceId) : [];
       if (type === "draw" && count > 0) state.players[side].hand.slice(-count).forEach(card => { card.handEntryKind = "draw"; });
-      pendingAnimations.push({ type, side, count, cardIds, phase: state.phase });
+      const animation = { type, side, count, cardIds, phase: state.phase, deckCount: state.players[side].deck.length, ...details };
+      pendingAnimations.push(animation);
+      if (["shuffle", "draw", "deck-return", "deck-generate"].includes(type)) {
+        // Share only public generation faces; returns carry no private card data or source rectangles.
+        const { origins, side: owner, ...publicAnimation } = animation;
+        const events = (state.deckVisualEvents || []).filter(event => event.token === state.preBattleToken);
+        events.push({ ...publicAnimation, owner, id: nextDeckVisualId++, token: state.preBattleToken });
+        state.deckVisualEvents = events.slice(-100);
+      }
     }
 
     function flushAnimationQueue() {
-      if (pendingAnimations.length === 0) return;
+      if (!pendingAnimations.length) return;
       const animations = pendingAnimations.splice(0);
-      const battleDraw = animations.some(animation => animation.type === "draw" && animation.phase === "battle");
-      if (battleDraw) queuedBattlePresentations += 1;
+      const token = state.preBattleToken;
+      queuedBattlePresentations += 1;
       window.requestAnimationFrame(() => {
-        if (battleDraw) queuedBattlePresentations -= 1;
-        if (state.screen !== "battle") return;
-        const draws = new Map();
-        animations.forEach((animation) => {
-          if (animation.type === "shuffle") animateDeck(animation.side, "shuffle-anim");
-          if (animation.type === "mulligan") animateHandZone(animation.side);
-          if (animation.type === "draw") {
-            if (animation.phase !== "battle") {
-              if (animation.count <= 0) return;
-              animateDeck(animation.side, "draw-anim");
-              const zone = animation.side === "player" ? elements.playerHand : elements.opponentHand;
-              [...zone.children].slice(-animation.count).forEach(card => restartAnimation(card, "draw-anim"));
-              return;
+        queuedBattlePresentations -= 1;
+        if (state.screen !== "battle" || token !== state.preBattleToken || state.training?.skipAnimations) return;
+        // Combine consecutive draws on each side, but never move a draw past a return/shuffle.
+        const batches = [];
+        for (const animation of animations) {
+          const previous = batches.findLast(entry => entry.side === animation.side);
+          if (animation.type === "draw" && previous?.type === "draw" && previous.phase === animation.phase) {
+            previous.cardIds = [...new Set([...previous.cardIds, ...animation.cardIds])];
+            previous.count += animation.count;
+          } else batches.push({ ...animation });
+        }
+        for (const animation of batches) {
+          const side = animation.side;
+          if (["shuffle", "deck-return", "deck-generate"].includes(animation.type)) {
+            if (animation.type === "shuffle" && animation.deckCount < 2) continue;
+            window.ChibattleDeck?.play({ ...animation,
+              deck: side === "player" ? elements.playerDeckPile : elements.opponentDeckPile,
+              hand: side === "player" ? elements.playerHand : elements.opponentHand,
+              trash: side === "player" ? elements.playerTrashButton : elements.opponentTrashButton,
+              face: cardShellTemplate,
+              isCurrent: () => state.screen === "battle" && token === state.preBattleToken && !state.training?.skipAnimations,
+              isVisualBusy: () => !elements.playRevealOverlay.classList.contains("hidden")
+                || window.ChibattleHandTrash?.isBusy() || state.resolvingOrderedAttendance || Date.now() < drawEffectVisualUntil,
+              syncScale: scheduleCardTemplateScaleSync
+            });
+          } else if (animation.type === "mulligan") {
+            window.ChibattleDeck?.barrier(side).then(() => {
+              if (state.preBattleToken === token && state.screen === "battle") animateHandZone(side);
+            });
+          } else if (animation.type === "draw" && animation.count > 0) {
+            if (animation.phase === "battle") {
+              const hidden = state.players[side].hand.some(card => card.hidden) ? animation.count : 0;
+              animateRecentHandCards(side, animation.cardIds, hidden);
+            } else {
+              const presentation = window.ChibattleDeck?.barrier(side).then(() => {
+                if (state.screen !== "battle" || state.preBattleToken !== token) return;
+                animateDeck(side, "draw-anim");
+                const zone = side === "player" ? elements.playerHand : elements.opponentHand;
+                [...zone.children].slice(-animation.count).forEach(card => restartAnimation(card, "draw-anim"));
+              });
+              window.ChibattleDeck?.follow(side, presentation);
             }
-            const ids = draws.get(animation.side) || new Set();
-            animation.cardIds.forEach((id) => ids.add(id));
-            draws.set(animation.side, ids);
           }
-        });
-        draws.forEach((ids, side) => animateRecentHandCards(side, ids));
+        }
       });
     }
 
@@ -53033,7 +53094,8 @@
         const publicCard = publicCards.find(entry => entry.index === index)?.card;
         return node ? { node, card: publicCard || hand[index], getNode } : null;
       }).filter(Boolean);
-      window.ChibattleDraw?.play({
+      const presentation = window.ChibattleDraw?.play({
+        waitFor: window.ChibattleDeck?.barrier(side),
         side, cards, obtained,
         deck: side === "player" ? elements.playerDeckPile : elements.opponentDeckPile,
         life: document.querySelector(`[data-life-target="${side}"]`),
@@ -53044,6 +53106,8 @@
           || window.ChibattleHandTrash?.isBusy() || state.resolvingOrderedAttendance || Date.now() < drawEffectVisualUntil,
         syncScale: scheduleCardTemplateScaleSync
       });
+      if (presentation) window.ChibattleDeck?.follow(side, presentation);
+      return presentation;
     }
 
     function restartAnimation(element, className) {
@@ -61194,7 +61258,8 @@
   </script>
 <script src="cards-ui.js?v=0.41.0-match-common"></script>
   <script src="desktop-ui.js?v=0.26.0"></script>
-<script src="draw-animation.js?v=0.23.19-video-tempo"></script>
+<script src="deck-animation.js?v=0.45.3"></script>
+<script src="draw-animation.js?v=0.45.3-deck-order"></script>
 <script src="wonton-animation.js?v=0.36.0-cover-1s"></script>
 <script src="hand-trash-animation.js?v=0.23.19-deck"></script>
 <script src="gacha-ui.js?v=0.39.0-feast"></script>

@@ -1,3 +1,18 @@
+# Deck Shuffle and Transfers — 2026-11-22
+
+final result: passed
+
+- Centralized deck insertions: mulligan, hand redraw, hand trimming, board/trash recovery, Confucius, Folder Galaxy, Endless Talker, and generated deck cards now share transfer → shuffle presentation. Explicit top/bottom placements preserve their position; ordinary draws and top-card milling preserve the remaining order.
+- Added omitted shuffles to Amphisbaena Sofa's deck selection, Illegal Cafeteria's selected deck-card adjustment, and Information Tired Student's deck/hand search. Existing return/reset/submission behavior is retained; card stats and text are unchanged. The rule ledger and AGENTS.md record the common policy for future cards.
+- Generated faces use the existing card renderer and a count badge for duplicate cards. Preview, insertion and shuffle play in order; all returning private cards use backs. Per-side queues keep both players independent and serialize subsequent draws. Public event history is bounded to 100 entries and excluded from private replay checkpoints; return events contain no card faces or screen rectangles.
+- Inspected desktop (1440 × 900) and mobile (390 × 844) generated-card screenshots under `/tmp/chibatoru-deck-shuffle-visual-final/`. Previews stay within the viewport and use stable layout scaling while travelling. Existing board/card styles are retained.
+- 17 new focused cases cover preserved top/bottom order, actual shuffled permutations, both sides' return → shuffle → draw order, batched generation, immediate draws of generated cards, actual Cornering Lecturer attendance, mulligan timing, hidden information, reduced motion, skip, leaving/reset/resize cancellation, and guest/spectator snapshots. Repeated snapshots during playback do not cancel or replay the effect.
+- Existing relevant suites pass: 9 Sofa cases, 9 deck-to-trash cases, 3 mulligan cases, 18 draw cases, 7 deck-choice cases, 2 Sofa and 2 Endless Talker real-WebSocket cases, 5 Lecturer/Yohabari effect cases, and 5 renderer/timing Node cases. One additional real-WebSocket case runs eight host/guest Thin-item scenarios and verifies private-backed returns, shuffle and final synchronization (47.6 s).
+- Updated stale test assumptions: Sofa now shuffles rather than preserves deck order; TRPG searches for its current two students; direct actions are tested separately from the UI's existing action reservation; room-code entry is expanded before typing. No game rules were changed to satisfy those tests.
+- Wider legacy checks found two unrelated test setup issues: `versioning.test.cjs` searches for a removed `LATEST_UPDATE_VERSION` marker (also absent in unmodified HEAD a355df5), and the old Yohabari catalog-entry case starts inside an active card test but tries to click hidden home navigation. The five relevant Yohabari/Lecturer effect tests and the new actual Lecturer card-test case pass. Those unrelated files were not modified.
+
+---
+
 # Card Selection Overflow Fix — 2026-11-22
 
 final result: passed

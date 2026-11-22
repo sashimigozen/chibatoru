@@ -39,7 +39,8 @@ for (const side of ['player', 'opponent']) {
       }
       expect(new Set(rects.map(rect => `${Math.round(rect.x)},${Math.round(rect.y)}`)).size).toBe(count);
       expect(await page.evaluate(() => battleNewActionBlocked())).toBe(true);
-      await page.locator('#endTurnButton').dispatchEvent('click');
+      // Direct action is rejected while busy; the visible button can reserve a later end turn.
+      await page.evaluate(() => endTurn());
       expect(await page.evaluate(() => state.currentSide)).toBe('player');
       await page.screenshot({ path: test.info().outputPath(`${side}-${count}-deck-trash.png`) });
       await expect(flights).toHaveCount(0);
