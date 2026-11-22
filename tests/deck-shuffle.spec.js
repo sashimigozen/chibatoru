@@ -25,6 +25,16 @@ async function setup(page, size={width:1440,height:900}) {
   });
 }
 async function settled(page) {await expect.poll(()=>page.evaluate(()=>battlePresentationBusy()),{timeout:20000}).toBe(false);}
+async function centeredCards(preview,size) {
+ const rects=await preview.evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom};}));
+ const left=Math.min(...rects.map(r=>r.x)),right=Math.max(...rects.map(r=>r.right));
+ const top=Math.min(...rects.map(r=>r.y)),bottom=Math.max(...rects.map(r=>r.bottom));
+ expect(Math.abs((left+right)/2-size.width/2)).toBeLessThan(1);
+ expect(Math.abs((top+bottom)/2-size.height/2)).toBeLessThan(1);
+ const rows=new Map();for(const r of rects){const key=Math.round(r.y);rows.set(key,[...(rows.get(key)||[]),r]);}
+ for(const row of rows.values())expect(Math.abs((Math.min(...row.map(r=>r.x))+Math.max(...row.map(r=>r.right)))/2-size.width/2)).toBeLessThan(1);
+}
+
 
 test('通常ドローと上から校外へ送る処理は順番を維持し、シャッフルしない',async({page})=>{
  await setup(page);const r=await page.evaluate(()=>{
@@ -59,6 +69,7 @@ for(const size of [{width:1440,height:900},{width:390,height:844}])test(`生成1
  const preview=page.locator('.deck-flight[data-deck-phase="deck-generate"]');await expect(preview).toHaveCount(10);
  await expect(preview.first()).toContainText('怖い質問');await expect(preview.locator('.deck-flight-count')).toHaveCount(0);
  await page.waitForTimeout(260);const rects=await preview.evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom};}));for(const rect of rects){expect(rect.x).toBeGreaterThanOrEqual(0);expect(rect.y).toBeGreaterThanOrEqual(0);expect(rect.right).toBeLessThanOrEqual(size.width+1);expect(rect.bottom).toBeLessThanOrEqual(size.height+1);}expect(new Set(rects.map(r=>`${Math.round(r.x)},${Math.round(r.y)}`)).size).toBe(10);
+ await centeredCards(preview,size);
  await page.screenshot({path:test.info().outputPath(`deck-generation-${size.width}.png`)});
  await expect(page.locator('.deck-flight[data-deck-phase="deck-insert"]')).toHaveCount(10);
  await expect(page.locator('.deck-flight[data-deck-phase="shuffle"]')).toHaveCount(3);
@@ -172,6 +183,7 @@ test(`生成3枚をそれぞれ見せ、めくって入れ終わった後に上�
  const bounds=await preview.evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect();return{x:r.x,y:r.y,right:r.right,bottom:r.bottom};}));
  expect(new Set(bounds.map(r=>Math.round(r.x))).size).toBe(3);
  for(const r of bounds){expect(r.x).toBeGreaterThanOrEqual(0);expect(r.y).toBeGreaterThanOrEqual(0);expect(r.right).toBeLessThanOrEqual(size.width+1);expect(r.bottom).toBeLessThanOrEqual(size.height+1);}
+ await centeredCards(preview,size);
  await page.screenshot({path:test.info().outputPath(`three-generated-${side}-${size.width}.png`)});
  const inserting=page.locator('.deck-flight[data-deck-phase="deck-insert"]');await expect(inserting).toHaveCount(3);
  const timings=await inserting.evaluateAll(nodes=>nodes.map(n=>({move:n.getAnimations().at(-1).effect.getTiming(),turn:n.firstElementChild.getAnimations().at(-1).effect.getTiming()})));
@@ -186,4 +198,12 @@ test(`生成3枚をそれぞれ見せ、めくって入れ終わった後に上�
  expect(Math.max(...packetA.map(m=>m.x))-Math.min(...packetA.map(m=>m.x))).toBeLessThan(7);
  await page.screenshot({path:test.info().outputPath(`packet-shuffle-${side}-${size.width}.png`)});
  await settled(page);expect(await page.evaluate(side=>state.players[side].deck.filter(c=>c.baseId==='scary_question').length,side)).toBe(3);
+});
+
+for(const size of [{width:1440,height:900},{width:390,height:844}])test(`生成1枚も中央で見せてから山札へ入れる ${size.width}`,async({page})=>{
+ await setup(page,size);await page.evaluate(()=>{generateCardsIntoDeck('player','scary_question',1);render();});
+ const preview=page.locator('.deck-flight[data-deck-phase="deck-generate"]');await expect(preview).toHaveCount(1);
+ await page.waitForTimeout(260);await centeredCards(preview,size);
+ await page.screenshot({path:test.info().outputPath(`one-generated-center-${size.width}.png`)});
+ await settled(page);
 });

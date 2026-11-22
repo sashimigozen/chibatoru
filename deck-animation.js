@@ -86,10 +86,15 @@
         const height = width * 1.5, step = width * 1.14, rowStep = height * 1.10;
         const groupWidth = width + Math.max(0, columns - 1) * step;
         const groupHeight = height + Math.max(0, rows - 1) * rowStep;
-        const x = Math.max(12, Math.min(innerWidth - groupWidth - 12, end.x + end.width / 2 - groupWidth / 2));
-        const y = Math.max(12, Math.min(innerHeight - groupHeight - 12, side === 'player' ? end.y - groupHeight - 24 : end.bottom + 24));
-        const previews = cards.map((card, index) => ({ node: ghost(width, height, card),
-          x: x + (index % columns) * step, y: y + Math.floor(index / columns) * rowStep }));
+        const x = (innerWidth - groupWidth) / 2;
+        const y = (innerHeight - groupHeight) / 2;
+        const previews = cards.map((card, index) => {
+          const row = Math.floor(index / columns);
+          const rowCount = Math.min(columns, cards.length - row * columns);
+          return { node: ghost(width, height, card),
+            x: x + (columns - rowCount) * step / 2 + (index % columns) * step,
+            y: y + row * rowStep };
+        });
         syncScale?.();
         await Promise.all(previews.map(({ node, x, y }) => animate(node, [
           { transform: at(x, y + 14, .92), opacity: 0 }, { transform: at(x, y), opacity: 1 }

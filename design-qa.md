@@ -1,3 +1,11 @@
+# Centered Generated-Card Presentation — 2026-11-22
+
+- Changed generated deck-card previews from the owner's pile vicinity to the center of the viewport, matching the existing card-use overlay's centered presentation. Incomplete final rows are individually centered as well.
+- Kept every card visible, including ten identical cards, and retained face-to-back insertion followed by shuffle and then draw. Owner, online role, motion cancellation and game effects do not change.
+- All 10 focused checks pass: 1/3/10 cards at desktop and mobile sizes, both owners for the three-card case, each row's horizontal center, the full group's vertical center, viewport bounds, online repeated snapshots and insertion → shuffle → draw order. Viewed the 1440 × 900 and 390 × 844 ten-card screenshots under `/tmp/chibatoru-centered-generation/`.
+
+---
+
 # Reference Shuffle Motion and Full Generation Count — 2026-11-22
 
 - Reviewed both user videos in full through extracted frame sequences: `shuffle_normal_compatible.mp4` (480 × 1038, 30 fps, 1.27 s) and `shuffle_slow_compatible.mp4` (480 × 854, 30 fps, 1.63 s). Examined the slow clip's pile every 0.1 s. References: `/tmp/chibatoru-shuffle-reference/normal-sheet.jpg`, `slow-sheet.jpg`, `shuffle-detail.jpg`.
