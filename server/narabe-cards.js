@@ -80,7 +80,7 @@
     "name": "インファイト将棋部",
     "type": "student",
     "cost": 10,
-    "attack": 9,
+    "attack": 8,
     "hp": 5
   },
   {
