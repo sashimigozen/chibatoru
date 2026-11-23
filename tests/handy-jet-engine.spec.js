@@ -19,7 +19,7 @@ test("本文・表示・台帳と同日更新を揃え、カードテストに�
     api.showBattleCardPreview(item);
     return { cost: item.cost, text: api.cardRulesText(item), usable: api.canUseHandCardNow(item),
       own: own.hand.length, other: api.state.players.opponent.hand.length };
-  })).toEqual({ cost: 3, text, usable: true, own: 4, other: 6 });
+  })).toEqual({ cost: 4, text, usable: true, own: 4, other: 6 });
   await expect(page.locator("#battleCardPreview .battle-card-preview-rules")).toHaveText(text);
   for (const file of ["index.html", "card_rules.txt"]) {
     expect(fs.readFileSync(path.join(__dirname, "..", file), "utf8")).toContain('handy_jet_engine: "' + text + '"');
@@ -47,7 +47,7 @@ for (const side of ["player", "opponent"]) {
         ownTrash: own.trash.map(c => c.baseId), otherTrash: other.trash.map(c => c.baseId), will: own.will,
         sourceCount: own.trash.filter(c => c.instanceId === item.instanceId).length };
     }, side)).toEqual({ used: true, ownFirst: true, own: ["bento"], other: ["cafeteria"],
-      ownTrash: ["handy_jet_engine", "ruler"], otherTrash: ["general_student", "general_teacher"], will: 7, sourceCount: 1 });
+      ownTrash: ["handy_jet_engine", "ruler"], otherTrash: ["general_student", "general_teacher"], will: 6, sourceCount: 1 });
   });
 }
 

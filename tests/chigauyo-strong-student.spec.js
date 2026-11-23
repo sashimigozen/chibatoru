@@ -28,7 +28,7 @@ test("ちがうよの本文をデッキからカードを引く表記に揃え�
 
 test("デッキ詳細の本文・戦意表示と同日ver.0.23.12の更新情報を揃える", async ({ page }) => {
   const cards = [
-    { id: "chigauyo", text: chigauyoDisplay, cost: "3", title: "ちがうよ" },
+    { id: "chigauyo", text: chigauyoDisplay, cost: "4", title: "ちがうよ" },
     { id: "annoying_na", cost: "5", title: "煩わしいなぁ",
       text: "自分のターン開始時にのみ使用できる。\nお互いのプレイヤーがそれぞれ1回ターンを終了するまで、お互いは出席時効果、持ち物カードの使用時効果、環境カードを環境マスに置いたときの効果を使用できない。" }
   ];
@@ -66,7 +66,7 @@ test("ちがうよは最大戦意に関係なく使える", async ({ page }) => 
       const item = api.createCardFromBase("chigauyo", side);
       own.maxWill = ownMax;
       target.maxWill = otherMax;
-      own.will = 3;
+      own.will = 4;
       target.will = 0;
       own.hand = [item];
       target.hand = [api.createCardFromBase("general_student", other), api.createCardFromBase("ruler", other)];
@@ -93,7 +93,7 @@ test("ちがうよは効果封印中・通常AI・トレーニングAIでも最�
       const other = api.state.players.player;
       own.maxWill = ownMax;
       other.maxWill = otherMax;
-      own.will = 3;
+      own.will = 4;
       own.hand = [api.createCardFromBase("chigauyo", "opponent")];
       other.hand = Array.from({ length: 6 }, () => api.createCardFromBase("general_student", "player"));
       if (suppressed) own.effectUseLockTurnsRemaining = 1;

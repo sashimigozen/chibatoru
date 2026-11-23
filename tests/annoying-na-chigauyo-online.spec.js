@@ -33,6 +33,7 @@ async function openBattle(host, guest) {
   await host.locator("#onlineCreateRoomButton").click();
   await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.role)).toBe("host");
   const room = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+  await guest.locator(".private-code-entry > summary").click();
   await guest.locator("#onlineRoomInput").fill(room);
   await guest.locator("#onlineJoinRoomButton").click();
   for (const page of [host, guest]) {
@@ -49,35 +50,37 @@ async function openBattle(host, guest) {
   await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.started)).toBe(true);
 }
 
-test("ホスト・ゲストのちがうよは双方の最大戦意10で表示後に引き直す", async ({ browser }) => {
+test("ホスト・ゲストの手札干渉2枚は戦意4を支払い効果を同期する", async ({ browser }) => {
   const contexts = await Promise.all([browser.newContext(), browser.newContext()]);
   const [host, guest] = await Promise.all(contexts.map((context) => context.newPage()));
   const errors = [];
   try {
     for (const page of [host, guest]) page.on("pageerror", (error) => errors.push(error.message));
     await openBattle(host, guest);
-    for (const side of ["player", "opponent"]) {
+    for (const baseId of ["chigauyo", "handy_jet_engine"]) for (const side of ["player", "opponent"]) {
       const actor = side === "player" ? host : guest;
       for (const [ownMax, otherMax] of [[10, 10]]) {
-        const setup = await host.evaluate(({ side, ownMax, otherMax }) => {
+        const setup = await host.evaluate(({ side, ownMax, otherMax, baseId }) => {
           const api = window.__chibattle;
-          api.startCardTest("chigauyo");
+          api.startCardTest(baseId);
+          api.state.training.skipAnimations = true;
+          scheduleOpponentAI = () => {};
           api.state.currentSide = side;
           api.state.testMode = false;
           const other = side === "player" ? "opponent" : "player";
           for (const owner of [side, other]) {
             const player = api.state.players[owner];
             player.maxWill = owner === side ? ownMax : otherMax;
-            player.will = owner === side ? 3 : 0;
+            player.will = owner === side ? 4 : 0;
             player.hand = [api.createCardFromBase("general_student", owner)];
             player.deck = Array.from({ length: 8 }, () => api.createCardFromBase("general_teacher", owner));
             player.trash = [];
           }
-          const item = api.createCardFromBase("chigauyo", side);
+          const item = api.createCardFromBase(baseId, side);
           api.state.players[side].hand.unshift(item);
           api.render();
           return { id: item.instanceId, seq: api.state.online.lastSnapshotSeq };
-        }, { side, ownMax, otherMax });
+        }, { side, ownMax, otherMax, baseId });
         await expect.poll(() => guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(setup.seq);
         for (const page of [host, guest]) await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
         expect(await actor.evaluate((id) => {
@@ -89,12 +92,12 @@ test("ホスト・ゲストのちがうよは双方の最大戦意10で表示後
           api.beginItemUse(api.state.players.player.hand.find((card) => card.instanceId === id));
         }, setup.id);
         for (const page of [host, guest]) {
-          await expect.poll(() => page.evaluate(() => ["player", "opponent"].map((owner) => window.__chibattle.state.players[owner].hand.length))).toEqual([1, 1]);
+          await expect.poll(() => page.evaluate(() => ["player", "opponent"].map((owner) => window.__chibattle.state.players[owner].hand.length))).toEqual(baseId === "chigauyo" ? [1, 1] : [0, 0]);
           const actorSide = page === actor ? "player" : "opponent";
-          expect(await page.evaluate((actorSide) => {
+          expect(await page.evaluate(({ actorSide, baseId }) => {
             const own = window.__chibattle.state.players[actorSide];
-            return { will: own.will, deck: own.deck.length, used: own.trash.some((card) => card.baseId === "chigauyo") };
-          }, actorSide)).toEqual({ will: 0, deck: 8, used: true });
+            return { will: own.will, deck: own.deck.length, used: own.trash.some((card) => card.baseId === baseId) };
+          }, { actorSide, baseId })).toEqual({ will: 0, deck: 8, used: true });
         }
       }
     }

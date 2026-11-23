@@ -197,7 +197,7 @@ test('表記統一のお知らせは書き方の一覧とし、実際の能力�
   await page.goto(url);
   const release = await page.evaluate(() => UPDATE_HISTORY.find(entry => entry.version === 'ver.0.45.4'));
   const comparisons = release.changes.filter(change => change.before && change.after);
-  expect(comparisons.map(change => change.title)).toEqual(['斥候学生', 'ハバヨセ!']);
+  expect(comparisons.map(change => change.title)).toEqual(['斥候学生', 'ハバヨセ!', 'ちがうよ', 'ハンディジェットエンジン']);
   const wording = release.changes.find(change => change.title === 'カード本文の表記統一');
   expect(wording.after).toContain('指定カードを手札に加える → 指定カードを引く');
   expect(wording.after).toContain('公開・確認した候補から取る場合は「手札に加える」を維持');
@@ -205,7 +205,7 @@ test('表記統一のお知らせは書き方の一覧とし、実際の能力�
   await page.locator('#homeUpdatesButton').click();
   const latest = page.locator('.update-entry').filter({ has: page.locator('summary', { hasText: 'ver.0.45.4（' }) });
   await latest.locator('summary').click();
-  await expect(latest.locator('.update-before')).toHaveCount(2);
+  await expect(latest.locator('.update-before')).toHaveCount(4);
   const overview = latest.locator('.update-change').filter({ hasText: 'カード本文の表記統一' });
   await expect(overview).toContainText('指定カードを手札に加える → 指定カードを引く');
   await overview.scrollIntoViewIfNeeded();
