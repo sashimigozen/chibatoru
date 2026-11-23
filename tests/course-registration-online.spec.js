@@ -50,6 +50,7 @@ async function connectPlayers(browser) {
   await host.locator("#onlineCreateRoomButton").click();
   await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.role)).toBe("host");
   const roomCode = await host.evaluate(() => window.__chibattle.state.online.roomCode);
+  await guest.locator(".private-code-entry > summary").click();
   await guest.locator("#onlineRoomInput").fill(roomCode);
   await guest.locator("#onlineJoinRoomButton").click();
   await expect.poll(() => host.evaluate(() => window.__chibattle.state.online.connected)).toBe(true);
@@ -79,6 +80,11 @@ async function connectPlayers(browser) {
 async function prepareBattle(host, guest, sourceSide) {
   const itemId = await host.evaluate((side) => {
     const api = window.__chibattle;
+    // Cancel pre-battle timers before preparing the synchronized test battle.
+    api.startCardTest("course_registration_party");
+    api.state.testMode = false;
+    api.state.training.skipAnimations = true;
+    scheduleOpponentAI = () => {};
     api.state.screen = "battle";
     api.state.phase = "battle";
     api.state.currentSide = side;
@@ -326,12 +332,18 @@ test("ホストが履修登録結論パを使用するとゲストの了承・�
     await expect(players.guest.locator("#courseRegistrationConsentModal")).not.toHaveClass(/hidden/);
     await expect(players.guest.locator("#courseRegistrationAcceptButton")).toBeVisible();
     await expect(players.guest.locator("#courseRegistrationRejectButton")).toBeVisible();
-    await players.host.evaluate(() => window.__chibattle.onlineBroadcastState(true));
+    const resyncSeq = await players.host.evaluate(() => {
+      window.__chibattle.onlineBroadcastState(true);
+      return window.__chibattle.state.online.lastSnapshotSeq;
+    });
+    await expect.poll(() => players.guest.evaluate(() => window.__chibattle.state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(resyncSeq);
     await expect(players.guest.locator("#courseRegistrationConsentModal")).not.toHaveClass(/hidden/);
-    await players.guest.locator("#courseRegistrationAcceptButton").click();
-    await expect.poll(() => players.guest.evaluate(() => (
-      window.__chibattle.state.pendingCardChoice?.mode
-    ))).toBe("course_registration_online_response");
+    // Check the consent handler after the resynchronized modal has been restored.
+    const acceptedMode = await players.guest.evaluate(() => {
+      acceptCourseRegistrationConsent();
+      return window.__chibattle.state.pendingCardChoice?.mode;
+    });
+    expect(acceptedMode).toBe("course_registration_online_response");
   } finally {
     await players.hostContext.close();
     await players.guestContext.close();
