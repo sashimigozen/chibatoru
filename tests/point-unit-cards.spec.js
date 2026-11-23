@@ -112,7 +112,7 @@ test('点数カードの本文は単位取得前後とも元の効果、単位�
  for(const {id,text} of result[1]){
   expect(text).toMatch(/^\[点数\]\n/);
   const unit=text.indexOf('[単位]取得済みなら、');expect(unit).toBeGreaterThan(0);
-  const ordinary={pinige:'4. 相手の出席者1人をランダムに選び、3ダメージを与える。',sports_spectator_student:'2. このカードの攻撃力と体力を+2する。',short_sleeve_student:'ランダムに選び、2ダメージ',lucky_man:'その後、自分の気力を2回復する。',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',secretly_mocked_student:'その出席者は体力が1',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
+  const ordinary={pinige:'4. 相手の出席者1人をランダムに指名し、3ダメージを与える。',sports_spectator_student:'2. このカードの攻撃力と体力を+2する。',short_sleeve_student:'ランダムに指名し、2ダメージ',lucky_man:'その後、自分の気力を2回復する。',long_sleeve_student:'1ターンに2回攻撃',group_sniper:'1ダメージを与える',could_not_escape_student:'破壊する。',secretly_mocked_student:'その出席者は体力が1',gecko_carrier_student:'2. このカードは[超陽気]を持つ。'}[id];
   expect(text.indexOf(ordinary)).toBeGreaterThan(-1);expect(text.indexOf(ordinary)).toBeLessThan(unit);
  }
 });

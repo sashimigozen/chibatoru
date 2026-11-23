@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
-const searchText = '自分のデッキから「U太」と名のつくカード1枚を選び、手札に加える。';
+const searchText = '自分のデッキから「U太」とつくカード1枚を選び、手札に加える。';
 
 async function setup(page) {
   await page.goto(url);
@@ -24,7 +24,7 @@ test('カード一覧のテストから名前だけで検索し、本文だけ�
   await expect.poll(() => page.evaluate(() => state.pendingCardChoice?.context?.kind), { timeout: 15000 }).toBe('habayose_search');
   expect(await page.evaluate(() => [...new Set(state.pendingCardChoice.cards.map(c => c.baseId))].sort()))
     .toEqual(['dark_yuta', 'yuta', 'yuta_umbrella']);
-  expect(await page.evaluate(() => state.pendingCardChoice.message)).toContain('「U太」と名のつくカード');
+  expect(await page.evaluate(() => state.pendingCardChoice.message)).toContain('「U太」とつくカード');
   await page.screenshot({ path: test.info().outputPath('habayose-name-only.png') });
   await page.evaluate(() => {
     toggleCardChoiceCard(state.pendingCardChoice.cards.find(c => c.baseId === 'yuta_umbrella').instanceId);

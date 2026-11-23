@@ -60,7 +60,7 @@ test('複数選択は選択・解除と確定を分け、盤面を見て戻っ�
   await page.setViewportSize({ width: 1440, height: 900 });
   await pinige(page);
   const rows = page.locator('.effect-mode-option');
-  await expect(rows.nth(1)).toContainText('自分のデッキから[点数]を持つ学生を2枚引く。');
+  await expect(rows.nth(1)).toContainText('自分のデッキから[点数]を持つ学生2枚を手札に加える。');
   await expect(page.locator('#threeGesturesConfirmButton')).toBeDisabled();
   await rows.nth(0).click();
   await expect(rows.nth(0)).toBeFocused();

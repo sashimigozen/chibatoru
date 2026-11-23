@@ -20,8 +20,11 @@ for (const width of [1280, 390]) test(`カード修正は能力値と全文を�
   }
   await expect(change.locator(".update-before .update-text-highlight")).toHaveText(["-2"]);
   await expect(change.locator(".update-after .update-text-highlight")).toHaveText(["次の相手のターン終了まで、", "-3"]);
-  const currentRules = await page.evaluate(() => cardRulesText(createCardFromBase("adjective_vs_cynical", "player")));
-  await expect(change.locator(".update-after")).toContainText(currentRules);
+  // Past releases keep their original wording after a later text-only update.
+  const historicalRules = await page.evaluate(() => UPDATE_HISTORY
+    .find(entry => entry.version === "ver.0.26.0").changes
+    .find(change => change.title === "形容詞学生vs冷笑学生").after);
+  await expect(change.locator(".update-after")).toContainText(historicalRules);
   await change.scrollIntoViewIfNeeded();
   const box = await change.boundingBox();
   expect(box.x).toBeGreaterThanOrEqual(0);
