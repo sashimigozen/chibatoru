@@ -1,3 +1,12 @@
+# Habayose Name-Only Search — 2026-11-23
+
+- Confirmed the intended change with the user: only card names containing U太 are eligible. Replaced the former name-or-rules-text search and the resolution-time recheck with one shared predicate. A Habayose in the deck is excluded even though its rules mention U太 and it counts as U太 while in trash. Red Happi, Sexual Eye and Accelerate are likewise excluded; U太の傘 and U太くんU太くん remain eligible by name.
+- Canonical card text now says 自分のデッキから「U太」と名のつくカード1枚を選び、手札に加える。 Synchronized the choice prompt, AI candidate evaluation, card ledger, card-test deck/guide, exact-text assertions and full before/after notice. Historical notices retain the previous behavior. AGENTS.md now requires explicit name-versus-body semantics, the established 名のつく wording, and comparison of displayed text, candidates, AI and source documents.
+- Retained costs, optional attendance, direct seat/teacher selection, equipment and trash alias behavior. Narrowing the target removes self-search and body-only equipment searches without adding a new loop or broadening other effects. An attempted search with zero matching names now also follows the already-established one-shuffle rule; a deck-to-hand lock does not search or shuffle.
+- Twelve focused checks pass for candidate/AI parity on both sides, zone-limited aliases, forged-choice revalidation, no-target/draw-lock cases, canonical data synchronization and existing attendance/equipment/submission/recovery paths. Two real WebSocket host/guest cases also pass, including excluded body-only candidates and private choices. The fresh catalogue → detail → card-test scenario checks the actual text and valid names without replacing its starting hand, deck or board.
+
+---
+
 # Scout Student Attendance Condition — 2026-11-23
 
 - Added printed Cheerful to Scout Student. On attendance only, an empty opposing classroom grants Super Cheerful through the common keyword-grant path. Removed the former continuously recalculated condition and its obsolete status explanation. The granted keyword persists when the opponent attends; clearing the opposing classroom later does not promote an already-attended Scout. Attendance from hand, generated cards, copies and trash uses the same entry-time check; movement does not retrigger it.

@@ -207,31 +207,31 @@ test('フットキリは効果捨てでも検索し、山札から手札への�
     state.players.player.will])).toEqual([0, 1, 20]);
 });
 
-test('ハバヨセ!は名前または本文にU太があるカードを選べる', async ({ page }) => {
+test('ハバヨセ!はカード名にU太を含むカードだけを選べる', async ({ page }) => {
   await page.evaluate(() => {
-    state.players.player.deck = ['yuta', 'dark_yuta', 'sexual_eye', 'general_student'].map(id => createCardFromBase(id, 'player'));
+    state.players.player.deck = ['yuta', 'dark_yuta', 'yuta_umbrella', 'general_student'].map(id => createCardFromBase(id, 'player'));
     state.players.player.will = 2;
   });
   await use(page, 'habayose');
   await expect.poll(() => page.evaluate(() => state.pendingCardChoice?.context?.kind)).toBe('habayose_search');
   expect(await page.evaluate(() => state.pendingCardChoice.cards.map(card => card.baseId).sort()))
-    .toEqual(['dark_yuta', 'sexual_eye', 'yuta']);
-  await choose(page, 'habayose_search', 'sexual_eye'); await settle(page);
+    .toEqual(['dark_yuta', 'yuta', 'yuta_umbrella']);
+  await choose(page, 'habayose_search', 'yuta_umbrella'); await settle(page);
   expect(await page.evaluate(() => [state.players.player.hand.map(card => card.baseId), state.players.player.will]))
-    .toEqual([['sexual_eye'], 0]);
+    .toEqual([['yuta_umbrella'], 0]);
 });
 
 for (const zone of ['seat', 'teacher']) {
   test(`ハバヨセ!は進化元なしで${zone}へ直接出席し自身を装備する`, async ({ page }) => {
     const sourceId = await page.evaluate(() => {
       state.players.player.hand = [createCardFromBase('dark_yuta', 'player')];
-      state.players.player.deck = [createCardFromBase('sexual_eye', 'player')];
+      state.players.player.deck = [createCardFromBase('yuta_umbrella', 'player')];
       const card = createCardFromBase('habayose', 'player');
       state.players.player.hand.push(card);
       castImmediateItem('player', card, false);
       return card.instanceId;
     });
-    await choose(page, 'habayose_search', 'sexual_eye');
+    await choose(page, 'habayose_search', 'yuta_umbrella');
     await choose(page, 'attendance_optional', 'dark_yuta');
     await choose(page, 'attendance_seats', null, { zone, ...(zone === 'seat' ? { index: 4 } : {}) });
     await choose(page, 'habayose_equip', 'habayose'); await settle(page);
@@ -241,7 +241,7 @@ for (const zone of ['seat', 'teacher']) {
         cheerful: hasKeyword(card, '陽気'), will: state.players.player.will,
         hand: state.players.player.hand.map(entry => entry.baseId), sourceInTrash: state.players.player.trash.some(entry => entry.instanceId === sourceId) };
     }, { zone, sourceId })).toEqual({ baseId: 'dark_yuta', stats: [5, 5], equipment: ['habayose'], cheerful: true,
-      will: 15, hand: ['sexual_eye'], sourceInTrash: false });
+      will: 15, hand: ['yuta_umbrella'], sourceInTrash: false });
     // The source is one physical card; detaching it does not submit again.
     await page.evaluate(zone => destroyBoardCard({ owner: 'player', zone, index: zone === 'seat' ? 4 : null }), zone);
     await settle(page);
@@ -276,12 +276,12 @@ test('ハバヨセ!は相手ターンの提出では検索だけ行い、追加�
     state.currentSide = 'opponent';
     const card = createCardFromBase('habayose', 'player');
     state.players.player.hand = [card, createCardFromBase('dark_yuta', 'player')];
-    state.players.player.deck = [createCardFromBase('sexual_eye', 'player')];
+    state.players.player.deck = [createCardFromBase('yuta_umbrella', 'player')];
     moveHandCardToTrash('player', card, { effectDiscard: true });
   });
-  await choose(page, 'habayose_search', 'sexual_eye'); await settle(page);
+  await choose(page, 'habayose_search', 'yuta_umbrella'); await settle(page);
   expect(await page.evaluate(() => [state.players.player.will, state.players.player.hand.map(card => card.baseId),
-    listBoardRefs('player').length, state.pendingCardChoice])).toEqual([20, ['dark_yuta', 'sexual_eye'], 0, null]);
+    listBoardRefs('player').length, state.pendingCardChoice])).toEqual([20, ['dark_yuta', 'yuta_umbrella'], 0, null]);
 });
 
 test('校外のハバヨセ!はU太の枚数へ加算され、回収後は元の持ち物のまま', async ({ page }) => {

@@ -83,7 +83,7 @@ for (const side of ['player', 'opponent']) {
         });
         state.players[side].hand = ['tojirika', 'cafeteria_lady', 'general_student', 'habayose', 'dark_yuta']
           .map(id => createCardFromBase(id, side));
-        state.players[side].deck = ['sexual_eye', 'yuta'].map(id => createCardFromBase(id, side));
+        state.players[side].deck = ['yuta_umbrella', 'yuta', 'sexual_eye', 'red_happi', 'habayose'].map(id => createCardFromBase(id, side));
         state.players[oppositeSide(side)].board.seats[4] = makeBoardCard(createCardFromBase('strong_student', oppositeSide(side)));
         render(); return state.online.lastSnapshotSeq;
       }, side);
@@ -108,7 +108,8 @@ for (const side of ['player', 'opponent']) {
       await actor.evaluate(() => beginItemUse(state.players.player.hand.find(card => card.baseId === 'habayose')));
       await expect.poll(() => actor.evaluate(() => state.pendingCardChoice?.context?.kind)).toBe('habayose_search');
       expect(await other.evaluate(() => state.pendingCardChoice)).toBeNull();
-      await choose(actor, 'habayose_search', 'sexual_eye');
+      expect(await actor.evaluate(() => state.pendingCardChoice.cards.map(card => card.baseId).sort())).toEqual(['yuta', 'yuta_umbrella']);
+      await choose(actor, 'habayose_search', 'yuta_umbrella');
       await choose(actor, 'attendance_optional', 'dark_yuta');
       await choose(actor, 'attendance_seats', null, 'teacher');
       await choose(actor, 'habayose_equip', 'habayose');
