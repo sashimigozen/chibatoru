@@ -37,7 +37,8 @@ test('現在の表示本文・原稿・管理台帳と今回の更新情報が�
     'trpg_member', 'lightning_n', 'curry_treater', 'think_so', 'environment_setup',
     'iv_pack', 'dry_meal_ticket', 'pure_destruction', 'childhood_memory_tutuapp',
     'efficient_experiment_method', 'sexual_eye', 'dorm_council', 'shukii',
-    'course_registration_party', 'yamanashi_minimum_wage'];
+    'course_registration_party', 'yamanashi_minimum_wage',
+    'group_sniper', 'wonton_graduation', 'chotto_machii', 'aggro_student', 'eaten_student', 'ttb', 'predator', 'loud_group', 'success_student', 'bounce_day', 'cynical_student', 'impossible_pink_fat', 'bird_a', 'demon_a_plus', 'ninety_three_teacher', 'president', 'where_bone', 'where_uma_bone_maibo', 'aggro_princess', 'aggro_walk', 'igidakatta', 'ruler', 'aggro_eater', 'king_ghidorah_bed', 'ux_design_textbook', 'handmade_ctoc', 'fire_touch', 'thin_item', 'smoke_flare', 'forbidden_book', 'think_so', 'sock_block', 'grudge', 'green_curry', 'vampirization', 'music_detergent', 'donguri', 'greeting_3000', 'double_diamond', 'aggro_kingdom', 'seat_rules', 'dark_student_council', 'student_council', 'full_lock', 'chaos_world', 'cote_dazur', 'exploding_student', 'amphisbaena_sofa', 'angry_maker', 'elite_open_chatter', 'word_increaser', 'deck_without', 'gamma'];
   for (const id of affected) {
     const row = result.rows.find(row => row.id === id);
     const entry = ledger.find(entry => entry.id === id);

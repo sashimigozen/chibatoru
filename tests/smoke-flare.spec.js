@@ -5,7 +5,7 @@ const { pathToFileURL } = require("node:url");
 const catalog = require("../server/card-catalog.json");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const rules = "自分のデッキから1枚引く。この効果で引いたカードのコストを1減らす。ただし、1未満にはならない。";
+const rules = "自分のデッキから1枚引く。この効果で引いたカードの戦意を1減らす。ただし、1未満にはならない。";
 
 async function prepareBattle(page) {
   await page.goto(gameUrl);
@@ -32,7 +32,7 @@ test("本文・3枚制限・エースぺ解除・サーバー登録・お知ら�
       limit: maxCopiesForCard(card.baseId), allowed: canAddAceCard({ smoke_flare: 2 }, card.baseId, 0),
       valid: hasValidAceCounts({ smoke_flare: 3 }, ALL_DECK_IDS, 0),
       aceIds: [...ACE_CARD_IDS].sort(), order: getDeckEditorIds(""),
-      update: UPDATE_HISTORY[0].changes.find(change => change.title === card.name)
+      update: UPDATE_HISTORY.flatMap(entry => entry.changes).find(change => change.title === card.name)
     };
   });
   expect(result).toMatchObject({ cost: 2, text: rules, ace: false, limit: 3, allowed: true, valid: true });
@@ -41,7 +41,7 @@ test("本文・3枚制限・エースぺ解除・サーバー登録・お知ら�
   expect(catalog.direct).toContain("smoke_flare");
   expect(catalog.specialties.big).toContain("smoke_flare");
   expect(catalog.aces).not.toContain("smoke_flare");
-  expect(result.update.after).toBe("持ち物／バカでかい型／戦意2／攻撃力0／体力0／デッキ投入上限3枚\n" + rules);
+  expect(result.update.after).toBe("持ち物／バカでかい型／戦意2／攻撃力0／体力0／デッキ投入上限3枚\n" + rules.replace("戦意を1減らす", "コストを1減らす"));
   expect(result.update.before).toContain("自分の戦意最大値を+2する。");
   expect(result.update.beforeHighlights).toContain("エースぺ");
   expect(result.update.afterHighlights).toContain("デッキ投入上限3枚");

@@ -21,6 +21,7 @@ async function setup(page, side = "player") {
         board: { teacher: null, seats: Array(9).fill(null) } });
     }
   }, side);
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
 }
 
 test("2枚の表示本文・台帳・更新情報が合意した文章と一致する", async ({ page }) => {
@@ -30,8 +31,8 @@ test("2枚の表示本文・台帳・更新情報が合意した文章と一致�
     return ["aggro_walk", "aggro_princess"].map(id => api.cardRulesText(api.createCardFromBase(id, "player")));
   });
   expect(texts).toEqual([
-    "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分本体に2ダメージを与える。",
-    "[超陽気]\nこのカードが相手本体を攻撃したとき、自分本体に1ダメージを与える。"
+    "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分の気力に2ダメージ。",
+    "[超陽気]\nこのカードが相手本体を攻撃したとき、自分の気力に1ダメージ。"
   ]);
   const ledger = fs.readFileSync(path.join(__dirname, "..", "card_rules.txt"), "utf8");
   for (const text of texts) expect(ledger).toContain(text.replace("[超陽気]\n", "超陽気を持つ。").replaceAll("\n", ""));
@@ -156,6 +157,7 @@ test("相手本体へのダメージが無効でも、プリンセスの攻撃�
     document.querySelector("#opponentLifeTarget").click();
   });
   await expect.poll(() => page.evaluate(() => window.__chibattle.state.players.player.life)).toBe(19);
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   await page.evaluate(() => {
     const api = window.__chibattle, s = api.state;
     api.resetAttackFlags("player");

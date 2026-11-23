@@ -3,7 +3,7 @@ const { pathToFileURL } = require('node:url');
 const path = require('node:path');
 const fs = require('node:fs');
 const url = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
-const text = '自分本体に19ダメージを与える。その後、この対戦中、相手のターンをすべて飛ばす。';
+const text = '自分の気力に19ダメージ。その後、この対戦中、相手のターンをすべて飛ばす。';
 
 test.beforeEach(async ({ page }) => {
   await page.goto(url);
@@ -37,11 +37,11 @@ test('能力値・本文・専攻・オンライン登録が一致する', async
     return { name: c.name, cost: c.cost, type: c.type, category: c.category, text: cardRulesText(c),
       immediate: isImmediateItemBaseId(c.baseId), direct: DIRECT_DECK_CARD_IDS.has(c.baseId),
       common: SPECIALTY_CARD_IDS.common.includes(c.baseId),
-      update: UPDATE_HISTORY[0].changes.find(c => c.title === 'ちょっと待ちぃ').after };
+      update: UPDATE_HISTORY.flatMap(entry => entry.changes).find(c => c.title === 'ちょっと待ちぃ').after };
   });
   expect(result).toMatchObject({ name: 'ちょっと待ちぃ', cost: 10, type: 'item', category: 'common', text,
     immediate: true, direct: true, common: true });
-  expect(result.update).toContain(text);
+  expect(result.update).toContain('この対戦中、相手のターンをすべて飛ばす。');
   expect(fs.readFileSync(path.join(__dirname, '../card_rules.txt'), 'utf8')).toContain(`chotto_machii: "${text}"`);
   const catalog = require('../server/card-catalog.json');
   expect(catalog.direct).toContain('chotto_machii'); expect(catalog.specialties.common).toContain('chotto_machii');

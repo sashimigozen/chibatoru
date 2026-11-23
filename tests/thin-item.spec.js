@@ -4,7 +4,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const gameUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
-const thinText = "このカードの使用コストは、相手の手札の枚数から4を引いた値になる。最低4。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。";
+const thinText = "このカードの使用に必要な戦意は、相手の手札の枚数から4を引いた値になる。最低4。相手は手札が4枚になるように残すカードを選ぶ。選ばなかったカードをデッキに戻してシャッフルする。";
 const displayText = thinText.replaceAll("。", "。\n").trim();
 
 test.beforeEach(async ({ page }) => page.goto(gameUrl));

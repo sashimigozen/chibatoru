@@ -42,7 +42,7 @@ test("カード自身の能力を冒頭へまとめ、条件付き能力は本�
   expect(texts.evolutionWithFlavor.startsWith("[進化]：「デザインファルコン」\n")).toBe(true);
   expect(texts.evolutionWithFlavor).toContain("\n進化したとき、「相手の講義室の出席者1人をランダムに指名し、1ダメージを与える。」を10回行う。\n");
   expect(texts.equipment).toBe("[装備]\n装備者は[講義]の効果を受けない。");
-  expect(texts.fusion).toBe("[融合：「定規」2枚]\n相手の出席者1人または相手本体を指名し、4ダメージを与える。\n出席者を指名した場合、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。");
+  expect(texts.fusion).toBe("相手の出席者1人または相手本体を指名する。\n相手本体を指名した場合、相手の気力に4ダメージ。\n出席者を指名した場合、その出席者に4ダメージを与える。その後、その出席者に隣接する別の出席者1人を指名し、2ダメージを与える。");
   expect(texts.drowsy).toBe("[眠気]\n自分のターン終了時、このカードの体力を1回復する。");
 });
 
@@ -72,7 +72,7 @@ test("全カードで括弧を二重化せず、カード名と場所の一部�
   expect(result.strictLate).toContain("講義室にいる[遅刻]を持つ学生");
   expect(result.strictLate).toContain("遅刻ゾーンにいる学生");
   expect(result.token.startsWith("[注目] [陽気]\n")).toBe(true);
-  expect(result.generated.startsWith("[融合：「定規」2枚]\n")).toBe(true);
+  expect(result.generated.startsWith("相手の出席者1人または相手本体を指名する。")).toBe(true);
   expect(result.longText.split("\n").length).toBeGreaterThanOrEqual(6);
   expect(result.longText).toContain("このカードは[講義]を持たない。");
 });
