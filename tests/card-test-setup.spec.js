@@ -114,8 +114,9 @@ test("追加カードのテスト開始時に効果条件を満たす手札・�
   expect(result.strict_lateness_teacher.opponentBoard.some((card) => card.baseId === "lazy_student")).toBe(true);
   expect(result.strict_lateness_teacher.late).toContain("cancel_student");
   expect(result.strict_lateness_teacher.opponentLate).toContain("eaten_student");
-  expect(result.scout_student.opponentBoard).toHaveLength(0);
-  expect(result.scout_student.superCheerful).toBe(true);
+  expect(result.scout_student.opponentBoard).toEqual([expect.objectContaining({baseId: "general_student"})]);
+  expect(result.scout_student.hand.filter(id => id === "scout_student")).toHaveLength(2);
+  expect(result.scout_student.superCheerful).toBe(false);
   expect(result.happy_blue_bird.playerBoard.filter((card) => card.baseId === "happy_blue_bird")).toHaveLength(1);
   expect(result.happy_blue_bird.opponentBoard).toEqual([
     expect.objectContaining({ baseId: "general_student", hp: 1 })

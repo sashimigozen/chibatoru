@@ -626,30 +626,23 @@ test("声が大きい集団は自分の3行目の席マスにのみ出席でき�
   await expect(change.locator(".update-after")).toContainText("自分の3行目の席マスにのみ");
 });
 
-test("斥候学生は相手の講義室が空の間だけ超陽気を持つ", async ({ page }) => {
+test("斥候学生は出席時だけ条件を確認し、得た超陽気を保持する", async ({ page }) => {
   await page.goto(gameUrl);
-
   const result = await page.evaluate(() => {
-    const api = window.__chibattle;
-    const { state } = api;
-    state.players.player.board.seats = Array(9).fill(null);
-    state.players.player.board.teacher = null;
-    state.players.opponent.board.seats = Array(9).fill(null);
-    state.players.opponent.board.teacher = null;
-
-    const scout = api.makeBoardCard(api.createCardFromBase("scout_student", "player"));
-    state.players.player.board.seats[0] = scout;
-    const emptyClassroom = api.hasKeyword(scout, "超陽気") && api.hasKeyword(scout, "陽気");
-
-    state.players.opponent.board.seats[0] = api.makeBoardCard(api.createCardFromBase("general_student", "opponent"));
-    const occupiedClassroom = !api.hasKeyword(scout, "超陽気");
-
+    state.training.skipAnimations = true;
+    for (const side of ["player", "opponent"]) state.players[side].board = {seats: Array(9).fill(null), teacher: null};
+    const scout = makeBoardCard(createCardFromBase("scout_student", "player"));
+    const before = !hasKeyword(scout, "超陽気") && hasKeyword(scout, "陽気");
+    attendCard("player", scout, "seat", 0, {attendanceSource: ATTENDANCE_SOURCE.HAND});
+    const emptyAttendance = hasKeyword(scout, "超陽気");
+    state.players.opponent.board.seats[0] = makeBoardCard(createCardFromBase("general_student", "opponent"));
+    const retained = hasKeyword(scout, "超陽気");
+    const normal = makeBoardCard(createCardFromBase("scout_student", "player"));
+    attendCard("player", normal, "seat", 1, {attendanceSource: ATTENDANCE_SOURCE.HAND});
     state.players.opponent.board.seats[0] = null;
-    const emptyAgain = api.hasKeyword(scout, "超陽気");
-    return { emptyClassroom, occupiedClassroom, emptyAgain };
+    return {before, emptyAttendance, retained, normalAfterEmpty: hasKeyword(normal,"陽気") && !hasKeyword(normal,"超陽気")};
   });
-
-  expect(result).toEqual({ emptyClassroom: true, occupiedClassroom: true, emptyAgain: true });
+  expect(result).toEqual({before:true, emptyAttendance:true, retained:true, normalAfterEmpty:true});
 });
 
 test("保留カード確認後の文章と処理が確定仕様に一致する", async ({ page }) => {

@@ -19843,7 +19843,7 @@
       aggro_dome: ["aggro_student", "aggro_king", "aggro_queen"],
       absent_student: [],
       strict_lateness_teacher: ["absent_student"],
-      scout_student: [],
+      scout_student: ["scout_student"],
       ta_squad: [],
       happy_blue_bird: [],
       pad_present_creator: [],
@@ -20031,7 +20031,7 @@
       pad_present_creator: { name: "パッドプレゼンクリエイター", type: "student", cost: 3, attack: 1, hp: 1, allowedZones: ["seat", "teacher"] },
       aggro_student: { name: "アグロ大学生", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       aggro_king: { name: "アグロキング", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
-      scout_student: { name: "斥候学生", type: "student", cost: 2, attack: 2, hp: 1, allowedZones: ["seat"] },
+      scout_student: { name: "斥候学生", type: "student", cost: 2, attack: 2, hp: 1, keywords: ["陽気"], allowedZones: ["seat"] },
       single_cell: { name: "単細胞生物", type: "student", cost: 1, attack: 1, hp: 1, allowedZones: ["seat"] },
       midge: { name: "ミジンコ", type: "student", cost: 0, noCost: true, attack: 2, hp: 2, evolutionFrom: "single_cell", token: true, allowedZones: ["evolution"] },
       organism: { name: "生物", type: "student", cost: 0, noCost: true, attack: 6, hp: 6, keywords: ["陽気"], evolutionFrom: "midge", token: true, allowedZones: ["evolution"] },
@@ -20385,7 +20385,7 @@
     Object.values(CARD_BASES).forEach((base) => { base.attendanceTrigger = ATTENDANCE_TRIGGER.HAND; });
     [
       "midge", "organism", "perfect_mutant", "adjective_student", "cancel_student",
-      "big_omata", "wonton_ki", "group_sniper"
+      "big_omata", "wonton_ki", "group_sniper", "scout_student"
     ].forEach((baseId) => {
       if (CARD_BASES[baseId]) CARD_BASES[baseId].attendanceTrigger = ATTENDANCE_TRIGGER.ANY;
     });
@@ -20474,6 +20474,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
+      {"version": "ver.0.45.4", "versioning": "semver", "date": "2026年11月23日", "summary": "斥候学生に陽気を追加し、出席時の条件で超陽気を得る効果に調整しました。", "changes": [{"category": "カード調整", "title": "斥候学生", "before": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは[超陽気]を持つ。", "after": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n[陽気]\nこのカードが出席したとき、相手の講義室に出席者がいないなら、[超陽気]を持つ。", "beforeHighlights": ["これは"], "afterHighlights": ["[陽気]", "このカードが出席したとき、"]}, {"category": "システム", "title": "斥候学生のカードテストとAI", "after": "相手がいるときの陽気と、出席時に相手がいないときの超陽気を続けて試せる手札・盤面にしました。条件は出席時にだけ確認し、得た超陽気は相手が出席しても残ります。AIの本体攻撃判断を更新し、条件の成立・不成立、後から盤面が変わる場合、攻撃回数、効果による出席とオンライン同期を確認するテストを追加・更新しました。戦意・攻撃力・体力は変更していません。"}]},
       {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "インファイト将棋部の攻撃力を調整し、カード選択画面とデッキ操作・演出を改善しました。", "changes": [{"category": "カード調整", "title": "インファイト将棋部", "before": "インファイト将棋部／学生／将棋部／戦意10／攻撃力9／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "after": "インファイト将棋部／学生／将棋部／戦意10／攻撃力8／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "beforeHighlights": ["攻撃力9"], "afterHighlights": ["攻撃力8"]}, {"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、束の一部を上に抜いて重ね直すシャッフル演出を追加しました。山札へ生成する場合は全カードの表面を画面中央で見せ、裏向きになって山札へ入った後にシャッフルします。生成枚数を省略せず、同じカードでも1枚ずつ並べて表示します。枚数が多い場合は複数の段に並べ、各段を中央揃えにして、すべてのカードが画面内に収まります。続けて引く場合も、すべて入り終わってから混ぜ、その後に引く順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えと表示順を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "表示・操作改善", "title": "複数種類のサーチ", "after": "効率的な実験法や乾いた食券で複数種類のカードを探すときは、まとめて引き、最後に1回だけシャッフルするようにしました。自分が引いたカードは画面中央に並べて表示します。候補不足・手札上限・ドロー禁止と、オンライン対戦・観戦での表示順と非公開情報を確認するテストを追加しました。カードの能力値・本文・探す対象と枚数は変更していません。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
       {"version": "ver.0.45.2", "versioning": "semver", "date": "2026年11月21日", "summary": "ピニゲの効果2と、効果の選択画面を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つ学生を2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["[点数]を持つカード"], "afterHighlights": ["[点数]を持つ学生"]}, {"category": "システム", "title": "ピニゲのカードテスト", "after": "効果2で［点数］を持つ学生だけを引くよう、選択画面・AIの判断・カードテストの案内を更新しました。対象が0枚・1枚・2枚以上の場合と、効果3による同名カードの補充、オンライン双方の同期を確認するテストを追加・更新しました。能力値と効果1・3・4は変更していません。"}, {"category": "表示・操作改善", "title": "効果の選択画面", "after": "使用カードを左、効果のボタンを右に並べ、盤面を透かして確認できる表示にしました。カードと効果が現れる演出と、決定時の短い発光を追加しました。効果を1つ選ぶ場合は、押すとそのまま決定します。複数選ぶ場合は選択状態と枚数を表示し、選び直してから確定できます。講義室を見て選択画面へ戻ることもできます。スマートフォン表示・選択のやり直し・対戦切り替え・オンライン双方の操作を確認するテストを追加・更新しました。効果を選んだ後の処理順は変更していません。"}]},
       {"version": "ver.0.45.1", "versioning": "semver", "date": "2026年11月20日", "summary": "すべての対戦ルールの手札上限を調整しました。", "changes": [{"category": "システム", "title": "手札上限の共通化", "after": "手札上限の初期値・最低設定を12枚に変更しました。通常・専攻・カオスのすべてのルールで、ソロ対戦・オンライン対戦に同じ上限処理を適用します。各準備画面で増減・直接入力ができ、空欄は上限なしです。カードテスト・チュートリアル・魔の1号館の初期上限も12枚です。全ルールの超過処理、設定操作とオンライン同期を確認するテストを更新しました。カードの能力値・本文は変更していません。"}]},
@@ -32947,6 +32948,8 @@
       if (!card || !["student", "teacher", "vampire"].includes(card.type)) return false;
       if (card.keywords?.includes("超陽気")) return true;
       if (card.baseId === "vampire" && isCafeteriaEnvironmentActive()) return true;
+      if (card.baseId === "scout_student") return canUsePrintedCardEffects(card)
+        && !arePlayedEffectsSuppressed(side) && listBoardRefs(oppositeSide(side)).length === 0;
       if (card.baseId === "gecko_carrier_student" && !arePlayedEffectsSuppressed(side)
         && canUsePrintedCardEffects(card) && aiGeckoCanFinishOnAttendance(side, card)) return true;
       if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(side)) return true;
@@ -42665,6 +42668,10 @@
         addLog(`${card.name}の出席時効果は、煩わしいなぁの効果により使用できませんでした。`);
         return;
       }
+      if (card.baseId === "scout_student" && listBoardRefs(opponent).length === 0) {
+        addKeyword(card, "超陽気", card.name);
+        addLog(`${card.name}の出席時効果：相手の講義室に出席者がいないため、超陽気を得ました。`);
+      }
       if (card.baseId === "aki_helper") queueAkiHelperAttendance(side, card);
       if (card.baseId === "questioning_lecturer") resolveQuestioningLecturerAttendance(side, card);
       if (card.baseId === "endless_talker") resolveEndlessTalker(side, card);
@@ -47546,7 +47553,6 @@
         && ongoingEnvironmentBaseId() === "aggro_dome"
         && ["student", "teacher", "vampire"].includes(card.type)
         && String(card.name || "").includes("アグロ")) return true;
-      if (keyword === "超陽気" && card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) return true;
       if (keyword === "超陽気" && card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) return true;
       if (keyword === "超陽気" && card.baseId === "loud_student" && isAdjacentToBestFriend(card)) return true;
       if (keyword === "陽気" && questioningLecturerAbilityActive(card)) return true;
@@ -57505,6 +57511,7 @@
       }
       if (baseId === "scout_student") {
         opponent.board.seats.fill(null);
+        opponent.board.seats[0] = makeOpponentTestAttendee("general_student");
         opponent.board.teacher = null;
       }
       if (baseId === "aggro_dome") {
@@ -57853,7 +57860,7 @@
       state.message = `${CARD_BASES[baseId].name}のテストプレイ。戦意${player.will}、初期手札は${testHandCardNames(baseId)}。`;
       addLog(`${CARD_BASES[baseId].name}のテストプレイを開始しました。`);
       addLog(CARD_TEST_SCENARIOS[baseId]?.note || (baseId === "scout_student"
-        ? "斥候学生の超陽気を確認できるよう、相手の講義室を空にしています。"
+        ? "斥候学生を2枚用意しています。1枚目は陽気で相手の一般学生を攻撃し、相手の講義室が空になったら2枚目を出席させて超陽気による本体攻撃を確認します。"
         : baseId === "happy_blue_bird"
           ? "幸せの青い鳥の自動攻撃と増殖を確認できるよう、攻撃可能な青い鳥と体力1の一般学生を配置しています。"
           : baseId === "suit_student"
@@ -59308,7 +59315,6 @@
       Object.entries(directSources).forEach(([keyword, sources]) => add(keyword, (sources || []).join("・")));
       if (hasKeyword(card, "超陽気")) {
         if (card.baseId === "vampire" && isCafeteriaEnvironmentActive()) add("超陽気", "食堂");
-        if (card.baseId === "scout_student" && listBoardRefs(oppositeSide(card.owner)).length === 0) add("超陽気", "相手の講義室に出席者がいない");
         if (card.baseId === "eaten_student" && opponentHasStudentAndTeacher(card.owner)) add("超陽気", "相手の学生・教師");
         if (card.baseId === "loud_student" && isAdjacentToBestFriend(card)) add("超陽気", "ベストフレンド");
       } else if (hasKeyword(card, "陽気")) {
@@ -59758,7 +59764,7 @@
         earphones: "装備\n装備者は講義の効果を受けない。",
         aggro_student: "このカードが出席している相手の場の席には、どのカードも出席できない。",
         aggro_king: "このカードが3行1列にいる状態で自分のターンを2回終了したとき、1度だけこのカードの攻撃力を+2、体力を+1する。",
-        scout_student: "相手の講義室に出席者がいないなら、これは「超陽気」を持つ。",
+        scout_student: "陽気を持つ。このカードが出席したとき、相手の講義室に出席者がいないなら、超陽気を持つ。",
         ta_squad: "このカードは自分の2行目の席マスにのみ出席できる。このカードを手札から出席させたとき、自分の2行目の空いている席マスすべてに、「TA」を1人ずつ出席させる。",
         happy_blue_bird: "このカードは相手本体に攻撃することはできない。このカードが相手の出席者を攻撃し、校外に送った場合、その出席者のいた位置に「幸せの青い鳥」を出席させる。自分のターン終了時、このカードが攻撃可能ならば、ランダムな相手の出席者を1人指名して攻撃する。",
         suit_student: "このカードを手札から出席させたとき、自分のデッキからカードを1枚引く。このカードの戦意は、この対戦中にお互いの講義室へ出た「スーツを着た学生」1人につき-1される。このカードは教師からダメージを受けない。",

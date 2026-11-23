@@ -1,3 +1,13 @@
+# Scout Student Attendance Condition — 2026-11-23
+
+- Added printed Cheerful to Scout Student. On attendance only, an empty opposing classroom grants Super Cheerful through the common keyword-grant path. Removed the former continuously recalculated condition and its obsolete status explanation. The granted keyword persists when the opponent attends; clearing the opposing classroom later does not promote an already-attended Scout. Attendance from hand, generated cards, copies and trash uses the same entry-time check; movement does not retrigger it.
+- Kept cost 2, attack 2, HP 1, seat-only placement and expansion category. AI attendance evaluation now predicts the empty-classroom condition while respecting effect suppression. Compared the low-HP immediate attacker with General Student (2/2 without Cheerful), Aggro Princess (unconditional face access with self-damage) and Zombie (transformation effect); these retain different roles. No repeat-attack or resource loop was introduced in the checked paths; this is not a full environment win-rate study.
+- Updated canonical rules, card ledger, full before/after notice and card-test setup. The test supplies two Scouts and one opposing General Student: trade the first Scout immediately, then attend the second and deal 2 to the opposing player. Reviewed `/tmp/chibatoru-scout-attendance-final/` screenshot.
+- Six focused cases pass: actual card-test sequence, refusal of premature face attack, normal attack and single-use attack rights, exact displayed text, both owners' entry-time persistence/no late promotion, generated/copy/trash attendance, and online guest snapshots. The movement case also passes after switching to the actual movement API.
+- Two broader text-format assertions still expect an old Double Diamond fusion heading. Confirmed that heading is already absent in the unchanged HEAD runtime; left that unrelated behavior and its assertions alone. The Scout-specific display assertion and focused behavior checks pass.
+
+---
+
 # Batched Multi-Type Search — 2026-11-22
 
 - Efficient Experiment Method now searches student, teacher and item as one batch; Dry Meal Ticket likewise searches its two named cards together. Each uses one draw presentation and exactly one final deck shuffle. Separate numbered effects and intervening actions retain their current order. Recorded this policy in AGENTS.md and the rule ledger.
