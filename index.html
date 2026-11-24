@@ -20474,7 +20474,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.45.5", "versioning": "semver", "date": "2026年11月24日", "summary": "手札の効果変更マークを修正し、AIの盤面処理と手札の再検討を改善しました。", "changes": [{"category": "表示・操作改善", "title": "手札の効果変更マーク", "after": "元から持つ超注目などを、後から付いた能力として扱って「!」を表示していた判定を修正しました。元の超注目に含まれる注目、超陽気に含まれる陽気も、追加された能力には含めません。効果で追加された能力・負荷・融合・数値変更の印と詳細表示は維持します。標準の能力と効果付与後の表示、非公開手札、画面サイズごとの位置を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "AIの行動継続と盤面処理", "after": "勝利できるという予測が外れた場合や、持ち物を1枚使用できなかった場合も、ほかの有効な手札を検討するようにしました。一人では不利でも複数人で倒せる相手への攻撃を検討し、攻撃後に空いたマスや変化した手札も手番終了前に再確認します。倒せない相手への無意味な特攻を避ける判断は維持し、左右のAIと既存の講義・攻撃判断を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}]},
+      {"version": "ver.0.45.5", "versioning": "semver", "date": "2026年11月24日", "summary": "手札の表示と、AIの行動継続・敗北予測を改善しました。", "changes": [{"category": "表示・操作改善", "title": "手札の効果変更マーク", "after": "元から持つ超注目などを、後から付いた能力として扱って「!」を表示していた判定を修正しました。元の超注目に含まれる注目、超陽気に含まれる陽気も、追加された能力には含めません。効果で追加された能力・負荷・融合・数値変更の印と詳細表示は維持します。標準の能力と効果付与後の表示、非公開手札、画面サイズごとの位置を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "AIの行動継続と盤面処理", "after": "勝利できるという予測が外れた場合や、持ち物を1枚使用できなかった場合も、ほかの有効な手札を検討するようにしました。一人では不利でも複数人で倒せる相手への攻撃を検討し、攻撃後に空いたマスや変化した手札も手番終了前に再確認します。倒せない相手への無意味な特攻を避ける判断は維持し、左右のAIと既存の講義・攻撃判断を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "AIの敗北予測と防御判断", "after": "相手の次の手番の二回攻撃、注目を突破された後の打点、公開された継続ダメージ、防御の有効期限を危険予測に含めました。次の敗北を避ける除去・弱体化・回復・注目の出席を、通常の展開やサーチより優先します。その場で確実に勝てる行動は維持します。公開されたカードと既知の構成から追加打点の可能性も推測し、非公開の手札・残り山札の中身を予測の答えとして使用しないようにしました。左右のAIの防御・対象選択・非公開情報の扱いを確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}]},
       {"version": "ver.0.45.4", "versioning": "semver", "date": "2026年11月23日", "summary": "斥候学生とハバヨセ!を調整し、ちがうよとハンディジェットエンジンを戦意4にしました。カード本文と用語の表記も整理しました。", "changes": [{"category": "カード調整", "title": "斥候学生", "before": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは[超陽気]を持つ。", "after": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n[陽気]\nこのカードが出席したとき、相手の講義室に出席者がいないなら、[超陽気]を持つ。", "beforeHighlights": ["これは"], "afterHighlights": ["[陽気]", "このカードが出席したとき、"]}, {"category": "カード調整", "title": "ハバヨセ!", "before": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。その後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。\nそうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから「U太」とつくカード1枚を選び、手札に加える。その後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。\nそうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。", "beforeHighlights": ["、カード名か本文に", "記された"], "afterHighlights": ["とつく"]}, {"category": "システム", "title": "斥候学生のカードテストとAI", "after": "相手がいるときの陽気と、出席時に相手がいないときの超陽気を続けて試せる手札・盤面にしました。条件は出席時にだけ確認し、得た超陽気は相手が出席しても残ります。AIの本体攻撃判断を更新し、条件の成立・不成立、後から盤面が変わる場合、攻撃回数、効果による出席とオンライン同期を確認するテストを追加・更新しました。戦意・攻撃力・体力は変更していません。"}, {"category": "システム", "title": "ハバヨセ!の検索対象", "after": "カード名に「U太」を含むカードだけを選べるよう、選択画面・AI・カードテストを揃えました。本文にだけ「U太」があるカードと、デッキにあるハバヨセ!自身は対象になりません。候補がない場合のシャッフル、対象の確認、通常使用・提出・オンライン双方の同期を確認するテストを追加・更新しました。追加戦意での裏U太の出席、装備、校外でのU太扱いと能力値は変更していません。"}, {"category": "表示・操作改善", "title": "カード本文の表記統一", "after": "表記を次の一覧に統一しました。能力値・対象・枚数・選び方・効果の処理順は変更していません。\n\n・名称参照\n「○○」と名のつく → 「○○」とつく\n\n・人物へのランダムな対象決定\nランダムに選ぶ → ランダムに指名する\n\n・候補を事前に見ずに取るサーチ\n指定カードを手札に加える → 指定カードを引く\n\n・複数効果の選択\n次の効果から○つを選ぶ → ○つの効果から○つを選んで使用する\n\n・出席時の効果選択\n手札から出席させるとき → 手札から出席させたとき\n\n・通常ドローの代替\nドローの代わりに → ターン開始時の通常ドローの代わりに\n\n・デッキから手札への追加禁止\n手札に加えられない → 引くことも、手札に加えることもできない\n\n公開・確認した候補から取る場合は「手札に加える」を維持します。出席時と進化時、回収・生成はそれぞれ区別しています。\n\n・支払量の呼び方\nコスト → 戦意（使用に必要な戦意）\n\n・盤面の場所\n教師マス → 教卓マス\n講義室を意味する「場」 → 講義室\n\n・デッキから引く表記\nデッキを○枚引く → デッキからカードを○枚引く\n上から・枚数・上限の指定は維持します。\n\n・プレイヤーへのダメージ\n本体に○ダメージを与える／気力を○失う → 自分／相手の気力に○ダメージ。\n後続の処理は「その後、〜」で区切ります。攻撃先や指名対象を意味する「本体」は維持します。"}, {"category": "システム", "title": "カード表記とルールの確認", "after": "今回の使い分けをルール台帳と開発ガイドラインへ記録しました。本文・選択画面・管理台帳の一致と、候補不足・通常ドロー・サーチ・シャッフル・手札上限・デッキ切れ・ドロー禁止・オンライン同期を確認するテストを追加・更新しました。オンラインの検証手順は、現在の入室画面と同期完了の確認に合わせました。"}, {"category": "表示・操作改善", "title": "戦意不足の警告を削除", "after": "戦意が足りない場合の警告メッセージとログを削除しました。使用できないカードを止める判定は維持しています。カード本文・選択画面・対戦ログ・管理台帳の用語を揃え、使用制限とダメージ・ドローの処理を確認するテストを追加・更新しました。能力値と効果の処理は変更していません。"}, {"category": "カード調整", "title": "ちがうよ", "before": "ちがうよ／持ち物／バカでかい型／戦意3／攻撃力0／体力0\nお互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。", "after": "ちがうよ／持ち物／バカでかい型／戦意4／攻撃力0／体力0\nお互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。", "beforeHighlights": ["戦意3"], "afterHighlights": ["戦意4"]}, {"category": "カード調整", "title": "ハンディジェットエンジン", "before": "ハンディジェットエンジン／持ち物／妨害・LO／戦意3／攻撃力0／体力0\n自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。", "after": "ハンディジェットエンジン／持ち物／妨害・LO／戦意4／攻撃力0／体力0\n自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。", "beforeHighlights": ["戦意3"], "afterHighlights": ["戦意4"]}, {"category": "システム", "title": "手札干渉カードの戦意調整", "after": "ちがうよとハンディジェットエンジンを戦意4にしました。効果本文・対象・枚数・処理順は変更していません。管理ログと台帳の戦意表示・並び順を揃え、戦意3では使用できず4で使用できること、AI・高負荷・カードテスト・オンライン双方の支払いと効果処理を確認するテストを追加・更新しました。"}]},
       {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "インファイト将棋部の攻撃力を調整し、カード選択画面とデッキ操作・演出を改善しました。", "changes": [{"category": "カード調整", "title": "インファイト将棋部", "before": "インファイト将棋部／学生／将棋部／戦意10／攻撃力9／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "after": "インファイト将棋部／学生／将棋部／戦意10／攻撃力8／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "beforeHighlights": ["攻撃力9"], "afterHighlights": ["攻撃力8"]}, {"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、束の一部を上に抜いて重ね直すシャッフル演出を追加しました。山札へ生成する場合は全カードの表面を画面中央で見せ、裏向きになって山札へ入った後にシャッフルします。生成枚数を省略せず、同じカードでも1枚ずつ並べて表示します。枚数が多い場合は複数の段に並べ、各段を中央揃えにして、すべてのカードが画面内に収まります。続けて引く場合も、すべて入り終わってから混ぜ、その後に引く順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えと表示順を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "表示・操作改善", "title": "複数種類のサーチ", "after": "効率的な実験法や乾いた食券で複数種類のカードを探すときは、まとめて引き、最後に1回だけシャッフルするようにしました。自分が引いたカードは画面中央に並べて表示します。候補不足・手札上限・ドロー禁止と、オンライン対戦・観戦での表示順と非公開情報を確認するテストを追加しました。カードの能力値・本文・探す対象と枚数は変更していません。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
       {"version": "ver.0.45.2", "versioning": "semver", "date": "2026年11月21日", "summary": "ピニゲの効果2と、効果の選択画面を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つ学生を2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["[点数]を持つカード"], "afterHighlights": ["[点数]を持つ学生"]}, {"category": "システム", "title": "ピニゲのカードテスト", "after": "効果2で［点数］を持つ学生だけを引くよう、選択画面・AIの判断・カードテストの案内を更新しました。対象が0枚・1枚・2枚以上の場合と、効果3による同名カードの補充、オンライン双方の同期を確認するテストを追加・更新しました。能力値と効果1・3・4は変更していません。"}, {"category": "表示・操作改善", "title": "効果の選択画面", "after": "使用カードを左、効果のボタンを右に並べ、盤面を透かして確認できる表示にしました。カードと効果が現れる演出と、決定時の短い発光を追加しました。効果を1つ選ぶ場合は、押すとそのまま決定します。複数選ぶ場合は選択状態と枚数を表示し、選び直してから確定できます。講義室を見て選択画面へ戻ることもできます。スマートフォン表示・選択のやり直し・対戦切り替え・オンライン双方の操作を確認するテストを追加・更新しました。効果を選んだ後の処理順は変更していません。"}]},
@@ -31011,7 +31011,7 @@
 
     function scoreAiDontWorry(side, item) {
       const own = state.players[side], enemySide = oppositeSide(side);
-      if (state.actionTurn < 5 || effectiveCardCost(item) > own.will || item.unusable || isHighLoadHandCard(item)
+      if (effectiveCardCost(item) > own.will || item.unusable || isHighLoadHandCard(item)
         || arePlayedEffectsSuppressed(side)
         || (own.lifeShieldUntilTurn >= state.actionTurn + 1 && own.lifeShieldUntilSide === enemySide)) return 0;
       const forecast = getAiLethalForecast(side);
@@ -31019,6 +31019,7 @@
       const incoming = Math.max(0, forecast.opponentNextTurnDamage);
       if (incoming <= 0) return 0;
       if (forecast.opponentCounterLethal) return 65 + incoming;
+      if (state.actionTurn < 5) return 0;
       const decisive = own.maxWill >= 7 || own.turnsTaken >= 6 || own.life <= 8 || state.players[enemySide].life <= 8;
       // Preserve it during ordinary early exchanges; spend it to secure the
       // next finish, not simply because any damage is forecast.
@@ -31241,7 +31242,8 @@
       if (!hasEnemy) return false;
       const faceDamage = aiBoardFaceDamage(side, { readyOnly: true }).guaranteed;
       if (faceDamage >= state.players[targetSide].life) return true;
-      const incoming = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 }).expected;
+      const incoming = aiIncomingBoardDamage(side) + aiPublicBurstRisk(side);
+      if (incoming >= state.players[side].life && aiRemovalSurvivalPriority(side, target) > 0) return false;
       // An exhausted enemy, a life shield, or a different attention card does
       // not make the aura disposable. Only remove its source for a real threat.
       const trpgThreat = Math.max(0, target.attack || 0) > 0
@@ -31459,10 +31461,11 @@
       const removes = options.destroy
         ? aiCanPredictEffectRemoval(card, { destroy: true })
         : aiCanPredictEffectRemoval(card) && damage + hpReduction >= card.currentHp;
-      if (removes && aiShouldPreserveEnemyTrpg(side, card)) return -Infinity;
+      if (removes && aiShouldPreserveEnemyTrpg(side, card) && aiRemovalSurvivalPriority(side, card) === 0) return -Infinity;
+      const survival = removes ? aiRemovalSurvivalPriority(side, card) : 0;
       const avoidedCounter = removes ? Math.max(0, card.attack || 0) : 0;
-      if (options.destroy) return scoreAiDestroyTarget(card, ref) + 24 + avoidedCounter * 2;
-      return Math.min(card.currentHp, damage + hpReduction) * 2
+      if (options.destroy) return survival + scoreAiDestroyTarget(card, ref) + 24 + avoidedCounter * 2;
+      return survival + Math.min(card.currentHp, damage + hpReduction) * 2
         + (removes ? 24 + avoidedCounter * 2 : 0)
         + scoreAiEnemyAttendeeThreat(card, ref) * (removes ? 1 : 0.35)
         - (removes ? aiEnemyTrpgRemovalPenalty(side, [card]) : 0);
@@ -31483,7 +31486,8 @@
       }).map((entry) => ({
         ...entry,
         score: illness
-          ? Math.min(1, Math.max(0, entry.card.attack || 0)) * 2 + scoreAiEnemyAttendeeThreat(entry.card, entry.ref) * 0.35
+          ? aiSurvivalPriority(side, {attackReduction: {[entry.card.instanceId]: 1}})
+            + Math.min(1, Math.max(0, entry.card.attack || 0)) * 2 + scoreAiEnemyAttendeeThreat(entry.card, entry.ref) * 0.35
           : scoreAiNonCombatEffectTarget(side, item, entry, { damage, destroy })
       })).filter((entry) => Number.isFinite(entry.score) && entry.score > 0)
         .sort((a, b) => b.score - a.score);
@@ -32599,7 +32603,8 @@
       const candidates = player.hand
         .filter((card) => card.type !== "item" && handFusionReady(card)
           && effectiveCardCost(card) <= player.will && !shouldAiWaitForSummoningAttendance(side, card, null, deferredAttendance))
-        .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) + aiHandSpaceAdjustment(side, card) * 10 }))
+        .map((card) => ({ card, priority: trainingYocchanPlayPriority(side, card) + aiHandSpaceAdjustment(side, card) * 10
+          + aiCardSurvivalPriority(side, card) * 10 }))
         .filter((entry) => entry.priority > -900)
         .sort((a, b) => b.priority - a.priority
           || effectiveCardCost(b.card) - effectiveCardCost(a.card)
@@ -32650,7 +32655,10 @@
     }
 
     function scoreTrainingYocchanItem(side, item) {
+      if (aiItemFinishesNow(side, item)) return 10000;
       const score = scoreTrainingYocchanItemWithoutHandLimit(side, item);
+      const survival = aiCardSurvivalPriority(side, item);
+      if (survival > 0) return Math.max(0, Number.isFinite(score) ? score : 0) + survival;
       if (!Number.isFinite(score) || score <= 0 || score >= 900) return score;
       const urgent = aiLifeHealingValue(item) > 0 && getAiLethalForecast(side).opponentCounterLethal;
       if (!urgent && shouldAiMakeHandSpaceFirst(side, item)) return -Infinity;
@@ -32872,7 +32880,8 @@
         .filter(({ card }) => card && canAibenNyoteiAttackTarget(attacker, card))
         .filter(({ card }) => !isDesignDomainAttackBlocked(attacker, card))
         .filter(({ card }) => attacker.baseId === "loud_student" || priorityIds.size === 0 || priorityIds.has(card.instanceId))
-        .filter(({ card }) => !preserveBiologyMaterial || Math.max(0, card.attack || 0) < attacker.currentHp)
+        .filter(({ card }) => !preserveBiologyMaterial || Math.max(0, card.attack || 0) < attacker.currentHp
+          || aiAttackPreventsLethalCounter(side, targetSide, card, attacker))
         .filter(({ card }) => !effectKillPlan.targetIds.has(card.instanceId))
         .filter(({ card }) => !preserveEffectSource || aiAttackCounterDamage(attacker, card) < attacker.currentHp)
         .filter(({ card }) => !aiShouldPreserveEnemyTrpg(side, card))
@@ -32880,14 +32889,15 @@
         .map((entry) => {
           const defeats = attacker.baseId === "absolute_woman"
             || previewFinalDamageToCard(entry.card, cardAttackDamage(attacker, entry.card), attacker, { combat: true }) >= entry.card.currentHp;
-          return { ...entry, defeats, score: (defeats ? 14 : 0)
+          return { ...entry, defeats, score: (defeats ? aiRemovalSurvivalPriority(side, entry.card) : 0) + (defeats ? 14 : 0)
             + (aiAttackCounterDamage(attacker, entry.card) < attacker.currentHp ? 4 : -8)
             + scoreAiEnemyAttendeeThreat(entry.card, entry.ref)
             + aiCombatExplosionValue(side, attacker, entry.card) - entry.card.currentHp * 0.25 };
         }).sort((a, b) => b.score - a.score);
       const best = targets[0];
       if (!best) return null;
-      if (aiAttackPreventsLethalCounter(side, targetSide, best.card, attacker)) return best.ref;
+      if (aiAttackPreventsLethalCounter(side, targetSide, best.card, attacker)
+        || (best.defeats && aiRemovalSurvivalPriority(side, best.card) > 0)) return best.ref;
       if (priorityIds.size === 0 && enemyStudentTrpgAuraActive(attacker)
         && canAiLethalAttackerHitLife(attacker, targetSide)) return null;
       if (priorityIds.size === 0 && canAiLethalAttackerHitLife(attacker, targetSide)) {
@@ -33073,15 +33083,9 @@
 
     function aiAttackPreventsLethalCounter(side, targetSide, targetCard, attacker) {
       if (!targetCard || !attacker) return false;
-      const futureTurn = state.actionTurn + 1;
-      const incoming = aiBoardFaceDamage(targetSide, { futureActionTurn: futureTurn }).expected;
-      if (incoming < state.players[side].life || isAttackLocked(targetCard, futureTurn)
-        || isSameNameAttackLocked(targetCard) || !aiCanCardTargetLife(targetCard, targetSide, { actionTurn: futureTurn })) return false;
       const defeats = attacker.baseId === "absolute_woman"
-        || previewFinalDamageToCard(targetCard, cardAttackDamage(attacker, targetCard), attacker, { combat: true }) >= targetCard.currentHp;
-      return defeats && aiBoardFaceDamage(targetSide, {
-        futureActionTurn: futureTurn, excludedInstanceId: targetCard.instanceId
-      }).expected < state.players[side].life;
+        || previewFinalDamageToCard(targetCard, cardAttackDamage(attacker, targetCard), attacker, {combat: true}) >= targetCard.currentHp;
+      return defeats && aiRemovalSurvivalPriority(side, targetCard) >= 2000;
     }
 
     function aiReadyAttackersForLethal(options = {}) {
@@ -33364,6 +33368,183 @@
       return Math.max(0.48, 0.9 - Math.min(4, defenders) * 0.055 - Math.min(6, handSize) * 0.025);
     }
 
+    const aiPublicDeckModelCache = new Map();
+
+    function aiPublicDeckModel(side) {
+      const enemySide = oppositeSide(side), enemy = state.players[enemySide];
+      const library = window.ChibattleAiBattleDecks || [];
+      // Only public zones form evidence. Never read the opponent's original
+      // deck list, hidden hand faces, or remaining deck identities here.
+      const visible = [...listBoardRefs(enemySide).map(getBoardCardFromRef), ...enemy.trash,
+        ...enemy.late.map(entry => entry.card), ...(state.environment?.owner === enemySide ? [state.environment] : [])]
+        .filter(card => card && !card.hidden && !CARD_BASES[card.baseId]?.generated && !CARD_BASES[card.baseId]?.token);
+      const seen = new Map(visible.map(card => [card.instanceId, card.baseId]));
+      const signature = `${state.preBattleToken}:${[...seen].sort().join("|")}`;
+      const cached = aiPublicDeckModelCache.get(side);
+      if (cached?.signature === signature && cached.library === library) return cached.model;
+      const counts = {};
+      for (const id of seen.values()) counts[id] = (counts[id] || 0) + 1;
+      const evidence = Object.keys(counts).map(id => ({ id,
+        weight: Math.log((library.length + 1) / (1 + library.filter(deck => deck.counts[id]).length)) }))
+        .filter(entry => entry.weight > 0 && library.some(deck => deck.counts[entry.id]));
+      const strength = evidence.reduce((sum, entry) => sum + entry.weight, 0);
+      const profiles = strength < 0.3 ? [] : library.map(deck => ({ deck,
+        score: evidence.reduce((sum, {id, weight}) => sum + weight * (deck.counts[id] ? 1 : -2), 0) }));
+      const best = Math.max(0, ...profiles.map(entry => entry.score));
+      const total = profiles.reduce((sum, entry) => sum + Math.exp(entry.score - best), 0);
+      const model = { counts, profiles: profiles.map(entry => ({ deck: entry.deck,
+        probability: Math.exp(entry.score - best) / total })) };
+      aiPublicDeckModelCache.set(side, { signature, library, model });
+      return model;
+    }
+
+    function aiPublicBurstRisk(side) {
+      const enemySide = oppositeSide(side), enemy = state.players[enemySide];
+      if (enemy.skipAllTurns || aiLifeDamagePrevented(side, state.actionTurn + 1, enemySide)) return 0;
+      const will = Math.min(10, enemy.maxWill + 1);
+      const burst = card => {
+        const direct = aiDirectLifeDamageValue(card, enemySide);
+        const rush = card.keywords?.includes("超陽気")
+          && ongoingEnvironmentBaseId() !== "meguro_library"
+          ? Math.max(0, card.attack || 0) * cardAttackLimit(card) : 0;
+        return previewFinalDamageToLife(side, Math.max(direct, rush), card);
+      };
+      const known = aiMaximizeHandValue(enemy.hand.filter(card => card.publicHandAddition), will, burst);
+      const model = aiPublicDeckModel(side), candidates = new Map();
+      model.profiles.forEach(({deck, probability}) => Object.entries(deck.counts).forEach(([id, count]) => {
+        candidates.set(id, (candidates.get(id) || 0) + probability * Math.max(0, count - (model.counts[id] || 0)));
+      }));
+      let inferred = 0;
+      for (const [id, copies] of candidates) {
+        const base = CARD_BASES[id];
+        if (!base || base.evolutionFrom || base.cost > will || copies < 0.65) continue;
+        const chance = 1 - Math.pow(1 - Math.min(1, copies / Math.max(1, enemy.deck.length + enemy.hand.length)),
+          enemy.hand.length + Number(enemy.deck.length > 0));
+        if (chance < 0.12) continue;
+        inferred = Math.max(inferred, Math.ceil(burst({...base, baseId: id, owner: enemySide}) * Math.max(0.5, chance)));
+      }
+      return Math.max(known, inferred);
+    }
+
+    function aiIncomingBoardDamage(side, options = {}) {
+      const enemySide = oppositeSide(side), futureTurn = state.actionTurn + 1;
+      if (state.players[enemySide].skipAllTurns || ongoingEnvironmentBaseId() === "meguro_library"
+        || (state.noAttackUntilActionTurn && state.noAttackUntilActionTurn >= futureTurn)
+        || aiLifeDamagePrevented(side, futureTurn, enemySide)) return 0;
+      const removed = new Set(options.removedIds || []);
+      const guards = [...listBoardRefs(side).map(getBoardCardFromRef), ...(options.blocker ? [options.blocker] : [])]
+        .filter(card => card && (hasKeyword(card, "注目") || hasKeyword(card, "超注目")));
+      const attacks = [];
+      for (const ref of listBoardRefs(enemySide)) {
+        const original = getBoardCardFromRef(ref);
+        if (!original || removed.has(original.instanceId) || isAttackLocked(original, futureTurn)
+          || isSameNameAttackLocked(original) || original.currentHp <= 0) continue;
+        const card = options.attackReduction?.[original.instanceId]
+          ? {...original, attack: Math.max(0, original.attack - options.attackReduction[original.instanceId])} : original;
+        const face = card.baseId === "happy_blue_bird" || isAibenNyoteiAttackLifeBlocked(card, side)
+          ? 0 : previewFinalDamageToLife(side, Math.max(0, card.attack || 0), card);
+        for (let hit = 0; hit < cardAttackLimit(card); hit++) attacks.push({card, face});
+      }
+      // Safety estimate: reserve the cheapest possible attacks needed to clear
+      // Attention. Ignoring counterattack losses is deliberately conservative;
+      // a fragile guard is never treated as complete immunity.
+      const bypass = attacks.filter(entry => entry.card.baseId === "loud_student");
+      let requiredHits = 0;
+      for (const guard of guards) {
+        const eligible = attacks.filter(entry => canAiLethalAttackerTargetCard(entry.card, guard));
+        const maximum = Math.max(0, ...eligible.map(entry => entry.card.baseId === "absolute_woman"
+          ? guard.currentHp : previewFinalDamageToCard(guard, cardAttackDamage(entry.card, guard), entry.card, {combat: true})));
+        requiredHits += maximum > 0 ? Math.ceil(guard.currentHp / maximum)
+          + Number(Boolean(guard.yutaUmbrellaShield)) : Infinity;
+      }
+      // Count a lower bound on attacks spent on guards, then deduct the
+      // cheapest face hits globally. A greedy guard-by-guard assignment can
+      // falsely declare safety by wasting the only large guard-clearing hit.
+      const remaining = [...attacks].sort((a,b) => a.face - b.face).slice(requiredHits);
+      const available = remaining.reduce((sum, entry) => sum + entry.face, 0)
+        >= bypass.reduce((sum, entry) => sum + entry.face, 0) ? remaining : bypass;
+      let total = 0;
+      let shields = ongoingEffectsSuppressed() ? 0 : (state.players[side].lifeFloorShields || [])
+        .filter(shield => shield.untilActionTurn >= futureTurn && shield.againstSide === enemySide).length;
+      const life = state.players[side].life + (options.heal || 0);
+      for (const {face} of [...available].sort((a,b) => b.face - a.face)) {
+        if (face <= 0) continue;
+        if (shields && face >= life - total) { total += Math.max(0, life - total - 1); shields--; }
+        else total += face;
+      }
+      return total;
+    }
+
+    function aiIncomingPublicEffectDamage(side, options = {}) {
+      const enemySide = oppositeSide(side);
+      if (state.players[enemySide].skipAllTurns || ongoingEffectsSuppressed()
+        || aiLifeDamagePrevented(side, state.actionTurn + 1, enemySide)) return 0;
+      const removed = new Set(options.removedIds || []);
+      return listBoardRefs(enemySide).map(getBoardCardFromRef)
+        .filter(card => card && !removed.has(card.instanceId) && card.baseId === "where_bone" && canUsePrintedCardEffects(card))
+        .reduce((sum, card) => sum + previewFinalDamageToLife(side, 3, card), 0);
+    }
+
+    function aiSurvivalPriority(side, options = {}) {
+      const life = state.players[side].life;
+      const burst = aiPublicBurstRisk(side);
+      const before = aiIncomingBoardDamage(side) + aiIncomingPublicEffectDamage(side) + burst;
+      if (before < life) return 0;
+      const after = (options.preventDamage ? 0 : aiIncomingBoardDamage(side, options) + aiIncomingPublicEffectDamage(side, options) + burst)
+        - (options.heal || 0);
+      const reduction = Math.max(0, before - after);
+      return reduction > 0 ? (after < life ? 2000 : 0) + reduction * 60 : 0;
+    }
+
+    function aiRemovalSurvivalPriority(side, card) {
+      return aiSurvivalPriority(side, {removedIds: [card.instanceId]});
+    }
+
+    function aiItemFinishesNow(side, item) {
+      const enemySide = oppositeSide(side);
+      return !item.unusable && !isHighLoadHandCard(item) && effectiveCardCost(item) <= state.players[side].will
+        && !arePlayedEffectsSuppressed(side) && !aiLifeDamagePrevented(enemySide, state.actionTurn, side)
+        && !aiLifeFloorShieldActive(enemySide, side)
+        && previewFinalDamageToLife(enemySide, aiDirectLifeDamageValue(item, side), item) >= state.players[enemySide].life;
+    }
+
+    function aiCardSurvivalPriority(side, card, zone = null, index = null) {
+      if (!card || card.unusable || isHighLoadHandCard(card) || effectiveCardCost(card) > state.players[side].will) return 0;
+      if (card.type !== "item") {
+        if (zone && !canPlaceCard(side, card, zone, side, index)) return 0;
+        return aiCardProvidesFaceProtection(card)
+          ? aiSurvivalPriority(side, {blocker: makeBoardCard({...card, owner: side})}) : 0;
+      }
+      if (arePlayedEffectsSuppressed(side)) return 0;
+      if (card.baseId === "dont_worry") return aiSurvivalPriority(side, {preventDamage: true});
+      const drawWouldLose = card.baseId === "onigiri_draw" && !isDeckToHandLocked() && state.players[side].deck.length < 2;
+      const healing = drawWouldLose ? 0 : Math.min(aiLifeHealingValue(card), Math.max(0, currentLifeCap(side) - state.players[side].life));
+      let priority = healing ? aiSurvivalPriority(side, {heal: healing}) : 0;
+      const damage = {ruler: 1, double_diamond: 4, laser_beam: 5}[card.baseId];
+      const destroy = TARGETED_DESTROY_ITEM_IDS.has(card.baseId);
+      if (damage || destroy) {
+        for (const entry of effectTargetEntries(side, oppositeSide(side))) {
+          if (card.baseId === "laser_beam" && (entry.ref.zone !== "seat" || seatRow(entry.ref.index) !== 3)) continue;
+          if (card.baseId === "favorite_number_s" && (entry.ref.zone !== "teacher" || entry.card.type !== "teacher")) continue;
+          if (!aiCanPredictEffectRemoval(entry.card, {destroy})
+            || (!destroy && previewFinalDamageToCard(entry.card, damage, card) < entry.card.currentHp)) continue;
+          priority = Math.max(priority, aiRemovalSurvivalPriority(side, entry.card));
+        }
+      }
+      if (card.baseId === "illness") {
+        for (const {card: target} of effectTargetEntries(side, oppositeSide(side))) {
+          if (target.baseId === "yuta" || !canEquipIllness({...target})) continue;
+          priority = Math.max(priority, aiSurvivalPriority(side, {attackReduction: {[target.instanceId]: 1}}));
+        }
+      }
+      if (card.baseId === "green_curry") {
+        const targets = effectTargetEntries(side, oppositeSide(side)).filter(entry => aiCanPredictEffectRemoval(entry.card, {destroy: true}));
+        priority = Math.max(priority,
+          aiSurvivalPriority(side, {removedIds: targets.map(entry => entry.card.instanceId)}));
+      }
+      return priority;
+    }
+
     function getAiLethalForecast(side = "opponent") {
       const targetSide = oppositeSide(side);
       const ai = state.players[side];
@@ -33376,7 +33557,6 @@
       const immediateExpectedDamage = currentBoard.expected + immediateDirectDamage;
 
       const aiFutureBoard = aiBoardFaceDamage(side, { futureActionTurn: state.actionTurn + 2 });
-      const playerFutureBoard = aiBoardFaceDamage(targetSide, { futureActionTurn: state.actionTurn + 1 });
       const aiSurvival = aiBoardSurvivalFactor(side);
       const projectedNextTurnDamage = aiFutureBoard.expected * aiSurvival
         + aiAffordableHandFaceBurst(side, aiNextWill, state.actionTurn + 2)
@@ -33388,13 +33568,12 @@
         + projectedFollowingTurnDamage;
       // Counter-lethal is evaluated from the board that is actually left alive.
       // Discounting it by a generic removal chance made the AI race into visible lethal.
-      const opponentNextTurnDamage = playerFutureBoard.expected
-        + aiAffordableHandFaceBurst(targetSide, playerNextWill, state.actionTurn + 1)
-        + aiExpectedDeckFaceBurst(targetSide, 1, state.actionTurn + 1);
+      const opponentBoardDamage = aiIncomingBoardDamage(side) + aiIncomingPublicEffectDamage(side);
+      const opponentBurstRisk = aiPublicBurstRisk(side);
+      const opponentNextTurnDamage = opponentBoardDamage + opponentBurstRisk;
 
-      const opponentHealingRisk = aiAffordableLifeHealing(targetSide, playerNextWill)
-        + aiExpectedDeckHealing(targetSide, 1)
-        + aiEndTurnHealing(targetSide);
+      const opponentHealingRisk = aiMaximizeHandValue(player.hand.filter(card => card.publicHandAddition),
+        playerNextWill, aiLifeHealingValue) + aiEndTurnHealing(targetSide);
       const ownEmergencyHealing = aiAffordableLifeHealing(side, ai.will) + aiEndTurnHealing(side);
       const protectionAvailable = aiHasAffordableFaceProtection(side, ai.will);
       const protectionActive = listAttentionCards(side).length > 0;
@@ -33402,7 +33581,7 @@
       const opponentCounterLethal = opponentNextTurnDamage >= ai.life;
       const effectiveEnemyLife = player.life + opponentHealingRisk;
       const twoTurnEffectiveEnemyLife = player.life + opponentHealingRisk * 1.6;
-      const safeRace = !opponentCounterLethal || protectionActive;
+      const safeRace = !opponentCounterLethal;
       return {
         immediateMaxDamage,
         immediateExpectedDamage,
@@ -33414,6 +33593,8 @@
         nextTurnLethal: ownNextTurnDamage >= effectiveEnemyLife,
         twoTurnLethal: ownTwoTurnDamage >= twoTurnEffectiveEnemyLife,
         opponentNextTurnDamage,
+        opponentBoardDamage,
+        opponentBurstRisk,
         opponentCounterLethal,
         opponentHealingRisk,
         ownEmergencyHealing,
@@ -33525,6 +33706,7 @@
 
     function shouldAiUseItemAtTiming(item, score, timing) {
       if (score <= 0) return false;
+      if (aiCardSurvivalPriority("opponent", item) > 0) return true;
       if (score >= 1000 && ["female_highball", "male_highball"].includes(item.baseId)) return true;
       if (item.baseId === "dont_worry") return scoreAiDontWorry("opponent", item) > 0;
       if (item.baseId === "yakitori_harassment") return Boolean(planAiYakitori("opponent", item).target);
@@ -33760,7 +33942,8 @@
       // Calculate against unchanged scores, so enumeration order cannot affect
       // another candidate's follow-up value. Re-evaluate after every real move.
       const adjustedScores = moves.map(move => move.score + aiPlacementStrategyAdjustment(move, moves, strategyForecast)
-        + aiHandSpaceAdjustment("opponent", move.card));
+        + aiHandSpaceAdjustment("opponent", move.card)
+        + aiCardSurvivalPriority("opponent", move.card, move.zone, move.index));
       moves.forEach((move, index) => { move.score = adjustedScores[index]; });
       moves.sort((a, b) => b.score - a.score || effectiveCardCost(b.card) - effectiveCardCost(a.card));
       if (!(moves[0]?.score > 0)) return null;
@@ -34624,7 +34807,10 @@
     }
 
     function scoreAiItem(item, options = {}) {
+      if (aiItemFinishesNow("opponent", item)) return 10000;
       const score = scoreAiItemWithoutHandLimit(item, options);
+      const survival = aiCardSurvivalPriority("opponent", item);
+      if (survival > 0) return Math.max(0, Number.isFinite(score) ? score : 0) + survival;
       if (score <= 0 || score >= 900) return score;
       return score + aiHandSpaceAdjustment("opponent", item);
     }
@@ -35658,7 +35844,7 @@
         || attacker.baseId === "happy_blue_bird"
         || (attacker.playedOnTurn === state.actionTurn && hasKeyword(attacker, "陽気") && !hasKeyword(attacker, "超陽気"));
       const lethalForecast = getAiLethalForecast();
-      if (!cannotAttackLife && lethalForecast.immediateLethal) return null;
+      if (!cannotAttackLife && aiBoardFaceDamage("opponent", {readyOnly: true}).guaranteed >= state.players.player.life) return null;
       const preserveBiologyMaterial = isAiProtectedBiologyMaterial("opponent", attacker);
       const effectKillPlan = planAiGuaranteedEndTurnEffectKills("opponent");
       const preserveEffectSource = effectKillPlan.sourceIds.has(attacker.instanceId);
@@ -35668,7 +35854,8 @@
         .filter((target) => canAibenNyoteiAttackTarget(attacker, target.card))
         .filter((target) => !isDesignDomainAttackBlocked(attacker, target.card))
         .filter((target) => attacker.baseId === "loud_student" || attentionIds.size === 0 || attentionIds.has(target.card.instanceId))
-        .filter((target) => !preserveBiologyMaterial || Math.max(0, target.card.attack || 0) < attacker.currentHp)
+        .filter((target) => !preserveBiologyMaterial || Math.max(0, target.card.attack || 0) < attacker.currentHp
+          || aiAttackPreventsLethalCounter("opponent", "player", target.card, attacker))
         .filter((target) => !effectKillPlan.targetIds.has(target.card.instanceId))
         .filter((target) => !preserveEffectSource || aiAttackCounterDamage(attacker, target.card) < attacker.currentHp)
         .filter((target) => !aiShouldPreserveEnemyTrpg("opponent", target.card))
@@ -35679,7 +35866,7 @@
           const survivesCounter = aiAttackCounterDamage(attacker, target.card) < attacker.currentHp;
           const lostValue = survivesCounter ? 0 : Math.max(0, attacker.attack || 0) * 1.5
             + Math.max(0, aiRecurringCardValue("opponent", attacker));
-          const score = (canDefeat ? 14 : 0)
+          const score = (canDefeat ? aiRemovalSurvivalPriority("opponent", target.card) : 0) + (canDefeat ? 14 : 0)
             + (survivesCounter ? 4 : -8)
             + scoreAiEnemyAttendeeThreat(target.card, target)
             - lostValue
@@ -35695,7 +35882,8 @@
       if (forcedLethalTarget) return forcedLethalTarget;
       const best = targets[0];
       if (!best) return null;
-      if (aiAttackPreventsLethalCounter("opponent", "player", best.card, attacker)) return best;
+      if (aiAttackPreventsLethalCounter("opponent", "player", best.card, attacker)
+        || (best.canDefeat && aiRemovalSurvivalPriority("opponent", best.card) > 0)) return best;
       if (!cannotAttackLife && enemyStudentTrpgAuraActive(attacker)) return null;
       const utaBoardClearer = isAiUtaStrategyActive()
         && isUtaEquipmentTarget(attacker)
@@ -35744,12 +35932,14 @@
       if (!hits.length) return false;
       const defeated = hits.filter(hit => hit.damage >= hit.card.currentHp).map(hit => hit.card);
       if (aiEnemyTrpgRemovalPenalty(side, defeated) > 0) return false;
-      if (defeated.length || hits.length >= 2 || !canAttackSilently(teacher)) return true;
-
       const targetRef = side === "opponent"
         ? findAiAttackTarget(teacher)
         : findTrainingAiAttackTarget(side, teacher);
       const target = targetRef ? getBoardCardFromRef(targetRef) : null;
+      const lecturePriority = aiSurvivalPriority(side, {removedIds: defeated.map(card => card.instanceId)});
+      if (target && canAttackSilently(teacher) && canAiLethalAttackerDefeatCard(teacher, target)
+        && aiRemovalSurvivalPriority(side, target) > lecturePriority) return false;
+      if (defeated.length || hits.length >= 2 || !canAttackSilently(teacher)) return true;
       if (!target) return !aiShouldAttackLife(side, teacher);
 
       // Preserve useful removal and on-attack effects. Compare chip damage
