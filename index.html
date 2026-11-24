@@ -20474,7 +20474,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.45.5", "versioning": "semver", "date": "2026年11月24日", "summary": "手札のカードに表示する「!」の判定を修正しました。", "changes": [{"category": "表示・操作改善", "title": "手札の効果変更マーク", "after": "元から持つ超注目などを、後から付いた能力として扱って「!」を表示していた判定を修正しました。元の超注目に含まれる注目、超陽気に含まれる陽気も、追加された能力には含めません。効果で追加された能力・負荷・融合・数値変更の印と詳細表示は維持します。標準の能力と効果付与後の表示、非公開手札、画面サイズごとの位置を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}]},
+      {"version": "ver.0.45.5", "versioning": "semver", "date": "2026年11月24日", "summary": "手札の効果変更マークを修正し、AIの盤面処理と手札の再検討を改善しました。", "changes": [{"category": "表示・操作改善", "title": "手札の効果変更マーク", "after": "元から持つ超注目などを、後から付いた能力として扱って「!」を表示していた判定を修正しました。元の超注目に含まれる注目、超陽気に含まれる陽気も、追加された能力には含めません。効果で追加された能力・負荷・融合・数値変更の印と詳細表示は維持します。標準の能力と効果付与後の表示、非公開手札、画面サイズごとの位置を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "AIの行動継続と盤面処理", "after": "勝利できるという予測が外れた場合や、持ち物を1枚使用できなかった場合も、ほかの有効な手札を検討するようにしました。一人では不利でも複数人で倒せる相手への攻撃を検討し、攻撃後に空いたマスや変化した手札も手番終了前に再確認します。倒せない相手への無意味な特攻を避ける判断は維持し、左右のAIと既存の講義・攻撃判断を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}]},
       {"version": "ver.0.45.4", "versioning": "semver", "date": "2026年11月23日", "summary": "斥候学生とハバヨセ!を調整し、ちがうよとハンディジェットエンジンを戦意4にしました。カード本文と用語の表記も整理しました。", "changes": [{"category": "カード調整", "title": "斥候学生", "before": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは[超陽気]を持つ。", "after": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n[陽気]\nこのカードが出席したとき、相手の講義室に出席者がいないなら、[超陽気]を持つ。", "beforeHighlights": ["これは"], "afterHighlights": ["[陽気]", "このカードが出席したとき、"]}, {"category": "カード調整", "title": "ハバヨセ!", "before": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。その後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。\nそうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから「U太」とつくカード1枚を選び、手札に加える。その後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。\nそうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。", "beforeHighlights": ["、カード名か本文に", "記された"], "afterHighlights": ["とつく"]}, {"category": "システム", "title": "斥候学生のカードテストとAI", "after": "相手がいるときの陽気と、出席時に相手がいないときの超陽気を続けて試せる手札・盤面にしました。条件は出席時にだけ確認し、得た超陽気は相手が出席しても残ります。AIの本体攻撃判断を更新し、条件の成立・不成立、後から盤面が変わる場合、攻撃回数、効果による出席とオンライン同期を確認するテストを追加・更新しました。戦意・攻撃力・体力は変更していません。"}, {"category": "システム", "title": "ハバヨセ!の検索対象", "after": "カード名に「U太」を含むカードだけを選べるよう、選択画面・AI・カードテストを揃えました。本文にだけ「U太」があるカードと、デッキにあるハバヨセ!自身は対象になりません。候補がない場合のシャッフル、対象の確認、通常使用・提出・オンライン双方の同期を確認するテストを追加・更新しました。追加戦意での裏U太の出席、装備、校外でのU太扱いと能力値は変更していません。"}, {"category": "表示・操作改善", "title": "カード本文の表記統一", "after": "表記を次の一覧に統一しました。能力値・対象・枚数・選び方・効果の処理順は変更していません。\n\n・名称参照\n「○○」と名のつく → 「○○」とつく\n\n・人物へのランダムな対象決定\nランダムに選ぶ → ランダムに指名する\n\n・候補を事前に見ずに取るサーチ\n指定カードを手札に加える → 指定カードを引く\n\n・複数効果の選択\n次の効果から○つを選ぶ → ○つの効果から○つを選んで使用する\n\n・出席時の効果選択\n手札から出席させるとき → 手札から出席させたとき\n\n・通常ドローの代替\nドローの代わりに → ターン開始時の通常ドローの代わりに\n\n・デッキから手札への追加禁止\n手札に加えられない → 引くことも、手札に加えることもできない\n\n公開・確認した候補から取る場合は「手札に加える」を維持します。出席時と進化時、回収・生成はそれぞれ区別しています。\n\n・支払量の呼び方\nコスト → 戦意（使用に必要な戦意）\n\n・盤面の場所\n教師マス → 教卓マス\n講義室を意味する「場」 → 講義室\n\n・デッキから引く表記\nデッキを○枚引く → デッキからカードを○枚引く\n上から・枚数・上限の指定は維持します。\n\n・プレイヤーへのダメージ\n本体に○ダメージを与える／気力を○失う → 自分／相手の気力に○ダメージ。\n後続の処理は「その後、〜」で区切ります。攻撃先や指名対象を意味する「本体」は維持します。"}, {"category": "システム", "title": "カード表記とルールの確認", "after": "今回の使い分けをルール台帳と開発ガイドラインへ記録しました。本文・選択画面・管理台帳の一致と、候補不足・通常ドロー・サーチ・シャッフル・手札上限・デッキ切れ・ドロー禁止・オンライン同期を確認するテストを追加・更新しました。オンラインの検証手順は、現在の入室画面と同期完了の確認に合わせました。"}, {"category": "表示・操作改善", "title": "戦意不足の警告を削除", "after": "戦意が足りない場合の警告メッセージとログを削除しました。使用できないカードを止める判定は維持しています。カード本文・選択画面・対戦ログ・管理台帳の用語を揃え、使用制限とダメージ・ドローの処理を確認するテストを追加・更新しました。能力値と効果の処理は変更していません。"}, {"category": "カード調整", "title": "ちがうよ", "before": "ちがうよ／持ち物／バカでかい型／戦意3／攻撃力0／体力0\nお互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。", "after": "ちがうよ／持ち物／バカでかい型／戦意4／攻撃力0／体力0\nお互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。", "beforeHighlights": ["戦意3"], "afterHighlights": ["戦意4"]}, {"category": "カード調整", "title": "ハンディジェットエンジン", "before": "ハンディジェットエンジン／持ち物／妨害・LO／戦意3／攻撃力0／体力0\n自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。", "after": "ハンディジェットエンジン／持ち物／妨害・LO／戦意4／攻撃力0／体力0\n自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。", "beforeHighlights": ["戦意3"], "afterHighlights": ["戦意4"]}, {"category": "システム", "title": "手札干渉カードの戦意調整", "after": "ちがうよとハンディジェットエンジンを戦意4にしました。効果本文・対象・枚数・処理順は変更していません。管理ログと台帳の戦意表示・並び順を揃え、戦意3では使用できず4で使用できること、AI・高負荷・カードテスト・オンライン双方の支払いと効果処理を確認するテストを追加・更新しました。"}]},
       {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "インファイト将棋部の攻撃力を調整し、カード選択画面とデッキ操作・演出を改善しました。", "changes": [{"category": "カード調整", "title": "インファイト将棋部", "before": "インファイト将棋部／学生／将棋部／戦意10／攻撃力9／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "after": "インファイト将棋部／学生／将棋部／戦意10／攻撃力8／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "beforeHighlights": ["攻撃力9"], "afterHighlights": ["攻撃力8"]}, {"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、束の一部を上に抜いて重ね直すシャッフル演出を追加しました。山札へ生成する場合は全カードの表面を画面中央で見せ、裏向きになって山札へ入った後にシャッフルします。生成枚数を省略せず、同じカードでも1枚ずつ並べて表示します。枚数が多い場合は複数の段に並べ、各段を中央揃えにして、すべてのカードが画面内に収まります。続けて引く場合も、すべて入り終わってから混ぜ、その後に引く順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えと表示順を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "表示・操作改善", "title": "複数種類のサーチ", "after": "効率的な実験法や乾いた食券で複数種類のカードを探すときは、まとめて引き、最後に1回だけシャッフルするようにしました。自分が引いたカードは画面中央に並べて表示します。候補不足・手札上限・ドロー禁止と、オンライン対戦・観戦での表示順と非公開情報を確認するテストを追加しました。カードの能力値・本文・探す対象と枚数は変更していません。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
       {"version": "ver.0.45.2", "versioning": "semver", "date": "2026年11月21日", "summary": "ピニゲの効果2と、効果の選択画面を調整しました。", "changes": [{"category": "カード調整", "title": "ピニゲ", "before": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つカードを2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "after": "ピニゲ／持ち物／共通カード／戦意3／攻撃力0／体力0\n[点数]\n次の4つの効果から2つを選ぶ。選んだ効果を番号順に行う。\n1. 自分の戦意を1回復する。\n2. 自分のデッキから[点数]を持つ学生を2枚引く。\n3. 自分のデッキから「ピニゲ」を1枚引く。\n4. 相手の出席者1人をランダムに選び、3ダメージを与える。\n単位取得済みなら、2つではなく3つを選ぶ。", "beforeHighlights": ["[点数]を持つカード"], "afterHighlights": ["[点数]を持つ学生"]}, {"category": "システム", "title": "ピニゲのカードテスト", "after": "効果2で［点数］を持つ学生だけを引くよう、選択画面・AIの判断・カードテストの案内を更新しました。対象が0枚・1枚・2枚以上の場合と、効果3による同名カードの補充、オンライン双方の同期を確認するテストを追加・更新しました。能力値と効果1・3・4は変更していません。"}, {"category": "表示・操作改善", "title": "効果の選択画面", "after": "使用カードを左、効果のボタンを右に並べ、盤面を透かして確認できる表示にしました。カードと効果が現れる演出と、決定時の短い発光を追加しました。効果を1つ選ぶ場合は、押すとそのまま決定します。複数選ぶ場合は選択状態と枚数を表示し、選び直してから確定できます。講義室を見て選択画面へ戻ることもできます。スマートフォン表示・選択のやり直し・対戦切り替え・オンライン双方の操作を確認するテストを追加・更新しました。効果を選んだ後の処理順は変更していません。"}]},
@@ -30919,12 +30919,22 @@
       if (await resolveAiGuaranteedBoardLethal()) return;
       await useAiVoluntaryMovement("opponent");
       await aiAttackWithReadyCards(deferredAttendance);
+      if (isOpponentAiActive() && !state.pendingCardChoice && !state.pendingRemoteHandTrim) {
+        await tryUseAiItems({ timing: "afterBoard" });
+        await waitForOrderedAttendance();
+        await waitForAiTimedEffects();
+        await playAiBoardMoves(deferredAttendance);
+        await waitForOrderedAttendance();
+        await waitForAiTimedEffects();
+        if (!state.pendingCardChoice && !state.pendingRemoteHandTrim) await aiAttackWithReadyCards(deferredAttendance);
+      }
       state.aiThinking = false;
       if (state.gameOver) {
         render();
         return;
       }
       render();
+      if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
       await sleep(AI_STEP_DELAY);
       if (state.phase === "battle" && state.currentSide === "opponent" && !state.gameOver) {
         endTurn({ fromAi: true });
@@ -31355,6 +31365,42 @@
       return (ownBurst - opposingBurst) * 4;
     }
 
+    function aiCanFinishCombinedAttack(side, attacker, target) {
+      // Use visible, currently ready attackers only. Do not count uncertain
+      // hits, umbrella shields, or a vampire healing between attacks as a kill.
+      if (!canAttackSilently(attacker) || hasKeyword(attacker, "眠気")
+        || target.yutaUmbrellaShield || target.type === "vampire") return false;
+      const priorityIds = new Set(listAttackPriorityCards(oppositeSide(side)).map(card => card.instanceId));
+      const allies = listBoardRefs(side).map(getBoardCardFromRef).filter(card => card
+        && card.instanceId !== attacker.instanceId && canAttackSilently(card) && !hasKeyword(card, "眠気")
+        && canAiLethalAttackerTargetCard(card, target)
+        && (card.baseId === "loud_student" || !priorityIds.size || priorityIds.has(target.instanceId))
+        && !isAiProtectedBiologyMaterial(side, card))
+        .sort((a, b) => aiAttackCounterDamage(a, target) - aiAttackCounterDamage(b, target)
+          || (a.attack || 0) - (b.attack || 0));
+      if (!allies.length) return false;
+      let remainingHp = target.currentHp, lostValue = 0;
+      const bodyValue = card => Math.max(0, card.attack || 0) * 1.5
+        + Math.max(0, card.currentHp || 0) * 0.65 + Math.max(0, aiRecurringCardValue(side, card));
+      for (const card of [attacker, ...allies]) {
+        const preview = { ...target, currentHp: remainingHp };
+        const damage = previewFinalDamageToCard(preview, cardAttackDamage(card, preview), card, { combat: true });
+        if (damage <= 0 || aiCombatExplosionValue(side, card, preview) <= -1000) continue;
+        if (aiAttackCounterDamage(card, preview) >= card.currentHp) lostValue += bodyValue(card);
+        remainingHp -= damage;
+        if (remainingHp <= 0) {
+          const enemySide = oppositeSide(side), futureTurn = state.actionTurn + 1;
+          const incoming = aiBoardFaceDamage(enemySide, { futureActionTurn: futureTurn }).expected;
+          const withoutTarget = aiBoardFaceDamage(enemySide, {
+            futureActionTurn: futureTurn, excludedInstanceId: target.instanceId
+          }).expected;
+          const preventsDefeat = incoming >= state.players[side].life && withoutTarget < state.players[side].life;
+          return preventsDefeat || lostValue <= bodyValue(target);
+        }
+      }
+      return false;
+    }
+
     function aiShouldAttackCard(side, attacker, target) {
       const damage = previewFinalDamageToCard(target, cardAttackDamage(attacker, target), attacker, { combat: true });
       const triggerValue = aiAttackTriggerHasValue(side, attacker, target);
@@ -31366,6 +31412,7 @@
       const removes = !target.yutaUmbrellaShield && (damage >= target.currentHp
         || (triggerValue && ["absolute_woman", "bounce_day"].includes(attacker.baseId)));
       if (removes) return true;
+      if (aiCanFinishCombinedAttack(side, attacker, target)) return true;
       // Preserve the attendee instead of spending its health on a losing trade.
       if (counter >= attacker.currentHp && !triggerValue) {
         return explosionValue > 0 && damage >= Math.min(2, target.currentHp);
@@ -32780,10 +32827,12 @@
     async function tryUseTrainingYocchanItems(side) {
       let usedAny = false;
       let safety = 0;
+      const failedItems = new Set();
       while (isTrainingLeftAiActive() && safety < 8) {
-        safety += 1;
         const setup = planAiSacrificeSetup(side);
         if (setup && placeCardFromHand(side, setup.card.instanceId, setup.zone, setup.owner, setup.index, false)) {
+          safety += 1;
+          failedItems.clear();
           usedAny = true;
           render();
           await waitForOrderedAttendance();
@@ -32791,11 +32840,17 @@
           continue;
         }
         const choice = state.players[side].hand
-          .filter((card) => card.type === "item")
+          .filter((card) => card.type === "item" && !failedItems.has(card.instanceId))
           .map((item) => ({ item, score: scoreTrainingYocchanItem(side, item) }))
           .filter((entry) => Number.isFinite(entry.score) && entry.score > 0)
           .sort((a, b) => b.score - a.score || effectiveCardCost(a.item) - effectiveCardCost(b.item))[0];
-        if (!choice || !useTrainingYocchanItem(side, choice.item)) break;
+        if (!choice) break;
+        if (!useTrainingYocchanItem(side, choice.item)) {
+          failedItems.add(choice.item.instanceId);
+          continue;
+        }
+        safety += 1;
+        failedItems.clear();
         usedAny = true;
         resolveTrainingAiPendingSelections(side);
         render();
@@ -32861,62 +32916,68 @@
       resolveTrainingAiPendingSelections("player");
       while (tryFuseHorseForAi("player")) { render(); await waitForBattlePresentation(); }
       const deferredAttendance = new Map();
-      let safety = 0;
-      while (isTrainingLeftAiActive() && safety < 8) {
-        safety += 1;
-        const refill = planAiYakitori("player");
-        if (refill.target && aiBoardFaceDamage("player", { readyOnly: true }).guaranteed < state.players.opponent.life) {
-          if (castItemOnCard("player", refill.item, "player", refill.target.zone, refill.target.index, false)) {
-            render(); await waitForOrderedAttendance(); await waitForAiTimedEffects();
-            continue;
-          }
+      for (let actionPass = 0; actionPass < 2 && isTrainingLeftAiActive(); actionPass += 1) {
+        if (actionPass > 0) {
+          await tryUseTrainingYocchanItems("player");
+          resolveTrainingAiPendingSelections("player");
         }
-        while (tryFuseAnyHandCardForAi("player")) {render();await waitForBattlePresentation();}
-        const move = findTrainingAiPlayMove("player", deferredAttendance);
-        if (!move) break;
-        placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
-        resolveTrainingAiPendingSelections("player");
-        render();
-        await waitForOrderedAttendance();
-        await waitForAiTimedEffects();
-        await sleep(AI_STEP_DELAY);
-      }
-      await tryUseTrainingYocchanItems("player");
-      resolveTrainingAiPendingSelections("player");
-      await useAiVoluntaryMovement("player");
-      const attackers = aiOrderedAttackRefs("player");
-      for (const ref of attackers) {
-        let attackSafety = 0;
-        while (isTrainingLeftAiActive() && attackSafety < 12) {
-          await waitForBattlePresentation();
-          if (!isTrainingLeftAiActive()) return;
-          attackSafety += 1;
-          const attacker = getBoardCardFromRef(ref);
-          if (!attacker) break;
-          if (shouldAiUseLecture(ref, attacker, "player")) {
-            performTeacherLecture("player", ref, { renderAfter: false });
-            render();
-            await sleep(AI_STEP_DELAY);
-            break;
+        let safety = 0;
+        while (isTrainingLeftAiActive() && safety < 8) {
+          safety += 1;
+          const refill = planAiYakitori("player");
+          if (refill.target && aiBoardFaceDamage("player", { readyOnly: true }).guaranteed < state.players.opponent.life) {
+            if (castItemOnCard("player", refill.item, "player", refill.target.zone, refill.target.index, false)) {
+              render(); await waitForOrderedAttendance(); await waitForAiTimedEffects();
+              continue;
+            }
           }
-          if (!canAttackSilently(attacker)) break;
-          const target = findTrainingAiAttackTarget("player", attacker);
-          const lifeBlocked = !target && (!aiShouldAttackLife("player", attacker)
-            || listAttentionCards("opponent").length > 0
-            || ongoingEnvironmentBaseId() === "meguro_library"
-            || isAibenNyoteiAttackLifeBlocked(attacker, "opponent")
-            || attacker.baseId === "happy_blue_bird"
-            || (attacker.playedOnTurn === state.actionTurn
-              && hasKeyword(attacker, "陽気")
-              && !hasKeyword(attacker, "超陽気")));
-          if (lifeBlocked) break;
-          state.selectedAttacker = { ...ref };
-          if (target) await attackCard(target.owner, target.zone, target.index);
-          else await attackLifeForCurrentSide("opponent");
-          if (state.gameOver) return;
-          await playAiWhiteAfterLoadAttack("player", attacker);
-          await playDeferredSummoningAttendance("player", deferredAttendance);
+          while (tryFuseAnyHandCardForAi("player")) {render();await waitForBattlePresentation();}
+          const move = findTrainingAiPlayMove("player", deferredAttendance);
+          if (!move) break;
+          placeCardFromHand("player", move.card.instanceId, move.zone, move.owner, move.index, false);
+          resolveTrainingAiPendingSelections("player");
+          render();
+          await waitForOrderedAttendance();
+          await waitForAiTimedEffects();
           await sleep(AI_STEP_DELAY);
+        }
+        await tryUseTrainingYocchanItems("player");
+        resolveTrainingAiPendingSelections("player");
+        await useAiVoluntaryMovement("player");
+        const attackers = aiOrderedAttackRefs("player");
+        for (const ref of attackers) {
+          let attackSafety = 0;
+          while (isTrainingLeftAiActive() && attackSafety < 12) {
+            await waitForBattlePresentation();
+            if (!isTrainingLeftAiActive()) return;
+            attackSafety += 1;
+            const attacker = getBoardCardFromRef(ref);
+            if (!attacker) break;
+            if (shouldAiUseLecture(ref, attacker, "player")) {
+              performTeacherLecture("player", ref, { renderAfter: false });
+              render();
+              await sleep(AI_STEP_DELAY);
+              break;
+            }
+            if (!canAttackSilently(attacker)) break;
+            const target = findTrainingAiAttackTarget("player", attacker);
+            const lifeBlocked = !target && (!aiShouldAttackLife("player", attacker)
+              || listAttentionCards("opponent").length > 0
+              || ongoingEnvironmentBaseId() === "meguro_library"
+              || isAibenNyoteiAttackLifeBlocked(attacker, "opponent")
+              || attacker.baseId === "happy_blue_bird"
+              || (attacker.playedOnTurn === state.actionTurn
+                && hasKeyword(attacker, "陽気")
+                && !hasKeyword(attacker, "超陽気")));
+            if (lifeBlocked) break;
+            state.selectedAttacker = { ...ref };
+            if (target) await attackCard(target.owner, target.zone, target.index);
+            else await attackLifeForCurrentSide("opponent");
+            if (state.gameOver) return;
+            await playAiWhiteAfterLoadAttack("player", attacker);
+            await playDeferredSummoningAttendance("player", deferredAttendance);
+            await sleep(AI_STEP_DELAY);
+          }
         }
       }
       state.aiThinking = false;
@@ -33116,16 +33177,15 @@
       addLog(message);
       await aiAttackWithReadyCards();
       state.aiLethalForcedTargetId = null;
-      state.aiThinking = false;
       if (state.gameOver) {
+        state.aiThinking = false;
         render();
         return true;
       }
+      // A predicted finish can fail when attack effects change the board.
+      // Continue the turn and reconsider the remaining hand instead of passing.
       render();
-      if (state.phase === "battle" && state.currentSide === "opponent") {
-        endTurn({ fromAi: true });
-      }
-      return true;
+      return false;
     }
 
     function canAiCardAttackAfterSuperCheerful(card) {
@@ -34516,14 +34576,16 @@
         await sleep(AI_STEP_DELAY);
       }
       let safety = 0;
+      const failedItems = new Set();
       while (safety < 8 && isOpponentAiActive()) {
         await waitForBattlePresentation();
         if (!isOpponentAiActive()) return;
-        safety += 1;
         const opponent = state.players.opponent;
         const setup = planAiSacrificeSetup("opponent");
         if (setup && !getAiGuaranteedBoardLethalPlan()) {
           if (placeCardFromHand("opponent", setup.card.instanceId, setup.zone, setup.owner, setup.index, false)) {
+            safety += 1;
+            failedItems.clear();
             render();
             await waitForOrderedAttendance();
             await waitForAiTimedEffects();
@@ -34531,7 +34593,7 @@
           }
         }
         const item = opponent.hand
-          .filter((card) => card.type === "item" && (effectiveCardCost(card) <= opponent.will
+          .filter((card) => card.type === "item" && !failedItems.has(card.instanceId) && (effectiveCardCost(card) <= opponent.will
             || fusionEligibleUtasInHand("opponent", card).length > 0))
           .map((card) => ({ card, score: scoreAiItem(card, { timing }) }))
           .filter((entry) => entry.score > 0)
@@ -34539,7 +34601,12 @@
           .sort((a, b) => b.score - a.score)[0]?.card;
         if (!item) return;
         const used = useAiItem(item);
-        if (!used) return;
+        if (!used) {
+          failedItems.add(item.instanceId);
+          continue;
+        }
+        safety += 1;
+        failedItems.clear();
         render();
         if (state.pendingCardChoice || state.pendingRemoteHandTrim) return;
         if (getAiGuaranteedBoardLethalPlan()) return;
