@@ -3,6 +3,7 @@ const { spawn } = require("node:child_process");
 const net = require("node:net");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const loDeck = require("./fixtures/lo-final-lecture-deck.json");
 let server, gameUrl;
 
 test.beforeAll(async () => {
@@ -24,12 +25,12 @@ test.beforeAll(async () => {
 test.afterAll(() => server?.kill("SIGTERM"));
 
 
-for(const actorSide of ['player','opponent'])test(`ソファのホスト・ゲストの選択を実WebSocketで同期 ${actorSide}`,async({browser})=>{
+for(const actorSide of ['player','opponent'])test(`LO最終講義で対戦開始し、ソファのホスト・ゲストの選択を実WebSocketで同期 ${actorSide}`,async({browser})=>{
  test.setTimeout(90000);const contexts=await Promise.all([browser.newContext(),browser.newContext()]);const [host,guest]=await Promise.all(contexts.map(c=>c.newPage()));const errors=[];
  try{
   for(const p of [host,guest]){p.on('pageerror',e=>errors.push(e.message));await p.goto(gameUrl.href);await p.locator('#homeNavBattleButton').click();await p.locator('#onlinePrivateMatchButton').click();}
   await host.locator('#onlineCreateRoomButton').click();await expect.poll(()=>host.evaluate(()=>state.online.role)).toBe('host');await guest.locator('.private-code-entry > summary').click();await guest.locator('#onlineRoomInput').fill(await host.evaluate(()=>state.online.roomCode));await guest.locator('#onlineJoinRoomButton').click();
-  for(const p of [host,guest]){await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);await p.evaluate(()=>{state.deckBuilder.counts.player=createAutoDeckCounts();document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));});await p.locator('#onlineReadyButton').click();}
+  for(const p of [host,guest]){await expect.poll(()=>p.evaluate(()=>state.online.connected)).toBe(true);await p.evaluate(deck=>{state.deckBuilder.counts.player=deck.counts;document.getElementById('onlineDeckSelect').dispatchEvent(new Event('change',{bubbles:true}));},loDeck);await p.locator('#onlineReadyButton').click();}
   await expect.poll(()=>host.evaluate(()=>state.online.remoteReady)).toBe(true);await host.locator('#onlineStartButton').click();await expect.poll(()=>guest.evaluate(()=>state.online.started)).toBe(true);
   const actor=actorSide==='player'?host:guest;
   async function choose(kind,count){await expect.poll(()=>actor.evaluate(()=>state.pendingCardChoice?.context?.kind)).toBe(kind);await actor.evaluate(count=>{for(const c of state.pendingCardChoice.cards.slice(0,count))toggleCardChoiceCard(c.instanceId);confirmCardChoiceSelection();},count);}
