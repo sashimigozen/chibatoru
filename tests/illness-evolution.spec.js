@@ -137,9 +137,9 @@ test('両方のU太は直接装備とランダム感染の対象外になる', a
     api.state.players.player.board.seats[2] = infected;
     api.state.players.player.board.seats[3] = eligible;
     api.equipIllness('player', infected, api.createCardFromBase('illness', 'player'));
-    const random = Math.random; Math.random = () => 0;
+    const random = battleRandom; battleRandom = () => 0.75;
     api.resolveIllnessEndTurn();
-    Math.random = random;
+    battleRandom = random;
     return { direct, immune: immune.map(card => ({
       equipped: card.illnessEquipments?.length || 0, infected: api.isIllnessInfected(card),
       attack: card.attack, hp: card.maxHp

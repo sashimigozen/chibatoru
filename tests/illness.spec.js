@@ -42,9 +42,10 @@ test('装備時は攻撃力だけ減り、感染済み・装備済みの出席�
     count: 1, willSpent: 0, itemRemains: true, occupiedAllowed: false });
 });
 
-for (const endingSide of ['player', 'opponent']) {
-  test(`${endingSide}の終了時にその側だけ感染し、教師・ヴァンパイアも対象になる`, async ({ page }) => {
-    const result = await page.evaluate((side) => {
+for (const endingSide of ['player', 'opponent']) for (const effect of ['debuff', 'infection']) {
+  test(`${endingSide}の終了時に${effect}だけ発動し、教師・ヴァンパイアも対象になる`, async ({ page }) => {
+    const result = await page.evaluate(({side, effect}) => {
+      battleRandom = () => effect === "debuff" ? 0.499999 : 0.5;
       const api = window.__chibattle;
       const sources = [], targets = [];
       for (const owner of ['player', 'opponent']) {
@@ -61,9 +62,9 @@ for (const endingSide of ['player', 'opponent']) {
       api.resolveEndTurnEffects(side);
       return { sources: sources.map(({card, hp, attack}) => ({ attackLoss: attack-card.attack, hpLoss: hp-card.currentHp })),
         targets: targets.map(({card, hp, attack}) => ({ infected: api.isIllnessInfected(card), hpLoss: hp-card.currentHp, attackLoss: attack-card.attack })) };
-    }, endingSide);
-    expect(result).toEqual({ sources: ['player','opponent'].map(owner=>({attackLoss:owner===endingSide?1:0,hpLoss:0})),
-      targets: ['player','opponent'].map(owner=>({infected:owner===endingSide,hpLoss:0,attackLoss:owner===endingSide?1:0})) });
+    }, {side: endingSide, effect});
+    expect(result).toEqual({ sources: ['player','opponent'].map(owner=>({attackLoss:owner===endingSide && effect==="debuff"?1:0,hpLoss:0})),
+      targets: ['player','opponent'].map(owner=>({infected:owner===endingSide && effect==="infection",hpLoss:0,attackLoss:owner===endingSide && effect==="infection"?1:0})) });
   });
 }
 
@@ -77,6 +78,7 @@ test('装備解除後も感染は残り、再感染せず、持ち主の終了�
     api.removeIllnessEquipment(card, 'player', card.illnessEquipments[0]);
     const attack = card.attack, hp = card.currentHp;
     const allowed = api.canEquipIllness(card);
+    battleRandom = () => 0;
     api.resolveEndTurnEffects('player'); api.resolveEndTurnEffects('opponent');
     const copy = JSON.parse(JSON.stringify(card));
     return { allowed, infected: api.isIllnessInfected(copy), equipment: card.illnessEquipments.length,
@@ -93,6 +95,7 @@ test('感染は同じ講義室だけに広がり、その終了時には連鎖�
         api.makeBoardCard(api.createCardFromBase('general_student', owner));
     }
     api.equipIllness('player', api.state.players.player.board.seats[0], api.createCardFromBase('illness', 'opponent'));
+    battleRandom = () => 0.75;
     api.resolveIllnessEndTurn();
     return ['player','opponent'].map(owner=>api.state.players[owner].board.seats.filter(api.isIllnessInfected).length);
   });
@@ -121,5 +124,43 @@ test('ターン開始時には発動せず、オンライン同期データに�
 
 test('病の表示本文は合意した文面と一致する', async ({ page }) => {
   const text = await page.evaluate(() => window.__chibattle.cardRulesText(window.__chibattle.createCardFromBase('illness', 'player')));
-  expect(text).toBe('[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の攻撃力を-1する。\n装備者の持ち主のターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。');
+  expect(text).toBe('[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の攻撃力を-1する。\n装備者の持ち主のターン終了時、2つの効果から1つをランダムに選んで使用する。\n1. 装備者の攻撃力を-1する。\n2. 装備者と同じ講義室にいる出席者1人をランダムに指名し、「病」を装備させる。');
+});
+
+for (const random of [0, 0.5, 0.999999]) test(`感染先がなくても選んだ効果を変更しない ${random}`, async ({page}) => {
+  const result = await page.evaluate(random => {
+    const api = window.__chibattle;
+    const card = api.makeBoardCard(api.createCardFromBase('strong_student', 'player'));
+    api.state.players.player.board.seats[0] = card;
+    api.equipIllness('player', card, api.createCardFromBase('illness', 'player'));
+    const before = card.attack;
+    battleRandom = () => random;
+    api.resolveIllnessEndTurn();
+    return {loss: before-card.attack, count: card.illnessEquipments.length};
+  }, random);
+  expect(result).toEqual({loss: random < 0.5 ? 1 : 0, count:1});
+});
+
+test('カードテストの初期状態から装備・終了時効果を試せる', async ({page}) => {
+  const started = await page.evaluate(() => {
+    const api = window.__chibattle;
+    api.startCardTest('illness');
+    const player = api.state.players.player;
+    const target = player.board.seats[0];
+    const attack = target.attack;
+    const item = player.hand.find(c => c.baseId === 'illness');
+    const cast = api.castItemOnCard('player', item, 'player', 'seat', 0, false);
+    return {cast, attack};
+  });
+  await expect.poll(()=>page.evaluate(()=>isIllnessInfected(state.players.player.board.seats[0]))).toBe(true);
+  const result = await page.evaluate(({cast,attack}) => {
+    const api=window.__chibattle, player=api.state.players.player, target=player.board.seats[0];
+    battleRandom = () => 0.75;
+    api.resolveIllnessEndTurn('player');
+    return {cast, loss: attack-target.attack,
+      own: listBoardRefs('player').map(getBoardCardFromRef).filter(api.isIllnessInfected).length,
+      enemy: listBoardRefs('opponent').map(getBoardCardFromRef).filter(api.isIllnessInfected).length,
+      deck: player.deck.some(c=>c.baseId==='illness'), hand:player.hand.some(c=>c.baseId==='yuta')};
+  }, started);
+  expect(result).toEqual({cast:true, loss:1, own:2, enemy:0, deck:true, hand:true});
 });
