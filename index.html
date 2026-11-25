@@ -20149,7 +20149,7 @@
       corridor_student: { name: "通路で粘る学生", type: "student", cost: 3, attack: 2, hp: 2, allowedZones: ["seat"], category: "gakuyukai_item" },
       diligent_student: { name: "熱心な学生", type: "student", cost: 3, attack: 2, hp: 3, rowOnly: 1, allowedZones: ["seat"], category: "common" },
       plump_student: { name: "ふくよかな学生", type: "student", cost: 5, attack: 4, hp: 5, keywords: ["陽気"], occupiedSeatSize: { rows: 1, cols: 2 }, allowedZones: ["seat"], category: "big" },
-      aggro_boss: { name: "アグロボス", type: "student", cost: 3, attack: 0, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "common" },
+      aggro_boss: { name: "アグロボス", type: "student", cost: 4, attack: 1, hp: 2, keywords: ["超陽気"], allowedZones: ["seat"], category: "common" },
       aggro_princess: { name: "アグロプリンセス", type: "student", cost: 1, attack: 1, hp: 1, keywords: ["超陽気"], allowedZones: ["seat"], category: "common" },
       sick_yuta: { name: "病に臥すU太", type: "student", cost: 0, noCost: true, attack: 4, hp: 4, evolutionFrom: "yuta", generated: true, token: true, allowedZones: ["evolution"], category: "gakuyukai_item" },
       recovered_dark_yuta: { name: "病に打ち勝った裏U太", type: "student", cost: 0, noCost: true, attack: 4, hp: 4, evolutionFrom: "sick_yuta", token: true, allowedZones: ["evolution"], category: "gakuyukai_item" },
@@ -20475,7 +20475,7 @@
 
     const UPDATE_READ_STORAGE_KEY = "chibattle-read-updates-v3";
     const UPDATE_HISTORY = [
-      {"version": "ver.0.46.0", "versioning": "semver", "date": "2026年11月25日", "summary": "新カード「アグロボス」を追加しました。", "changes": [{"category": "新カード", "title": "アグロボス", "after": "アグロボス／学生／共通カード／戦意3／攻撃力0／体力2\n[超陽気]\n自分の「アグロ」とつく出席者が相手本体を攻撃するたび、ターン終了時まで、このカードの攻撃力を+1する。"}, {"category": "システム", "title": "アグロボスの対戦対応とカードテスト", "after": "自身を含むアグロの本体攻撃に、ダメージ前に反応します。複数体の発動、ターン終了時の強化解除、既存の強化との併用を確認するテストを追加しました。カードテストにアグロ関連の手札と盤面を用意し、AIの出席・攻撃順と打点予測、オンラインの同期にも対応しました。"}]},
+      {"version": "ver.0.46.0", "versioning": "semver", "date": "2026年11月25日", "summary": "新カード「アグロボス」を追加しました。", "changes": [{"category": "新カード", "title": "アグロボス", "after": "アグロボス／学生／共通カード／戦意4／攻撃力1／体力2\n[超陽気]\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスを1つずつ選び、そこに「アグロキング」と「アグロプリンセス」を1人ずつ出席させる。\n自分の「アグロ」とつく出席者が相手本体を攻撃するたび、ターン終了時まで、このカードの攻撃力を+1する。"}, {"category": "カード調整", "title": "アグロボス", "before": "アグロボス／学生／共通カード／戦意3／攻撃力0／体力2\n[超陽気]\n自分の「アグロ」とつく出席者が相手本体を攻撃するたび、ターン終了時まで、このカードの攻撃力を+1する。", "after": "アグロボス／学生／共通カード／戦意4／攻撃力1／体力2\n[超陽気]\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスを1つずつ選び、そこに「アグロキング」と「アグロプリンセス」を1人ずつ出席させる。\n自分の「アグロ」とつく出席者が相手本体を攻撃するたび、ターン終了時まで、このカードの攻撃力を+1する。", "beforeHighlights": ["戦意3／攻撃力0"], "afterHighlights": ["戦意4／攻撃力1", "このカードを手札から出席させたとき、左右に隣接する空いている席マスを1つずつ選び、そこに「アグロキング」と「アグロプリンセス」を1人ずつ出席させる。"]}, {"category": "システム", "title": "アグロボスの対戦対応とカードテスト", "after": "手札からの出席時に、左右の空き席を直接選び、アグロキングとアグロプリンセスを出席させられます。空き席が1つ・0の場合、効果による出席、無効化、複数体の強化、ターン終了時の解除と既存の強化との併用を確認するテストを追加・更新しました。カードテスト、AIの配置・攻撃順、オンライン双方と観戦の同期にも対応しました。"}]},
       {"version": "ver.0.45.5", "versioning": "semver", "date": "2026年11月24日", "summary": "病の効果を調整し、手札の表示、AIの行動・敗北予測、オンラインのデッキ判定を改善しました。", "changes": [{"category": "カード調整", "title": "病", "before": "病／持ち物／学友会・持ち物／戦意1／攻撃力0／体力0\n[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の攻撃力を-1する。\n装備者の持ち主のターン終了時、装備者の攻撃力を-1する。その後、その講義室にいる出席者1人をランダムに指名し、「病」を装備させる。", "after": "病／持ち物／学友会・持ち物／戦意1／攻撃力0／体力0\n[装備]\nお互いの講義室にいる出席者1人に装備する。\n装備者の攻撃力を-1する。\n装備者の持ち主のターン終了時、2つの効果から1つをランダムに選んで使用する。\n1. 装備者の攻撃力を-1する。\n2. 装備者と同じ講義室にいる出席者1人をランダムに指名し、「病」を装備させる。", "beforeHighlights": ["その後、その講義室"], "afterHighlights": ["2つの効果から1つをランダムに選んで使用する。", "1. ", "2. 装備者と同じ講義室"]}, {"category": "システム", "title": "病のカードテスト", "after": "双方の講義室に装備先と感染先を用意しました。ランダムな二つの効果、装備直後の弱体化、感染の連鎖制限、U太関連の特殊進化と装備解除、オンラインの同期を確認するテストを追加・更新しました。"}, {"category": "表示・操作改善", "title": "手札の効果変更マーク", "after": "元から持つ超注目などを、後から付いた能力として扱って「!」を表示していた判定を修正しました。元の超注目に含まれる注目、超陽気に含まれる陽気も、追加された能力には含めません。効果で追加された能力・負荷・融合・数値変更の印と詳細表示は維持します。標準の能力と効果付与後の表示、非公開手札、画面サイズごとの位置を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "AIの行動継続と盤面処理", "after": "勝利できるという予測が外れた場合や、持ち物を1枚使用できなかった場合も、ほかの有効な手札を検討するようにしました。一人では不利でも複数人で倒せる相手への攻撃を検討し、攻撃後に空いたマスや変化した手札も手番終了前に再確認します。倒せない相手への無意味な特攻を避ける判断は維持し、左右のAIと既存の講義・攻撃判断を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "AIの敗北予測と防御判断", "after": "相手の次の手番の二回攻撃、注目を突破された後の打点、公開された継続ダメージ、防御の有効期限を危険予測に含めました。次の敗北を避ける除去・弱体化・回復・注目の出席を、通常の展開やサーチより優先します。その場で確実に勝てる行動は維持します。公開されたカードと既知の構成から追加打点の可能性も推測し、非公開の手札・残り山札の中身を予測の答えとして使用しないようにしました。左右のAIの防御・対象選択・非公開情報の扱いを確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "オンライン対戦のデッキ判定", "after": "アンフィスバエナソファを含む有効なデッキが、オンラインサーバー側の登録漏れにより準備OKにならない問題を修正しました。通常版とサーバーの直接編成・専攻・枚数制限の一致と、対象デッキでの対戦開始、双方の効果選択と同期を確認するテストを追加・更新しました。カードの能力値・本文・効果処理とデッキの構成は変更していません。"}]},
       {"version": "ver.0.45.4", "versioning": "semver", "date": "2026年11月23日", "summary": "斥候学生とハバヨセ!を調整し、ちがうよとハンディジェットエンジンを戦意4にしました。カード本文と用語の表記も整理しました。", "changes": [{"category": "カード調整", "title": "斥候学生", "before": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n相手の講義室に出席者がいないなら、これは[超陽気]を持つ。", "after": "斥候学生／学生／展開・敵増殖／戦意2／攻撃力2／体力1\n[陽気]\nこのカードが出席したとき、相手の講義室に出席者がいないなら、[超陽気]を持つ。", "beforeHighlights": ["これは"], "afterHighlights": ["[陽気]", "このカードが出席したとき、"]}, {"category": "カード調整", "title": "ハバヨセ!", "before": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから、カード名か本文に「U太」と記されたカード1枚を選び、手札に加える。その後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。\nそうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。", "after": "ハバヨセ!／持ち物／共通カード／戦意2／攻撃力0／体力0\n[提出]\nこのカードは校外エリアにあるかぎり、「U太」として扱う。\n自分のデッキから「U太」とつくカード1枚を選び、手札に加える。その後、自分のターンなら、さらに戦意3を消費して、自分の手札の「裏U太」1枚を選んでもよい。\nそうしたなら、自分の空いている席マスか教卓マスを1つ選び、進化元を必要とせず、そこにそのカードを出席させる。その後、このカードをその出席者に装備してもよい。", "beforeHighlights": ["、カード名か本文に", "記された"], "afterHighlights": ["とつく"]}, {"category": "システム", "title": "斥候学生のカードテストとAI", "after": "相手がいるときの陽気と、出席時に相手がいないときの超陽気を続けて試せる手札・盤面にしました。条件は出席時にだけ確認し、得た超陽気は相手が出席しても残ります。AIの本体攻撃判断を更新し、条件の成立・不成立、後から盤面が変わる場合、攻撃回数、効果による出席とオンライン同期を確認するテストを追加・更新しました。戦意・攻撃力・体力は変更していません。"}, {"category": "システム", "title": "ハバヨセ!の検索対象", "after": "カード名に「U太」を含むカードだけを選べるよう、選択画面・AI・カードテストを揃えました。本文にだけ「U太」があるカードと、デッキにあるハバヨセ!自身は対象になりません。候補がない場合のシャッフル、対象の確認、通常使用・提出・オンライン双方の同期を確認するテストを追加・更新しました。追加戦意での裏U太の出席、装備、校外でのU太扱いと能力値は変更していません。"}, {"category": "表示・操作改善", "title": "カード本文の表記統一", "after": "表記を次の一覧に統一しました。能力値・対象・枚数・選び方・効果の処理順は変更していません。\n\n・名称参照\n「○○」と名のつく → 「○○」とつく\n\n・人物へのランダムな対象決定\nランダムに選ぶ → ランダムに指名する\n\n・候補を事前に見ずに取るサーチ\n指定カードを手札に加える → 指定カードを引く\n\n・複数効果の選択\n次の効果から○つを選ぶ → ○つの効果から○つを選んで使用する\n\n・出席時の効果選択\n手札から出席させるとき → 手札から出席させたとき\n\n・通常ドローの代替\nドローの代わりに → ターン開始時の通常ドローの代わりに\n\n・デッキから手札への追加禁止\n手札に加えられない → 引くことも、手札に加えることもできない\n\n公開・確認した候補から取る場合は「手札に加える」を維持します。出席時と進化時、回収・生成はそれぞれ区別しています。\n\n・支払量の呼び方\nコスト → 戦意（使用に必要な戦意）\n\n・盤面の場所\n教師マス → 教卓マス\n講義室を意味する「場」 → 講義室\n\n・デッキから引く表記\nデッキを○枚引く → デッキからカードを○枚引く\n上から・枚数・上限の指定は維持します。\n\n・プレイヤーへのダメージ\n本体に○ダメージを与える／気力を○失う → 自分／相手の気力に○ダメージ。\n後続の処理は「その後、〜」で区切ります。攻撃先や指名対象を意味する「本体」は維持します。"}, {"category": "システム", "title": "カード表記とルールの確認", "after": "今回の使い分けをルール台帳と開発ガイドラインへ記録しました。本文・選択画面・管理台帳の一致と、候補不足・通常ドロー・サーチ・シャッフル・手札上限・デッキ切れ・ドロー禁止・オンライン同期を確認するテストを追加・更新しました。オンラインの検証手順は、現在の入室画面と同期完了の確認に合わせました。"}, {"category": "表示・操作改善", "title": "戦意不足の警告を削除", "after": "戦意が足りない場合の警告メッセージとログを削除しました。使用できないカードを止める判定は維持しています。カード本文・選択画面・対戦ログ・管理台帳の用語を揃え、使用制限とダメージ・ドローの処理を確認するテストを追加・更新しました。能力値と効果の処理は変更していません。"}, {"category": "カード調整", "title": "ちがうよ", "before": "ちがうよ／持ち物／バカでかい型／戦意3／攻撃力0／体力0\nお互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。", "after": "ちがうよ／持ち物／バカでかい型／戦意4／攻撃力0／体力0\nお互いのプレイヤーは手札をすべてデッキに戻してシャッフルする。その後、戻した手札の合計枚数を2で割って切り上げた枚数だけ、それぞれデッキからカードを引く。", "beforeHighlights": ["戦意3"], "afterHighlights": ["戦意4"]}, {"category": "カード調整", "title": "ハンディジェットエンジン", "before": "ハンディジェットエンジン／持ち物／妨害・LO／戦意3／攻撃力0／体力0\n自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。", "after": "ハンディジェットエンジン／持ち物／妨害・LO／戦意4／攻撃力0／体力0\n自分の手札をランダムに1枚、校外エリアへ送る。その後、相手の手札をランダムに2枚、校外エリアへ送る。", "beforeHighlights": ["戦意3"], "afterHighlights": ["戦意4"]}, {"category": "システム", "title": "手札干渉カードの戦意調整", "after": "ちがうよとハンディジェットエンジンを戦意4にしました。効果本文・対象・枚数・処理順は変更していません。管理ログと台帳の戦意表示・並び順を揃え、戦意3では使用できず4で使用できること、AI・高負荷・カードテスト・オンライン双方の支払いと効果処理を確認するテストを追加・更新しました。"}]},
       {"version": "ver.0.45.3", "versioning": "semver", "date": "2026年11月22日", "summary": "インファイト将棋部の攻撃力を調整し、カード選択画面とデッキ操作・演出を改善しました。", "changes": [{"category": "カード調整", "title": "インファイト将棋部", "before": "インファイト将棋部／学生／将棋部／戦意10／攻撃力9／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "after": "インファイト将棋部／学生／将棋部／戦意10／攻撃力8／体力5\n[超陽気]\nこのカードを手札から出席させたとき、自分の最大気力を1にする。次の相手ターン終了時まで、自分の気力はダメージを受けない。", "beforeHighlights": ["攻撃力9"], "afterHighlights": ["攻撃力8"]}, {"category": "システム", "title": "デッキ操作後のシャッフル", "after": "デッキから探す・選ぶ、デッキへ戻す・生成する、デッキ内のカードを選んで変更する処理の後は、原則シャッフルするよう統一しました。上・下など位置や順番の指定がある処理と通常ドローは、その指定を守ります。ルール台帳と今後の実装ルールにも記録しました。カードの能力値・本文は変更していません。"}, {"category": "表示・操作改善", "title": "山札へ戻す・生成する演出", "after": "カードが山札へ戻る動きと、束の一部を上に抜いて重ね直すシャッフル演出を追加しました。山札へ生成する場合は全カードの表面を画面中央で見せ、裏向きになって山札へ入った後にシャッフルします。生成枚数を省略せず、同じカードでも1枚ずつ並べて表示します。枚数が多い場合は複数の段に並べ、各段を中央揃えにして、すべてのカードが画面内に収まります。続けて引く場合も、すべて入り終わってから混ぜ、その後に引く順番で表示します。非公開の手札を戻す際は裏面を使います。オンライン対戦・観戦、演出の省略、画面切り替えと表示順を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "表示・操作改善", "title": "複数種類のサーチ", "after": "効率的な実験法や乾いた食券で複数種類のカードを探すときは、まとめて引き、最後に1回だけシャッフルするようにしました。自分が引いたカードは画面中央に並べて表示します。候補不足・手札上限・ドロー禁止と、オンライン対戦・観戦での表示順と非公開情報を確認するテストを追加しました。カードの能力値・本文・探す対象と枚数は変更していません。"}, {"category": "不具合修正", "title": "カード選択画面のスクロールと確定", "after": "候補が多いとカード一覧が画面外へ広がり、スクロールや確定操作ができなくなる不具合を修正しました。一覧は画面内に収まり、候補部分だけを横へスクロールできます。マウスホイールにも対応し、高さの低い画面でも確定ボタンを表示します。デッキの先頭・末尾の選択、画面の切り替え、オンライン双方の操作と同期を確認するテストを追加しました。カードの能力値・本文・効果処理は変更していません。"}, {"category": "不具合修正", "title": "シャッフルの処理漏れ", "after": "アンフィスバエナソファでデッキから選んだカードを校外へ送る処理と、無法の食堂・情報に疲れた学生でデッキを参照する処理にも、操作後のシャッフルを適用しました。フォルダギャラクシーと子曰くで、実際のシャッフルに対応した演出が表示されるようにしました。"}]},
@@ -34090,7 +34090,7 @@
 
     const AI_SUMMONING_ATTENDEE_VALUES = Object.freeze({
       fifty_ninth_paia: 36, college_student_vibe: 45, loud_group: 40, apprentice_vampire: 65,
-      rear_queen: 9, chugidesu: 9, group_sniper: 8, gecko_carrier_student: 9, jobs_woody: 14,
+      aggro_boss: 12, rear_queen: 9, chugidesu: 9, group_sniper: 8, gecko_carrier_student: 9, jobs_woody: 14,
       enemy_boss: 10, enemy_horde: 6, could_not_escape_student: 8
     });
 
@@ -34113,6 +34113,7 @@
         case "chugidesu":
           limit = (card.handFusionStored || []).length >= 3 ? 2 : 1;
           break;
+        case "aggro_boss":
         case "group_sniper":
         case "gecko_carrier_student":
           limit = 2;
@@ -34226,7 +34227,8 @@
     }
 
     function scoreAiPlacement(card, zone, index) {
-      if (card.baseId === "aggro_boss") return scoreAiAggroBossAttendance("opponent", card);
+      if (card.baseId === "aggro_boss") return scoreAiAggroBossAttendance("opponent", card)
+        + scoreAiSummoningAttendance("opponent", card, zone, index);
       if (card.baseId === "endless_talker") return scoreAiEndlessTalker("opponent", card);
       if (card.baseId === "questioning_lecturer") {
         if (arePlayedEffectsSuppressed("opponent") || !canUsePrintedCardEffects(card)) return 2;
@@ -40431,6 +40433,43 @@
       return false;
     }
 
+    function queueAggroBossAttendance(side, source, sourceIndex) {
+      return queueFusionEffect(async () => {
+        const token = state.preBattleToken;
+        const seats = adjacentIndexes(sourceIndex);
+        for (const baseId of ["aggro_king", "aggro_princess"]) {
+          if (token !== state.preBattleToken || state.gameOver || state.screen !== "battle") return;
+          const card = createCardFromBase(baseId, side);
+          card.effectAllowedSeats = [...seats];
+          card.specialAttendanceSeatOnly = true;
+          const available = seats.filter(index => canPlaceCard(side, card, "seat", side, index));
+          if (!available.length) break;
+          if (isCpuControlledBattleSide(side) && !isOnlineBattle()) {
+            const value = index => scoreAiPlacementAuras(side, card, "seat", index)
+              + (baseId === "aggro_king" && index === 6 ? 40 : 0);
+            const index = available.sort((a,b) => value(b) - value(a))[0];
+            const attendee = makeBoardCard(card);
+            if (attendCard(side, attendee, "seat", index, { attendanceSource: ATTENDANCE_SOURCE.GENERATED })) {
+              showCardPlayAnimation(attendee, "board");
+            }
+            continue;
+          }
+          await new Promise(resolve => {
+            const timer = window.setInterval(() => {
+              if (token !== state.preBattleToken || state.gameOver || state.screen !== "battle") {
+                window.clearInterval(timer);
+                resolve();
+              }
+            }, 100);
+            const onComplete = () => { window.clearInterval(timer); resolve(); };
+            if (!startSpecialAttendanceQueue(side, [card], {
+              attendanceSource: ATTENDANCE_SOURCE.GENERATED, seatOnly: true, label: source.name, onComplete
+            })) onComplete();
+          });
+        }
+      });
+    }
+
     function queueExplodingStudents(side, source, count, allowedSeats = null, options = {}) {
       return queueFusionEffect(async () => {
         const token = state.preBattleToken;
@@ -42970,6 +43009,7 @@
         addKeyword(card, "超陽気", card.name);
         addLog(`${card.name}の出席時効果：相手の講義室に出席者がいないため、超陽気を得ました。`);
       }
+      if (card.baseId === "aggro_boss" && zone === "seat") queueAggroBossAttendance(side, card, index);
       if (card.baseId === "aki_helper") queueAkiHelperAttendance(side, card);
       if (card.baseId === "questioning_lecturer") resolveQuestioningLecturerAttendance(side, card);
       if (card.baseId === "endless_talker") resolveEndlessTalker(side, card);
@@ -57311,12 +57351,12 @@
     // needed to exercise each effect through ordinary play.
     const CARD_TEST_SCENARIOS = {
       aggro_boss: {
-        hand: ["aggro_boss", "aggro_princess", "aggro_walk", "aggro_dome", "general_student"], will: 10,
-        own: { seats: [[0, "aggro_king"], [2, "aggro_queen"], [6, "general_student"]], teacher: null },
+        hand: ["aggro_boss", "aggro_dome", "aggro_walk", "general_student"], will: 10,
+        own: { seats: [[6, "general_student"]], teacher: null },
         enemy: { seats: [[8, "general_student"]], teacher: null },
         deck: ["aggro_boss", "aggro_princess", "aggro_army", "aggro_dome", "aggro_walk", "general_student"],
         enemyDeck: ["general_student", "aggro_princess", "onigiri_draw"],
-        note: "アグロボスを出してから、アグロキングとアグロクイーンで相手本体を攻撃すると強化されます。ボス自身の攻撃もダメージ前に反応します。2体目のボス、アグロ散歩との併用、一般学生では反応しないこと、ターン終了時の解除を試せます。"
+        note: "中央列へアグロボスを出すと、左右の空き席を直接選んでアグロキングとアグロプリンセスを出席させられます。プリンセスとボスの順に本体を攻撃すると合計4ダメージです。アグロドーム、2体目のボス、アグロ散歩との併用、一般学生では反応しないこと、ターン終了時の解除も試せます。"
       },
       illness: {
         hand: ["illness", "illness", "yuta", "igidakatta"], will: 10,
@@ -60245,7 +60285,7 @@
         corridor_student: "このカードを手札から出席させたとき、自分のデッキと手札にある「ウマ」「マイボ」「骨」「どこ」の中から、名前の異なるカードをランダムに2枚選び、それぞれを1枚ずつ手札に生成する。",
         diligent_student: "このカードは自分の1行目の席マスにのみ出席できる。このカードが相手の教師から講義のダメージを受ける場合、代わりに体力を1回復する。",
         plump_student: "陽気を持つ。このカードを出席させるには、横に連続した席マスを2つ使用する。",
-        aggro_boss: "超陽気を持つ。自分の「アグロ」とつく出席者が相手本体を攻撃するたび、ターン終了時まで、このカードの攻撃力を+1する。",
+        aggro_boss: "超陽気を持つ。\nこのカードを手札から出席させたとき、左右に隣接する空いている席マスを1つずつ選び、そこに「アグロキング」と「アグロプリンセス」を1人ずつ出席させる。\n自分の「アグロ」とつく出席者が相手本体を攻撃するたび、ターン終了時まで、このカードの攻撃力を+1する。",
         aggro_princess: "超陽気を持つ。このカードが相手本体を攻撃したとき、自分の気力に1ダメージ。",
         aggro_walk: "自分の講義室にいる「アグロ」とつく出席者1人を指名し、その攻撃力を+2する。その後、自分の気力に2ダメージ。",
         red_ideology: "お互いの講義室にいる出席者を、各行の左側の席マスへ詰める。",
