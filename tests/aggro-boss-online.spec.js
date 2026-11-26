@@ -85,21 +85,21 @@ for (const actorSide of ['player','opponent']) test(`アグロボスをデッキ
     }),side)).toEqual(expected);
    }
   }
-  await check({attacks:[1,1],life:20,will:6});
+  await check({attacks:[0,0],life:20,will:6});
   for(const index of [0,5,4,8]) {
    for(const p of [host,guest])await expect.poll(()=>p.evaluate(()=>battlePresentationBusy())).toBe(false);
    await actor.evaluate(index=>{
     state.selectedAttacker={owner:'player',zone:'seat',index};attackLife('opponent');
    },index);
-   const expected=index===0?{attacks:[2,2],life:19,will:6}
-    :index===5?{attacks:[3,3],life:18,will:6}
-    :index===4?{attacks:[4,4],life:14,will:6}:{attacks:[5,5],life:9,will:6};
+   const expected=index===0?{attacks:[1,1],life:19,will:6}
+    :index===5?{attacks:[2,2],life:18,will:6}
+    :index===4?{attacks:[3,3],life:15,will:6}:{attacks:[4,4],life:11,will:6};
    await check(expected);
   }
   const endSeq=await host.evaluate(side=>{
    resolveEndTurnEffects(side);applyBoardAuras();render();onlineBroadcastState();return state.online.lastSnapshotSeq;
   },actorSide);
   await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThanOrEqual(endSeq);
-  await check({attacks:[1,1],life:9,will:6});expect(errors).toEqual([]);
+  await check({attacks:[0,0],life:11,will:6});expect(errors).toEqual([]);
  }finally{await Promise.all(contexts.map(c=>c.close()));}
 });

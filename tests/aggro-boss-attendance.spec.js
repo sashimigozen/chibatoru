@@ -32,7 +32,7 @@ for(const width of [1280,390])test(`左右の席マスを直接選び、キン�
  expect(await page.evaluate(()=>[3,4,5].map(i=>{
   const c=state.players.player.board.seats[i];return [c.baseId,c.attack,c.currentHp,c.lastAttendanceSource,canAttackSilently(c),hasKeyword(c,'超陽気')];
  }))).toEqual([
-  ['aggro_princess',1,1,'generated',true,true],['aggro_boss',1,2,'hand',true,true],['aggro_king',1,1,'generated',false,false]
+  ['aggro_princess',1,1,'generated',true,true],['aggro_boss',0,2,'hand',true,true],['aggro_king',1,1,'generated',false,false]
  ]);
  expect(await page.evaluate(()=>state.players.player.will)).toBe(6);
 });
@@ -49,7 +49,7 @@ test('左右が埋まっていてもボスは出席でき、別の行へ追加�
  await page.evaluate(()=>{for(const index of [3,5])state.players.player.board.seats[index]=makeBoardCard(createCardFromBase('general_student','player'));});
  await spawn(page);await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
  expect(await page.evaluate(()=>({count:listBoardRefs('player').length,attack:state.players.player.board.seats[4].attack,
-  pending:!!state.pendingCopiedCard,will:state.players.player.will}))).toEqual({count:4,attack:1,pending:false,will:6});
+  pending:!!state.pendingCopiedCard,will:state.players.player.will}))).toEqual({count:4,attack:0,pending:false,will:6});
 });
 for(const reason of ['effect','suppressed','effectless'])test(`追加出席は手札からの有効な出席時だけ ${reason}`,async({page})=>{
  await open(page);
@@ -88,12 +88,12 @@ for(const side of ['player','opponent'])test(`${side}: AIは2人出せる席を�
   queue:!!state.pendingSpecialAttendanceQueue,pending:!!state.pendingCopiedCard,will:state.players[side].will}),side))
   .toEqual({ids:['aggro_boss','aggro_king','aggro_princess'],queue:false,pending:false,will:6});
 });
-test('ドーム下では追加出席したキングも即攻撃でき、合計6ダメージになる',async({page})=>{
+test('ドーム下では追加出席したキングも即攻撃でき、合計5ダメージになる',async({page})=>{
  await open(page);
  await page.evaluate(()=>{state.environment=makeBoardCard(createCardFromBase('aggro_dome','player'));applyBoardAuras();});
  await spawn(page);await choose(page,'aggro_king',3);await choose(page,'aggro_princess',5);
  await expect.poll(()=>page.evaluate(()=>fusionTasksBusy())).toBe(false);
  await page.evaluate(async()=>{for(const index of [3,5,4]){state.selectedAttacker={owner:'player',zone:'seat',index};await attackLifeForCurrentSide('opponent');}});
  expect(await page.evaluate(()=>({life:state.players.opponent.life,own:state.players.player.life,boss:state.players.player.board.seats[4].attack})))
-  .toEqual({life:14,own:19,boss:4});
+  .toEqual({life:15,own:19,boss:3});
 });
