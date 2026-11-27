@@ -39194,6 +39194,7 @@
       }
       if (HORSE_MATERIAL_IDS.includes(item.baseId)) { openHorseFusionChoice(item); return; }
       if (UTA_FUSION_MATERIAL_IDS.includes(item.baseId)) { openUtaFusionChoice(item); return; }
+      if (effectiveCardCost(item) > state.players.player.will) return;
       if (arePlayedEffectsSuppressed("player")) {
         if (onlineCanSendCommand()) {
           onlineSendCommand("itemSuppressed", { instanceId: item.instanceId });
@@ -45596,6 +45597,7 @@
 
     function toggleDestroyItemTarget(item, owner, zone, index) {
       if (!usesBoardTargetConfirmation(item)) return false;
+      if (effectiveCardCost(item) > state.players.player.will) return false;
       const target = getBoardCard(owner, zone, index);
       if (!target || !canUseItemOnBoardTarget(item, owner, zone, index)) {
         state.message = `${item.name}はその出席者を対象にできません。`;
@@ -45617,7 +45619,13 @@
     function confirmDestroyItemTarget() {
       const pending = state.pendingDestroyItem;
       const item = pending ? getHandCard("player", pending.itemId) : null;
-      if (!pending || !item || !pending.target) return false;
+      if (!pending) return false;
+      if (!item || effectiveCardCost(item) > state.players.player.will) {
+        clearSelections();
+        render();
+        return false;
+      }
+      if (!pending.target) return false;
       const { owner, zone, index = null } = pending.target;
       if (!canUseItemOnBoardTarget(item, owner, zone, index)) {
         pending.target = null;
