@@ -56,12 +56,12 @@ test('効果を1つ選ぶカードは使用カード1枚と縦のボタンを表
   expect(errors).toEqual([]);
 });
 
-test('複数選択は選択・解除と確定を分け、盤面を見て戻っても選択を維持する', async ({ page }) => {
+test('複数選択は必要数で自動決定し、それまでは解除や盤面確認ができる', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await pinige(page);
   const rows = page.locator('.effect-mode-option');
   await expect(rows.nth(1)).toContainText('自分のデッキから[点数]を持つ学生2枚を引く。');
-  await expect(page.locator('#threeGesturesConfirmButton')).toBeDisabled();
+  await expect(page.locator('#threeGesturesConfirmButton')).toBeHidden();
   await rows.nth(0).click();
   await expect(rows.nth(0)).toBeFocused();
   await expect(rows.nth(0)).toHaveAttribute('aria-pressed', 'true');
@@ -71,20 +71,24 @@ test('複数選択は選択・解除と確定を分け、盤面を見て戻っ�
   await expect(rows.nth(0)).toHaveAttribute('aria-pressed', 'true');
   await rows.nth(0).click();
   await expect(rows.nth(0)).toHaveAttribute('aria-pressed', 'false');
-  await rows.nth(3).click(); await rows.nth(0).click();
+  await rows.nth(3).click();
+  expect(await page.evaluate(() => state.pendingCardChoice.selectedIds.length)).toBe(1);
+  await page.evaluate(() => {
+    const last = document.querySelectorAll('.effect-mode-option')[0];
+    last.click(); last.click();
+  });
   await expect(rows.nth(1)).toBeDisabled();
-  await expect(page.locator('#threeGesturesConfirmButton')).toBeEnabled();
+  await expect(page.locator('#threeGesturesConfirmButton')).toBeHidden();
   await page.screenshot({ path: test.info().outputPath('multiple-desktop.png') });
-  await page.locator('#threeGesturesConfirmButton').click();
   await expect.poll(() => page.evaluate(() => !state.pendingCardChoice && !fusionTasksBusy())).toBe(true);
   expect(await page.evaluate(() => state.players.player.trash.filter(c => c.baseId === 'pinige').length)).toBe(1);
 });
 
 for (const viewport of [{ width: 390, height: 844 }, { width: 1108, height: 512 }]) {
-  test(`4つの効果と確定操作が画面に収まる ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`4つの効果が画面に収まり、2つ選ぶと自動決定する ${viewport.width}x${viewport.height}`, async ({ page }) => {
     await page.setViewportSize(viewport); await pinige(page);
     await page.waitForTimeout(450);
-    for (const selector of ['#effectModeSource', '#threeGesturesHand', '#threeGesturesConfirmButton']) {
+    for (const selector of ['#effectModeSource', '#threeGesturesHand', '#threeGesturesStage [data-selection-peek]']) {
       const box = await page.locator(selector).boundingBox();
       expect(box.x).toBeGreaterThanOrEqual(0); expect(box.y).toBeGreaterThanOrEqual(0);
       expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
@@ -92,6 +96,10 @@ for (const viewport of [{ width: 390, height: 844 }, { width: 1108, height: 512 
     }
     expect(await page.locator('#threeGesturesHand').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.screenshot({ path: test.info().outputPath(`multiple-${viewport.width}.png`) });
+    await expect(page.locator('#threeGesturesConfirmButton')).toBeHidden();
+    await page.locator('.effect-mode-option').nth(0).click();
+    await page.locator('.effect-mode-option').nth(1).click();
+    await expect.poll(() => page.evaluate(() => !state.pendingCardChoice && !fusionTasksBusy())).toBe(true);
   });
 }
 

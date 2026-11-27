@@ -116,7 +116,7 @@ for (const actorSide of ['player','opponent']) test(`実WebSocketで${actorSide=
      return {max:choice.max,ids:modes.map(mode=>choice.cards.find(c=>c.pointMode===mode).instanceId)};
     },{id,score});
     for(const cardId of selection.ids) await actor.locator(`.effect-mode-option[data-card-id="${cardId}"]`).click();
-    if(selection.max>1) await actor.locator('#threeGesturesConfirmButton').click();
+    await expect(actor.locator('#threeGesturesConfirmButton')).toBeHidden();
    }
    if(id==='lucky_man')for(let i=0;i<(score===10?2:1);i++){await expect.poll(()=>actor.evaluate(()=>!!state.pendingCardChoice)).toBe(true);await expect.poll(()=>actor.evaluate(()=>battlePresentationBusy({ignoreFusionTasks:true}))).toBe(false);await actor.locator('.board-card[data-owner="opponent"][data-zone="seat"][data-index="0"]').click();await actor.locator('#itemTargetConfirmButton').click();}
    await expect.poll(()=>host.evaluate(()=>fusionTasksBusy())).toBe(false);await expect.poll(()=>guest.evaluate(()=>state.online.lastSnapshotSeq)).toBeGreaterThan(setup.seq);
