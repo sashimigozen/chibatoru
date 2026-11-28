@@ -7,6 +7,9 @@ test.beforeEach(async ({ page }) => {
   await page.goto(gameUrl);
   await page.evaluate(() => {
     const { state } = window.__chibattle;
+    startCardTest("go_away");
+    state.training.skipAnimations = true;
+    scheduleOpponentAI = () => {};
     state.screen = "battle";
     state.phase = "battle";
     state.currentSide = "player";
@@ -22,41 +25,46 @@ test.beforeEach(async ({ page }) => {
       });
     }
   });
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
 });
 
-test("全トークンは両プレイヤーの破壊・手札破棄で消滅し、校外や復活履歴に残らない", async ({ page }) => {
+test("生成トークンは両プレイヤーの破壊・手札破棄で校外と復活履歴に残る", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
     const ids = Object.keys(api.CARD_BASES).filter(id => api.CARD_BASES[id].token);
+    // 融合完成品の素材生成は専用テストで確認する。
+    const generatedIds = ids.filter(id => !horseFusionMaterialEntries(api.createCardFromBase(id, "player")).length);
     const checks = [];
     for (const side of ["player", "opponent"]) {
-      for (const id of ids) {
-        const card = api.makeBoardCard(api.createCardFromBase(id, side));
-        state.players[side].board.seats[0] = card;
-        const removed = api.destroyBoardCard({ owner: side, zone: "seat", index: 0 }, { reason: "体力0", showDestroyFeedback: false });
-        checks.push(removed === card && card.tokenVanished && !state.players[side].board.seats[0]);
+      for (const id of generatedIds) {
+        if (["student", "teacher", "vampire"].includes(api.CARD_BASES[id].type)) {
+          const card = api.makeBoardCard(api.createCardFromBase(id, side));
+          state.players[side].board.seats[0] = card;
+          const removed = api.destroyBoardCard({ owner: side, zone: "seat", index: 0 }, { reason: "体力0", showDestroyFeedback: false });
+          checks.push(removed === card && !card.tokenVanished && !state.players[side].board.seats[0] && state.players[side].trash.includes(card));
+        }
         const handCard = api.createCardFromBase(id, side);
         state.players[side].hand = [handCard];
         api.moveHandCardToTrash(side, handCard);
-        checks.push(state.players[side].hand.length === 0 && handCard.tokenVanished);
+        checks.push(state.players[side].hand.length === 0 && !handCard.tokenVanished && state.players[side].trash.includes(handCard));
       }
     }
     const snapshot = api.onlineCreateSnapshot();
-    return { ids, checks, trash: [state.players.player.trash.length, state.players.opponent.trash.length], history: state.recentBoardTrash.length,
+    return { ids, generatedCount: generatedIds.length, boardCount: generatedIds.filter(id => ["student", "teacher", "vampire"].includes(api.CARD_BASES[id].type)).length, checks, trash: [state.players.player.trash.length, state.players.opponent.trash.length], history: state.recentBoardTrash.length,
       snapshotHasVanishedCard: JSON.stringify(snapshot.state.players).includes('"tokenVanished":true') };
   });
-  expect(result.ids).toHaveLength(16);
   expect(result.ids).toEqual(expect.arrayContaining(['umaibo','uma_bone','where_uma','maibo_bone','where_maibo','where_bone','where_uma_bone_maibo']));
   expect(result.ids).toContain("grudge");
   expect(result.ids).toContain("recovered_dark_yuta");
   expect(result.checks.every(Boolean)).toBe(true);
-  expect(result.trash).toEqual([16, 16]); // 融合完成品の破壊で通常の素材だけが残る。
-  expect(result.history).toBe(0);
+  expect(result.generatedCount).toBeGreaterThan(0);
+  expect(result.trash).toEqual([result.generatedCount + result.boardCount, result.generatedCount + result.boardCount]);
+  expect(result.history).toBe(result.boardCount * 2);
   expect(result.snapshotHasVanishedCard).toBe(false);
 });
 
-test("通常カードのコピーと生成専用カードは消滅せず、トークンの装備も校外へ送る", async ({ page }) => {
+test("通常カードのコピー・生成専用カード・トークンとその装備を校外へ送る", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -70,11 +78,11 @@ test("通常カードのコピーと生成専用カードは消滅せず、ト�
     api.destroyBoardCard({ owner: "player", zone: "seat", index: 0 }, { reason: "体力0", showDestroyFeedback: false });
     return { player: state.players.player.trash.map(c => c.baseId), opponent: state.players.opponent.trash.map(c => c.baseId) };
   });
-  expect(result.player).toEqual(["general_student", "key", "dry_meal_ticket", "earphones"]);
+  expect(result.player).toEqual(["general_student", "key", "dry_meal_ticket", "extra_student", "earphones"]);
   expect(result.opponent).toEqual(["padlock"]);
 });
 
-test("旧データのトークンも回収・デッキ戻し・逆行の対象外になり表示時に校外から消える", async ({ page }) => {
+test("旧データのトークンも回収・デッキ戻し・逆行の対象にできる", async ({ page }) => {
   const result = await page.evaluate(async () => {
     const api = window.__chibattle;
     const { state } = api;
@@ -84,7 +92,8 @@ test("旧データのトークンも回収・デッキ戻し・逆行の対象�
     state.players.player.trash = [token, ...ordinary];
     const item = api.createCardFromBase("go_away", "player");
     state.players.player.hand = [item];
-    const returned = api.resolveGoAwayChoice("player", item, state.players.player.trash.map(c => c.instanceId), false);
+    const returned = api.resolveGoAwayChoice("player", item, state.players.player.trash.slice(0, 5).map(c => c.instanceId), false);
+    api.render();
     await waitForBattlePresentation();
     state.recentBoardTrash = [{ owner: "player", zone: "seat", index: 0, actionTurn: 1, card: { ...token, lastDamageSource: { baseId: "general_student" } } }];
     const restored = api.restoreRecentBoardCard("player");
@@ -96,16 +105,16 @@ test("旧データのトークンも回収・デッキ戻し・逆行の対象�
       hand: state.players.opponent.hand.map(c => c.baseId), history: state.recentBoardTrash.length };
   });
   expect(result.returned).toBe(true);
-  expect(result.restored).toBe(false);
+  expect(result.restored).toBe(true);
   expect(result.will).toBe(8);
-  expect(result.picked).toBe(1);
-  expect(result.hand).toEqual(["key"]);
-  expect(result.playerTrash).toEqual(["go_away"]);
+  expect(result.picked).toBe(2);
+  expect(result.hand).toEqual(["key", "ta"]);
+  expect(result.playerTrash).toEqual(["general_student", "go_away"]);
   expect(result.opponentTrash).toBe(0);
   expect(result.history).toBe(0);
 });
 
-test("幸せの青い鳥はトークン消滅では増殖せず通常の校外送りでは増殖する", async ({ page }) => {
+test("幸せの青い鳥はトークンも通常カードも校外へ送ったら増殖する", async ({ page }) => {
   const result = await page.evaluate(() => {
     const api = window.__chibattle;
     const { state } = api;
@@ -118,7 +127,7 @@ test("幸せの青い鳥はトークン消滅では増殖せず通常の校外�
     }
     return results;
   });
-  expect(result).toEqual([{ targetDefeated: true, birdSummoned: false }, { targetDefeated: true, birdSummoned: true }]);
+  expect(result).toEqual([{ targetDefeated: true, birdSummoned: true }, { targetDefeated: true, birdSummoned: true }]);
 });
 
 test("通常カード5枚のデッキ戻しとドローは引き続き使える", async ({ page }) => {
@@ -129,6 +138,7 @@ test("通常カード5枚のデッキ戻しとドローは引き続き使える"
     const item = api.createCardFromBase("go_away", "player");
     player.hand = [item];
     const success = api.resolveGoAwayChoice("player", item, player.trash.map(c => c.instanceId), false);
+    api.render();
     await waitForBattlePresentation();
     return { success, deck: player.deck.length, hand: player.hand.length, trash: player.trash.map(c => c.baseId) };
   });
@@ -136,9 +146,10 @@ test("通常カード5枚のデッキ戻しとドローは引き続き使える"
 });
 
 test("行かれてはいかがですかは通常カードを必ず5枚選ぶ", async ({ page }) => {
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const api = window.__chibattle;
-    const cases = [0, 1, 3, 4, 5, 6].map((count) => {
+    const cases = [];
+    for (const count of [0, 1, 3, 4, 5, 6]) {
       const player = api.state.players.player;
       player.deck = [];
       player.trash = Array.from({ length: count }, () => api.createCardFromBase("general_student", "player"));
@@ -146,15 +157,17 @@ test("行かれてはいかがですかは通常カードを必ず5枚選ぶ", a
       player.hand = [item];
       player.will = 10;
       const success = api.resolveGoAwayChoice("player", item, player.trash.map((card) => card.instanceId), false);
-      return {
+      api.render();
+      await waitForBattlePresentation();
+      cases.push({
         count,
         success,
         will: player.will,
         deck: player.deck.length,
         hand: player.hand.length,
         trash: player.trash.length
-      };
-    });
+      });
+    }
     return {
       text: api.cardRulesText(api.createCardFromBase("go_away", "player")),
       cases
@@ -187,6 +200,7 @@ test("5枚未満なら使用不可、選択UIは5枚を選ぶまで確定不可"
   }, count);
   expect(await prepare(4)).toEqual({ usable: false, choice: false, will: 10, hand: 1 });
   expect(await prepare(6)).toEqual({ usable: true, choice: true, will: 10, hand: 1 });
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   await expect(page.locator("#threeGesturesMessage")).toContainText("5枚選んでください");
   await expect(page.locator("#threeGesturesHand .card")).toHaveCount(6);
   const select = index => page.locator("#threeGesturesHand .card").nth(index).click();
@@ -197,6 +211,7 @@ test("5枚未満なら使用不可、選択UIは5枚を選ぶまで確定不可"
   await select(5);
   expect(await page.evaluate(() => window.__chibattle.state.pendingCardChoice.selectedIds.length)).toBe(5);
   await page.locator("#threeGesturesConfirmButton").click();
+  await expect.poll(() => page.evaluate(() => battlePresentationBusy())).toBe(false);
   expect(await page.evaluate(() => {
     const player = window.__chibattle.state.players.player;
     return { will: player.will, deck: player.deck.length, hand: player.hand.length,
@@ -205,7 +220,7 @@ test("5枚未満なら使用不可、選択UIは5枚を選ぶまで確定不可"
 });
 
 test("AIの自動選択とオンライン用の相手側処理も必ず5枚に揃う", async ({ page }) => {
-  const results = await page.evaluate(() => {
+  const results = await page.evaluate(async () => {
     const api = window.__chibattle;
     const results = [];
     for (const side of ["player", "opponent"]) {
@@ -218,6 +233,8 @@ test("AIの自動選択とオンライン用の相手側処理も必ず5枚に�
         player.hand = [item];
         const score = side === "player" ? scoreTrainingYocchanItem(side, item) : scoreAiItem(item);
         const success = castImmediateItem(side, item, false);
+        api.render();
+      await waitForBattlePresentation();
         results.push({ side, count, success, will: player.will, deck: player.deck.length,
           hand: player.hand.length, remaining: player.trash.filter(card => card.baseId !== "go_away").length,
           unavailableScore: count === 4 ? score <= 0 : true });
@@ -232,6 +249,8 @@ test("AIの自動選択とオンライン用の相手側処理も必ず5枚に�
       results.push({ side, rejectedFour: !api.resolveGoAwayChoice(side, item, ids.slice(0, 4), false),
         rejectedSix: !api.resolveGoAwayChoice(side, item, ids, false),
         acceptedFive: api.resolveGoAwayChoice(side, item, ids.slice(0, 5), false) });
+      api.render();
+      await waitForBattlePresentation();
     }
     return results;
   });

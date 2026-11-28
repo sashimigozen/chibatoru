@@ -24759,7 +24759,7 @@
     }
 
     function canRecoverTrashCard(card) {
-      return Boolean(card && !isTokenCard(card) && !card.tokenVanished);
+      return Boolean(card && !card.tokenVanished);
     }
 
     function removeLegacyTrashTokens() {
@@ -42923,7 +42923,6 @@
           uta.forEach(material => recover(createCardFromBase(material.baseId, owner), owner));
           if (card.baseId === "ultimate_yuta") card = createCardFromBase("yuta", owner);
         }
-        if (isTokenCard(card)) return; // Ordinary tokens vanish on leaving play; their fusion materials above survive.
         resetCardEffectsForTrash(card, owner);
         returned[owner].push(card);
       };
@@ -45025,7 +45024,7 @@
       });
       addLog(`${attacker.name}が${target.name}に${dealtDamage}ダメージ。${vampireLog}${target.name}の反撃で${attacker.name}に${counterDealtDamage}ダメージ。`);
       if (attacker.baseId === "trendy_student"
-        && !isTokenCard(target)
+        && horseFusionMaterialEntries(target).length === 0
         && target.currentHp <= 0
         && attacker.currentHp > 0
         && !(target.baseId === "rebirth_student" && !target.rebirthUsed)
@@ -45054,7 +45053,7 @@
       }
       let birdSummoned = false;
       if (attacker.baseId === "happy_blue_bird"
-        && !isTokenCard(target)
+        && !target.tokenVanished
         && targetDefeated
         && !getBoardCardFromRef(canonicalTargetRef)
         && isBoardSlotOpen(canonicalTargetRef.owner, canonicalTargetRef.zone, canonicalTargetRef.index)) {
@@ -49476,11 +49475,13 @@
       const defeatSource = isDestruction ? (trashOptions.pointSource || card.pointLethalSource) : null;
       const fusionMaterials = isDestruction && !card.tokenVanished ? horseFusionMaterialEntries(card).map(entry => entry.baseId) : [];
       const triggersExplosion = isDestruction && card.baseId === "exploding_student" && canUsePrintedCardEffects(card);
-      const triggersAbsentStudent = !isTokenCard(card) && card.baseId === "absent_student" && canUsePrintedCardEffects(card);
-      if (showDestroyFeedback) showFloatingTextForCard(card, isTokenCard(card) ? "消滅" : "破壊", "destroy");
-      recordRecentBoardTrash(ref.owner, card, ref);
+      const triggersAbsentStudent = card.baseId === "absent_student" && canUsePrintedCardEffects(card);
+      if (showDestroyFeedback) showFloatingTextForCard(card, "破壊", "destroy");
+      // Destroyed horse fusion results leave only their materials, not a recoverable body.
+      if (fusionMaterials.length === 0) recordRecentBoardTrash(ref.owner, card, ref);
       const moveOptions = {
         ...trashOptions,
+        decomposeHorseFusion: fusionMaterials.length > 0,
         directDestruction: showDestroyFeedback,
         reason: trashOptions.reason || (showDestroyFeedback ? "破壊" : "")
       };
@@ -49633,7 +49634,7 @@
       const submissionFromHand = !options.handOverflow && options.sourceZone !== "fusion" && (options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId));
       for(const material of fusedCards) moveToTrash(owner, material, {sourceZone:"fusion",playedFromHand:true,reason:"融合素材",suppressToast:options.suppressToast});
       for(const entry of nestedRecipe) moveToTrash(owner,createCardFromBase(entry.baseId,owner),{sourceZone:"fusion",playedFromHand:true,reason:"融合素材",suppressToast:options.suppressToast});
-      const vanishes = isTokenCard(card);
+      const decomposes = options.decomposeHorseFusion === true && horseFusionMaterialEntries(card).length > 0;
       const wasUsedFromHand = card.usedFromHand === true;
       const fromHand = options.sourceZone === "hand" || state.players[owner].hand.some(entry => entry.instanceId === card.instanceId)
         || (renderedHandTrashState?.token === state.preBattleToken
@@ -49653,10 +49654,10 @@
         : detachPadlock(card);
       const detachedIllnesses = Array.isArray(card?.illnessEquipments) ? [...card.illnessEquipments] : [];
       const detachedStressHairs = stressHairEquipments(card);
-      const detachedEarphones = (vanishes || card?.baseId === "dark_yuta") && isEarphoneEquipped(card)
+      const detachedEarphones = (isTokenCard(card) || card?.baseId === "dark_yuta") && isEarphoneEquipped(card)
         ? { ...card.earphoneEquipment } : null;
       if (detachedEarphones) delete card.earphoneEquipment;
-      if (vanishes) card.tokenVanished = true;
+      if (decomposes) card.tokenVanished = true;
       else resetCardEffectsForTrash(card, owner);
       card.trashFromHand = Boolean(fromHand && !options.playedFromHand && !options.handRevealShown && !wasUsedFromHand
         && options.sourceZone !== "deck" && options.sourceZone !== "equipment");
@@ -49666,18 +49667,18 @@
       delete card.pendingDirectDestruction;
       card.suppressTrashToast = options.suppressToast === true;
       card.trashReason = options.reason || "";
-      if (!vanishes) {
+      if (!decomposes) {
         state.players[owner].trash.push(card);
         analyticsAddResidence(owner, card);
       }
       if (options.reason === "体力0" && lastDamageSource) analyticsAddRemovalContribution(lastDamageSource);
       analyticsRecordAction({
         side: owner,
-        actionType: vanishes ? "token_disappear" : "trash",
+        actionType: decomposes ? "token_disappear" : "trash",
         card,
         cost: null,
         sourceZone: options.sourceZone || "unknown",
-        targetZone: vanishes ? "removed" : "trash",
+        targetZone: decomposes ? "removed" : "trash",
         details: {
           reason: options.reason || "",
           suppressLog: options.suppressLog === true,
@@ -49686,8 +49687,11 @@
           detachedPadlock: Boolean(detachedPadlock)
         }
       });
-      if (!options.suppressLog) addTrashLog(owner, card, options.reason || "");
-      if (!vanishes && !options.suppressToast) announceTrashMove(owner, card);
+      if (!options.suppressLog) {
+        if (decomposes) addLog(`${card.name}を融合素材に分解しました。`);
+        else addTrashLog(owner, card, options.reason || "");
+      }
+      if (!decomposes && !options.suppressToast) announceTrashMove(owner, card);
       detachedUtaEquipments.forEach((entry) => {
         moveToTrash(owner, entry.baseId === "habayose" && entry.instanceId ? entry : createCardFromBase(entry.baseId, owner), {
           suppressLog: options.suppressLog === true,
@@ -49747,10 +49751,6 @@
 
     function addTrashLog(owner, card, reason = "") {
       if (!card || state.screen !== "battle") return;
-      if (isTokenCard(card)) {
-        addLog(`${localTrashOwnerLabel(owner)}の${card.name}はトークンのため消滅しました${reason ? `（${reason}）` : ""}。`);
-        return;
-      }
       addLog(`${localTrashOwnerLabel(owner)}の校外へ：${card.name || "カード"}${reason ? `（${reason}）` : ""}`);
     }
 
@@ -49783,8 +49783,8 @@
       return id;
     }
 
-    function trashDetailCountText(owner, cards, title, unit = "枚", includeVanished = false) {
-      // 破壊人数には消滅したトークンも含めるが、校外へ送った枚数には含めない。
+    function trashDetailCountText(owner, cards, title, unit = "枚", includeVanished = true) {
+      // Log the full resolved count, including tokens sent to the trash.
       const moved = cards.filter(includeVanished ? Boolean : canRecoverTrashCard);
       if (moved.length === 0) return `0${unit}`;
       const eventId = createTrashDetailEvent(owner, moved, title, unit, includeVanished);

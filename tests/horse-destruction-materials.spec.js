@@ -28,12 +28,13 @@ test('両側の完成品7種類と素材情報のないコピーは、対応す�
       return { expected: recipe.split(','), actual: trash.map(c => c.baseId),
         fresh: new Set(trash.map(c => c.instanceId)).size === trash.length,
         recoverable: trash.every(c => canRecoverTrashCard(c) && c.owner === owner && !isTokenCard(c)),
-        snapshot: snapshotTrash.map(c => c.baseId), vanished: card.tokenVanished === true };
+        history: state.recentBoardTrash.some(entry => entry.card.instanceId === card.instanceId), snapshot: snapshotTrash.map(c => c.baseId), vanished: card.tokenVanished === true };
     }));
   });
   for (const result of results) {
     expect(result.actual).toEqual(result.expected);
     expect(result.snapshot).toEqual(result.expected);
+    expect(result.history).toBe(false);
     expect(result.fresh && result.recoverable && result.vanished).toBe(true);
   }
 });
@@ -76,6 +77,29 @@ test('破壊ではない校外送り・手札破棄では素材を生成しな�
     destroyBoardRefsToTrash([{ owner: 'player', zone: 'seat', index: 0 }], { isDestruction: false });
     const handCard = createCardFromBase('umaibo', 'player');
     state.players.player.hand = [handCard]; moveHandCardToTrash('player', handCard);
-    return state.players.player.trash.length;
-  })).toBe(0);
+    return state.players.player.trash.map(card => card.baseId);
+  })).toEqual(['umaibo', 'umaibo', 'umaibo', 'umaibo']);
+});
+
+test('素材に分解された完成品は逆行・幸せの青い鳥・再攻撃の対象にしない', async ({ page }) => {
+ const result=await page.evaluate(()=>{
+  const results=[];
+  for(const attackerId of ['happy_blue_bird','trendy_student'])for(const targetId of ['extra_student','umaibo']){
+   for(const side of ['player','opponent'])Object.assign(state.players[side],{board:{teacher:null,seats:Array(9).fill(null)},trash:[]});
+   state.recentBoardTrash=[];state.actionTurn=2;
+   const attacker=makeBoardCard(createCardFromBase(attackerId,'player'));attacker.attack=20;attacker.currentHp=20;attacker.hasAttacked=true;attacker.attacksUsedThisTurn=1;
+   const target=makeBoardCard(createCardFromBase(targetId,'opponent'));state.players.player.board.seats[0]=attacker;state.players.opponent.board.seats[0]=target;
+   const resolved=resolveCardAttackWithBoardCleanup(attacker,{owner:'opponent',zone:'seat',index:0});
+   const history=state.recentBoardTrash.length;
+   state.actionTurn=3;const restored=restoreRecentBoardCard('opponent');
+   results.push({attackerId,targetId,bird:resolved.birdSummoned,attacked:attacker.hasAttacked,history,restored});
+  }
+  return results;
+ });
+ expect(result).toEqual([
+  {attackerId:'happy_blue_bird',targetId:'extra_student',bird:true,attacked:true,history:1,restored:false},
+  {attackerId:'happy_blue_bird',targetId:'umaibo',bird:false,attacked:true,history:0,restored:false},
+  {attackerId:'trendy_student',targetId:'extra_student',bird:false,attacked:false,history:1,restored:true},
+  {attackerId:'trendy_student',targetId:'umaibo',bird:false,attacked:true,history:0,restored:false}
+ ]);
 });

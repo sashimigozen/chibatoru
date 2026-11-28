@@ -31,11 +31,11 @@ test('カード一覧から開始し、手札と席をクリックして主要�
  expect(r.refs.map(c=>c.baseId)).toEqual([id]);expect(r.refs[0].cost).toBe(10);expect(r.enemyRefs).toEqual([]);
  expect(r.own.life).toBe(before.life);expect(r.enemy.life).toBe(before.enemyLife);expect(r.late).toBe(before.late);expect(r.env).toBe(before.env);
  expect(r.own.trash.map(c=>c.baseId)).toEqual(['ruler']);expect(r.enemy.trash.map(c=>c.baseId)).toEqual(['onigiri_draw']);
- expect(r.own.deck.length).toBe(before.ownDeck+8);expect(r.enemy.deck.length).toBe(before.enemyDeck+5);
+ expect(r.own.deck.length).toBe(before.ownDeck+8);expect(r.enemy.deck.length).toBe(before.enemyDeck+6);
  for(const c of [...r.own.deck,...r.enemy.deck]){const b=await p.evaluate(id=>CARD_BASES[id],c.baseId);expect(c.cost).toBe(['student','teacher','vampire'].includes(c.type)?Math.max(0,b.cost-3):b.cost);expect(c.handFusionStored).toBeUndefined();expect(c.evolvedFrom).toBeUndefined();}
  expect(r.own.deck.some(c=>c.baseId==='yuta')).toBe(true);expect(r.own.deck.some(c=>c.baseId==='dark_yuta')).toBe(true);expect(r.own.deck.some(c=>c.baseId==='umaibo')).toBe(false);
  expect(r.own.deck.filter(c=>['fusion_uma','fusion_maibo'].includes(c.baseId))).toHaveLength(2);
- expect(r.enemy.deck.filter(c=>c.baseId==='two_achievers')).toHaveLength(1);expect(r.enemy.deck.some(c=>c.baseId==='exploding_student')).toBe(false);
+ expect(r.enemy.deck.filter(c=>c.baseId==='two_achievers')).toHaveLength(1);expect(r.enemy.deck.some(c=>c.baseId==='exploding_student')).toBe(true);
  expect(errors).toEqual([]);await p.screenshot({path:test.info().outputPath('endless-talker-after.png')});
 });
 
@@ -94,7 +94,7 @@ test('完成した融合・重ねた進化と装備を分解し、破壊時効�
   return {own:own.deck.map(c=>c.baseId),enemy:enemy.deck.map(c=>c.baseId),trash:own.trash.map(c=>c.baseId),life:own.life,beforeLife:life,points:own.pointScore};
  });
  expect(r.own.sort()).toEqual(['yuta','dark_yuta','yuta','tsurai_nara','company_one_day','enough_to_fly','ii_daro_tte'].sort());
- expect(r.enemy.sort()).toEqual(['fusion_uma','fusion_maibo','fusion_bone','fusion_where','wood_gitch','gitch','gigi_blood'].sort());expect(r.trash).toEqual(['red_happi']);expect(r.life).toBe(r.beforeLife);expect(r.points).toBe(2);
+ expect(r.enemy.sort()).toEqual(['fusion_uma','fusion_maibo','fusion_bone','fusion_where','wood_gitch','gitch','gigi_blood','exploding_student'].sort());expect(r.trash).toEqual(['red_happi']);expect(r.life).toBe(r.beforeLife);expect(r.points).toBe(2);
 });
 
 test('CPUが実際に出席させて効果を解決し、通常の使用演出を経てリセットする',async({page:p})=>{
